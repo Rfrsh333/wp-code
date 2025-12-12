@@ -15,7 +15,7 @@ export default function Footer() {
                 alt="TopTalent Jobs"
                 width={200}
                 height={65}
-                className="h-16 w-auto brightness-0 invert"
+                className="h-32 w-auto brightness-0 invert"
               />
             </Link>
             <p className="text-neutral-400 text-sm leading-relaxed mb-6">
