@@ -16,7 +16,7 @@ export default function ParallaxImage({
   const containerRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0 });
   const [isDesktop, setIsDesktop] = useState(true);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const targetRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
