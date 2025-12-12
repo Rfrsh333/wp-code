@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
-import ParallaxImage from "@/components/animations/ParallaxImage";
 
 export default function Home() {
   return (
@@ -82,20 +81,18 @@ export default function Home() {
                     alt=""
                     width={500}
                     height={500}
-                    className="object-contain opacity-90 scale-125"
+                    className="object-contain opacity-90 scale-150"
                     priority
                   />
                 </div>
-                <ParallaxImage maxMovement={15} smoothness={100}>
-                  <Image
-                    src="/images/barista.png"
-                    alt="Professionele barista"
-                    width={240}
-                    height={320}
-                    className="object-contain z-10 relative drop-shadow-2xl"
-                    priority
-                  />
-                </ParallaxImage>
+                <Image
+                  src="/images/barista.png"
+                  alt="Professionele barista"
+                  width={240}
+                  height={320}
+                  className="object-contain z-10 relative drop-shadow-2xl"
+                  priority
+                />
               </div>
             </FadeIn>
           </div>
