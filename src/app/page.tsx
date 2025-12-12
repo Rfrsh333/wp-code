@@ -75,8 +75,17 @@ export default function Home() {
             {/* Right side - Image */}
             <FadeIn direction="right" delay={0.2} duration={0.8}>
               <div className="relative flex justify-center items-center h-full">
-                {/* Subtle gradient background */}
-                <div className="absolute w-[400px] h-[400px] bg-gradient-to-br from-[#F27501]/20 to-orange-200/30 rounded-full blur-3xl"></div>
+                {/* Powder splash background */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Image
+                    src="/images/powder-splash.png"
+                    alt=""
+                    width={500}
+                    height={500}
+                    className="object-contain opacity-90 scale-125"
+                    priority
+                  />
+                </div>
                 <ParallaxImage maxMovement={15} smoothness={100}>
                   <Image
                     src="/images/barista.png"
