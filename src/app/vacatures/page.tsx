@@ -1,10 +1,8 @@
-import { Metadata } from "next";
-import Link from "next/link";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Vacatures - TopTalent Jobs",
-  description: "Bekijk onze vacatures in de horeca en evenementensector. Flexibel werken met goede arbeidsvoorwaarden.",
-};
+import Link from "next/link";
+import FadeIn from "@/components/animations/FadeIn";
+import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
 const vacatures = [
   {
@@ -61,135 +59,134 @@ export default function VacaturesPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-gray-50 to-orange-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Onze <span className="text-[#F27501]">Vacatures</span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Vind jouw perfecte baan in de horeca of evenementensector
-          </p>
+      <section className="bg-white py-20 lg:py-28">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <FadeIn>
+            <div className="text-center max-w-3xl mx-auto">
+              <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
+                Carriere
+              </span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
+                Vind jouw ideale baan
+              </h1>
+              <p className="text-neutral-600 text-lg leading-relaxed">
+                Bekijk onze actuele vacatures in de horeca en evenementensector.
+                Flexibel werken met uitstekende arbeidsvoorwaarden.
+              </p>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
-      {/* Voordelen */}
-      <section className="py-12 bg-[#F27501]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-white text-center">
-            <div>
-              <div className="text-2xl font-bold">💰</div>
-              <p className="mt-2 font-medium">Goed Salaris</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold">⚡</div>
-              <p className="mt-2 font-medium">Snelle Uitbetaling</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold">📱</div>
-              <p className="mt-2 font-medium">Handige App</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold">🎓</div>
-              <p className="mt-2 font-medium">Gratis Trainingen</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Vacatures Grid */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {vacatures.map((vacature) => (
-              <div
-                key={vacature.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="bg-orange-100 text-[#F27501] px-3 py-1 rounded-full text-sm font-medium">
-                    {vacature.categorie}
-                  </span>
-                  <span className="text-gray-500 text-sm">{vacature.type}</span>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{vacature.titel}</h3>
-                <div className="flex items-center text-gray-500 mb-4">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {vacature.locatie}
-                </div>
-                <p className="text-gray-600 mb-6">{vacature.beschrijving}</p>
-                <Link
-                  href="/contact"
-                  className="block w-full bg-[#F27501] text-white text-center px-6 py-3 rounded-lg font-semibold hover:bg-[#d96800] transition-colors"
-                >
-                  Solliciteer Nu
-                </Link>
+      {/* Benefits Bar */}
+      <section className="py-8 bg-neutral-900">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-white">
+            {[
+              { icon: "€", label: "Competitief salaris" },
+              { icon: "⚡", label: "Snelle uitbetaling" },
+              { icon: "📱", label: "Eigen talent-app" },
+              { icon: "🎓", label: "Gratis trainingen" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center justify-center gap-3">
+                <span className="text-2xl">{item.icon}</span>
+                <span className="text-sm font-medium">{item.label}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Vacatures Grid */}
+      <section className="py-20 lg:py-28 bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" staggerDelay={0.1}>
+            {vacatures.map((vacature) => (
+              <StaggerItem key={vacature.id}>
+                <div className="group bg-white rounded-2xl p-8 shadow-sm border border-neutral-100 hover:shadow-xl hover:border-neutral-200 transition-all duration-500 h-full flex flex-col">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="bg-[#FEF3E7] text-[#F27501] px-3 py-1.5 rounded-lg text-sm font-medium">
+                      {vacature.categorie}
+                    </span>
+                    <span className="text-neutral-500 text-sm">{vacature.type}</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900 mb-3">{vacature.titel}</h3>
+                  <div className="flex items-center text-neutral-500 mb-4">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {vacature.locatie}
+                  </div>
+                  <p className="text-neutral-600 mb-6 flex-grow">{vacature.beschrijving}</p>
+                  <Link
+                    href="/contact"
+                    className="block w-full bg-[#F27501] text-white text-center px-6 py-3.5 rounded-xl font-semibold
+                    shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
+                    hover:bg-[#d96800] transition-all duration-300"
+                  >
+                    Solliciteer nu
+                  </Link>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </div>
+      </section>
+
       {/* Open Sollicitatie */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Niet de juiste vacature gevonden?
-          </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Stuur een open sollicitatie! Wij zijn altijd op zoek naar gemotiveerd talent
-            voor de horeca en evenementensector.
-          </p>
-          <Link
-            href="/contact"
-            className="bg-[#F27501] text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#d96800] transition-colors inline-block"
-          >
-            Stuur Open Sollicitatie
-          </Link>
+      <section className="py-20 lg:py-28 bg-white">
+        <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+          <FadeIn>
+            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
+              Niet de juiste vacature gevonden?
+            </h2>
+            <p className="text-lg text-neutral-600 mb-10 leading-relaxed">
+              Stuur een open sollicitatie! Wij zijn altijd op zoek naar gemotiveerd talent
+              voor de horeca en evenementensector. Wellicht hebben wij binnenkort de perfecte match voor jou.
+            </p>
+            <Link
+              href="/contact"
+              className="inline-block bg-[#F27501] text-white px-8 py-4 rounded-lg font-semibold
+              shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
+              hover:bg-[#d96800] transition-all duration-300"
+            >
+              Stuur open sollicitatie
+            </Link>
+          </FadeIn>
         </div>
       </section>
 
       {/* Proces */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Hoe werkt het?
-            </h2>
-          </div>
+      <section className="py-20 lg:py-28 bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
+                Hoe werkt het
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900">
+                In 4 stappen aan de slag
+              </h2>
+            </div>
+          </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#F27501] text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                1
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">Solliciteer</h3>
-              <p className="text-gray-600">Stuur je gegevens via het contactformulier</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#F27501] text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                2
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">Kennismaking</h3>
-              <p className="text-gray-600">We nodigen je uit voor een gesprek</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#F27501] text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                3
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">Inschrijving</h3>
-              <p className="text-gray-600">Je wordt ingeschreven in ons systeem</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#F27501] text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                4
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">Aan de slag!</h3>
-              <p className="text-gray-600">Je ontvangt je eerste opdracht</p>
-            </div>
-          </div>
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-4 gap-8" staggerDelay={0.15}>
+            {[
+              { num: "01", title: "Solliciteer", desc: "Stuur je gegevens via het contactformulier" },
+              { num: "02", title: "Kennismaking", desc: "We nodigen je uit voor een gesprek" },
+              { num: "03", title: "Inschrijving", desc: "Je wordt ingeschreven in ons systeem" },
+              { num: "04", title: "Aan de slag", desc: "Je ontvangt je eerste opdracht" },
+            ].map((step, i) => (
+              <StaggerItem key={i}>
+                <div className="text-center">
+                  <div className="text-5xl font-bold text-[#F27501]/20 mb-4">{step.num}</div>
+                  <h3 className="text-xl font-bold text-neutral-900 mb-2">{step.title}</h3>
+                  <p className="text-neutral-600">{step.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         </div>
       </section>
     </>
