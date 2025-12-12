@@ -80,8 +80,8 @@ export default function Home() {
                   <Image
                     src="/images/barista.png"
                     alt="Professionele barista"
-                    width={420}
-                    height={560}
+                    width={320}
+                    height={430}
                     className="object-contain z-10 relative drop-shadow-2xl"
                     priority
                   />
