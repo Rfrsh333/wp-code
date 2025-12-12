@@ -29,14 +29,17 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right side - Barista Image */}
-            <div className="relative flex justify-center">
+            {/* Right side - Barista Image with orange splash */}
+            <div className="relative flex justify-center items-center">
+              {/* Orange splash effect */}
+              <div className="absolute w-[400px] h-[400px] bg-[#F27501] rounded-full blur-3xl opacity-60"></div>
+              <div className="absolute w-[300px] h-[300px] bg-[#FFB347] rounded-full blur-2xl opacity-50 translate-x-10"></div>
               <Image
                 src="/images/barista.png"
-                alt="Barista met oranje achtergrond"
-                width={500}
+                alt="Barista"
+                width={400}
                 height={600}
-                className="object-contain z-10"
+                className="object-contain z-10 relative"
                 priority
               />
             </div>
