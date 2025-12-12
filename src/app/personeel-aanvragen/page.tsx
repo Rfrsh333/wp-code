@@ -1,6 +1,5 @@
 "use client";
 
-import FadeIn from "@/components/animations/FadeIn";
 import PersoneelAanvragenWizard from "@/components/forms/PersoneelAanvragenWizard";
 
 export default function PersoneelAanvragenPage() {
@@ -9,29 +8,24 @@ export default function PersoneelAanvragenPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-neutral-50 to-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <FadeIn>
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
-                Personeel aanvragen
-              </span>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
-                Vind het perfecte{" "}
-                <span className="text-[#F27501]">horecapersoneel</span>
-              </h1>
-              <p className="text-neutral-600 text-lg">
-                Vul het formulier in en wij nemen binnen 24 uur contact met u op.
-                Geen verplichtingen, gewoon een persoonlijk gesprek over uw behoefte.
-              </p>
-            </div>
-          </FadeIn>
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
+              Personeel aanvragen
+            </span>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
+              Vind het perfecte{" "}
+              <span className="text-[#F27501]">horecapersoneel</span>
+            </h1>
+            <p className="text-neutral-600 text-lg">
+              Vul het formulier in en wij nemen binnen 24 uur contact met u op.
+              Geen verplichtingen, gewoon een persoonlijk gesprek over uw behoefte.
+            </p>
+          </div>
 
-          <FadeIn delay={0.2}>
-            <PersoneelAanvragenWizard />
-          </FadeIn>
+          <PersoneelAanvragenWizard />
 
           {/* Trust Indicators */}
-          <FadeIn delay={0.4}>
-            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
               <div className="text-center">
                 <div className="w-12 h-12 bg-[#F27501]/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,8 +55,7 @@ export default function PersoneelAanvragenPage() {
                 <h3 className="font-semibold text-neutral-900 mb-1">500+ tevreden klanten</h3>
                 <p className="text-sm text-neutral-500">Bewezen trackrecord</p>
               </div>
-            </div>
-          </FadeIn>
+          </div>
         </div>
       </section>
     </>
