@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
+import ParallaxImage from "@/components/animations/ParallaxImage";
 
 export default function Home() {
   return (
@@ -76,7 +77,7 @@ export default function Home() {
               <div className="relative flex justify-center items-center h-full">
                 {/* Subtle gradient background */}
                 <div className="absolute w-[400px] h-[400px] bg-gradient-to-br from-[#F27501]/20 to-orange-200/30 rounded-full blur-3xl"></div>
-                <div className="relative">
+                <ParallaxImage maxMovement={15} smoothness={100}>
                   <Image
                     src="/images/barista.png"
                     alt="Professionele barista"
@@ -85,7 +86,7 @@ export default function Home() {
                     className="object-contain z-10 relative drop-shadow-2xl"
                     priority
                   />
-                </div>
+                </ParallaxImage>
               </div>
             </FadeIn>
           </div>
