@@ -5,246 +5,225 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-[600px] flex items-center">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/restaurant.jpg"
-            alt="Restaurant sfeer"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-black/50" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Jouw Personeel,{" "}
-              <span className="text-[#F27501]">Onze Missie</span>
-            </h1>
-            <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
-              Flexibel en kwalitatief personeel voor horeca en evenementen.
-              Wij verbinden talent met kansen.
-            </p>
-
-            {/* Hero CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <p className="text-lg text-white font-medium">Ik ben opzoek naar:</p>
+      <section className="bg-white min-h-[600px] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Text */}
+            <div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-8">
+                ik ben<br />opzoek naar
+              </h1>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/vacatures"
+                  className="bg-[#F27501] text-white px-8 py-3 rounded-md text-lg font-medium hover:bg-[#d96800] transition-colors text-center"
+                >
+                  Werk
+                </Link>
+                <Link
+                  href="/contact"
+                  className="bg-[#F27501] text-white px-8 py-3 rounded-md text-lg font-medium hover:bg-[#d96800] transition-colors text-center"
+                >
+                  TopTalent
+                </Link>
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/vacatures"
-                className="bg-[#F27501] text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#d96800] transition-colors shadow-lg"
-              >
-                Werk
-              </Link>
-              <Link
-                href="/contact"
-                className="bg-white text-[#F27501] border-2 border-[#F27501] px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#F27501] hover:text-white transition-colors shadow-lg"
-              >
-                TopTalent
-              </Link>
+
+            {/* Right side - Barista Image */}
+            <div className="relative flex justify-center">
+              <Image
+                src="/images/barista.png"
+                alt="Barista met oranje achtergrond"
+                width={500}
+                height={600}
+                className="object-contain z-10"
+                priority
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Diensten Section */}
-      <section className="py-20 bg-white">
+      {/* Onze Diensten Section */}
+      <section className="py-20 bg-[#FDF8F3]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Onze Diensten
+              Onze diensten
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Wij bieden verschillende oplossingen voor uw personeelsbehoefte
+            <p className="text-gray-600 max-w-3xl mx-auto text-sm">
+              Als horeca uitzendbureau bieden wij verschillende diensten. Wil je cateringpersoneel inhuren voor een tijdelijke klus of zoek je horecamedewerkers voor langdurige ondersteuning?
+              Wij zetten onze flexibele medewerkers in voor jouw klus. Op zoek naar vast horecapersoneel? Wij vinden voor jou de perfecte match.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
             {/* Uitzenden */}
-            <div className="bg-gray-50 rounded-2xl p-8 hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-[#F27501] rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+            <div className="bg-white rounded-2xl p-8 shadow-sm relative">
+              <div className="absolute -top-4 left-8">
+                <div className="w-10 h-10 bg-[#F27501] rounded-lg flex items-center justify-center rotate-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Uitzenden</h3>
-              <p className="text-gray-600">
-                We plaatsen tijdelijk onze arbeidskrachten bij horecagelegenheden en evenementen. Flexibel personeel wanneer u het nodig heeft.
+              <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4 border-b-2 border-[#F27501] pb-2 inline-block">Uitzenden</h3>
+              <p className="text-gray-600 text-sm">
+                Wij plaatsen tijdelijk onze arbeidskrachten bij horecagelegenheden. We bieden hiermee flexibiliteit voor zowel werknemers als werkgevers. Onze uitzendkrachten helpen bij het invullen van tijdelijke personeelsbehoeften.
               </p>
             </div>
 
             {/* Detachering */}
-            <div className="bg-gray-50 rounded-2xl p-8 hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-[#F27501] rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+            <div className="bg-white rounded-2xl p-8 shadow-sm relative">
+              <div className="absolute -top-4 left-8">
+                <div className="w-10 h-10 bg-[#F27501] rounded-lg flex items-center justify-center rotate-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Detachering</h3>
-              <p className="text-gray-600">
-                Langdurige plaatsing voor vaste periodes. Ons personeel werkt bij u, maar blijft bij ons in dienst. De perfecte tussenoplossing.
+              <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4 border-b-2 border-[#F27501] pb-2 inline-block">Detachering</h3>
+              <p className="text-gray-600 text-sm">
+                Voor een vast afgesproken periode plaatsen we onze horecamedewerkers bij onze klanten. Ideaal voor langdurige ondersteuning tijdens drukke periodes. Tegelijkertijd behoud je de flexibiliteit van een personeelsbestand.
               </p>
             </div>
 
             {/* Recruitment */}
-            <div className="bg-gray-50 rounded-2xl p-8 hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-[#F27501] rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            <div className="bg-white rounded-2xl p-8 shadow-sm relative">
+              <div className="absolute -top-4 left-8">
+                <div className="w-10 h-10 bg-[#F27501] rounded-lg flex items-center justify-center rotate-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Recruitment</h3>
-              <p className="text-gray-600">
-                Aantrekken, selecteren en plaatsen van geschikte kandidaten. Wij vinden het perfecte talent voor uw organisatie.
+              <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4 border-b-2 border-[#F27501] pb-2 inline-block">Recruitment</h3>
+              <p className="text-gray-600 text-sm">
+                Als uitzendbureau voor horecapersoneel verzorgen wij ook het aantrekken, selecteren en plaatsen van geschikte kandidaten voor vaste vacatures. Veel van onze horecamedewerkers willen uiteindelijk doorgroeien naar een vaste horecabaan.
               </p>
             </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              href="/diensten"
+              className="border-2 border-[#F27501] text-[#F27501] px-8 py-3 rounded-md font-medium hover:bg-[#F27501] hover:text-white transition-colors inline-block"
+            >
+              Meer informatie
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Kom Gezellig Werken Section */}
-      <section className="py-20 bg-[#F27501]">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Kom Gezellig Werken
-            </h2>
-            <p className="text-xl text-orange-100 max-w-2xl mx-auto">
-              Waarom werken bij TopTalent? Wij bieden meer dan alleen een baan.
-            </p>
-          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">
+            Kom gezellig werken
+          </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { title: "Goed Salaris", desc: "Competitieve vergoeding voor jouw inzet" },
-              { title: "Snelle Uitbetaling", desc: "Binnen 24 uur je geld op je rekening" },
-              { title: "Handige App", desc: "Plan je shifts en beheer alles via onze app" },
-              { title: "Trainingen", desc: "Gratis trainingen om jezelf te ontwikkelen" },
-              { title: "Community", desc: "Word onderdeel van ons gezellige team" },
-              { title: "Werkervaring", desc: "Bouw waardevolle ervaring op in de horeca" },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white"
-              >
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <p className="text-orange-100">{item.desc}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Waarom kaart */}
+            <div className="bg-gray-50 rounded-2xl p-8 shadow-sm">
+              <h3 className="text-xl font-bold text-[#F27501] mb-4">Waarom</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Werken bij <span className="font-bold">Top</span>Talent betekent bijdragen aan de toekomst. Meer specifiek: jouw toekomst!
+              </p>
+              <p className="text-gray-600 text-sm mb-4">
+                We zijn voortdurend op zoek naar de meest gedreven individuen om ons team te versterken.
+              </p>
+              <p className="text-gray-600 text-sm">
+                Voordat je op de onderstaande knop klikt, is het goed om te weten wat je van ons kunt verwachten.
+              </p>
+            </div>
+
+            {/* Wij bieden kaart */}
+            <div className="bg-gray-50 rounded-2xl p-8 shadow-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Wij bieden</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center text-gray-700 text-sm">
+                  <span className="text-[#F27501] mr-3">€</span>
+                  een uitstekend salaris
+                </li>
+                <li className="flex items-center text-gray-700 text-sm">
+                  <span className="text-[#F27501] mr-3">⚡</span>
+                  binnen 24 uur uitbetaald
+                </li>
+                <li className="flex items-center text-gray-700 text-sm">
+                  <span className="text-[#F27501] mr-3">📱</span>
+                  een eigen handige talent-app
+                </li>
+                <li className="flex items-center text-gray-700 text-sm">
+                  <span className="text-[#F27501] mr-3">🎓</span>
+                  trainingen en opleidingen
+                </li>
+                <li className="flex items-center text-gray-700 text-sm">
+                  <span className="text-[#F27501] mr-3">👥</span>
+                  eigen community met collega&apos;s
+                </li>
+                <li className="flex items-center text-gray-700 text-sm">
+                  <span className="text-[#F27501] mr-3">📍</span>
+                  werkervaring op de gaafste locaties
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div className="text-center mt-12">
             <Link
               href="/vacatures"
-              className="bg-white text-[#F27501] px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition-colors inline-block"
+              className="bg-[#F27501] text-white px-8 py-3 rounded-md font-medium hover:bg-[#d96800] transition-colors inline-block"
             >
-              Bekijk Vacatures
+              Meld je hier aan
             </Link>
           </div>
         </div>
       </section>
 
       {/* Kernwaarden Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Onze Kernwaarden
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              onze kernwaarden
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Dit is waar wij voor staan
+            <p className="text-gray-600">
+              wat wij belangrijk vinden
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Plezier */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-[#F27501] rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Plezier</h3>
-              <p className="text-gray-600">
-                Met plezier slagen we beter in wat we willen bereiken.
+            <div className="bg-gray-50 rounded-2xl p-6 border-b-4 border-[#F27501]">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">plezier</h3>
+              <p className="text-gray-600 text-sm">
+                Met plezier slagen we beter in wat we willen bereiken. Het geeft energie, verbindt, en draagt bij aan een prettige samenwerking.
               </p>
             </div>
 
             {/* Impact */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-[#F27501] rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Impact</h3>
-              <p className="text-gray-600">
-                Economisch, ecologisch en sociaal verschil maken.
+            <div className="bg-gray-50 rounded-2xl p-6 border-b-4 border-[#F27501]">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">impact</h3>
+              <p className="text-gray-600 text-sm">
+                Impact creëren op economisch, ecologisch en sociaal niveau levert de resultaten op waar we naar streven.
               </p>
             </div>
 
             {/* Betrokken */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-[#F27501] rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Betrokken</h3>
-              <p className="text-gray-600">
-                Meeleven, meedenken en meevoelen met onze mensen.
+            <div className="bg-gray-50 rounded-2xl p-6 border-b-4 border-[#F27501]">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">betrokken</h3>
+              <p className="text-gray-600 text-sm">
+                Empathiseer, denk mee en voel mee. Wees betrokken bij het proces. Het komt van binnenuit en is oprecht.
               </p>
             </div>
 
             {/* Vernieuwend */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-[#F27501] rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Vernieuwend</h3>
-              <p className="text-gray-600">
-                Door anders te kijken maken kleine aanpassingen een groot verschil.
+            <div className="bg-gray-50 rounded-2xl p-6 border-b-4 border-[#F27501]">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">vernieuwend</h3>
+              <p className="text-gray-600 text-sm">
+                Door anders te kijken kunnen kleine aanpassingen een groot verschil maken. Het is een nieuwe manier van denken en organiseren.
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/chef.jpg"
-            alt="Chef aan het werk"
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gray-900/80" />
-        </div>
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Klaar om te beginnen?
-          </h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Neem contact met ons op en ontdek hoe wij u kunnen helpen met flexibel personeel.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/contact"
-              className="bg-[#F27501] text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#d96800] transition-colors"
-            >
-              Neem Contact Op
-            </Link>
-            <a
-              href="tel:+31649200412"
-              className="bg-transparent text-white border-2 border-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-gray-900 transition-colors"
-            >
-              Bel Ons: +31 6 49 20 04 12
-            </a>
           </div>
         </div>
       </section>
