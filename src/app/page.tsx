@@ -41,12 +41,12 @@ export default function Home() {
                     </span>
                   </Link>
                   <Link
-                    href="/vacatures"
+                    href="/inschrijven"
                     className="group border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-lg
                     text-base font-semibold hover:border-[#F27501] hover:text-[#F27501]
                     transition-all duration-300 text-center"
                   >
-                    Bekijk vacatures
+                    Solliciteren
                   </Link>
                 </div>
 
