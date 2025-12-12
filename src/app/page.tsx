@@ -30,7 +30,7 @@ export default function Home() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/contact"
+                    href="/personeel-aanvragen"
                     className="group bg-[#F27501] text-white px-8 py-4 rounded-lg text-base font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                     hover:bg-[#d96800] transition-all duration-300 text-center"
