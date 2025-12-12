@@ -13,9 +13,9 @@ export default function Footer() {
               <Image
                 src="/logo.png"
                 alt="TopTalent Jobs"
-                width={160}
-                height={50}
-                className="h-12 w-auto brightness-0 invert"
+                width={200}
+                height={65}
+                className="h-16 w-auto brightness-0 invert"
               />
             </Link>
             <p className="text-neutral-400 text-sm leading-relaxed mb-6">

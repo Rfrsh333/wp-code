@@ -88,9 +88,9 @@ export default function Header() {
               <Image
                 src="/logo.png"
                 alt="TopTalent Jobs"
-                width={180}
-                height={60}
-                className="h-14 w-auto"
+                width={220}
+                height={70}
+                className="h-20 w-auto"
                 priority
               />
             </Link>
