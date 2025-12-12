@@ -73,16 +73,16 @@ export default function Home() {
 
             {/* Right side - Image */}
             <FadeIn direction="right" delay={0.2} duration={0.8}>
-              <div className="relative flex justify-center items-center">
+              <div className="relative flex justify-center items-center h-full">
                 {/* Subtle gradient background */}
-                <div className="absolute w-[350px] h-[350px] bg-gradient-to-br from-[#F27501]/20 to-orange-200/30 rounded-full blur-3xl"></div>
+                <div className="absolute w-[400px] h-[400px] bg-gradient-to-br from-[#F27501]/20 to-orange-200/30 rounded-full blur-3xl"></div>
                 <div className="relative">
                   <Image
                     src="/images/barista.png"
                     alt="Professionele barista"
-                    width={280}
-                    height={380}
-                    className="object-contain z-10 relative drop-shadow-2xl max-h-[380px]"
+                    width={420}
+                    height={560}
+                    className="object-contain z-10 relative drop-shadow-2xl"
                     priority
                   />
                 </div>
