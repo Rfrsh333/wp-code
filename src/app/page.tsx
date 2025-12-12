@@ -53,7 +53,7 @@ export default function Home() {
                 <div className="mt-12 pt-8 border-t border-neutral-100">
                   <div className="flex items-center gap-8">
                     <div>
-                      <p className="text-3xl font-bold text-neutral-900">500+</p>
+                      <p className="text-3xl font-bold text-neutral-900">100+</p>
                       <p className="text-sm text-neutral-500">Tevreden klanten</p>
                     </div>
                     <div className="w-px h-12 bg-neutral-200"></div>
