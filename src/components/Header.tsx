@@ -90,7 +90,7 @@ export default function Header() {
                 alt="TopTalent Jobs"
                 width={220}
                 height={70}
-                className="h-20 w-auto"
+                className="h-28 w-auto"
                 priority
               />
             </Link>
