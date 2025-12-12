@@ -27,7 +27,7 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Stuur ons een bericht</h2>
-              <form className="space-y-6">
+              <form action="https://formspree.io/f/xyzrllbz" method="POST" className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="naam" className="block text-sm font-medium text-gray-700 mb-2">

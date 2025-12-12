@@ -1,24 +1,35 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-gray-50 to-orange-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-[600px] flex items-center">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/restaurant.jpg"
+            alt="Restaurant sfeer"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
               Jouw Personeel,{" "}
               <span className="text-[#F27501]">Onze Missie</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
               Flexibel en kwalitatief personeel voor horeca en evenementen.
               Wij verbinden talent met kansen.
             </p>
 
             {/* Hero CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <p className="text-lg text-gray-700 font-medium">Ik ben opzoek naar:</p>
+              <p className="text-lg text-white font-medium">Ik ben opzoek naar:</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -204,8 +215,17 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gray-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative py-20">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/chef.jpg"
+            alt="Chef aan het werk"
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gray-900/80" />
+        </div>
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Klaar om te beginnen?
           </h2>

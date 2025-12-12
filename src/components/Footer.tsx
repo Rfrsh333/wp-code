@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -8,8 +9,13 @@ export default function Footer() {
           {/* Logo & Description */}
           <div className="col-span-1 md:col-span-2">
             <Link href="/" className="flex items-center mb-4">
-              <span className="text-2xl font-bold text-[#F27501]">TopTalent</span>
-              <span className="text-2xl font-bold text-white">Jobs</span>
+              <Image
+                src="/logo.png"
+                alt="TopTalent Jobs"
+                width={150}
+                height={50}
+                className="h-12 w-auto brightness-0 invert"
+              />
             </Link>
             <p className="text-gray-400 mb-4">
               Jouw Personeel, Onze Missie: Flexibel en Kwalitatief.
