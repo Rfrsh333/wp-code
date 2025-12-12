@@ -32,14 +32,14 @@ export default function Home() {
             {/* Right side - Barista Image with orange splash */}
             <div className="relative flex justify-center items-center">
               {/* Orange splash effect */}
-              <div className="absolute w-[400px] h-[400px] bg-[#F27501] rounded-full blur-3xl opacity-60"></div>
-              <div className="absolute w-[300px] h-[300px] bg-[#FFB347] rounded-full blur-2xl opacity-50 translate-x-10"></div>
+              <div className="absolute w-[250px] h-[250px] bg-[#F27501] rounded-full blur-3xl opacity-60"></div>
+              <div className="absolute w-[200px] h-[200px] bg-[#FFB347] rounded-full blur-2xl opacity-50 translate-x-10"></div>
               <Image
                 src="/images/barista.png"
                 alt="Barista"
-                width={400}
-                height={600}
-                className="object-contain z-10 relative"
+                width={280}
+                height={420}
+                className="object-contain z-10 relative max-h-[450px]"
                 priority
               />
             </div>
