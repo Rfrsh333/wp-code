@@ -4,7 +4,8 @@
 
 .section {
   padding: 6rem 0;
-  background-color: #ffffff;
+  /* Warm gradient: warm → deeper warm (continues flow) */
+  background: linear-gradient(180deg, #FFF7F1 0%, #FFF4EC 100%);
   position: relative;
 }
 

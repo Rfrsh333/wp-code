@@ -3,7 +3,8 @@
    ========================================================================== */
 
 .hero {
-  background-color: #fff;
+  /* Gradient A: Clean → Warm (barely noticeable warmth at bottom) */
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 70%, #FFF7F1 100%);
   min-height: 85vh;
   position: relative;
   overflow: hidden;
