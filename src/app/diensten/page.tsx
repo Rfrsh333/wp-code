@@ -33,35 +33,19 @@ export default function DienstenPage() {
 
           {/* ============================================================
               UITZENDEN - Afbeelding RECHTS van tekst
-              flex-direction: row-reverse op desktop
+              Grid layout: 55-60% tekst / 40-45% afbeelding
               ============================================================ */}
-          <div id="uitzenden" className="scroll-mt-32 mb-24">
+          <div id="uitzenden" className="scroll-mt-32 mb-20 lg:mb-28">
             <FadeIn>
-              <div className="flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-12">
-                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
-                <div className="w-full lg:w-auto flex-shrink-0">
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden mx-auto lg:mx-0">
-                    <Image
-                      src="/images/dienst-uitzenden.png"
-                      alt="Uitzenden - Snel & Flexibel"
-                      width={160}
-                      height={160}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <p className="text-neutral-500 text-sm font-medium text-center lg:text-center mt-3">
-                    Snel & Flexibel
-                  </p>
-                </div>
-
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
                 {/* Tekst - Links op desktop */}
-                <div className="flex-1">
-                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Uitzenden</h2>
-                  <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
+                <div className="order-2 lg:order-1 text-center lg:text-left">
+                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Uitzenden</h2>
+                  <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
                     Tijdelijke inzet van gekwalificeerd horecapersoneel. Perfect voor piekmomenten,
                     festivals, evenementen of seizoensgebonden drukte. Flexibel in te zetten wanneer u het nodig heeft.
                   </p>
-                  <ul className="space-y-4 mb-8">
+                  <ul className="space-y-3 mb-6 text-left max-w-[560px] mx-auto lg:mx-0">
                     {[
                       "Flexibele inzet per dag, week of maand",
                       "Geschoold en ervaren personeel",
@@ -88,41 +72,51 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
+
+                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
+                <div className="order-1 lg:order-2">
+                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
+                    <Image
+                      src="/images/dienst-uitzenden.png"
+                      alt="Uitzenden - Snel & Flexibel"
+                      width={380}
+                      height={380}
+                      className="w-full h-auto rounded-2xl object-cover"
+                    />
+                  </div>
+                </div>
               </div>
             </FadeIn>
           </div>
 
           {/* ============================================================
               DETACHERING - Afbeelding LINKS van tekst
-              flex-direction: row op desktop (normaal)
+              Grid layout: 42% afbeelding / 58% tekst
               ============================================================ */}
-          <div id="detachering" className="scroll-mt-32 mb-24">
+          <div id="detachering" className="scroll-mt-32 mb-20 lg:mb-28">
             <FadeIn>
-              <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+              <div className="grid grid-cols-1 lg:grid-cols-[42%_1fr] gap-8 lg:gap-12 items-center">
                 {/* Afbeelding - Links op desktop, boven op mobiel */}
-                <div className="w-full lg:w-auto flex-shrink-0">
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden mx-auto lg:mx-0">
+                <div className="order-1">
+                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0">
                     <Image
                       src="/images/dienst-detachering.png"
                       alt="Detachering - Langdurig Partnership"
-                      width={160}
-                      height={160}
-                      className="w-full h-full object-cover"
+                      width={380}
+                      height={380}
+                      className="w-full h-auto rounded-2xl object-cover"
                     />
                   </div>
-                  <p className="text-neutral-500 text-sm font-medium text-center lg:text-center mt-3">
-                    Langdurig Partnership
-                  </p>
                 </div>
 
                 {/* Tekst - Rechts op desktop */}
-                <div className="flex-1">
-                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Detachering</h2>
-                  <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
+                <div className="order-2 text-center lg:text-left">
+                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Detachering</h2>
+                  <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
                     Langdurige plaatsing voor vaste periodes. Ons personeel werkt bij u, maar blijft bij ons in dienst.
                     De perfecte tussenoplossing voor structurele personeelsbehoefte met behoud van flexibiliteit.
                   </p>
-                  <ul className="space-y-4 mb-8">
+                  <ul className="space-y-3 mb-6 text-left max-w-[560px] mx-auto lg:mx-0">
                     {[
                       "Vaste medewerker voor langere periode",
                       "Wij regelen alle administratie",
@@ -155,35 +149,19 @@ export default function DienstenPage() {
 
           {/* ============================================================
               RECRUITMENT - Afbeelding RECHTS van tekst
-              flex-direction: row-reverse op desktop
+              Grid layout: 58% tekst / 42% afbeelding
               ============================================================ */}
           <div id="recruitment" className="scroll-mt-32">
             <FadeIn>
-              <div className="flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-12">
-                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
-                <div className="w-full lg:w-auto flex-shrink-0">
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden mx-auto lg:mx-0">
-                    <Image
-                      src="/images/dienst-recruitment.png"
-                      alt="Recruitment - De perfecte match"
-                      width={160}
-                      height={160}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <p className="text-neutral-500 text-sm font-medium text-center lg:text-center mt-3">
-                    De perfecte match
-                  </p>
-                </div>
-
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
                 {/* Tekst - Links op desktop */}
-                <div className="flex-1">
-                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Recruitment</h2>
-                  <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
+                <div className="order-2 lg:order-1 text-center lg:text-left">
+                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Recruitment</h2>
+                  <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
                     Werving en selectie voor vaste posities. Wij vinden het perfecte talent voor uw organisatie
                     en nemen u het hele proces uit handen. Van intake tot plaatsing.
                   </p>
-                  <ul className="space-y-4 mb-8">
+                  <ul className="space-y-3 mb-6 text-left max-w-[560px] mx-auto lg:mx-0">
                     {[
                       "Uitgebreide selectieprocedure",
                       "Referentiecheck en screening",
@@ -209,6 +187,19 @@ export default function DienstenPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
+                </div>
+
+                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
+                <div className="order-1 lg:order-2">
+                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
+                    <Image
+                      src="/images/dienst-recruitment.png"
+                      alt="Recruitment - De perfecte match"
+                      width={380}
+                      height={380}
+                      className="w-full h-auto rounded-2xl object-cover"
+                    />
+                  </div>
                 </div>
               </div>
             </FadeIn>
