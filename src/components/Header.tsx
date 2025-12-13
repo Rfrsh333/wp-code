@@ -161,6 +161,36 @@ export default function Header() {
                 Over Ons
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
+              <div className="relative group">
+                <button className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1">
+                  Meer
+                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]">
+                    <Link
+                      href="/blog"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                    >
+                      Blog
+                    </Link>
+                    <Link
+                      href="/testimonials"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                    >
+                      Testimonials
+                    </Link>
+                    <Link
+                      href="/faq"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                    >
+                      FAQ
+                    </Link>
+                  </div>
+                </div>
+              </div>
               <Link
                 href="/contact"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
@@ -216,7 +246,7 @@ export default function Header() {
           {/* Mobile Navigation */}
           <div
             className={`lg:hidden overflow-hidden transition-all duration-300 ${
-              isMenuOpen ? "max-h-[400px] pb-6" : "max-h-0"
+              isMenuOpen ? "max-h-[550px] pb-6" : "max-h-0"
             }`}
           >
             <nav className="flex flex-col gap-1 pt-4 border-t border-neutral-100">
@@ -240,6 +270,27 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Over Ons
+              </Link>
+              <Link
+                href="/blog"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Blog
+              </Link>
+              <Link
+                href="/testimonials"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Testimonials
+              </Link>
+              <Link
+                href="/faq"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                FAQ
               </Link>
               <Link
                 href="/contact"
