@@ -1,0 +1,456 @@
+/* ==========================================================================
+   Why TopTalent Section - Premium Styles
+   ========================================================================== */
+
+.section {
+  padding: 6rem 0;
+  background-color: #ffffff;
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding: 8rem 0;
+  }
+}
+
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 3rem;
+  }
+}
+
+/* ==========================================================================
+   Grid Layout
+   ========================================================================== */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+}
+
+/* ==========================================================================
+   Left Column - Content
+   ========================================================================== */
+
+.content {
+  max-width: 32rem;
+}
+
+@media (min-width: 1024px) {
+  .content {
+    max-width: none;
+  }
+}
+
+/* Eyebrow */
+.eyebrow {
+  display: inline-block;
+  color: #F27501;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+/* Headline */
+.headline {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #171717;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .headline {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .headline {
+    font-size: 2.75rem;
+  }
+}
+
+/* Description paragraph */
+.description {
+  color: #525252;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  margin-bottom: 2rem;
+  max-width: 30rem;
+}
+
+/* ==========================================================================
+   Bullet Points
+   ========================================================================== */
+
+.bulletList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.bulletItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  border-radius: 0.75rem;
+  transition: background-color 0.2s ease;
+}
+
+.bulletItem:hover {
+  background-color: rgba(242, 117, 1, 0.04);
+}
+
+.bulletIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F27501 0%, #d96800 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.bulletIcon svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #ffffff;
+}
+
+.bulletContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.bulletTitle {
+  font-weight: 600;
+  color: #171717;
+  font-size: 0.9375rem;
+}
+
+.bulletDescription {
+  color: #737373;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Text Link
+   ========================================================================== */
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #F27501;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: gap 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.textLink:hover {
+  gap: 0.75rem;
+}
+
+.textLink:focus-visible {
+  outline: 2px solid #F27501;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.linkArrow {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.textLink:hover .linkArrow {
+  transform: translateX(4px);
+}
+
+/* ==========================================================================
+   Right Column - Benefits Card
+   ========================================================================== */
+
+.benefitsCard {
+  background: linear-gradient(145deg, #fafafa 0%, #f5f5f5 100%);
+  border-radius: 1.25rem;
+  padding: 2rem;
+  position: relative;
+
+  /* Premium layered shadow */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 4px 8px rgba(0, 0, 0, 0.02),
+    0 8px 16px rgba(0, 0, 0, 0.03),
+    0 16px 32px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 768px) {
+  .benefitsCard {
+    padding: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .benefitsCard {
+    padding: 3rem;
+  }
+}
+
+.cardTitle {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #171717;
+  margin-bottom: 1.75rem;
+}
+
+/* ==========================================================================
+   Benefits List
+   ========================================================================== */
+
+.benefitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  margin-bottom: 2rem;
+}
+
+.benefitItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #404040;
+}
+
+.benefitIconContainer {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #ffffff;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.benefitItem:hover .benefitIconContainer {
+  transform: scale(1.05);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.04);
+}
+
+.benefitIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.benefitText {
+  font-weight: 500;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   CTA Button
+   ========================================================================== */
+
+.ctaButton {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, #F27501 0%, #e06c00 100%);
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+
+  /* Premium shadow */
+  box-shadow:
+    0 4px 12px rgba(242, 117, 1, 0.25),
+    0 2px 4px rgba(242, 117, 1, 0.15);
+
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(242, 117, 1, 0.3),
+    0 4px 8px rgba(242, 117, 1, 0.2);
+}
+
+.ctaButton:active {
+  transform: scale(0.98) translateY(0);
+}
+
+.ctaButton:focus-visible {
+  outline: 2px solid #F27501;
+  outline-offset: 3px;
+}
+
+/* Subtle shine effect */
+.ctaButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: ctaShine 10s infinite;
+}
+
+@keyframes ctaShine {
+  0%, 100% {
+    left: -100%;
+  }
+  12%, 88% {
+    left: -100%;
+  }
+  20% {
+    left: 100%;
+  }
+}
+
+/* ==========================================================================
+   Scroll Reveal Animations
+   ========================================================================== */
+
+.revealItem {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.revealItem.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays - Left column */
+.delayEyebrow { transition-delay: 0ms; }
+.delayHeadline { transition-delay: 80ms; }
+.delayDescription { transition-delay: 160ms; }
+.delayBullet1 { transition-delay: 240ms; }
+.delayBullet2 { transition-delay: 300ms; }
+.delayBullet3 { transition-delay: 360ms; }
+.delayBullet4 { transition-delay: 420ms; }
+.delayLink { transition-delay: 500ms; }
+
+/* Stagger delays - Right column (starts after left) */
+.delayCard { transition-delay: 300ms; }
+.delayCardTitle { transition-delay: 380ms; }
+.delayBenefit1 { transition-delay: 440ms; }
+.delayBenefit2 { transition-delay: 480ms; }
+.delayBenefit3 { transition-delay: 520ms; }
+.delayBenefit4 { transition-delay: 560ms; }
+.delayBenefit5 { transition-delay: 600ms; }
+.delayBenefit6 { transition-delay: 640ms; }
+.delayCta { transition-delay: 720ms; }
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .revealItem {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .bulletItem {
+    transition: none;
+  }
+
+  .bulletItem:hover {
+    background-color: transparent;
+  }
+
+  .textLink {
+    transition: none;
+  }
+
+  .textLink:hover {
+    gap: 0.5rem;
+  }
+
+  .textLink:hover .linkArrow {
+    transform: none;
+  }
+
+  .benefitIconContainer {
+    transition: none;
+  }
+
+  .benefitItem:hover .benefitIconContainer {
+    transform: none;
+  }
+
+  .ctaButton {
+    transition: none;
+  }
+
+  .ctaButton:hover {
+    transform: none;
+  }
+
+  .ctaButton::before {
+    animation: none;
+  }
+}
