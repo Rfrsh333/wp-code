@@ -1,0 +1,505 @@
+/* ==========================================================================
+   How We Work Carousel - Premium Styles
+   ========================================================================== */
+
+.section {
+  padding: 6rem 0;
+  background: linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fafafa 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding: 8rem 0;
+  }
+}
+
+.container {
+  max-width: 75rem; /* 1200px */
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 3rem;
+  }
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.header {
+  text-align: center;
+  max-width: 40rem;
+  margin: 0 auto 3.5rem;
+}
+
+@media (min-width: 1024px) {
+  .header {
+    margin-bottom: 4rem;
+  }
+}
+
+.eyebrow {
+  display: inline-block;
+  color: #F27501;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.headline {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #171717;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .headline {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .headline {
+    font-size: 3rem;
+  }
+}
+
+.subtitle {
+  color: #525252;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .subtitle {
+    font-size: 1.125rem;
+  }
+}
+
+/* ==========================================================================
+   Carousel Wrapper
+   ========================================================================== */
+
+.carouselWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .carouselWrapper {
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .carouselWrapper {
+    gap: 1.5rem;
+  }
+}
+
+/* ==========================================================================
+   Navigation Buttons
+   ========================================================================== */
+
+.navButton {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+  color: #404040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.navButton:hover {
+  border-color: #F27501;
+  color: #F27501;
+  box-shadow:
+    0 2px 8px rgba(242, 117, 1, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.navButton:focus-visible {
+  outline: 2px solid #F27501;
+  outline-offset: 2px;
+}
+
+.navButton:active {
+  transform: scale(0.95);
+}
+
+.navButton svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Hide on small mobile, show on tablet+ */
+@media (max-width: 639px) {
+  .navButton {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .navButton {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .navButton svg {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+}
+
+/* ==========================================================================
+   Carousel Container & Track
+   ========================================================================== */
+
+.carouselContainer {
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y pinch-zoom;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.carouselContainer:active {
+  cursor: grabbing;
+}
+
+.track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.track.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+
+.track.reducedMotion {
+  transition: none;
+}
+
+/* ==========================================================================
+   Slide Wrapper
+   ========================================================================== */
+
+.slideWrapper {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .slideWrapper {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .slideWrapper {
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* ==========================================================================
+   Card
+   ========================================================================== */
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 2rem;
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: 2.5rem;
+    max-width: 26rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 2.75rem;
+    max-width: 28rem;
+  }
+}
+
+.card.reducedMotion {
+  transition: none;
+}
+
+/* Active Card */
+.cardActive {
+  transform: scale(1);
+  opacity: 1;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    0 16px 48px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 1024px) {
+  .cardActive {
+    transform: scale(1.02);
+  }
+}
+
+/* Inactive Card */
+.cardInactive {
+  transform: scale(0.96);
+  opacity: 0.7;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.03),
+    0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+@media (min-width: 1024px) {
+  .cardInactive {
+    transform: scale(0.98);
+    opacity: 0.85;
+  }
+}
+
+/* ==========================================================================
+   Step Number
+   ========================================================================== */
+
+.stepNumber {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #d4d4d4;
+  letter-spacing: 0.05em;
+}
+
+@media (min-width: 640px) {
+  .stepNumber {
+    top: 1.5rem;
+    right: 1.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* ==========================================================================
+   Icon
+   ========================================================================== */
+
+.iconWrapper {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, rgba(242, 117, 1, 0.08) 0%, rgba(242, 117, 1, 0.04) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.iconWrapper svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #F27501;
+}
+
+@media (min-width: 640px) {
+  .iconWrapper {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .iconWrapper svg {
+    width: 1.625rem;
+    height: 1.625rem;
+  }
+}
+
+/* ==========================================================================
+   Card Content
+   ========================================================================== */
+
+.cardContent {
+  /* Content wrapper */
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #171717;
+  margin-bottom: 0.875rem;
+  line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+  .cardTitle {
+    font-size: 1.375rem;
+  }
+}
+
+.cardDescription {
+  color: #525252;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  max-width: 24rem;
+}
+
+@media (min-width: 640px) {
+  .cardDescription {
+    font-size: 1rem;
+  }
+}
+
+/* ==========================================================================
+   Dots Pagination
+   ========================================================================== */
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.625rem;
+  margin-top: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .dots {
+    margin-top: 2.5rem;
+  }
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  border: none;
+  background: #d4d4d4;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dot:hover {
+  background: #a3a3a3;
+}
+
+.dot:focus-visible {
+  outline: 2px solid #F27501;
+  outline-offset: 3px;
+}
+
+.dotActive {
+  background: #F27501;
+  width: 1.5rem;
+  border-radius: 0.25rem;
+}
+
+/* ==========================================================================
+   Scroll Reveal Animations
+   ========================================================================== */
+
+.revealItem {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.revealItem.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays */
+.delay1 { transition-delay: 0ms; }
+.delay2 { transition-delay: 100ms; }
+.delay3 { transition-delay: 180ms; }
+.delay4 { transition-delay: 280ms; }
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .revealItem {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .track {
+    transition: none;
+  }
+
+  .card {
+    transition: none;
+  }
+
+  .cardActive,
+  .cardInactive {
+    transform: none;
+    opacity: 1;
+  }
+
+  .navButton {
+    transition: none;
+  }
+
+  .navButton:active {
+    transform: none;
+  }
+
+  .dot {
+    transition: none;
+  }
+
+  .carouselContainer {
+    cursor: default;
+  }
+
+  .carouselContainer:active {
+    cursor: default;
+  }
+}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
+import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
@@ -18,6 +19,9 @@ export default function Home() {
 
       {/* Why TopTalent Section */}
       <WhyTopTalent />
+
+      {/* How We Work Carousel */}
+      <HowWeWorkCarousel />
 
       {/* Values Section */}
       <section className="py-24 lg:py-32 bg-neutral-900 text-white">
