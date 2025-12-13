@@ -5,8 +5,14 @@
 .section {
   padding: 6rem 0;
   position: relative;
-  /* Warm gradient: deeper warm → warm (creates depth) */
-  background: linear-gradient(180deg, #FFF4EC 0%, #FFF7F1 100%);
+  /* 4-stop gradient: wit → tint → tint → wit (sfeer, geen blok) */
+  background: linear-gradient(
+    180deg,
+    #FFFFFF 0%,
+    #FFF7F1 15%,
+    #FFF7F1 85%,
+    #FFFFFF 100%
+  );
 }
 
 @media (min-width: 1024px) {

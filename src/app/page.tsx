@@ -5,57 +5,39 @@ import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
-import {
-  WaveDividerSoft,
-  WaveDividerArc,
-  AccentLine,
-} from "@/components/SectionDividers";
+import { CurveDivider } from "@/components/SectionDividers";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
 export default function Home() {
   return (
     <>
-      {/* Hero Section - Premium with Animations */}
-      {/* Background: white → warm (#FFF7F1) */}
+      {/* ============================================================
+          SECTION FLOW:
+          Hero (wit) → HowWeWork (tinted) → WhyTopTalent (wit) →
+          Services (tinted) → Values (dark) → CTA (wit)
+          ============================================================ */}
+
+      {/* Hero Section - White background */}
       <Hero />
 
-      {/* Transition: Hero → HowWeWork (wave to warm) */}
-      <WaveDividerSoft fillColor="#FFF7F1" height={55} />
-
-      {/* How We Work Carousel */}
-      {/* Background: solid warm (#FFF7F1) */}
+      {/* How We Work - Tinted section (4-stop gradient: wit→tint→tint→wit) */}
       <HowWeWorkCarousel />
 
-      {/* Accent line as rhythm marker */}
-      <div style={{ backgroundColor: "#FFF7F1", paddingBottom: "1rem" }}>
-        <AccentLine width={50} height={3} color="#F97316" />
-      </div>
-
-      {/* Transition: HowWeWork → WhyTopTalent (arc for subtlety) */}
-      <div style={{ backgroundColor: "#FFF7F1" }}>
-        <WaveDividerArc fillColor="#FFF7F1" height={45} />
-      </div>
-
-      {/* Why TopTalent Section */}
-      {/* Background: warm → deeper warm (#FFF7F1 → #FFF4EC) */}
+      {/* Why TopTalent - White background */}
       <WhyTopTalent />
 
-      {/* Transition: WhyTopTalent → Services (wave to deeper warm) */}
-      <WaveDividerSoft fillColor="#FFF4EC" height={55} />
-
-      {/* Services Section - Premium Cards */}
-      {/* Background: deeper warm → warm (#FFF4EC → #FFF7F1) */}
+      {/* Services - Tinted section (4-stop gradient) */}
       <ServicesSection />
 
-      {/* Transition: Services → Values (wave to dark) */}
-      <WaveDividerArc fillColor="#171717" height={50} />
+      {/* Curve transition naar dark section */}
+      <CurveDivider fill="#171717" height={50} position="bottom" />
 
-      {/* Values Section */}
-      <section className="pt-16 pb-24 lg:pt-20 lg:pb-32 bg-neutral-900 text-white">
+      {/* Values Section - Dark for contrast */}
+      <section className="py-20 lg:py-28 bg-neutral-900 text-white">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <FadeIn>
-            <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="text-center max-w-3xl mx-auto mb-14">
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                 Onze Waarden
               </span>
@@ -100,11 +82,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Transition: Values → CTA (wave to white) */}
-      <WaveDividerSoft fillColor="#FFFFFF" height={55} />
-
-      {/* CTA Section */}
-      <section className="pt-12 pb-24 lg:pt-16 lg:pb-32 bg-white">
+      {/* CTA Section - White background */}
+      <section className="py-20 lg:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <FadeIn>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">

@@ -3,87 +3,44 @@
 import styles from "./SectionDividers.module.css";
 
 /* ==========================================================================
-   Section Dividers - Premium Transition System
+   Section Dividers - Clean Premium System
 
-   Design Philosophy:
-   - Subtle warmth through soft gradients
-   - Organic flow through gentle curves
-   - Brand presence through minimal accent lines
-   - The best transitions are felt, not seen
+   Filosofie:
+   - Geen zwevende decoratieve elementen
+   - Curves alleen als natuurlijke overgang
+   - Tinted sections fade naar wit aan beide kanten
    ========================================================================== */
 
 /* ==========================================================================
-   Color Constants (for reference)
-
-   Base colors:
-   - Pure white: #FFFFFF
-   - Warm off-white: #FFF7F1
-   - Deeper warm off-white: #FFF4EC
-
-   Accent colors:
-   - Primary accent: #F97316
-   - Softer accent: #FB923C
+   Curve Divider - Alleen waar nodig
    ========================================================================== */
 
-/* ==========================================================================
-   Curved Wave Dividers
-   ========================================================================== */
-
-interface WaveDividerProps {
-  /** Color of the wave (should match the NEXT section's background) */
-  fillColor?: string;
-  /** Height of the wave in pixels (40-80px recommended) */
+interface CurveDividerProps {
+  /** Fill color (must match next section's top color) */
+  fill?: string;
+  /** Height in pixels (40-70px recommended) */
   height?: number;
-  /** Flip the wave vertically */
-  flip?: boolean;
+  /** Position: top of section or bottom */
+  position?: "top" | "bottom";
   /** Additional className */
   className?: string;
 }
 
 /**
- * Soft Wave Divider - Type A
- * A gentle, organic curve for transitioning between sections
+ * Subtle Curve Divider
+ * Use sparingly - only between sections that need visual separation
  */
-export function WaveDividerSoft({
-  fillColor = "#FFF7F1",
-  height = 60,
-  flip = false,
-  className = "",
-}: WaveDividerProps) {
-  return (
-    <div
-      className={`${styles.waveDivider} ${flip ? styles.flipped : ""} ${className}`}
-      style={{ height: `${height}px` }}
-      aria-hidden="true"
-    >
-      <svg
-        viewBox="0 0 1440 60"
-        fill="none"
-        preserveAspectRatio="none"
-        className={styles.waveSvg}
-      >
-        <path
-          d="M0 60V30C240 50 480 10 720 30C960 50 1200 10 1440 30V60H0Z"
-          fill={fillColor}
-        />
-      </svg>
-    </div>
-  );
-}
-
-/**
- * Gentle Arc Divider - Type B
- * An even subtler single arc for minimal transitions
- */
-export function WaveDividerArc({
-  fillColor = "#FFF7F1",
+export function CurveDivider({
+  fill = "#FFF7F1",
   height = 50,
-  flip = false,
+  position = "bottom",
   className = "",
-}: WaveDividerProps) {
+}: CurveDividerProps) {
+  const isTop = position === "top";
+
   return (
     <div
-      className={`${styles.waveDivider} ${flip ? styles.flipped : ""} ${className}`}
+      className={`${styles.curveDivider} ${isTop ? styles.curveTop : styles.curveBottom} ${className}`}
       style={{ height: `${height}px` }}
       aria-hidden="true"
     >
@@ -91,187 +48,48 @@ export function WaveDividerArc({
         viewBox="0 0 1440 50"
         fill="none"
         preserveAspectRatio="none"
-        className={styles.waveSvg}
+        className={styles.curveSvg}
       >
-        <path
-          d="M0 50V25C360 0 1080 0 1440 25V50H0Z"
-          fill={fillColor}
-        />
-      </svg>
-    </div>
-  );
-}
-
-/**
- * Asymmetric Wave Divider - Type C
- * A slightly asymmetric curve for organic flow
- */
-export function WaveDividerOrganic({
-  fillColor = "#FFF7F1",
-  height = 55,
-  flip = false,
-  className = "",
-}: WaveDividerProps) {
-  return (
-    <div
-      className={`${styles.waveDivider} ${flip ? styles.flipped : ""} ${className}`}
-      style={{ height: `${height}px` }}
-      aria-hidden="true"
-    >
-      <svg
-        viewBox="0 0 1440 55"
-        fill="none"
-        preserveAspectRatio="none"
-        className={styles.waveSvg}
-      >
-        <path
-          d="M0 55V35C180 15 360 45 600 25C840 5 1080 40 1440 20V55H0Z"
-          fill={fillColor}
-        />
+        {isTop ? (
+          // Curve at TOP of section (previous section flows into this)
+          <path d="M0 0V25C360 50 1080 50 1440 25V0H0Z" fill={fill} />
+        ) : (
+          // Curve at BOTTOM of section (flows into next section)
+          <path d="M0 50V25C360 0 1080 0 1440 25V50H0Z" fill={fill} />
+        )}
       </svg>
     </div>
   );
 }
 
 /* ==========================================================================
-   Accent Line Dividers
+   Accent Underline - Use INSIDE sections, under headings
    ========================================================================== */
 
-interface AccentLineProps {
-  /** Width of the line in pixels */
+interface AccentUnderlineProps {
+  /** Width in pixels */
   width?: number;
-  /** Height of the line in pixels */
-  height?: number;
-  /** Color of the line */
+  /** Color */
   color?: string;
-  /** Alignment: center, left, or right */
-  align?: "center" | "left" | "right";
   /** Additional className */
   className?: string;
 }
 
 /**
- * Accent Line
- * A minimal brand-colored line for rhythm and warmth
- * Use sparingly between related content blocks
+ * Accent Underline
+ * Use directly under eyebrow or headline text, NOT as section separator
  */
-export function AccentLine({
+export function AccentUnderline({
   width = 48,
-  height = 3,
   color = "#F97316",
-  align = "center",
   className = "",
-}: AccentLineProps) {
+}: AccentUnderlineProps) {
   return (
     <div
-      className={`${styles.accentLineWrapper} ${styles[`align${align.charAt(0).toUpperCase() + align.slice(1)}`]} ${className}`}
+      className={`${styles.accentUnderline} ${className}`}
+      style={{ width: `${width}px`, backgroundColor: color }}
       aria-hidden="true"
-    >
-      <div
-        className={styles.accentLine}
-        style={{
-          width: `${width}px`,
-          height: `${height}px`,
-          backgroundColor: color,
-        }}
-      />
-    </div>
-  );
-}
-
-/* ==========================================================================
-   Section Wrapper with Gradient
-   ========================================================================== */
-
-interface GradientSectionProps {
-  children: React.ReactNode;
-  /**
-   * Gradient type:
-   * - "cleanToWarm": #FFFFFF → #FFF7F1 (use after pure white sections)
-   * - "warmToDeep": #FFF7F1 → #FFF4EC (use for longer content)
-   * - "warmToClean": #FFF4EC → #FFFFFF (use to return to white)
-   * - "warmSubtle": #FFF7F1 solid (subtle warm background)
-   * - "deepWarm": #FFF4EC solid (deeper warm background)
-   * - "white": #FFFFFF solid
-   */
-  gradient?: "cleanToWarm" | "warmToDeep" | "warmToClean" | "warmSubtle" | "deepWarm" | "white";
-  /** Additional className */
-  className?: string;
-  /** Section ID for accessibility */
-  id?: string;
-  /** aria-labelledby reference */
-  ariaLabelledBy?: string;
-}
-
-/**
- * Gradient Section Wrapper
- * Wraps content with the appropriate background gradient
- */
-export function GradientSection({
-  children,
-  gradient = "white",
-  className = "",
-  id,
-  ariaLabelledBy,
-}: GradientSectionProps) {
-  return (
-    <section
-      className={`${styles.gradientSection} ${styles[gradient]} ${className}`}
-      id={id}
-      aria-labelledby={ariaLabelledBy}
-    >
-      {children}
-    </section>
-  );
-}
-
-/* ==========================================================================
-   Combined Section Transition
-   ========================================================================== */
-
-interface SectionTransitionProps {
-  /** Type of transition */
-  type?: "waveToWarm" | "waveToWhite" | "arcToWarm" | "arcToWhite" | "accentOnly";
-  /** Custom fill color for waves */
-  fillColor?: string;
-  /** Show accent line */
-  showAccent?: boolean;
-  /** Accent line alignment */
-  accentAlign?: "center" | "left" | "right";
-  /** Additional className */
-  className?: string;
-}
-
-/**
- * Section Transition
- * A combined component for common transition patterns
- */
-export function SectionTransition({
-  type = "waveToWarm",
-  fillColor,
-  showAccent = false,
-  accentAlign = "center",
-  className = "",
-}: SectionTransitionProps) {
-  const defaultColors = {
-    waveToWarm: "#FFF7F1",
-    waveToWhite: "#FFFFFF",
-    arcToWarm: "#FFF7F1",
-    arcToWhite: "#FFFFFF",
-    accentOnly: undefined,
-  };
-
-  const color = fillColor || defaultColors[type];
-
-  return (
-    <div className={`${styles.transitionWrapper} ${className}`} aria-hidden="true">
-      {showAccent && <AccentLine align={accentAlign} className={styles.transitionAccent} />}
-
-      {type === "waveToWarm" && <WaveDividerSoft fillColor={color} />}
-      {type === "waveToWhite" && <WaveDividerSoft fillColor={color} />}
-      {type === "arcToWarm" && <WaveDividerArc fillColor={color} />}
-      {type === "arcToWhite" && <WaveDividerArc fillColor={color} />}
-    </div>
+    />
   );
 }
 
@@ -280,10 +98,6 @@ export function SectionTransition({
    ========================================================================== */
 
 export default {
-  WaveDividerSoft,
-  WaveDividerArc,
-  WaveDividerOrganic,
-  AccentLine,
-  GradientSection,
-  SectionTransition,
+  CurveDivider,
+  AccentUnderline,
 };

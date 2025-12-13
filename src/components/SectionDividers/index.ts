@@ -1,8 +1,1 @@
-export {
-  WaveDividerSoft,
-  WaveDividerArc,
-  WaveDividerOrganic,
-  AccentLine,
-  GradientSection,
-  SectionTransition,
-} from './SectionDividers';
+export { CurveDivider, AccentUnderline } from './SectionDividers';

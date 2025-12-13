@@ -4,8 +4,14 @@
 
 .section {
   padding: 5rem 0;
-  /* Warm subtle background (solid warm) */
-  background-color: #FFF7F1;
+  /* 4-stop gradient: wit → tint → tint → wit (sfeer, geen blok) */
+  background: linear-gradient(
+    180deg,
+    #FFFFFF 0%,
+    #FFF7F1 15%,
+    #FFF7F1 85%,
+    #FFFFFF 100%
+  );
   position: relative;
   overflow: hidden;
 }
