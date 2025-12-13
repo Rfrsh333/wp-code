@@ -8,7 +8,6 @@ import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 import MarqueeBanner from "@/components/MarqueeBanner";
-import StatsGrid from "@/components/StatsGrid";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
@@ -139,9 +138,6 @@ export default function Home() {
 
       {/* Service Banner - Premium Marquee */}
       <MarqueeBanner />
-
-      {/* Stats Grid - Social Proof */}
-      <StatsGrid />
 
       {/* How We Work - White section */}
       <HowWeWorkCarousel />
