@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
@@ -11,70 +10,6 @@ import MarqueeBanner from "@/components/MarqueeBanner";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
-
-/* ==========================================================================
-   Animated Counter Hook
-   ========================================================================== */
-function useCountUp(target: number, duration: number = 2000, startCounting: boolean = false) {
-  const [count, setCount] = useState(0);
-  const countRef = useRef(0);
-  const hasAnimated = useRef(false);
-
-  useEffect(() => {
-    if (!startCounting || hasAnimated.current) return;
-    hasAnimated.current = true;
-
-    const startTime = Date.now();
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      countRef.current = Math.round(easeOut * target);
-      setCount(countRef.current);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    };
-    requestAnimationFrame(animate);
-  }, [target, duration, startCounting]);
-
-  return count;
-}
-
-/* ==========================================================================
-   Intersection Observer Hook
-   ========================================================================== */
-function useInView(options = {}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsInView(true);
-      }
-    }, { threshold: 0.2, ...options });
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  return [ref, isInView] as const;
-}
-
-/* ==========================================================================
-   Stats Data
-   ========================================================================== */
-const stats = [
-  { value: 100, suffix: "+", label: "Tevreden klanten" },
-  { value: 24, suffix: "u", label: "Responstijd" },
-  { value: 98, suffix: "%", label: "Klanttevredenheid" },
-  { value: 500, suffix: "+", label: "Plaatsingen" },
-];
 
 /* ==========================================================================
    Testimonials Data
@@ -113,7 +48,6 @@ const industries = [
 ];
 
 export default function Home() {
-  const [statsRef, statsInView] = useInView();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   // Auto-rotate testimonials
@@ -144,27 +78,6 @@ export default function Home() {
 
       {/* Why TopTalent - Tinted background */}
       <WhyTopTalent />
-
-      {/* Fun Facts / Stats Section - Jobaway Style */}
-      <Section variant="white" spacing="large">
-        <Section.Container>
-          <div ref={statsRef} className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {stats.map((stat, index) => {
-              const count = useCountUp(stat.value, 2000, statsInView);
-              return (
-                <FadeIn key={index} delay={0.1 * index}>
-                  <div className="text-center p-6 lg:p-8 bg-neutral-50 rounded-2xl border border-neutral-100 hover:border-[#F97316]/30 hover:shadow-lg transition-all duration-300 group">
-                    <div className="text-4xl lg:text-5xl font-bold text-[#F97316] mb-2 group-hover:scale-110 transition-transform duration-300">
-                      {count}{stat.suffix}
-                    </div>
-                    <p className="text-neutral-600 font-medium">{stat.label}</p>
-                  </div>
-                </FadeIn>
-              );
-            })}
-          </div>
-        </Section.Container>
-      </Section>
 
       {/* Services - Tinted section */}
       <ServicesSection />
