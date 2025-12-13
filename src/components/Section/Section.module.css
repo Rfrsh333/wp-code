@@ -20,24 +20,24 @@
   background: #FFFFFF;
 }
 
-/* Tinted section - warm off-white with fade to white at edges */
+/* Tinted section - warmer orange tint with fade to white at edges */
 .sectionTinted {
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFF7F1 18%, #FFF7F1 82%, #FFFFFF 100%);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF3E8 18%, #FFF3E8 82%, #FFFFFF 100%);
 }
 
-/* Tinted Deep section - deeper warm gradient */
+/* Tinted Deep section - deeper warm orange gradient */
 .sectionTintedDeep {
-  background: linear-gradient(180deg, #FFF7F1 0%, #FFF4EC 50%, #FFF7F1 100%);
+  background: linear-gradient(180deg, #FFF3E8 0%, #FFEDE0 50%, #FFF3E8 100%);
 }
 
 /* Gradient A: White to Warm (for top transitions) */
 .sectionGradientToWarm {
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFF7F1 100%);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF3E8 100%);
 }
 
 /* Gradient B: Warm to White (for bottom transitions) */
 .sectionGradientToWhite {
-  background: linear-gradient(180deg, #FFF4EC 0%, #FFFFFF 100%);
+  background: linear-gradient(180deg, #FFEDE0 0%, #FFFFFF 100%);
 }
 
 /* -----------------------------------------------------------------------------

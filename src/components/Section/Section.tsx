@@ -63,9 +63,9 @@ export interface AccentLineProps {
 // -----------------------------------------------------------------------------
 const variantColors: Record<SectionVariant, string> = {
   white: "#FFFFFF",
-  tinted: "#FFF7F1",
-  tintedDeep: "#FFF4EC",
-  gradientToWarm: "#FFF7F1",
+  tinted: "#FFF3E8",
+  tintedDeep: "#FFEDE0",
+  gradientToWarm: "#FFF3E8",
   gradientToWhite: "#FFFFFF",
 };
 
