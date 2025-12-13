@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
+import PremiumImage from "@/components/PremiumImage";
 
 export default function DienstenPage() {
   return (
@@ -75,12 +75,11 @@ export default function DienstenPage() {
                 </div>
                 <div className="order-1 lg:order-2">
                   <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
-                    <Image
+                    <PremiumImage
                       src="/images/dienst-uitzenden.png"
                       alt="Uitzenden - Snel & Flexibel"
                       width={380}
                       height={380}
-                      className="w-full h-auto rounded-2xl object-cover"
                     />
                   </div>
                 </div>
@@ -98,12 +97,11 @@ export default function DienstenPage() {
               <div className="grid grid-cols-1 lg:grid-cols-[42%_1fr] gap-8 lg:gap-12 items-center">
                 <div className="order-1">
                   <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0">
-                    <Image
+                    <PremiumImage
                       src="/images/dienst-detachering.png"
                       alt="Detachering - Langdurig Partnership"
                       width={380}
                       height={380}
-                      className="w-full h-auto rounded-2xl object-cover"
                     />
                   </div>
                 </div>
@@ -187,12 +185,11 @@ export default function DienstenPage() {
                 </div>
                 <div className="order-1 lg:order-2">
                   <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
-                    <Image
+                    <PremiumImage
                       src="/images/dienst-recruitment.png"
                       alt="Recruitment - De perfecte match"
                       width={380}
                       height={380}
-                      className="w-full h-auto rounded-2xl object-cover"
                     />
                   </div>
                 </div>

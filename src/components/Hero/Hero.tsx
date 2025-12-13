@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./Hero.module.css";
 import { useInView, useCountUp } from "./hooks";
+import PremiumImage from "@/components/PremiumImage";
 
 /**
  * Arrow Icon Component
@@ -182,15 +183,16 @@ export default function Hero() {
               />
             </div>
 
-            {/* Hero image */}
-            <Image
-              src="/images/barista.png"
-              alt="Professionele barista"
-              width={240}
-              height={320}
-              className={styles.heroImage}
-              priority
-            />
+            {/* Hero image with Premium Frame */}
+            <div className={styles.heroImageWrapper}>
+              <PremiumImage
+                src="/images/barista.png"
+                alt="Professionele barista"
+                width={280}
+                height={350}
+                priority
+              />
+            </div>
           </div>
         </div>
       </div>
