@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./Hero.module.css";
-import { useInView, useCountUp } from "./hooks";
+import { useInView } from "./hooks";
 
 /**
  * Arrow Icon Component
@@ -26,30 +26,6 @@ const ArrowIcon = () => (
     <path d="m12 5 7 7-7 7" />
   </svg>
 );
-
-/**
- * Stat Counter Component
- */
-interface StatCounterProps {
-  target: number;
-  suffix: string;
-  label: string;
-  shouldAnimate: boolean;
-}
-
-const StatCounter = ({ target, suffix, label, shouldAnimate }: StatCounterProps) => {
-  const count = useCountUp(target, 1100, shouldAnimate);
-
-  return (
-    <div className={styles.stat}>
-      <span className={styles.statValue}>
-        {count}
-        {suffix}
-      </span>
-      <span className={styles.statLabel}>{label}</span>
-    </div>
-  );
-};
 
 /**
  * Hero Section Component
@@ -134,33 +110,6 @@ export default function Hero() {
               </Link>
             </div>
 
-            {/* Stats Row */}
-            <div
-              className={`${styles.statsRow} ${styles.revealItem} ${
-                isHeroInView ? styles.visible : ""
-              } ${styles.delay5}`}
-            >
-              <StatCounter
-                target={100}
-                suffix="+"
-                label="Tevreden klanten"
-                shouldAnimate={isHeroInView}
-              />
-              <div className={styles.statDivider} />
-              <StatCounter
-                target={24}
-                suffix="u"
-                label="Responstijd"
-                shouldAnimate={isHeroInView}
-              />
-              <div className={styles.statDivider} />
-              <StatCounter
-                target={98}
-                suffix="%"
-                label="Klanttevredenheid"
-                shouldAnimate={isHeroInView}
-              />
-            </div>
           </div>
 
           {/* Right Image Section */}
