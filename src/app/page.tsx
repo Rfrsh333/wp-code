@@ -42,12 +42,12 @@ const testimonials = [
    Industries Data
    ========================================================================== */
 const industries = [
-  { name: "Restaurants", icon: "🍽️", count: "150+" },
-  { name: "Hotels", icon: "🏨", count: "80+" },
-  { name: "Catering", icon: "🍴", count: "60+" },
-  { name: "Evenementen", icon: "🎉", count: "200+" },
-  { name: "Cafés & Bars", icon: "☕", count: "90+" },
-  { name: "Festivals", icon: "🎪", count: "40+" },
+  { name: "Restaurants", icon: "🍽️", count: "25+" },
+  { name: "Hotels", icon: "🏨", count: "15+" },
+  { name: "Catering", icon: "🍴", count: "10+" },
+  { name: "Evenementen", icon: "🎉", count: "30+" },
+  { name: "Cafés & Bars", icon: "☕", count: "15+" },
+  { name: "Festivals", icon: "🎪", count: "5+" },
 ];
 
 export default function Home() {
