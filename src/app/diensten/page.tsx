@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import FadeIn from "@/components/animations/FadeIn";
-import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
 export default function DienstenPage() {
   return (
@@ -31,20 +30,15 @@ export default function DienstenPage() {
       {/* Diensten Detail */}
       <section className="py-20 lg:py-28 bg-neutral-50">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          {/* Uitzenden */}
+
+          {/* ============================================================
+              UITZENDEN - Afbeelding RECHTS van tekst
+              ============================================================ */}
           <div id="uitzenden" className="scroll-mt-32 mb-24">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <FadeIn direction="left">
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+              {/* Tekst - Links */}
+              <FadeIn direction="left" className="flex-1">
                 <div>
-                  <div className="w-16 h-16 rounded-xl overflow-hidden mb-8">
-                    <Image
-                      src="/images/dienst-uitzenden.png"
-                      alt="Uitzenden"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Uitzenden</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
                     Tijdelijke inzet van gekwalificeerd horecapersoneel. Perfect voor piekmomenten,
@@ -78,31 +72,49 @@ export default function DienstenPage() {
                   </Link>
                 </div>
               </FadeIn>
-              <FadeIn direction="right" delay={0.2}>
-                <div className="bg-gradient-to-br from-[#F27501]/10 to-orange-100/50 rounded-3xl p-12 flex items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
-                  <div className="text-center">
-                    <div className="text-7xl mb-4">&#128337;</div>
-                    <p className="text-neutral-600 font-medium">Snel & Flexibel</p>
+
+              {/* Afbeelding - Rechts */}
+              <FadeIn direction="right" delay={0.2} className="flex-1 w-full lg:w-auto">
+                <div className="bg-gradient-to-br from-[#F27501]/10 to-orange-100/50 rounded-3xl p-8 lg:p-12 flex flex-col items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
+                  <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden mb-6">
+                    <Image
+                      src="/images/dienst-uitzenden.png"
+                      alt="Uitzenden"
+                      width={256}
+                      height={256}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
+                  <p className="text-neutral-600 font-medium">Snel & Flexibel</p>
                 </div>
               </FadeIn>
             </div>
           </div>
 
-          {/* Detachering */}
+          {/* ============================================================
+              DETACHERING - Afbeelding LINKS van tekst
+              ============================================================ */}
           <div id="detachering" className="scroll-mt-32 mb-24">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <FadeIn direction="left" className="lg:order-2">
-                <div>
-                  <div className="w-16 h-16 rounded-xl overflow-hidden mb-8">
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+              {/* Afbeelding - Links (op desktop) */}
+              <FadeIn direction="left" delay={0.2} className="flex-1 w-full lg:w-auto order-1 lg:order-1">
+                <div className="bg-gradient-to-br from-blue-100/50 to-blue-50 rounded-3xl p-8 lg:p-12 flex flex-col items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
+                  <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden mb-6">
                     <Image
                       src="/images/dienst-detachering.png"
                       alt="Detachering"
-                      width={64}
-                      height={64}
+                      width={256}
+                      height={256}
                       className="w-full h-full object-cover"
                     />
                   </div>
+                  <p className="text-neutral-600 font-medium">Langdurig Partnership</p>
+                </div>
+              </FadeIn>
+
+              {/* Tekst - Rechts (op desktop) */}
+              <FadeIn direction="right" className="flex-1 order-2 lg:order-2">
+                <div>
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Detachering</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
                     Langdurige plaatsing voor vaste periodes. Ons personeel werkt bij u, maar blijft bij ons in dienst.
@@ -136,31 +148,17 @@ export default function DienstenPage() {
                   </Link>
                 </div>
               </FadeIn>
-              <FadeIn direction="right" delay={0.2} className="lg:order-1">
-                <div className="bg-gradient-to-br from-blue-100/50 to-blue-50 rounded-3xl p-12 flex items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
-                  <div className="text-center">
-                    <div className="text-7xl mb-4">&#129309;</div>
-                    <p className="text-neutral-600 font-medium">Langdurig Partnership</p>
-                  </div>
-                </div>
-              </FadeIn>
             </div>
           </div>
 
-          {/* Recruitment */}
+          {/* ============================================================
+              RECRUITMENT - Afbeelding RECHTS van tekst
+              ============================================================ */}
           <div id="recruitment" className="scroll-mt-32">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <FadeIn direction="left">
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+              {/* Tekst - Links */}
+              <FadeIn direction="left" className="flex-1">
                 <div>
-                  <div className="w-16 h-16 rounded-xl overflow-hidden mb-8">
-                    <Image
-                      src="/images/dienst-recruitment.png"
-                      alt="Recruitment"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Recruitment</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
                     Werving en selectie voor vaste posities. Wij vinden het perfecte talent voor uw organisatie
@@ -194,16 +192,25 @@ export default function DienstenPage() {
                   </Link>
                 </div>
               </FadeIn>
-              <FadeIn direction="right" delay={0.2}>
-                <div className="bg-gradient-to-br from-green-100/50 to-green-50 rounded-3xl p-12 flex items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
-                  <div className="text-center">
-                    <div className="text-7xl mb-4">&#128270;</div>
-                    <p className="text-neutral-600 font-medium">De Perfecte Match</p>
+
+              {/* Afbeelding - Rechts */}
+              <FadeIn direction="right" delay={0.2} className="flex-1 w-full lg:w-auto">
+                <div className="bg-gradient-to-br from-green-100/50 to-green-50 rounded-3xl p-8 lg:p-12 flex flex-col items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
+                  <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden mb-6">
+                    <Image
+                      src="/images/dienst-recruitment.png"
+                      alt="Recruitment"
+                      width={256}
+                      height={256}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
+                  <p className="text-neutral-600 font-medium">De Perfecte Match</p>
                 </div>
               </FadeIn>
             </div>
           </div>
+
         </div>
       </section>
 
