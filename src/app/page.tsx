@@ -9,7 +9,6 @@ import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 import MarqueeBanner from "@/components/MarqueeBanner";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
-import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
 /* ==========================================================================
    Testimonials Data
@@ -199,59 +198,6 @@ export default function Home() {
           </FadeIn>
         </div>
       </section>
-
-      {/* Values Section - Tinted for contrast */}
-      <Section variant="tinted" spacing="large">
-        <Section.Container>
-          <FadeIn>
-            <div className="text-center max-w-3xl mx-auto mb-14">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100">
-                Onze Waarden
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
-                Waar wij voor staan
-              </h2>
-              <p className="text-neutral-600 text-lg leading-relaxed">
-                Onze kernwaarden vormen de basis van alles wat wij doen.
-                Ze sturen onze beslissingen en definiëren onze samenwerking.
-              </p>
-            </div>
-          </FadeIn>
-
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
-            {[
-              {
-                title: "Betrouwbaarheid",
-                desc: "Wij komen onze afspraken na. Altijd. Dat is de basis van elk succesvol partnership.",
-                icon: "🤝",
-              },
-              {
-                title: "Kwaliteit",
-                desc: "Alleen het beste personeel draagt onze naam. Grondig gescreend en professioneel getraind.",
-                icon: "⭐",
-              },
-              {
-                title: "Snelheid",
-                desc: "In de horeca telt elke minuut. Wij reageren snel en leveren nog sneller.",
-                icon: "⚡",
-              },
-              {
-                title: "Persoonlijk",
-                desc: "Geen nummers, maar mensen. Wij kennen onze klanten én ons talent persoonlijk.",
-                icon: "❤️",
-              },
-            ].map((value, index) => (
-              <StaggerItem key={index}>
-                <div className="bg-white rounded-2xl p-8 border border-neutral-100 hover:border-[#F97316]/30 hover:shadow-xl transition-all duration-300 h-full group">
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{value.icon}</div>
-                  <h3 className="text-xl font-bold text-neutral-900 mb-4">{value.title}</h3>
-                  <p className="text-neutral-600 leading-relaxed">{value.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </Section.Container>
-      </Section>
 
       {/* CTA Section - White background */}
       <Section variant="white" spacing="large">
