@@ -5,7 +5,7 @@ import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
-import { CurveDivider } from "@/components/SectionDividers";
+import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
@@ -13,78 +13,77 @@ export default function Home() {
   return (
     <>
       {/* ============================================================
-          SECTION FLOW:
-          Hero (wit) → HowWeWork (tinted) → WhyTopTalent (wit) →
-          Services (tinted) → Values (dark) → CTA (wit)
+          SECTION FLOW (Design System):
+          Hero (white) → HowWeWork (tinted) → WhyTopTalent (white) →
+          Services (tinted) → Values (dark) → CTA (white)
           ============================================================ */}
 
       {/* Hero Section - White background */}
       <Hero />
 
-      {/* How We Work - Tinted section (4-stop gradient: wit→tint→tint→wit) */}
+      {/* How We Work - Tinted section with fade */}
       <HowWeWorkCarousel />
 
       {/* Why TopTalent - White background */}
       <WhyTopTalent />
 
-      {/* Services - Tinted section (4-stop gradient) */}
+      {/* Services - Tinted section */}
       <ServicesSection />
 
-      {/* Curve transition naar dark section */}
-      <CurveDivider fill="#171717" height={50} position="bottom" />
-
       {/* Values Section - Dark for contrast */}
-      <section className="py-20 lg:py-28 bg-neutral-900 text-white">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <FadeIn>
-            <div className="text-center max-w-3xl mx-auto mb-14">
-              <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                Onze Waarden
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                Waar wij voor staan
-              </h2>
-              <p className="text-neutral-400 text-lg leading-relaxed">
-                Onze kernwaarden vormen de basis van alles wat wij doen.
-                Ze sturen onze beslissingen en definiëren onze samenwerking.
-              </p>
-            </div>
-          </FadeIn>
+      <Section variant="white" spacing="none">
+        <section className="py-20 lg:py-28 bg-neutral-900 text-white">
+          <Section.Container>
+            <FadeIn>
+              <div className="text-center max-w-3xl mx-auto mb-14">
+                <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+                  Onze Waarden
+                </span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
+                  Waar wij voor staan
+                </h2>
+                <p className="text-neutral-400 text-lg leading-relaxed">
+                  Onze kernwaarden vormen de basis van alles wat wij doen.
+                  Ze sturen onze beslissingen en definiëren onze samenwerking.
+                </p>
+              </div>
+            </FadeIn>
 
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
-            {[
-              {
-                title: "Betrouwbaarheid",
-                desc: "Wij komen onze afspraken na. Altijd. Dat is de basis van elk succesvol partnership.",
-              },
-              {
-                title: "Kwaliteit",
-                desc: "Alleen het beste personeel draagt onze naam. Grondig gescreend en professioneel getraind.",
-              },
-              {
-                title: "Snelheid",
-                desc: "In de horeca telt elke minuut. Wij reageren snel en leveren nog sneller.",
-              },
-              {
-                title: "Persoonlijk",
-                desc: "Geen nummers, maar mensen. Wij kennen onze klanten én ons talent persoonlijk.",
-              },
-            ].map((value, index) => (
-              <StaggerItem key={index}>
-                <div className="bg-neutral-800/50 rounded-2xl p-8 border border-neutral-700/50 hover:border-[#F97316]/30 transition-colors duration-300 h-full">
-                  <div className="w-12 h-1 bg-[#F97316] rounded mb-6"></div>
-                  <h3 className="text-xl font-bold mb-4">{value.title}</h3>
-                  <p className="text-neutral-400 leading-relaxed">{value.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </div>
-      </section>
+            <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
+              {[
+                {
+                  title: "Betrouwbaarheid",
+                  desc: "Wij komen onze afspraken na. Altijd. Dat is de basis van elk succesvol partnership.",
+                },
+                {
+                  title: "Kwaliteit",
+                  desc: "Alleen het beste personeel draagt onze naam. Grondig gescreend en professioneel getraind.",
+                },
+                {
+                  title: "Snelheid",
+                  desc: "In de horeca telt elke minuut. Wij reageren snel en leveren nog sneller.",
+                },
+                {
+                  title: "Persoonlijk",
+                  desc: "Geen nummers, maar mensen. Wij kennen onze klanten én ons talent persoonlijk.",
+                },
+              ].map((value, index) => (
+                <StaggerItem key={index}>
+                  <div className="bg-neutral-800/50 rounded-2xl p-8 border border-neutral-700/50 hover:border-[#F97316]/30 transition-colors duration-300 h-full">
+                    <div className="w-12 h-1 bg-[#F97316] rounded mb-6"></div>
+                    <h3 className="text-xl font-bold mb-4">{value.title}</h3>
+                    <p className="text-neutral-400 leading-relaxed">{value.desc}</p>
+                  </div>
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          </Section.Container>
+        </section>
+      </Section>
 
       {/* CTA Section - White background */}
-      <section className="py-20 lg:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <Section variant="white" spacing="large">
+        <Section.Container>
           <FadeIn>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               {/* Subtle pattern overlay */}
@@ -120,8 +119,8 @@ export default function Home() {
               </div>
             </div>
           </FadeIn>
-        </div>
-      </section>
+        </Section.Container>
+      </Section>
     </>
   );
 }

@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 
 export default function DienstenPage() {
   return (
     <>
-      {/* Hero Section */}
-      <section className="bg-white py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      {/* ============================================================
+          SECTION FLOW (Design System):
+          Hero (white) → Diensten (tinted) → CTA (white)
+          ============================================================ */}
+
+      {/* Hero Section - White */}
+      <Section variant="white" spacing="default">
+        <Section.Container>
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto">
-              <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
+              <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                 Onze Diensten
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
@@ -24,21 +30,17 @@ export default function DienstenPage() {
               </p>
             </div>
           </FadeIn>
-        </div>
-      </section>
+        </Section.Container>
+      </Section>
 
-      {/* Diensten Detail */}
-      <section className="py-20 lg:py-28 bg-neutral-50">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      {/* Diensten Detail - Tinted with fade */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
 
-          {/* ============================================================
-              UITZENDEN - Afbeelding RECHTS van tekst
-              Grid layout: 55-60% tekst / 40-45% afbeelding
-              ============================================================ */}
+          {/* UITZENDEN - Afbeelding RECHTS */}
           <div id="uitzenden" className="scroll-mt-32 mb-20 lg:mb-28">
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
-                {/* Tekst - Links op desktop */}
                 <div className="order-2 lg:order-1 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Uitzenden</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
@@ -53,7 +55,7 @@ export default function DienstenPage() {
                       "Geen administratieve rompslomp"
                     ].map((item, i) => (
                       <li key={i} className="flex items-center gap-3 text-neutral-700">
-                        <div className="w-5 h-5 rounded-full bg-[#F27501] flex items-center justify-center flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-[#F97316] flex items-center justify-center flex-shrink-0">
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
@@ -64,7 +66,7 @@ export default function DienstenPage() {
                   </ul>
                   <Link
                     href="/contact"
-                    className="inline-flex items-center text-[#F27501] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+                    className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Direct personeel aanvragen
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,8 +74,6 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
-
-                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
                 <div className="order-1 lg:order-2">
                   <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
                     <Image
@@ -89,14 +89,10 @@ export default function DienstenPage() {
             </FadeIn>
           </div>
 
-          {/* ============================================================
-              DETACHERING - Afbeelding LINKS van tekst
-              Grid layout: 42% afbeelding / 58% tekst
-              ============================================================ */}
+          {/* DETACHERING - Afbeelding LINKS */}
           <div id="detachering" className="scroll-mt-32 mb-20 lg:mb-28">
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[42%_1fr] gap-8 lg:gap-12 items-center">
-                {/* Afbeelding - Links op desktop, boven op mobiel */}
                 <div className="order-1">
                   <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0">
                     <Image
@@ -108,8 +104,6 @@ export default function DienstenPage() {
                     />
                   </div>
                 </div>
-
-                {/* Tekst - Rechts op desktop */}
                 <div className="order-2 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Detachering</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
@@ -124,7 +118,7 @@ export default function DienstenPage() {
                       "Continuiteit en stabiliteit"
                     ].map((item, i) => (
                       <li key={i} className="flex items-center gap-3 text-neutral-700">
-                        <div className="w-5 h-5 rounded-full bg-[#F27501] flex items-center justify-center flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-[#F97316] flex items-center justify-center flex-shrink-0">
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
@@ -135,7 +129,7 @@ export default function DienstenPage() {
                   </ul>
                   <Link
                     href="/contact"
-                    className="inline-flex items-center text-[#F27501] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+                    className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Meer informatie aanvragen
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,14 +141,10 @@ export default function DienstenPage() {
             </FadeIn>
           </div>
 
-          {/* ============================================================
-              RECRUITMENT - Afbeelding RECHTS van tekst
-              Grid layout: 58% tekst / 42% afbeelding
-              ============================================================ */}
+          {/* RECRUITMENT - Afbeelding RECHTS */}
           <div id="recruitment" className="scroll-mt-32">
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
-                {/* Tekst - Links op desktop */}
                 <div className="order-2 lg:order-1 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Recruitment</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
@@ -169,7 +159,7 @@ export default function DienstenPage() {
                       "Garantie op plaatsing"
                     ].map((item, i) => (
                       <li key={i} className="flex items-center gap-3 text-neutral-700">
-                        <div className="w-5 h-5 rounded-full bg-[#F27501] flex items-center justify-center flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-[#F97316] flex items-center justify-center flex-shrink-0">
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
@@ -180,7 +170,7 @@ export default function DienstenPage() {
                   </ul>
                   <Link
                     href="/contact"
-                    className="inline-flex items-center text-[#F27501] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+                    className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Start uw zoekopdracht
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,8 +178,6 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
-
-                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
                 <div className="order-1 lg:order-2">
                   <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
                     <Image
@@ -205,14 +193,14 @@ export default function DienstenPage() {
             </FadeIn>
           </div>
 
-        </div>
-      </section>
+        </Section.Container>
+      </Section>
 
-      {/* CTA Section */}
-      <section className="py-24 lg:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      {/* CTA Section - White */}
+      <Section variant="white" spacing="large">
+        <Section.Container>
           <FadeIn>
-            <div className="bg-gradient-to-br from-[#F27501] to-[#d96800] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                 <div className="absolute bottom-0 right-0 w-60 h-60 border border-white/20 rounded-full translate-x-1/3 translate-y-1/3"></div>
@@ -228,7 +216,7 @@ export default function DienstenPage() {
                 </p>
                 <Link
                   href="/contact"
-                  className="inline-block bg-white text-[#F27501] px-8 py-4 rounded-lg text-base font-semibold
+                  className="inline-block bg-white text-[#F97316] px-8 py-4 rounded-lg text-base font-semibold
                   hover:bg-neutral-100 transition-all duration-300"
                 >
                   Neem contact op
@@ -236,8 +224,8 @@ export default function DienstenPage() {
               </div>
             </div>
           </FadeIn>
-        </div>
-      </section>
+        </Section.Container>
+      </Section>
     </>
   );
 }

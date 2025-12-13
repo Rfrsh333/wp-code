@@ -1,20 +1,21 @@
 "use client";
 
+import Section from "@/components/Section";
 import InschrijfFormulier from "@/components/forms/InschrijfFormulier";
 
 export default function InschrijvenPage() {
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-b from-neutral-50 via-white to-neutral-50/50 py-16 lg:py-20 overflow-hidden">
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 opacity-[0.015]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
+      {/* ============================================================
+          SECTION FLOW (Design System):
+          Full page tinted section with form
+          ============================================================ */}
 
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      {/* Form Section - Tinted */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
           {/* Benefits bar */}
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-12 pb-12 border-b border-neutral-100">
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-12 pb-12 border-b border-neutral-200/50">
             {[
               { icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z", text: "Competitief salaris" },
               { icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z", text: "Flexibele uren" },
@@ -22,8 +23,8 @@ export default function InschrijvenPage() {
               { icon: "M13 10V3L4 14h7v7l9-11h-7z", text: "Snel aan de slag" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-neutral-600">
-                <div className="w-8 h-8 rounded-lg bg-[#F27501]/10 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-lg bg-[#F97316]/10 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                   </svg>
                 </div>
@@ -35,7 +36,7 @@ export default function InschrijvenPage() {
           <InschrijfFormulier />
 
           {/* Trust badges */}
-          <div className="mt-16 pt-12 border-t border-neutral-100">
+          <div className="mt-16 pt-12 border-t border-neutral-200/50">
             <div className="text-center mb-8">
               <p className="text-sm text-neutral-500 uppercase tracking-wider font-medium">
                 Waarom kiezen voor TopTalent?
@@ -43,8 +44,8 @@ export default function InschrijvenPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <div className="text-center group">
-                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 flex items-center justify-center mx-auto mb-4 group-hover:shadow-md group-hover:border-[#F27501]/20 transition-all duration-300">
-                  <svg className="w-6 h-6 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 flex items-center justify-center mx-auto mb-4 group-hover:shadow-md group-hover:border-[#F97316]/20 transition-all duration-300">
+                  <svg className="w-6 h-6 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
@@ -53,8 +54,8 @@ export default function InschrijvenPage() {
               </div>
 
               <div className="text-center group">
-                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 flex items-center justify-center mx-auto mb-4 group-hover:shadow-md group-hover:border-[#F27501]/20 transition-all duration-300">
-                  <svg className="w-6 h-6 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 flex items-center justify-center mx-auto mb-4 group-hover:shadow-md group-hover:border-[#F97316]/20 transition-all duration-300">
+                  <svg className="w-6 h-6 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
@@ -63,8 +64,8 @@ export default function InschrijvenPage() {
               </div>
 
               <div className="text-center group">
-                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 flex items-center justify-center mx-auto mb-4 group-hover:shadow-md group-hover:border-[#F27501]/20 transition-all duration-300">
-                  <svg className="w-6 h-6 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 flex items-center justify-center mx-auto mb-4 group-hover:shadow-md group-hover:border-[#F97316]/20 transition-all duration-300">
+                  <svg className="w-6 h-6 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
@@ -73,8 +74,8 @@ export default function InschrijvenPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </Section.Container>
+      </Section>
     </>
   );
 }

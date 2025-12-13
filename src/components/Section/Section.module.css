@@ -1,0 +1,276 @@
+/* =============================================================================
+   SECTION DESIGN SYSTEM - TopTalent
+   Premium, consistent section styling across all pages
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Base Section
+   ----------------------------------------------------------------------------- */
+.section {
+  position: relative;
+  width: 100%;
+}
+
+/* -----------------------------------------------------------------------------
+   Section Variants - Background Gradients
+   ----------------------------------------------------------------------------- */
+
+/* White section - pure white background */
+.sectionWhite {
+  background: #FFFFFF;
+}
+
+/* Tinted section - warm off-white with fade to white at edges */
+.sectionTinted {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF7F1 18%, #FFF7F1 82%, #FFFFFF 100%);
+}
+
+/* Tinted Deep section - deeper warm gradient */
+.sectionTintedDeep {
+  background: linear-gradient(180deg, #FFF7F1 0%, #FFF4EC 50%, #FFF7F1 100%);
+}
+
+/* Gradient A: White to Warm (for top transitions) */
+.sectionGradientToWarm {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF7F1 100%);
+}
+
+/* Gradient B: Warm to White (for bottom transitions) */
+.sectionGradientToWhite {
+  background: linear-gradient(180deg, #FFF4EC 0%, #FFFFFF 100%);
+}
+
+/* -----------------------------------------------------------------------------
+   Section Spacing - Responsive padding
+   Desktop: 96-120px | Tablet: 72-96px | Mobile: 56-72px
+   ----------------------------------------------------------------------------- */
+.spacing {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+
+@media (min-width: 640px) {
+  .spacing {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .spacing {
+    padding-top: 96px;
+    padding-bottom: 96px;
+  }
+}
+
+/* Larger spacing variant */
+.spacingLarge {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+
+@media (min-width: 640px) {
+  .spacingLarge {
+    padding-top: 96px;
+    padding-bottom: 96px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .spacingLarge {
+    padding-top: 120px;
+    padding-bottom: 120px;
+  }
+}
+
+/* Smaller spacing variant */
+.spacingSmall {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+@media (min-width: 640px) {
+  .spacingSmall {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .spacingSmall {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+}
+
+/* No spacing (for hero sections or custom layouts) */
+.spacingNone {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   Container - Centered content with max-width
+   ----------------------------------------------------------------------------- */
+.container {
+  max-width: 80rem; /* 1280px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* Narrow container for text-heavy sections */
+.containerNarrow {
+  max-width: 64rem; /* 1024px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .containerNarrow {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .containerNarrow {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Accent Line - Brand color underline for headings
+   ----------------------------------------------------------------------------- */
+.accentLine {
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #F97316 0%, #FB923C 100%);
+  border-radius: 2px;
+  margin-top: 1rem;
+}
+
+.accentLineCenter {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.accentLineLeft {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* -----------------------------------------------------------------------------
+   Curve Dividers - SVG containers
+   ----------------------------------------------------------------------------- */
+.dividerTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: translateY(-99%);
+}
+
+.dividerBottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: translateY(99%);
+}
+
+.dividerSvg {
+  display: block;
+  width: 100%;
+  height: 40px;
+}
+
+@media (min-width: 640px) {
+  .dividerSvg {
+    height: 50px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dividerSvg {
+    height: 60px;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Section Header - Consistent heading styles
+   ----------------------------------------------------------------------------- */
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .sectionHeader {
+    margin-bottom: 4rem;
+  }
+}
+
+.eyebrow {
+  display: inline-block;
+  color: #F97316;
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #171717;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 3rem;
+  }
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: #525252;
+  line-height: 1.6;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}

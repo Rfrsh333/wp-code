@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 
 export default function ContactPage() {
@@ -42,12 +43,17 @@ export default function ContactPage() {
 
   return (
     <>
-      {/* Hero Section */}
-      <section className="bg-white py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      {/* ============================================================
+          SECTION FLOW (Design System):
+          Hero (white) → Contact Form (tinted)
+          ============================================================ */}
+
+      {/* Hero Section - White */}
+      <Section variant="white" spacing="default">
+        <Section.Container>
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto">
-              <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
+              <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                 Contact
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
@@ -59,12 +65,12 @@ export default function ContactPage() {
               </p>
             </div>
           </FadeIn>
-        </div>
-      </section>
+        </Section.Container>
+      </Section>
 
-      {/* Contact Section */}
-      <section className="py-20 lg:py-28 bg-neutral-50">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      {/* Contact Section - Tinted */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
             {/* Contact Form */}
             <FadeIn direction="left" className="lg:col-span-3">
@@ -84,7 +90,7 @@ export default function ContactPage() {
                     <p className="text-neutral-600 mb-6">Wij nemen zo snel mogelijk contact met u op.</p>
                     <button
                       onClick={() => setIsSubmitted(false)}
-                      className="text-[#F27501] font-medium hover:underline"
+                      className="text-[#F97316] font-medium hover:underline"
                     >
                       Nog een bericht sturen
                     </button>
@@ -102,7 +108,7 @@ export default function ContactPage() {
                         name="naam"
                         required
                         className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
-                        focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]
+                        focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                         placeholder="Uw naam"
                       />
@@ -117,7 +123,7 @@ export default function ContactPage() {
                         name="email"
                         required
                         className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
-                        focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]
+                        focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                         placeholder="uw@email.nl"
                       />
@@ -133,7 +139,7 @@ export default function ContactPage() {
                       id="telefoon"
                       name="telefoon"
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
-                      focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]
+                      focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                       outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                       placeholder="+31 6 12345678"
                     />
@@ -148,7 +154,7 @@ export default function ContactPage() {
                       name="onderwerp"
                       required
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
-                      focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]
+                      focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                       outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                     >
                       <option value="">Selecteer een onderwerp</option>
@@ -171,7 +177,7 @@ export default function ContactPage() {
                       rows={5}
                       required
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
-                      focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]
+                      focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                       outline-none transition-all duration-300 bg-neutral-50 focus:bg-white resize-none"
                       placeholder="Uw bericht..."
                     ></textarea>
@@ -180,9 +186,9 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#F27501] text-white px-8 py-4 rounded-xl font-semibold
+                    className="w-full bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#d96800] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    hover:bg-[#EA580C] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Verzenden..." : "Verstuur bericht"}
                   </button>
@@ -200,7 +206,7 @@ export default function ContactPage() {
                   <div className="space-y-6">
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-[#FEF3E7] rounded-xl flex items-center justify-center flex-shrink-0">
-                        <svg className="w-5 h-5 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
@@ -213,13 +219,13 @@ export default function ContactPage() {
 
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-[#FEF3E7] rounded-xl flex items-center justify-center flex-shrink-0">
-                        <svg className="w-5 h-5 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                       </div>
                       <div>
                         <h3 className="font-semibold text-neutral-900 mb-1">Telefoon</h3>
-                        <a href="tel:+31649200412" className="text-[#F27501] hover:text-[#d96800] transition-colors duration-300">
+                        <a href="tel:+31649200412" className="text-[#F97316] hover:text-[#EA580C] transition-colors duration-300">
                           +31 6 49 20 04 12
                         </a>
                         <p className="text-neutral-500 text-sm mt-1">24/7 bereikbaar</p>
@@ -228,13 +234,13 @@ export default function ContactPage() {
 
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-[#FEF3E7] rounded-xl flex items-center justify-center flex-shrink-0">
-                        <svg className="w-5 h-5 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                       </div>
                       <div>
                         <h3 className="font-semibold text-neutral-900 mb-1">E-mail</h3>
-                        <a href="mailto:info@toptalentjobs.nl" className="text-[#F27501] hover:text-[#d96800] transition-colors duration-300">
+                        <a href="mailto:info@toptalentjobs.nl" className="text-[#F97316] hover:text-[#EA580C] transition-colors duration-300">
                           info@toptalentjobs.nl
                         </a>
                       </div>
@@ -282,8 +288,8 @@ export default function ContactPage() {
               </div>
             </FadeIn>
           </div>
-        </div>
-      </section>
+        </Section.Container>
+      </Section>
     </>
   );
 }
