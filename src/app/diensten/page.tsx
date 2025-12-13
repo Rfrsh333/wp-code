@@ -33,12 +33,29 @@ export default function DienstenPage() {
 
           {/* ============================================================
               UITZENDEN - Afbeelding RECHTS van tekst
+              flex-direction: row-reverse op desktop
               ============================================================ */}
           <div id="uitzenden" className="scroll-mt-32 mb-24">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-              {/* Tekst - Links */}
-              <FadeIn direction="left" className="flex-1">
-                <div>
+            <FadeIn>
+              <div className="flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-12">
+                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
+                <div className="w-full lg:w-auto flex-shrink-0">
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden mx-auto lg:mx-0">
+                    <Image
+                      src="/images/dienst-uitzenden.png"
+                      alt="Uitzenden - Snel & Flexibel"
+                      width={160}
+                      height={160}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-neutral-500 text-sm font-medium text-center lg:text-center mt-3">
+                    Snel & Flexibel
+                  </p>
+                </div>
+
+                {/* Tekst - Links op desktop */}
+                <div className="flex-1">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Uitzenden</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
                     Tijdelijke inzet van gekwalificeerd horecapersoneel. Perfect voor piekmomenten,
@@ -71,50 +88,35 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
-              </FadeIn>
-
-              {/* Afbeelding - Rechts */}
-              <FadeIn direction="right" delay={0.2} className="flex-1 w-full lg:w-auto">
-                <div className="bg-gradient-to-br from-[#F27501]/10 to-orange-100/50 rounded-3xl p-8 lg:p-12 flex flex-col items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
-                  <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden mb-6">
-                    <Image
-                      src="/images/dienst-uitzenden.png"
-                      alt="Uitzenden"
-                      width={256}
-                      height={256}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <p className="text-neutral-600 font-medium">Snel & Flexibel</p>
-                </div>
-              </FadeIn>
-            </div>
+              </div>
+            </FadeIn>
           </div>
 
           {/* ============================================================
               DETACHERING - Afbeelding LINKS van tekst
+              flex-direction: row op desktop (normaal)
               ============================================================ */}
           <div id="detachering" className="scroll-mt-32 mb-24">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-              {/* Afbeelding - Links (op desktop) */}
-              <FadeIn direction="left" delay={0.2} className="flex-1 w-full lg:w-auto order-1 lg:order-1">
-                <div className="bg-gradient-to-br from-blue-100/50 to-blue-50 rounded-3xl p-8 lg:p-12 flex flex-col items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
-                  <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden mb-6">
+            <FadeIn>
+              <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+                {/* Afbeelding - Links op desktop, boven op mobiel */}
+                <div className="w-full lg:w-auto flex-shrink-0">
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden mx-auto lg:mx-0">
                     <Image
                       src="/images/dienst-detachering.png"
-                      alt="Detachering"
-                      width={256}
-                      height={256}
+                      alt="Detachering - Langdurig Partnership"
+                      width={160}
+                      height={160}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-neutral-600 font-medium">Langdurig Partnership</p>
+                  <p className="text-neutral-500 text-sm font-medium text-center lg:text-center mt-3">
+                    Langdurig Partnership
+                  </p>
                 </div>
-              </FadeIn>
 
-              {/* Tekst - Rechts (op desktop) */}
-              <FadeIn direction="right" className="flex-1 order-2 lg:order-2">
-                <div>
+                {/* Tekst - Rechts op desktop */}
+                <div className="flex-1">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Detachering</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
                     Langdurige plaatsing voor vaste periodes. Ons personeel werkt bij u, maar blijft bij ons in dienst.
@@ -147,18 +149,35 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
-              </FadeIn>
-            </div>
+              </div>
+            </FadeIn>
           </div>
 
           {/* ============================================================
               RECRUITMENT - Afbeelding RECHTS van tekst
+              flex-direction: row-reverse op desktop
               ============================================================ */}
           <div id="recruitment" className="scroll-mt-32">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-              {/* Tekst - Links */}
-              <FadeIn direction="left" className="flex-1">
-                <div>
+            <FadeIn>
+              <div className="flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-12">
+                {/* Afbeelding - Rechts op desktop, boven op mobiel */}
+                <div className="w-full lg:w-auto flex-shrink-0">
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden mx-auto lg:mx-0">
+                    <Image
+                      src="/images/dienst-recruitment.png"
+                      alt="Recruitment - De perfecte match"
+                      width={160}
+                      height={160}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-neutral-500 text-sm font-medium text-center lg:text-center mt-3">
+                    De perfecte match
+                  </p>
+                </div>
+
+                {/* Tekst - Links op desktop */}
+                <div className="flex-1">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Recruitment</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
                     Werving en selectie voor vaste posities. Wij vinden het perfecte talent voor uw organisatie
@@ -191,24 +210,8 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
-              </FadeIn>
-
-              {/* Afbeelding - Rechts */}
-              <FadeIn direction="right" delay={0.2} className="flex-1 w-full lg:w-auto">
-                <div className="bg-gradient-to-br from-green-100/50 to-green-50 rounded-3xl p-8 lg:p-12 flex flex-col items-center justify-center aspect-square lg:aspect-auto lg:h-[400px]">
-                  <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden mb-6">
-                    <Image
-                      src="/images/dienst-recruitment.png"
-                      alt="Recruitment"
-                      width={256}
-                      height={256}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <p className="text-neutral-600 font-medium">De Perfecte Match</p>
-                </div>
-              </FadeIn>
-            </div>
+              </div>
+            </FadeIn>
           </div>
 
         </div>
