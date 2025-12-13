@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
@@ -35,10 +36,14 @@ export default function DienstenPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <FadeIn direction="left">
                 <div>
-                  <div className="w-16 h-16 bg-[#FEF3E7] rounded-2xl flex items-center justify-center mb-8">
-                    <svg className="w-8 h-8 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <div className="w-16 h-16 rounded-xl overflow-hidden mb-8">
+                    <Image
+                      src="/images/dienst-uitzenden.png"
+                      alt="Uitzenden"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Uitzenden</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
@@ -89,10 +94,14 @@ export default function DienstenPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <FadeIn direction="left" className="lg:order-2">
                 <div>
-                  <div className="w-16 h-16 bg-[#FEF3E7] rounded-2xl flex items-center justify-center mb-8">
-                    <svg className="w-8 h-8 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+                  <div className="w-16 h-16 rounded-xl overflow-hidden mb-8">
+                    <Image
+                      src="/images/dienst-detachering.png"
+                      alt="Detachering"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Detachering</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
@@ -143,10 +152,14 @@ export default function DienstenPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <FadeIn direction="left">
                 <div>
-                  <div className="w-16 h-16 bg-[#FEF3E7] rounded-2xl flex items-center justify-center mb-8">
-                    <svg className="w-8 h-8 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
+                  <div className="w-16 h-16 rounded-xl overflow-hidden mb-8">
+                    <Image
+                      src="/images/dienst-recruitment.png"
+                      alt="Recruitment"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">Recruitment</h2>
                   <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
