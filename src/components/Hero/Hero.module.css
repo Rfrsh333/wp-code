@@ -292,64 +292,20 @@
   min-height: 400px;
 }
 
-/* Gradient blob */
-.blob {
+/* Powder splash background */
+.powderSplash {
   position: absolute;
-  width: 120%;
-  height: 120%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    ellipse at center,
-    rgba(242, 117, 1, 0.12) 0%,
-    rgba(242, 117, 1, 0.06) 40%,
-    transparent 70%
-  );
-  border-radius: 50%;
-  filter: blur(40px);
-  animation: blobFloat 12s ease-in-out infinite;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
 }
 
-@keyframes blobFloat {
-  0%, 100% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-  }
-  33% {
-    transform: translate(-48%, -52%) scale(1.05) rotate(2deg);
-  }
-  66% {
-    transform: translate(-52%, -48%) scale(0.95) rotate(-2deg);
-  }
-}
-
-/* Secondary subtle blob */
-.blobSecondary {
-  position: absolute;
-  width: 80%;
-  height: 80%;
-  top: 60%;
-  left: 40%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    ellipse at center,
-    rgba(115, 115, 115, 0.08) 0%,
-    transparent 60%
-  );
-  border-radius: 50%;
-  filter: blur(50px);
-  animation: blobFloat2 14s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes blobFloat2 {
-  0%, 100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-45%, -55%) scale(1.1);
-  }
+.powderSplashImage {
+  object-fit: contain;
+  opacity: 0.9;
+  transform: scale(1.5);
 }
 
 /* Hero image */
@@ -395,11 +351,6 @@
   }
 
   .ctaPrimary::before {
-    animation: none;
-  }
-
-  .blob,
-  .blobSecondary {
     animation: none;
   }
 

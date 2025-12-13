@@ -169,27 +169,14 @@ export default function Hero() {
               isHeroInView ? styles.visible : ""
             } ${styles.delay6}`}
           >
-            {/* Gradient blobs */}
-            <div className={styles.blob} aria-hidden="true" />
-            <div className={styles.blobSecondary} aria-hidden="true" />
-
             {/* Powder splash background */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <div className={styles.powderSplash}>
               <Image
                 src="/images/powder-splash.png"
                 alt=""
                 width={500}
                 height={500}
-                className="object-contain opacity-90"
-                style={{ transform: "scale(1.5)" }}
+                className={styles.powderSplashImage}
                 priority
                 aria-hidden="true"
               />
