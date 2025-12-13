@@ -1,0 +1,284 @@
+"use client";
+
+import Link from "next/link";
+import Section from "@/components/Section";
+import FadeIn from "@/components/animations/FadeIn";
+import PremiumImage from "@/components/PremiumImage";
+
+export default function RecruitmentPage() {
+  return (
+    <>
+      {/* ============================================================
+          SECTION FLOW: Hero (wit) → Aanpak (tinted) → Waarom (wit) →
+          Selectieproces (tinted) → CTA (wit)
+          ============================================================ */}
+
+      {/* HERO - WIT */}
+      <Section variant="white" spacing="large">
+        <Section.Container>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <FadeIn direction="left">
+              <div>
+                <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+                  Recruitment
+                </span>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
+                  De perfecte match voor uw team
+                </h1>
+                <p className="text-xl text-neutral-600 mb-8 leading-relaxed max-w-xl">
+                  Werving en selectie van vast horecapersoneel. Wij vinden niet zomaar iemand —
+                  wij vinden de juiste persoon die past bij uw organisatie.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link
+                    href="/contact"
+                    className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                    shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
+                    hover:bg-[#EA580C] transition-all duration-300"
+                  >
+                    Start uw zoekopdracht
+                    <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
+                  <Link
+                    href="tel:+31649200412"
+                    className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
+                    hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
+                  >
+                    Direct overleggen
+                  </Link>
+                </div>
+              </div>
+            </FadeIn>
+
+            <FadeIn direction="right" delay={0.2}>
+              <div className="flex justify-center lg:justify-end">
+                <PremiumImage
+                  src="/images/dienst-recruitment.png"
+                  alt="Recruitment - De perfecte match"
+                  width={480}
+                  height={480}
+                />
+              </div>
+            </FadeIn>
+          </div>
+        </Section.Container>
+      </Section>
+
+      {/* ONZE AANPAK - TINTED */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
+          <FadeIn>
+            <div className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
+                Onze aanpak
+              </h2>
+              <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
+                Van intake tot plaatsing: een zorgvuldig proces voor de beste resultaten.
+              </p>
+            </div>
+          </FadeIn>
+
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {[
+                {
+                  step: "01",
+                  title: "Intake",
+                  description: "Diepgaand gesprek over uw wensen, cultuur en verwachtingen.",
+                },
+                {
+                  step: "02",
+                  title: "Werving",
+                  description: "Actieve search in ons netwerk en via gerichte kanalen.",
+                },
+                {
+                  step: "03",
+                  title: "Screening",
+                  description: "Cv-check, gesprekken, referenties en vaardigheidstesten.",
+                },
+                {
+                  step: "04",
+                  title: "Matching",
+                  description: "Selectie op basis van skills, ervaring én cultuurfit.",
+                },
+                {
+                  step: "05",
+                  title: "Plaatsing",
+                  description: "Begeleiding bij introductie en nazorg na indiensttreding.",
+                },
+              ].map((item, i) => (
+                <FadeIn key={i} delay={0.1 * i}>
+                  <div className="bg-white rounded-2xl p-6 border border-neutral-100 h-full relative group hover:shadow-lg transition-all duration-300">
+                    <div className="text-4xl font-bold text-[#F97316]/20 mb-3 group-hover:text-[#F97316]/40 transition-colors duration-300">
+                      {item.step}
+                    </div>
+                    <h3 className="text-lg font-bold text-neutral-900 mb-2">{item.title}</h3>
+                    <p className="text-neutral-600 text-sm leading-relaxed">{item.description}</p>
+                  </div>
+                </FadeIn>
+              ))}
+            </div>
+          </div>
+        </Section.Container>
+      </Section>
+
+      {/* WAAROM VIA ONS - WIT */}
+      <Section variant="white" spacing="default">
+        <Section.Container>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <FadeIn direction="left">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
+                  Waarom recruiten via TopTalent?
+                </h2>
+                <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
+                  Werving kost tijd, energie en expertise. Door dit aan ons over te laten,
+                  kunt u zich focussen op waar u goed in bent — terwijl wij het perfecte
+                  teamlid voor u vinden.
+                </p>
+
+                <div className="space-y-4">
+                  {[
+                    {
+                      title: "Cultuurmatch",
+                      description: "Wij kijken verder dan het CV. Past iemand bij uw team en bedrijfscultuur?",
+                    },
+                    {
+                      title: "Horecakennis",
+                      description: "Wij kennen de branche, de functies en wat er écht nodig is.",
+                    },
+                    {
+                      title: "Tijd- en kostenbesparing",
+                      description: "Geen advertenties, geen stapels CV's. Wij leveren alleen topkandidaten.",
+                    },
+                    {
+                      title: "Plaatsingsgarantie",
+                      description: "Niet tevreden binnen de proefperiode? Wij zoeken kosteloos opnieuw.",
+                    },
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-4 items-start">
+                      <div className="w-6 h-6 rounded-full bg-[#F97316] flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-neutral-900">{item.title}</h3>
+                        <p className="text-neutral-600 text-sm">{item.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FadeIn>
+
+            <FadeIn direction="right" delay={0.2}>
+              <div className="bg-gradient-to-br from-[#F97316]/5 to-orange-100/30 rounded-3xl p-10 lg:p-12">
+                <div className="text-center">
+                  <div className="text-6xl font-bold text-[#F97316] mb-4">95%</div>
+                  <p className="text-xl text-neutral-700 font-medium mb-6">
+                    van onze plaatsingen is na 1 jaar nog werkzaam
+                  </p>
+                  <div className="h-px bg-neutral-200 my-6"></div>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div>
+                      <div className="text-3xl font-bold text-neutral-900">14</div>
+                      <p className="text-neutral-600 text-sm">dagen gemiddelde doorlooptijd</p>
+                    </div>
+                    <div>
+                      <div className="text-3xl font-bold text-neutral-900">100%</div>
+                      <p className="text-neutral-600 text-sm">plaatsingsgarantie</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+        </Section.Container>
+      </Section>
+
+      {/* SELECTIEPROCES - TINTED */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <FadeIn direction="left">
+              <div className="order-2 lg:order-1 grid grid-cols-2 gap-4">
+                {[
+                  { icon: "📋", label: "Uitgebreide intake" },
+                  { icon: "🔍", label: "Actieve sourcing" },
+                  { icon: "💬", label: "Diepte-interviews" },
+                  { icon: "✓", label: "Referentiecheck" },
+                  { icon: "🎯", label: "Skill assessments" },
+                  { icon: "🤝", label: "Cultuurfit analyse" },
+                ].map((item, i) => (
+                  <div key={i} className="bg-white rounded-xl p-5 border border-neutral-100 text-center">
+                    <div className="text-2xl mb-2">{item.icon}</div>
+                    <p className="text-neutral-700 font-medium text-sm">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+
+            <FadeIn direction="right" delay={0.2}>
+              <div className="order-1 lg:order-2">
+                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
+                  Premium selectieproces
+                </h2>
+                <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
+                  Elke kandidaat doorloopt een uitgebreid selectietraject.
+                  Zo weet u zeker dat wie wij presenteren ook echt geschikt is.
+                </p>
+                <p className="text-lg text-neutral-600 leading-relaxed">
+                  Wij presenteren geen tientallen CV&apos;s. Wij presenteren 2-3 topkandidaten
+                  die écht passen. Kwaliteit boven kwantiteit.
+                </p>
+              </div>
+            </FadeIn>
+          </div>
+        </Section.Container>
+      </Section>
+
+      {/* CTA - WIT */}
+      <Section variant="white" spacing="large">
+        <Section.Container>
+          <FadeIn>
+            <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-60 h-60 border border-white/20 rounded-full translate-x-1/3 translate-y-1/3"></div>
+              </div>
+
+              <div className="relative z-10 max-w-2xl mx-auto">
+                <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                  Op zoek naar vast personeel?
+                </h2>
+                <p className="text-white/90 text-lg leading-relaxed mb-10">
+                  Vertel ons wie u zoekt. Wij gaan voor u aan de slag en presenteren
+                  binnen twee weken de beste kandidaten.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link
+                    href="/contact"
+                    className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
+                    hover:bg-neutral-100 transition-all duration-300"
+                  >
+                    Start zoekopdracht
+                  </Link>
+                  <Link
+                    href="tel:+31649200412"
+                    className="border-2 border-white/30 text-white px-8 py-4 rounded-xl text-base font-semibold
+                    hover:bg-white/10 transition-all duration-300"
+                  >
+                    Bel voor advies
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        </Section.Container>
+      </Section>
+    </>
+  );
+}
