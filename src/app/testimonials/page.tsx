@@ -273,32 +273,6 @@ export default function TestimonialsPage() {
         </div>
       </section>
 
-      {/* Video CTA Section */}
-      <Section variant="tinted" spacing="large">
-        <Section.Container>
-          <FadeIn>
-            <div className="relative rounded-3xl overflow-hidden">
-              <div className="aspect-video lg:aspect-[21/9] bg-gradient-to-r from-neutral-900 to-neutral-800 relative">
-                {/* Background Image Placeholder */}
-                <div className="absolute inset-0 bg-[url('/images/barista.png')] bg-cover bg-center opacity-30"></div>
-
-                {/* Content */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <button className="w-20 h-20 bg-[#F97316] rounded-full flex items-center justify-center mb-6 mx-auto hover:bg-[#EA580C] transition-colors duration-300 hover:scale-110 transform shadow-xl shadow-orange-500/30">
-                      <svg className="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </button>
-                    <p className="text-lg font-medium">Bekijk onze video</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </FadeIn>
-        </Section.Container>
-      </Section>
-
       {/* Subscribe / CTA Section */}
       <Section variant="white" spacing="large">
         <Section.Container>
