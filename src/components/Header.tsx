@@ -159,31 +159,14 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* Over Ons Dropdown */}
-              <div className="relative group">
-                <button className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1">
-                  Over Ons
-                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]">
-                    <Link
-                      href="/over-ons"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200 font-medium"
-                    >
-                      Over TopTalent
-                    </Link>
-                    <Link
-                      href="/over-ons#werkwijze"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                    >
-                      Onze Werkwijze
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              {/* Over Ons */}
+              <Link
+                href="/over-ons"
+                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+              >
+                Over Ons
+                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+              </Link>
 
               {/* Meer Dropdown */}
               <div className="relative group">
@@ -319,23 +302,13 @@ export default function Header() {
                 Recruitment
               </Link>
 
-              {/* Over Ons Section */}
-              <div className="px-4 py-2 mt-2">
-                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Over Ons</span>
-              </div>
+              {/* Over Ons */}
               <Link
                 href="/over-ons"
-                className="px-4 py-2.5 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 mt-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Over TopTalent
-              </Link>
-              <Link
-                href="/over-ons#werkwijze"
-                className="px-4 py-2.5 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Onze Werkwijze
+                Over Ons
               </Link>
 
               {/* Meer Section */}
