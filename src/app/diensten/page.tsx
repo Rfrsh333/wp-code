@@ -10,10 +10,11 @@ export default function DienstenPage() {
     <>
       {/* ============================================================
           SECTION FLOW (Design System):
-          Hero (white) → Diensten (tinted) → CTA (white)
+          Hero (white) → Uitzenden (tinted) → Detachering (white) →
+          Recruitment (tinted) → CTA (white)
           ============================================================ */}
 
-      {/* Hero Section - White */}
+      {/* Hero Section - WHITE */}
       <Section variant="white" spacing="default">
         <Section.Container>
           <FadeIn>
@@ -33,12 +34,10 @@ export default function DienstenPage() {
         </Section.Container>
       </Section>
 
-      {/* Diensten Detail - Tinted with fade */}
+      {/* UITZENDEN - TINTED */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-
-          {/* UITZENDEN - Afbeelding RECHTS */}
-          <div id="uitzenden" className="scroll-mt-32 mb-20 lg:mb-28">
+          <div id="uitzenden" className="scroll-mt-32">
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
                 <div className="order-2 lg:order-1 text-center lg:text-left">
@@ -88,9 +87,13 @@ export default function DienstenPage() {
               </div>
             </FadeIn>
           </div>
+        </Section.Container>
+      </Section>
 
-          {/* DETACHERING - Afbeelding LINKS */}
-          <div id="detachering" className="scroll-mt-32 mb-20 lg:mb-28">
+      {/* DETACHERING - WHITE */}
+      <Section variant="white" spacing="default">
+        <Section.Container>
+          <div id="detachering" className="scroll-mt-32">
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[42%_1fr] gap-8 lg:gap-12 items-center">
                 <div className="order-1">
@@ -140,8 +143,12 @@ export default function DienstenPage() {
               </div>
             </FadeIn>
           </div>
+        </Section.Container>
+      </Section>
 
-          {/* RECRUITMENT - Afbeelding RECHTS */}
+      {/* RECRUITMENT - TINTED */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
           <div id="recruitment" className="scroll-mt-32">
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
@@ -192,11 +199,10 @@ export default function DienstenPage() {
               </div>
             </FadeIn>
           </div>
-
         </Section.Container>
       </Section>
 
-      {/* CTA Section - White */}
+      {/* CTA Section - WHITE */}
       <Section variant="white" spacing="large">
         <Section.Container>
           <FadeIn>
