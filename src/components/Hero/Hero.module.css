@@ -309,23 +309,11 @@
   transform: scale(1.5);
 }
 
-/* Hero image wrapper for PremiumImage */
-.heroImageWrapper {
+/* Hero image */
+.heroImage {
   position: relative;
   z-index: 10;
-  max-width: 280px;
-}
-
-@media (min-width: 768px) {
-  .heroImageWrapper {
-    max-width: 320px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .heroImageWrapper {
-    max-width: 350px;
-  }
+  filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15));
 }
 
 /* ==========================================================================
