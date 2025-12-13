@@ -64,24 +64,26 @@ export default function DienstenPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/contact"
+                    href="/diensten/uitzenden"
                     className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
-                    Direct personeel aanvragen
+                    Meer over uitzenden
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
                 </div>
                 <div className="order-1 lg:order-2">
-                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
-                    <PremiumImage
-                      src="/images/dienst-uitzenden.png"
-                      alt="Uitzenden - Snel & Flexibel"
-                      width={380}
-                      height={380}
-                    />
-                  </div>
+                  <Link href="/diensten/uitzenden" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto group">
+                    <div className="transition-transform duration-300 group-hover:scale-[1.02]">
+                      <PremiumImage
+                        src="/images/dienst-uitzenden.png"
+                        alt="Uitzenden - Snel & Flexibel"
+                        width={380}
+                        height={380}
+                      />
+                    </div>
+                  </Link>
                 </div>
               </div>
             </FadeIn>
@@ -96,14 +98,16 @@ export default function DienstenPage() {
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[42%_1fr] gap-8 lg:gap-12 items-center">
                 <div className="order-1">
-                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0">
-                    <PremiumImage
-                      src="/images/dienst-detachering.png"
-                      alt="Detachering - Langdurig Partnership"
-                      width={380}
-                      height={380}
-                    />
-                  </div>
+                  <Link href="/diensten/detachering" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 group">
+                    <div className="transition-transform duration-300 group-hover:scale-[1.02]">
+                      <PremiumImage
+                        src="/images/dienst-detachering.png"
+                        alt="Detachering - Langdurig Partnership"
+                        width={380}
+                        height={380}
+                      />
+                    </div>
+                  </Link>
                 </div>
                 <div className="order-2 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Detachering</h2>
@@ -129,10 +133,10 @@ export default function DienstenPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/contact"
+                    href="/diensten/detachering"
                     className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
-                    Meer informatie aanvragen
+                    Meer over detachering
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -174,24 +178,26 @@ export default function DienstenPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/contact"
+                    href="/diensten/recruitment"
                     className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
-                    Start uw zoekopdracht
+                    Meer over recruitment
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
                 </div>
                 <div className="order-1 lg:order-2">
-                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto">
-                    <PremiumImage
-                      src="/images/dienst-recruitment.png"
-                      alt="Recruitment - De perfecte match"
-                      width={380}
-                      height={380}
-                    />
-                  </div>
+                  <Link href="/diensten/recruitment" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto group">
+                    <div className="transition-transform duration-300 group-hover:scale-[1.02]">
+                      <PremiumImage
+                        src="/images/dienst-recruitment.png"
+                        alt="Recruitment - De perfecte match"
+                        width={380}
+                        height={380}
+                      />
+                    </div>
+                  </Link>
                 </div>
               </div>
             </FadeIn>
