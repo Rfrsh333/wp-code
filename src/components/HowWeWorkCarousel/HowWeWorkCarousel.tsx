@@ -282,132 +282,170 @@ export default function HowWeWorkCarousel({
       aria-labelledby="how-we-work-heading"
     >
       <div className={styles.container}>
-        {/* Header */}
-        <div className={styles.header}>
-          <span
-            className={`${styles.eyebrow} ${styles.revealItem} ${styles.delay1} ${
-              isInView ? styles.visible : ""
-            }`}
-          >
-            Zo werken wij
-          </span>
-
-          <h2
-            id="how-we-work-heading"
-            className={`${styles.headline} ${styles.revealItem} ${styles.delay2} ${
-              isInView ? styles.visible : ""
-            }`}
-          >
-            In 4 stappen geregeld
-          </h2>
-
-          <p
-            className={`${styles.subtitle} ${styles.revealItem} ${styles.delay3} ${
-              isInView ? styles.visible : ""
-            }`}
-          >
-            Snel schakelen, duidelijke afspraken en betrokken nazorg.
-          </p>
-        </div>
-
-        {/* Carousel */}
-        <div
-          className={`${styles.carouselWrapper} ${styles.revealItem} ${styles.delay4} ${
-            isInView ? styles.visible : ""
-          }`}
-        >
-          {/* Previous Button */}
-          <button
-            type="button"
-            className={`${styles.navButton} ${styles.navButtonPrev}`}
-            onClick={goToPrev}
-            aria-label="Vorige stap"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          {/* Track Container */}
+        <div className={styles.grid}>
+          {/* Left Column - Text Content */}
           <div
-            className={styles.carouselContainer}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            className={`${styles.textColumn} ${styles.revealItem} ${styles.delayText} ${
+              isInView ? styles.visible : ""
+            }`}
           >
+            <span className={styles.eyebrow}>Zo werken wij</span>
+
+            <h2 id="how-we-work-heading" className={styles.headline}>
+              In 4 stappen geregeld
+            </h2>
+
+            <p className={styles.subtitle}>
+              Snel schakelen, duidelijke afspraken en betrokken nazorg.
+            </p>
+
+            {/* Dots Pagination - Desktop (under text) */}
             <div
-              ref={trackRef}
-              className={`${styles.track} ${isDragging ? styles.dragging : ""} ${
-                prefersReducedMotion ? styles.reducedMotion : ""
-              }`}
-              style={{
-                transform: `translateX(${-activeIndex * 100}%)`,
-              }}
+              className={styles.dotsDesktop}
+              role="tablist"
+              aria-label="Carousel navigatie"
             >
               {steps.map((step, index) => (
-                <div
+                <button
                   key={step.number}
-                  className={styles.slideWrapper}
-                  aria-hidden={index !== activeIndex}
-                >
-                  <article
-                    className={`${styles.card} ${
-                      index === activeIndex ? styles.cardActive : styles.cardInactive
-                    } ${prefersReducedMotion ? styles.reducedMotion : ""}`}
-                  >
-                    {/* Step Number */}
-                    <span className={styles.stepNumber}>{step.number}</span>
-
-                    {/* Icon */}
-                    <div className={styles.iconWrapper}>
-                      {step.icon}
-                    </div>
-
-                    {/* Content */}
-                    <div className={styles.cardContent}>
-                      <h3 className={styles.cardTitle}>
-                        Stap {step.number.replace(/^0/, "")} – {step.title}
-                      </h3>
-                      <p className={styles.cardDescription}>{step.description}</p>
-                    </div>
-                  </article>
-                </div>
+                  type="button"
+                  role="tab"
+                  className={`${styles.dot} ${
+                    index === activeIndex ? styles.dotActive : ""
+                  }`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`Ga naar stap ${index + 1}`}
+                  aria-selected={index === activeIndex}
+                  aria-current={index === activeIndex ? "true" : undefined}
+                  tabIndex={index === activeIndex ? 0 : -1}
+                />
               ))}
             </div>
           </div>
 
-          {/* Next Button */}
-          <button
-            type="button"
-            className={`${styles.navButton} ${styles.navButtonNext}`}
-            onClick={goToNext}
-            aria-label="Volgende stap"
+          {/* Right Column - Carousel */}
+          <div
+            className={`${styles.carouselColumn} ${styles.revealItem} ${styles.delayCarousel} ${
+              isInView ? styles.visible : ""
+            }`}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+            <div className={styles.carouselWrapper}>
+              {/* Previous Button */}
+              <button
+                type="button"
+                className={`${styles.navButton} ${styles.navButtonPrev}`}
+                onClick={goToPrev}
+                aria-label="Vorige stap"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
 
-        {/* Dots Pagination */}
-        <div className={styles.dots} role="tablist" aria-label="Carousel navigatie">
-          {steps.map((step, index) => (
-            <button
-              key={step.number}
-              type="button"
-              role="tab"
-              className={`${styles.dot} ${index === activeIndex ? styles.dotActive : ""}`}
-              onClick={() => goToSlide(index)}
-              aria-label={`Ga naar stap ${index + 1}`}
-              aria-selected={index === activeIndex}
-              aria-current={index === activeIndex ? "true" : undefined}
-              tabIndex={index === activeIndex ? 0 : -1}
-            />
-          ))}
+              {/* Track Container */}
+              <div
+                className={styles.carouselContainer}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div
+                  ref={trackRef}
+                  className={`${styles.track} ${isDragging ? styles.dragging : ""} ${
+                    prefersReducedMotion ? styles.reducedMotion : ""
+                  }`}
+                  style={{
+                    transform: `translateX(${-activeIndex * 100}%)`,
+                  }}
+                >
+                  {steps.map((step, index) => (
+                    <div
+                      key={step.number}
+                      className={styles.slideWrapper}
+                      aria-hidden={index !== activeIndex}
+                    >
+                      <article
+                        className={`${styles.card} ${
+                          index === activeIndex
+                            ? styles.cardActive
+                            : styles.cardInactive
+                        } ${prefersReducedMotion ? styles.reducedMotion : ""}`}
+                      >
+                        {/* Step Number */}
+                        <span className={styles.stepNumber}>{step.number}</span>
+
+                        {/* Icon */}
+                        <div className={styles.iconWrapper}>{step.icon}</div>
+
+                        {/* Content */}
+                        <div className={styles.cardContent}>
+                          <h3 className={styles.cardTitle}>
+                            Stap {step.number.replace(/^0/, "")} – {step.title}
+                          </h3>
+                          <p className={styles.cardDescription}>
+                            {step.description}
+                          </p>
+                        </div>
+                      </article>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Next Button */}
+              <button
+                type="button"
+                className={`${styles.navButton} ${styles.navButtonNext}`}
+                onClick={goToNext}
+                aria-label="Volgende stap"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Dots Pagination - Mobile (under carousel) */}
+            <div
+              className={styles.dotsMobile}
+              role="tablist"
+              aria-label="Carousel navigatie"
+            >
+              {steps.map((step, index) => (
+                <button
+                  key={step.number}
+                  type="button"
+                  role="tab"
+                  className={`${styles.dot} ${
+                    index === activeIndex ? styles.dotActive : ""
+                  }`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`Ga naar stap ${index + 1}`}
+                  aria-selected={index === activeIndex}
+                  aria-current={index === activeIndex ? "true" : undefined}
+                  tabIndex={index === activeIndex ? 0 : -1}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
