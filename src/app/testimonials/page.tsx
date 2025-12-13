@@ -59,13 +59,6 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const stats = [
-  { value: "100+", label: "Tevreden Klanten" },
-  { value: "98%", label: "Klanttevredenheid" },
-  { value: "500+", label: "Succesvolle Plaatsingen" },
-  { value: "24u", label: "Gemiddelde Responstijd" },
-];
-
 const StarIcon = () => (
   <svg className="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20">
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -202,60 +195,76 @@ export default function TestimonialsPage() {
         </Section.Container>
       </Section>
 
-      {/* Testimonials Grid */}
-      <section className="py-20 lg:py-28 bg-gradient-to-b from-[#1F2937] to-[#111827] relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}></div>
-        </div>
-
+      {/* Testimonials Grid - Light, Warm & Premium */}
+      <section
+        className="py-20 lg:py-28 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF7F1 18%, #FFF7F1 82%, #FFFFFF 100%)'
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <FadeIn>
-            <div className="text-center mb-16">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-white/10 px-4 py-2 rounded-full border border-white/20">
+            <div className="text-center mb-14 lg:mb-16">
+              <span className="inline-block text-[#FF7A00] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
                 Testimonials
               </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1F1F1F]">
                 Woorden van onze partners
               </h2>
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <FadeIn key={index} delay={0.1 * index}>
-                <div className="bg-white rounded-2xl p-6 lg:p-8 relative group hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                  {/* Shape/Pattern */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-50 to-transparent rounded-bl-full opacity-50"></div>
-
-                  {/* Quote Icon */}
-                  <div className="absolute top-6 right-6 w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-[#F97316] group-hover:bg-[#F97316] group-hover:text-white transition-all duration-300">
-                    <QuoteIcon />
-                  </div>
-
-                  {/* Author */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {testimonial.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-neutral-900">{testimonial.name}</h4>
-                      <span className="text-sm text-neutral-500">{testimonial.role}, {testimonial.company}</span>
+              <FadeIn key={index} delay={0.08 * index}>
+                <div className="relative pt-7">
+                  {/* Profile Photo - Overlapping */}
+                  <div className="absolute left-6 top-0 z-10">
+                    <div
+                      className="w-14 h-14 rounded-full overflow-hidden border-[3px] border-white"
+                      style={{
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
+                      }}
+                    >
+                      <div className="w-full h-full bg-gradient-to-br from-[#FF7A00] to-[#EA580C] flex items-center justify-center text-white font-bold text-lg">
+                        {testimonial.name.split(' ').map(n => n[0]).join('')}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Content */}
-                  <p className="text-neutral-600 leading-relaxed mb-4">
-                    {testimonial.content}
-                  </p>
+                  {/* Testimonial Card */}
+                  <div
+                    className="bg-white rounded-[20px] p-8 pt-12 relative group hover:-translate-y-1 transition-all duration-300"
+                    style={{
+                      boxShadow: '0 20px 50px rgba(0,0,0,0.06)'
+                    }}
+                  >
+                    {/* Quote Icon - Subtle */}
+                    <div className="absolute top-6 right-6">
+                      <div className="text-[#FF7A00] opacity-25">
+                        <QuoteIcon />
+                      </div>
+                    </div>
 
-                  {/* Rating */}
-                  <div className="flex gap-1">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <StarIcon key={i} />
-                    ))}
+                    {/* Content */}
+                    <p className="text-[#1F1F1F] leading-relaxed mb-6 pr-8">
+                      &ldquo;{testimonial.content}&rdquo;
+                    </p>
+
+                    {/* Author Info */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-[#1F1F1F]">{testimonial.name}</h4>
+                        <span className="text-sm text-neutral-500">{testimonial.role}, {testimonial.company}</span>
+                      </div>
+
+                      {/* Rating */}
+                      <div className="flex gap-0.5">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <StarIcon key={i} />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </FadeIn>
@@ -263,35 +272,6 @@ export default function TestimonialsPage() {
           </div>
         </div>
       </section>
-
-      {/* Stats Section */}
-      <Section variant="white" spacing="large">
-        <Section.Container>
-          <FadeIn>
-            <div className="text-center mb-12">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
-                Onze cijfers
-              </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900">
-                Vertrouwd door de beste in de branche
-              </h2>
-            </div>
-          </FadeIn>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {stats.map((stat, index) => (
-              <FadeIn key={index} delay={0.1 * index}>
-                <div className="text-center p-6 lg:p-8 bg-neutral-50 rounded-2xl hover:bg-orange-50 transition-colors duration-300 group">
-                  <div className="text-4xl lg:text-5xl font-bold text-[#F97316] mb-2 group-hover:scale-110 transition-transform duration-300">
-                    {stat.value}
-                  </div>
-                  <p className="text-neutral-600">{stat.label}</p>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </Section.Container>
-      </Section>
 
       {/* Video CTA Section */}
       <Section variant="tinted" spacing="large">
