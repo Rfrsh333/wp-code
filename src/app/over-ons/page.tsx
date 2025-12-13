@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
+import PremiumImage from "@/components/PremiumImage";
 
 export default function OverOnsPage() {
   return (
@@ -64,20 +64,17 @@ export default function OverOnsPage() {
               </div>
             </FadeIn>
 
-            {/* Afbeelding - Rechts */}
-            <FadeIn direction="right" delay={0.2}>
-              <div className="order-1 lg:order-2">
-                <div className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
-                  <Image
-                    src="/images/over-ons-verhaal.png"
-                    alt="TopTalent team - Ons verhaal"
-                    width={420}
-                    height={420}
-                    className="w-full h-auto rounded-2xl object-cover"
-                  />
-                </div>
+            {/* Afbeelding - Rechts (Premium Frame) */}
+            <div className="order-1 lg:order-2">
+              <div className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
+                <PremiumImage
+                  src="/images/over-ons-verhaal.png"
+                  alt="TopTalent team - Ons verhaal"
+                  width={420}
+                  height={420}
+                />
               </div>
-            </FadeIn>
+            </div>
           </div>
         </Section.Container>
       </Section>

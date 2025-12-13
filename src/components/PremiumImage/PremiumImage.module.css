@@ -1,0 +1,178 @@
+/* =============================================================================
+   PREMIUM IMAGE COMPONENT
+   Luxe editorial frame met subtiele effecten
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Container - Houdt alle lagen bij elkaar
+   ----------------------------------------------------------------------------- */
+.container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* -----------------------------------------------------------------------------
+   Static Glow - Zachte halo achter het geheel
+   ----------------------------------------------------------------------------- */
+.glow {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(249, 115, 22, 0.12),
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   Mat Layer - Tweede laag achter de foto (offset)
+   ----------------------------------------------------------------------------- */
+.mat {
+  position: absolute;
+  inset: 0;
+  background: #FFF7F1;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+  transform: translate(10px, 10px);
+  z-index: 1;
+}
+
+/* -----------------------------------------------------------------------------
+   Frame - De hoofdcontainer voor de foto
+   ----------------------------------------------------------------------------- */
+.frame {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  background: #FFFFFF;
+  z-index: 2;
+  transition: transform 300ms ease-out, box-shadow 300ms ease-out;
+}
+
+/* Hover state - Desktop only */
+@media (hover: hover) and (pointer: fine) {
+  .frame:hover {
+    transform: scale(1.02) translateY(-4px);
+    box-shadow: 0 28px 50px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Image - De daadwerkelijke foto
+   ----------------------------------------------------------------------------- */
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* -----------------------------------------------------------------------------
+   Corner Accents - Subtiele L-vormige hoekaccenten
+   ----------------------------------------------------------------------------- */
+.cornerAccent {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Linksboven */
+.cornerTopLeft {
+  top: -6px;
+  left: -6px;
+}
+
+.cornerTopLeft::before,
+.cornerTopLeft::after {
+  content: '';
+  position: absolute;
+  background: rgba(249, 115, 22, 0.7);
+  border-radius: 1px;
+}
+
+.cornerTopLeft::before {
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 2px;
+}
+
+.cornerTopLeft::after {
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 18px;
+}
+
+/* Rechtsonder */
+.cornerBottomRight {
+  bottom: -6px;
+  right: -6px;
+}
+
+.cornerBottomRight::before,
+.cornerBottomRight::after {
+  content: '';
+  position: absolute;
+  background: rgba(249, 115, 22, 0.7);
+  border-radius: 1px;
+}
+
+.cornerBottomRight::before {
+  bottom: 0;
+  right: 0;
+  width: 18px;
+  height: 2px;
+}
+
+.cornerBottomRight::after {
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  height: 18px;
+}
+
+/* -----------------------------------------------------------------------------
+   Scroll Reveal Animation
+   ----------------------------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .revealed {
+    transition: none;
+  }
+
+  .frame {
+    transition: none;
+  }
+
+  .frame:hover {
+    transform: none;
+  }
+}
