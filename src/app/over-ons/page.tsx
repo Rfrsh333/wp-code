@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
@@ -36,9 +37,10 @@ export default function OverOnsPage() {
       {/* Ons Verhaal - Tinted */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[58%_42%] gap-8 lg:gap-12 items-center">
+            {/* Tekst - Links */}
             <FadeIn direction="left">
-              <div>
+              <div className="order-2 lg:order-1 text-center lg:text-left">
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                   Ons Verhaal
                 </span>
@@ -61,11 +63,18 @@ export default function OverOnsPage() {
                 </p>
               </div>
             </FadeIn>
+
+            {/* Afbeelding - Rechts */}
             <FadeIn direction="right" delay={0.2}>
-              <div className="bg-gradient-to-br from-[#F97316]/10 to-orange-100/50 rounded-3xl p-12 flex items-center justify-center aspect-square lg:aspect-auto lg:h-[450px]">
-                <div className="text-center">
-                  <div className="text-8xl mb-6">&#127919;</div>
-                  <p className="text-xl text-neutral-700 font-medium">Verbinden van Talent</p>
+              <div className="order-1 lg:order-2">
+                <div className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
+                  <Image
+                    src="/images/over-ons-verhaal.png"
+                    alt="TopTalent team - Ons verhaal"
+                    width={420}
+                    height={420}
+                    className="w-full h-auto rounded-2xl object-cover"
+                  />
                 </div>
               </div>
             </FadeIn>
