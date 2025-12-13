@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = "https://nntxpyoyrpquzghsnwxj.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5udHhweW95cnBxdXpnaHNud3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTcxMjIsImV4cCI6MjA4MTE5MzEyMn0.a9WrCUxfInyBgUYXmkhJv6NM7p8Ll7wTUfXgu5bRGEE";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
