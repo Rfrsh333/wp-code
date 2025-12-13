@@ -7,6 +7,7 @@ import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
+import MarqueeBanner from "@/components/MarqueeBanner";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
@@ -134,6 +135,9 @@ export default function Home() {
 
       {/* Hero Section - White background (BEHOUDEN) */}
       <Hero />
+
+      {/* Service Banner - Premium Marquee */}
+      <MarqueeBanner />
 
       {/* Clients Section - Jobaway Style */}
       <Section variant="tinted" spacing="default">
