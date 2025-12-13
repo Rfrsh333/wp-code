@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
@@ -19,18 +20,21 @@ const testimonials = [
     role: "Eigenaar",
     company: "Restaurant De Smaak",
     content: "TopTalent heeft ons enorm geholpen tijdens de drukke zomermaanden. Binnen een dag hadden we ervaren bediening op de vloer.",
+    image: "/images/testimonials/martijn.jpg",
   },
   {
     name: "Sophie Jansen",
     role: "HR Manager",
     company: "Grand Hotel Amsterdam",
     content: "TopTalent onderscheidt zich door hun persoonlijke aanpak en het begrip van onze specifieke behoeften.",
+    image: "/images/testimonials/sophie.jpg",
   },
   {
     name: "Rick van den Berg",
     role: "Operations Manager",
     company: "Catering Company",
     content: "TopTalent begrijpt de dynamiek van de eventbranche en levert altijd betrouwbare, professionele medewerkers.",
+    image: "/images/testimonials/rick.jpg",
   },
 ];
 
@@ -114,83 +118,113 @@ export default function Home() {
         </Section.Container>
       </Section>
 
-      {/* Testimonials Section - Jobaway Style Dark */}
-      <section className="py-20 lg:py-28 bg-gradient-to-b from-[#1F2937] to-[#111827] relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}></div>
-        </div>
-
+      {/* Testimonials Section - Light, Warm & Premium */}
+      <section
+        className="py-20 lg:py-28 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF7F1 18%, #FFF7F1 82%, #FFFFFF 100%)'
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
           <FadeIn>
-            <div className="text-center mb-12">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-white/10 px-4 py-2 rounded-full border border-white/20">
+            <div className="text-center mb-14 lg:mb-16">
+              <span className="inline-block text-[#FF7A00] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
                 Testimonials
               </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1F1F1F]">
                 Wat onze klanten zeggen
               </h2>
             </div>
           </FadeIn>
 
-          {/* Testimonial Slider */}
-          <FadeIn delay={0.2}>
+          {/* Testimonial Card with Profile Photo */}
+          <FadeIn delay={0.15}>
             <div className="max-w-3xl mx-auto">
-              <div className="bg-white rounded-3xl p-8 lg:p-12 relative">
-                {/* Quote Icon */}
-                <div className="absolute top-6 right-6 w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center text-[#F97316]">
-                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                  </svg>
-                </div>
-
-                {/* Content */}
-                <div className="transition-all duration-500">
-                  <p className="text-xl lg:text-2xl text-neutral-700 leading-relaxed mb-8">
-                    &ldquo;{testimonials[activeTestimonial].content}&rdquo;
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full flex items-center justify-center text-white font-bold text-lg">
+              {/* Card Container with Profile Photo */}
+              <div className="relative">
+                {/* Profile Photo - Overlapping on Desktop */}
+                <div className="flex justify-center lg:block lg:absolute lg:-left-8 lg:top-1/2 lg:-translate-y-1/2 mb-[-28px] lg:mb-0 z-10">
+                  <div
+                    className="w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden border-[3px] border-white relative"
+                    style={{
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
+                    }}
+                  >
+                    {/* Fallback Avatar with Initials */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#FF7A00] to-[#EA580C] flex items-center justify-center text-white font-bold text-lg lg:text-xl">
                       {testimonials[activeTestimonial].name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-neutral-900">{testimonials[activeTestimonial].name}</h4>
-                      <span className="text-sm text-neutral-500">
-                        {testimonials[activeTestimonial].role}, {testimonials[activeTestimonial].company}
-                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Dots Navigation */}
-                <div className="flex justify-center gap-2 mt-8">
-                  {testimonials.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveTestimonial(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        index === activeTestimonial
-                          ? "bg-[#F97316] w-8"
-                          : "bg-neutral-200 hover:bg-neutral-300"
-                      }`}
-                    />
-                  ))}
+                {/* Testimonial Card */}
+                <div
+                  className="bg-white rounded-[20px] p-8 lg:p-12 lg:pl-16 relative"
+                  style={{
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  {/* Quote Icon - Subtle */}
+                  <div className="absolute top-6 right-6 lg:top-8 lg:right-8">
+                    <svg className="w-8 h-8 lg:w-10 lg:h-10 text-[#FF7A00] opacity-30" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                    </svg>
+                  </div>
+
+                  {/* Content */}
+                  <div className="transition-all duration-500">
+                    <p className="text-lg lg:text-xl xl:text-2xl text-[#1F1F1F] leading-relaxed mb-8 pr-8 lg:pr-12">
+                      &ldquo;{testimonials[activeTestimonial].content}&rdquo;
+                    </p>
+
+                    {/* Author Info */}
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h4 className="font-semibold text-[#1F1F1F] text-base lg:text-lg">
+                          {testimonials[activeTestimonial].name}
+                        </h4>
+                        <span className="text-sm text-neutral-500">
+                          {testimonials[activeTestimonial].role}, {testimonials[activeTestimonial].company}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dots Navigation */}
+                  <div className="flex justify-center gap-2 mt-8 lg:mt-10">
+                    {testimonials.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setActiveTestimonial(index)}
+                        aria-label={`Bekijk testimonial ${index + 1}`}
+                        className={`h-2.5 rounded-full transition-all duration-300 ${
+                          index === activeTestimonial
+                            ? "bg-[#FF7A00] w-8"
+                            : "bg-neutral-200 hover:bg-neutral-300 w-2.5"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </FadeIn>
 
-          {/* View All Link */}
-          <FadeIn delay={0.3}>
-            <div className="text-center mt-8">
+          {/* View All Link - Subtle */}
+          <FadeIn delay={0.25}>
+            <div className="text-center mt-10 lg:mt-12">
               <Link
                 href="/testimonials"
-                className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors font-medium"
+                className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#FF7A00] transition-colors font-medium group"
               >
                 Bekijk alle testimonials
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
