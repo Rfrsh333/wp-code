@@ -1,20 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [configError, setConfigError] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setConfigError(`Config missing - URL: ${supabaseUrl ? "OK" : "MISSING"}, Key: ${supabaseAnonKey ? "OK" : "MISSING"}`);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setError("Supabase configuratie ontbreekt");
+      setIsLoading(false);
+      return;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -45,6 +63,11 @@ export default function AdminLoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
+          {configError && (
+            <div className="bg-yellow-50 text-yellow-700 px-4 py-3 rounded-xl text-sm">
+              {configError}
+            </div>
+          )}
           {error && (
             <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">
               {error}
