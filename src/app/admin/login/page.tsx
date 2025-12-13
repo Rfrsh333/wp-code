@@ -22,7 +22,8 @@ export default function AdminLoginPage() {
     });
 
     if (error) {
-      setError("Ongeldige inloggegevens");
+      console.error("Login error:", error);
+      setError(error.message || "Ongeldige inloggegevens");
       setIsLoading(false);
     } else {
       router.push("/admin");
