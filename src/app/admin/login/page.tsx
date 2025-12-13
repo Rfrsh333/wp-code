@@ -32,20 +32,26 @@ export default function AdminLoginPage() {
       return;
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    try {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      console.error("Login error:", error);
-      setError(error.message || "Ongeldige inloggegevens");
+      if (error) {
+        console.error("Login error:", error);
+        setError(error.message || "Ongeldige inloggegevens");
+        setIsLoading(false);
+      } else {
+        router.push("/admin");
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Catch error:", err);
+      setError(`Fout: ${err instanceof Error ? err.message : "Onbekende fout"}`);
       setIsLoading(false);
-    } else {
-      router.push("/admin");
-      router.refresh();
     }
   };
 
