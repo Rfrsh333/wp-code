@@ -1,0 +1,320 @@
+/* ==========================================================================
+   Services Section - Premium Styles
+   ========================================================================== */
+
+.section {
+  padding: 6rem 0;
+  position: relative;
+  /* Subtle gradient background for depth */
+  background: linear-gradient(
+    180deg,
+    #fafafa 0%,
+    #f5f5f5 50%,
+    #fafafa 100%
+  );
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding: 8rem 0;
+  }
+}
+
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 3rem;
+  }
+}
+
+/* ==========================================================================
+   Header Styles
+   ========================================================================== */
+
+.header {
+  text-align: center;
+  max-width: 48rem;
+  margin: 0 auto 4rem;
+}
+
+/* Eyebrow - small, uppercase, brand accent */
+.eyebrow {
+  display: inline-block;
+  color: #F27501;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+/* Headline - dominant, tight line-height */
+.headline {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #171717;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .headline {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .headline {
+    font-size: 3rem;
+  }
+}
+
+/* Subtitle - softer contrast, max-width for readability */
+.subtitle {
+  color: #737373;
+  font-size: 1.125rem;
+  line-height: 1.75;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Cards Grid
+   ========================================================================== */
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cardsGrid {
+    gap: 2.5rem;
+  }
+}
+
+/* ==========================================================================
+   Service Card - Premium floating surface
+   ========================================================================== */
+
+.card {
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  /* Soft shadow for floating effect */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 4px 8px rgba(0, 0, 0, 0.02),
+    0 8px 16px rgba(0, 0, 0, 0.02),
+    0 16px 32px rgba(0, 0, 0, 0.03);
+
+  /* Subtle border for definition */
+  border: 1px solid rgba(0, 0, 0, 0.04);
+
+  /* Smooth transitions */
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+  .card {
+    padding: 2.5rem;
+  }
+}
+
+/* Card hover - subtle lift with deeper shadow */
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.03),
+    0 8px 16px rgba(0, 0, 0, 0.04),
+    0 16px 32px rgba(0, 0, 0, 0.05),
+    0 32px 64px rgba(0, 0, 0, 0.06);
+}
+
+/* Focus state for accessibility */
+.card:focus-within {
+  outline: 2px solid #F27501;
+  outline-offset: 4px;
+}
+
+/* ==========================================================================
+   Icon Container
+   ========================================================================== */
+
+.iconContainer {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, #FEF3E7 0%, #FDE8D3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 0.3s ease;
+}
+
+.card:hover .iconContainer {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #F27501 0%, #d96800 100%);
+}
+
+.icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: #F27501;
+  transition: color 0.3s ease;
+}
+
+.card:hover .icon {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Card Content
+   ========================================================================== */
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #171717;
+  margin-bottom: 0.875rem;
+  line-height: 1.3;
+}
+
+.cardDescription {
+  color: #525252;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+/* ==========================================================================
+   Micro-CTA Link
+   ========================================================================== */
+
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #F27501;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: gap 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cardLink:hover {
+  gap: 0.75rem;
+}
+
+.cardLink:focus-visible {
+  outline: 2px solid #F27501;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.linkArrow {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cardLink:hover .linkArrow {
+  transform: translateX(4px);
+}
+
+/* ==========================================================================
+   Scroll Reveal Animations
+   ========================================================================== */
+
+.revealItem {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.revealItem.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays for header elements */
+.delayEyebrow { transition-delay: 0ms; }
+.delayHeadline { transition-delay: 80ms; }
+.delaySubtitle { transition-delay: 160ms; }
+
+/* Stagger delays for cards (left to right) */
+.delayCard1 { transition-delay: 280ms; }
+.delayCard2 { transition-delay: 380ms; }
+.delayCard3 { transition-delay: 480ms; }
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .revealItem {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .card {
+    transition: box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .iconContainer {
+    transition: background 0.2s ease;
+  }
+
+  .card:hover .iconContainer {
+    transform: none;
+  }
+
+  .cardLink {
+    transition: none;
+  }
+
+  .cardLink:hover {
+    gap: 0.5rem;
+  }
+
+  .cardLink:hover .linkArrow {
+    transform: none;
+  }
+}

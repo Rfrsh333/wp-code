@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import Hero from "@/components/Hero";
+import ServicesSection from "@/components/ServicesSection";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
@@ -13,92 +14,7 @@ export default function Home() {
       <Hero />
 
       {/* Services Section - Premium Cards */}
-      <section className="py-24 lg:py-32 bg-neutral-50">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <FadeIn>
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
-                Onze Diensten
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
-                Flexibele personeelsoplossingen
-              </h2>
-              <p className="text-neutral-600 text-lg leading-relaxed">
-                Van tijdelijke inhuur tot permanente plaatsing. Wij bieden complete
-                personeelsoplossingen voor de horeca- en evenementenbranche.
-              </p>
-            </div>
-          </FadeIn>
-
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8" staggerDelay={0.15}>
-            {/* Uitzenden */}
-            <StaggerItem>
-              <div className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 border border-neutral-100 h-full">
-                <div className="w-14 h-14 bg-[#FEF3E7] rounded-xl flex items-center justify-center mb-6 group-hover:bg-[#F27501] transition-colors duration-300">
-                  <svg className="w-7 h-7 text-[#F27501] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-4">Uitzenden</h3>
-                <p className="text-neutral-600 leading-relaxed mb-6">
-                  Tijdelijke inzet van gekwalificeerd horecapersoneel. Flexibel in te zetten
-                  voor piekuren, evenementen of seizoensgebonden drukte.
-                </p>
-                <Link href="/diensten" className="inline-flex items-center text-[#F27501] font-medium hover:gap-3 gap-2 transition-all duration-300">
-                  Meer informatie
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            </StaggerItem>
-
-            {/* Detachering */}
-            <StaggerItem>
-              <div className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 border border-neutral-100 h-full">
-                <div className="w-14 h-14 bg-[#FEF3E7] rounded-xl flex items-center justify-center mb-6 group-hover:bg-[#F27501] transition-colors duration-300">
-                  <svg className="w-7 h-7 text-[#F27501] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-4">Detachering</h3>
-                <p className="text-neutral-600 leading-relaxed mb-6">
-                  Langdurige plaatsing van ervaren professionals. Ideaal voor structurele
-                  versterking met behoud van flexibiliteit.
-                </p>
-                <Link href="/diensten" className="inline-flex items-center text-[#F27501] font-medium hover:gap-3 gap-2 transition-all duration-300">
-                  Meer informatie
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            </StaggerItem>
-
-            {/* Recruitment */}
-            <StaggerItem>
-              <div className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 border border-neutral-100 h-full">
-                <div className="w-14 h-14 bg-[#FEF3E7] rounded-xl flex items-center justify-center mb-6 group-hover:bg-[#F27501] transition-colors duration-300">
-                  <svg className="w-7 h-7 text-[#F27501] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-4">Recruitment</h3>
-                <p className="text-neutral-600 leading-relaxed mb-6">
-                  Werving en selectie voor vaste posities. Wij vinden de perfecte match
-                  voor uw organisatie met onze uitgebreide kandidatenpool.
-                </p>
-                <Link href="/diensten" className="inline-flex items-center text-[#F27501] font-medium hover:gap-3 gap-2 transition-all duration-300">
-                  Meer informatie
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            </StaggerItem>
-          </StaggerContainer>
-        </div>
-      </section>
+      <ServicesSection />
 
       {/* Why TopTalent Section */}
       <section className="py-24 lg:py-32 bg-white">
