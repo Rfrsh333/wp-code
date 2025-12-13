@@ -8,6 +8,7 @@ import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 import MarqueeBanner from "@/components/MarqueeBanner";
+import StatsGrid from "@/components/StatsGrid";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
@@ -139,27 +140,8 @@ export default function Home() {
       {/* Service Banner - Premium Marquee */}
       <MarqueeBanner />
 
-      {/* Clients Section - Jobaway Style */}
-      <Section variant="tinted" spacing="default">
-        <Section.Container>
-          <FadeIn>
-            <div className="text-center mb-10">
-              <h3 className="text-xl md:text-2xl font-semibold text-neutral-700">
-                Vertrouwd door toonaangevende bedrijven in de horeca
-              </h3>
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.2}>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 lg:gap-16 opacity-60 hover:opacity-100 transition-opacity duration-500">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-12 w-32 bg-neutral-300 rounded-lg flex items-center justify-center text-neutral-500 font-semibold text-sm">
-                  Partner {i}
-                </div>
-              ))}
-            </div>
-          </FadeIn>
-        </Section.Container>
-      </Section>
+      {/* Stats Grid - Social Proof */}
+      <StatsGrid />
 
       {/* How We Work - White section */}
       <HowWeWorkCarousel />
