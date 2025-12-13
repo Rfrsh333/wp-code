@@ -2,19 +2,31 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const ticking = useRef(false);
+
+  // Throttled scroll handler using requestAnimationFrame
+  const handleScroll = useCallback(() => {
+    if (!ticking.current) {
+      requestAnimationFrame(() => {
+        setIsScrolled(window.scrollY > 10);
+        ticking.current = false;
+      });
+      ticking.current = true;
+    }
+  }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
+    // Set initial value
+    setIsScrolled(window.scrollY > 10);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [handleScroll]);
 
   return (
     <>
@@ -75,10 +87,12 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Main Header */}
+      {/* Main Header with Glass Effect */}
       <header
-        className={`bg-white sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled ? "shadow-lg shadow-neutral-900/5" : "shadow-none"
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-white/80 backdrop-blur-xl shadow-lg shadow-neutral-900/5 border-b border-neutral-100/50"
+            : "bg-white shadow-none"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">

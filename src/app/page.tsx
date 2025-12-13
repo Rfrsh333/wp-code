@@ -2,102 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import Hero from "@/components/Hero";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
 export default function Home() {
   return (
     <>
-      {/* Hero Section - Premium & Clean */}
-      <section className="bg-white min-h-[85vh] relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-24 lg:py-32">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left side - Text */}
-            <FadeIn direction="left" duration={0.8}>
-              <div className="max-w-xl">
-                <span className="inline-block text-[#F27501] font-medium text-sm tracking-wider uppercase mb-4">
-                  Horeca Uitzendbureau
-                </span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
-                  Uw partner voor{" "}
-                  <span className="text-[#F27501]">kwalitatief</span>{" "}
-                  horecapersoneel
-                </h1>
-                <p className="text-neutral-600 text-lg leading-relaxed mb-10">
-                  TopTalent levert betrouwbaar en professioneel personeel voor restaurants,
-                  hotels en evenementen. Binnen 24 uur de juiste mensen op de juiste plek.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    href="/personeel-aanvragen"
-                    className="group bg-[#F27501] text-white px-8 py-4 rounded-lg text-base font-semibold
-                    shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#d96800] transition-all duration-300 text-center"
-                  >
-                    Personeel aanvragen
-                    <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform duration-300">
-                      &rarr;
-                    </span>
-                  </Link>
-                  <Link
-                    href="/inschrijven"
-                    className="group border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-lg
-                    text-base font-semibold hover:border-[#F27501] hover:text-[#F27501]
-                    transition-all duration-300 text-center"
-                  >
-                    Solliciteren
-                  </Link>
-                </div>
-
-                {/* Trust indicators */}
-                <div className="mt-12 pt-8 border-t border-neutral-100">
-                  <div className="flex items-center gap-8">
-                    <div>
-                      <p className="text-3xl font-bold text-neutral-900">100+</p>
-                      <p className="text-sm text-neutral-500">Tevreden klanten</p>
-                    </div>
-                    <div className="w-px h-12 bg-neutral-200"></div>
-                    <div>
-                      <p className="text-3xl font-bold text-neutral-900">24u</p>
-                      <p className="text-sm text-neutral-500">Responstijd</p>
-                    </div>
-                    <div className="w-px h-12 bg-neutral-200"></div>
-                    <div>
-                      <p className="text-3xl font-bold text-neutral-900">98%</p>
-                      <p className="text-sm text-neutral-500">Klanttevredenheid</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </FadeIn>
-
-            {/* Right side - Image */}
-            <FadeIn direction="right" delay={0.2} duration={0.8}>
-              <div className="relative flex justify-center items-center h-full">
-                {/* Powder splash background */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Image
-                    src="/images/powder-splash.png"
-                    alt=""
-                    width={500}
-                    height={500}
-                    className="object-contain opacity-90 scale-150"
-                    priority
-                  />
-                </div>
-                <Image
-                  src="/images/barista.png"
-                  alt="Professionele barista"
-                  width={240}
-                  height={320}
-                  className="object-contain z-10 relative drop-shadow-2xl"
-                  priority
-                />
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section - Premium with Animations */}
+      <Hero />
 
       {/* Services Section - Premium Cards */}
       <section className="py-24 lg:py-32 bg-neutral-50">
