@@ -10,10 +10,10 @@ interface Stat {
 }
 
 const stats: Stat[] = [
-  { value: 200, suffix: "+", label: "Freelance Workers" },
-  { value: 95, suffix: "%", label: "Jobs Fulfillment Rate" },
-  { value: 500, suffix: "+", label: "Jobs Filled" },
-  { value: 120, suffix: "+", label: "Satisfied Businesses" },
+  { value: 620, suffix: "+", label: "Tevreden klanten" },
+  { value: 98, suffix: "%", label: "Klanttevredenheid" },
+  { value: 1500, suffix: "+", label: "Plaatsingen per jaar" },
+  { value: 24, suffix: "u", label: "Gemiddelde responstijd" },
 ];
 
 /* ==========================================================================
