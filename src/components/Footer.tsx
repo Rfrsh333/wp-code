@@ -71,9 +71,6 @@ export default function Footer() {
               <Link href="/" className="block text-neutral-400 hover:text-white transition-colors duration-300">
                 Home
               </Link>
-              <Link href="/vacatures" className="block text-neutral-400 hover:text-white transition-colors duration-300">
-                Vacatures
-              </Link>
               <Link href="/diensten" className="block text-neutral-400 hover:text-white transition-colors duration-300">
                 Diensten
               </Link>

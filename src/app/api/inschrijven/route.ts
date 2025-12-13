@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -198,6 +199,27 @@ export async function POST(request: NextRequest) {
         { error: "Fout bij verzenden e-mail" },
         { status: 500 }
       );
+    }
+
+    // Opslaan in Supabase
+    const { error: dbError } = await supabase.from("inschrijvingen").insert({
+      voornaam,
+      tussenvoegsel: tussenvoegsel || null,
+      achternaam,
+      email,
+      telefoon,
+      stad,
+      geboortedatum,
+      geslacht,
+      motivatie,
+      hoe_gekomen: hoeGekomen,
+      uitbetalingswijze,
+      kvk_nummer: kvkNummer || null,
+    });
+
+    if (dbError) {
+      console.error("Supabase error:", dbError);
+      // We laten de request toch slagen want de email is al verstuurd
     }
 
     return NextResponse.json({ success: true });

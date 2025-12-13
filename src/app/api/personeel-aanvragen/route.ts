@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { supabase } from "@/lib/supabase";
 
 interface FormData {
   bedrijfsnaam: string;
@@ -155,6 +156,27 @@ export async function POST(request: NextRequest) {
         { error: "Fout bij verzenden e-mail" },
         { status: 500 }
       );
+    }
+
+    // Opslaan in Supabase
+    const { error: dbError } = await supabase.from("personeel_aanvragen").insert({
+      bedrijfsnaam: data.bedrijfsnaam,
+      contactpersoon: data.contactpersoon,
+      email: data.email,
+      telefoon: data.telefoon,
+      type_personeel: data.typePersoneel,
+      aantal_personen: data.aantalPersonen,
+      start_datum: data.startDatum,
+      eind_datum: data.eindDatum || null,
+      werkdagen: data.werkdagen,
+      werktijden: data.werktijden,
+      locatie: data.locatie,
+      opmerkingen: data.opmerkingen || null,
+    });
+
+    if (dbError) {
+      console.error("Supabase error:", dbError);
+      // We laten de request toch slagen want de email is al verstuurd
     }
 
     return NextResponse.json({ success: true });

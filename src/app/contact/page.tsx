@@ -1,9 +1,45 @@
 "use client";
 
+import { useState } from "react";
 import FadeIn from "@/components/animations/FadeIn";
-import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 
 export default function ContactPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          naam: formData.get("naam"),
+          email: formData.get("email"),
+          telefoon: formData.get("telefoon"),
+          onderwerp: formData.get("onderwerp"),
+          bericht: formData.get("bericht"),
+        }),
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+        form.reset();
+      } else {
+        alert("Er is iets misgegaan. Probeer het opnieuw.");
+      }
+    } catch {
+      alert("Er is iets misgegaan. Probeer het opnieuw.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <>
       {/* Hero Section */}
@@ -37,7 +73,24 @@ export default function ContactPage() {
                 <p className="text-neutral-600 mb-8">
                   Vul het formulier in en wij nemen binnen 24 uur contact met u op.
                 </p>
-                <form action="https://formspree.io/f/xyzrllbz" method="POST" className="space-y-6">
+                {isSubmitted ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-neutral-900 mb-2">Bericht verzonden!</h3>
+                    <p className="text-neutral-600 mb-6">Wij nemen zo snel mogelijk contact met u op.</p>
+                    <button
+                      onClick={() => setIsSubmitted(false)}
+                      className="text-[#F27501] font-medium hover:underline"
+                    >
+                      Nog een bericht sturen
+                    </button>
+                  </div>
+                ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="naam" className="block text-sm font-medium text-neutral-700 mb-2">
@@ -126,13 +179,15 @@ export default function ContactPage() {
 
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="w-full bg-[#F27501] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#d96800] transition-all duration-300"
+                    hover:bg-[#d96800] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Verstuur bericht
+                    {isSubmitting ? "Verzenden..." : "Verstuur bericht"}
                   </button>
                 </form>
+                )}
               </div>
             </FadeIn>
 
