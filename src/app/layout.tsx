@@ -21,8 +21,30 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TopTalent Jobs - Jouw Personeel, Onze Missie",
-  description: "Flexibel en kwalitatief personeel voor horeca en evenementen. Uitzenden, detachering en recruitment.",
+  title: {
+    default: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
+    template: "%s | TopTalent Jobs",
+  },
+  description: "Snel en betrouwbaar horeca personeel nodig? TopTalent Jobs levert binnen 24 uur ervaren krachten voor restaurants, hotels en evenementen in Utrecht en omgeving.",
+  keywords: ["horeca uitzendbureau", "personeel horeca", "uitzendbureau utrecht", "horeca vacatures", "evenementen personeel", "catering personeel"],
+  authors: [{ name: "TopTalent Jobs" }],
+  openGraph: {
+    title: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
+    description: "Snel en betrouwbaar horeca personeel nodig? TopTalent Jobs levert binnen 24 uur ervaren krachten voor restaurants, hotels en evenementen.",
+    url: "https://toptalentjobs.nl",
+    siteName: "TopTalent Jobs",
+    locale: "nl_NL",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
+    description: "Snel en betrouwbaar horeca personeel nodig? TopTalent Jobs levert binnen 24 uur ervaren krachten.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
