@@ -127,7 +127,7 @@ export default function BedanktContactPage() {
           }`}
         >
           <Link
-            href="/faq"
+            href="/contact#faq"
             className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#FF7A00] transition-colors duration-300 font-medium group"
           >
             Bekijk veelgestelde vragen
