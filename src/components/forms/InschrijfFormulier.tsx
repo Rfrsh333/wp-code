@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 interface FormData {
   voornaam: string;
@@ -463,6 +464,7 @@ export default function InschrijfFormulier() {
   const [profielFoto, setProfielFoto] = useState<File | null>(null);
   const [extraDocumenten, setExtraDocumenten] = useState<File[]>([]);
   const [mounted, setMounted] = useState(false);
+  const { executeRecaptcha } = useRecaptcha();
 
   useEffect(() => {
     setMounted(true);
@@ -508,11 +510,18 @@ export default function InschrijfFormulier() {
     setIsSubmitting(true);
 
     try {
+      // Get reCAPTCHA token
+      const recaptchaToken = await executeRecaptcha("inschrijven");
+
       const submitData = new FormData();
 
       Object.entries(formData).forEach(([key, value]) => {
         submitData.append(key, String(value));
       });
+
+      if (recaptchaToken) {
+        submitData.append("recaptchaToken", recaptchaToken);
+      }
 
       if (cvFile) submitData.append("cv", cvFile);
       if (profielFoto) submitData.append("profielfoto", profielFoto);
@@ -528,7 +537,8 @@ export default function InschrijfFormulier() {
       if (response.ok) {
         setIsSubmitted(true);
       } else {
-        alert("Er is iets misgegaan. Probeer het opnieuw.");
+        const data = await response.json();
+        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
       alert("Er is iets misgegaan. Probeer het opnieuw.");

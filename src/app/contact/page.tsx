@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { executeRecaptcha } = useRecaptcha();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -17,6 +19,9 @@ export default function ContactPage() {
     const formData = new FormData(form);
 
     try {
+      // Get reCAPTCHA token
+      const recaptchaToken = await executeRecaptcha("contact");
+
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -26,13 +31,15 @@ export default function ContactPage() {
           telefoon: formData.get("telefoon"),
           onderwerp: formData.get("onderwerp"),
           bericht: formData.get("bericht"),
+          recaptchaToken,
         }),
       });
 
       if (response.ok) {
         router.push("/bedankt/contact");
       } else {
-        alert("Er is iets misgegaan. Probeer het opnieuw.");
+        const data = await response.json();
+        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
       alert("Er is iets misgegaan. Probeer het opnieuw.");

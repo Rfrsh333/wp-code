@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { verifyRecaptcha } from "@/lib/recaptcha";
 
 interface ContactFormData {
   naam: string;
@@ -8,11 +10,37 @@ interface ContactFormData {
   telefoon?: string;
   onderwerp: string;
   bericht: string;
+  recaptchaToken?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: max 5 requests per minute per IP
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`contact:${clientIP}`, {
+      windowMs: 60 * 1000,
+      maxRequests: 5,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Te veel verzoeken. Probeer opnieuw over ${rateLimit.resetIn} seconden.` },
+        { status: 429 }
+      );
+    }
+
     const data: ContactFormData = await request.json();
+
+    // Verify reCAPTCHA
+    if (data.recaptchaToken) {
+      const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
+      if (!recaptchaResult.success) {
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Spam detectie mislukt" },
+          { status: 400 }
+        );
+      }
+    }
 
     // Validate required fields
     if (!data.naam || !data.email || !data.onderwerp || !data.bericht) {

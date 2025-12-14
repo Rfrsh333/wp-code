@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 interface FormData {
   // Stap 1: Bedrijfsgegevens
@@ -68,6 +69,7 @@ export default function PersoneelAanvragenWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [direction, setDirection] = useState(1);
+  const { executeRecaptcha } = useRecaptcha();
 
   const totalSteps = 4;
 
@@ -137,16 +139,23 @@ export default function PersoneelAanvragenWizard() {
     setIsSubmitting(true);
 
     try {
+      // Get reCAPTCHA token
+      const recaptchaToken = await executeRecaptcha("personeel_aanvragen");
+
       const response = await fetch("/api/personeel-aanvragen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          recaptchaToken,
+        }),
       });
 
       if (response.ok) {
         setIsSubmitted(true);
       } else {
-        alert("Er is iets misgegaan. Probeer het opnieuw.");
+        const data = await response.json();
+        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
       alert("Er is iets misgegaan. Probeer het opnieuw.");

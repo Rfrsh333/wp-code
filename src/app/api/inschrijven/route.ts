@@ -1,10 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { verifyRecaptcha } from "@/lib/recaptcha";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: max 3 requests per minute per IP (stricter for file uploads)
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`inschrijven:${clientIP}`, {
+      windowMs: 60 * 1000,
+      maxRequests: 3,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Te veel verzoeken. Probeer opnieuw over ${rateLimit.resetIn} seconden.` },
+        { status: 429 }
+      );
+    }
+
     const formData = await request.formData();
+
+    // Verify reCAPTCHA
+    const recaptchaToken = formData.get("recaptchaToken") as string;
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+      if (!recaptchaResult.success) {
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Spam detectie mislukt" },
+          { status: 400 }
+        );
+      }
+    }
 
     // Extract form fields
     const voornaam = formData.get("voornaam") as string;
