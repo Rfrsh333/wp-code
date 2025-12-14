@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
 
 interface FormData {
   voornaam: string;
@@ -35,20 +34,6 @@ const initialFormData: FormData = {
   toestemming: false,
 };
 
-// Animation variants for sections
-const sectionVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.5,
-      ease: "easeOut" as const,
-    },
-  }),
-};
-
 // Card component for sections
 function FormCard({
   children,
@@ -64,12 +49,9 @@ function FormCard({
   index: number;
 }) {
   return (
-    <motion.div
-      custom={index}
-      initial="hidden"
-      animate="visible"
-      variants={sectionVariants}
-      className="bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 overflow-hidden"
+    <div
+      className="bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 overflow-hidden animate-fade-in"
+      style={{ animationDelay: `${index * 0.1}s` }}
     >
       <div className="px-6 py-5 border-b border-neutral-100 bg-gradient-to-r from-neutral-50 to-white">
         <div className="flex items-center gap-4">
@@ -85,7 +67,7 @@ function FormCard({
         </div>
       </div>
       <div className="p-6">{children}</div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -138,16 +120,12 @@ function FormInput({
           `}
         />
         {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-red-500 text-sm mt-2 flex items-center gap-1.5"
-          >
+          <p className="text-red-500 text-sm mt-2 flex items-center gap-1.5 animate-fade-in">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {error}
-          </motion.p>
+          </p>
         )}
       </div>
     </div>
@@ -210,16 +188,12 @@ function FormSelect({
         </div>
       </div>
       {error && (
-        <motion.p
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-red-500 text-sm mt-2 flex items-center gap-1.5"
-        >
+        <p className="text-red-500 text-sm mt-2 flex items-center gap-1.5 animate-fade-in">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           {error}
-        </motion.p>
+        </p>
       )}
     </div>
   );
@@ -271,16 +245,12 @@ function FormTextarea({
         `}
       />
       {error && (
-        <motion.p
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-red-500 text-sm mt-2 flex items-center gap-1.5"
-        >
+        <p className="text-red-500 text-sm mt-2 flex items-center gap-1.5 animate-fade-in">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           {error}
-        </motion.p>
+        </p>
       )}
     </div>
   );
@@ -446,11 +416,9 @@ function FileUpload({
       {multiple && files && files.length > 0 && (
         <div className="mt-3 space-y-2">
           {files.map((doc, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center justify-between bg-neutral-50 px-4 py-3 rounded-xl border border-neutral-100"
+              className="flex items-center justify-between bg-neutral-50 px-4 py-3 rounded-xl border border-neutral-100 animate-fade-in"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#F27501]/10 flex items-center justify-center text-[#F27501]">
@@ -469,22 +437,18 @@ function FileUpload({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
 
       {error && (
-        <motion.p
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-red-500 text-sm mt-2 flex items-center gap-1.5"
-        >
+        <p className="text-red-500 text-sm mt-2 flex items-center gap-1.5 animate-fade-in">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           Dit veld is verplicht
-        </motion.p>
+        </p>
       )}
     </div>
   );
@@ -581,12 +545,7 @@ export default function InschrijfFormulier() {
 
   if (isSubmitted) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white rounded-2xl shadow-xl shadow-neutral-900/5 border border-neutral-100 p-10 md:p-14 text-center max-w-2xl mx-auto"
-      >
+      <div className="bg-white rounded-2xl shadow-xl shadow-neutral-900/5 border border-neutral-100 p-10 md:p-14 text-center max-w-2xl mx-auto animate-fade-in">
         <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
           <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -614,33 +573,25 @@ export default function InschrijfFormulier() {
           </svg>
           Nieuwe inschrijving
         </button>
-      </motion.div>
+      </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-10"
-      >
+      <div className="text-center mb-10 animate-fade-in">
         <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
           Inschrijven bij TopTalent
         </h2>
         <p className="text-neutral-600 max-w-xl mx-auto">
           Leuk dat je je wilt inschrijven! Vul onderstaand formulier in en wij nemen spoedig contact met je op.
         </p>
-      </motion.div>
+      </div>
 
       {/* Toestemming */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className={`
+      <div
+        className={`animate-fade-in
           bg-gradient-to-r from-neutral-50 to-white rounded-2xl p-5 border-2 transition-colors duration-200
           ${errors.toestemming ? "border-red-200" : formData.toestemming ? "border-green-200" : "border-neutral-100"}
         `}
@@ -673,18 +624,14 @@ export default function InschrijfFormulier() {
           </span>
         </label>
         {errors.toestemming && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-red-500 text-sm mt-3 flex items-center gap-1.5"
-          >
+          <p className="text-red-500 text-sm mt-3 flex items-center gap-1.5 animate-fade-in">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {errors.toestemming}
-          </motion.p>
+          </p>
         )}
-      </motion.div>
+      </div>
 
       {/* Section 1: Persoonlijke gegevens */}
       <FormCard
@@ -866,25 +813,17 @@ export default function InschrijfFormulier() {
               ))}
             </div>
             {errors.uitbetalingswijze && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-red-500 text-sm mt-2 flex items-center gap-1.5"
-              >
+              <p className="text-red-500 text-sm mt-2 flex items-center gap-1.5 animate-fade-in">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 {errors.uitbetalingswijze}
-              </motion.p>
+              </p>
             )}
           </div>
 
           {formData.uitbetalingswijze === "zzp" && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-            >
+            <div className="animate-fade-in">
               <FormInput
                 label="KVK nummer"
                 value={formData.kvkNummer}
@@ -893,7 +832,7 @@ export default function InschrijfFormulier() {
                 error={errors.kvkNummer}
                 required
               />
-            </motion.div>
+            </div>
           )}
         </div>
       </FormCard>
@@ -944,12 +883,7 @@ export default function InschrijfFormulier() {
       </FormCard>
 
       {/* Submit Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-        className="pt-4"
-      >
+      <div className="pt-4 animate-fade-in" style={{ animationDelay: "0.5s" }}>
         <button
           type="submit"
           disabled={isSubmitting}
@@ -987,7 +921,7 @@ export default function InschrijfFormulier() {
           {" "}en{" "}
           <a href="/privacy" className="text-[#F27501] hover:underline">privacybeleid</a>.
         </p>
-      </motion.div>
+      </div>
     </form>
   );
 }

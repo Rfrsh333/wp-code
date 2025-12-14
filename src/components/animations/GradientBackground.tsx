@@ -10,6 +10,7 @@ export default function GradientBackground() {
           background: "radial-gradient(circle, #F27501 0%, transparent 70%)",
           top: "-10%",
           right: "-5%",
+          willChange: "transform",
         }}
       />
 
@@ -20,6 +21,7 @@ export default function GradientBackground() {
           background: "radial-gradient(circle, #FFB347 0%, transparent 70%)",
           bottom: "10%",
           left: "-10%",
+          willChange: "transform",
         }}
       />
 
@@ -30,26 +32,33 @@ export default function GradientBackground() {
           background: "radial-gradient(circle, #F27501 0%, transparent 70%)",
           top: "50%",
           left: "50%",
+          willChange: "transform",
         }}
       />
 
       <style jsx>{`
         @keyframes blob1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(50px, 30px) scale(1.1); }
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+          50% { transform: translate3d(50px, 30px, 0) scale(1.1); }
         }
         @keyframes blob2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-40px, -50px) scale(1.15); }
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+          50% { transform: translate3d(-40px, -50px, 0) scale(1.15); }
         }
         @keyframes blob3 {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); }
-          33% { transform: translate(calc(-50% + 30px), calc(-50% - 20px)) scale(1.2); }
-          66% { transform: translate(calc(-50% - 30px), calc(-50% + 20px)) scale(0.9); }
+          0%, 100% { transform: translate3d(-50%, -50%, 0) scale(1); }
+          33% { transform: translate3d(calc(-50% + 30px), calc(-50% - 20px), 0) scale(1.2); }
+          66% { transform: translate3d(calc(-50% - 30px), calc(-50% + 20px), 0) scale(0.9); }
         }
         .animate-blob1 { animation: blob1 20s ease-in-out infinite; }
         .animate-blob2 { animation: blob2 25s ease-in-out infinite; }
         .animate-blob3 { animation: blob3 30s ease-in-out infinite; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .animate-blob1, .animate-blob2, .animate-blob3 {
+            animation: none;
+          }
+        }
       `}</style>
     </div>
   );
