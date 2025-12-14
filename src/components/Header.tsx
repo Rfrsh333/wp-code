@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileDienstenOpen, setIsMobileDienstenOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -227,13 +228,55 @@ export default function Header() {
               >
                 Home
               </Link>
-              <Link
-                href="/diensten"
-                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Diensten
-              </Link>
+              {/* Diensten met dropdown */}
+              <div>
+                <button
+                  onClick={() => setIsMobileDienstenOpen(!isMobileDienstenOpen)}
+                  className="w-full px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 flex items-center justify-between"
+                >
+                  Diensten
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${isMobileDienstenOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className={`overflow-hidden transition-all duration-200 ${isMobileDienstenOpen ? 'max-h-48' : 'max-h-0'}`}>
+                  <div className="pl-4 py-1 space-y-1">
+                    <Link
+                      href="/diensten"
+                      className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Alle Diensten
+                    </Link>
+                    <Link
+                      href="/diensten/uitzenden"
+                      className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Uitzenden
+                    </Link>
+                    <Link
+                      href="/diensten/detachering"
+                      className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Detachering
+                    </Link>
+                    <Link
+                      href="/diensten/recruitment"
+                      className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Recruitment
+                    </Link>
+                  </div>
+                </div>
+              </div>
               <Link
                 href="/over-ons"
                 className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
