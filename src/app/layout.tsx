@@ -21,6 +21,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://toptalentjobs.nl"),
   title: {
     default: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
     template: "%s | TopTalent Jobs",
