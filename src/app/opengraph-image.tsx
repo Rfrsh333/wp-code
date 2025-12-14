@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
-
-export const runtime = 'edge'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
 export const alt = 'TopTalent Jobs - Horeca Uitzendbureau Utrecht'
 export const size = {
@@ -10,6 +10,9 @@ export const size = {
 export const contentType = 'image/png'
 
 export default async function Image() {
+  const logoData = await readFile(join(process.cwd(), 'public/images/logo-icon.png'))
+  const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
+
   return new ImageResponse(
     (
       <div
@@ -36,22 +39,16 @@ export default async function Image() {
           }}
         />
 
-        {/* Logo T */}
-        <div
+        {/* Logo Icon */}
+        <img
+          src={logoBase64}
+          alt="TopTalent Logo"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '120px',
-            height: '120px',
-            background: 'linear-gradient(135deg, #FF7A00 0%, #F97316 100%)',
-            borderRadius: '24px',
+            width: '150px',
+            height: '150px',
             marginBottom: '40px',
-            boxShadow: '0 20px 40px rgba(249, 115, 22, 0.3)',
           }}
-        >
-          <span style={{ fontSize: '72px', color: 'white', fontWeight: 'bold' }}>T</span>
-        </div>
+        />
 
         {/* Title */}
         <div
