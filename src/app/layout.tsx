@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import ClickSparkWrapper from "@/components/ClickSparkWrapper";
 import GradientBackground from "@/components/animations/GradientBackground";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import StructuredData from "@/components/StructuredData";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -56,6 +57,7 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <head>
+        <StructuredData />
         {/* Google Tag Manager */}
         <Script
           id="gtm-script"
