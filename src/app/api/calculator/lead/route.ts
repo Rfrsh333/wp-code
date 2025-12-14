@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
 
       // Email to lead
       const leadEmailPromise = resend.emails.send({
-        from: "TopTalent Jobs <onboarding@resend.dev>",
+        from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
         to: [lead.email],
         subject: "Uw kostenoverzicht horecapersoneel - TopTalent Jobs",
         html: generateLeadEmail(lead, inputs, resultaten, pdfToken),
@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
 
       // Internal notification
       const internalEmailPromise = resend.emails.send({
-        from: "TopTalent Jobs <onboarding@resend.dev>",
+        from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
         to: ["info@toptalentjobs.nl"],
         replyTo: lead.email,
         subject: `Calculator Lead: ${lead.bedrijfsnaam} - ${lead.naam}`,
