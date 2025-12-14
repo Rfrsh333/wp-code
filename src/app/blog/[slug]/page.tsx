@@ -627,6 +627,336 @@ Je runt de dagelijkse operatie van een horecazaak.
 Bij TopTalent Jobs hebben we vacatures voor al deze functies. Schrijf je in en we helpen je aan de perfecte baan!
     `,
   },
+  "restaurant-openen-team-samenstellen": {
+    title: "Restaurant openen? Zo stel je het perfecte team samen",
+    excerpt: "Een nieuw restaurant openen begint met het juiste team.",
+    category: "Management",
+    author: "TopTalent Team",
+    date: "25 november 2024",
+    image: "/images/dienst-recruitment.png",
+    relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "meest-gevraagde-horecafuncties-nederland"],
+    content: `
+## Het belang van een goed team bij het openen van een restaurant
+
+Een nieuw restaurant openen is spannend, maar ook uitdagend. Naast een goed concept, locatie en financiering is uw team misschien wel de belangrijkste succesfactor. Met de juiste mensen om u heen kan uw restaurant floreren.
+
+## Welke functies heeft u nodig?
+
+### Kernteam (vanaf de start)
+
+**Chef-kok of Hoofdkok**
+De creatieve motor achter uw keuken. Verantwoordelijk voor het menu, inkoop en kwaliteit.
+- Salaris: €2.800 - €4.500 bruto per maand
+- Tip: Zoek iemand die past bij uw concept
+
+**Bedrijfsleider / Manager**
+Runt de dagelijkse operatie, aanspreekpunt voor personeel en gasten.
+- Salaris: €2.500 - €3.800 bruto per maand
+- Kan in het begin uzelf zijn
+
+**Souschef**
+Rechterhand van de chef, neemt over bij afwezigheid.
+- Salaris: €2.200 - €3.200 bruto per maand
+
+### Operationeel team
+
+**Bediening**
+- 1 medewerker per 15-20 zitplaatsen (lunchservice)
+- 1 medewerker per 10-15 zitplaatsen (diner)
+
+**Keukenmedewerkers**
+- Afhankelijk van uw menukaart en volume
+- Start met minimaal 2 krachten naast de chef
+
+**Afwas**
+- Minimaal 1 persoon tijdens drukke diensten
+
+## Hoeveel personeel heeft u nodig?
+
+Een vuistregel voor een restaurant met 50 zitplaatsen:
+
+| Functie | Aantal (FTE) |
+|---------|--------------|
+| Chef-kok | 1 |
+| Souschef | 1 |
+| Koks/keukenhulp | 2-3 |
+| Bediening | 4-6 |
+| Afwas | 1-2 |
+| Manager | 1 |
+
+## Tips voor het samenstellen van uw team
+
+### 1. Begin op tijd met werven
+Start minimaal 2-3 maanden voor opening met het zoeken naar personeel. Goede mensen zijn schaars.
+
+### 2. Investeer in training
+Neem tijd om uw team te trainen vóór de opening. Dit voorkomt opstartproblemen.
+
+### 3. Zoek mensen die passen bij uw concept
+Een fine dining restaurant vraagt ander personeel dan een casual eetcafé.
+
+### 4. Combineer ervaring met enthousiasme
+Een mix van ervaren krachten en gemotiveerde starters werkt vaak goed.
+
+### 5. Overweeg flexibel personeel
+Gebruik uitzendkrachten voor de opstartfase of drukke periodes.
+
+## Hulp nodig bij het vinden van personeel?
+
+TopTalent Jobs helpt nieuwe horecaondernemers met het samenstellen van hun team. Van chef-kok tot afwasser - wij hebben de juiste mensen.
+
+Neem contact op voor een vrijblijvend gesprek!
+    `,
+  },
+  "seizoenspersoneel-horeca-zomer": {
+    title: "Seizoenspersoneel horeca: voorbereid op de zomer",
+    excerpt: "De zomer betekent terrassen en drukte. Leer hoe u tijdig seizoenspersoneel werft.",
+    category: "Uitzenden",
+    author: "TopTalent Team",
+    date: "22 november 2024",
+    image: "/images/dienst-uitzenden.png",
+    relatedSlugs: ["personeelstekort-horeca-oplossen", "horecapersoneel-inhuren-gids-2025"],
+    content: `
+## Waarom seizoenspersoneel essentieel is
+
+De zomermaanden zijn voor veel horecazaken de drukste periode van het jaar. Terrassen stromen vol, toeristen komen langs en evenementen volgen elkaar op. Zonder voldoende personeel kunt u deze kansen niet optimaal benutten.
+
+## Wanneer begint u met werven?
+
+### Tijdlijn voor seizoenspersoneel
+
+**Februari - Maart**
+- Bepaal uw personeelsbehoefte
+- Neem contact op met uitzendbureaus
+- Plaats vacatures
+
+**April**
+- Voer sollicitatiegesprekken
+- Selecteer kandidaten
+- Start met contracten
+
+**Mei**
+- Inwerken van nieuwe medewerkers
+- Training en kennismaking met het team
+
+**Juni - Augustus**
+- Zomerseizoen: alle hens aan dek!
+
+## Hoeveel extra personeel heeft u nodig?
+
+Een indicatie voor de zomermaanden:
+
+- **Terras**: +50-100% bediening ten opzichte van winter
+- **Strandtent**: vaak volledig seizoensteam
+- **Restaurant in toeristisch gebied**: +30-50% personeel
+- **Evenementen/festivals**: projectmatig inhuren
+
+## Voordelen van seizoenspersoneel via een uitzendbureau
+
+### Flexibiliteit
+Schaal makkelijk op en af op basis van het weer en drukte.
+
+### Geen vaste lasten
+U betaalt alleen voor gewerkte uren.
+
+### Snel beschikbaar
+Uitzendkrachten kunnen vaak op korte termijn starten.
+
+### Minder administratie
+Het uitzendbureau regelt contracten, loon en verzekeringen.
+
+## Tips voor succesvol werken met seizoenspersoneel
+
+### 1. Zorg voor goede onboarding
+Ook tijdelijke krachten hebben een degelijke inwerkperiode nodig.
+
+### 2. Creëer een prettige werksfeer
+Seizoenswerkers die zich welkom voelen, presteren beter.
+
+### 3. Bied doorgroeikansen
+Goede seizoenskrachten kunt u wellicht behouden voor vast werk.
+
+### 4. Communiceer duidelijk
+Bespreek verwachtingen, roosters en huisregels vooraf.
+
+### 5. Plan vooruit
+Wacht niet tot het laatste moment met werven.
+
+## Wat zoeken seizoenswerkers?
+
+- Flexibele roosters
+- Leuke werksfeer
+- Eerlijk loon
+- Mogelijkheid om veel uren te maken
+- Eventueel kost en inwoning (bij ver weg)
+
+## TopTalent Jobs helpt u aan seizoenspersoneel
+
+Wij hebben een groot netwerk van ervaren horecamedewerkers die beschikbaar zijn voor seizoenswerk. Neem tijdig contact op voor de beste selectie!
+    `,
+  },
+  "cao-horeca-2025-wijzigingen": {
+    title: "CAO Horeca 2025: dit verandert er voor werkgevers",
+    excerpt: "De nieuwe CAO Horeca brengt veranderingen in salaris, toeslagen en arbeidsvoorwaarden.",
+    category: "HR",
+    author: "TopTalent Team",
+    date: "20 november 2024",
+    image: "/images/dienst-detachering.png",
+    relatedSlugs: ["kosten-uitzendkracht-horeca-tarieven", "horecapersoneel-inhuren-gids-2025"],
+    content: `
+## CAO Horeca 2025: de belangrijkste wijzigingen
+
+De CAO Horeca wordt regelmatig vernieuwd. Als werkgever is het belangrijk om op de hoogte te blijven van de laatste wijzigingen. Hier vindt u een overzicht van de belangrijkste veranderingen.
+
+## Salariswijzigingen
+
+### Minimumuurlonen per functiegroep
+
+De salarissen in de horeca stijgen. Hieronder een indicatie van de minimumuurlonen:
+
+| Functiegroep | Uurloon 2025 (indicatie) |
+|--------------|--------------------------|
+| Groep 1 (starter) | €13,50 - €14,50 |
+| Groep 2 | €14,00 - €15,50 |
+| Groep 3 | €15,00 - €17,00 |
+| Groep 4 | €16,50 - €19,00 |
+| Groep 5 | €18,00 - €22,00 |
+
+*Let op: dit zijn indicaties. Raadpleeg altijd de officiële CAO tekst.*
+
+### Periodieken
+Medewerkers hebben recht op jaarlijkse periodieken (salarisverhogingen) tot ze het maximum van hun schaal bereiken.
+
+## Toeslagen
+
+### Overwerktoeslag
+- Meer dan 38 uur per week: 125% of 150% afhankelijk van het moment
+
+### Feestdagentoeslag
+- Werken op officiële feestdagen: tot 200% van het uurloon
+
+### Onregelmatigheidstoeslag
+Voor werk op onregelmatige tijden (avond, nacht, weekend) kunnen toeslagen gelden.
+
+## Arbeidsvoorwaarden
+
+### Vakantiedagen
+Minimaal 20 vakantiedagen per jaar (bij fulltime dienstverband), plus eventuele bovenwettelijke dagen.
+
+### Vakantiegeld
+8% van het bruto jaarsalaris, uit te betalen in mei/juni.
+
+### Pensioen
+Pensioenopbouw via het pensioenfonds Horeca & Catering.
+
+## Wat betekent dit voor u als werkgever?
+
+### Hogere loonkosten
+De salarissverhogingen betekenen hogere personeelskosten. Calculeer dit mee in uw tarieven.
+
+### Administratieve verplichtingen
+Zorg dat uw loonadministratie up-to-date is met de nieuwe bedragen.
+
+### Uitzendkrachten
+Ook uitzendkrachten hebben recht op dezelfde beloning als uw vaste personeel (inlenersbeloning).
+
+## Tip: werk samen met een uitzendbureau
+
+Een gespecialiseerd uitzendbureau zoals TopTalent Jobs is altijd op de hoogte van de laatste CAO wijzigingen. Wij zorgen dat uw uitzendkrachten correct worden betaald, zodat u zich daar geen zorgen over hoeft te maken.
+
+Neem contact op voor meer informatie!
+    `,
+  },
+  "horeca-personeelsplanning-rooster-tips": {
+    title: "Horeca personeelsplanning: tips voor een efficiënt rooster",
+    excerpt: "Een goede personeelsplanning bespaart kosten en voorkomt stress.",
+    category: "Management",
+    author: "TopTalent Team",
+    date: "18 november 2024",
+    image: "/images/barista.png",
+    relatedSlugs: ["personeelstekort-horeca-oplossen", "seizoenspersoneel-horeca-zomer"],
+    content: `
+## Waarom is goede personeelsplanning zo belangrijk?
+
+Een efficiënt rooster zorgt voor:
+- Lagere personeelskosten
+- Minder stress bij uw team
+- Betere service voor gasten
+- Hogere medewerkerstevredenheid
+- Minder uitval en ziekteverzuim
+
+## 10 tips voor een efficiënt horecapersoneel rooster
+
+### 1. Ken uw drukke en rustige momenten
+
+Analyseer uw omzetdata per dag en per uur. Wanneer is het druk? Wanneer rustig? Plan personeel in op basis van verwachte drukte.
+
+### 2. Gebruik planningssoftware
+
+Excel werkt, maar gespecialiseerde software (Dyflexis, Shiftbase, etc.) bespaart tijd en voorkomt fouten.
+
+### 3. Plan minimaal 2 weken vooruit
+
+Medewerkers waarderen voorspelbaarheid. Publiceer roosters minimaal 2 weken van tevoren.
+
+### 4. Houd rekening met pauzes
+
+Wettelijk verplicht en belangrijk voor de energie van uw team.
+
+### 5. Zorg voor een goede mix
+
+Combineer ervaren krachten met minder ervaren medewerkers. Zo kunnen nieuwelingen leren.
+
+### 6. Wees flexibel met beschikbaarheid
+
+Vraag medewerkers naar hun beschikbaarheid en houd hier waar mogelijk rekening mee.
+
+### 7. Bouw een flexibele schil
+
+Gebruik uitzendkrachten voor piekmomenten of onverwachte drukte.
+
+### 8. Communiceer wijzigingen tijdig
+
+Roosterwijzigingen altijd zo snel mogelijk communiceren.
+
+### 9. Evalueer regelmatig
+
+Kijk maandelijks of uw planning aansluit bij de werkelijke drukte.
+
+### 10. Luister naar feedback
+
+Uw team weet vaak goed wat wel en niet werkt.
+
+## Veelgemaakte fouten bij personeelsplanning
+
+### Te weinig personeel inplannen
+Leidt tot stress, slechte service en uitval.
+
+### Te veel personeel inplannen
+Verspilling van loonkosten.
+
+### Geen rekening houden met vakanties
+Plan vakanties tijdig in en zorg voor vervanging.
+
+### Altijd dezelfde mensen op drukke dagen
+Wissel af om overbelasting te voorkomen.
+
+## De flexibele schil: uitzendkrachten als buffer
+
+Niet elke dienst is voorspelbaar. Met een flexibele schil van uitzendkrachten kunt u:
+
+- Snel opschalen bij onverwachte drukte
+- Ziekteverzuim opvangen
+- Piekmomenten managen
+- Vakanties overbruggen
+
+TopTalent Jobs levert betrouwbare uitzendkrachten, vaak binnen 24 uur beschikbaar.
+
+## Hulp nodig?
+
+Heeft u moeite met uw personeelsplanning of zoekt u flexibele krachten? Neem contact op met TopTalent Jobs voor advies en ondersteuning!
+    `,
+  },
 };
 
 // Generate static params for all blog articles
