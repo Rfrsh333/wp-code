@@ -195,12 +195,6 @@ export default function Header() {
                     </Link>
                     <div className="h-px bg-neutral-100 my-1"></div>
                     <Link
-                      href="/contact#faq"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                    >
-                      FAQ
-                    </Link>
-                    <Link
                       href="/testimonials"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
@@ -331,13 +325,6 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
-              </Link>
-              <Link
-                href="/contact#faq"
-                className="px-4 py-2.5 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                FAQ
               </Link>
               <Link
                 href="/testimonials"
