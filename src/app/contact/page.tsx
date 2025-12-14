@@ -16,60 +16,90 @@ const faqData: FAQItem[] = [
   // Voor Opdrachtgevers
   {
     category: "Voor Opdrachtgevers",
-    question: "Hoe snel kan ik personeel krijgen?",
-    answer: "In de meeste gevallen kunnen wij binnen 24 uur gekwalificeerd horecapersoneel leveren. Voor grotere aanvragen of specifieke functies kan dit iets langer duren, maar we streven altijd naar de snelst mogelijke oplossing voor uw personeelsbehoefte."
+    question: "Hoe snel kan ik horecapersoneel inhuren?",
+    answer: "Bij TopTalent Jobs kunt u binnen 24 uur gekwalificeerd horecapersoneel inhuren. Of u nu een bartender, kok, of bedienend personeel nodig heeft - wij leveren snel en betrouwbaar. Voor grotere aanvragen of gespecialiseerde functies plannen we graag een kort gesprek om uw wensen te bespreken."
   },
   {
     category: "Voor Opdrachtgevers",
-    question: "Wat zijn de kosten voor het inhuren van personeel?",
-    answer: "Onze tarieven zijn afhankelijk van de functie, ervaring en de duur van de inzet. Wij hanteren transparante uurtarieven zonder verborgen kosten. Neem contact met ons op voor een vrijblijvende offerte op maat."
+    question: "Wat kost het om horecapersoneel in te huren via een uitzendbureau?",
+    answer: "De kosten voor het inhuren van horecapersoneel zijn afhankelijk van de functie, ervaring en inzetduur. TopTalent Jobs hanteert transparante uurtarieven zonder verborgen kosten. Vraag vrijblijvend een offerte aan en ontvang binnen 24 uur een persoonlijk voorstel."
   },
   {
     category: "Voor Opdrachtgevers",
-    question: "Hoe werkt het selectieproces?",
-    answer: "Alle kandidaten doorlopen een uitgebreid selectieproces inclusief cv-screening, persoonlijke gesprekken en referentiechecks. We kijken niet alleen naar ervaring en vaardigheden, maar ook naar persoonlijkheid en cultuurfit met uw organisatie."
+    question: "Hoe selecteert TopTalent Jobs horecamedewerkers?",
+    answer: "Alle kandidaten doorlopen een uitgebreid selectieproces: cv-screening, persoonlijke gesprekken en referentiechecks. We beoordelen niet alleen vakkennis en ervaring, maar ook persoonlijkheid, betrouwbaarheid en gastvrijheid. Zo garanderen we dat u personeel krijgt dat past bij uw bedrijf."
   },
   {
     category: "Voor Opdrachtgevers",
-    question: "Wat als het personeel niet bevalt?",
-    answer: "Klanttevredenheid staat bij ons voorop. Als een medewerker niet aan uw verwachtingen voldoet, zorgen wij kosteloos voor vervanging. Bij recruitment bieden wij een plaatsingsgarantie tijdens de proefperiode."
+    question: "Wat als de ingehuurde medewerker niet voldoet?",
+    answer: "Klanttevredenheid staat voorop bij TopTalent Jobs. Voldoet een medewerker niet aan uw verwachtingen? Wij regelen kosteloos vervanging. Bij werving en selectie bieden we een plaatsingsgarantie gedurende de proefperiode."
   },
   {
     category: "Voor Opdrachtgevers",
-    question: "Welke functies kunnen jullie invullen?",
-    answer: "Wij leveren personeel voor alle horecafuncties: van bediening, bar en keuken tot management, receptie en evenementenpersoneel. Of het nu gaat om restaurants, hotels, catering of evenementen - wij hebben de juiste mensen."
+    question: "Voor welke horecafuncties kan ik personeel inhuren?",
+    answer: "TopTalent Jobs levert personeel voor alle horecafuncties: bediening, bar, keuken (van afwasser tot souschef), gastheer/gastvrouw, receptie, banqueting, catering en evenementenpersoneel. Of het nu gaat om restaurants, hotels, cafés, festivals of bedrijfsevenementen - wij hebben de juiste mensen."
+  },
+  {
+    category: "Voor Opdrachtgevers",
+    question: "Kan ik personeel inhuren voor een evenement of festival?",
+    answer: "Ja, TopTalent Jobs is gespecialiseerd in het leveren van evenementenpersoneel. Van kleine bedrijfsfeesten tot grote festivals - wij leveren ervaren horecamedewerkers die gewend zijn aan drukte en piekmoment. Neem minimaal 1 week van tevoren contact op voor de beste beschikbaarheid."
+  },
+  {
+    category: "Voor Opdrachtgevers",
+    question: "Wat is het verschil tussen uitzenden en detacheren?",
+    answer: "Bij uitzenden werkt het personeel op basis van een uitzendovereenkomst en betaalt u per gewerkt uur. Ideaal voor tijdelijke inzet of piekperiodes. Bij detachering wordt een medewerker voor langere tijd exclusief bij u geplaatst, met meer binding aan uw organisatie. Wij adviseren graag welke vorm het beste bij uw situatie past."
   },
   // Voor Werkzoekenden
   {
     category: "Voor Werkzoekenden",
-    question: "Hoe kan ik mij inschrijven?",
-    answer: "Inschrijven kan eenvoudig via onze website. Vul het inschrijfformulier in, upload je cv en we nemen zo snel mogelijk contact met je op voor een kennismakingsgesprek."
+    question: "Hoe schrijf ik me in als horecamedewerker?",
+    answer: "Inschrijven bij TopTalent Jobs is gratis en eenvoudig. Vul het online inschrijfformulier in, upload je cv en wij nemen binnen 48 uur contact op voor een kennismakingsgesprek. Na goedkeuring kun je direct aan de slag bij onze opdrachtgevers."
   },
   {
     category: "Voor Werkzoekenden",
-    question: "Moet ik ervaring hebben in de horeca?",
-    answer: "Ervaring is een plus, maar niet altijd vereist. We zoeken vooral gemotiveerde mensen met de juiste instelling. Voor bepaalde functies bieden we training en begeleiding aan."
+    question: "Heb ik ervaring nodig om in de horeca te werken?",
+    answer: "Ervaring is een plus, maar niet altijd vereist. TopTalent Jobs zoekt vooral gemotiveerde mensen met een gastvrije instelling en werkhouding. Voor bepaalde functies bieden we training en begeleiding aan. Starters zijn welkom!"
   },
   {
     category: "Voor Werkzoekenden",
-    question: "Hoe word ik betaald?",
-    answer: "Je ontvangt wekelijks of maandelijks je salaris, afhankelijk van je voorkeur. Alle betalingen verlopen via ons en je ontvangt een duidelijke loonstrook. We zorgen voor correcte afdracht van belastingen en premies."
+    question: "Hoe en wanneer word ik betaald als uitzendkracht?",
+    answer: "Je ontvangt wekelijks of maandelijks je salaris, afhankelijk van je voorkeur. Alle betalingen verlopen via TopTalent Jobs en je krijgt altijd een duidelijke loonstrook. Wij zorgen voor correcte afdracht van belastingen, premies en pensioenopbouw."
   },
   {
     category: "Voor Werkzoekenden",
-    question: "Kan ik zelf mijn werktijden bepalen?",
-    answer: "Flexibiliteit is een van onze kernwaarden. Je geeft je beschikbaarheid door en wij matchen dit met passende opdrachten. Of je nu fulltime wilt werken of alleen in het weekend - er is altijd werk dat bij je past."
+    question: "Kan ik als uitzendkracht zelf mijn werktijden kiezen?",
+    answer: "Ja, flexibiliteit is een groot voordeel van werken via TopTalent Jobs. Je geeft je beschikbaarheid door en wij matchen dit met passende opdrachten. Of je nu fulltime, parttime, in het weekend of alleen avonden wilt werken - er is altijd werk dat bij je past."
+  },
+  {
+    category: "Voor Werkzoekenden",
+    question: "Wat verdien ik als horecamedewerker via TopTalent Jobs?",
+    answer: "Het salaris hangt af van je functie, ervaring en de cao Horeca. Als uitzendkracht ontvang je minimaal hetzelfde loon als vaste medewerkers in dezelfde functie (inlenersbeloning). Daarnaast bouw je vakantiegeld, vakantiedagen en pensioen op."
+  },
+  {
+    category: "Voor Werkzoekenden",
+    question: "Kan ik via TopTalent Jobs een vast contract krijgen?",
+    answer: "Zeker! Veel van onze opdrachtgevers nemen goed presterende uitzendkrachten in vaste dienst. Ook bieden wij recruitment diensten waarbij we je direct koppelen aan werkgevers die zoeken naar vast personeel. Geef bij inschrijving aan wat je voorkeur heeft."
   },
   // Over TopTalent
   {
     category: "Over TopTalent",
-    question: "In welke regio's zijn jullie actief?",
-    answer: "TopTalent Jobs is actief in heel Nederland, met een focus op de Randstad en grote steden. We breiden continu uit om onze klanten en kandidaten nog beter van dienst te kunnen zijn."
+    question: "In welke steden en regio's is TopTalent Jobs actief?",
+    answer: "TopTalent Jobs is actief in heel Nederland, met een sterke focus op de Randstad (Amsterdam, Rotterdam, Den Haag, Utrecht), maar ook in steden als Eindhoven, Arnhem, Groningen en Maastricht. We breiden continu uit om werkgevers en horecamedewerkers in heel Nederland te bedienen."
   },
   {
     category: "Over TopTalent",
-    question: "Wat onderscheidt TopTalent van andere uitzendbureaus?",
-    answer: "Onze focus ligt 100% op de horeca, waardoor we de branche door en door kennen. We bieden persoonlijke service, snelle responstijden en investeren in langdurige relaties met zowel klanten als medewerkers."
+    question: "Waarom kiezen voor TopTalent Jobs als horeca uitzendbureau?",
+    answer: "TopTalent Jobs is 100% gespecialiseerd in de horeca. Wij kennen de branche, begrijpen de uitdagingen en weten welk type personeel bij welke gelegenheid past. Onze persoonlijke aanpak, snelle service (24/7 bereikbaar) en focus op kwaliteit maken ons de ideale partner voor horecabedrijven."
+  },
+  {
+    category: "Over TopTalent",
+    question: "Is TopTalent Jobs een betrouwbaar uitzendbureau?",
+    answer: "Ja, TopTalent Jobs is een betrouwbaar en professioneel uitzendbureau. Wij werken volgens de wet- en regelgeving voor uitzendorganisaties, zorgen voor correcte verloning en zijn transparant in onze werkwijze. Onze vele tevreden klanten en medewerkers bevestigen dit."
+  },
+  {
+    category: "Over TopTalent",
+    question: "Hoe neem ik contact op met TopTalent Jobs?",
+    answer: "U kunt TopTalent Jobs bereiken via telefoon (+31 6 49 20 04 12), e-mail (info@toptalentjobs.nl) of WhatsApp. Wij zijn 7 dagen per week bereikbaar en reageren doorgaans binnen enkele uren. U kunt ook het contactformulier op deze pagina invullen."
   },
 ];
 
