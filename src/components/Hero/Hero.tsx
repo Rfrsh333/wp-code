@@ -134,7 +134,7 @@ export default function Hero() {
             {/* Hero image */}
             <Image
               src="/images/barista.png"
-              alt="Professionele barista"
+              alt="Professionele barista aan het werk - TopTalent horeca personeel Utrecht"
               width={240}
               height={320}
               className={styles.heroImage}

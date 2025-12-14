@@ -56,7 +56,7 @@ export default function UitzendenPage() {
               <div className="flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-uitzenden.png"
-                  alt="Uitzenden - Flexibel horecapersoneel"
+                  alt="Flexibel horeca uitzendpersoneel aan het werk - bediening restaurant Utrecht"
                   width={480}
                   height={480}
                 />

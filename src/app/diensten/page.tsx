@@ -78,7 +78,7 @@ export default function DienstenPage() {
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
                         src="/images/dienst-uitzenden.png"
-                        alt="Uitzenden - Snel & Flexibel"
+                        alt="Horeca uitzendkracht aan het werk - flexibel personeel TopTalent Utrecht"
                         width={380}
                         height={380}
                       />
@@ -102,7 +102,7 @@ export default function DienstenPage() {
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
                         src="/images/dienst-detachering.png"
-                        alt="Detachering - Langdurig Partnership"
+                        alt="Gedetacheerd horeca personeel - langdurige samenwerking TopTalent"
                         width={380}
                         height={380}
                       />
@@ -192,7 +192,7 @@ export default function DienstenPage() {
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
                         src="/images/dienst-recruitment.png"
-                        alt="Recruitment - De perfecte match"
+                        alt="Recruitment gesprek horeca - werving en selectie TopTalent Utrecht"
                         width={380}
                         height={380}
                       />

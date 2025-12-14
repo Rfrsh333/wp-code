@@ -69,7 +69,7 @@ export default function OverOnsPage() {
               <div className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
                 <PremiumImage
                   src="/images/over-ons-verhaal.png"
-                  alt="TopTalent team - Ons verhaal"
+                  alt="TopTalent Jobs team Utrecht - horeca uitzendbureau met persoonlijke aanpak"
                   width={420}
                   height={420}
                 />

@@ -105,7 +105,7 @@ export default function TestimonialsPage() {
                     <div className="rounded-2xl overflow-hidden aspect-[4/5] bg-neutral-100">
                       <Image
                         src="/images/dienst-uitzenden.png"
-                        alt="TopTalent Service"
+                        alt="Horeca uitzendkracht TopTalent aan het werk in restaurant"
                         width={280}
                         height={350}
                         className="w-full h-full object-cover"
@@ -114,7 +114,7 @@ export default function TestimonialsPage() {
                     <div className="rounded-2xl overflow-hidden aspect-square bg-neutral-100">
                       <Image
                         src="/images/dienst-detachering.png"
-                        alt="TopTalent Detachering"
+                        alt="Gedetacheerd horeca personeel TopTalent in hotel"
                         width={280}
                         height={280}
                         className="w-full h-full object-cover"
@@ -125,7 +125,7 @@ export default function TestimonialsPage() {
                     <div className="rounded-2xl overflow-hidden aspect-square bg-neutral-100">
                       <Image
                         src="/images/dienst-recruitment.png"
-                        alt="TopTalent Recruitment"
+                        alt="Recruitment kandidaat gesprek TopTalent horeca"
                         width={280}
                         height={280}
                         className="w-full h-full object-cover"
@@ -134,7 +134,7 @@ export default function TestimonialsPage() {
                     <div className="rounded-2xl overflow-hidden aspect-[4/5] bg-neutral-100">
                       <Image
                         src="/images/barista.png"
-                        alt="TopTalent Team"
+                        alt="Professionele barista TopTalent aan het werk"
                         width={280}
                         height={350}
                         className="w-full h-full object-cover"

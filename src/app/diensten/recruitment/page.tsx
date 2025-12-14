@@ -56,7 +56,7 @@ export default function RecruitmentPage() {
               <div className="flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-recruitment.png"
-                  alt="Recruitment - De perfecte match"
+                  alt="Recruitment gesprek horeca kandidaat - werving en selectie TopTalent"
                   width={480}
                   height={480}
                 />

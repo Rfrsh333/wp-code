@@ -56,7 +56,7 @@ export default function DetacheringPage() {
               <div className="flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-detachering.png"
-                  alt="Detachering - Langdurig partnership"
+                  alt="Gedetacheerd horeca medewerker - langdurige samenwerking TopTalent Utrecht"
                   width={480}
                   height={480}
                 />
