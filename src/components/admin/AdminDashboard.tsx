@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-type Tab = "overzicht" | "aanvragen" | "inschrijvingen" | "contact";
+type Tab = "overzicht" | "aanvragen" | "inschrijvingen" | "contact" | "calculator";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 
 interface PersoneelAanvraag {
@@ -54,10 +54,35 @@ interface ContactBericht {
   status: Status;
 }
 
+interface CalculatorLead {
+  id: string;
+  created_at: string;
+  naam: string;
+  bedrijfsnaam: string;
+  email: string;
+  functie: string;
+  aantal_medewerkers: number;
+  ervaring: string;
+  uren_per_dienst: number;
+  dagen_per_week: number[];
+  inzet_type: string;
+  vergelijkingen: string[];
+  resultaten: {
+    vast?: { uurtarief: number; perMaand: number };
+    uitzend?: { uurtarief: number; perMaand: number };
+    zzp?: { uurtarief: number; perMaand: number };
+  };
+  pdf_token: string;
+  pdf_downloaded: boolean;
+  pdf_downloaded_at: string | null;
+  email_sent: boolean;
+}
+
 interface Stats {
   aanvragen: { total: number; nieuw: number };
   inschrijvingen: { total: number; nieuw: number };
   contact: { total: number; nieuw: number };
+  calculator: { total: number; downloaded: number };
 }
 
 export default function AdminDashboard() {
@@ -66,12 +91,14 @@ export default function AdminDashboard() {
     aanvragen: { total: 0, nieuw: 0 },
     inschrijvingen: { total: 0, nieuw: 0 },
     contact: { total: 0, nieuw: 0 },
+    calculator: { total: 0, downloaded: 0 },
   });
   const [aanvragen, setAanvragen] = useState<PersoneelAanvraag[]>([]);
   const [inschrijvingen, setInschrijvingen] = useState<Inschrijving[]>([]);
   const [contactBerichten, setContactBerichten] = useState<ContactBericht[]>([]);
+  const [calculatorLeads, setCalculatorLeads] = useState<CalculatorLead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState<PersoneelAanvraag | Inschrijving | ContactBericht | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PersoneelAanvraag | Inschrijving | ContactBericht | CalculatorLead | null>(null);
   const [detailType, setDetailType] = useState<Tab | null>(null);
   const router = useRouter();
 
@@ -79,15 +106,17 @@ export default function AdminDashboard() {
     setIsLoading(true);
 
     // Fetch all data
-    const [aanvragenRes, inschrijvingenRes, contactRes] = await Promise.all([
+    const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes] = await Promise.all([
       supabase.from("personeel_aanvragen").select("*").order("created_at", { ascending: false }),
       supabase.from("inschrijvingen").select("*").order("created_at", { ascending: false }),
       supabase.from("contact_berichten").select("*").order("created_at", { ascending: false }),
+      supabase.from("calculator_leads").select("*").order("created_at", { ascending: false }),
     ]);
 
     if (aanvragenRes.data) setAanvragen(aanvragenRes.data);
     if (inschrijvingenRes.data) setInschrijvingen(inschrijvingenRes.data);
     if (contactRes.data) setContactBerichten(contactRes.data);
+    if (calculatorRes.data) setCalculatorLeads(calculatorRes.data);
 
     // Calculate stats
     setStats({
@@ -102,6 +131,10 @@ export default function AdminDashboard() {
       contact: {
         total: contactRes.data?.length || 0,
         nieuw: contactRes.data?.filter((c) => c.status === "nieuw").length || 0,
+      },
+      calculator: {
+        total: calculatorRes.data?.length || 0,
+        downloaded: calculatorRes.data?.filter((c) => c.pdf_downloaded).length || 0,
       },
     });
 
@@ -221,6 +254,15 @@ export default function AdminDashboard() {
         </svg>
       ),
     },
+    {
+      id: "calculator",
+      label: "Calculator Leads",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -260,6 +302,11 @@ export default function AdminDashboard() {
                   {stats.contact.nieuw}
                 </span>
               )}
+              {tab.id === "calculator" && stats.calculator.total > 0 && (
+                <span className="ml-auto bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  {stats.calculator.total}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -290,7 +337,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-2xl font-bold text-neutral-900 mb-6">Dashboard Overzicht</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                   <div className="bg-white rounded-2xl p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -340,6 +387,23 @@ export default function AdminDashboard() {
                     </div>
                     <h3 className="text-3xl font-bold text-neutral-900">{stats.contact.total}</h3>
                     <p className="text-neutral-500">Contact berichten</p>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      {stats.calculator.downloaded > 0 && (
+                        <span className="bg-green-100 text-green-600 text-xs font-semibold px-2 py-1 rounded-full">
+                          {stats.calculator.downloaded} PDF
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-3xl font-bold text-neutral-900">{stats.calculator.total}</h3>
+                    <p className="text-neutral-500">Calculator leads</p>
                   </div>
                 </div>
 
@@ -602,6 +666,112 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+
+            {/* Calculator Leads Tab */}
+            {activeTab === "calculator" && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-neutral-900">Calculator Leads</h2>
+                  <button
+                    onClick={() => exportToCSV(calculatorLeads.map(lead => ({
+                      naam: lead.naam,
+                      bedrijfsnaam: lead.bedrijfsnaam,
+                      email: lead.email,
+                      functie: lead.functie,
+                      aantal_medewerkers: lead.aantal_medewerkers,
+                      ervaring: lead.ervaring,
+                      uren_per_dienst: lead.uren_per_dienst,
+                      dagen_per_week: lead.dagen_per_week.length,
+                      inzet_type: lead.inzet_type,
+                      vast_per_maand: lead.resultaten.vast?.perMaand || '',
+                      uitzend_per_maand: lead.resultaten.uitzend?.perMaand || '',
+                      zzp_per_maand: lead.resultaten.zzp?.perMaand || '',
+                      pdf_downloaded: lead.pdf_downloaded ? 'Ja' : 'Nee',
+                      email_sent: lead.email_sent ? 'Ja' : 'Nee',
+                      datum: lead.created_at,
+                    })), "calculator_leads")}
+                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Exporteer CSV
+                  </button>
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-neutral-50 border-b border-neutral-100">
+                      <tr>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Bedrijf</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Contact</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Functie</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Kosten/maand</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Datum</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Status</th>
+                        <th className="text-right px-6 py-4 text-sm font-semibold text-neutral-600">Acties</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100">
+                      {calculatorLeads.map((item) => (
+                        <tr key={item.id} className="hover:bg-neutral-50">
+                          <td className="px-6 py-4">
+                            <p className="font-medium text-neutral-900">{item.bedrijfsnaam}</p>
+                            <p className="text-sm text-neutral-500">{item.aantal_medewerkers} medewerker(s)</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-neutral-900">{item.naam}</p>
+                            <p className="text-sm text-neutral-500">{item.email}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-neutral-900 capitalize">{item.functie}</p>
+                            <p className="text-sm text-neutral-500">{item.ervaring}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            {item.resultaten.uitzend && (
+                              <p className="text-[#F27501] font-semibold">
+                                € {item.resultaten.uitzend.perMaand.toLocaleString("nl-NL")}
+                              </p>
+                            )}
+                            <p className="text-xs text-neutral-500">uitzend</p>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-neutral-500">
+                            {formatDate(item.created_at)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                item.email_sent ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                              }`}>
+                                {item.email_sent ? "Email verzonden" : "Geen email"}
+                              </span>
+                              {item.pdf_downloaded && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                  PDF gedownload
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => { setSelectedItem(item); setDetailType("calculator"); }}
+                              className="text-[#F27501] hover:text-[#d96800] font-medium text-sm"
+                            >
+                              Bekijken
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {calculatorLeads.length === 0 && (
+                    <div className="text-center py-12 text-neutral-500">
+                      Geen calculator leads gevonden
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>
@@ -615,6 +785,7 @@ export default function AdminDashboard() {
                 {detailType === "aanvragen" && "Personeel Aanvraag"}
                 {detailType === "inschrijvingen" && "Inschrijving"}
                 {detailType === "contact" && "Contact Bericht"}
+                {detailType === "calculator" && "Calculator Lead"}
               </h3>
               <button
                 onClick={() => setSelectedItem(null)}
@@ -776,37 +947,143 @@ export default function AdminDashboard() {
                 </>
               )}
 
-              {/* Status Update */}
-              <div className="pt-4 border-t border-neutral-100">
-                <p className="text-sm text-neutral-500 mb-2">Status wijzigen</p>
-                <div className="flex gap-2">
-                  {(["nieuw", "in_behandeling", "afgehandeld"] as Status[]).map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => updateStatus(
-                        detailType === "aanvragen" ? "personeel_aanvragen" :
-                        detailType === "inschrijvingen" ? "inschrijvingen" : "contact_berichten",
-                        selectedItem.id,
-                        status
+              {detailType === "calculator" && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-neutral-500">Naam</p>
+                      <p className="font-medium">{(selectedItem as CalculatorLead).naam}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Bedrijfsnaam</p>
+                      <p className="font-medium">{(selectedItem as CalculatorLead).bedrijfsnaam}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Email</p>
+                      <a href={`mailto:${(selectedItem as CalculatorLead).email}`} className="font-medium text-[#F27501]">
+                        {(selectedItem as CalculatorLead).email}
+                      </a>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Functie</p>
+                      <p className="font-medium capitalize">{(selectedItem as CalculatorLead).functie}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Aantal medewerkers</p>
+                      <p className="font-medium">{(selectedItem as CalculatorLead).aantal_medewerkers}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Ervaring</p>
+                      <p className="font-medium">{(selectedItem as CalculatorLead).ervaring}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Uren per dienst</p>
+                      <p className="font-medium">{(selectedItem as CalculatorLead).uren_per_dienst}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Dagen per week</p>
+                      <p className="font-medium">{(selectedItem as CalculatorLead).dagen_per_week?.length || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Type inzet</p>
+                      <p className="font-medium">{(selectedItem as CalculatorLead).inzet_type}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Aangevraagd op</p>
+                      <p className="font-medium">{formatDate((selectedItem as CalculatorLead).created_at)}</p>
+                    </div>
+                  </div>
+
+                  {/* Kostenvergelijking */}
+                  <div className="mt-4 p-4 bg-neutral-50 rounded-xl">
+                    <h4 className="font-semibold text-neutral-900 mb-3">Berekende kosten per maand</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      {(selectedItem as CalculatorLead).resultaten.vast && (
+                        <div className="text-center p-3 bg-white rounded-lg">
+                          <p className="text-xs text-neutral-500 mb-1">Vast</p>
+                          <p className="font-bold text-neutral-900">
+                            € {(selectedItem as CalculatorLead).resultaten.vast?.perMaand.toLocaleString("nl-NL")}
+                          </p>
+                          <p className="text-xs text-neutral-400">
+                            € {(selectedItem as CalculatorLead).resultaten.vast?.uurtarief.toFixed(2)}/uur
+                          </p>
+                        </div>
                       )}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                        selectedItem.status === status
-                          ? "bg-[#F27501] text-white"
-                          : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                      }`}
-                    >
-                      {status === "nieuw" ? "Nieuw" : status === "in_behandeling" ? "In behandeling" : "Afgehandeld"}
-                    </button>
-                  ))}
+                      {(selectedItem as CalculatorLead).resultaten.uitzend && (
+                        <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                          <p className="text-xs text-orange-600 mb-1">Uitzend</p>
+                          <p className="font-bold text-[#F27501]">
+                            € {(selectedItem as CalculatorLead).resultaten.uitzend?.perMaand.toLocaleString("nl-NL")}
+                          </p>
+                          <p className="text-xs text-neutral-400">
+                            € {(selectedItem as CalculatorLead).resultaten.uitzend?.uurtarief.toFixed(2)}/uur
+                          </p>
+                        </div>
+                      )}
+                      {(selectedItem as CalculatorLead).resultaten.zzp && (
+                        <div className="text-center p-3 bg-white rounded-lg">
+                          <p className="text-xs text-neutral-500 mb-1">ZZP</p>
+                          <p className="font-bold text-neutral-900">
+                            € {(selectedItem as CalculatorLead).resultaten.zzp?.perMaand.toLocaleString("nl-NL")}
+                          </p>
+                          <p className="text-xs text-neutral-400">
+                            € {(selectedItem as CalculatorLead).resultaten.zzp?.uurtarief.toFixed(2)}/uur
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status badges */}
+                  <div className="flex gap-2 mt-4">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      (selectedItem as CalculatorLead).email_sent ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {(selectedItem as CalculatorLead).email_sent ? "Email verzonden" : "Geen email verzonden"}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      (selectedItem as CalculatorLead).pdf_downloaded ? "bg-blue-100 text-blue-700" : "bg-neutral-100 text-neutral-600"
+                    }`}>
+                      {(selectedItem as CalculatorLead).pdf_downloaded ? "PDF gedownload" : "PDF niet gedownload"}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* Status Update - not for calculator leads */}
+              {detailType !== "calculator" && (
+                <div className="pt-4 border-t border-neutral-100">
+                  <p className="text-sm text-neutral-500 mb-2">Status wijzigen</p>
+                  <div className="flex gap-2">
+                    {(["nieuw", "in_behandeling", "afgehandeld"] as Status[]).map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => updateStatus(
+                          detailType === "aanvragen" ? "personeel_aanvragen" :
+                          detailType === "inschrijvingen" ? "inschrijvingen" : "contact_berichten",
+                          selectedItem.id,
+                          status
+                        )}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                          (selectedItem as PersoneelAanvraag | Inschrijving | ContactBericht).status === status
+                            ? "bg-[#F27501] text-white"
+                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                        }`}
+                      >
+                        {status === "nieuw" ? "Nieuw" : status === "in_behandeling" ? "In behandeling" : "Afgehandeld"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="p-6 border-t border-neutral-100 flex justify-between">
               <button
                 onClick={() => deleteItem(
                   detailType === "aanvragen" ? "personeel_aanvragen" :
-                  detailType === "inschrijvingen" ? "inschrijvingen" : "contact_berichten",
+                  detailType === "inschrijvingen" ? "inschrijvingen" :
+                  detailType === "calculator" ? "calculator_leads" : "contact_berichten",
                   selectedItem.id
                 )}
                 className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
