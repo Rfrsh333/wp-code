@@ -2,31 +2,19 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const ticking = useRef(false);
-
-  // Throttled scroll handler using requestAnimationFrame
-  const handleScroll = useCallback(() => {
-    if (!ticking.current) {
-      requestAnimationFrame(() => {
-        setIsScrolled(window.scrollY > 10);
-        ticking.current = false;
-      });
-      ticking.current = true;
-    }
-  }, []);
 
   useEffect(() => {
-    // Set initial value
-    setIsScrolled(window.scrollY > 10);
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+  }, []);
 
   return (
     <>
@@ -87,12 +75,10 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Main Header with Glass Effect */}
+      {/* Main Header */}
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-white/80 backdrop-blur-xl shadow-lg shadow-neutral-900/5 border-b border-neutral-100/50"
-            : "bg-white shadow-none"
+        className={`bg-white sticky top-0 z-50 transition-all duration-300 ${
+          isScrolled ? "shadow-lg shadow-neutral-900/5" : "shadow-none"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
@@ -111,7 +97,6 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
-              {/* Home */}
               <Link
                 href="/"
                 className="px-4 py-2 text-neutral-900 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
@@ -119,8 +104,6 @@ export default function Header() {
                 Home
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
-
-              {/* Diensten Dropdown */}
               <div className="relative group">
                 <button className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1">
                   Diensten
@@ -132,25 +115,24 @@ export default function Header() {
                   <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]">
                     <Link
                       href="/diensten"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200 font-medium"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
                       Alle Diensten
                     </Link>
-                    <div className="h-px bg-neutral-100 my-1"></div>
                     <Link
-                      href="/diensten/uitzenden"
+                      href="/diensten#uitzenden"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
                       Uitzenden
                     </Link>
                     <Link
-                      href="/diensten/detachering"
+                      href="/diensten#detachering"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
                       Detachering
                     </Link>
                     <Link
-                      href="/diensten/recruitment"
+                      href="/diensten#recruitment"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
                       Recruitment
@@ -158,8 +140,6 @@ export default function Header() {
                   </div>
                 </div>
               </div>
-
-              {/* Over Ons */}
               <Link
                 href="/over-ons"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
@@ -167,51 +147,13 @@ export default function Header() {
                 Over Ons
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
-
-              {/* Blog */}
               <Link
-                href="/blog"
+                href="/contact"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
-                Blog
+                Contact
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
-
-              {/* Kosten Calculator */}
-              <Link
-                href="/kosten-calculator"
-                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
-              >
-                Kosten calculator
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-              </Link>
-
-              {/* Contact Dropdown */}
-              <div className="relative group">
-                <button className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1">
-                  Contact
-                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]">
-                    <Link
-                      href="/contact"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200 font-medium"
-                    >
-                      Contact
-                    </Link>
-                    <div className="h-px bg-neutral-100 my-1"></div>
-                    <Link
-                      href="/testimonials"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                    >
-                      Testimonials
-                    </Link>
-                  </div>
-                </div>
-              </div>
             </nav>
 
             {/* CTA Button */}
@@ -260,11 +202,10 @@ export default function Header() {
           {/* Mobile Navigation */}
           <div
             className={`lg:hidden overflow-hidden transition-all duration-300 ${
-              isMenuOpen ? "max-h-[700px] pb-6" : "max-h-0"
+              isMenuOpen ? "max-h-[400px] pb-6" : "max-h-0"
             }`}
           >
             <nav className="flex flex-col gap-1 pt-4 border-t border-neutral-100">
-              {/* Home */}
               <Link
                 href="/"
                 className="px-4 py-3 text-neutral-900 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
@@ -272,87 +213,27 @@ export default function Header() {
               >
                 Home
               </Link>
-
-              {/* Diensten Section */}
-              <div className="px-4 py-2">
-                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Diensten</span>
-              </div>
               <Link
                 href="/diensten"
-                className="px-4 py-2.5 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Alle Diensten
+                Diensten
               </Link>
-              <Link
-                href="/diensten/uitzenden"
-                className="px-4 py-2.5 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Uitzenden
-              </Link>
-              <Link
-                href="/diensten/detachering"
-                className="px-4 py-2.5 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Detachering
-              </Link>
-              <Link
-                href="/diensten/recruitment"
-                className="px-4 py-2.5 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Recruitment
-              </Link>
-
-              {/* Over Ons */}
               <Link
                 href="/over-ons"
-                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 mt-2"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Over Ons
               </Link>
-
-              {/* Blog */}
-              <Link
-                href="/blog"
-                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 mt-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Blog
-              </Link>
-
-              {/* Kosten Calculator */}
-              <Link
-                href="/kosten-calculator"
-                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Kosten calculator
-              </Link>
-
-              {/* Contact Section */}
-              <div className="px-4 py-2 mt-2">
-                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Contact</span>
-              </div>
               <Link
                 href="/contact"
-                className="px-4 py-2.5 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
               </Link>
-              <Link
-                href="/testimonials"
-                className="px-4 py-2.5 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 ml-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Testimonials
-              </Link>
-
-              {/* CTA Button */}
               <div className="mt-4 px-4">
                 <Link
                   href="/contact"

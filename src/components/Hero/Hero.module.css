@@ -5,9 +5,15 @@
 .hero {
   /* Pure white background for Hero */
   background-color: #FFFFFF;
-  min-height: 85vh;
+  min-height: auto;
   position: relative;
   overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    min-height: 85vh;
+  }
 }
 
 .container {
@@ -287,10 +293,16 @@
 
 .imageSection {
   position: relative;
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
   min-height: 400px;
+}
+
+@media (min-width: 1024px) {
+  .imageSection {
+    display: flex;
+  }
 }
 
 /* Powder splash background */
