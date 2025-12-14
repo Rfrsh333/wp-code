@@ -335,24 +335,6 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                {/* FAQ Quick */}
-                <div className="bg-neutral-900 rounded-2xl p-8 text-white">
-                  <h2 className="text-xl font-bold mb-6">Veelgestelde vragen</h2>
-                  <div className="space-y-5">
-                    <div>
-                      <h3 className="font-medium mb-1">Hoe snel kan ik personeel krijgen?</h3>
-                      <p className="text-neutral-400 text-sm">Vaak binnen 24 uur geregeld.</p>
-                    </div>
-                    <div>
-                      <h3 className="font-medium mb-1">Wat zijn de kosten?</h3>
-                      <p className="text-neutral-400 text-sm">Neem contact op voor een offerte op maat.</p>
-                    </div>
-                    <div>
-                      <h3 className="font-medium mb-1">Voor welke sectoren werken jullie?</h3>
-                      <p className="text-neutral-400 text-sm">Horeca, evenementen en catering.</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </FadeIn>
           </div>
