@@ -58,7 +58,7 @@
 /* Eyebrow */
 .eyebrow {
   display: inline-block;
-  color: #c45e00;
+  color: #9a4a00;
   font-weight: 600;
   font-size: 0.875rem;
   letter-spacing: 0.1em;
@@ -96,7 +96,7 @@
 
 /* Highlighted word with underline animation */
 .highlight {
-  color: #c45e00;
+  color: #9a4a00;
   position: relative;
   display: inline-block;
 }
