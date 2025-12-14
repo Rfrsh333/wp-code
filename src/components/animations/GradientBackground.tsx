@@ -50,9 +50,12 @@ export default function GradientBackground() {
           33% { transform: translate3d(calc(-50% + 30px), calc(-50% - 20px), 0) scale(1.2); }
           66% { transform: translate3d(calc(-50% - 30px), calc(-50% + 20px), 0) scale(0.9); }
         }
-        .animate-blob1 { animation: blob1 20s ease-in-out infinite; }
-        .animate-blob2 { animation: blob2 25s ease-in-out infinite; }
-        .animate-blob3 { animation: blob3 30s ease-in-out infinite; }
+        /* Only animate on desktop (1024px+) */
+        @media (min-width: 1024px) {
+          .animate-blob1 { animation: blob1 20s ease-in-out infinite; }
+          .animate-blob2 { animation: blob2 25s ease-in-out infinite; }
+          .animate-blob3 { animation: blob3 30s ease-in-out infinite; }
+        }
 
         @media (prefers-reduced-motion: reduce) {
           .animate-blob1, .animate-blob2, .animate-blob3 {
