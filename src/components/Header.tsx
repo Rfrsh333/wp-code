@@ -43,7 +43,7 @@ export default function Header() {
               </a>
             </div>
             <div className="flex items-center gap-4">
-              <span className="hidden md:inline text-neutral-400 text-xs tracking-wide">
+              <span className="hidden md:inline text-neutral-300 text-xs tracking-wide">
                 24/7 beschikbaar voor uw vragen
               </span>
               <div className="flex items-center gap-1">

@@ -181,10 +181,10 @@ export default function Home() {
                     {/* Author Info */}
                     <div className="flex items-center gap-3">
                       <div>
-                        <h4 className="font-semibold text-[#1F1F1F] text-base lg:text-lg">
+                        <h3 className="font-semibold text-[#1F1F1F] text-base lg:text-lg">
                           {testimonials[activeTestimonial].name}
-                        </h4>
-                        <span className="text-sm text-neutral-500">
+                        </h3>
+                        <span className="text-sm text-neutral-600">
                           {testimonials[activeTestimonial].role}, {testimonials[activeTestimonial].company}
                         </span>
                       </div>
@@ -216,7 +216,7 @@ export default function Home() {
             <div className="text-center mt-10 lg:mt-12">
               <Link
                 href="/testimonials"
-                className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#FF7A00] transition-colors font-medium group"
+                className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#FF7A00] transition-colors font-medium group"
               >
                 Bekijk alle testimonials
                 <svg
