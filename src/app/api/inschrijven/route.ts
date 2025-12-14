@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
-      from: "TopTalent Jobs <onboarding@resend.dev>",
+      from: "TopTalent Jobs <info@toptalentjobs.nl>",
       to: ["info@toptalentjobs.nl"],
       replyTo: email,
       subject: `Nieuwe inschrijving - ${volledigeNaam}`,
