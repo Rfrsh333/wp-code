@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import Section from "@/components/Section";
+import { Section, Container } from "@/components/Section";
 
 // Blog artikel data met volledige content
 const blogArticles: Record<string, {
@@ -334,70 +334,67 @@ Wilt u weten wat horecapersoneel voor uw specifieke situatie kost? Neem contact 
   },
   "werken-uitzendkracht-horeca-salaris": {
     title: "Werken als uitzendkracht in de horeca: salaris en voordelen",
-    excerpt: "Overweeg je om als uitzendkracht in de horeca te werken?",
+    excerpt: "Overweeg je om als uitzendkracht in de horeca te werken? Ontdek de salarissen, voordelen en hoe je snel kunt starten.",
     category: "Carrière",
     author: "TopTalent Team",
     date: "8 december 2024",
     image: "/images/barista.png",
     relatedSlugs: ["horecamedewerker-worden-zonder-ervaring", "meest-gevraagde-horecafuncties-nederland"],
     content: `
-## Waarom kiezen voor uitzendwerk in de horeca?
-
-Werken via een uitzendbureau biedt veel voordelen, vooral in de horeca. Of je nu student bent, een carrièreswitch overweegt, of gewoon flexibiliteit zoekt - uitzendwerk kan de perfecte oplossing zijn.
-
-## Voordelen van werken als uitzendkracht
-
-### 1. Flexibiliteit
-Je bepaalt zelf wanneer je werkt. Geef je beschikbaarheid door en wij matchen je met passende opdrachten. Ideaal te combineren met studie, zorgtaken of andere werkzaamheden.
-
-### 2. Variatie
-Werk bij verschillende horecazaken en doe ervaring op in restaurants, hotels, cafés, cateringbedrijven en evenementen. Zo ontdek je wat het beste bij je past.
-
-### 3. Snel aan de slag
-Geen lange sollicitatieprocedures. Na inschrijving en een kennismakingsgesprek kun je vaak binnen een week je eerste opdracht starten.
-
-### 4. Zekerheid
-Als uitzendkracht heb je recht op hetzelfde salaris als vaste medewerkers (inlenersbeloning). Daarnaast bouw je vakantiegeld, vakantiedagen en pensioen op.
-
-### 5. Kans op vast werk
-Veel horecaondernemers nemen goed presterende uitzendkrachten in vaste dienst. Uitzendwerk is een uitstekende manier om jezelf te bewijzen.
+Overweeg je om als uitzendkracht in de horeca te gaan werken? Dit is een slimme keuze – of je nu flexibel wilt bijverdienen, net begint in de horeca of gewoon het maximale uit je uren wilt halen. In dit artikel leggen wij uit wat je kunt verdienen, welke voordelen er zijn en hoe je snel kunt starten. Bekijk ook onze <a href="/diensten/uitzenden">uitzendservice</a> voor meer informatie over werken via TopTalent.
 
 ## Wat verdien je als uitzendkracht in de horeca?
 
-Het salaris is gebaseerd op de CAO Horeca en je functie/ervaring:
+Als uitzendkracht in de horeca word je betaald volgens de <a href="/blog/cao-horeca-2025-wijzigingen">CAO Horeca</a>, aangevuld met toeslagen en vakantiegeld. De hoogte van je salaris hangt af van je functie, ervaring en het tijdstip waarop je werkt.
 
-- **Bediening**: €12 - €15 bruto per uur
-- **Bar**: €12,50 - €16 bruto per uur
-- **Keuken**: €12 - €20 bruto per uur (afhankelijk van functie)
-- **Evenementen**: €12 - €15 bruto per uur
+**Indicatie bruto uurlonen (2025):**
 
-**Extra's:**
-- Avondtoeslag (na 20:00)
-- Weekendtoeslag
-- Feestdagentoeslag (tot 200%)
-- Vakantiegeld (8%)
+- **Bedieningsmedewerker:** €21 – €25 per uur
+- **Bartender:** €22 – €26 per uur
+- **Kok:** €24 – €30 per uur
+- **Afwasser:** €20 – €23 per uur
 
-## Hoe schrijf je je in?
+Daarbovenop ontvang je toeslagen voor avond-, weekend- en feestdagendiensten. Bekijk ons uitgebreide overzicht van <a href="/blog/kosten-uitzendkracht-horeca-tarieven">uitzendkracht tarieven in de horeca</a>.
 
-Inschrijven bij TopTalent Jobs is gratis en eenvoudig:
+## Voordelen van werken als uitzendkracht in de horeca
 
-1. Vul het online inschrijfformulier in
-2. Upload je cv (of bel ons voor hulp)
-3. We nemen binnen 48 uur contact op
-4. Na een kort kennismakingsgesprek kun je starten
+### 1. Flexibiliteit
+Je bepaalt zelf wanneer je werkt. Je geeft je beschikbaarheid door en wij plannen je in op basis van jouw agenda. Ideaal voor studenten, ouders of iedereen die vrijheid zoekt.
 
-## Veelgestelde vragen
+### 2. Variatie
+Je komt op verschillende locaties en maakt kennis met diverse horecazaken – van drukke restaurants tot exclusieve evenementen. Zo bouw je snel ervaring op én ontdek je wat écht bij je past.
 
-**Moet ik ervaring hebben?**
-Nee, ervaring is een plus maar niet vereist. We zoeken vooral gemotiveerde mensen.
+### 3. Goed verdienen
+Uitzendwerk in de horeca is goed betaald. Door avond- en weekendtoeslagen en het 8% vakantiegeld verdien je vaak meer dan je denkt.
 
-**Hoeveel uur moet ik werken?**
-Dat bepaal je zelf. Van een paar uur per week tot fulltime is alles mogelijk.
+### 4. Snel starten
+Geen eindeloze sollicitatieprocedures. Na je inschrijving nemen wij contact met je op en kun je vaak al binnen enkele dagen aan de slag. Lees ook ons artikel <a href="/blog/horecamedewerker-worden-zonder-ervaring">horecamedewerker worden zonder ervaring</a>.
 
-**Krijg ik ook betaald als ik ziek ben?**
-Ja, als uitzendkracht heb je recht op doorbetaling bij ziekte.
+### 5. Zekerheid
+Als uitzendkracht ben je verzekerd, bouw je pensioen op en krijg je doorbetaald bij ziekte. Geen financiële risico's zoals bij zzp.
 
-Klaar om te starten? Schrijf je vandaag nog in!
+## Is werken als uitzendkracht iets voor jou?
+
+Uitzendwerk past perfect als je:
+
+- Flexibel wilt werken rond studie of andere verplichtingen
+- Snel wilt starten zonder lange sollicitatieronde
+- Op zoek bent naar afwisseling
+- Geen risico wilt lopen (zoals bij zzp)
+
+## Uitzendkracht vs. ZZP: wat past beter?
+
+Veel mensen twijfelen: ga ik als zzp'er werken of via een uitzendbureau? Kort gezegd:
+
+**Als zzp'er** ben je volledig zelfstandig. Je regelt je eigen administratie, verzekeringen en pensioen. Je draagt ook zelf het risico bij ziekte of geen opdrachten.
+
+**Als uitzendkracht** krijg je zekerheid: je bent verzekerd, bouwt pensioen op en wordt netjes doorbetaald als je ziek bent. Bovendien hoef je je niet bezig te houden met administratie – dat regelen wij. <a href="/over-ons">Lees meer over TopTalent</a>.
+
+## Direct aan de slag?
+
+Wil je werken als uitzendkracht in de horeca? Bij TopTalent kun je je eenvoudig inschrijven. <a href="/inschrijven">Schrijf je nu in</a> en ontvang binnen 48 uur een reactie. We helpen je snel aan leuke opdrachten bij gezellige horecazaken.
+
+**Liever eerst meer weten?** <a href="/contact">Neem contact met ons op</a> of bekijk onze <a href="/diensten">diensten</a>.
     `,
   },
   "evenementenpersoneel-inhuren-checklist": {
@@ -487,82 +484,109 @@ Neem contact op voor een vrijblijvende offerte!
   },
   "detachering-vs-uitzenden-verschil": {
     title: "Detachering vs uitzenden: welke vorm past bij uw bedrijf?",
-    excerpt: "Wat is het verschil tussen detachering en uitzenden?",
+    excerpt: "Wij vergelijken detachering en uitzenden op kosten, flexibiliteit en risico's. Ontdek welke vorm past bij uw bedrijf.",
     category: "Detachering",
     author: "TopTalent Team",
     date: "3 december 2024",
     image: "/images/dienst-detachering.png",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "kosten-uitzendkracht-horeca-tarieven"],
     content: `
-## Uitzenden vs detacheren: wat is het verschil?
+Veel ondernemers in de horeca en aanverwante sectoren lopen tegen dezelfde vraag aan: kiezen we voor detachering of uitzenden? Beide vormen bieden flexibiliteit, maar de verschillen zijn groter dan vaak wordt gedacht. De juiste keuze kan u tijd, geld en zorgen besparen. Lees ook onze <a href="/blog/horecapersoneel-inhuren-gids-2025">complete gids over horecapersoneel inhuren</a>.
 
-Beide vormen zijn manieren om flexibel personeel in te zetten, maar er zijn belangrijke verschillen.
+Wij krijgen deze vraag regelmatig van opdrachtgevers. Daarom zetten wij in deze blog de verschillen tussen detachering en uitzenden helder op een rij, zodat u een weloverwogen keuze kunt maken.
 
-## Uitzenden: maximale flexibiliteit
+## Wat is uitzenden?
 
-Bij uitzenden werkt een medewerker op basis van een uitzendovereenkomst. U huurt de medewerker in voor een bepaalde periode of opdracht.
+Bij uitzenden huurt u personeel in via een <a href="/diensten/uitzenden">uitzendbureau</a> voor tijdelijke inzet. De uitzendkracht staat bij het uitzendbureau op de loonlijst en kan flexibel worden ingezet, vaak per dienst of per week.
 
-**Kenmerken:**
-- Korte tot middellange inzet
-- Per uur of per dag te boeken
-- Makkelijk op- en afschalen
-- Uitzendbureau is juridisch werkgever
-- Snelle beschikbaarheid
+**Kenmerken van uitzenden:**
 
-**Ideaal voor:**
-- Piekmomenten en drukte
-- Vervanging bij ziekte of vakantie
-- Seizoenswerk
-- Evenementen en catering
-- Proefperiode voor vast personeel
+- Zeer flexibel inzetbaar
+- Geschikt voor piekmomenten en spoed
+- Geen langdurige verplichtingen
+- Loonbetaling en administratie worden geregeld
 
-## Detachering: langdurige inzet met binding
+Wij zien dat uitzenden vooral populair is in de horeca, evenementenbranche en seizoensgebonden sectoren. Bekijk ook ons artikel over <a href="/blog/seizoenspersoneel-horeca-zomer">seizoenspersoneel in de horeca</a>.
 
-Bij detachering wordt een medewerker voor langere tijd exclusief bij uw bedrijf geplaatst. De medewerker werkt bij u, maar is in dienst bij het detacheringsbureau.
+## Wat is detachering?
 
-**Kenmerken:**
-- Langere inzetperiode (maanden tot jaren)
-- Vaste medewerker op uw locatie
-- Meer binding met uw bedrijf
-- Vaak hoger gekwalificeerd personeel
-- Vast tarief per maand mogelijk
+Bij <a href="/diensten/detachering">detachering</a> wordt een medewerker voor een langere periode bij uw organisatie geplaatst. De medewerker blijft in dienst bij het detacheringsbureau, maar werkt fulltime of voor een vast aantal uren bij u.
 
-**Ideaal voor:**
-- Tijdelijke versterking managementfuncties
-- Projectmatige inzet
-- Specialistische functies
-- Wanneer u (nog) niet vast wilt aannemen
+**Kenmerken van detachering:**
 
-## Vergelijking in een tabel
+- Langere inzetperiode
+- Meer continuïteit
+- Minder wisselingen
+- Meer betrokkenheid bij uw organisatie
 
-| Aspect | Uitzenden | Detachering |
-|--------|-----------|-------------|
-| Duur | Kort - middel | Middel - lang |
-| Flexibiliteit | Zeer hoog | Gemiddeld |
-| Binding | Laag | Hoog |
-| Kosten per uur | Lager | Hoger |
-| Inwerktijd | Kort | Langer |
-| Werkgever | Uitzendbureau | Detacheringsbureau |
+Detachering wordt vaak gebruikt wanneer u tijdelijk extra capaciteit nodig heeft, maar geen vaste medewerker wilt aannemen.
 
-## Wat past bij uw situatie?
+## Detachering vs uitzenden: de belangrijkste verschillen
 
-**Kies voor uitzenden als:**
-- U flexibel wilt inspelen op drukte
-- U personeel nodig heeft voor korte periodes
-- U verschillende mensen wilt uitproberen
-- U kosten variabel wilt houden
+### Flexibiliteit
 
-**Kies voor detachering als:**
-- U een vaste kracht zoekt voor langere tijd
-- Binding en betrokkenheid belangrijk zijn
-- U een specifieke functie wilt invullen
-- U nog niet klaar bent voor vast personeel
+Uitzenden biedt maximale flexibiliteit. U kunt snel opschalen en afschalen. Detachering is minder flexibel, maar biedt meer stabiliteit.
 
-## TopTalent Jobs biedt beide opties
+### Duur van inzet
 
-Wij adviseren u graag over de beste keuze voor uw situatie. Vaak is een combinatie het meest effectief: vaste kern via detachering, aangevuld met uitzendkrachten voor piekperiodes.
+Uitzendkrachten worden vaak kort ingezet. Detachering is gericht op middellange tot langere perioden.
 
-Neem contact op voor een vrijblijvend adviesgesprek.
+### Kosten
+
+Bij uitzenden betaalt u per gewerkt uur. Bij detachering betaalt u meestal een vast tarief per maand of per periode. Bekijk ons uitgebreide overzicht van <a href="/blog/kosten-uitzendkracht-horeca-tarieven">uitzendkracht tarieven in de horeca</a>.
+
+Wij zien dat uitzenden vaak voordeliger is bij korte inzet en spoed, terwijl detachering aantrekkelijker kan zijn bij langere projecten.
+
+## Welke vorm past het beste bij uw bedrijf?
+
+### Kies voor uitzenden als:
+
+- U te maken heeft met piekdrukte
+- U personeel nodig heeft bij ziekte of uitval
+- Flexibiliteit voorop staat
+- U snel wilt kunnen schakelen
+
+### Kies voor detachering als:
+
+- U voor langere tijd extra capaciteit nodig heeft
+- Continuïteit belangrijk is
+- U kennis wilt behouden binnen uw team
+- U geen vaste contracten wilt aangaan
+
+Veel bedrijven combineren beide vormen om flexibel én stabiel te blijven. Lees ook onze tips voor een <a href="/blog/horeca-personeelsplanning-rooster-tips">efficiënte personeelsplanning</a>.
+
+## Wat betekent dit voor horecaondernemers?
+
+In de horeca zien wij dat uitzenden vaak de voorkeur heeft. De sector vraagt om snelle oplossingen, flexibiliteit en het kunnen opvangen van onverwachte drukte. Detachering kan interessant zijn bij bijvoorbeeld:
+
+- Keukenpersoneel voor langere periodes
+- Managementfuncties
+- Structurele ondersteuning tijdens seizoenen
+
+De juiste keuze hangt af van uw situatie en doelstellingen. Lees ook ons artikel over het <a href="/blog/personeelstekort-horeca-oplossen">oplossen van personeelstekort in de horeca</a>.
+
+## Kosten en risico's: waar moet u op letten?
+
+Welke vorm u ook kiest, let altijd op:
+
+- Duidelijke afspraken
+- Transparante tarieven
+- Correcte naleving van wet- en regelgeving (zie ook de <a href="/blog/cao-horeca-2025-wijzigingen">CAO Horeca 2025 wijzigingen</a>)
+- Betrouwbare partners
+
+Wij zien dat samenwerken met een gespecialiseerde partij veel risico's wegneemt en zorgt voor rust. <a href="/over-ons">Lees meer over TopTalent</a> en bekijk onze <a href="/testimonials">klantervaringen</a>.
+
+## Conclusie: uitzenden of detachering?
+
+Detachering en uitzenden zijn beide waardevolle oplossingen, mits ze op de juiste manier worden ingezet. Uitzenden biedt maximale flexibiliteit en snelheid, terwijl detachering zorgt voor continuïteit en stabiliteit.
+
+Wij adviseren om per situatie te kijken welke vorm het beste past bij uw bedrijf. In veel gevallen is een combinatie van beide de meest effectieve oplossing.
+
+## Hulp nodig bij uw keuze?
+
+Twijfelt u tussen detachering en uitzenden? Wij denken graag met u mee en kijken naar wat het beste past bij uw personeelsbehoefte.
+
+<a href="/contact">Neem vrijblijvend contact met ons op</a> en ontdek welke oplossing voor uw bedrijf het meest geschikt is. Of <a href="/personeel-aanvragen">vraag direct personeel aan</a> – wij zorgen voor duidelijkheid, snelheid en betrouwbaar personeel.
     `,
   },
   "horecamedewerker-worden-zonder-ervaring": {
@@ -640,100 +664,148 @@ Vul het inschrijfformulier in of bel ons voor meer informatie!
   },
   "meest-gevraagde-horecafuncties-nederland": {
     title: "De 10 meest gevraagde horecafuncties in Nederland",
-    excerpt: "Van barista tot sous-chef: dit zijn de meest gevraagde functies.",
+    excerpt: "Ontdek de 10 meest gevraagde horecafuncties in Nederland. Van barista tot sous-chef. Inclusief trends en tips.",
     category: "Carrière",
     author: "TopTalent Team",
     date: "28 november 2024",
     image: "/images/barista.png",
     relatedSlugs: ["werken-uitzendkracht-horeca-salaris", "horecamedewerker-worden-zonder-ervaring"],
     content: `
-## De top 10 meest gevraagde horecafuncties
+De Nederlandse horeca draait op mensen. Toch zien wij dagelijks hoe lastig het is om de juiste medewerkers te vinden. Sommige functies zijn structureel moeilijk in te vullen, terwijl de vraag alleen maar toeneemt. In 2025 is dat niet anders. Lees ook onze <a href="/blog/personeelstekort-horeca-oplossen">tips om het personeelstekort in de horeca op te lossen</a>.
 
-De horeca kent een grote variëteit aan functies. Dit zijn de meest gevraagde in Nederland.
+Wij werken dagelijks met restaurants, cafés, hotels en evenementenlocaties en zien daardoor precies welke horecafuncties het meest worden gevraagd. In deze blog zetten wij de top 10 voor u op een rij.
 
-## 1. Medewerker bediening
+## 1. Bedieningsmedewerker
 
-De klassieke horecafunctie. Je neemt bestellingen op, serveert eten en drinken, en zorgt dat gasten een fijne ervaring hebben.
+De bedieningsmedewerker blijft de meest gevraagde horecafunctie. Gastvrijheid, overzicht en snelheid zijn hierbij essentieel.
 
-**Salaris:** €12 - €15 bruto per uur
-**Vereisten:** Geen, maar ervaring is een plus
-**Doorgroeien naar:** Hoofd bediening, bedrijfsleider
+**Waarom veel gevraagd:**
 
-## 2. Kok
+- Direct contact met gasten
+- Onmisbaar tijdens piekuren
+- Groot tekort aan ervaren krachten
 
-Van lunchkok tot souschef - koks zijn altijd gevraagd. Je bereidt gerechten volgens het menu en recepten.
+Benieuwd naar het salaris? Bekijk ons overzicht van <a href="/blog/kosten-uitzendkracht-horeca-tarieven">uitzendkracht tarieven in de horeca</a>.
 
-**Salaris:** €14 - €22 bruto per uur
-**Vereisten:** Koksdipolma of relevante ervaring
-**Doorgroeien naar:** Sous-chef, chef-kok
+## 2. Bartender
+
+Van cocktailbars tot festivals: goede bartenders zijn schaars. Wij merken dat opdrachtgevers vooral zoeken naar mensen die snelheid combineren met kwaliteit.
+
+**Belangrijkste vaardigheden:**
+
+- Snel en nauwkeurig werken
+- Drankkennis
+- Gastgerichtheid
 
 ## 3. Barista
 
-Specialiteit: koffie. Je maakt koffiespecialiteiten en helpt gasten bij hun keuze.
+De vraag naar barista's blijft groeien, vooral bij koffiebars en lunchzaken. Koffiekwaliteit wordt steeds belangrijker.
 
-**Salaris:** €12 - €15 bruto per uur
-**Vereisten:** Barista training is een plus
-**Doorgroeien naar:** Leidinggevende, eigen koffiebar
+**Waarom populair:**
 
-## 4. Bartender
+- Gespecialiseerde functie
+- Klanten verwachten kwaliteit
+- Veel vraag in stedelijke gebieden
 
-Je mixt cocktails, tapt bier en creëert een gezellige sfeer achter de bar.
+## 4. Zelfstandig werkend kok
 
-**Salaris:** €13 - €17 bruto per uur
-**Vereisten:** Kennis van dranken, sociale vaardigheden
-**Doorgroeien naar:** Hoofdbartender, bar manager
+Een goede kok is goud waard. Wij zien dat zelfstandig werkend koks continu worden gezocht, vooral in restaurants met een wisselende menukaart.
 
-## 5. Gastheer/gastvrouw
+**Waarom moeilijk te vinden:**
 
-Het eerste contact met de gast. Je verwelkomt bezoekers en begeleidt ze naar hun tafel.
+- Hoge werkdruk
+- Veel verantwoordelijkheid
+- Ervaring vereist
 
-**Salaris:** €12 - €16 bruto per uur
-**Vereisten:** Representatief, goede communicatie
-**Doorgroeien naar:** Restaurant manager, F&B manager
+## 5. Sous-chef
 
-## 6. Keukenhulp
+De sous-chef ondersteunt de chef-kok en houdt overzicht in de keuken. Deze functie is cruciaal voor continuïteit.
 
-Je ondersteunt de koks met voorbereiding, afwas en schoonmaak.
+**Waarom veel vraag:**
 
-**Salaris:** €11 - €14 bruto per uur
-**Vereisten:** Geen
-**Doorgroeien naar:** Kok
+- Leidinggevende rol
+- Verantwoordelijk voor kwaliteit
+- Onmisbaar bij grotere keukens
 
-## 7. Receptionist (hotel)
+## 6. Afwasser / keukenhulp
 
-Je ontvangt gasten, handelt reserveringen af en beantwoordt vragen.
+Hoewel vaak onderschat, is deze functie essentieel. Zonder afwassers en keukenhulpen loopt een keuken vast. Een uitstekende instapfunctie – lees ook ons artikel <a href="/blog/horecamedewerker-worden-zonder-ervaring">horecamedewerker worden zonder ervaring</a>.
 
-**Salaris:** €13 - €17 bruto per uur
-**Vereisten:** Talen, klantvriendelijkheid
-**Doorgroeien naar:** Front office manager
+**Waarom altijd nodig:**
 
-## 8. Cateringmedewerker
+- Hoge uitval
+- Fysiek werk
+- Veel vraag bij piekmomenten
 
-Je werkt bij evenementen, bedrijfscatering of partijen.
+## 7. Allround horecamedewerker
 
-**Salaris:** €12 - €15 bruto per uur
-**Vereisten:** Flexibiliteit, representatief
-**Doorgroeien naar:** Catering coördinator
+Flexibiliteit is belangrijk in de horeca. Allround medewerkers die meerdere taken aankunnen, zijn daarom zeer gewild.
 
-## 9. Afwasser
+**Taken kunnen zijn:**
 
-Essentieel in elke keuken. Je zorgt voor schone borden, pannen en bestek.
+- Bediening
+- Bar
+- Eenvoudige keukenwerkzaamheden
 
-**Salaris:** €11 - €13 bruto per uur
-**Vereisten:** Geen
-**Doorgroeien naar:** Keukenhulp, kok
+## 8. Floormanager / shiftleader
 
-## 10. Bedrijfsleider
+Goede aansturing op de werkvloer maakt het verschil. Floormanagers zorgen voor structuur en overzicht.
 
-Je runt de dagelijkse operatie van een horecazaak.
+**Waarom schaars:**
 
-**Salaris:** €2.500 - €4.000 bruto per maand
-**Vereisten:** Ervaring, leidinggevende capaciteiten
-**Doorgroeien naar:** Regiomanager, eigen zaak
+- Verantwoordelijkheid
+- Leiderschap vereist
+- Ervaring noodzakelijk
 
-## Op zoek naar een horecabaan?
+## 9. Evenementenmedewerker
 
-Bij TopTalent Jobs hebben we vacatures voor al deze functies. Schrijf je in en we helpen je aan de perfecte baan!
+Festivals, beurzen en grote evenementen blijven groeien. Hierdoor is de vraag naar tijdelijke evenementenmedewerkers groot. Bekijk ook onze <a href="/blog/evenementenpersoneel-inhuren-checklist">checklist voor evenementenpersoneel</a>.
+
+**Denk aan:**
+
+- Barpersoneel
+- Op- en afbouw
+- Gastbegeleiding
+
+## 10. Hotelmedewerker (front office & F&B)
+
+Hotels zoeken continu personeel voor receptie en food & beverage. Vooral flexibel inzetbare medewerkers zijn populair.
+
+**Waarom veel gevraagd:**
+
+- Wisselende diensten
+- Internationale gasten
+- Combinatie van service en organisatie
+
+## Waarom deze horecafuncties zo gewild zijn
+
+De rode draad is duidelijk: flexibiliteit, gastgerichtheid en ervaring. Wij zien dat ondernemers vooral zoeken naar medewerkers die snel inzetbaar zijn en weten wat er van hen verwacht wordt.
+
+Door het personeelstekort blijven deze functies structureel moeilijk te vullen. Lees ook onze <a href="/blog/horecapersoneel-inhuren-gids-2025">complete gids over horecapersoneel inhuren</a>.
+
+## Wat betekent dit voor horecaondernemers?
+
+Voor horecaondernemers betekent dit dat vooruitdenken steeds belangrijker wordt. Door samen te werken met een gespecialiseerd <a href="/diensten/uitzenden">horeca-uitzendbureau</a>:
+
+- Heeft u sneller toegang tot personeel
+- Kunt u pieken beter opvangen
+- Beperkt u risico's en administratieve lasten
+
+<a href="/over-ons">Lees meer over TopTalent</a> en bekijk wat onze <a href="/testimonials">klanten over ons zeggen</a>.
+
+## Conclusie: vraag naar horecapersoneel blijft hoog
+
+De vraag naar goed horecapersoneel blijft in 2025 onverminderd groot. Vooral de functies in deze top 10 zijn lastig in te vullen en vragen om een flexibele aanpak.
+
+Wij zien dat bedrijven die tijdig schakelen en flexibel omgaan met personeel, beter voorbereid zijn op drukte en groei.
+
+## Personeel nodig of juist aan de slag in de horeca?
+
+Of u nu personeel zoekt of zelf in de horeca wilt werken: wij helpen u graag verder.
+
+**Voor werkgevers:** <a href="/personeel-aanvragen">Vraag direct personeel aan</a> of <a href="/contact">neem contact met ons op</a> voor een vrijblijvend gesprek. Wij zorgen voor de juiste match, snel en betrouwbaar.
+
+**Wil je werken in de horeca?** <a href="/inschrijven">Schrijf je nu in</a> en ontvang binnen 48 uur een reactie. Ook zonder ervaring ben je welkom – bekijk ons artikel over <a href="/blog/werken-uitzendkracht-horeca-salaris">werken als uitzendkracht in de horeca</a>.
     `,
   },
   "restaurant-openen-team-samenstellen": {
@@ -906,149 +978,194 @@ Wij hebben een groot netwerk van ervaren horecamedewerkers die beschikbaar zijn 
   },
   "cao-horeca-2025-wijzigingen": {
     title: "CAO Horeca 2025: dit verandert er voor werkgevers",
-    excerpt: "De nieuwe CAO Horeca brengt veranderingen in salaris, toeslagen en arbeidsvoorwaarden.",
+    excerpt: "De nieuwe CAO Horeca brengt veranderingen in salaris, toeslagen en arbeidsvoorwaarden. Wij leggen uit wat u als werkgever moet weten.",
     category: "HR",
     author: "TopTalent Team",
     date: "20 november 2024",
     image: "/images/dienst-detachering.png",
     relatedSlugs: ["kosten-uitzendkracht-horeca-tarieven", "horecapersoneel-inhuren-gids-2025"],
     content: `
-## CAO Horeca 2025: de belangrijkste wijzigingen
+Als horecaondernemer heeft u te maken met regels voor arbeidsvoorwaarden en lonen die min of meer ieder jaar veranderen. Voor 2025 is er een nieuwe Collectieve Arbeidsovereenkomst (CAO) Horeca afgesproken die loopt van 1 januari 2025 tot en met 31 december 2026. Deze cao bevat belangrijke wijzigingen die direct effect hebben op uw personeelsbeleid en arbeidskosten.
 
-De CAO Horeca wordt regelmatig vernieuwd. Als werkgever is het belangrijk om op de hoogte te blijven van de laatste wijzigingen. Hier vindt u een overzicht van de belangrijkste veranderingen.
+In deze blog zetten wij de belangrijkste veranderingen op een rij en leggen we uit wat dit betekent voor uw bedrijf. Lees ook onze <a href="/blog/horecapersoneel-inhuren-gids-2025">complete gids over horecapersoneel inhuren</a>.
 
-## Salariswijzigingen
+## Nieuwe cao Horeca 2025–2026: wat is het en waarom is het belangrijk?
 
-### Minimumuurlonen per functiegroep
+De Horeca-CAO 2025–2026 is een collectieve arbeidsovereenkomst tussen werkgevers(organisaties) en werknemersorganisaties voor bedrijven in de horeca-sector. Deze cao bepaalt minimumlonen, loonsverhogingen, arbeidsvoorwaarden, functiegroepen, werktijden en meer.
 
-De salarissen in de horeca stijgen. Hieronder een indicatie van de minimumuurlonen:
+Vanaf 2 augustus 2025 is de cao door de Minister van Sociale Zaken en Werkgelegenheid algemeen verbindend verklaard, wat betekent dat zelfs werkgevers die niet bij de cao-onderhandelende organisaties zijn aangesloten, de bepalingen moeten toepassen als die gunstiger zijn voor werknemers.
 
-| Functiegroep | Uurloon 2025 (indicatie) |
-|--------------|--------------------------|
-| Groep 1 (starter) | €13,50 - €14,50 |
-| Groep 2 | €14,00 - €15,50 |
-| Groep 3 | €15,00 - €17,00 |
-| Groep 4 | €16,50 - €19,00 |
-| Groep 5 | €18,00 - €22,00 |
+## 1. Loonsverhogingen en salarisstructuur
 
-*Let op: dit zijn indicaties. Raadpleeg altijd de officiële CAO tekst.*
+Een van de meest relevante onderdelen van de nieuwe horeca-cao zijn de afgesproken loonsverhogingen voor 2025 en 2026. Deze zijn bedoeld om de horeca aantrekkelijk te houden voor medewerkers en om de koopkracht te beschermen in tijden van inflatie en stijgende kosten:
 
-### Periodieken
-Medewerkers hebben recht op jaarlijkse periodieken (salarisverhogingen) tot ze het maximum van hun schaal bereiken.
+- **Per 1 januari 2025** geldt een loonsverhoging van circa 2,5% voor de meeste functiegroepen
+- **Per 1 juli 2025** is er een verdere aanpassing van ongeveer 1% opgenomen in de cao-afspraken
+- **Per 1 januari 2026** volgt opnieuw een verhoging, vaak rond 2,5%
 
-## Toeslagen
+Daarnaast moet u rekening houden met een verhoging van het wettelijk minimumloon. Vanaf 1 juli 2025 bedraagt het minimumuurloon €14,40 bruto voor werknemers vanaf 21 jaar, wat ook gevolgen heeft voor de minimumlonen in uw loonschalen.
 
-### Overwerktoeslag
-- Meer dan 38 uur per week: 125% of 150% afhankelijk van het moment
+### Wat betekent dit voor werkgevers?
 
-### Feestdagentoeslag
-- Werken op officiële feestdagen: tot 200% van het uurloon
+- U moet uw salarisadministratie tijdig aanpassen aan de nieuwe loonschalen en -percentages
+- Lagere functiegroepen volgen het minimumloon, dus ook daar moet u op tijd de juiste lonen toepassen
 
-### Onregelmatigheidstoeslag
-Voor werk op onregelmatige tijden (avond, nacht, weekend) kunnen toeslagen gelden.
+Benieuwd naar de actuele tarieven? Bekijk ons overzicht van <a href="/blog/kosten-uitzendkracht-horeca-tarieven">uitzendkracht tarieven in de horeca</a>.
 
-## Arbeidsvoorwaarden
+## 2. Eenvoudigere en transparantere functie- en loonstructuur
 
-### Vakantiedagen
-Minimaal 20 vakantiedagen per jaar (bij fulltime dienstverband), plus eventuele bovenwettelijke dagen.
+Een belangrijke doelstelling van de vernieuwde horeca-cao is om de structuur van functiegroepen en loonschalen transparanter te maken. Dit helpt werkgevers én medewerkers om beter te begrijpen welke functie in welke loonschaal hoort en wat de doorgroeimogelijkheden zijn.
 
-### Vakantiegeld
-8% van het bruto jaarsalaris, uit te betalen in mei/juni.
+Als werkgever kunt u dit gebruiken om functies duidelijker te beschrijven en werknemers eerlijk te belonen, wat kan bijdragen aan personeelsbinding en minder verloop. Lees ook onze tips om het <a href="/blog/personeelstekort-horeca-oplossen">personeelstekort in de horeca op te lossen</a>.
 
-### Pensioen
-Pensioenopbouw via het pensioenfonds Horeca & Catering.
+## 3. Loyaliteitsverlof en arbeidsvoorwaarden
 
-## Wat betekent dit voor u als werkgever?
+De Horeca-CAO 2025 introduceert of verduidelijkt ook regelingen rondom loyaliteitsverlof. Werknemers die langer dan 10 jaar in dienst zijn, kunnen extra verlofuren opbouwen als beloning voor hun loyaliteit.
 
-### Hogere loonkosten
-De salarissverhogingen betekenen hogere personeelskosten. Calculeer dit mee in uw tarieven.
+Daarnaast zijn er veranderingen rond het opnemen van meeruren en overwerk. Werknemers kunnen meer inspraak krijgen over hoe hun meeruren worden opgenomen, mits dit tijdig wordt aangevraagd en in het rooster kan worden verwerkt.
 
-### Administratieve verplichtingen
-Zorg dat uw loonadministratie up-to-date is met de nieuwe bedragen.
+Voor u als werkgever betekent dit dat u uw personeelsadministratie en roosters moet aanpassen en dat u duidelijke afspraken moet maken met medewerkers over het opnemen van uren en verlof. Bekijk ook onze tips voor een <a href="/blog/horeca-personeelsplanning-rooster-tips">efficiënte personeelsplanning</a>.
 
-### Uitzendkrachten
-Ook uitzendkrachten hebben recht op dezelfde beloning als uw vaste personeel (inlenersbeloning).
+## 4. Verhoogde stagevergoeding
 
-## Tip: werk samen met een uitzendbureau
+Vanaf 1 januari 2025 geldt een verhoogde minimum stagevergoeding voor stagiairs in de horeca. De nieuwe ondergrens is vastgesteld op €400 bruto per maand voor een fulltime stageplaats.
 
-Een gespecialiseerd uitzendbureau zoals TopTalent Jobs is altijd op de hoogte van de laatste CAO wijzigingen. Wij zorgen dat uw uitzendkrachten correct worden betaald, zodat u zich daar geen zorgen over hoeft te maken.
+Dit betekent dat u als werkgever moet controleren of uw stagevergoedingen voldoen aan de nieuwe cao-normen, anders loopt u risico op niet-naleving.
 
-Neem contact op voor meer informatie!
+## 5. Werk-privébalans en overwerkregels
+
+Een ander belangrijk onderdeel van de nieuwe cao richt zich op de werk-privébalans van medewerkers. De cao geeft medewerkers meer mogelijkheden om zelf mee te denken over wanneer zij overuren opnemen.
+
+Voor werkgevers betekent dit meer aandacht voor planning en communicatie. U behoudt de regie over werktijden, maar moet rekening houden met verzoeken van medewerkers en dit op een eerlijke manier meenemen in de roosterplanning.
+
+## 6. Praktische tips voor horecaondernemers
+
+Het implementeren van de nieuwe cao-afspraken vraagt aandacht. Wij adviseren horecaondernemers om:
+
+- Tijdig de loonadministratie aan te passen aan de nieuwe loonschalen en minimumlonen
+- Functieomschrijvingen door te nemen en te toetsen aan de nieuwe cao-structuur
+- Stagevergoedingen te actualiseren volgens de nieuwe minimumregels
+- Rooster- en urenregistratieprocessen te evalueren om werk-privébalansverzoeken goed op te nemen
+
+## Uitzendkrachten en de CAO Horeca
+
+Ook voor uitzendkrachten geldt de inlenersbeloning: zij hebben recht op dezelfde beloning als uw vaste personeel. Bij samenwerking met een gespecialiseerd <a href="/diensten/uitzenden">horeca-uitzendbureau</a> zoals TopTalent hoeft u zich hier geen zorgen over te maken – wij zorgen dat alle cao-bepalingen correct worden toegepast.
+
+<a href="/over-ons">Lees meer over TopTalent</a> en bekijk wat onze <a href="/testimonials">klanten over ons zeggen</a>.
+
+## Conclusie
+
+De Horeca-CAO 2025–2026 brengt diverse veranderingen die impact hebben op uw personeelskosten, arbeidsvoorwaarden en bedrijfsvoering. Denk hierbij aan periodieke loonsverhogingen, een transparantere functie- en loonstructuur, extra verlofregelingen en hogere stagevergoedingen.
+
+Het is belangrijk om deze wijzigingen tijdig door te voeren in uw loonadministratie en personeelsbeleid, zodat u compliant blijft en uw medewerkers eerlijk en correct behandelt.
+
+## Hulp nodig met uw personeelsbezetting?
+
+Heeft u vragen over de CAO of zoekt u flexibel horecapersoneel dat correct wordt verloond? Wij helpen u graag.
+
+**<a href="/personeel-aanvragen">Vraag direct personeel aan</a>** of **<a href="/contact">neem contact met ons op</a>** voor een vrijblijvend gesprek. Wij zorgen voor betrouwbaar personeel én correcte naleving van de CAO Horeca.
+
+**Bronnen:** Koninklijke Horeca Nederland (KHN), Horecava.nl
     `,
   },
   "horeca-personeelsplanning-rooster-tips": {
     title: "Horeca personeelsplanning: tips voor een efficiënt rooster",
-    excerpt: "Een goede personeelsplanning bespaart kosten en voorkomt stress.",
+    excerpt: "Wij delen praktische tips voor een efficiënte personeelsplanning in de horeca. Bespaar kosten en voorkom stress.",
     category: "Management",
     author: "TopTalent Team",
     date: "18 november 2024",
     image: "/images/barista.png",
     relatedSlugs: ["personeelstekort-horeca-oplossen", "seizoenspersoneel-horeca-zomer"],
     content: `
-## Waarom is goede personeelsplanning zo belangrijk?
+Een goede personeelsplanning is één van de grootste uitdagingen in de horeca. Drukke piekmomenten, wisselende beschikbaarheid, ziekte en last-minute wijzigingen maken het maken van een efficiënt rooster complex. Wij zien dagelijks dat een slechte planning leidt tot stress op de werkvloer, onnodige kosten en ontevreden medewerkers.
 
-Een efficiënt rooster zorgt voor:
-- Lagere personeelskosten
-- Minder stress bij uw team
-- Betere service voor gasten
-- Hogere medewerkerstevredenheid
-- Minder uitval en ziekteverzuim
+Een doordachte personeelsplanning zorgt juist voor rust, grip en betere prestaties. In deze blog delen wij praktische tips om uw horeca-rooster efficiënter en overzichtelijker te maken. Lees ook onze <a href="/blog/horecapersoneel-inhuren-gids-2025">complete gids over horecapersoneel inhuren</a>.
 
-## 10 tips voor een efficiënt horecapersoneel rooster
+## Waarom is personeelsplanning zo belangrijk in de horeca?
 
-### 1. Ken uw drukke en rustige momenten
+In de horeca staat alles of valt alles met timing. Te weinig personeel leidt tot lange wachttijden en ontevreden gasten. Te veel personeel betekent onnodig hoge loonkosten.
 
-Analyseer uw omzetdata per dag en per uur. Wanneer is het druk? Wanneer rustig? Plan personeel in op basis van verwachte drukte.
+Wij zien dat een goede personeelsplanning:
 
-### 2. Gebruik planningssoftware
+- Kosten bespaart
+- Stress op de werkvloer vermindert
+- Ziekmeldingen en uitval verlaagt
+- De werktevredenheid verhoogt
+- De kwaliteit van service verbetert
 
-Excel werkt, maar gespecialiseerde software (Dyflexis, Shiftbase, etc.) bespaart tijd en voorkomt fouten.
+Een efficiënt rooster is dus geen luxe, maar noodzaak. Dit helpt ook bij het <a href="/blog/personeelstekort-horeca-oplossen">oplossen van personeelstekort in de horeca</a>.
 
-### 3. Plan minimaal 2 weken vooruit
+## Tip 1: Breng uw piek- en dalmomenten goed in kaart
 
-Medewerkers waarderen voorspelbaarheid. Publiceer roosters minimaal 2 weken van tevoren.
+De basis van een goede planning begint bij inzicht. Kijk naar:
 
-### 4. Houd rekening met pauzes
+- Drukke dagen en tijden
+- Seizoensinvloeden
+- Evenementen of reserveringen
+- Historische omzetgegevens
 
-Wettelijk verplicht en belangrijk voor de energie van uw team.
+Door deze gegevens te combineren, kunt u gerichter plannen en voorkomt u structurele over- of onderbezetting.
 
-### 5. Zorg voor een goede mix
+## Tip 2: Werk met vaste én flexibele medewerkers
 
-Combineer ervaren krachten met minder ervaren medewerkers. Zo kunnen nieuwelingen leren.
+Wij zien dat de meest succesvolle horecabedrijven werken met een hybride personeelsmodel:
 
-### 6. Wees flexibel met beschikbaarheid
+- Een vaste kern voor continuïteit
+- Flexibele krachten voor pieken en uitval
 
-Vraag medewerkers naar hun beschikbaarheid en houd hier waar mogelijk rekening mee.
+Flexibel personeel via een <a href="/diensten/uitzenden">horeca-uitzendbureau</a> biedt u de ruimte om snel te schakelen zonder uw vaste team te overbelasten. Bekijk ook het <a href="/blog/detachering-vs-uitzenden-verschil">verschil tussen detachering en uitzenden</a>.
 
-### 7. Bouw een flexibele schil
+## Tip 3: Maak beschikbaarheid inzichtelijk en actueel
 
-Gebruik uitzendkrachten voor piekmomenten of onverwachte drukte.
+Een veelvoorkomende oorzaak van planningsproblemen is onduidelijke beschikbaarheid. Zorg ervoor dat:
 
-### 8. Communiceer wijzigingen tijdig
+- Medewerkers hun beschikbaarheid tijdig doorgeven
+- Wijzigingen direct worden gecommuniceerd
+- Iedereen toegang heeft tot het rooster
 
-Roosterwijzigingen altijd zo snel mogelijk communiceren.
+Wij merken dat duidelijke afspraken hierover veel misverstanden voorkomen.
 
-### 9. Evalueer regelmatig
+## Tip 4: Plan vooruit, maar blijf flexibel
 
-Kijk maandelijks of uw planning aansluit bij de werkelijke drukte.
+Een goede planning begint vooruit, maar moet ruimte laten voor aanpassingen. In de horeca loopt het zelden precies zoals gepland.
 
-### 10. Luister naar feedback
+Houd daarom altijd rekening met:
 
-Uw team weet vaak goed wat wel en niet werkt.
+- Ziekmeldingen
+- Onverwachte drukte
+- Last-minute reserveringen
 
-## Veelgemaakte fouten bij personeelsplanning
+Door een flexibele schil achter de hand te houden, blijft u in control. Bekijk ook onze tips voor <a href="/blog/seizoenspersoneel-horeca-zomer">seizoenspersoneel in de horeca</a>.
 
-### Te weinig personeel inplannen
-Leidt tot stress, slechte service en uitval.
+## Tip 5: Zorg voor de juiste bezetting per functie
 
-### Te veel personeel inplannen
-Verspilling van loonkosten.
+Niet elke dienst vraagt om dezelfde vaardigheden. Let bij het plannen niet alleen op aantallen, maar ook op functies:
 
-### Geen rekening houden met vakanties
-Plan vakanties tijdig in en zorg voor vervanging.
+- Ervaren medewerkers op piekmomenten
+- Allround krachten op rustige momenten
+- Leidinggevende aanwezigheid wanneer nodig
 
-### Altijd dezelfde mensen op drukke dagen
-Wissel af om overbelasting te voorkomen.
+Dit verhoogt de efficiëntie én de kwaliteit op de werkvloer. Bekijk ook de <a href="/blog/meest-gevraagde-horecafuncties-nederland">meest gevraagde horecafuncties</a>.
+
+## Tip 6: Houd rekening met werk-privébalans
+
+Wij zien dat medewerkers die structureel overbelast worden, sneller uitvallen. Een goede personeelsplanning houdt rekening met:
+
+- Rusttijden
+- Eerlijke verdeling van weekenden
+- Afwisseling in diensten
+
+Dit zorgt voor gemotiveerde medewerkers en minder verloop. Let ook op de regels in de <a href="/blog/cao-horeca-2025-wijzigingen">CAO Horeca 2025</a>.
+
+## Tip 7: Evalueer en optimaliseer uw rooster regelmatig
+
+Een planning is nooit perfect. Daarom is evalueren essentieel:
+
+- Wat ging goed?
+- Waar liep het vast?
+- Was de bezetting passend bij de drukte?
+
+Door regelmatig bij te sturen, wordt uw planning steeds efficiënter.
 
 ## De flexibele schil: uitzendkrachten als buffer
 
@@ -1059,11 +1176,19 @@ Niet elke dienst is voorspelbaar. Met een flexibele schil van uitzendkrachten ku
 - Piekmomenten managen
 - Vakanties overbruggen
 
-TopTalent Jobs levert betrouwbare uitzendkrachten, vaak binnen 24 uur beschikbaar.
+Benieuwd naar de kosten? Bekijk ons overzicht van <a href="/blog/kosten-uitzendkracht-horeca-tarieven">uitzendkracht tarieven in de horeca</a>.
 
-## Hulp nodig?
+## Conclusie: een efficiënte personeelsplanning geeft rust en controle
 
-Heeft u moeite met uw personeelsplanning of zoekt u flexibele krachten? Neem contact op met TopTalent Jobs voor advies en ondersteuning!
+Een goede horeca personeelsplanning voorkomt stress, bespaart kosten en verhoogt de kwaliteit van uw dienstverlening. Door vooruit te plannen, flexibel te blijven en slim gebruik te maken van vaste én flexibele medewerkers, houdt u grip op uw roosters — ook tijdens drukke periodes.
+
+Wij zien dagelijks dat ondernemers die hun planning goed op orde hebben, beter presteren en meer rust ervaren. <a href="/over-ons">Lees meer over TopTalent</a> en bekijk wat onze <a href="/testimonials">klanten over ons zeggen</a>.
+
+## Klaar voor een zorgeloze personeelsplanning?
+
+Heeft u moeite met roosters, uitval of piekdrukte? Wij helpen u graag met een flexibele personeelsoplossing die past bij uw planning en bedrijfsvoering.
+
+**<a href="/personeel-aanvragen">Vraag direct personeel aan</a>** en ontdek hoe wij uw personeelsplanning eenvoudiger maken. Of **<a href="/contact">neem contact met ons op</a>** voor een vrijblijvend gesprek – wij zorgen voor snel, betrouwbaar personeel zonder zorgen.
     `,
   },
 };
@@ -1076,8 +1201,9 @@ export function generateStaticParams() {
 }
 
 // Generate metadata for SEO
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const article = blogArticles[params.slug];
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = blogArticles[slug];
 
   if (!article) {
     return {
@@ -1098,8 +1224,9 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   };
 }
 
-export default function BlogArticlePage({ params }: { params: { slug: string } }) {
-  const article = blogArticles[params.slug];
+export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = blogArticles[slug];
 
   if (!article) {
     notFound();
@@ -1162,7 +1289,7 @@ export default function BlogArticlePage({ params }: { params: { slug: string } }
 
       {/* Article Content */}
       <Section variant="white" spacing="default">
-        <Section.Container>
+        <Container>
           <div className="max-w-3xl mx-auto">
             <article className="prose prose-lg prose-neutral max-w-none prose-headings:text-neutral-900 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-p:text-neutral-600 prose-p:leading-relaxed prose-li:text-neutral-600 prose-strong:text-neutral-900 prose-a:text-[#F97316] prose-a:no-underline hover:prose-a:underline prose-table:text-sm prose-th:bg-neutral-100 prose-th:p-3 prose-td:p-3 prose-td:border-b">
               <div dangerouslySetInnerHTML={{ __html: formatContent(article.content) }} />
@@ -1197,7 +1324,7 @@ export default function BlogArticlePage({ params }: { params: { slug: string } }
               <p className="text-sm font-medium text-neutral-600 mb-4">Deel dit artikel:</p>
               <div className="flex gap-3">
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=https://toptalentjobs.nl/blog/${params.slug}`}
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=https://toptalentjobs.nl/blog/${slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 bg-[#0077B5] text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -1207,7 +1334,7 @@ export default function BlogArticlePage({ params }: { params: { slug: string } }
                   </svg>
                 </a>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(article.title + ' - https://toptalentjobs.nl/blog/' + params.slug)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(article.title + ' - https://toptalentjobs.nl/blog/' + slug)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -1217,7 +1344,7 @@ export default function BlogArticlePage({ params }: { params: { slug: string } }
                   </svg>
                 </a>
                 <a
-                  href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://toptalentjobs.nl/blog/' + params.slug)}`}
+                  href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://toptalentjobs.nl/blog/' + slug)}`}
                   className="w-10 h-10 bg-neutral-600 text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1227,13 +1354,13 @@ export default function BlogArticlePage({ params }: { params: { slug: string } }
               </div>
             </div>
           </div>
-        </Section.Container>
+        </Container>
       </Section>
 
       {/* Related Articles */}
       {relatedArticles.length > 0 && (
         <Section variant="tinted" spacing="large">
-          <Section.Container>
+          <Container>
             <h2 className="text-2xl font-bold text-neutral-900 mb-8 text-center">
               Gerelateerde artikelen
             </h2>
@@ -1263,7 +1390,7 @@ export default function BlogArticlePage({ params }: { params: { slug: string } }
                 </Link>
               ))}
             </div>
-          </Section.Container>
+          </Container>
         </Section>
       )}
     </>
