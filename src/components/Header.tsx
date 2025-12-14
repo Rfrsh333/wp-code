@@ -120,19 +120,19 @@ export default function Header() {
                       Alle Diensten
                     </Link>
                     <Link
-                      href="/diensten#uitzenden"
+                      href="/diensten/uitzenden"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
                       Uitzenden
                     </Link>
                     <Link
-                      href="/diensten#detachering"
+                      href="/diensten/detachering"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
                       Detachering
                     </Link>
                     <Link
-                      href="/diensten#recruitment"
+                      href="/diensten/recruitment"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                     >
                       Recruitment
@@ -145,6 +145,20 @@ export default function Header() {
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Over Ons
+                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+              </Link>
+              <Link
+                href="/blog"
+                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+              >
+                Blog
+                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+              </Link>
+              <Link
+                href="/kosten-calculator"
+                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+              >
+                Kosten calculator
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
@@ -202,7 +216,7 @@ export default function Header() {
           {/* Mobile Navigation */}
           <div
             className={`lg:hidden overflow-hidden transition-all duration-300 ${
-              isMenuOpen ? "max-h-[400px] pb-6" : "max-h-0"
+              isMenuOpen ? "max-h-[500px] pb-6" : "max-h-0"
             }`}
           >
             <nav className="flex flex-col gap-1 pt-4 border-t border-neutral-100">
@@ -226,6 +240,20 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Over Ons
+              </Link>
+              <Link
+                href="/blog"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Blog
+              </Link>
+              <Link
+                href="/kosten-calculator"
+                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Kosten calculator
               </Link>
               <Link
                 href="/contact"
