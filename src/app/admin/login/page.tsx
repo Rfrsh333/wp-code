@@ -1,56 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-const supabaseUrl = "https://nntxpyoyrpquzghsnwxj.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5udHhweW95cnBxdXpnaHNud3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTcxMjIsImV4cCI6MjA4MTE5MzEyMn0.a9WrCUxfInyBgUYXmkhJv6NM7p8Ll7wTUfXgu5bRGEE";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [configError, setConfigError] = useState("");
   const router = useRouter();
-
-  useEffect(() => {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      setConfigError(`Config missing - URL: ${supabaseUrl ? "OK" : "MISSING"}, Key: ${supabaseAnonKey ? "OK" : "MISSING"}`);
-    }
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      setError("Supabase configuratie ontbreekt");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Gebruik server-side API met rate limiting
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) {
-        console.error("Login error:", error);
-        setError(error.message || "Ongeldige inloggegevens");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Ongeldige inloggegevens");
         setIsLoading(false);
-      } else {
-        router.push("/admin");
-        router.refresh();
+        return;
       }
+
+      // Zet sessie aan client-side
+      if (data.session) {
+        await supabase.auth.setSession(data.session);
+      }
+
+      router.push("/admin");
+      router.refresh();
     } catch (err) {
-      console.error("Catch error:", err);
-      setError(`Fout: ${err instanceof Error ? err.message : "Onbekende fout"}`);
+      console.error("Login error:", err);
+      setError("Er is een fout opgetreden. Probeer het opnieuw.");
       setIsLoading(false);
     }
   };
@@ -69,11 +60,6 @@ export default function AdminLoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {configError && (
-            <div className="bg-yellow-50 text-yellow-700 px-4 py-3 rounded-xl text-sm">
-              {configError}
-            </div>
-          )}
           {error && (
             <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">
               {error}
