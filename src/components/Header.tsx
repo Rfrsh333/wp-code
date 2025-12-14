@@ -46,12 +46,12 @@ export default function Header() {
               <span className="hidden md:inline text-neutral-400 text-xs tracking-wide">
                 24/7 beschikbaar voor uw vragen
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
                 <a
                   href="https://instagram.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-neutral-400 hover:text-[#F27501] transition-colors duration-300"
+                  className="text-neutral-400 hover:text-[#F27501] transition-colors duration-300 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label="Instagram"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@ export default function Header() {
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-neutral-400 hover:text-[#F27501] transition-colors duration-300"
+                  className="text-neutral-400 hover:text-[#F27501] transition-colors duration-300 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label="LinkedIn"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -88,9 +88,9 @@ export default function Header() {
               <Image
                 src="/logo.png"
                 alt="TopTalent Jobs"
-                width={220}
-                height={70}
-                className="h-36 w-auto"
+                width={288}
+                height={144}
+                className="h-20 w-auto"
                 priority
               />
             </Link>

@@ -13,12 +13,12 @@ export default function Footer() {
               <Image
                 src="/logo.png"
                 alt="TopTalent Jobs"
-                width={200}
-                height={65}
-                className="h-32 w-auto brightness-0 invert"
+                width={256}
+                height={128}
+                className="h-16 w-auto brightness-0 invert"
               />
             </Link>
-            <p className="text-neutral-400 text-sm leading-relaxed mb-6">
+            <p className="text-neutral-300 text-sm leading-relaxed mb-6">
               Uw betrouwbare partner voor kwalitatief horecapersoneel.
               Uitzenden, detachering en recruitment.
             </p>
@@ -64,20 +64,20 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
+            <h2 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
               Navigatie
-            </h3>
+            </h2>
             <nav className="space-y-4">
-              <Link href="/" className="block text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Home
               </Link>
-              <Link href="/diensten" className="block text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/diensten" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Diensten
               </Link>
-              <Link href="/over-ons" className="block text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/over-ons" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Over Ons
               </Link>
-              <Link href="/contact" className="block text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/contact" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Contact
               </Link>
             </nav>
@@ -85,17 +85,17 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
+            <h2 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
               Diensten
-            </h3>
+            </h2>
             <nav className="space-y-4">
-              <Link href="/diensten#uitzenden" className="block text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/diensten#uitzenden" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Uitzenden
               </Link>
-              <Link href="/diensten#detachering" className="block text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/diensten#detachering" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Detachering
               </Link>
-              <Link href="/diensten#recruitment" className="block text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/diensten#recruitment" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Recruitment
               </Link>
             </nav>
@@ -103,22 +103,22 @@ export default function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
+            <h2 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
               Contact
-            </h3>
+            </h2>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-[#F27501] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span className="text-neutral-400">Utrecht, Nederland</span>
+                <span className="text-neutral-300">Utrecht, Nederland</span>
               </div>
               <div className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-[#F27501] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                <a href="tel:+31649200412" className="text-neutral-400 hover:text-white transition-colors duration-300">
+                <a href="tel:+31649200412" className="text-neutral-300 hover:text-white transition-colors duration-300">
                   +31 6 49 20 04 12
                 </a>
               </div>
@@ -126,7 +126,7 @@ export default function Footer() {
                 <svg className="w-5 h-5 text-[#F27501] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <a href="mailto:info@toptalentjobs.nl" className="text-neutral-400 hover:text-white transition-colors duration-300">
+                <a href="mailto:info@toptalentjobs.nl" className="text-neutral-300 hover:text-white transition-colors duration-300">
                   info@toptalentjobs.nl
                 </a>
               </div>
@@ -139,14 +139,14 @@ export default function Footer() {
       <div className="border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-neutral-500 text-sm">
+            <p className="text-neutral-400 text-sm">
               &copy; {new Date().getFullYear()} TopTalent Jobs. Alle rechten voorbehouden.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <Link href="/voorwaarden" className="text-neutral-500 hover:text-white transition-colors duration-300">
+              <Link href="/voorwaarden" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Algemene voorwaarden
               </Link>
-              <Link href="/privacy" className="text-neutral-500 hover:text-white transition-colors duration-300">
+              <Link href="/privacy" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Privacy Policy
               </Link>
             </div>

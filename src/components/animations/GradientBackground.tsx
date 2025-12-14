@@ -38,17 +38,21 @@ export default function GradientBackground() {
 
       <style jsx>{`
         @keyframes blob1 {
-          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-          50% { transform: translate3d(50px, 30px, 0) scale(1.1); }
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.25; }
+          50% { transform: translate3d(50px, 30px, 0) scale(1.1); opacity: 0.25; }
         }
         @keyframes blob2 {
-          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-          50% { transform: translate3d(-40px, -50px, 0) scale(1.15); }
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.20; }
+          50% { transform: translate3d(-40px, -50px, 0) scale(1.15); opacity: 0.20; }
         }
         @keyframes blob3 {
-          0%, 100% { transform: translate3d(-50%, -50%, 0) scale(1); }
-          33% { transform: translate3d(calc(-50% + 30px), calc(-50% - 20px), 0) scale(1.2); }
-          66% { transform: translate3d(calc(-50% - 30px), calc(-50% + 20px), 0) scale(0.9); }
+          0%, 100% { transform: translate3d(-50%, -50%, 0) scale(1); opacity: 0.15; }
+          33% { transform: translate3d(calc(-50% + 30px), calc(-50% - 20px), 0) scale(1.2); opacity: 0.15; }
+          66% { transform: translate3d(calc(-50% - 30px), calc(-50% + 20px), 0) scale(0.9); opacity: 0.15; }
+        }
+        .animate-blob1, .animate-blob2, .animate-blob3 {
+          backface-visibility: hidden;
+          perspective: 1000px;
         }
         /* Only animate on desktop (1024px+) */
         @media (min-width: 1024px) {
