@@ -38,11 +38,11 @@ interface Resultaten {
 
 // Basis uurtarieven per functie (ervaren niveau)
 const basisTarieven: Record<FunctieType, { vast: number; uitzend: number; zzp: number }> = {
-  bediening: { vast: 16.5, uitzend: 21.0, zzp: 19.5 },
-  bar: { vast: 17.0, uitzend: 21.5, zzp: 20.0 },
-  keuken: { vast: 18.5, uitzend: 23.5, zzp: 22.0 },
-  afwas: { vast: 14.5, uitzend: 18.5, zzp: 17.0 },
-  allround: { vast: 17.0, uitzend: 21.5, zzp: 20.0 },
+  bediening: { vast: 18.5, uitzend: 27.0, zzp: 25.5 },
+  bar: { vast: 18.5, uitzend: 27.0, zzp: 25.5 },
+  keuken: { vast: 19.5, uitzend: 28.0, zzp: 26.5 },
+  afwas: { vast: 17.0, uitzend: 25.0, zzp: 23.5 },
+  allround: { vast: 18.5, uitzend: 27.0, zzp: 25.5 },
 };
 
 // Ervaringsmultiplier
