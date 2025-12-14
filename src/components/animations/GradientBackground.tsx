@@ -1,70 +1,56 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 export default function GradientBackground() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       {/* Gradient blob 1 - Orange */}
-      <motion.div
-        className="absolute w-[600px] h-[600px] rounded-full opacity-[0.25]"
+      <div
+        className="absolute w-[600px] h-[600px] rounded-full opacity-[0.25] animate-blob1"
         style={{
           background: "radial-gradient(circle, #F27501 0%, transparent 70%)",
           top: "-10%",
           right: "-5%",
         }}
-        animate={{
-          x: [0, 50, 0],
-          y: [0, 30, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
       />
 
       {/* Gradient blob 2 - Light Orange */}
-      <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full opacity-[0.20]"
+      <div
+        className="absolute w-[500px] h-[500px] rounded-full opacity-[0.20] animate-blob2"
         style={{
           background: "radial-gradient(circle, #FFB347 0%, transparent 70%)",
           bottom: "10%",
           left: "-10%",
         }}
-        animate={{
-          x: [0, -40, 0],
-          y: [0, -50, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
       />
 
       {/* Gradient blob 3 - Subtle warm */}
-      <motion.div
-        className="absolute w-[400px] h-[400px] rounded-full opacity-[0.15]"
+      <div
+        className="absolute w-[400px] h-[400px] rounded-full opacity-[0.15] animate-blob3"
         style={{
           background: "radial-gradient(circle, #F27501 0%, transparent 70%)",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-        animate={{
-          x: [0, 30, -30, 0],
-          y: [0, -20, 20, 0],
-          scale: [1, 1.2, 0.9, 1],
-        }}
-        transition={{
-          duration: 30,
-          repeat: Infinity,
-          ease: "easeInOut",
         }}
       />
+
+      <style jsx>{`
+        @keyframes blob1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(50px, 30px) scale(1.1); }
+        }
+        @keyframes blob2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-40px, -50px) scale(1.15); }
+        }
+        @keyframes blob3 {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          33% { transform: translate(calc(-50% + 30px), calc(-50% - 20px)) scale(1.2); }
+          66% { transform: translate(calc(-50% - 30px), calc(-50% + 20px)) scale(0.9); }
+        }
+        .animate-blob1 { animation: blob1 20s ease-in-out infinite; }
+        .animate-blob2 { animation: blob2 25s ease-in-out infinite; }
+        .animate-blob3 { animation: blob3 30s ease-in-out infinite; }
+      `}</style>
     </div>
   );
 }
