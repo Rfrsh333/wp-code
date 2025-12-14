@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,8 +30,7 @@ export default function ContactPage() {
       });
 
       if (response.ok) {
-        setIsSubmitted(true);
-        form.reset();
+        router.push("/bedankt/contact");
       } else {
         alert("Er is iets misgegaan. Probeer het opnieuw.");
       }
@@ -79,23 +79,6 @@ export default function ContactPage() {
                 <p className="text-neutral-600 mb-8">
                   Vul het formulier in en wij nemen binnen 24 uur contact met u op.
                 </p>
-                {isSubmitted ? (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold text-neutral-900 mb-2">Bericht verzonden!</h3>
-                    <p className="text-neutral-600 mb-6">Wij nemen zo snel mogelijk contact met u op.</p>
-                    <button
-                      onClick={() => setIsSubmitted(false)}
-                      className="text-[#F97316] font-medium hover:underline"
-                    >
-                      Nog een bericht sturen
-                    </button>
-                  </div>
-                ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
@@ -193,7 +176,6 @@ export default function ContactPage() {
                     {isSubmitting ? "Verzenden..." : "Verstuur bericht"}
                   </button>
                 </form>
-                )}
               </div>
             </FadeIn>
 
