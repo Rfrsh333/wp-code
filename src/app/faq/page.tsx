@@ -68,11 +68,6 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Over TopTalent",
-    question: "Zijn jullie gecertificeerd?",
-    answer: "Ja, wij zijn aangesloten bij de ABU (Algemene Bond Uitzendondernemingen) en voldoen aan alle wettelijke eisen voor uitzendorganisaties. Dit garandeert dat we werken volgens de hoogste normen."
-  },
-  {
-    category: "Over TopTalent",
     question: "Wat onderscheidt TopTalent van andere uitzendbureaus?",
     answer: "Onze focus ligt 100% op de horeca, waardoor we de branche door en door kennen. We bieden persoonlijke service, snelle responstijden en investeren in langdurige relaties met zowel klanten als medewerkers."
   },
