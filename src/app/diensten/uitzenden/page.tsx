@@ -53,7 +53,7 @@ export default function UitzendenPage() {
             </FadeIn>
 
             <FadeIn direction="right" delay={0.2}>
-              <div className="flex justify-center lg:justify-end">
+              <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-uitzenden.png"
                   alt="Flexibel horeca uitzendpersoneel aan het werk - bediening restaurant Utrecht"
