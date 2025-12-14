@@ -79,27 +79,23 @@ export default async function Image() {
           </span>
         </div>
 
-        {/* Tagline */}
+        {/* Call-to-Action Button */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '32px',
-            marginTop: '20px',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #FF7A00 0%, #F97316 100%)',
+            color: 'white',
+            padding: '20px 48px',
+            borderRadius: '16px',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            marginTop: '24px',
+            boxShadow: '0 10px 30px rgba(249, 115, 22, 0.4)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '24px' }}>⚡</span>
-            <span style={{ fontSize: '24px', color: '#666' }}>Binnen 24 uur</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '24px' }}>🏆</span>
-            <span style={{ fontSize: '24px', color: '#666' }}>Ervaren personeel</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '24px' }}>📞</span>
-            <span style={{ fontSize: '24px', color: '#666' }}>7 dagen bereikbaar</span>
-          </div>
+          Vraag nu personeel aan →
         </div>
 
         {/* Website URL */}
@@ -112,7 +108,7 @@ export default async function Image() {
             gap: '8px',
           }}
         >
-          <span style={{ fontSize: '24px', color: '#FF7A00', fontWeight: '600' }}>
+          <span style={{ fontSize: '24px', color: '#666' }}>
             toptalentjobs.nl
           </span>
         </div>
