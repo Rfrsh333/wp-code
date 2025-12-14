@@ -6,10 +6,89 @@ import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
+interface FAQItem {
+  question: string;
+  answer: string;
+  category: string;
+}
+
+const faqData: FAQItem[] = [
+  // Voor Opdrachtgevers
+  {
+    category: "Voor Opdrachtgevers",
+    question: "Hoe snel kan ik personeel krijgen?",
+    answer: "In de meeste gevallen kunnen wij binnen 24 uur gekwalificeerd horecapersoneel leveren. Voor grotere aanvragen of specifieke functies kan dit iets langer duren, maar we streven altijd naar de snelst mogelijke oplossing voor uw personeelsbehoefte."
+  },
+  {
+    category: "Voor Opdrachtgevers",
+    question: "Wat zijn de kosten voor het inhuren van personeel?",
+    answer: "Onze tarieven zijn afhankelijk van de functie, ervaring en de duur van de inzet. Wij hanteren transparante uurtarieven zonder verborgen kosten. Neem contact met ons op voor een vrijblijvende offerte op maat."
+  },
+  {
+    category: "Voor Opdrachtgevers",
+    question: "Hoe werkt het selectieproces?",
+    answer: "Alle kandidaten doorlopen een uitgebreid selectieproces inclusief cv-screening, persoonlijke gesprekken en referentiechecks. We kijken niet alleen naar ervaring en vaardigheden, maar ook naar persoonlijkheid en cultuurfit met uw organisatie."
+  },
+  {
+    category: "Voor Opdrachtgevers",
+    question: "Wat als het personeel niet bevalt?",
+    answer: "Klanttevredenheid staat bij ons voorop. Als een medewerker niet aan uw verwachtingen voldoet, zorgen wij kosteloos voor vervanging. Bij recruitment bieden wij een plaatsingsgarantie tijdens de proefperiode."
+  },
+  {
+    category: "Voor Opdrachtgevers",
+    question: "Welke functies kunnen jullie invullen?",
+    answer: "Wij leveren personeel voor alle horecafuncties: van bediening, bar en keuken tot management, receptie en evenementenpersoneel. Of het nu gaat om restaurants, hotels, catering of evenementen - wij hebben de juiste mensen."
+  },
+  // Voor Werkzoekenden
+  {
+    category: "Voor Werkzoekenden",
+    question: "Hoe kan ik mij inschrijven?",
+    answer: "Inschrijven kan eenvoudig via onze website. Vul het inschrijfformulier in, upload je cv en we nemen zo snel mogelijk contact met je op voor een kennismakingsgesprek."
+  },
+  {
+    category: "Voor Werkzoekenden",
+    question: "Moet ik ervaring hebben in de horeca?",
+    answer: "Ervaring is een plus, maar niet altijd vereist. We zoeken vooral gemotiveerde mensen met de juiste instelling. Voor bepaalde functies bieden we training en begeleiding aan."
+  },
+  {
+    category: "Voor Werkzoekenden",
+    question: "Hoe word ik betaald?",
+    answer: "Je ontvangt wekelijks of maandelijks je salaris, afhankelijk van je voorkeur. Alle betalingen verlopen via ons en je ontvangt een duidelijke loonstrook. We zorgen voor correcte afdracht van belastingen en premies."
+  },
+  {
+    category: "Voor Werkzoekenden",
+    question: "Kan ik zelf mijn werktijden bepalen?",
+    answer: "Flexibiliteit is een van onze kernwaarden. Je geeft je beschikbaarheid door en wij matchen dit met passende opdrachten. Of je nu fulltime wilt werken of alleen in het weekend - er is altijd werk dat bij je past."
+  },
+  // Over TopTalent
+  {
+    category: "Over TopTalent",
+    question: "In welke regio's zijn jullie actief?",
+    answer: "TopTalent Jobs is actief in heel Nederland, met een focus op de Randstad en grote steden. We breiden continu uit om onze klanten en kandidaten nog beter van dienst te kunnen zijn."
+  },
+  {
+    category: "Over TopTalent",
+    question: "Wat onderscheidt TopTalent van andere uitzendbureaus?",
+    answer: "Onze focus ligt 100% op de horeca, waardoor we de branche door en door kennen. We bieden persoonlijke service, snelle responstijden en investeren in langdurige relaties met zowel klanten als medewerkers."
+  },
+];
+
+const categories = ["Alle", "Voor Opdrachtgevers", "Voor Werkzoekenden", "Over TopTalent"];
+
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(0);
+  const [activeCategory, setActiveCategory] = useState("Alle");
   const router = useRouter();
   const { executeRecaptcha } = useRecaptcha();
+
+  const filteredFAQ = activeCategory === "Alle"
+    ? faqData
+    : faqData.filter(item => item.category === activeCategory);
+
+  const toggleAccordion = (index: number) => {
+    setActiveIndex(activeIndex === index ? null : index);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -276,6 +355,95 @@ export default function ContactPage() {
                 </div>
               </div>
             </FadeIn>
+          </div>
+        </Section.Container>
+      </Section>
+
+      {/* FAQ Section */}
+      <Section variant="white" spacing="large" id="faq">
+        <Section.Container>
+          <FadeIn>
+            <div className="text-center mb-12">
+              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+                Veelgestelde Vragen
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
+                Antwoord op uw vragen
+              </h2>
+              <p className="text-neutral-600 max-w-2xl mx-auto">
+                Heeft u vragen over onze diensten? Hieronder vindt u antwoorden op de meest gestelde vragen.
+              </p>
+            </div>
+          </FadeIn>
+
+          {/* Category Tabs */}
+          <FadeIn delay={0.1}>
+            <div className="flex flex-wrap justify-center gap-3 mb-10">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => {
+                    setActiveCategory(category);
+                    setActiveIndex(0);
+                  }}
+                  className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+                    activeCategory === category
+                      ? "bg-[#F97316] text-white shadow-lg shadow-orange-500/25"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </FadeIn>
+
+          {/* Accordion */}
+          <div className="max-w-3xl mx-auto space-y-4">
+            {filteredFAQ.map((item, index) => (
+              <FadeIn key={index} delay={0.05 * index}>
+                <div
+                  className={`bg-neutral-50 rounded-2xl border transition-all duration-300 ${
+                    activeIndex === index
+                      ? "border-[#F97316] shadow-lg shadow-orange-500/10"
+                      : "border-neutral-200 hover:border-[#F97316]/50"
+                  }`}
+                >
+                  <button
+                    onClick={() => toggleAccordion(index)}
+                    className="w-full flex items-center gap-4 p-5 text-left"
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                        activeIndex === index
+                          ? "bg-[#F97316] text-white rotate-180"
+                          : "bg-orange-100 text-[#F97316]"
+                      }`}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    <h4
+                      className={`font-semibold text-lg transition-colors duration-300 ${
+                        activeIndex === index ? "text-[#F97316]" : "text-neutral-900"
+                      }`}
+                    >
+                      {item.question}
+                    </h4>
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${
+                      activeIndex === index ? "max-h-96" : "max-h-0"
+                    }`}
+                  >
+                    <div className="px-5 pb-5 pl-[4.5rem]">
+                      <p className="text-neutral-600 leading-relaxed">{item.answer}</p>
+                    </div>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
           </div>
         </Section.Container>
       </Section>
