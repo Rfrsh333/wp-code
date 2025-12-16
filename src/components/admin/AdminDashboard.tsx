@@ -76,6 +76,7 @@ interface CalculatorLead {
   pdf_downloaded: boolean;
   pdf_downloaded_at: string | null;
   email_sent: boolean;
+  contacted: boolean;
 }
 
 interface Stats {
@@ -1035,7 +1036,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Status badges */}
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex gap-2 mt-4 flex-wrap">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                       (selectedItem as CalculatorLead).email_sent ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                     }`}>
@@ -1046,6 +1047,36 @@ export default function AdminDashboard() {
                     }`}>
                       {(selectedItem as CalculatorLead).pdf_downloaded ? "PDF gedownload" : "PDF niet gedownload"}
                     </span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      (selectedItem as CalculatorLead).contacted ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                    }`}>
+                      {(selectedItem as CalculatorLead).contacted ? "Gecontacteerd" : "Nog niet gecontacteerd"}
+                    </span>
+                  </div>
+
+                  {/* Contacted toggle */}
+                  <div className="pt-4 border-t border-neutral-100 mt-4">
+                    <p className="text-sm text-neutral-500 mb-2">Follow-up emails</p>
+                    <button
+                      onClick={async () => {
+                        const newValue = !(selectedItem as CalculatorLead).contacted;
+                        await supabase
+                          .from("calculator_leads")
+                          .update({ contacted: newValue })
+                          .eq("id", selectedItem.id);
+                        fetchData();
+                        setSelectedItem({ ...selectedItem, contacted: newValue } as CalculatorLead);
+                      }}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                        (selectedItem as CalculatorLead).contacted
+                          ? "bg-green-500 text-white hover:bg-green-600"
+                          : "bg-orange-500 text-white hover:bg-orange-600"
+                      }`}
+                    >
+                      {(selectedItem as CalculatorLead).contacted
+                        ? "✓ Gecontacteerd (follow-ups gestopt)"
+                        : "Markeer als gecontacteerd (stop follow-ups)"}
+                    </button>
                   </div>
                 </>
               )}
