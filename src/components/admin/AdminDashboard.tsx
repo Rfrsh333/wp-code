@@ -104,7 +104,37 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<PersoneelAanvraag | Inschrijving | ContactBericht | CalculatorLead | null>(null);
   const [detailType, setDetailType] = useState<Tab | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = (ids: string[]) => {
+    setSelectedIds(prev => prev.size === ids.length ? new Set() : new Set(ids));
+  };
+
+  const deleteSelected = async (table: string) => {
+    if (selectedIds.size === 0) return;
+    if (confirm(`Weet je zeker dat je ${selectedIds.size} items wilt verwijderen?`)) {
+      await supabase.from(table).delete().in("id", Array.from(selectedIds));
+      setSelectedIds(new Set());
+      fetchData();
+    }
+  };
+
+  const exportSelected = (data: object[], filename: string) => {
+    const toExport = selectedIds.size > 0
+      ? data.filter((d: { id?: string }) => selectedIds.has(d.id || ""))
+      : data;
+    exportToCSV(toExport, filename);
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -309,7 +339,7 @@ export default function AdminDashboard() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); setSelectedIds(new Set()); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                 activeTab === tab.id
                   ? "bg-[#F27501] text-white"
@@ -561,21 +591,25 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Inschrijvingen</h2>
-                  <button
-                    onClick={() => exportToCSV(inschrijvingen, "inschrijvingen")}
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Exporteer CSV
-                  </button>
+                  <div className="flex gap-2">
+                    {selectedIds.size > 0 && (
+                      <button onClick={() => deleteSelected("inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Verwijder ({selectedIds.size})
+                      </button>
+                    )}
+                    <button onClick={() => exportSelected(inschrijvingen, "inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      {selectedIds.size > 0 ? `Exporteer (${selectedIds.size})` : "Exporteer alle"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
+                        <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(inschrijvingen.map(i => i.id))} checked={selectedIds.size === inschrijvingen.length && inschrijvingen.length > 0} className="w-4 h-4 rounded" /></th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Naam</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Contact</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Locatie</th>
@@ -588,6 +622,7 @@ export default function AdminDashboard() {
                     <tbody className="divide-y divide-neutral-100">
                       {inschrijvingen.map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
+                          <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 rounded" /></td>
                           <td className="px-6 py-4">
                             <p className="font-medium text-neutral-900">
                               {item.voornaam} {item.tussenvoegsel} {item.achternaam}
@@ -637,21 +672,25 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Contact Berichten</h2>
-                  <button
-                    onClick={() => exportToCSV(contactBerichten, "contact_berichten")}
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Exporteer CSV
-                  </button>
+                  <div className="flex gap-2">
+                    {selectedIds.size > 0 && (
+                      <button onClick={() => deleteSelected("contact_berichten")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Verwijder ({selectedIds.size})
+                      </button>
+                    )}
+                    <button onClick={() => exportSelected(contactBerichten, "contact_berichten")} className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      {selectedIds.size > 0 ? `Exporteer (${selectedIds.size})` : "Exporteer alle"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
+                        <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(contactBerichten.map(c => c.id))} checked={selectedIds.size === contactBerichten.length && contactBerichten.length > 0} className="w-4 h-4 rounded" /></th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Naam</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Onderwerp</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Bericht</th>
@@ -663,6 +702,7 @@ export default function AdminDashboard() {
                     <tbody className="divide-y divide-neutral-100">
                       {contactBerichten.map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
+                          <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 rounded" /></td>
                           <td className="px-6 py-4">
                             <p className="font-medium text-neutral-900">{item.naam}</p>
                             <p className="text-sm text-neutral-500">{item.email}</p>
@@ -712,37 +752,35 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Calculator Leads</h2>
-                  <button
-                    onClick={() => exportToCSV(calculatorLeads.map(lead => ({
-                      naam: lead.naam,
-                      bedrijfsnaam: lead.bedrijfsnaam,
-                      email: lead.email,
-                      functie: lead.functie,
-                      aantal_medewerkers: lead.aantal_medewerkers,
-                      ervaring: lead.ervaring,
-                      uren_per_dienst: lead.uren_per_dienst,
-                      dagen_per_week: lead.dagen_per_week.length,
-                      inzet_type: lead.inzet_type,
-                      vast_per_maand: lead.resultaten.vast?.perMaand || '',
-                      uitzend_per_maand: lead.resultaten.uitzend?.perMaand || '',
-                      zzp_per_maand: lead.resultaten.zzp?.perMaand || '',
-                      pdf_downloaded: lead.pdf_downloaded ? 'Ja' : 'Nee',
-                      email_sent: lead.email_sent ? 'Ja' : 'Nee',
-                      datum: lead.created_at,
-                    })), "calculator_leads")}
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Exporteer CSV
-                  </button>
+                  <div className="flex gap-2">
+                    {selectedIds.size > 0 && (
+                      <button onClick={() => deleteSelected("calculator_leads")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Verwijder ({selectedIds.size})
+                      </button>
+                    )}
+                    <button onClick={() => {
+                      const toExport = selectedIds.size > 0 ? calculatorLeads.filter(l => selectedIds.has(l.id)) : calculatorLeads;
+                      exportToCSV(toExport.map(lead => ({
+                        naam: lead.naam, bedrijfsnaam: lead.bedrijfsnaam, email: lead.email, functie: lead.functie,
+                        aantal_medewerkers: lead.aantal_medewerkers, ervaring: lead.ervaring, uren_per_dienst: lead.uren_per_dienst,
+                        dagen_per_week: lead.dagen_per_week.length, inzet_type: lead.inzet_type,
+                        vast_per_maand: lead.resultaten.vast?.perMaand || '', uitzend_per_maand: lead.resultaten.uitzend?.perMaand || '',
+                        zzp_per_maand: lead.resultaten.zzp?.perMaand || '', pdf_downloaded: lead.pdf_downloaded ? 'Ja' : 'Nee',
+                        email_sent: lead.email_sent ? 'Ja' : 'Nee', datum: lead.created_at,
+                      })), "calculator_leads");
+                    }} className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      {selectedIds.size > 0 ? `Exporteer (${selectedIds.size})` : "Exporteer alle"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
+                        <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(calculatorLeads.map(c => c.id))} checked={selectedIds.size === calculatorLeads.length && calculatorLeads.length > 0} className="w-4 h-4 rounded" /></th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Bedrijf</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Contact</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Functie</th>
@@ -755,6 +793,7 @@ export default function AdminDashboard() {
                     <tbody className="divide-y divide-neutral-100">
                       {calculatorLeads.map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
+                          <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 rounded" /></td>
                           <td className="px-6 py-4">
                             <p className="font-medium text-neutral-900">{item.bedrijfsnaam}</p>
                             <p className="text-sm text-neutral-500">{item.aantal_medewerkers} medewerker(s)</p>
