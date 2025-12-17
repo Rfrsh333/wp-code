@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { CalculatorPDF } from "@/lib/pdf/calculator-pdf";
 import type { CalculatorInputs, Resultaten, VergelijkingType, FunctieType, ErvaringType, InzetType } from "@/lib/calculator/types";
 

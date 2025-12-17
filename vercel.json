@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/facturen",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/herinneringen",
+      "schedule": "0 10 * * *"
+    }
+  ]
+}

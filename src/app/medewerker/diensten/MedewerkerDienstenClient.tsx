@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 
 interface Medewerker {
   id: string;
@@ -27,69 +26,57 @@ interface Dienst {
   uren_status?: string;
 }
 
+interface KlantAanpassing {
+  id: string;
+  start_tijd: string;
+  eind_tijd: string;
+  pauze_minuten: number;
+  gewerkte_uren: number;
+  klant_start_tijd: string;
+  klant_eind_tijd: string;
+  klant_pauze_minuten: number;
+  klant_gewerkte_uren: number;
+  klant_opmerking: string;
+  dienst_datum: string;
+  klant_naam: string;
+  locatie: string;
+}
+
 export default function MedewerkerDienstenClient({ medewerker }: { medewerker: Medewerker }) {
   const [diensten, setDiensten] = useState<Dienst[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [tab, setTab] = useState<"beschikbaar" | "mijn">("beschikbaar");
+  const [tab, setTab] = useState<"beschikbaar" | "mijn" | "aanpassingen">("beschikbaar");
   const [urenModal, setUrenModal] = useState<Dienst | null>(null);
   const [urenForm, setUrenForm] = useState({ start: "", eind: "", pauze: "0" });
+  const [aanpassingen, setAanpassingen] = useState<KlantAanpassing[]>([]);
 
-  const fetchDiensten = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
-
-    // Fetch open diensten matching medewerker's functies
-    const { data: alleDiensten } = await supabase
-      .from("diensten")
-      .select("*")
-      .in("functie", medewerker.functie)
-      .in("status", ["open", "vol"])
-      .gte("datum", new Date().toISOString().split("T")[0])
-      .order("datum", { ascending: true });
-
-    // Fetch medewerker's aanmeldingen with uren
-    const { data: aanmeldingen } = await supabase
-      .from("dienst_aanmeldingen")
-      .select("id, dienst_id, status, uren_registraties(status)")
-      .eq("medewerker_id", medewerker.id);
-
-    const aanmeldMap = new Map(
-      aanmeldingen?.map((a) => [
-        a.dienst_id,
-        { id: a.id, status: a.status, uren_status: (a.uren_registraties as { status: string }[])?.[0]?.status },
-      ]) || []
-    );
-
-    const dienstenMetStatus = (alleDiensten || []).map((d) => ({
-      ...d,
-      aangemeld: aanmeldMap.has(d.id),
-      aanmelding_id: aanmeldMap.get(d.id)?.id,
-      aanmelding_status: aanmeldMap.get(d.id)?.status,
-      uren_status: aanmeldMap.get(d.id)?.uren_status,
-    }));
-
-    setDiensten(dienstenMetStatus);
+    const res = await fetch("/api/medewerker/diensten");
+    const data = await res.json();
+    setDiensten(data.diensten || []);
+    setAanpassingen(data.aanpassingen || []);
     setIsLoading(false);
   };
 
-  useEffect(() => {
-    fetchDiensten();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const aanmelden = async (dienstId: string) => {
-    await supabase.from("dienst_aanmeldingen").insert({
-      dienst_id: dienstId,
-      medewerker_id: medewerker.id,
+    await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "aanmelden", dienst_id: dienstId }),
     });
-    fetchDiensten();
+    fetchData();
   };
 
   const afmelden = async (dienstId: string) => {
-    await supabase
-      .from("dienst_aanmeldingen")
-      .delete()
-      .eq("dienst_id", dienstId)
-      .eq("medewerker_id", medewerker.id);
-    fetchDiensten();
+    await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "afmelden", dienst_id: dienstId }),
+    });
+    fetchData();
   };
 
   const openUrenModal = (dienst: Dienst) => {
@@ -103,15 +90,35 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
     const eind = urenForm.eind.split(":").map(Number);
     const uren = (eind[0] * 60 + eind[1] - start[0] * 60 - start[1] - parseInt(urenForm.pauze)) / 60;
 
-    await supabase.from("uren_registraties").insert({
-      aanmelding_id: urenModal.aanmelding_id,
-      start_tijd: urenForm.start,
-      eind_tijd: urenForm.eind,
-      pauze_minuten: parseInt(urenForm.pauze),
-      gewerkte_uren: Math.round(uren * 100) / 100,
+    await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "uren_indienen",
+        aanmelding_id: urenModal.aanmelding_id,
+        data: { start: urenForm.start, eind: urenForm.eind, pauze: parseInt(urenForm.pauze), uren: Math.round(uren * 100) / 100 },
+      }),
     });
     setUrenModal(null);
-    fetchDiensten();
+    fetchData();
+  };
+
+  const accepteerAanpassing = async (id: string) => {
+    await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "accepteer_aanpassing", uren_id: id }),
+    });
+    fetchData();
+  };
+
+  const weigerAanpassing = async (id: string) => {
+    await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "weiger_aanpassing", uren_id: id }),
+    });
+    fetchData();
   };
 
   const formatDate = (date: string) =>
@@ -135,7 +142,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <button
             onClick={() => setTab("beschikbaar")}
             className={`px-4 py-2 rounded-xl font-medium ${
@@ -152,11 +159,73 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
           >
             Mijn diensten ({mijnDiensten.length})
           </button>
+          {aanpassingen.length > 0 && (
+            <button
+              onClick={() => setTab("aanpassingen")}
+              className={`px-4 py-2 rounded-xl font-medium ${
+                tab === "aanpassingen" ? "bg-orange-500 text-white" : "bg-orange-100 text-orange-700"
+              }`}
+            >
+              Klant aanpassingen ({aanpassingen.length})
+            </button>
+          )}
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
+          </div>
+        ) : tab === "aanpassingen" ? (
+          <div className="space-y-4">
+            {aanpassingen.map((a) => (
+              <div key={a.id} className="bg-white rounded-2xl p-5 shadow-sm">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-neutral-900">{a.klant_naam}</h3>
+                    <p className="text-sm text-neutral-500">{a.locatie} • {formatDate(a.dienst_datum)}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                    Klant aanpassing
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-neutral-50 rounded-xl p-3">
+                    <p className="text-xs text-neutral-500 mb-1">Jouw uren (origineel)</p>
+                    <p className="font-medium">{a.start_tijd?.slice(0,5)} - {a.eind_tijd?.slice(0,5)}</p>
+                    <p className="text-sm text-neutral-600">{a.pauze_minuten}m pauze = {a.gewerkte_uren} uur</p>
+                  </div>
+                  <div className="bg-orange-50 rounded-xl p-3 border-2 border-orange-200">
+                    <p className="text-xs text-orange-600 mb-1">Klant correctie</p>
+                    <p className="font-medium text-orange-700">{a.klant_start_tijd?.slice(0,5)} - {a.klant_eind_tijd?.slice(0,5)}</p>
+                    <p className="text-sm text-orange-600">{a.klant_pauze_minuten}m pauze = {a.klant_gewerkte_uren} uur</p>
+                  </div>
+                </div>
+
+                {a.klant_opmerking && (
+                  <div className="bg-neutral-50 rounded-xl p-3 mb-4">
+                    <p className="text-xs text-neutral-500 mb-1">Reden van klant</p>
+                    <p className="text-sm">{a.klant_opmerking}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button onClick={() => accepteerAanpassing(a.id)}
+                    className="flex-1 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700">
+                    Akkoord
+                  </button>
+                  <button onClick={() => weigerAanpassing(a.id)}
+                    className="flex-1 py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600">
+                    Niet akkoord
+                  </button>
+                </div>
+              </div>
+            ))}
+            {aanpassingen.length === 0 && (
+              <div className="text-center py-12 text-neutral-500">
+                Geen klant aanpassingen
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -82,35 +82,32 @@ export default function DienstenTab() {
   const [isSaving, setIsSaving] = useState(false);
   const [filter, setFilter] = useState<"alle" | "open" | "vol" | "afgerond">("alle");
 
+  const getAuthHeader = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return { Authorization: `Bearer ${session?.access_token}` };
+  };
+
   const fetchDiensten = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("diensten")
-      .select("*")
-      .order("datum", { ascending: true });
-
-    if (!error && data) {
-      setDiensten(data);
-    }
+    const headers = await getAuthHeader();
+    const res = await fetch("/api/admin/diensten", { headers });
+    const { data } = await res.json();
+    setDiensten(data || []);
     setIsLoading(false);
   };
 
   const fetchAanmeldingen = async (dienstId: string) => {
-    const { data, error } = await supabase
-      .from("dienst_aanmeldingen")
-      .select(`
-        *,
-        medewerker:medewerkers(naam, email, telefoon)
-      `)
-      .eq("dienst_id", dienstId)
-      .order("aangemeld_at", { ascending: true });
-
-    if (!error && data) {
-      setAanmeldingen(data.map(a => ({
-        ...a,
-        medewerker: a.medewerker as unknown as Aanmelding["medewerker"]
-      })));
-    }
+    const headers = await getAuthHeader();
+    const res = await fetch("/api/admin/diensten", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_aanmeldingen", dienst_id: dienstId }),
+    });
+    const { data } = await res.json();
+    setAanmeldingen((data || []).map((a: any) => ({
+      ...a,
+      medewerker: a.medewerker as Aanmelding["medewerker"]
+    })));
   };
 
   useEffect(() => {
@@ -167,7 +164,8 @@ export default function DienstenTab() {
     e.preventDefault();
     setIsSaving(true);
 
-    const data = {
+    const headers = await getAuthHeader();
+    const payload = {
       klant_naam: formData.klant_naam,
       klant_email: formData.klant_email || null,
       klant_telefoon: formData.klant_telefoon || null,
@@ -182,11 +180,15 @@ export default function DienstenTab() {
       notities: formData.notities || null,
     };
 
-    if (editingDienst) {
-      await supabase.from("diensten").update(data).eq("id", editingDienst.id);
-    } else {
-      await supabase.from("diensten").insert(data);
-    }
+    await fetch("/api/admin/diensten", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: editingDienst ? "update" : "create",
+        id: editingDienst?.id,
+        data: payload,
+      }),
+    });
 
     setIsSaving(false);
     setShowModal(false);
@@ -195,13 +197,23 @@ export default function DienstenTab() {
 
   const deleteDienst = async (id: string) => {
     if (confirm("Weet je zeker dat je deze dienst wilt verwijderen?")) {
-      await supabase.from("diensten").delete().eq("id", id);
+      const headers = await getAuthHeader();
+      await fetch("/api/admin/diensten", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id }),
+      });
       fetchDiensten();
     }
   };
 
   const updateDienstStatus = async (id: string, status: Dienst["status"]) => {
-    await supabase.from("diensten").update({ status }).eq("id", id);
+    const headers = await getAuthHeader();
+    await fetch("/api/admin/diensten", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update", id, data: { status } }),
+    });
     fetchDiensten();
   };
 
@@ -209,15 +221,16 @@ export default function DienstenTab() {
     aanmeldingId: string,
     status: Aanmelding["status"]
   ) => {
-    await supabase
-      .from("dienst_aanmeldingen")
-      .update({ status, beoordeeld_at: new Date().toISOString() })
-      .eq("id", aanmeldingId);
+    const headers = await getAuthHeader();
+    await fetch("/api/admin/diensten", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update_aanmelding", id: aanmeldingId, data: { status } }),
+    });
 
     if (selectedDienst) {
       await fetchAanmeldingen(selectedDienst.id);
 
-      // Check if dienst is now full
       const geaccepteerd = aanmeldingen.filter(
         (a) => a.status === "geaccepteerd" || (a.id === aanmeldingId && status === "geaccepteerd")
       ).length;

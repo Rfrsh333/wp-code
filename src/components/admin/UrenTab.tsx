@@ -20,26 +20,31 @@ interface UrenRegistratie {
 export default function UrenTab() {
   const [uren, setUren] = useState<UrenRegistratie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<"ingediend" | "alle">("ingediend");
+  const [filter, setFilter] = useState<"klant_goedgekeurd" | "ingediend" | "alle">("klant_goedgekeurd");
+
+  const getAuthHeader = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return { Authorization: `Bearer ${session?.access_token}` };
+  };
 
   const fetchUren = async () => {
     setIsLoading(true);
-    let query = supabase
-      .from("uren_registraties")
-      .select(`*, aanmelding:dienst_aanmeldingen(medewerker:medewerkers(naam, email), dienst:diensten(klant_naam, datum, locatie, uurtarief))`)
-      .order("created_at", { ascending: false });
-
-    if (filter === "ingediend") query = query.eq("status", "ingediend");
-
-    const { data } = await query;
-    setUren((data || []) as unknown as UrenRegistratie[]);
+    const headers = await getAuthHeader();
+    const res = await fetch(`/api/admin/uren?filter=${filter}`, { headers });
+    const { data } = await res.json();
+    setUren((data || []) as UrenRegistratie[]);
     setIsLoading(false);
   };
 
   useEffect(() => { fetchUren(); }, [filter]);
 
   const updateStatus = async (id: string, status: "goedgekeurd" | "afgewezen") => {
-    await supabase.from("uren_registraties").update({ status, goedgekeurd_at: new Date().toISOString() }).eq("id", id);
+    const headers = await getAuthHeader();
+    await fetch("/api/admin/uren", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update_status", id, status }),
+    });
     fetchUren();
   };
 
@@ -52,8 +57,11 @@ export default function UrenTab() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-neutral-900">Uren Goedkeuren</h2>
         <div className="flex gap-2">
+          <button onClick={() => setFilter("klant_goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "klant_goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
+            Klant goedgekeurd
+          </button>
           <button onClick={() => setFilter("ingediend")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "ingediend" ? "bg-[#F27501] text-white" : "bg-white"}`}>
-            Te beoordelen ({uren.filter(u => u.status === "ingediend").length})
+            Wacht op klant
           </button>
           <button onClick={() => setFilter("alle")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "alle" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Alle
@@ -94,11 +102,12 @@ export default function UrenTab() {
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     u.status === "goedgekeurd" ? "bg-green-100 text-green-700" :
+                    u.status === "klant_goedgekeurd" ? "bg-blue-100 text-blue-700" :
                     u.status === "afgewezen" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
-                  }`}>{u.status}</span>
+                  }`}>{u.status === "klant_goedgekeurd" ? "Klant OK" : u.status}</span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  {u.status === "ingediend" && (
+                  {(u.status === "ingediend" || u.status === "klant_goedgekeurd") && (
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => updateStatus(u.id, "goedgekeurd")} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Goedkeuren</button>
                       <button onClick={() => updateStatus(u.id, "afgewezen")} className="px-3 py-1 bg-red-500 text-white rounded text-sm">Afwijzen</button>

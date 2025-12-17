@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import crypto from "crypto";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import type { CalculatorInputs, Resultaten, LeadFormData } from "@/lib/calculator/types";
 import { berekenKosten, validateInputs } from "@/lib/calculator/calculate";

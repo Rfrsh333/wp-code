@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import bcrypt from "bcryptjs";
 
 interface Medewerker {
   id: string;
@@ -40,16 +39,17 @@ export default function MedewerkersTab() {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  const getAuthHeader = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return { Authorization: `Bearer ${session?.access_token}` };
+  };
+
   const fetchMedewerkers = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("medewerkers")
-      .select("*")
-      .order("naam", { ascending: true });
-
-    if (!error && data) {
-      setMedewerkers(data);
-    }
+    const headers = await getAuthHeader();
+    const res = await fetch("/api/admin/medewerkers", { headers });
+    const { data } = await res.json();
+    setMedewerkers(data || []);
     setIsLoading(false);
   };
 
@@ -91,7 +91,8 @@ export default function MedewerkersTab() {
     e.preventDefault();
     setIsSaving(true);
 
-    const data: Record<string, unknown> = {
+    const headers = await getAuthHeader();
+    const payload = {
       naam: formData.naam,
       email: formData.email,
       telefoon: formData.telefoon || null,
@@ -99,17 +100,18 @@ export default function MedewerkersTab() {
       uurtarief: parseFloat(formData.uurtarief),
       status: formData.status,
       notities: formData.notities || null,
+      wachtwoord: formData.wachtwoord || undefined,
     };
 
-    if (formData.wachtwoord) {
-      data.wachtwoord = await bcrypt.hash(formData.wachtwoord, 10);
-    }
-
-    if (editingMedewerker) {
-      await supabase.from("medewerkers").update(data).eq("id", editingMedewerker.id);
-    } else {
-      await supabase.from("medewerkers").insert(data);
-    }
+    await fetch("/api/admin/medewerkers", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: editingMedewerker ? "update" : "create",
+        id: editingMedewerker?.id,
+        data: payload,
+      }),
+    });
 
     setIsSaving(false);
     setShowModal(false);
@@ -118,7 +120,12 @@ export default function MedewerkersTab() {
 
   const deleteMedewerker = async (id: string) => {
     if (confirm("Weet je zeker dat je deze medewerker wilt verwijderen?")) {
-      await supabase.from("medewerkers").delete().eq("id", id);
+      const headers = await getAuthHeader();
+      await fetch("/api/admin/medewerkers", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id }),
+      });
       fetchMedewerkers();
     }
   };
