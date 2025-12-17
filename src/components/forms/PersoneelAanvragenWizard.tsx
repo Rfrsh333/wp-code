@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { basisTarieven } from "@/lib/calculator/tarieven";
+
+type ContractType = "zzp" | "loondienst" | "uitzendkracht";
 
 interface FormData {
   // Stap 1: Bedrijfsgegevens
@@ -12,6 +15,8 @@ interface FormData {
   // Stap 2: Personeelsbehoefte
   typePersoneel: string[];
   aantalPersonen: string;
+  contractType: ContractType[];
+  gewenstUurtarief: string;
   // Stap 3: Planning
   startDatum: string;
   eindDatum: string;
@@ -29,6 +34,8 @@ const initialFormData: FormData = {
   telefoon: "",
   typePersoneel: [],
   aantalPersonen: "",
+  contractType: [],
+  gewenstUurtarief: "",
   startDatum: "",
   eindDatum: "",
   werkdagen: [],
@@ -62,6 +69,45 @@ const werkdagenOptions = [
 
 const aantalOptions = ["1", "2-3", "4-5", "6-10", "10+"];
 
+const contractTypeOptions: { value: ContractType; label: string; description: string }[] = [
+  { value: "zzp", label: "ZZP'er", description: "Zelfstandige zonder personeel" },
+  { value: "loondienst", label: "Loondienst", description: "Vast of tijdelijk contract" },
+  { value: "uitzendkracht", label: "Uitzendkracht", description: "Via uitzendbureau" },
+];
+
+// Map personeel types naar calculator functie types voor richtprijzen
+const getRelevantTarieven = (typePersoneel: string[]): { min: number; max: number } | null => {
+  if (typePersoneel.length === 0) return null;
+
+  const functieMapping: Record<string, keyof typeof basisTarieven> = {
+    "Barista": "bar",
+    "Bartender": "bar",
+    "Ober/Serveerster": "bediening",
+    "Gastheer/Gastvrouw": "bediening",
+    "Runner": "bediening",
+    "Evenement medewerker": "bediening",
+    "Kok": "keuken",
+    "Sous-chef": "keuken",
+    "Afwasser": "afwas",
+  };
+
+  let minTarief = Infinity;
+  let maxTarief = 0;
+
+  typePersoneel.forEach(type => {
+    const functie = functieMapping[type];
+    if (functie) {
+      const tarieven = basisTarieven[functie];
+      // Gebruik het laagste (vast) en hoogste (uitzend) tarief
+      minTarief = Math.min(minTarief, tarieven.vast);
+      maxTarief = Math.max(maxTarief, tarieven.uitzend);
+    }
+  });
+
+  if (minTarief === Infinity) return null;
+  return { min: minTarief, max: maxTarief };
+};
+
 export default function PersoneelAanvragenWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -78,7 +124,7 @@ export default function PersoneelAanvragenWizard() {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const toggleArrayField = (field: "typePersoneel" | "werkdagen", value: string) => {
+  const toggleArrayField = (field: "typePersoneel" | "werkdagen" | "contractType", value: string) => {
     setFormData((prev) => {
       const current = prev[field] as string[];
       const updated = current.includes(value)
@@ -106,6 +152,7 @@ export default function PersoneelAanvragenWizard() {
       case 1:
         if (formData.typePersoneel.length === 0) newErrors.typePersoneel = [] as unknown as string[];
         if (!formData.aantalPersonen) newErrors.aantalPersonen = "Selecteer aantal personen";
+        if (formData.contractType.length === 0) newErrors.contractType = [] as unknown as ContractType[];
         break;
       case 2:
         if (!formData.startDatum) newErrors.startDatum = "Startdatum is verplicht";
@@ -374,6 +421,99 @@ export default function PersoneelAanvragenWizard() {
                     <p className="text-red-500 text-sm mt-2">{errors.aantalPersonen}</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-3">
+                    Contractvorm * <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {contractTypeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => toggleArrayField("contractType", option.value)}
+                        className={`px-4 py-4 rounded-lg border text-left transition-all duration-200 ${
+                          formData.contractType.includes(option.value)
+                            ? "bg-[#F27501] border-[#F27501] text-white"
+                            : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501]"
+                        }`}
+                      >
+                        <span className="block font-medium">{option.label}</span>
+                        <span className={`block text-xs mt-1 ${
+                          formData.contractType.includes(option.value)
+                            ? "text-white/80"
+                            : "text-neutral-400"
+                        }`}>
+                          {option.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {errors.contractType !== undefined && formData.contractType.length === 0 && (
+                    <p className="text-red-500 text-sm mt-2">Selecteer minimaal één contractvorm</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Gewenst uurtarief <span className="text-neutral-400 font-normal">(optioneel)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">€</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      min="0"
+                      value={formData.gewenstUurtarief}
+                      onChange={(e) => updateField("gewenstUurtarief", e.target.value)}
+                      className="w-full pl-8 pr-16 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
+                      placeholder="Bijv. 25"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400">per uur</span>
+                  </div>
+                </div>
+
+                {/* Richtprijzen info box */}
+                {formData.typePersoneel.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-blue-900 mb-1">Richtprijzen</h4>
+                        <p className="text-sm text-blue-700 mb-2">
+                          Op basis van uw selectie liggen marktconforme uurtarieven tussen:
+                        </p>
+                        {(() => {
+                          const tarieven = getRelevantTarieven(formData.typePersoneel);
+                          if (!tarieven) return null;
+                          return (
+                            <div className="flex flex-wrap gap-4 text-sm">
+                              <div className="bg-white/60 rounded-lg px-3 py-2">
+                                <span className="text-blue-600 font-medium">Loondienst:</span>
+                                <span className="text-blue-900 ml-1">€{tarieven.min.toFixed(2)} - €{(tarieven.min * 1.2).toFixed(2)}</span>
+                              </div>
+                              <div className="bg-white/60 rounded-lg px-3 py-2">
+                                <span className="text-blue-600 font-medium">ZZP:</span>
+                                <span className="text-blue-900 ml-1">€{(tarieven.max * 0.94).toFixed(2)} - €{tarieven.max.toFixed(2)}</span>
+                              </div>
+                              <div className="bg-white/60 rounded-lg px-3 py-2">
+                                <span className="text-blue-600 font-medium">Uitzendkracht:</span>
+                                <span className="text-blue-900 ml-1">€{(tarieven.max * 0.95).toFixed(2)} - €{(tarieven.max * 1.1).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        <p className="text-xs text-blue-600 mt-2">
+                          * Tarieven zijn indicatief en afhankelijk van ervaring en beschikbaarheid
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -508,6 +648,18 @@ export default function PersoneelAanvragenWizard() {
                     <span className="text-neutral-900">{formData.typePersoneel.join(", ")}</span>
                     <span className="text-neutral-500">Aantal:</span>
                     <span className="text-neutral-900">{formData.aantalPersonen} personen</span>
+                    <span className="text-neutral-500">Contractvorm:</span>
+                    <span className="text-neutral-900">
+                      {formData.contractType.map(ct =>
+                        contractTypeOptions.find(o => o.value === ct)?.label
+                      ).join(", ")}
+                    </span>
+                    {formData.gewenstUurtarief && (
+                      <>
+                        <span className="text-neutral-500">Gewenst uurtarief:</span>
+                        <span className="text-neutral-900">€{formData.gewenstUurtarief} per uur</span>
+                      </>
+                    )}
                     <span className="text-neutral-500">Startdatum:</span>
                     <span className="text-neutral-900">{formData.startDatum}</span>
                   </div>

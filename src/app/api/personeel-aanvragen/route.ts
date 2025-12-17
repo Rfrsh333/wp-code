@@ -11,6 +11,8 @@ interface FormData {
   telefoon: string;
   typePersoneel: string[];
   aantalPersonen: string;
+  contractType: string[];
+  gewenstUurtarief: string;
   startDatum: string;
   eindDatum: string;
   werkdagen: string[];
@@ -19,6 +21,12 @@ interface FormData {
   opmerkingen: string;
   recaptchaToken?: string;
 }
+
+const contractTypeLabels: Record<string, string> = {
+  zzp: "ZZP'er",
+  loondienst: "Loondienst",
+  uitzendkracht: "Uitzendkracht",
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,6 +114,16 @@ export async function POST(request: NextRequest) {
                 <td style="padding: 8px 0; color: #666;">Aantal personen:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.aantalPersonen}</td>
               </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;">Contractvorm:</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.contractType.map(ct => contractTypeLabels[ct] || ct).join(", ")}</td>
+              </tr>
+              ${data.gewenstUurtarief ? `
+              <tr>
+                <td style="padding: 8px 0; color: #666;">Gewenst uurtarief:</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">€${data.gewenstUurtarief} per uur</td>
+              </tr>
+              ` : ""}
             </table>
           </div>
 
@@ -194,6 +212,8 @@ export async function POST(request: NextRequest) {
       telefoon: data.telefoon,
       type_personeel: data.typePersoneel,
       aantal_personen: data.aantalPersonen,
+      contract_type: data.contractType,
+      gewenst_uurtarief: data.gewenstUurtarief ? parseFloat(data.gewenstUurtarief) : null,
       start_datum: data.startDatum,
       eind_datum: data.eindDatum || null,
       werkdagen: data.werkdagen,
