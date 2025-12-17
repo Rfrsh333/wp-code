@@ -19,6 +19,7 @@ interface Dienst {
   eind_tijd: string;
   functie: string;
   uurtarief: number | null;
+  afbeelding: string | null;
   status: string;
   aangemeld?: boolean;
   aanmelding_id?: string;
@@ -158,78 +159,88 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
             <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {(tab === "beschikbaar" ? beschikbaar : mijnDiensten).map((dienst) => (
-              <div key={dienst.id} className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-neutral-900">{dienst.klant_naam}</p>
-                    <p className="text-sm text-neutral-500">{dienst.locatie}</p>
-                    <div className="flex gap-4 mt-2 text-sm">
-                      <span className="text-neutral-700">{formatDate(dienst.datum)}</span>
-                      <span className="text-neutral-500">
-                        {dienst.start_tijd.slice(0, 5)} - {dienst.eind_tijd.slice(0, 5)}
-                      </span>
+              <div key={dienst.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+                {/* Image */}
+                <div className="relative aspect-[16/10] bg-neutral-100">
+                  {dienst.afbeelding ? (
+                    <img src={dienst.afbeelding} alt={dienst.klant_naam} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
+                      <svg className="w-16 h-16 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
                     </div>
-                    <div className="flex gap-2 mt-2">
-                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs capitalize">
-                        {dienst.functie}
-                      </span>
-                      {dienst.uurtarief && (
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
-                          €{dienst.uurtarief}/uur
-                        </span>
-                      )}
-                      {dienst.aanmelding_status && (
-                        <span
-                          className={`px-2 py-0.5 rounded text-xs ${
-                            dienst.aanmelding_status === "geaccepteerd"
-                              ? "bg-green-100 text-green-700"
-                              : dienst.aanmelding_status === "afgewezen"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {dienst.aanmelding_status}
-                        </span>
-                      )}
-                    </div>
+                  )}
+                  <span className="absolute top-3 left-3 bg-[#F27501] text-white text-xs font-semibold px-3 py-1 rounded-full capitalize">
+                    {dienst.functie}
+                  </span>
+                  {dienst.aanmelding_status && (
+                    <span className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full ${
+                      dienst.aanmelding_status === "geaccepteerd" ? "bg-green-500 text-white" :
+                      dienst.aanmelding_status === "afgewezen" ? "bg-red-500 text-white" : "bg-yellow-500 text-white"
+                    }`}>
+                      {dienst.aanmelding_status}
+                    </span>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="font-bold text-lg text-neutral-900 mb-1">{dienst.klant_naam}</h3>
+                  <p className="text-neutral-500 text-sm mb-3 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {dienst.locatie}
+                  </p>
+
+                  <div className="flex items-center gap-4 text-sm text-neutral-600 mb-4">
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {formatDate(dienst.datum)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {dienst.start_tijd.slice(0, 5)} - {dienst.eind_tijd.slice(0, 5)}
+                    </span>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    {!dienst.aangemeld ? (
-                      <button
-                        onClick={() => aanmelden(dienst.id)}
-                        className="px-4 py-2 bg-[#F27501] text-white rounded-lg text-sm font-medium hover:bg-[#d96800]"
-                      >
-                        Aanmelden
-                      </button>
-                    ) : dienst.aanmelding_status === "aangemeld" ? (
-                      <button
-                        onClick={() => afmelden(dienst.id)}
-                        className="px-4 py-2 bg-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-300"
-                      >
-                        Afmelden
-                      </button>
-                    ) : dienst.aanmelding_status === "geaccepteerd" && !dienst.uren_status && new Date(dienst.datum) <= new Date() ? (
-                      <button
-                        onClick={() => openUrenModal(dienst)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
-                      >
-                        Uren invullen
-                      </button>
-                    ) : dienst.uren_status ? (
-                      <span className={`px-3 py-1 rounded text-xs ${
-                        dienst.uren_status === "goedgekeurd" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                      }`}>
-                        Uren {dienst.uren_status}
-                      </span>
-                    ) : null}
+
+                  <div className="flex items-center justify-between">
+                    {dienst.uurtarief && (
+                      <span className="text-[#F27501] font-bold">€{dienst.uurtarief}/uur</span>
+                    )}
+                    <div className="ml-auto">
+                      {!dienst.aangemeld ? (
+                        <button onClick={() => aanmelden(dienst.id)} className="px-5 py-2 bg-[#F27501] text-white rounded-xl text-sm font-semibold hover:bg-[#d96800] transition-colors">
+                          Aanmelden
+                        </button>
+                      ) : dienst.aanmelding_status === "aangemeld" ? (
+                        <button onClick={() => afmelden(dienst.id)} className="px-5 py-2 bg-neutral-200 text-neutral-700 rounded-xl text-sm font-medium hover:bg-neutral-300 transition-colors">
+                          Afmelden
+                        </button>
+                      ) : dienst.aanmelding_status === "geaccepteerd" && !dienst.uren_status && new Date(dienst.datum) <= new Date() ? (
+                        <button onClick={() => openUrenModal(dienst)} className="px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
+                          Uren invullen
+                        </button>
+                      ) : dienst.uren_status ? (
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-medium ${dienst.uren_status === "goedgekeurd" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                          Uren {dienst.uren_status}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
             {(tab === "beschikbaar" ? beschikbaar : mijnDiensten).length === 0 && (
-              <div className="text-center py-12 text-neutral-500">
+              <div className="col-span-2 text-center py-12 text-neutral-500">
                 {tab === "beschikbaar" ? "Geen beschikbare diensten" : "Nog geen aanmeldingen"}
               </div>
             )}

@@ -15,6 +15,7 @@ interface Dienst {
   functie: string;
   aantal_nodig: number;
   uurtarief: number | null;
+  afbeelding: string | null;
   status: "open" | "vol" | "bezig" | "afgerond" | "geannuleerd";
   notities: string | null;
   created_at: string;
@@ -75,6 +76,7 @@ export default function DienstenTab() {
     functie: "bediening",
     aantal_nodig: "1",
     uurtarief: "",
+    afbeelding: "",
     notities: "",
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -130,6 +132,7 @@ export default function DienstenTab() {
       functie: "bediening",
       aantal_nodig: "1",
       uurtarief: "",
+      afbeelding: "",
       notities: "",
     });
     setShowModal(true);
@@ -145,6 +148,7 @@ export default function DienstenTab() {
       datum: dienst.datum,
       start_tijd: dienst.start_tijd,
       eind_tijd: dienst.eind_tijd,
+      afbeelding: dienst.afbeelding || "",
       functie: dienst.functie,
       aantal_nodig: dienst.aantal_nodig.toString(),
       uurtarief: dienst.uurtarief?.toString() || "",
@@ -174,6 +178,7 @@ export default function DienstenTab() {
       functie: formData.functie,
       aantal_nodig: parseInt(formData.aantal_nodig),
       uurtarief: formData.uurtarief ? parseFloat(formData.uurtarief) : null,
+      afbeelding: formData.afbeelding || null,
       notities: formData.notities || null,
     };
 
@@ -551,6 +556,19 @@ export default function DienstenTab() {
                     onChange={(e) => setFormData({ ...formData, uurtarief: e.target.value })}
                     className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
                     placeholder="Optioneel"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Afbeelding URL
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.afbeelding}
+                    onChange={(e) => setFormData({ ...formData, afbeelding: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                    placeholder="https://..."
                   />
                 </div>
 
