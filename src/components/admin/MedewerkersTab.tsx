@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import bcrypt from "bcryptjs";
 
 interface Medewerker {
   id: string;
@@ -31,6 +32,7 @@ export default function MedewerkersTab() {
     naam: "",
     email: "",
     telefoon: "",
+    wachtwoord: "",
     functie: [] as string[],
     uurtarief: "15.00",
     status: "actief" as "actief" | "inactief",
@@ -61,6 +63,7 @@ export default function MedewerkersTab() {
       naam: "",
       email: "",
       telefoon: "",
+      wachtwoord: "",
       functie: [],
       uurtarief: "15.00",
       status: "actief",
@@ -75,6 +78,7 @@ export default function MedewerkersTab() {
       naam: medewerker.naam,
       email: medewerker.email,
       telefoon: medewerker.telefoon || "",
+      wachtwoord: "",
       functie: medewerker.functie || [],
       uurtarief: medewerker.uurtarief.toString(),
       status: medewerker.status,
@@ -87,7 +91,7 @@ export default function MedewerkersTab() {
     e.preventDefault();
     setIsSaving(true);
 
-    const data = {
+    const data: Record<string, unknown> = {
       naam: formData.naam,
       email: formData.email,
       telefoon: formData.telefoon || null,
@@ -97,11 +101,12 @@ export default function MedewerkersTab() {
       notities: formData.notities || null,
     };
 
+    if (formData.wachtwoord) {
+      data.wachtwoord = await bcrypt.hash(formData.wachtwoord, 10);
+    }
+
     if (editingMedewerker) {
-      await supabase
-        .from("medewerkers")
-        .update(data)
-        .eq("id", editingMedewerker.id);
+      await supabase.from("medewerkers").update(data).eq("id", editingMedewerker.id);
     } else {
       await supabase.from("medewerkers").insert(data);
     }
@@ -310,6 +315,20 @@ export default function MedewerkersTab() {
                   onChange={(e) => setFormData({ ...formData, telefoon: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
                   placeholder="06 12345678"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Wachtwoord {editingMedewerker ? "(laat leeg om niet te wijzigen)" : "*"}
+                </label>
+                <input
+                  type="password"
+                  value={formData.wachtwoord}
+                  onChange={(e) => setFormData({ ...formData, wachtwoord: e.target.value })}
+                  required={!editingMedewerker}
+                  className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  placeholder="••••••••"
                 />
               </div>
 
