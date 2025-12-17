@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       .eq("id", medewerker.id);
 
     // Send email via Resend
-    const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://toptalentjobs.nl"}/medewerker/verify?token=${token}`;
+    const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://toptalentjobs.nl"}/api/medewerker/verify?token=${token}`;
 
     if (process.env.RESEND_API_KEY) {
       const { Resend } = await import("resend");
