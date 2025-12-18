@@ -1,36 +1,49 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Lazy initialization om build-time errors te voorkomen
+let _supabase: SupabaseClient | null = null;
+let _supabaseAdmin: SupabaseClient | null = null;
 
-// Debug logging voor development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('Supabase Config:', {
-    hasUrl: !!supabaseUrl,
-    hasAnonKey: !!supabaseAnonKey,
-    urlLength: supabaseUrl?.length,
-    keyLength: supabaseAnonKey?.length,
-  });
+function getSupabaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url || url.trim() === '') {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is missing or empty");
+  }
+  return url;
 }
 
-if (!supabaseUrl || supabaseUrl.trim() === '') {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL is missing or empty");
-}
-
-if (!supabaseAnonKey || supabaseAnonKey.trim() === '') {
-  throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty");
+function getSupabaseAnonKey(): string {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!key || key.trim() === '') {
+    throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty");
+  }
+  return key;
 }
 
 // Public client (beperkte toegang)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(target, prop) {
+    if (!_supabase) {
+      _supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey());
+    }
+    return _supabase[prop as keyof SupabaseClient];
+  }
+});
 
 // Admin client (volledige toegang - alleen server-side)
-export const supabaseAdmin = supabaseServiceKey
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    })
-  : supabase;
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(target, prop) {
+    if (!_supabaseAdmin) {
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      _supabaseAdmin = serviceKey
+        ? createClient(getSupabaseUrl(), serviceKey, {
+            auth: {
+              persistSession: false,
+              autoRefreshToken: false,
+            },
+          })
+        : createClient(getSupabaseUrl(), getSupabaseAnonKey());
+    }
+    return _supabaseAdmin[prop as keyof SupabaseClient];
+  }
+});
