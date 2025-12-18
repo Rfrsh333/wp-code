@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 
 // Draait dagelijks om 09:00 - checkt per klant of 2 weken verstreken zijn sinds eerste goedkeuring of laatste factuur
 
