@@ -46,6 +46,9 @@ interface Inschrijving {
   uitbetalingswijze: string;
   kvk_nummer: string | null;
   status: Status;
+  beschikbaarheid?: { [key: string]: string[] };
+  beschikbaar_vanaf?: string;
+  max_uren_per_week?: number;
 }
 
 interface ContactBericht {
@@ -1013,6 +1016,26 @@ export default function AdminDashboard() {
                     <p className="text-sm text-neutral-500">Motivatie</p>
                     <p className="font-medium whitespace-pre-wrap">{(selectedItem as Inschrijving).motivatie}</p>
                   </div>
+                  {(selectedItem as Inschrijving).beschikbaarheid && (
+                    <div className="mt-4 p-4 bg-neutral-50 rounded-xl">
+                      <h4 className="font-semibold mb-2">Beschikbaarheid</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        {(selectedItem as Inschrijving).beschikbaar_vanaf && (
+                          <div><span className="text-neutral-500">Vanaf:</span> <span className="font-medium">{new Date((selectedItem as Inschrijving).beschikbaar_vanaf!).toLocaleDateString('nl-NL')}</span></div>
+                        )}
+                        {(selectedItem as Inschrijving).max_uren_per_week && (
+                          <div><span className="text-neutral-500">Max uren/week:</span> <span className="font-medium">{(selectedItem as Inschrijving).max_uren_per_week}</span></div>
+                        )}
+                      </div>
+                      <div className="mt-2 space-y-1 text-sm">
+                        {Object.entries((selectedItem as Inschrijving).beschikbaarheid || {}).map(([dag, slots]) =>
+                          slots.length > 0 && (
+                            <div key={dag}><span className="font-medium capitalize">{dag}:</span> {slots.join(', ')}</div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
