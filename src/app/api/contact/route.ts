@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import { verifyRecaptcha } from "@/lib/recaptcha";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 interface ContactFormData {
   naam: string;
@@ -130,6 +131,16 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Send Telegram alert
+    sendTelegramAlert(
+      `📧 <b>NIEUW CONTACTBERICHT!</b>\n\n` +
+      `👤 ${data.naam}\n` +
+      `📧 ${data.email}\n` +
+      `${data.telefoon ? `📞 ${data.telefoon}\n` : ''}` +
+      `💬 ${data.onderwerp}\n\n` +
+      `"${data.bericht.substring(0, 100)}${data.bericht.length > 100 ? '...' : ''}"`
+    ).catch(console.error);
 
     return NextResponse.json({ success: true });
   } catch (error) {

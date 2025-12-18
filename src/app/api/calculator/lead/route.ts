@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import crypto from "crypto";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { sendTelegramAlert } from "@/lib/telegram";
 import type { CalculatorInputs, Resultaten, LeadFormData } from "@/lib/calculator/types";
 import { berekenKosten, validateInputs } from "@/lib/calculator/calculate";
 import { functieLabels, ervaringLabels, dagen } from "@/lib/calculator/tarieven";
@@ -340,6 +341,17 @@ export async function POST(request: NextRequest) {
       console.error("Database error:", dbError);
       // Continue anyway - email is more important
     }
+
+    // Send Telegram alert
+    sendTelegramAlert(
+      `🔥 <b>NIEUWE CALCULATOR LEAD!</b>\n\n` +
+      `👤 ${lead.naam}\n` +
+      `🏢 ${lead.bedrijfsnaam}\n` +
+      `📧 ${lead.email}\n` +
+      `💼 ${functieLabels[inputs.functie]}\n` +
+      `👥 ${inputs.aantalMedewerkers} medewerkers\n\n` +
+      `💰 ${resultaten.uitzend ? `€${resultaten.uitzend.perMaand.toLocaleString('nl-NL')}/mnd` : ''}`
+    ).catch(console.error);
 
     // Send emails via Resend
     if (process.env.RESEND_API_KEY) {

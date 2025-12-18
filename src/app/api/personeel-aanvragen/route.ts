@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import { verifyRecaptcha } from "@/lib/recaptcha";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 interface FormData {
   bedrijfsnaam: string;
@@ -226,6 +227,19 @@ export async function POST(request: NextRequest) {
       console.error("Supabase error:", dbError);
       // We laten de request toch slagen want de email is al verstuurd
     }
+
+    // Send Telegram alert
+    sendTelegramAlert(
+      `👥 <b>NIEUWE PERSONEEL AANVRAAG!</b>\n\n` +
+      `🏢 ${data.bedrijfsnaam}\n` +
+      `👤 ${data.contactpersoon}\n` +
+      `📧 ${data.email}\n` +
+      `📞 ${data.telefoon}\n\n` +
+      `💼 ${data.typePersoneel.join(', ')}\n` +
+      `📊 ${data.aantalPersonen} personen\n` +
+      `📍 ${data.locatie}\n` +
+      `📅 Start: ${data.startDatum}`
+    ).catch(console.error);
 
     return NextResponse.json({ success: true });
   } catch (error) {
