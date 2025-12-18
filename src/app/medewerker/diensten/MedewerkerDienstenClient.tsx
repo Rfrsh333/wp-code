@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import BeschikbaarheidForm from "@/components/medewerker/BeschikbaarheidForm";
 
 interface Medewerker {
   id: string;
@@ -45,7 +46,7 @@ interface KlantAanpassing {
 export default function MedewerkerDienstenClient({ medewerker }: { medewerker: Medewerker }) {
   const [diensten, setDiensten] = useState<Dienst[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [tab, setTab] = useState<"beschikbaar" | "mijn" | "aanpassingen">("beschikbaar");
+  const [tab, setTab] = useState<"beschikbaar" | "mijn" | "aanpassingen" | "beschikbaarheid">("beschikbaar");
   const [urenModal, setUrenModal] = useState<Dienst | null>(null);
   const [urenForm, setUrenForm] = useState({ start: "", eind: "", pauze: "0" });
   const [aanpassingen, setAanpassingen] = useState<KlantAanpassing[]>([]);
@@ -169,11 +170,33 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
               Klant aanpassingen ({aanpassingen.length})
             </button>
           )}
+          <button
+            onClick={() => setTab("beschikbaarheid")}
+            className={`px-4 py-2 rounded-xl font-medium ${
+              tab === "beschikbaarheid" ? "bg-[#F27501] text-white" : "bg-white text-neutral-600"
+            }`}
+          >
+            Mijn Beschikbaarheid
+          </button>
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
+          </div>
+        ) : tab === "beschikbaarheid" ? (
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <h2 className="text-xl font-bold mb-4">Stel je beschikbaarheid in</h2>
+            <BeschikbaarheidForm
+              onSave={async (data) => {
+                await fetch("/api/medewerker/beschikbaarheid", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: medewerker.email, ...data }),
+                });
+                alert("Beschikbaarheid opgeslagen!");
+              }}
+            />
           </div>
         ) : tab === "aanpassingen" ? (
           <div className="space-y-4">
