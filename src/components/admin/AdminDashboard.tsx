@@ -380,6 +380,15 @@ export default function AdminDashboard() {
               )}
             </button>
           ))}
+          <a
+            href="/admin/leads"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span className="text-sm font-medium">Leads Import</span>
+          </a>
         </nav>
 
         <div className="p-4 border-t border-neutral-800">
