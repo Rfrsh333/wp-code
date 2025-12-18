@@ -16,9 +16,34 @@ export default function AdminPage() {
 
       if (!session) {
         router.push("/admin/login");
-      } else {
-        setIsAuthenticated(true);
+        setIsLoading(false);
+        return;
       }
+
+      // Extra check: verifieer dat de gebruiker een admin is via de API
+      try {
+        const response = await fetch("/api/admin/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session }),
+        });
+
+        if (!response.ok) {
+          // Niet geautoriseerd als admin
+          console.error("Admin verificatie mislukt");
+          await supabase.auth.signOut();
+          router.push("/admin/login");
+          setIsLoading(false);
+          return;
+        }
+
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Admin verificatie error:", error);
+        await supabase.auth.signOut();
+        router.push("/admin/login");
+      }
+
       setIsLoading(false);
     };
 
@@ -26,6 +51,7 @@ export default function AdminPage() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
+        setIsAuthenticated(false);
         router.push("/admin/login");
       }
     });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { isAdminEmail } from "@/lib/admin-auth";
 
 // Strikte rate limiting voor admin login: max 5 pogingen per 15 minuten
 const LOGIN_RATE_LIMIT = {
@@ -61,8 +62,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check of gebruiker een admin is
+    if (!isAdminEmail(email)) {
+      console.warn(`[ADMIN LOGIN] Unauthorized access attempt by non-admin: ${email} from IP: ${clientIP}`);
+
+      // Sign out de gebruiker direct
+      await supabase.auth.signOut();
+
+      return NextResponse.json(
+        { error: "Geen toegang. Alleen administrators kunnen inloggen." },
+        { status: 403 }
+      );
+    }
+
     // Log succesvolle login
-    console.log(`[ADMIN LOGIN] Successful login for email: ${email} from IP: ${clientIP}`);
+    console.log(`[ADMIN LOGIN] Successful admin login for email: ${email} from IP: ${clientIP}`);
 
     return NextResponse.json({
       success: true,

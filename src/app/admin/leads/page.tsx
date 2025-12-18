@@ -1,11 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function LeadsImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push("/admin/login");
+        return;
+      }
+
+      // Verifieer admin status
+      try {
+        const response = await fetch("/api/admin/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session }),
+        });
+
+        if (!response.ok) {
+          await supabase.auth.signOut();
+          router.push("/admin/login");
+          return;
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Admin verificatie error:", error);
+        await supabase.auth.signOut();
+        router.push("/admin/login");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -34,6 +72,14 @@ export default function LeadsImportPage() {
       setLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-100 p-8">
