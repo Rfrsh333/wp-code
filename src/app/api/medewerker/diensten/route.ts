@@ -11,10 +11,14 @@ export async function GET() {
   const medewerker = await verifyMedewerkerSession(session.value);
   if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const functies = Array.isArray(medewerker.functie)
+    ? medewerker.functie
+    : [medewerker.functie];
+
   const { data: alleDiensten } = await supabaseAdmin
     .from("diensten")
     .select("*")
-    .in("functie", medewerker.functie)
+    .in("functie", functies)
     .in("status", ["open", "vol"])
     .gte("datum", new Date().toISOString().split("T")[0])
     .order("datum", { ascending: true });

@@ -4,7 +4,7 @@ import ServicesSection from "@/components/ServicesSection";
 import WhyTopTalent from "@/components/WhyTopTalent";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 import MarqueeBanner from "@/components/MarqueeBanner";
-import Section from "@/components/Section";
+import { Section, Container } from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import TestimonialCarousel from "@/components/TestimonialCarousel";
 
@@ -74,7 +74,7 @@ export default function Home() {
 
       {/* Industries Section - Jobaway Style */}
       <Section variant="white" spacing="large">
-        <Section.Container>
+        <Container>
           <FadeIn>
             <div className="text-center mb-12">
               <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
@@ -102,7 +102,7 @@ export default function Home() {
               </FadeIn>
             ))}
           </div>
-        </Section.Container>
+        </Container>
       </Section>
 
       {/* Testimonials Section */}
@@ -110,7 +110,7 @@ export default function Home() {
 
       {/* CTA Section - White background */}
       <Section variant="white" spacing="large">
-        <Section.Container>
+        <Container>
           <FadeIn>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               {/* Subtle pattern overlay */}
@@ -146,7 +146,7 @@ export default function Home() {
               </div>
             </div>
           </FadeIn>
-        </Section.Container>
+        </Container>
       </Section>
     </>
   );

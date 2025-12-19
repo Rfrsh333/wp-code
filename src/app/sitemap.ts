@@ -7,7 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Static pages - gebruik vaste datum voor stabiele crawl signalen
   const contentDate = new Date('2024-12-19')
 
-  const staticPages = [
+  const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: contentDate,

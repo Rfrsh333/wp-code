@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import Section from "@/components/Section";
+import { Section, Container } from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 
 interface BlogPost {
@@ -175,7 +175,7 @@ export default function BlogPage() {
 
       {/* Blog Grid with Sidebar */}
       <Section variant="white" spacing="large">
-        <Section.Container>
+        <Container>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             {/* Sidebar */}
             <div className="order-2 lg:order-1 lg:col-span-1">
@@ -383,12 +383,12 @@ export default function BlogPage() {
               </FadeIn>
             </div>
           </div>
-        </Section.Container>
+        </Container>
       </Section>
 
       {/* Subscribe Section */}
       <Section variant="tinted" spacing="large">
-        <Section.Container>
+        <Container>
           <FadeIn>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 relative overflow-hidden">
               {/* Decorative shapes */}
@@ -419,7 +419,7 @@ export default function BlogPage() {
               </div>
             </div>
           </FadeIn>
-        </Section.Container>
+        </Container>
       </Section>
     </>
   );

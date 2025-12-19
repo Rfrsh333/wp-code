@@ -1,0 +1,13 @@
+
+> toptalent-wordpress-html@0.1.0 start
+> next start -H 127.0.0.1 -p 3001
+
+ ⨯ Failed to start server
+Error: listen EPERM: operation not permitted 127.0.0.1:3001
+    at <unknown> (Error: listen EPERM: operation not permitted 127.0.0.1:3001) {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 3001
+}
