@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/api/', '/bedankt/'],
+      disallow: ['/admin/', '/api/', '/bedankt/', '/klant/', '/medewerker/'],
     },
     sitemap: 'https://toptalentjobs.nl/sitemap.xml',
   }

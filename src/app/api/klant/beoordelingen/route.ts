@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { verifyKlantSession } from "@/lib/session";
 
 export async function GET() {
   const cookieStore = await cookies();
   const session = cookieStore.get("klant_session");
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const klant = JSON.parse(session.value);
+  const klant = await verifyKlantSession(session.value);
+  if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Haal afgeronde diensten op die nog niet beoordeeld zijn
   const { data } = await supabaseAdmin
@@ -46,7 +48,8 @@ export async function POST(request: NextRequest) {
   const session = cookieStore.get("klant_session");
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const klant = JSON.parse(session.value);
+  const klant = await verifyKlantSession(session.value);
+  if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { dienst_id, medewerker_id, score, opmerking } = await request.json();
 
   await supabaseAdmin.from("beoordelingen").insert({

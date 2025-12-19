@@ -1,8 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyFactuurToken } from "@/lib/session";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { searchParams } = new URL(request.url);
+  const token = searchParams.get("token");
+
+  // Twee toegangspaden: admin auth OF klant met signed token
+  const { isAdmin } = await verifyAdmin(request);
+
+  let authorizedKlantId: string | null = null;
+
+  if (!isAdmin) {
+    // Niet admin - check of er een geldige klant token is
+    if (!token) {
+      console.warn(`[SECURITY] Unauthorized factuur PDF access - no token provided`);
+      return NextResponse.json({ error: "Unauthorized - Token required" }, { status: 403 });
+    }
+
+    const verified = await verifyFactuurToken(token);
+    if (!verified || verified.factuurId !== id) {
+      console.warn(`[SECURITY] Invalid factuur token for factuur ${id}`);
+      return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 403 });
+    }
+
+    // Token is geldig - klant mag alleen ZIJN eigen factuur zien
+    authorizedKlantId = verified.klantId;
+  }
 
   // Haal factuur met klant en regels op
   const { data: factuur } = await supabase
@@ -13,6 +39,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   if (!factuur) {
     return NextResponse.json({ error: "Factuur niet gevonden" }, { status: 404 });
+  }
+
+  // Extra check: als klant token gebruikt, check of factuur daadwerkelijk van die klant is
+  if (authorizedKlantId && factuur.klant_id !== authorizedKlantId) {
+    console.warn(`[SECURITY] Klant ${authorizedKlantId} probeerde factuur ${id} van andere klant te bekijken`);
+    return NextResponse.json({ error: "Unauthorized - Factuur hoort niet bij deze klant" }, { status: 403 });
   }
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });

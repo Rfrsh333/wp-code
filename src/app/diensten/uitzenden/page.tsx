@@ -4,6 +4,30 @@ import Link from "next/link";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import PremiumImage from "@/components/PremiumImage";
+import FAQ, { FAQItem } from "@/components/FAQ";
+
+const faqItems: FAQItem[] = [
+  {
+    question: "Hoe snel kan ik personeel krijgen?",
+    answer: "Vaak binnen 24 uur. Bij spoedinzet kunnen we soms zelfs dezelfde dag personeel leveren, afhankelijk van beschikbaarheid."
+  },
+  {
+    question: "Wat zijn de kosten van uitzendpersoneel?",
+    answer: "Tarieven variëren per functie en ervaring. Gebruik onze kosten calculator voor een indicatie of neem contact op voor een offerte op maat."
+  },
+  {
+    question: "Kan ik zelf het personeel kiezen?",
+    answer: "Ja, wij sturen cv's en profielen door. U beslist uiteindelijk wie er start. Bij vaste samenwerking leren we uw voorkeuren kennen."
+  },
+  {
+    question: "Wat als het personeel niet bevalt?",
+    answer: "U kunt altijd vervanging aanvragen. Wij blijven betrokken tijdens de hele samenwerking en zorgen voor passende alternatieven."
+  },
+  {
+    question: "Hoe zit het met verzekeringen en administratie?",
+    answer: "Volledig geregeld. Het personeel is via ons verzekerd en wij verzorgen alle administratie, loonadministratie en belastingen."
+  },
+];
 
 export default function UitzendenPage() {
   return (
@@ -215,6 +239,15 @@ export default function UitzendenPage() {
               </div>
             </div>
           </div>
+        </Section.Container>
+      </Section>
+
+      {/* FAQ - TINTED */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
+          <FadeIn>
+            <FAQ items={faqItems} />
+          </FadeIn>
         </Section.Container>
       </Section>
 

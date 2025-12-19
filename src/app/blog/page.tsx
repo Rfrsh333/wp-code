@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import Section from "@/components/Section";
@@ -241,6 +239,7 @@ export default function BlogPage() {
                               alt={post.title}
                               width={80}
                               height={80}
+                              sizes="80px"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
@@ -316,6 +315,7 @@ export default function BlogPage() {
                           alt={post.title}
                           width={400}
                           height={250}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

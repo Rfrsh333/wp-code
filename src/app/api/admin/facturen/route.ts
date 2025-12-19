@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
-
-async function verifyAdmin(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return false;
-  const token = authHeader.split(" ")[1];
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-  const { data: { user } } = await supabase.auth.getUser(token);
-  return !!user;
-}
+import { verifyAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
-  if (!await verifyAdmin(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { isAdmin, email } = await verifyAdmin(request);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized facturen access attempt by: ${email || "unknown"}`);
+    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
   const [{ data: facturen }, { data: klanten }] = await Promise.all([

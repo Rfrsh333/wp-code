@@ -3,6 +3,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Detachering - Langdurig Horeca Personeel",
   description: "Zoekt u horeca personeel voor langere periode? TopTalent Jobs detacheert ervaren medewerkers bij uw bedrijf. Vast team, flexibele voorwaarden.",
+  alternates: {
+    canonical: "https://toptalentjobs.nl/diensten/detachering",
+  },
 };
 
 export default function DetacheringLayout({
@@ -10,5 +13,38 @@ export default function DetacheringLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://toptalentjobs.nl"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Diensten",
+        "item": "https://toptalentjobs.nl/diensten"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Detachering",
+        "item": "https://toptalentjobs.nl/diensten/detachering"
+      }
+    ]
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {children}
+    </>
+  );
 }

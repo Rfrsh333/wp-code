@@ -1,92 +1,124 @@
 import { MetadataRoute } from 'next'
+import { blogArticles } from '@/data/blogArticles'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://toptalentjobs.nl'
 
-  return [
+  // Static pages - gebruik vaste datum voor stabiele crawl signalen
+  const contentDate = new Date('2024-12-19')
+
+  const staticPages = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'weekly',
       priority: 1,
     },
     {
       url: `${baseUrl}/diensten`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/diensten/uitzenden`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/diensten/detachering`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/diensten/recruitment`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/over-ons`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/contact`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/inschrijven`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/personeel-aanvragen`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/testimonials`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
       url: `${baseUrl}/blog`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'weekly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/kosten-calculator`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/locaties`,
+      lastModified: contentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/locaties/utrecht`,
+      lastModified: contentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/locaties/amsterdam`,
+      lastModified: contentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/voorwaarden`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
+      lastModified: contentDate,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
   ]
+
+  // Blog articles
+  const blogPages = Object.keys(blogArticles).map((slug) => ({
+    url: `${baseUrl}/blog/${slug}`,
+    lastModified: new Date(blogArticles[slug].datePublished),
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }))
+
+  return [...staticPages, ...blogPages]
 }

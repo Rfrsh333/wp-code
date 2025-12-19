@@ -64,7 +64,10 @@ export async function GET(request: NextRequest) {
       // Genereer factuur
       const generateRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/facturen/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.CRON_SECRET}`,
+        },
         body: JSON.stringify({ klant_id: klant.id, periode_start, periode_eind }),
       });
 
@@ -78,7 +81,10 @@ export async function GET(request: NextRequest) {
       // Verstuur factuur
       await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/facturen/send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.CRON_SECRET}`,
+        },
         body: JSON.stringify({ factuur_id: generateData.factuur.id, email: klant.email }),
       });
 

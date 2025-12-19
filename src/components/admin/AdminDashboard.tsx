@@ -8,8 +8,9 @@ import MedewerkersTab from "./MedewerkersTab";
 import DienstenTab from "./DienstenTab";
 import UrenTab from "./UrenTab";
 import FacturenTab from "./FacturenTab";
+import StatsTab from "./StatsTab";
 
-type Tab = "overzicht" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen";
+type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 
 interface PersoneelAanvraag {
@@ -96,6 +97,9 @@ interface Stats {
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overzicht");
+  const [zoekQuery, setZoekQuery] = useState("");
+  const [zoekResultaten, setZoekResultaten] = useState<{ medewerkers: any[]; diensten: any[]; klanten: any[] } | null>(null);
+  const [zoekOpen, setZoekOpen] = useState(false);
   const [stats, setStats] = useState<Stats>({
     aanvragen: { total: 0, nieuw: 0 },
     inschrijvingen: { total: 0, nieuw: 0 },
@@ -263,6 +267,15 @@ export default function AdminDashboard() {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+      ),
+    },
+    {
+      id: "stats",
+      label: "Statistieken",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
     },
@@ -772,6 +785,9 @@ export default function AdminDashboard() {
 
             {/* Facturen Tab */}
             {activeTab === "facturen" && <FacturenTab />}
+
+            {/* Stats Tab */}
+            {activeTab === "stats" && <StatsTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

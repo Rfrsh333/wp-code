@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import MedewerkerDienstenClient from "./MedewerkerDienstenClient";
+import { verifyMedewerkerSession } from "@/lib/session";
 
 export default async function MedewerkerDiensten() {
   const cookieStore = await cookies();
@@ -10,7 +11,10 @@ export default async function MedewerkerDiensten() {
     redirect("/medewerker/login");
   }
 
-  const medewerker = JSON.parse(session.value);
+  const medewerker = await verifyMedewerkerSession(session.value);
+  if (!medewerker) {
+    redirect("/medewerker/login");
+  }
 
   return <MedewerkerDienstenClient medewerker={medewerker} />;
 }

@@ -47,15 +47,20 @@ export async function POST(request: NextRequest) {
 
     const data: FormData = await request.json();
 
-    // Verify reCAPTCHA
-    if (data.recaptchaToken) {
-      const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
-      if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Spam detectie mislukt" },
-          { status: 400 }
-        );
-      }
+    // Verify reCAPTCHA (verplicht)
+    if (!data.recaptchaToken) {
+      return NextResponse.json(
+        { error: "reCAPTCHA verificatie vereist" },
+        { status: 400 }
+      );
+    }
+
+    const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || "Spam detectie mislukt" },
+        { status: 400 }
+      );
     }
 
     // Validate required fields

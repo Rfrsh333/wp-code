@@ -48,9 +48,10 @@ export default function FacturenTab() {
 
   const generateFactuur = async () => {
     setGenerating(true);
+    const headers = await getAuthHeader();
     const res = await fetch("/api/facturen/generate", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(form),
     });
     const data = await res.json();
@@ -65,12 +66,26 @@ export default function FacturenTab() {
   };
 
   const sendFactuur = async (id: string, email: string) => {
+    const headers = await getAuthHeader();
     await fetch("/api/facturen/send", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify({ factuur_id: id, email }),
     });
     fetchData();
+  };
+
+  const openFactuurPdf = async (id: string) => {
+    const headers = await getAuthHeader();
+    const res = await fetch(`/api/facturen/${id}/pdf`, { headers });
+    if (!res.ok) {
+      alert("PDF kon niet worden geladen");
+      return;
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
@@ -117,7 +132,12 @@ export default function FacturenTab() {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex gap-2 justify-end">
-                    <a href={`/api/facturen/${f.id}/pdf`} target="_blank" className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded text-sm hover:bg-neutral-200">PDF</a>
+                    <button
+                      onClick={() => openFactuurPdf(f.id)}
+                      className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded text-sm hover:bg-neutral-200"
+                    >
+                      PDF
+                    </button>
                     {f.status === "concept" && (
                       <button onClick={() => sendFactuur(f.id, f.klant?.email)} className="px-3 py-1 bg-[#F27501] text-white rounded text-sm hover:bg-[#d96800]">Versturen</button>
                     )}

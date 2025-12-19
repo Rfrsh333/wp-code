@@ -64,6 +64,21 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.toptalentjobs.nl',
+          },
+        ],
+        destination: 'https://toptalentjobs.nl/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

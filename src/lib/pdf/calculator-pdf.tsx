@@ -349,10 +349,10 @@ export function CalculatorPDF({ lead, inputs, resultaten, createdAt }: Calculato
             {/* Header */}
             <View style={styles.tableHeader}>
               <Text style={[styles.tableHeaderCell, styles.colType]}>Type</Text>
-              <Text style={[styles.tableHeaderCell, styles.colRate]}>Per uur</Text>
-              <Text style={[styles.tableHeaderCell, styles.colShift]}>Per dienst</Text>
-              <Text style={[styles.tableHeaderCell, styles.colWeek]}>Per week</Text>
-              <Text style={[styles.tableHeaderCell, styles.colMonth]}>Per maand</Text>
+              <Text style={[styles.tableHeaderCell, styles.colRate]}>Per uur (excl. btw)</Text>
+              <Text style={[styles.tableHeaderCell, styles.colShift]}>Per dienst (excl. btw)</Text>
+              <Text style={[styles.tableHeaderCell, styles.colWeek]}>Per week (excl. btw)</Text>
+              <Text style={[styles.tableHeaderCell, styles.colMonth]}>Per maand (excl. btw)</Text>
             </View>
 
             {/* Rows */}
@@ -385,7 +385,7 @@ export function CalculatorPDF({ lead, inputs, resultaten, createdAt }: Calculato
             })}
           </View>
           <Text style={styles.disclaimer}>
-            * Berekening op basis van gemiddelde tarieven 2024/2025. Exacte kosten kunnen afwijken per situatie.
+            * Alle bedragen zijn exclusief BTW. Berekening op basis van gemiddelde tarieven 2024/2025. Exacte kosten kunnen afwijken per situatie.
           </Text>
         </View>
 

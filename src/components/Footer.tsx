@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="bg-neutral-900 text-white">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <Link href="/" className="inline-block mb-6">
@@ -97,6 +97,21 @@ export default function Footer() {
               </Link>
               <Link href="/diensten#recruitment" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Recruitment
+              </Link>
+            </nav>
+          </div>
+
+          {/* Locations */}
+          <div>
+            <h2 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
+              Regio's
+            </h2>
+            <nav className="space-y-4">
+              <Link href="/locaties/utrecht" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Utrecht
+              </Link>
+              <Link href="/locaties/amsterdam" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Amsterdam
               </Link>
             </nav>
           </div>

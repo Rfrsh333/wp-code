@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { OffertePDF } from "@/lib/pdf/offerte-pdf";
+import { verifyAdmin } from "@/lib/admin-auth";
 import crypto from "crypto";
 
 // ============================================================================
@@ -16,6 +17,14 @@ import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get("authorization");
+    const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
+    const { isAdmin, email } = await verifyAdmin(request);
+    if (!isAdmin && !cronAuthorized) {
+      console.warn(`[SECURITY] Unauthorized offerte POST attempt by: ${email || "unknown"}`);
+      return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+    }
+
     const { aanvraagId } = await request.json();
 
     if (!aanvraagId) {
@@ -129,6 +138,14 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const authHeader = request.headers.get("authorization");
+    const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
+    const { isAdmin, email } = await verifyAdmin(request);
+    if (!isAdmin && !cronAuthorized) {
+      console.warn(`[SECURITY] Unauthorized offerte GET attempt by: ${email || "unknown"}`);
+      return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const aanvraagId = searchParams.get("aanvraagId");
 

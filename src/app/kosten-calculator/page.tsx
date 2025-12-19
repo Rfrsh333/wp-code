@@ -730,24 +730,24 @@ export default function KostenCalculatorPage() {
                       </h3>
 
                       <p className="text-sm text-neutral-500 mb-6">
-                        {formatCurrencyDecimal(result?.uurtarief || 0)} per uur
+                        {formatCurrencyDecimal(result?.uurtarief || 0)} per uur <span className="text-neutral-400">excl. btw</span>
                       </p>
 
                       <div className="space-y-4">
                         <div>
-                          <p className="text-sm text-neutral-500 mb-1">Per dienst</p>
+                          <p className="text-sm text-neutral-500 mb-1">Per dienst <span className="text-neutral-400">excl. btw</span></p>
                           <p className="text-2xl font-bold text-neutral-900">
                             <AnimatedCounter value={result?.perDienst || 0} duration={1000} />
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-neutral-500 mb-1">Per week</p>
+                          <p className="text-sm text-neutral-500 mb-1">Per week <span className="text-neutral-400">excl. btw</span></p>
                           <p className="text-2xl font-bold text-neutral-900">
                             <AnimatedCounter value={result?.perWeek || 0} duration={1200} />
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-neutral-500 mb-1">Per maand</p>
+                          <p className="text-sm text-neutral-500 mb-1">Per maand <span className="text-neutral-400">excl. btw</span></p>
                           <p className="text-3xl font-bold text-[#F97316]">
                             <AnimatedCounter value={result?.perMaand || 0} duration={1400} />
                           </p>
@@ -812,7 +812,7 @@ export default function KostenCalculatorPage() {
 
               {/* Disclaimer */}
               <p className="text-center text-sm text-neutral-500 mb-8">
-                * Berekening op basis van gemiddelde tarieven 2024/2025. Exacte kosten kunnen afwijken.
+                * Alle bedragen zijn exclusief BTW. Berekening op basis van gemiddelde tarieven 2024/2025. Exacte kosten kunnen afwijken.
               </p>
 
               {/* CTA Buttons */}

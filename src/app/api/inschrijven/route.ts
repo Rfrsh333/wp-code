@@ -22,16 +22,21 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
 
-    // Verify reCAPTCHA
+    // Verify reCAPTCHA (verplicht)
     const recaptchaToken = formData.get("recaptchaToken") as string;
-    if (recaptchaToken) {
-      const recaptchaResult = await verifyRecaptcha(recaptchaToken);
-      if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Spam detectie mislukt" },
-          { status: 400 }
-        );
-      }
+    if (!recaptchaToken) {
+      return NextResponse.json(
+        { error: "reCAPTCHA verificatie vereist" },
+        { status: 400 }
+      );
+    }
+
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || "Spam detectie mislukt" },
+        { status: 400 }
+      );
     }
 
     // Extract form fields

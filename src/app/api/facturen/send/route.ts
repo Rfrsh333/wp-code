@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { verifyAdmin } from "@/lib/admin-auth";
+import { signFactuurToken } from "@/lib/session";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
+  // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins of cron mogen facturen verzenden
+  const authHeader = request.headers.get("authorization");
+  const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
+  const { isAdmin, email: adminEmail } = await verifyAdmin(request);
+  if (!isAdmin && !cronAuthorized) {
+    console.warn(`[SECURITY] Unauthorized factuur send attempt by: ${adminEmail || "unknown"}`);
+    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+  }
+
   try {
     const { factuur_id, email } = await request.json();
 
@@ -19,7 +30,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Factuur niet gevonden" }, { status: 404 });
     }
 
-    const pdfUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://toptalentjobs.nl"}/api/facturen/${factuur_id}/pdf`;
+    // Genereer een signed token voor veilige PDF toegang (geldig 30 dagen)
+    const pdfToken = await signFactuurToken(factuur_id, factuur.klant_id);
+    const pdfUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://toptalentjobs.nl"}/api/facturen/${factuur_id}/pdf?token=${pdfToken}`;
 
     await resend.emails.send({
       from: "TopTalent Jobs <facturen@toptalentjobs.nl>",

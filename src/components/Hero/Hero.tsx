@@ -126,7 +126,6 @@ export default function Hero() {
                 width={500}
                 height={500}
                 className={styles.powderSplashImage}
-                priority
                 aria-hidden="true"
               />
             </div>

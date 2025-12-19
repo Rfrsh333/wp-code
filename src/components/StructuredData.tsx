@@ -9,6 +9,8 @@ export default function StructuredData() {
     "description": "Horeca uitzendbureau in Utrecht. Snel en betrouwbaar personeel voor restaurants, hotels en evenementen.",
     "address": {
       "@type": "PostalAddress",
+      "streetAddress": "Kanaalstraat 15",
+      "postalCode": "3531 CJ",
       "addressLocality": "Utrecht",
       "addressCountry": "NL"
     },
@@ -34,6 +36,8 @@ export default function StructuredData() {
     "email": "info@toptalentjobs.nl",
     "address": {
       "@type": "PostalAddress",
+      "streetAddress": "Kanaalstraat 15",
+      "postalCode": "3531 CJ",
       "addressLocality": "Utrecht",
       "addressRegion": "Utrecht",
       "addressCountry": "NL"
@@ -97,12 +101,7 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "TopTalent Jobs",
-    "url": "https://toptalentjobs.nl",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://toptalentjobs.nl/vacatures?q={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
+    "url": "https://toptalentjobs.nl"
   };
 
   return (

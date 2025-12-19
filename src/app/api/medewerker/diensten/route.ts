@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { verifyMedewerkerSession } from "@/lib/session";
 
 export async function GET() {
   const cookieStore = await cookies();
   const session = cookieStore.get("medewerker_session");
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const medewerker = JSON.parse(session.value);
+  const medewerker = await verifyMedewerkerSession(session.value);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: alleDiensten } = await supabaseAdmin
     .from("diensten")
@@ -67,7 +69,8 @@ export async function POST(request: NextRequest) {
   const session = cookieStore.get("medewerker_session");
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const medewerker = JSON.parse(session.value);
+  const medewerker = await verifyMedewerkerSession(session.value);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
 
   if (action === "aanmelden") {

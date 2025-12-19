@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { signKlantSession } from "@/lib/session";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`klant-login:${clientIP}`, {
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 5,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Te veel loginpogingen. Probeer opnieuw over ${rateLimit.resetIn} seconden.` },
+        { status: 429, headers: { "Retry-After": rateLimit.resetIn.toString() } }
+      );
+    }
+
     const { email, wachtwoord } = await request.json();
 
     if (!email || !wachtwoord) {
@@ -34,13 +49,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
     }
 
-    const cookieStore = await cookies();
-    cookieStore.set("klant_session", JSON.stringify({
+    const token = await signKlantSession({
       id: klant.id,
       bedrijfsnaam: klant.bedrijfsnaam,
       contactpersoon: klant.contactpersoon,
       email: klant.email,
-    }), {
+    });
+
+    const cookieStore = await cookies();
+    cookieStore.set("klant_session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

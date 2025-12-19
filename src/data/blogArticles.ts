@@ -9,6 +9,7 @@ export interface BlogArticle {
   category: string;
   author: string;
   date: string;
+  datePublished: string; // ISO-8601 format
   image: string;
   relatedSlugs: string[];
   blocks: ContentBlock[];
@@ -27,6 +28,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Recruitment",
     author: "TopTalent Team",
     date: "14 december 2024",
+    datePublished: "2024-12-14",
     image: "/images/dienst-recruitment.png",
     relatedSlugs: ["personeelstekort-horeca-oplossen", "kosten-uitzendkracht-horeca-tarieven"],
     blocks: [
@@ -306,6 +308,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "HR",
     author: "TopTalent Team",
     date: "12 december 2024",
+    datePublished: "2024-12-12",
     image: "/images/dienst-uitzenden.png",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "seizoenspersoneel-horeca-zomer"],
     blocks: [
@@ -585,6 +588,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Uitzenden",
     author: "TopTalent Team",
     date: "10 december 2024",
+    datePublished: "2024-12-10",
     image: "/images/dienst-detachering.png",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "detachering-vs-uitzenden-verschil"],
     blocks: [
@@ -750,6 +754,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Carrière",
     author: "TopTalent Team",
     date: "8 december 2024",
+    datePublished: "2024-12-08",
     image: "/images/barista.png",
     relatedSlugs: ["horecamedewerker-worden-zonder-ervaring", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
@@ -902,6 +907,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Evenementen",
     author: "TopTalent Team",
     date: "5 december 2024",
+    datePublished: "2024-12-05",
     image: "/images/dienst-recruitment.png",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "kosten-uitzendkracht-horeca-tarieven"],
     blocks: [
@@ -1111,6 +1117,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Detachering",
     author: "TopTalent Team",
     date: "3 december 2024",
+    datePublished: "2024-12-03",
     image: "/images/dienst-detachering.png",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "kosten-uitzendkracht-horeca-tarieven"],
     blocks: [
@@ -1323,6 +1330,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Carrière",
     author: "TopTalent Team",
     date: "1 december 2024",
+    datePublished: "2024-12-01",
     image: "/images/dienst-uitzenden.png",
     relatedSlugs: ["werken-uitzendkracht-horeca-salaris", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
@@ -1472,6 +1480,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Carrière",
     author: "TopTalent Team",
     date: "28 november 2024",
+    datePublished: "2024-11-28",
     image: "/images/barista.png",
     relatedSlugs: ["werken-uitzendkracht-horeca-salaris", "horecamedewerker-worden-zonder-ervaring"],
     blocks: [
@@ -1676,6 +1685,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Management",
     author: "TopTalent Team",
     date: "25 november 2024",
+    datePublished: "2024-11-25",
     image: "/images/dienst-recruitment.png",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
@@ -1844,6 +1854,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Uitzenden",
     author: "TopTalent Team",
     date: "22 november 2024",
+    datePublished: "2024-11-22",
     image: "/images/dienst-uitzenden.png",
     relatedSlugs: ["personeelstekort-horeca-oplossen", "horecapersoneel-inhuren-gids-2025"],
     blocks: [
@@ -1980,6 +1991,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "HR",
     author: "TopTalent Team",
     date: "20 november 2024",
+    datePublished: "2024-11-20",
     image: "/images/dienst-detachering.png",
     relatedSlugs: ["kosten-uitzendkracht-horeca-tarieven", "horecapersoneel-inhuren-gids-2025"],
     blocks: [
@@ -2203,6 +2215,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     category: "Management",
     author: "TopTalent Team",
     date: "18 november 2024",
+    datePublished: "2024-11-18",
     image: "/images/barista.png",
     relatedSlugs: ["personeelstekort-horeca-oplossen", "seizoenspersoneel-horeca-zomer"],
     blocks: [

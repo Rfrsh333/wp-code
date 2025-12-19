@@ -23,15 +23,34 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
+  const imageUrl = `https://toptalentjobs.nl${article.image}`;
+
   return {
     title: `${article.title} | TopTalent Jobs Blog`,
     description: article.excerpt,
+    alternates: {
+      canonical: `https://toptalentjobs.nl/blog/${slug}`,
+    },
     openGraph: {
       title: article.title,
       description: article.excerpt,
       type: "article",
-      publishedTime: article.date,
+      publishedTime: article.datePublished,
       authors: [article.author],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.excerpt,
+      images: [imageUrl],
     },
   };
 }
@@ -48,8 +67,73 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
     .map((relSlug) => ({ slug: relSlug, ...blogArticles[relSlug] }))
     .filter((a) => a.title);
 
+  const imageUrl = `https://toptalentjobs.nl${article.image}`;
+  const articleUrl = `https://toptalentjobs.nl/blog/${slug}`;
+
+  // Article schema for blog post
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": article.title,
+    "image": imageUrl,
+    "author": {
+      "@type": "Person",
+      "name": article.author,
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "TopTalent Jobs",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://toptalentjobs.nl/logo.png"
+      }
+    },
+    "datePublished": article.datePublished,
+    "dateModified": article.datePublished,
+    "description": article.excerpt,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": articleUrl
+    }
+  };
+
+  // BreadcrumbList schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://toptalentjobs.nl"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://toptalentjobs.nl/blog"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": article.title,
+        "item": articleUrl
+      }
+    ]
+  };
+
   return (
     <>
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Hero Section */}
       <section className="pt-28 pb-12 bg-gradient-to-b from-white to-neutral-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -93,6 +177,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
             src={article.image}
             alt={article.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 90vw, 896px"
             className="object-cover"
             priority
           />
@@ -188,6 +273,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                       src={related.image}
                       alt={related.title}
                       fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>

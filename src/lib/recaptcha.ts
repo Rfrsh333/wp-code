@@ -17,8 +17,12 @@ export async function verifyRecaptcha(token: string): Promise<{
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn("RECAPTCHA_SECRET_KEY not set - skipping verification");
-    return { success: true, score: 1 };
+    console.error("[SECURITY] RECAPTCHA_SECRET_KEY not set - rejecting submission");
+    return {
+      success: false,
+      score: 0,
+      error: "reCAPTCHA niet geconfigureerd - neem contact op met de beheerder",
+    };
   }
 
   try {

@@ -469,7 +469,7 @@ export default function PersoneelAanvragenWizard() {
                       className="w-full pl-8 pr-16 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                       placeholder="Bijv. 25"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400">per uur</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400">per uur (excl. btw)</span>
                   </div>
                 </div>
 
@@ -495,14 +495,17 @@ export default function PersoneelAanvragenWizard() {
                               <div className="bg-white/60 rounded-lg px-3 py-2">
                                 <span className="text-blue-600 font-medium">Loondienst:</span>
                                 <span className="text-blue-900 ml-1">€{tarieven.min.toFixed(2)} - €{(tarieven.min * 1.2).toFixed(2)}</span>
+                                <span className="text-blue-600/70 ml-1 text-xs">excl. btw</span>
                               </div>
                               <div className="bg-white/60 rounded-lg px-3 py-2">
                                 <span className="text-blue-600 font-medium">ZZP:</span>
                                 <span className="text-blue-900 ml-1">€{(tarieven.max * 0.94).toFixed(2)} - €{tarieven.max.toFixed(2)}</span>
+                                <span className="text-blue-600/70 ml-1 text-xs">excl. btw</span>
                               </div>
                               <div className="bg-white/60 rounded-lg px-3 py-2">
                                 <span className="text-blue-600 font-medium">Uitzendkracht:</span>
                                 <span className="text-blue-900 ml-1">€{(tarieven.max * 0.95).toFixed(2)} - €{(tarieven.max * 1.1).toFixed(2)}</span>
+                                <span className="text-blue-600/70 ml-1 text-xs">excl. btw</span>
                               </div>
                             </div>
                           );
@@ -657,7 +660,7 @@ export default function PersoneelAanvragenWizard() {
                     {formData.gewenstUurtarief && (
                       <>
                         <span className="text-neutral-500">Gewenst uurtarief:</span>
-                        <span className="text-neutral-900">€{formData.gewenstUurtarief} per uur</span>
+                        <span className="text-neutral-900">€{formData.gewenstUurtarief} per uur <span className="text-neutral-500">excl. btw</span></span>
                       </>
                     )}
                     <span className="text-neutral-500">Startdatum:</span>
