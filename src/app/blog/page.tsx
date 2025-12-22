@@ -92,7 +92,7 @@ const blogPosts: BlogPost[] = [
     category: "Management",
     author: "TopTalent Team",
     date: "25 november 2024",
-    image: "/images/dienst-recruitment.png",
+    image: "/images/blog-restaurant-openen.jpg",
     slug: "restaurant-openen-team-samenstellen",
   },
   {
@@ -102,7 +102,7 @@ const blogPosts: BlogPost[] = [
     category: "Uitzenden",
     author: "TopTalent Team",
     date: "22 november 2024",
-    image: "/images/dienst-uitzenden.png",
+    image: "/images/blog-seizoenspersoneel.jpg",
     slug: "seizoenspersoneel-horeca-zomer",
   },
   {
@@ -112,7 +112,7 @@ const blogPosts: BlogPost[] = [
     category: "HR",
     author: "TopTalent Team",
     date: "20 november 2024",
-    image: "/images/dienst-detachering.png",
+    image: "/images/blog-cao-horeca.jpg",
     slug: "cao-horeca-2025-wijzigingen",
   },
   {
@@ -122,7 +122,7 @@ const blogPosts: BlogPost[] = [
     category: "Management",
     author: "TopTalent Team",
     date: "18 november 2024",
-    image: "/images/barista.png",
+    image: "/images/blog-personeelsplanning.jpg",
     slug: "horeca-personeelsplanning-rooster-tips",
   },
 ];

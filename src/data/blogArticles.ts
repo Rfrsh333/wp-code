@@ -1500,7 +1500,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "25 november 2024",
     datePublished: "2024-11-25",
-    image: "/images/dienst-recruitment.png",
+    image: "/images/blog-restaurant-openen.jpg",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
       {
@@ -1669,7 +1669,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "22 november 2024",
     datePublished: "2024-11-22",
-    image: "/images/dienst-uitzenden.png",
+    image: "/images/blog-seizoenspersoneel.jpg",
     relatedSlugs: ["personeelstekort-horeca-oplossen", "horecapersoneel-inhuren-gids-2025"],
     blocks: [
       {
@@ -1806,7 +1806,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "20 november 2024",
     datePublished: "2024-11-20",
-    image: "/images/dienst-detachering.png",
+    image: "/images/blog-cao-horeca.jpg",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025"],
     blocks: [
       {
@@ -2025,7 +2025,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "18 november 2024",
     datePublished: "2024-11-18",
-    image: "/images/barista.png",
+    image: "/images/blog-personeelsplanning.jpg",
     relatedSlugs: ["personeelstekort-horeca-oplossen", "seizoenspersoneel-horeca-zomer"],
     blocks: [
       {
