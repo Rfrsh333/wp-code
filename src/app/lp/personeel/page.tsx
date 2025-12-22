@@ -6,6 +6,7 @@ import Link from "next/link";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import MiniTestimonialCarousel from "@/components/MiniTestimonialCarousel";
 
 interface LeadFormData {
   naam: string;
@@ -24,6 +25,27 @@ const initialFormData: LeadFormData = {
   rol: "",
   bericht: "",
 };
+
+const testimonials = [
+  {
+    name: "Martijn de Vries",
+    company: "Restaurant De Smaak",
+    content:
+      "TopTalent heeft ons enorm geholpen tijdens de drukke zomermaanden. Binnen een dag hadden we ervaren bediening op de vloer.",
+  },
+  {
+    name: "Sophie Jansen",
+    company: "Grand Hotel Amsterdam",
+    content:
+      "TopTalent onderscheidt zich door hun persoonlijke aanpak en het begrip van onze specifieke behoeften.",
+  },
+  {
+    name: "Rick van den Berg",
+    company: "Catering Company",
+    content:
+      "TopTalent begrijpt de dynamiek van de eventbranche en levert altijd betrouwbare, professionele medewerkers.",
+  },
+];
 
 export default function PersoneelLandingPage() {
   const [formData, setFormData] = useState<LeadFormData>(initialFormData);
@@ -142,14 +164,8 @@ export default function PersoneelLandingPage() {
                   Reactie binnen 24 uur
                 </div>
               </div>
-              <div className="bg-white border border-neutral-100 rounded-2xl p-5 shadow-sm max-w-md mb-6">
-                <p className="text-sm text-neutral-600 leading-relaxed mb-3">
-                  “TopTalent heeft ons enorm geholpen tijdens de drukke zomermaanden.
-                  Binnen een dag hadden we ervaren bediening op de vloer.”
-                </p>
-                <p className="text-xs font-semibold text-neutral-900">
-                  Martijn de Vries · Restaurant De Smaak
-                </p>
+              <div className="mb-6">
+                <MiniTestimonialCarousel testimonials={testimonials} />
               </div>
               <div className="flex items-center gap-4">
                 <Link
