@@ -575,7 +575,6 @@ export const blogArticles: Record<string, BlogArticle> = {
   },
 
   // ============================================================
-    datePublished: "2024-12-10",
   // ARTICLE 4: Werken als uitzendkracht
   // ============================================================
   "werken-uitzendkracht-horeca-salaris": {
