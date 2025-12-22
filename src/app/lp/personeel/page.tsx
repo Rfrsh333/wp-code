@@ -7,6 +7,7 @@ import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import MiniTestimonialCarousel from "@/components/MiniTestimonialCarousel";
+import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 
 interface LeadFormData {
   naam: string;
@@ -302,40 +303,12 @@ export default function PersoneelLandingPage() {
                 </p>
               </div>
 
-              <div className="mt-10 bg-white rounded-2xl p-6 border border-neutral-100 shadow-sm">
-                <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-3 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100">
-                  Zo werken wij
-                </span>
-                <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                  In 4 stappen geregeld
-                </h3>
-                <p className="text-sm text-neutral-600 mb-6">
-                  Snel schakelen, duidelijke afspraken en betrokken nazorg.
-                </p>
-
-                <div className="space-y-4">
-                  {[
-                    { title: "Intake & behoefte", text: "We bespreken planning, functies en inzet." },
-                    { title: "Selectie & matching", text: "We selecteren de beste kandidaten." },
-                    { title: "Inzet op locatie", text: "Snel geregeld, flexibel inzetbaar." },
-                    { title: "Nazorg & evaluatie", text: "We blijven betrokken en optimaliseren." },
-                  ].map((step, index) => (
-                    <div key={step.title} className="flex items-start gap-4">
-                      <div className="w-9 h-9 rounded-full bg-[#FFF7F1] text-[#F97316] flex items-center justify-center text-sm font-semibold">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-neutral-900">{step.title}</p>
-                        <p className="text-sm text-neutral-500">{step.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </FadeIn>
           </div>
         </Section.Container>
       </Section>
+
+      <HowWeWorkCarousel />
 
       <Section variant="tinted" spacing="default">
         <Section.Container>
