@@ -22,7 +22,7 @@ const blogPosts: BlogPost[] = [
     category: "Recruitment",
     author: "TopTalent Team",
     date: "14 december 2024",
-    image: "/images/dienst-recruitment.png",
+    image: "/images/blog-horecapersoneel-inhuren.jpg",
     slug: "horecapersoneel-inhuren-gids-2025",
   },
   {
@@ -32,7 +32,7 @@ const blogPosts: BlogPost[] = [
     category: "HR",
     author: "TopTalent Team",
     date: "12 december 2024",
-    image: "/images/dienst-uitzenden.png",
+    image: "/images/blog-personeelstekort.jpg",
     slug: "personeelstekort-horeca-oplossen",
   },
   {
@@ -52,7 +52,7 @@ const blogPosts: BlogPost[] = [
     category: "Carrière",
     author: "TopTalent Team",
     date: "8 december 2024",
-    image: "/images/barista.png",
+    image: "/images/blog-werken-als-uitzendkracht.jpg",
     slug: "werken-uitzendkracht-horeca-salaris",
   },
   {
@@ -62,7 +62,7 @@ const blogPosts: BlogPost[] = [
     category: "Evenementen",
     author: "TopTalent Team",
     date: "5 december 2024",
-    image: "/images/dienst-recruitment.png",
+    image: "/images/blog-evenementenpersoneel.jpg",
     slug: "evenementenpersoneel-inhuren-checklist",
   },
   {
@@ -72,7 +72,7 @@ const blogPosts: BlogPost[] = [
     category: "Detachering",
     author: "TopTalent Team",
     date: "3 december 2024",
-    image: "/images/dienst-detachering.png",
+    image: "/images/blog-detachering-vs-uitzenden.jpg",
     slug: "detachering-vs-uitzenden-verschil",
   },
   {
@@ -82,7 +82,7 @@ const blogPosts: BlogPost[] = [
     category: "Carrière",
     author: "TopTalent Team",
     date: "1 december 2024",
-    image: "/images/dienst-uitzenden.png",
+    image: "/images/blog-horecamedewerker-zonder-ervaring.jpg",
     slug: "horecamedewerker-worden-zonder-ervaring",
   },
   {
@@ -92,7 +92,7 @@ const blogPosts: BlogPost[] = [
     category: "Carrière",
     author: "TopTalent Team",
     date: "28 november 2024",
-    image: "/images/barista.png",
+    image: "/images/blog-meest-gevraagde-functies.jpg",
     slug: "meest-gevraagde-horecafuncties-nederland",
   },
   {
@@ -316,7 +316,7 @@ export default function BlogPage() {
                           width={400}
                           height={250}
                           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <span className="absolute top-4 left-4 bg-[#F97316] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
