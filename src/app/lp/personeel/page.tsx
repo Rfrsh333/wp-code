@@ -329,7 +329,7 @@ export default function PersoneelLandingPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="bg-white rounded-2xl p-6 border border-neutral-100 shadow-sm"
+                className="bg-white rounded-2xl p-6 border border-neutral-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#F97316]/30 hover:shadow-lg hover:shadow-orange-500/10"
               >
                 <h3 className="text-lg font-semibold text-neutral-900 mb-2">
                   {item.title}
