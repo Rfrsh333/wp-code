@@ -29,7 +29,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "14 december 2024",
     datePublished: "2024-12-14",
-    image: "/images/blog-horecapersoneel-inhuren.png",
+    image: "/images/blog-horecapersoneel-inhuren.jpg",
     relatedSlugs: ["personeelstekort-horeca-oplossen"],
     blocks: [
       {
@@ -304,7 +304,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "12 december 2024",
     datePublished: "2024-12-12",
-    image: "/images/blog-personeelstekort.png",
+    image: "/images/blog-personeelstekort.jpg",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "seizoenspersoneel-horeca-zomer"],
     blocks: [
       {
@@ -584,7 +584,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "8 december 2024",
     datePublished: "2024-12-08",
-    image: "/images/blog-werken-als-uitzendkracht.png",
+    image: "/images/blog-werken-als-uitzendkracht.jpg",
     relatedSlugs: ["horecamedewerker-worden-zonder-ervaring", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
       {
@@ -732,7 +732,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "5 december 2024",
     datePublished: "2024-12-05",
-    image: "/images/blog-evenementenpersoneel.png",
+    image: "/images/blog-evenementenpersoneel.jpg",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025"],
     blocks: [
       {
@@ -937,7 +937,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "3 december 2024",
     datePublished: "2024-12-03",
-    image: "/images/blog-detachering-vs-uitzenden.png",
+    image: "/images/blog-detachering-vs-uitzenden.jpg",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025"],
     blocks: [
       {
@@ -1145,7 +1145,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "1 december 2024",
     datePublished: "2024-12-01",
-    image: "/images/blog-horecamedewerker-zonder-ervaring.png",
+    image: "/images/blog-horecamedewerker-zonder-ervaring.jpg",
     relatedSlugs: ["werken-uitzendkracht-horeca-salaris", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
       {
@@ -1295,7 +1295,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "28 november 2024",
     datePublished: "2024-11-28",
-    image: "/images/blog-meest-gevraagde-functies.png",
+    image: "/images/blog-meest-gevraagde-functies.jpg",
     relatedSlugs: ["werken-uitzendkracht-horeca-salaris", "horecamedewerker-worden-zonder-ervaring"],
     blocks: [
       {
