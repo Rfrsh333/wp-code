@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   // KRITIEK: Set session cookie with signed JWT
   const { signMedewerkerSession } = await import("@/lib/session");
-  const token = await signMedewerkerSession({
+  const jwtToken = await signMedewerkerSession({
     id: medewerker.id,
     naam: medewerker.naam,
     email: medewerker.email,
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   });
 
   const cookieStore = await cookies();
-  cookieStore.set("medewerker_session", token, {
+  cookieStore.set("medewerker_session", jwtToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
