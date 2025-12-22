@@ -133,6 +133,23 @@ export default function PersoneelLandingPage() {
                   </div>
                 ))}
               </div>
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                <div className="px-4 py-2 rounded-full bg-neutral-900 text-white text-xs font-semibold tracking-wide">
+                  500+ tevreden klanten
+                </div>
+                <div className="px-4 py-2 rounded-full bg-[#FFF7F1] text-[#F97316] text-xs font-semibold tracking-wide">
+                  Reactie binnen 24 uur
+                </div>
+              </div>
+              <div className="bg-white border border-neutral-100 rounded-2xl p-5 shadow-sm max-w-md mb-6">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-3">
+                  “TopTalent heeft ons enorm geholpen tijdens de drukke zomermaanden.
+                  Binnen een dag hadden we ervaren bediening op de vloer.”
+                </p>
+                <p className="text-xs font-semibold text-neutral-900">
+                  Martijn de Vries · Restaurant De Smaak
+                </p>
+              </div>
               <div className="flex items-center gap-4">
                 <Link
                   href="tel:+31649200412"
