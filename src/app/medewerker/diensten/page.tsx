@@ -19,5 +19,11 @@ export default async function MedewerkerDiensten() {
     redirect("/medewerker/login");
   }
 
-  return <MedewerkerDienstenClient medewerker={medewerker} />;
+  // Ensure functie is always an array
+  const medewerkerData = {
+    ...medewerker,
+    functie: Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie]
+  };
+
+  return <MedewerkerDienstenClient medewerker={medewerkerData} />;
 }
