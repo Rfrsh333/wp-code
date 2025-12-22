@@ -116,6 +116,9 @@ export default function PersoneelLandingPage() {
                 TopTalent Jobs levert direct inzetbaar personeel voor restaurants, hotels,
                 evenementen en catering. Vertel ons wat je nodig hebt en wij regelen de rest.
               </p>
+              <p className="text-sm text-neutral-500 mb-6">
+                Voor wie: restaurants, hotels, events en cateringbedrijven.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 {[
                   "Reactie binnen 24 uur",
