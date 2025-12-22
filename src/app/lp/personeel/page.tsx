@@ -136,7 +136,7 @@ export default function PersoneelLandingPage() {
               </div>
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 <div className="px-4 py-2 rounded-full bg-neutral-900 text-white text-xs font-semibold tracking-wide">
-                  500+ tevreden klanten
+                  100+ klanten
                 </div>
                 <div className="px-4 py-2 rounded-full bg-[#FFF7F1] text-[#F97316] text-xs font-semibold tracking-wide">
                   Reactie binnen 24 uur
