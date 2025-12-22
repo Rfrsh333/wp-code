@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Als 2FA vereist is EN code is gegeven, verifieer de code
-    if (requires2FA && twoFactorCode) {
+    if (requires2FA && twoFactorCode && twoFactorData) {
       let isValid = false;
 
       if (isBackupCode) {
