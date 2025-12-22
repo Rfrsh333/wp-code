@@ -36,16 +36,6 @@ const blogPosts: BlogPost[] = [
     slug: "personeelstekort-horeca-oplossen",
   },
   {
-    id: 3,
-    title: "Wat kost een uitzendkracht in de horeca? Tarieven 2025",
-    excerpt: "Een transparant overzicht van de kosten voor het inhuren van uitzendkrachten in de horeca. Inclusief uurtarieven per functie, bijkomende kosten en besparingstips.",
-    category: "Uitzenden",
-    author: "TopTalent Team",
-    date: "10 december 2024",
-    image: "/images/dienst-detachering.png",
-    slug: "kosten-uitzendkracht-horeca-tarieven",
-  },
-  {
     id: 4,
     title: "Werken als uitzendkracht in de horeca: salaris en voordelen",
     excerpt: "Overweeg je om als uitzendkracht in de horeca te werken? Lees alles over het salaris, de voordelen, flexibiliteit en doorgroeimogelijkheden in deze complete gids.",
