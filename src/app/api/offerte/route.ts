@@ -16,6 +16,13 @@ import crypto from "crypto";
 // Also stores the offerte in the database for tracking.
 
 export async function POST(request: NextRequest) {
+  // KRITIEK: Dit endpoint was publiek en lekte PII - alleen admins mogen offertes genereren
+  const { isAdmin, email } = await verifyAdmin(request);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized offerte generation attempt by: ${email || 'unknown'}`);
+    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+  }
+
   try {
     const authHeader = request.headers.get("authorization");
     const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
@@ -137,6 +144,13 @@ export async function POST(request: NextRequest) {
 // Used by n8n to automatically generate offertes after a new aanvraag
 
 export async function GET(request: NextRequest) {
+  // KRITIEK: Dit endpoint was publiek en lekte PII - alleen admins mogen offertes genereren
+  const { isAdmin, email } = await verifyAdmin(request);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized offerte GET attempt by: ${email || 'unknown'}`);
+    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+  }
+
   try {
     const authHeader = request.headers.get("authorization");
     const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;

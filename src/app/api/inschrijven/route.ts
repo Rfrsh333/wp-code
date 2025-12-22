@@ -22,9 +22,10 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
 
-    // Verify reCAPTCHA (verplicht)
+    // KRITIEK: Verify reCAPTCHA - VERPLICHT (was optioneel, nu required)
     const recaptchaToken = formData.get("recaptchaToken") as string;
     if (!recaptchaToken) {
+      console.warn("[SECURITY] Inschrijven form submission without reCAPTCHA token");
       return NextResponse.json(
         { error: "reCAPTCHA verificatie vereist" },
         { status: 400 }
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
 
     const recaptchaResult = await verifyRecaptcha(recaptchaToken);
     if (!recaptchaResult.success) {
+      console.warn("[SECURITY] Inschrijven form reCAPTCHA verification failed");
       return NextResponse.json(
         { error: recaptchaResult.error || "Spam detectie mislukt" },
         { status: 400 }

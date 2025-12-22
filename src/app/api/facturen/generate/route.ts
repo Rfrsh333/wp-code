@@ -3,6 +3,13 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 
 export async function POST(request: NextRequest) {
+  // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen genereren
+  const { isAdmin, email } = await verifyAdmin(request);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized factuur generate attempt by: ${email || 'unknown'}`);
+    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+  }
+
   try {
     const authHeader = request.headers.get("authorization");
     const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;

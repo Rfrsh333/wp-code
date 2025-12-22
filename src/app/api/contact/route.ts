@@ -32,8 +32,9 @@ export async function POST(request: NextRequest) {
 
     const data: ContactFormData = await request.json();
 
-    // Verify reCAPTCHA (verplicht)
+    // KRITIEK: Verify reCAPTCHA - VERPLICHT (was optioneel, nu required)
     if (!data.recaptchaToken) {
+      console.warn("[SECURITY] Contact form submission without reCAPTCHA token");
       return NextResponse.json(
         { error: "reCAPTCHA verificatie vereist" },
         { status: 400 }
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
 
     const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
     if (!recaptchaResult.success) {
+      console.warn("[SECURITY] Contact form reCAPTCHA verification failed");
       return NextResponse.json(
         { error: recaptchaResult.error || "Spam detectie mislukt" },
         { status: 400 }

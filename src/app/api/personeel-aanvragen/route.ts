@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
 
     const data: FormData = await request.json();
 
-    // Verify reCAPTCHA (verplicht)
+    // KRITIEK: Verify reCAPTCHA - VERPLICHT (was optioneel, nu required)
     if (!data.recaptchaToken) {
+      console.warn("[SECURITY] Personeel-aanvragen form submission without reCAPTCHA token");
       return NextResponse.json(
         { error: "reCAPTCHA verificatie vereist" },
         { status: 400 }
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
     if (!recaptchaResult.success) {
+      console.warn("[SECURITY] Personeel-aanvragen form reCAPTCHA verification failed");
       return NextResponse.json(
         { error: recaptchaResult.error || "Spam detectie mislukt" },
         { status: 400 }
@@ -194,7 +196,10 @@ export async function POST(request: NextRequest) {
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
+
+    console.log("Attempting to send email from info@toptalentjobs.nl");
+
+    const { data: emailData, error } = await resend.emails.send({
       from: "TopTalent Jobs <info@toptalentjobs.nl>",
       to: ["info@toptalentjobs.nl"],
       replyTo: data.email,
@@ -203,12 +208,17 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      console.error("Resend error details:", JSON.stringify(error, null, 2));
+      console.error("Resend error type:", typeof error);
+      console.error("Resend error keys:", Object.keys(error));
+
       return NextResponse.json(
-        { error: "Fout bij verzenden e-mail" },
+        { error: "Fout bij verzenden e-mail. Probeer het later opnieuw.", details: error.message || String(error) },
         { status: 500 }
       );
     }
+
+    console.log("Email successfully sent! ID:", emailData?.id);
 
     // Opslaan in Supabase
     const { error: dbError } = await supabase.from("personeel_aanvragen").insert({

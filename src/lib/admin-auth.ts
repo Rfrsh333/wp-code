@@ -1,14 +1,13 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// Admin authenticatie helpers
+
 /**
- * Whitelist van admin email adressen
- * KRITIEK: Alleen deze emails hebben admin toegang
+ * Checkt of een email adres een admin is
  */
 export function isAdminEmail(email: string): boolean {
-  const adminEmails = process.env.ADMIN_EMAILS?.split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean) || [];
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
   return adminEmails.includes(email.toLowerCase());
 }
 
@@ -20,12 +19,11 @@ export function getAdminEmails(): string[] {
 }
 
 /**
- * Verifieert of request van een admin komt
- * Checkt zowel Supabase auth ALS admin email whitelist
+ * Verifieert of een request van een admin komt
+ * Checkt zowel of de user geauthenticeerd is ALS of het een admin email is
  */
 export async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: boolean; email?: string }> {
   const authHeader = request.headers.get("authorization");
-
   if (!authHeader?.startsWith("Bearer ")) {
     return { isAdmin: false };
   }
@@ -42,9 +40,8 @@ export async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: bool
     return { isAdmin: false };
   }
 
-  // KRITIEK: Check if user email is in admin whitelist
+  // KRITIEK: Check of de user email ook daadwerkelijk een admin email is
   if (!isAdminEmail(user.email)) {
-    console.warn(`[SECURITY] Non-admin user attempted admin access: ${user.email}`);
     return { isAdmin: false, email: user.email };
   }
 

@@ -4,7 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import bcrypt from "bcryptjs";
 
 export async function GET(request: NextRequest) {
-  // KRITIEK: Dit endpoint was publiek - alleen admins mogen medewerkers zien
+  // KRITIEK: Verify admin before allowing access
   const { isAdmin, email } = await verifyAdmin(request);
   if (!isAdmin) {
     console.warn(`[SECURITY] Unauthorized medewerkers access attempt by: ${email || 'unknown'}`);
@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // KRITIEK: Alleen admins mogen medewerkers aanpassen
+  // KRITIEK: Verify admin before allowing any mutations
   const { isAdmin, email } = await verifyAdmin(request);
   if (!isAdmin) {
-    console.warn(`[SECURITY] Unauthorized medewerkers POST attempt by: ${email || 'unknown'}`);
+    console.warn(`[SECURITY] Unauthorized medewerkers mutation attempt by: ${email || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 

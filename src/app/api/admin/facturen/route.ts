@@ -3,9 +3,10 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
+  // KRITIEK: Verify admin with proper email check
   const { isAdmin, email } = await verifyAdmin(request);
   if (!isAdmin) {
-    console.warn(`[SECURITY] Unauthorized facturen access attempt by: ${email || "unknown"}`);
+    console.warn(`[SECURITY] Unauthorized facturen access attempt by: ${email || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 

@@ -7,12 +7,10 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
-  // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins of cron mogen facturen verzenden
-  const authHeader = request.headers.get("authorization");
-  const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
+  // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen verzenden
   const { isAdmin, email: adminEmail } = await verifyAdmin(request);
-  if (!isAdmin && !cronAuthorized) {
-    console.warn(`[SECURITY] Unauthorized factuur send attempt by: ${adminEmail || "unknown"}`);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized factuur send attempt by: ${adminEmail || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 

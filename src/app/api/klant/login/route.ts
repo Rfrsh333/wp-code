@@ -2,24 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
-import { signKlantSession } from "@/lib/session";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
+  // Rate limiting: 5 login attempts per 15 minutes per IP
+  const clientIP = getClientIP(request);
+  const rateLimitResult = checkRateLimit(`klant-login:${clientIP}`, {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 5,
+  });
+
+  if (!rateLimitResult.success) {
+    console.warn(`[SECURITY] Rate limit exceeded for klant login from IP: ${clientIP}`);
+    return NextResponse.json(
+      {
+        error: `Te veel loginpogingen. Probeer het over ${rateLimitResult.resetIn} seconden opnieuw.`,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": rateLimitResult.resetIn.toString(),
+        },
+      }
+    );
+  }
+
   try {
-    const clientIP = getClientIP(request);
-    const rateLimit = checkRateLimit(`klant-login:${clientIP}`, {
-      windowMs: 15 * 60 * 1000,
-      maxRequests: 5,
-    });
-
-    if (!rateLimit.success) {
-      return NextResponse.json(
-        { error: `Te veel loginpogingen. Probeer opnieuw over ${rateLimit.resetIn} seconden.` },
-        { status: 429, headers: { "Retry-After": rateLimit.resetIn.toString() } }
-      );
-    }
-
     const { email, wachtwoord } = await request.json();
 
     if (!email || !wachtwoord) {
@@ -49,6 +57,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
     }
 
+    // KRITIEK: Gebruik signed JWT in plaats van plain JSON
+    const { signKlantSession } = await import("@/lib/session");
     const token = await signKlantSession({
       id: klant.id,
       bedrijfsnaam: klant.bedrijfsnaam,

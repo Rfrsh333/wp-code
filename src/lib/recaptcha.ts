@@ -21,7 +21,7 @@ export async function verifyRecaptcha(token: string): Promise<{
     return {
       success: false,
       score: 0,
-      error: "reCAPTCHA niet geconfigureerd - neem contact op met de beheerder",
+      error: "reCAPTCHA niet geconfigureerd - neem contact op met de beheerder"
     };
   }
 

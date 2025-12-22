@@ -192,30 +192,6 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
               <BlogContentRenderer blocks={article.blocks} />
             </article>
 
-            {/* CTA Box */}
-            <div className="mt-12 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl p-8 text-white">
-              <h3 className="text-2xl font-bold mb-3">
-                Hulp nodig bij het vinden van horecapersoneel?
-              </h3>
-              <p className="text-white/90 mb-6">
-                TopTalent Jobs helpt u graag. Neem contact op voor een vrijblijvend gesprek.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center bg-white text-[#F97316] px-6 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-colors"
-                >
-                  Neem contact op
-                </Link>
-                <Link
-                  href="/personeel-aanvragen"
-                  className="inline-flex items-center justify-center border-2 border-white/30 text-white px-6 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors"
-                >
-                  Direct personeel aanvragen
-                </Link>
-              </div>
-            </div>
-
             {/* Share Buttons */}
             <div className="mt-10 pt-8 border-t border-neutral-200">
               <p className="text-sm font-medium text-neutral-600 mb-4">Deel dit artikel:</p>

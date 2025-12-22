@@ -5,6 +5,8 @@ export async function POST(request: NextRequest) {
   try {
     const { email, beschikbaarheid, beschikbaar_vanaf, max_uren_per_week } = await request.json();
 
+    // TODO: Add auth check - for now this endpoint trusts the email parameter
+
     if (!email) {
       return NextResponse.json({ error: "Email verplicht" }, { status: 400 });
     }

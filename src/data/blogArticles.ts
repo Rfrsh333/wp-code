@@ -29,8 +29,8 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "14 december 2024",
     datePublished: "2024-12-14",
-    image: "/images/dienst-recruitment.png",
-    relatedSlugs: ["personeelstekort-horeca-oplossen", "kosten-uitzendkracht-horeca-tarieven"],
+    image: "/images/blog-horecapersoneel-inhuren.png",
+    relatedSlugs: ["personeelstekort-horeca-oplossen"],
     blocks: [
       {
         type: "paragraph",
@@ -193,11 +193,6 @@ export const blogArticles: Record<string, BlogArticle> = {
         footer: "Bij uitzendkrachten zijn alle kosten inbegrepen: loon, premies, verzekeringen en administratie."
       },
       {
-        type: "relatedLink",
-        href: "/blog/kosten-uitzendkracht-horeca-tarieven",
-        text: "Bekijk ons volledige tariefoverzicht"
-      },
-      {
         type: "divider"
       },
       {
@@ -309,7 +304,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "12 december 2024",
     datePublished: "2024-12-12",
-    image: "/images/dienst-uitzenden.png",
+    image: "/images/blog-personeelstekort.png",
     relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "seizoenspersoneel-horeca-zomer"],
     blocks: [
       {
@@ -580,172 +575,7 @@ export const blogArticles: Record<string, BlogArticle> = {
   },
 
   // ============================================================
-  // ARTICLE 3: Kosten uitzendkracht horeca tarieven
-  // ============================================================
-  "kosten-uitzendkracht-horeca-tarieven": {
-    title: "Wat kost een uitzendkracht in de horeca? Tarieven 2025",
-    excerpt: "Een transparant overzicht van de kosten voor het inhuren van uitzendkrachten in de horeca.",
-    category: "Uitzenden",
-    author: "TopTalent Team",
-    date: "10 december 2024",
     datePublished: "2024-12-10",
-    image: "/images/dienst-detachering.png",
-    relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "detachering-vs-uitzenden-verschil"],
-    blocks: [
-      {
-        type: "paragraph",
-        content: "Transparantie over kosten is essentieel bij het inhuren van horecapersoneel. In dit artikel leggen wij helder uit hoe de tarieven zijn opgebouwd en wat u kunt verwachten."
-      },
-      {
-        type: "divider"
-      },
-      {
-        type: "heading2",
-        content: "Hoe zijn de tarieven opgebouwd?"
-      },
-      {
-        type: "paragraph",
-        content: "Wanneer u een uitzendkracht inhuurt, betaalt u een \"all-in\" uurtarief. Dit tarief bestaat uit verschillende componenten:"
-      },
-      {
-        type: "priceTable",
-        title: "Opbouw uurtarief",
-        rows: [
-          { item: "Bruto uurloon medewerker", price: "Basis" },
-          { item: "Werkgeverslasten", price: "ca. 25-30%" },
-          { item: "Reserveringen (vakantie, feestdagen)", price: "ca. 20%" },
-          { item: "Bureaumarge", price: "ca. 15-25%" }
-        ],
-        footer: "Alle kosten zijn inbegrepen — geen verrassingen achteraf."
-      },
-      {
-        type: "divider"
-      },
-      {
-        type: "heading2",
-        content: "Tarieven per functie · 2025"
-      },
-      {
-        type: "heading3",
-        content: "Bediening & Service"
-      },
-      {
-        type: "priceTable",
-        title: "Bediening & Service tarieven",
-        rows: [
-          { item: "Medewerker bediening", price: "€16 – €20" },
-          { item: "Ervaren bediening", price: "€19 – €23" },
-          { item: "Gastheer/gastvrouw", price: "€18 – €24" },
-          { item: "Sommelier", price: "€24 – €32" }
-        ]
-      },
-      {
-        type: "heading3",
-        content: "Bar"
-      },
-      {
-        type: "priceTable",
-        title: "Bar tarieven",
-        rows: [
-          { item: "Barmedewerker", price: "€17 – €21" },
-          { item: "Bartender", price: "€19 – €25" },
-          { item: "Cocktail bartender", price: "€22 – €30" }
-        ]
-      },
-      {
-        type: "heading3",
-        content: "Keuken"
-      },
-      {
-        type: "priceTable",
-        title: "Keuken tarieven",
-        rows: [
-          { item: "Afwasser", price: "€15 – €18" },
-          { item: "Keukenhulp", price: "€16 – €20" },
-          { item: "Kok", price: "€20 – €28" },
-          { item: "Sous-chef", price: "€26 – €35" }
-        ]
-      },
-      {
-        type: "heading3",
-        content: "Evenementen"
-      },
-      {
-        type: "priceTable",
-        title: "Evenementen tarieven",
-        rows: [
-          { item: "Cateringmedewerker", price: "€17 – €22" },
-          { item: "Evenementenhost", price: "€19 – €25" },
-          { item: "Runner", price: "€16 – €20" }
-        ],
-        footer: "Tarieven kunnen variëren op basis van regio, ervaring en specifieke eisen."
-      },
-      {
-        type: "divider"
-      },
-      {
-        type: "heading2",
-        content: "Factoren die de prijs beïnvloeden"
-      },
-      {
-        type: "checklist",
-        title: "Prijsbepalende factoren",
-        variant: "steps",
-        items: [
-          { text: "**Ervaring en vaardigheden** — Een ervaren kok kost meer dan een keukenhulp, maar is ook direct productief." },
-          { text: "**Tijdstip van inzet** — Avond-, weekend- en feestdagendiensten kennen toeslagen volgens de CAO Horeca." },
-          { text: "**Last-minute aanvragen** — Bij spoedaanvragen (< 24 uur) kan een toeslag gelden." },
-          { text: "**Volume en frequentie** — Bij regelmatige of grote afnames zijn volumekortingen mogelijk." }
-        ]
-      },
-      {
-        type: "relatedLink",
-        href: "/blog/cao-horeca-2025-wijzigingen",
-        text: "Lees meer over de CAO Horeca 2025"
-      },
-      {
-        type: "divider"
-      },
-      {
-        type: "heading2",
-        content: "Wat bespaart u met een uitzendbureau?"
-      },
-      {
-        type: "checklist",
-        title: "Door samen te werken met een uitzendbureau bespaart u op",
-        variant: "benefits",
-        items: [
-          { text: "Wervingskosten (vacatures, tijd)" },
-          { text: "Administratieve lasten" },
-          { text: "Risico bij ziekte" },
-          { text: "Ontslagprocedures" }
-        ]
-      },
-      {
-        type: "quote",
-        quote: "Wij regelen alles — u focust op uw gasten.",
-        variant: "highlight"
-      },
-      {
-        type: "relatedLink",
-        href: "/blog/horecapersoneel-inhuren-gids-2025",
-        text: "Lees meer over horecapersoneel inhuren"
-      },
-      {
-        type: "divider"
-      },
-      {
-        type: "cta",
-        title: "Vrijblijvende offerte aanvragen",
-        description: "Wilt u weten wat horecapersoneel voor uw specifieke situatie kost? Wij maken graag een offerte op maat.",
-        primaryLink: { href: "/contact", text: "Neem contact op" },
-        secondaryLink: { href: "/personeel-aanvragen", text: "Vraag direct personeel aan" },
-        variant: "dark"
-      }
-    ]
-  },
-
-  // ============================================================
   // ARTICLE 4: Werken als uitzendkracht
   // ============================================================
   "werken-uitzendkracht-horeca-salaris": {
@@ -755,7 +585,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "8 december 2024",
     datePublished: "2024-12-08",
-    image: "/images/barista.png",
+    image: "/images/blog-werken-als-uitzendkracht.png",
     relatedSlugs: ["horecamedewerker-worden-zonder-ervaring", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
       {
@@ -783,11 +613,6 @@ export const blogArticles: Record<string, BlogArticle> = {
           { item: "Afwasser", price: "€20 – €23" }
         ],
         footer: "Daarbovenop ontvang je toeslagen voor avond-, weekend- en feestdagendiensten."
-      },
-      {
-        type: "relatedLink",
-        href: "/blog/kosten-uitzendkracht-horeca-tarieven",
-        text: "Bekijk het volledige tariefoverzicht"
       },
       {
         type: "divider"
@@ -908,8 +733,8 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "5 december 2024",
     datePublished: "2024-12-05",
-    image: "/images/dienst-recruitment.png",
-    relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "kosten-uitzendkracht-horeca-tarieven"],
+    image: "/images/blog-evenementenpersoneel.png",
+    relatedSlugs: ["horecapersoneel-inhuren-gids-2025"],
     blocks: [
       {
         type: "paragraph",
@@ -1090,11 +915,6 @@ export const blogArticles: Record<string, BlogArticle> = {
         ]
       },
       {
-        type: "relatedLink",
-        href: "/blog/kosten-uitzendkracht-horeca-tarieven",
-        text: "Bekijk onze tarieven"
-      },
-      {
         type: "divider"
       },
       {
@@ -1118,8 +938,8 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "3 december 2024",
     datePublished: "2024-12-03",
-    image: "/images/dienst-detachering.png",
-    relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "kosten-uitzendkracht-horeca-tarieven"],
+    image: "/images/blog-detachering-vs-uitzenden.png",
+    relatedSlugs: ["horecapersoneel-inhuren-gids-2025"],
     blocks: [
       {
         type: "paragraph",
@@ -1206,11 +1026,6 @@ export const blogArticles: Record<string, BlogArticle> = {
           { feature: "Kosten", optionA: "Per uur", optionB: "Vaak vast per maand" },
           { feature: "Binding", optionA: "Beperkt", optionB: "Hoog" }
         ]
-      },
-      {
-        type: "relatedLink",
-        href: "/blog/kosten-uitzendkracht-horeca-tarieven",
-        text: "Bekijk ons volledige tariefoverzicht"
       },
       {
         type: "divider"
@@ -1331,7 +1146,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "1 december 2024",
     datePublished: "2024-12-01",
-    image: "/images/dienst-uitzenden.png",
+    image: "/images/blog-horecamedewerker-zonder-ervaring.png",
     relatedSlugs: ["werken-uitzendkracht-horeca-salaris", "meest-gevraagde-horecafuncties-nederland"],
     blocks: [
       {
@@ -1481,7 +1296,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     author: "TopTalent Team",
     date: "28 november 2024",
     datePublished: "2024-11-28",
-    image: "/images/barista.png",
+    image: "/images/blog-meest-gevraagde-functies.png",
     relatedSlugs: ["werken-uitzendkracht-horeca-salaris", "horecamedewerker-worden-zonder-ervaring"],
     blocks: [
       {
@@ -1993,7 +1808,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     date: "20 november 2024",
     datePublished: "2024-11-20",
     image: "/images/dienst-detachering.png",
-    relatedSlugs: ["kosten-uitzendkracht-horeca-tarieven", "horecapersoneel-inhuren-gids-2025"],
+    relatedSlugs: ["horecapersoneel-inhuren-gids-2025"],
     blocks: [
       {
         type: "paragraph",
@@ -2055,11 +1870,6 @@ export const blogArticles: Record<string, BlogArticle> = {
         variant: "info",
         title: "Wettelijk minimumloon",
         content: "Vanaf 1 juli 2025 bedraagt het minimumuurloon €14,40 bruto voor werknemers vanaf 21 jaar."
-      },
-      {
-        type: "relatedLink",
-        href: "/blog/kosten-uitzendkracht-horeca-tarieven",
-        text: "Bekijk actuele tarieven"
       },
       {
         type: "divider"
@@ -2490,11 +2300,6 @@ export const blogArticles: Record<string, BlogArticle> = {
         type: "quote",
         quote: "Flexibiliteit zonder de lasten van vast personeel.",
         variant: "highlight"
-      },
-      {
-        type: "relatedLink",
-        href: "/blog/kosten-uitzendkracht-horeca-tarieven",
-        text: "Bekijk: Tarieven uitzendkrachten in de horeca"
       },
       {
         type: "divider"

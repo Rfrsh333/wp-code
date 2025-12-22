@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
-import { signMedewerkerSession } from "@/lib/session";
+import crypto from "crypto";
 
 export async function GET(request: NextRequest) {
-  const magicToken = request.nextUrl.searchParams.get("token");
+  const token = request.nextUrl.searchParams.get("token");
 
-  if (!magicToken) {
+  if (!token) {
     return NextResponse.redirect(new URL("/medewerker/login?error=invalid", request.url));
   }
 
   const { data: medewerker, error } = await supabase
     .from("medewerkers")
     .select("id, naam, email, functie")
-    .eq("magic_token", magicToken)
+    .eq("magic_token", token)
     .gt("magic_token_expires_at", new Date().toISOString())
     .single();
 
@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/medewerker/login?error=expired", request.url));
   }
 
+  // Create session token
+  const sessionToken = crypto.randomBytes(32).toString("hex");
   const sessionExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   await supabase
@@ -32,16 +34,17 @@ export async function GET(request: NextRequest) {
     })
     .eq("id", medewerker.id);
 
-  const sessionToken = await signMedewerkerSession({
+  // KRITIEK: Set session cookie with signed JWT
+  const { signMedewerkerSession } = await import("@/lib/session");
+  const token = await signMedewerkerSession({
     id: medewerker.id,
     naam: medewerker.naam,
     email: medewerker.email,
     functie: medewerker.functie,
   });
 
-  // Set session cookie
   const cookieStore = await cookies();
-  cookieStore.set("medewerker_session", sessionToken, {
+  cookieStore.set("medewerker_session", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

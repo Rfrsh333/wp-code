@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
-import { verifyMedewerkerSession } from "@/lib/session";
 
 export async function GET() {
+  // KRITIEK: Verify signed JWT instead of trusting JSON
   const cookieStore = await cookies();
   const session = cookieStore.get("medewerker_session");
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { verifyMedewerkerSession } = await import("@/lib/session");
   const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const functies = Array.isArray(medewerker.functie)
-    ? medewerker.functie
-    : [medewerker.functie];
+  if (!medewerker) {
+    console.warn("[SECURITY] Invalid medewerker session token");
+    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
+  }
 
   const { data: alleDiensten } = await supabaseAdmin
     .from("diensten")
     .select("*")
-    .in("functie", functies)
+    .in("functie", medewerker.functie)
     .in("status", ["open", "vol"])
     .gte("datum", new Date().toISOString().split("T")[0])
     .order("datum", { ascending: true });
@@ -69,12 +69,17 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // KRITIEK: Verify signed JWT instead of trusting JSON
   const cookieStore = await cookies();
   const session = cookieStore.get("medewerker_session");
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { verifyMedewerkerSession } = await import("@/lib/session");
   const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) {
+    console.warn("[SECURITY] Invalid medewerker session token");
+    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
+  }
   const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
 
   if (action === "aanmelden") {

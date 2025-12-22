@@ -3,9 +3,10 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
+  // KRITIEK: Verify admin with proper email check
   const { isAdmin, email } = await verifyAdmin(request);
   if (!isAdmin) {
-    console.warn(`[SECURITY] Unauthorized diensten access attempt by: ${email || "unknown"}`);
+    console.warn(`[SECURITY] Unauthorized diensten access attempt by: ${email || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
   const { data } = await supabaseAdmin.from("diensten").select("*").order("datum", { ascending: true });
@@ -13,9 +14,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // KRITIEK: Verify admin with proper email check
   const { isAdmin, email } = await verifyAdmin(request);
   if (!isAdmin) {
-    console.warn(`[SECURITY] Unauthorized diensten mutation attempt by: ${email || "unknown"}`);
+    console.warn(`[SECURITY] Unauthorized diensten mutation attempt by: ${email || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 

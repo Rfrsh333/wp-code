@@ -11,17 +11,13 @@ export default async function MedewerkerDiensten() {
     redirect("/medewerker/login");
   }
 
+  // Verifieer JWT token - beschermt tegen token forgery
   const medewerker = await verifyMedewerkerSession(session.value);
+
   if (!medewerker) {
+    console.warn("[SECURITY] Invalid medewerker session token - forcing re-login");
     redirect("/medewerker/login");
   }
 
-  const medewerkerNormalized = {
-    ...medewerker,
-    functie: Array.isArray(medewerker.functie)
-      ? medewerker.functie
-      : [medewerker.functie],
-  };
-
-  return <MedewerkerDienstenClient medewerker={medewerkerNormalized} />;
+  return <MedewerkerDienstenClient medewerker={medewerker} />;
 }

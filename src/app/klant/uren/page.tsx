@@ -11,8 +11,11 @@ export default async function KlantUren() {
     redirect("/klant/login");
   }
 
+  // Verifieer JWT token - beschermt tegen token forgery
   const klant = await verifyKlantSession(session.value);
+
   if (!klant) {
+    console.warn("[SECURITY] Invalid klant session token - forcing re-login");
     redirect("/klant/login");
   }
 

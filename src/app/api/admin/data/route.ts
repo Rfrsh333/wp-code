@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 
-// KRITIEK: Whitelist van toegestane tabellen - voorkomt SQL injection en data leakage
+// KRITIEK: Whitelist van toegestane tables om SQL injection te voorkomen
 const ALLOWED_TABLES = [
   "calculator_leads",
   "contact_berichten",
@@ -14,7 +14,7 @@ const ALLOWED_TABLES = [
   "dienst_aanmeldingen",
   "uren_registraties",
   "facturen",
-  "factuur_regels"
+  "factuur_regels",
 ] as const;
 
 type AllowedTable = typeof ALLOWED_TABLES[number];
@@ -24,7 +24,7 @@ function isAllowedTable(table: string): table is AllowedTable {
 }
 
 export async function GET(request: NextRequest) {
-  // KRITIEK: Check if user is admin (not just authenticated)
+  // KRITIEK: Verify admin with proper email check
   const { isAdmin, email } = await verifyAdmin(request);
   if (!isAdmin) {
     console.warn(`[SECURITY] Unauthorized data access attempt by: ${email || 'unknown'}`);
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Table required" }, { status: 400 });
   }
 
-  // KRITIEK: Whitelist check - voorkomt willekeurige table toegang
+  // KRITIEK: Check table whitelist
   if (!isAllowedTable(table)) {
     console.warn(`[SECURITY] Attempt to access non-whitelisted table: ${table} by ${email}`);
     return NextResponse.json({ error: "Table not allowed" }, { status: 403 });
@@ -49,18 +49,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // KRITIEK: Check if user is admin (not just authenticated)
+  // KRITIEK: Verify admin with proper email check
   const { isAdmin, email } = await verifyAdmin(request);
   if (!isAdmin) {
-    console.warn(`[SECURITY] Unauthorized data POST attempt by: ${email || 'unknown'}`);
+    console.warn(`[SECURITY] Unauthorized data mutation attempt by: ${email || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
   const { action, table, id, data } = await request.json();
 
-  // KRITIEK: Whitelist check - voorkomt willekeurige table toegang
+  // KRITIEK: Check table whitelist
   if (!table || !isAllowedTable(table)) {
-    console.warn(`[SECURITY] Attempt to modify non-whitelisted table: ${table} by ${email}`);
+    console.warn(`[SECURITY] Attempt to mutate non-whitelisted table: ${table} by ${email}`);
     return NextResponse.json({ error: "Table not allowed" }, { status: 403 });
   }
 
