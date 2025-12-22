@@ -71,10 +71,10 @@ const nextConfig: NextConfig = {
         has: [
           {
             type: 'host',
-            value: 'www.toptalentjobs.nl',
+            value: 'toptalentjobs.nl',
           },
         ],
-        destination: 'https://toptalentjobs.nl/:path*',
+        destination: 'https://www.toptalentjobs.nl/:path*',
         permanent: true,
       },
     ];
