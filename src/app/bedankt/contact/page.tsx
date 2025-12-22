@@ -12,6 +12,11 @@ export default function BedanktContactPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 50);
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "lead_success",
+      form: "contact",
+    });
     return () => clearTimeout(timer);
   }, []);
 

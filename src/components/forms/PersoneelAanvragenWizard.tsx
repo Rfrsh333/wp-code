@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { basisTarieven } from "@/lib/calculator/tarieven";
 
@@ -116,6 +117,7 @@ export default function PersoneelAanvragenWizard() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [direction, setDirection] = useState(1);
   const { executeRecaptcha } = useRecaptcha();
+  const router = useRouter();
 
   const totalSteps = 4;
 
@@ -199,7 +201,13 @@ export default function PersoneelAanvragenWizard() {
       });
 
       if (response.ok) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "lead_submit",
+          form: "personeel_aanvragen",
+        });
         setIsSubmitted(true);
+        router.push("/bedankt/zakelijk");
       } else {
         const data = await response.json();
         alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");

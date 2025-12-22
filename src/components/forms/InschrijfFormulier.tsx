@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 interface FormData {
@@ -465,6 +466,7 @@ export default function InschrijfFormulier() {
   const [extraDocumenten, setExtraDocumenten] = useState<File[]>([]);
   const [mounted, setMounted] = useState(false);
   const { executeRecaptcha } = useRecaptcha();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -535,7 +537,13 @@ export default function InschrijfFormulier() {
       });
 
       if (response.ok) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "lead_submit",
+          form: "inschrijven",
+        });
         setIsSubmitted(true);
+        router.push("/bedankt/kandidaat");
       } else {
         const data = await response.json();
         alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");

@@ -51,6 +51,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/lp/personeel`,
+      lastModified: contentDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/inschrijven`,
       lastModified: contentDate,
       changeFrequency: 'monthly',
@@ -103,6 +109,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: contentDate,
       changeFrequency: 'yearly',
       priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/cookies`,
+      lastModified: contentDate,
+      changeFrequency: 'yearly',
+      priority: 0.2,
     },
     {
       url: `${baseUrl}/privacy`,
