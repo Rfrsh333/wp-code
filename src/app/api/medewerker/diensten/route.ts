@@ -15,10 +15,11 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
   }
 
+  const functies = Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie];
   const { data: alleDiensten } = await supabaseAdmin
     .from("diensten")
     .select("*")
-    .in("functie", medewerker.functie)
+    .in("functie", functies)
     .in("status", ["open", "vol"])
     .gte("datum", new Date().toISOString().split("T")[0])
     .order("datum", { ascending: true });
