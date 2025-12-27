@@ -48,20 +48,20 @@ const ArrowIcon = () => (
  */
 const bulletPoints = [
   {
-    title: "Snelle responstijd",
-    description: "Binnen 24 uur personeel beschikbaar",
+    title: "Snel schakelen",
+    description: "Binnen 24 uur een passend voorstel",
   },
   {
-    title: "Gekwalificeerd personeel",
-    description: "Uitgebreid gescreend en getraind",
+    title: "Geselecteerde kandidaten",
+    description: "Ervaring in keuken, bediening en events",
   },
   {
     title: "Flexibele inzet",
-    description: "Van enkele uren tot langdurige plaatsing",
+    description: "Losse diensten of langere trajecten",
   },
   {
-    title: "Persoonlijke aanpak",
-    description: "Vaste contactpersoon voor uw account",
+    title: "Vaste contactpersoon",
+    description: "Eén aanspreekpunt voor planning en kwaliteit",
   },
 ];
 
@@ -69,12 +69,12 @@ const bulletPoints = [
  * Benefits data with icons
  */
 const benefits = [
-  { icon: "€", text: "Concurrerende salarissen voor talent" },
-  { icon: "⚡", text: "Snelle uitbetaling binnen 24 uur" },
-  { icon: "📱", text: "Moderne talent-app voor planning" },
-  { icon: "🎓", text: "Professionele trainingen en certificeringen" },
-  { icon: "👥", text: "Community van vakgenoten" },
-  { icon: "📍", text: "Werkervaring bij premium locaties" },
+  { icon: "€", text: "Transparante tarieven zonder verrassingen" },
+  { icon: "⚡", text: "Beschikbaar voor piekuren en last-minute diensten" },
+  { icon: "📱", text: "Snelle planning en heldere communicatie" },
+  { icon: "🎓", text: "Screening op ervaring en referenties" },
+  { icon: "👥", text: "Snelle vervanging bij uitval" },
+  { icon: "📍", text: "Lokale pool in Utrecht en omgeving" },
 ];
 
 /**
@@ -122,7 +122,7 @@ export default function WhyTopTalent() {
                 isInView ? styles.visible : ""
               }`}
             >
-              Waarom TopTalent
+              Waarom werkgevers kiezen
             </span>
 
             {/* Headline */}
@@ -132,7 +132,7 @@ export default function WhyTopTalent() {
                 isInView ? styles.visible : ""
               }`}
             >
-              Uw betrouwbare partner in horeca staffing
+              Het horeca uitzendbureau dat meedenkt
             </h2>
 
             {/* Description */}
@@ -141,9 +141,9 @@ export default function WhyTopTalent() {
                 isInView ? styles.visible : ""
               }`}
             >
-              Met jarenlange ervaring in de horeca- en evenementenbranche begrijpen
-              wij de uitdagingen van onze klanten. Wij leveren niet alleen personeel,
-              maar bouwen duurzame partnerships.
+              Wij kennen de horeca en begrijpen de druk op planning en service.
+              Daarom leveren we snel inzetbaar horecapersoneel en een vast
+              aanspreekpunt voor uw locatie.
             </p>
 
             {/* Bullet Points */}
@@ -175,7 +175,7 @@ export default function WhyTopTalent() {
                 isInView ? styles.visible : ""
               }`}
             >
-              Meer over TopTalent
+              Meer over onze werkwijze
               <ArrowIcon />
             </Link>
           </div>
@@ -192,7 +192,7 @@ export default function WhyTopTalent() {
                 isInView ? styles.visible : ""
               }`}
             >
-              Wij bieden
+              Wat u krijgt
             </h3>
 
             {/* Benefits List */}
@@ -221,7 +221,7 @@ export default function WhyTopTalent() {
                 isInView ? styles.visible : ""
               }`}
             >
-              Schrijf je nu in
+              Start de samenwerking
             </Link>
           </div>
         </div>

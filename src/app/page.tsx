@@ -17,21 +17,21 @@ const testimonials = [
     name: "Martijn de Vries",
     role: "Eigenaar",
     company: "Restaurant De Smaak",
-    content: "TopTalent heeft ons enorm geholpen tijdens de drukke zomermaanden. Binnen een dag hadden we ervaren bediening op de vloer.",
+    content: "Tijdens de drukte stonden er binnen 24 uur extra krachten op de vloer. Betrouwbaar horecapersoneel en prettig contact.",
     image: "/images/testimonials/martijn.jpg",
   },
   {
     name: "Sophie Jansen",
     role: "HR Manager",
     company: "Grand Hotel Amsterdam",
-    content: "TopTalent onderscheidt zich door hun persoonlijke aanpak en het begrip van onze specifieke behoeften.",
+    content: "Heldere communicatie en snel de juiste kandidaten voor ons hotel. Ze begrijpen onze planning en service-eisen.",
     image: "/images/testimonials/sophie.jpg",
   },
   {
     name: "Rick van den Berg",
     role: "Operations Manager",
     company: "Catering Company",
-    content: "TopTalent begrijpt de dynamiek van de eventbranche en levert altijd betrouwbare, professionele medewerkers.",
+    content: "Voor events kunnen we op ze rekenen: flexibel, professioneel en altijd op tijd. Een fijn horeca uitzendbureau.",
     image: "/images/testimonials/rick.jpg",
   },
 ];
@@ -49,6 +49,9 @@ const industries = [
 ];
 
 export const metadata: Metadata = {
+  title: "Horeca uitzendbureau voor werkgevers en flexibel horecapersoneel",
+  description:
+    "TopTalent Jobs is het horeca uitzendbureau voor Utrecht en omstreken. Binnen 24 uur inzetbaar horecapersoneel voor restaurants, hotels en events.",
   alternates: {
     canonical: "https://toptalentjobs.nl/",
   },
@@ -85,13 +88,13 @@ export default function Home() {
           <FadeIn>
             <div className="text-center mb-12">
               <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
-                Branches
+                Horecabranches
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Wij leveren aan alle <span className="text-[#F97316]">horecabranches</span>
+                Horecapersoneel voor elke <span className="text-[#F97316]">branche</span>
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
-                Van fine dining tot festivals - wij hebben ervaring in alle segmenten van de horeca.
+                Van fine dining tot festivals: wij leveren ervaren horecapersoneel dat past bij uw tempo en service.
               </p>
             </div>
           </FadeIn>
@@ -104,7 +107,7 @@ export default function Home() {
                     {industry.icon}
                   </div>
                   <h3 className="font-semibold text-neutral-900 mb-1">{industry.name}</h3>
-                  <span className="text-sm text-[#F97316] font-medium">{industry.count} klanten</span>
+                  <span className="text-sm text-[#F97316] font-medium">{industry.count} bedrijven</span>
                 </div>
               </FadeIn>
             ))}
@@ -128,11 +131,11 @@ export default function Home() {
 
               <div className="relative z-10 max-w-3xl mx-auto">
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                  Klaar om samen te werken?
+                  Direct horecapersoneel nodig?
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  Of u nu personeel zoekt of een nieuwe carrière wilt starten in de horeca,
-                  wij helpen u graag verder. Neem vandaag nog contact met ons op.
+                  Snel extra handen nodig voor keuken, bediening of events?
+                  Wij leveren passend personeel en regelen de inzet zonder gedoe.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link

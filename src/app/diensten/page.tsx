@@ -20,14 +20,14 @@ export default function DienstenPage() {
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto">
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                Onze Diensten
+                Diensten horeca uitzendbureau
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
-                Flexibele personeelsoplossingen
+                Diensten voor horeca-werkgevers
               </h1>
               <p className="text-neutral-600 text-lg leading-relaxed">
-                Van tijdelijke uitzendkrachten tot permanente plaatsingen.
-                Wij bieden complete personeelsoplossingen voor de horeca- en evenementenbranche.
+                Kies de inzet die past bij uw planning: tijdelijk, projectmatig of vast.
+                Wij regelen selectie, inzet en administratie voor horeca en events.
               </p>
             </div>
           </FadeIn>
@@ -41,17 +41,18 @@ export default function DienstenPage() {
             <FadeIn>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
                 <div className="order-2 lg:order-1 text-center lg:text-left">
-                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Uitzenden</h2>
+                  <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Uitzenden horeca</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
-                    Tijdelijke inzet van gekwalificeerd horecapersoneel. Perfect voor piekmomenten,
-                    festivals, evenementen of seizoensgebonden drukte. Flexibel in te zetten wanneer u het nodig heeft.
+                    Tijdelijke inzet van horecakrachten bij piekmomenten,
+                    events of seizoensdrukte. Ideaal als u snel wilt opschalen
+                    zonder extra vaste lasten.
                   </p>
                   <ul className="space-y-3 mb-6 text-left max-w-[560px] mx-auto lg:mx-0">
                     {[
-                      "Flexibele inzet per dag, week of maand",
-                      "Geschoold en ervaren personeel",
-                      "Snelle beschikbaarheid (binnen 24 uur)",
-                      "Geen administratieve rompslomp"
+                      "Inzet per dienst, week of seizoen",
+                      "Ervaren krachten voor keuken en bediening",
+                      "Snelle startmogelijkheden",
+                      "Wij regelen contracten en verloning"
                     ].map((item, i) => (
                       <li key={i} className="flex items-center gap-3 text-neutral-700">
                         <div className="w-5 h-5 rounded-full bg-[#F97316] flex items-center justify-center flex-shrink-0">
@@ -78,7 +79,7 @@ export default function DienstenPage() {
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
                         src="/images/dienst-uitzenden.png"
-                        alt="Horeca uitzendkracht aan het werk - flexibel personeel TopTalent Utrecht"
+                        alt="Horeca medewerker tijdens tijdelijke inzet via uitzendbureau"
                         width={380}
                         height={380}
                       />
@@ -102,7 +103,7 @@ export default function DienstenPage() {
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
                         src="/images/dienst-detachering.png"
-                        alt="Gedetacheerd horeca personeel - langdurige samenwerking TopTalent"
+                        alt="Gedetacheerde horecakrachten voor structurele inzet"
                         width={380}
                         height={380}
                       />
@@ -112,15 +113,15 @@ export default function DienstenPage() {
                 <div className="order-2 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Detachering</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
-                    Langdurige plaatsing voor vaste periodes. Ons personeel werkt bij u, maar blijft bij ons in dienst.
-                    De perfecte tussenoplossing voor structurele personeelsbehoefte met behoud van flexibiliteit.
+                    Structurele bezetting met behoud van flexibiliteit. De medewerker
+                    werkt bij u, blijft bij ons in dienst en past in uw vaste rooster.
                   </p>
                   <ul className="space-y-3 mb-6 text-left max-w-[560px] mx-auto lg:mx-0">
                     {[
-                      "Vaste medewerker voor langere periode",
-                      "Wij regelen alle administratie",
+                      "Vaste inzet voor langere periode",
+                      "Duidelijke tariefafspraken",
                       "Optie tot overname na detachering",
-                      "Continuiteit en stabiliteit"
+                      "Continuiteit voor uw planning"
                     ].map((item, i) => (
                       <li key={i} className="flex items-center gap-3 text-neutral-700">
                         <div className="w-5 h-5 rounded-full bg-[#F97316] flex items-center justify-center flex-shrink-0">
@@ -157,15 +158,15 @@ export default function DienstenPage() {
                 <div className="order-2 lg:order-1 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Recruitment</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
-                    Werving en selectie voor vaste posities. Wij vinden het perfecte talent voor uw organisatie
-                    en nemen u het hele proces uit handen. Van intake tot plaatsing.
+                    Werving en selectie voor vaste functies in uw team. We nemen
+                    het hele traject uit handen, van intake tot aanname.
                   </p>
                   <ul className="space-y-3 mb-6 text-left max-w-[560px] mx-auto lg:mx-0">
                     {[
-                      "Uitgebreide selectieprocedure",
+                      "Intake met leidinggevende en team",
+                      "Selectie op ervaring en cultuurfit",
                       "Referentiecheck en screening",
-                      "Match op basis van cultuur en skills",
-                      "Garantie op plaatsing"
+                      "Begeleiding tot indiensttreding"
                     ].map((item, i) => (
                       <li key={i} className="flex items-center gap-3 text-neutral-700">
                         <div className="w-5 h-5 rounded-full bg-[#F97316] flex items-center justify-center flex-shrink-0">
@@ -192,7 +193,7 @@ export default function DienstenPage() {
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
                         src="/images/dienst-recruitment.png"
-                        alt="Recruitment gesprek horeca - werving en selectie TopTalent Utrecht"
+                        alt="Recruitmentgesprek voor vaste horeca functies"
                         width={380}
                         height={380}
                       />
@@ -217,11 +218,11 @@ export default function DienstenPage() {
 
               <div className="relative z-10 max-w-2xl mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                  Interesse in onze diensten?
+                  Wilt u de juiste dienst kiezen?
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  Neem vrijblijvend contact met ons op voor een persoonlijk adviesgesprek
-                  en een offerte op maat.
+                  We denken graag mee over de beste inzet voor uw locatie
+                  en maken een duidelijke planningsofferte.
                 </p>
                 <Link
                   href="/contact"

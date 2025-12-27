@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import styles from "./MarqueeBanner.module.css";
 
 const services = [
-  "Uitzenden",
-  "Detachering",
-  "Recruitment",
-  "Events",
-  "Horeca personeel",
+  "Horeca uitzendbureau",
+  "Horecapersoneel",
+  "Uitzenden horeca",
+  "Detachering horeca",
+  "Werving en selectie",
 ];
 
 // Create repeated content for seamless loop

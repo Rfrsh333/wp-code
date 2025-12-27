@@ -10,9 +10,9 @@ import styles from "./ServicesSection.module.css";
 const services = [
   {
     id: "uitzenden",
-    title: "Uitzenden",
+    title: "Uitzenden horeca",
     description:
-      "Tijdelijke inzet van gekwalificeerd horecapersoneel. Flexibel in te zetten voor piekuren, evenementen of seizoensgebonden drukte.",
+      "Flexibele inzet van horecapersoneel voor piekuren, evenementen of seizoensdrukte. Snel beschikbaar en direct inzetbaar.",
     href: "/diensten#uitzenden",
     icon: (
       <svg
@@ -33,9 +33,9 @@ const services = [
   },
   {
     id: "detachering",
-    title: "Detachering",
+    title: "Detachering horeca",
     description:
-      "Langdurige plaatsing van ervaren professionals. Ideaal voor structurele versterking met behoud van flexibiliteit.",
+      "Structurele versterking met ervaren krachten voor langere periodes, met behoud van flexibiliteit.",
     href: "/diensten#detachering",
     icon: (
       <svg
@@ -56,9 +56,9 @@ const services = [
   },
   {
     id: "recruitment",
-    title: "Recruitment",
+    title: "Werving en selectie",
     description:
-      "Werving en selectie voor vaste posities. Wij vinden de perfecte match voor uw organisatie met onze uitgebreide kandidatenpool.",
+      "Werving en selectie voor vaste functies. Wij vinden kandidaten die passen bij uw team en tempo.",
     href: "/diensten#recruitment",
     icon: (
       <svg
@@ -118,7 +118,7 @@ const ServiceCard = ({ service, isVisible, delayClass }: ServiceCardProps) => (
     <h3 className={styles.cardTitle}>{service.title}</h3>
     <p className={styles.cardDescription}>{service.description}</p>
     <Link href={service.href} className={styles.cardLink}>
-      Meer informatie
+      Lees meer
       <ArrowIcon />
     </Link>
   </article>
@@ -147,7 +147,7 @@ export default function ServicesSection() {
               isInView ? styles.visible : ""
             }`}
           >
-            Onze Diensten
+            Diensten voor werkgevers
           </span>
           <h2
             id="services-heading"
@@ -155,15 +155,15 @@ export default function ServicesSection() {
               isInView ? styles.visible : ""
             }`}
           >
-            Flexibele personeelsoplossingen
+            Flexibel horecapersoneel op maat
           </h2>
           <p
             className={`${styles.subtitle} ${styles.revealItem} ${styles.delaySubtitle} ${
               isInView ? styles.visible : ""
             }`}
           >
-            Van tijdelijke inhuur tot permanente plaatsing. Wij bieden complete
-            personeelsoplossingen voor de horeca- en evenementenbranche.
+            Van tijdelijke inzet tot vaste plaatsing. Wij regelen de volledige
+            personeelsbezetting voor horeca en events.
           </p>
         </header>
 

@@ -64,7 +64,7 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay1}`}
             >
-              Horeca Uitzendbureau
+              Horeca uitzendbureau voor werkgevers
             </span>
 
             {/* Headline */}
@@ -79,7 +79,7 @@ export default function Hero() {
                   highlightAnimated ? styles.highlightAnimated : ""
                 }`}
               >
-                kwalitatief
+                betrouwbaar
               </span>{" "}
               horecapersoneel
             </h1>
@@ -90,9 +90,9 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay3}`}
             >
-              TopTalent levert betrouwbaar en professioneel personeel voor
-              restaurants, hotels en evenementen. Binnen 24 uur de juiste
-              mensen op de juiste plek.
+              Wij leveren snel inzetbaar horecapersoneel voor restaurants,
+              hotels en evenementen. Binnen 24 uur een passende bezetting
+              voor uw planning.
             </p>
 
             {/* CTA Buttons */}
@@ -102,11 +102,11 @@ export default function Hero() {
               } ${styles.delay4}`}
             >
               <Link href="/personeel-aanvragen" className={styles.ctaPrimary}>
-                Personeel aanvragen
+                Vraag personeel aan
                 <ArrowIcon />
               </Link>
               <Link href="/inschrijven" className={styles.ctaSecondary}>
-                Solliciteren
+                Inschrijven
               </Link>
             </div>
 
@@ -133,7 +133,7 @@ export default function Hero() {
             {/* Hero image */}
             <Image
               src="/images/barista.png"
-              alt="Professionele barista aan het werk - TopTalent horeca personeel Utrecht"
+              alt="Barista aan het werk met inzetbaar horecapersoneel via ons uitzendbureau"
               width={240}
               height={320}
               className={styles.heroImage}

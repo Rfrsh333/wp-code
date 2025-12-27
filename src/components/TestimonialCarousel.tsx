@@ -37,10 +37,10 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
         <FadeIn>
           <div className="text-center mb-14 lg:mb-16">
             <span className="inline-block text-[#FF7A00] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
-              Testimonials
+              Ervaringen
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1F1F1F]">
-              Wat onze klanten zeggen
+              Wat horeca-werkgevers zeggen
             </h2>
           </div>
         </FadeIn>
@@ -115,7 +115,7 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
               href="/testimonials"
               className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#FF7A00] transition-colors font-medium group"
             >
-              Bekijk alle testimonials
+              Bekijk alle ervaringen
               <svg
                 className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
                 fill="none"
