@@ -30,7 +30,14 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(REDIRECT_TARGET, 301);
   }
 
-  if (normalizedPath !== "/" && normalizedPath !== "/diensten") {
+  const isIndexablePath =
+    normalizedPath === "/" ||
+    normalizedPath === "/diensten" ||
+    normalizedPath === "/diensten/uitzenden" ||
+    normalizedPath === "/diensten/detachering" ||
+    normalizedPath === "/diensten/recruitment";
+
+  if (!isIndexablePath) {
     const response = NextResponse.next();
     response.headers.set("X-Robots-Tag", "noindex, follow");
     return response;
