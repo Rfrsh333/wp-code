@@ -94,7 +94,8 @@ export default function Home() {
                 Horecapersoneel voor elke <span className="text-[#F97316]">branche</span>
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
-                Van fine dining tot festivals: wij leveren ervaren horecapersoneel dat past bij uw tempo en service.
+                Van fine dining tot festivals: wij leveren ervaren{" "}
+                <Link href="/diensten/detachering">horecapersoneel</Link> dat past bij uw tempo en service.
               </p>
             </div>
           </FadeIn>
@@ -134,8 +135,8 @@ export default function Home() {
                   Direct horecapersoneel nodig?
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  Snel extra handen nodig voor keuken, bediening of events?
-                  Wij leveren passend personeel en regelen de inzet zonder gedoe.
+                  Snel <Link href="/diensten/uitzenden">extra handen</Link> nodig voor keuken, bediening of events?
+                  Wij leveren <Link href="/diensten/recruitment">passend personeel</Link> en regelen de inzet zonder gedoe.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link

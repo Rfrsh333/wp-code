@@ -44,7 +44,7 @@ export default function UitzendenPage() {
             <FadeIn direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                  Uitzenden
+                  <Link href="/diensten">Diensten</Link> › Uitzenden
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
                   Uitzenden met direct inzetbaar horecapersoneel
@@ -101,7 +101,8 @@ export default function UitzendenPage() {
                 </h2>
                 <p className="text-xl text-neutral-600 leading-relaxed">
                   Bij uitzenden werkt het horecapersoneel bij u, maar blijft in dienst bij TopTalent Jobs.
-                  U houdt grip op de personele bezetting zonder werkgeversrisico&apos;s. Wij regelen alles:
+                  U houdt grip op de{" "}
+                  <Link href="/diensten/detachering">personele bezetting</Link> zonder werkgeversrisico&apos;s. Wij regelen alles:
                   van werving tot salarisadministratie.
                 </p>
               </div>

@@ -20,7 +20,7 @@ export default function RecruitmentPage() {
             <FadeIn direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                  Recruitment
+                  <Link href="/diensten">Diensten</Link> › Recruitment
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
                   Recruitment voor vast horecapersoneel
@@ -134,7 +134,8 @@ export default function RecruitmentPage() {
                   Waarom recruitment via TopTalent?
                 </h2>
                 <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
-                  Recruitment voor vaste bezetting vraagt tijd en focus. Wij nemen dit uit handen
+                  Recruitment voor{" "}
+                  <Link href="/diensten/detachering">vaste bezetting</Link> vraagt tijd en focus. Wij nemen dit uit handen
                   en presenteren kandidaten die passen bij uw organisatie.
                 </p>
 

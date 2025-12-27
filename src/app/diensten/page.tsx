@@ -26,7 +26,10 @@ export default function DienstenPage() {
                 Diensten voor horeca-werkgevers
               </h1>
               <p className="text-neutral-600 text-lg leading-relaxed">
-                Kies de inzet die past bij uw planning: tijdelijk, projectmatig of vast.
+                Kies de inzet die past bij uw planning:{" "}
+                <Link href="/diensten/uitzenden">tijdelijk</Link>,{" "}
+                <Link href="/diensten/detachering">projectmatig</Link> of{" "}
+                <Link href="/diensten/recruitment">vast</Link>.
                 Wij regelen selectie, inzet en administratie voor horeca en events.
               </p>
             </div>

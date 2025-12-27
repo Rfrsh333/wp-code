@@ -20,7 +20,7 @@ export default function DetacheringPage() {
             <FadeIn direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                  Detachering
+                  <Link href="/diensten">Diensten</Link> › Detachering
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
                   Een vaste horecakracht, zonder vaste lasten
@@ -156,7 +156,12 @@ export default function DetacheringPage() {
               },
               {
                 title: "Optie tot overname",
-                description: "Tevreden? Na de detacheringsperiode kunt u de medewerker overnemen.",
+                description: (
+                  <>
+                    Tevreden? Na de detacheringsperiode kunt u de{" "}
+                    <Link href="/diensten/recruitment">medewerker overnemen</Link>.
+                  </>
+                ),
                 icon: (
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
