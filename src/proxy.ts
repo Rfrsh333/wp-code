@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const REDIRECT_TARGET = "https://toptalentjobs.nl/";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const normalizedPath = pathname !== "/" && pathname.endsWith("/")
     ? pathname.slice(0, -1)
