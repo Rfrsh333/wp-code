@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
@@ -46,6 +47,12 @@ const industries = [
   { name: "Cafés & Bars", icon: "☕", count: "15+" },
   { name: "Festivals", icon: "🎪", count: "5+" },
 ];
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://toptalentjobs.nl/",
+  },
+};
 
 export default function Home() {
   return (
