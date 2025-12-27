@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Detachering - Langdurig Horeca Personeel",
-  description: "Zoekt u horeca personeel voor langere periode? TopTalent Jobs detacheert ervaren medewerkers bij uw bedrijf. Vast team, flexibele voorwaarden.",
+  title: "Detachering horeca personeel voor werkgevers",
+  description: "Detachering van horecapersoneel voor structurele bezetting. Een vaste horecakracht in uw team, zonder werkgeversrisico en met heldere afspraken.",
   alternates: {
     canonical: "https://toptalentjobs.nl/diensten/detachering",
   },

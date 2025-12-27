@@ -9,23 +9,23 @@ import FAQ, { FAQItem } from "@/components/FAQ";
 const faqItems: FAQItem[] = [
   {
     question: "Hoe snel kan ik personeel krijgen?",
-    answer: "Vaak binnen 24 uur. Bij spoedinzet kunnen we soms zelfs dezelfde dag personeel leveren, afhankelijk van beschikbaarheid."
+    answer: "Vaak binnen 24 uur. Bij spoedinzet kunnen we soms dezelfde dag horecapersoneel leveren, afhankelijk van beschikbaarheid."
   },
   {
     question: "Wat zijn de kosten van uitzendpersoneel?",
-    answer: "Tarieven variëren per functie en ervaring. Gebruik onze kosten calculator voor een indicatie of neem contact op voor een offerte op maat."
+    answer: "Tarieven variëren per functie en ervaring. Gebruik onze kosten calculator voor een indicatie of neem contact op voor een prijs op maat."
   },
   {
     question: "Kan ik zelf het personeel kiezen?",
-    answer: "Ja, wij sturen cv's en profielen door. U beslist uiteindelijk wie er start. Bij vaste samenwerking leren we uw voorkeuren kennen."
+    answer: "Ja, wij sturen cv's en profielen door. U beslist uiteindelijk wie er start. Bij vaste samenwerking kennen we uw voorkeuren beter."
   },
   {
     question: "Wat als het personeel niet bevalt?",
-    answer: "U kunt altijd vervanging aanvragen. Wij blijven betrokken tijdens de hele samenwerking en zorgen voor passende alternatieven."
+    answer: "U kunt altijd vervanging aanvragen. Wij blijven betrokken tijdens de samenwerking en zorgen voor passende alternatieven."
   },
   {
     question: "Hoe zit het met verzekeringen en administratie?",
-    answer: "Volledig geregeld. Het personeel is via ons verzekerd en wij verzorgen alle administratie, loonadministratie en belastingen."
+    answer: "Volledig geregeld. De medewerkers zijn via ons verzekerd en wij verzorgen alle administratie, loonadministratie en belastingen."
   },
 ];
 
@@ -47,11 +47,11 @@ export default function UitzendenPage() {
                   Uitzenden
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
-                  Snel de juiste mensen op de juiste plek
+                  Uitzenden met direct inzetbaar horecapersoneel
                 </h1>
                 <p className="text-xl text-neutral-600 mb-8 leading-relaxed max-w-xl">
-                  Piekmomenten, evenementen of onverwachte drukte? Wij leveren binnen 24 uur
-                  gekwalificeerd horecapersoneel. Flexibel, betrouwbaar en zonder gedoe.
+                  Piekmomenten, events of onverwachte uitval? Wij leveren binnen 24 uur
+                  passend horecapersoneel. Heldere afspraken en snelle inzet.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
@@ -80,7 +80,7 @@ export default function UitzendenPage() {
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-uitzenden.png"
-                  alt="Flexibel horeca uitzendpersoneel aan het werk - bediening restaurant Utrecht"
+                  alt="Horecapersoneel in de bediening tijdens tijdelijke inzet"
                   width={480}
                   height={480}
                 />
@@ -100,8 +100,8 @@ export default function UitzendenPage() {
                   Wat is uitzenden?
                 </h2>
                 <p className="text-xl text-neutral-600 leading-relaxed">
-                  Bij uitzenden werkt het personeel bij u, maar blijft in dienst bij TopTalent Jobs.
-                  U krijgt flexibiliteit zonder werkgeversrisico&apos;s. Wij regelen alles:
+                  Bij uitzenden werkt het horecapersoneel bij u, maar blijft in dienst bij TopTalent Jobs.
+                  U houdt grip op de personele bezetting zonder werkgeversrisico&apos;s. Wij regelen alles:
                   van werving tot salarisadministratie.
                 </p>
               </div>
@@ -120,7 +120,7 @@ export default function UitzendenPage() {
                 },
                 {
                   title: "Snel",
-                  description: "Vaak binnen 24 uur gekwalificeerd personeel op locatie.",
+                  description: "Vaak binnen 24 uur gekwalificeerd horecapersoneel op locatie.",
                   icon: (
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -129,7 +129,7 @@ export default function UitzendenPage() {
                 },
                 {
                   title: "Ontzorgd",
-                  description: "Geen administratie, geen werkgeversrisico. Wij handelen alles af.",
+                  description: "Geen administratie en geen werkgeversrisico. Wij handelen alles af.",
                   icon: (
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -161,7 +161,7 @@ export default function UitzendenPage() {
                 Wanneer kies je voor uitzenden?
               </h2>
               <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-                Uitzenden is de ideale oplossing wanneer u tijdelijk extra handen nodig heeft.
+                Uitzenden is de ideale oplossing wanneer u tijdelijk extra medewerkers nodig heeft.
               </p>
             </div>
           </FadeIn>
@@ -223,7 +223,7 @@ export default function UitzendenPage() {
                 {[
                   { step: "1", title: "Intake", description: "U vertelt ons wat u nodig heeft" },
                   { step: "2", title: "Match", description: "Wij selecteren de juiste kandidaten" },
-                  { step: "3", title: "Inzet", description: "Personeel start bij u op locatie" },
+                  { step: "3", title: "Inzet", description: "Horecapersoneel start bij u op locatie" },
                   { step: "4", title: "Nazorg", description: "Wij blijven betrokken en evalueren" },
                 ].map((item, i) => (
                   <FadeIn key={i} delay={0.15 * i}>
@@ -264,13 +264,13 @@ export default function UitzendenPage() {
               <div className="relative z-10 max-w-2xl mx-auto">
                 <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  Binnen 24 uur personeel beschikbaar
+                  Binnen 24 uur horecapersoneel beschikbaar
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                  Klaar om te starten?
+                  Klaar om in te plannen?
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  Vertel ons wat u nodig heeft en wij regelen de rest.
+                  Vertel ons wat u nodig heeft en wij regelen de inzet.
                   Geen verplichtingen, gewoon een goed gesprek.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">

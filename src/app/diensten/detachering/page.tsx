@@ -23,11 +23,11 @@ export default function DetacheringPage() {
                   Detachering
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
-                  Vaste kracht, flexibele voorwaarden
+                  Een vaste horecakracht, zonder vaste lasten
                 </h1>
                 <p className="text-xl text-neutral-600 mb-8 leading-relaxed max-w-xl">
-                  Een vast teamlid voor langere periode, zonder werkgeversrisico&apos;s.
-                  Stabiliteit voor uw organisatie, flexibiliteit in de samenwerking.
+                  Een professionele medewerker voor langere tijd, zonder werkgeversrisico&apos;s.
+                  Stabiliteit voor uw team en voorspelbaarheid in de planning.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
@@ -56,7 +56,7 @@ export default function DetacheringPage() {
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-detachering.png"
-                  alt="Gedetacheerd horeca medewerker - langdurige samenwerking TopTalent Utrecht"
+                  alt="Gedetacheerde horecakracht voor langdurige inzet"
                   width={480}
                   height={480}
                 />
@@ -76,17 +76,17 @@ export default function DetacheringPage() {
                   Wat is detachering?
                 </h2>
                 <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
-                  Bij detachering plaatsen wij een medewerker voor langere tijd bij uw organisatie.
+                  Bij detachering plaatsen wij een professionele medewerker voor langere tijd bij uw organisatie.
                   De medewerker werkt volledig geïntegreerd in uw team, maar blijft formeel bij ons in dienst.
                 </p>
                 <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
-                  Dit geeft u alle voordelen van een vaste kracht, zonder de administratieve lasten
+                  Dit geeft u alle voordelen van een vaste horecakracht, zonder de administratieve lasten
                   en risico&apos;s van werkgeverschap.
                 </p>
                 <div className="bg-white rounded-xl p-6 border border-neutral-100">
                   <p className="text-neutral-700 font-medium">
                     <span className="text-[#F97316]">Het verschil met uitzenden:</span> Bij detachering gaat het om
-                    langdurige, structurele inzet. Bij uitzenden om tijdelijke, flexibele inzet.
+                    langdurige, structurele personele bezetting. Bij uitzenden om tijdelijke, flexibele inzet.
                   </p>
                 </div>
               </div>
@@ -98,7 +98,7 @@ export default function DetacheringPage() {
                   { value: "3-12", label: "maanden gemiddelde duur" },
                   { value: "100%", label: "geïntegreerd in uw team" },
                   { value: "0", label: "werkgeversrisico voor u" },
-                  { value: "24/7", label: "ondersteuning van ons" },
+                  { value: "24/7", label: "ondersteuning door ons" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white rounded-2xl p-6 text-center border border-neutral-100">
                     <div className="text-3xl font-bold text-[#F97316] mb-1">{stat.value}</div>
@@ -120,7 +120,7 @@ export default function DetacheringPage() {
                 Voordelen voor uw organisatie
               </h2>
               <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-                Waarom steeds meer bedrijven kiezen voor detachering.
+                Waarom steeds meer horeca-ondernemers kiezen voor detachering.
               </p>
             </div>
           </FadeIn>
@@ -129,7 +129,7 @@ export default function DetacheringPage() {
             {[
               {
                 title: "Continuïteit",
-                description: "Een vast gezicht in uw team. Iemand die uw bedrijf, processen en gasten kent.",
+                description: "Een vast gezicht in uw team dat uw bedrijf, processen en gasten kent.",
                 icon: (
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -138,7 +138,7 @@ export default function DetacheringPage() {
               },
               {
                 title: "Geen administratie",
-                description: "Wij verzorgen salarisadministratie, verzekeringen en alle HR-zaken.",
+                description: "Wij verzorgen salarisadministratie, verzekeringen en alle HR-taken.",
                 icon: (
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -204,7 +204,7 @@ export default function DetacheringPage() {
               <div className="order-2 lg:order-1">
                 <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm border border-neutral-100">
                   <blockquote className="text-xl text-neutral-700 leading-relaxed mb-6">
-                    &ldquo;Detachering via TopTalent geeft ons de stabiliteit van een vast teamlid,
+                    &ldquo;Detachering via TopTalent geeft ons de stabiliteit van een vaste kracht,
                     met de flexibiliteit die we nodig hebben in de horeca.&rdquo;
                   </blockquote>
                   <div className="flex items-center gap-4">
@@ -251,10 +251,10 @@ export default function DetacheringPage() {
 
               <div className="relative z-10 max-w-2xl mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                  Plan een vrijblijvend gesprek
+                  Plan een gesprek over detachering
                 </h2>
                 <p className="text-neutral-300 text-lg leading-relaxed mb-10">
-                  Ontdek of detachering de juiste oplossing is voor uw organisatie.
+                  Ontdek of detachering past bij uw organisatie.
                   Wij denken graag met u mee over de ideale invulling.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Uitzenden - Flexibel Horeca Personeel",
-  description: "Tijdelijk horeca personeel nodig? TopTalent Jobs levert flexibele uitzendkrachten voor piekdrukte, evenementen of ziektevervanging. Binnen 24 uur geregeld.",
+  title: "Uitzenden horeca personeel | diensten voor werkgevers",
+  description: "Uitzenden van horecapersoneel voor restaurants, hotels en events. Snel tijdelijke inzet bij piekdrukte of uitval, met één contactpunt en duidelijke tarieven.",
   alternates: {
     canonical: "https://toptalentjobs.nl/diensten/uitzenden",
   },
@@ -22,7 +22,7 @@ export default function UitzendenLayout({
         "name": "Hoe snel kan ik personeel krijgen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Vaak binnen 24 uur. Bij spoedinzet kunnen we soms zelfs dezelfde dag personeel leveren, afhankelijk van beschikbaarheid."
+          "text": "Vaak binnen 24 uur. Bij spoedinzet kunnen we soms dezelfde dag horecapersoneel leveren, afhankelijk van beschikbaarheid."
         }
       },
       {
@@ -30,7 +30,7 @@ export default function UitzendenLayout({
         "name": "Wat zijn de kosten van uitzendpersoneel?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Tarieven variëren per functie en ervaring. Gebruik onze kosten calculator voor een indicatie of neem contact op voor een offerte op maat."
+          "text": "Tarieven variëren per functie en ervaring. Gebruik onze kosten calculator voor een indicatie of neem contact op voor een prijs op maat."
         }
       },
       {
@@ -38,7 +38,7 @@ export default function UitzendenLayout({
         "name": "Kan ik zelf het personeel kiezen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, wij sturen cv's en profielen door. U beslist uiteindelijk wie er start. Bij vaste samenwerking leren we uw voorkeuren kennen."
+          "text": "Ja, wij sturen cv's en profielen door. U beslist uiteindelijk wie er start. Bij vaste samenwerking kennen we uw voorkeuren beter."
         }
       },
       {
@@ -46,7 +46,7 @@ export default function UitzendenLayout({
         "name": "Wat als het personeel niet bevalt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "U kunt altijd vervanging aanvragen. Wij blijven betrokken tijdens de hele samenwerking en zorgen voor passende alternatieven."
+          "text": "U kunt altijd vervanging aanvragen. Wij blijven betrokken tijdens de samenwerking en zorgen voor passende alternatieven."
         }
       },
       {
@@ -54,7 +54,7 @@ export default function UitzendenLayout({
         "name": "Hoe zit het met verzekeringen en administratie?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Volledig geregeld. Het personeel is via ons verzekerd en wij verzorgen alle administratie, loonadministratie en belastingen."
+          "text": "Volledig geregeld. De medewerkers zijn via ons verzekerd en wij verzorgen alle administratie, loonadministratie en belastingen."
         }
       }
     ]

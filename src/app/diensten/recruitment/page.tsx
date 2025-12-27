@@ -23,11 +23,11 @@ export default function RecruitmentPage() {
                   Recruitment
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
-                  De perfecte match voor uw team
+                  Recruitment voor vast horecapersoneel
                 </h1>
                 <p className="text-xl text-neutral-600 mb-8 leading-relaxed max-w-xl">
-                  Werving en selectie van vast horecapersoneel. Wij vinden niet zomaar iemand —
-                  wij vinden de juiste persoon die past bij uw organisatie.
+                  Werving en selectie van vast horecapersoneel. Wij zoeken vaste medewerkers
+                  die passen bij uw service, tempo en team.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
@@ -36,7 +36,7 @@ export default function RecruitmentPage() {
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                     hover:bg-[#EA580C] transition-all duration-300"
                   >
-                    Start uw zoekopdracht
+                    Start recruitment
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
@@ -56,7 +56,7 @@ export default function RecruitmentPage() {
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-recruitment.png"
-                  alt="Recruitment gesprek horeca kandidaat - werving en selectie TopTalent"
+                  alt="Recruitmentgesprek voor vaste horecakrachten in de horeca"
                   width={480}
                   height={480}
                 />
@@ -75,7 +75,7 @@ export default function RecruitmentPage() {
                 Onze aanpak
               </h2>
               <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-                Van intake tot plaatsing: een zorgvuldig proces voor de beste resultaten.
+                Van intake tot indiensttreding: een helder proces voor vaste medewerkers.
               </p>
             </div>
           </FadeIn>
@@ -86,27 +86,27 @@ export default function RecruitmentPage() {
                 {
                   step: "01",
                   title: "Intake",
-                  description: "Diepgaand gesprek over uw wensen, cultuur en verwachtingen.",
+                  description: "Gesprek over functie, team en planning.",
                 },
                 {
                   step: "02",
                   title: "Werving",
-                  description: "Actieve search in ons netwerk en via gerichte kanalen.",
+                  description: "Gerichte werving in netwerk en markt.",
                 },
                 {
                   step: "03",
                   title: "Screening",
-                  description: "Cv-check, gesprekken, referenties en vaardigheidstesten.",
+                  description: "Cv-check, interviews, referenties en toetsing.",
                 },
                 {
                   step: "04",
                   title: "Matching",
-                  description: "Selectie op basis van skills, ervaring én cultuurfit.",
+                  description: "Selectie op ervaring, rolfit en teamfit.",
                 },
                 {
                   step: "05",
                   title: "Plaatsing",
-                  description: "Begeleiding bij introductie en nazorg na indiensttreding.",
+                  description: "Begeleiding tot indiensttreding en nazorg.",
                 },
               ].map((item, i) => (
                 <FadeIn key={i} delay={0.1 * i}>
@@ -131,31 +131,30 @@ export default function RecruitmentPage() {
             <FadeIn direction="left">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
-                  Waarom recruiten via TopTalent?
+                  Waarom recruitment via TopTalent?
                 </h2>
                 <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
-                  Werving kost tijd, energie en expertise. Door dit aan ons over te laten,
-                  kunt u zich focussen op waar u goed in bent — terwijl wij het perfecte
-                  teamlid voor u vinden.
+                  Recruitment voor vaste bezetting vraagt tijd en focus. Wij nemen dit uit handen
+                  en presenteren kandidaten die passen bij uw organisatie.
                 </p>
 
                 <div className="space-y-4">
                   {[
                     {
-                      title: "Cultuurmatch",
-                      description: "Wij kijken verder dan het CV. Past iemand bij uw team en bedrijfscultuur?",
+                      title: "Teamfit",
+                      description: "Wij kijken verder dan het CV en toetsen op samenwerking en gastvrijheid.",
                     },
                     {
-                      title: "Horecakennis",
-                      description: "Wij kennen de branche, de functies en wat er écht nodig is.",
+                      title: "Branchekennis",
+                      description: "Wij kennen functies, roosters en de praktijk in de horeca.",
                     },
                     {
-                      title: "Tijd- en kostenbesparing",
-                      description: "Geen advertenties, geen stapels CV's. Wij leveren alleen topkandidaten.",
+                      title: "Efficiënt proces",
+                      description: "Geen brede advertenties en stapels CV's, alleen gerichte selectie.",
                     },
                     {
-                      title: "Plaatsingsgarantie",
-                      description: "Niet tevreden binnen de proefperiode? Wij zoeken kosteloos opnieuw.",
+                      title: "Nazorg bij mismatch",
+                      description: "Past het niet binnen de proefperiode, dan zoeken we kosteloos opnieuw.",
                     },
                   ].map((item, i) => (
                     <div key={i} className="flex gap-4 items-start">
@@ -206,12 +205,12 @@ export default function RecruitmentPage() {
             <FadeIn direction="left">
               <div className="order-2 lg:order-1 grid grid-cols-2 gap-4">
                 {[
-                  { icon: "📋", label: "Uitgebreide intake" },
-                  { icon: "🔍", label: "Actieve sourcing" },
-                  { icon: "💬", label: "Diepte-interviews" },
-                  { icon: "✓", label: "Referentiecheck" },
-                  { icon: "🎯", label: "Skill assessments" },
-                  { icon: "🤝", label: "Cultuurfit analyse" },
+                  { icon: "IN", label: "Intake en profiel" },
+                  { icon: "SO", label: "Actieve sourcing" },
+                  { icon: "IV", label: "Diepte-interviews" },
+                  { icon: "RC", label: "Referentiecheck" },
+                  { icon: "VT", label: "Vaardigheidstoets" },
+                  { icon: "TF", label: "Teamfit-analyse" },
                 ].map((item, i) => (
                   <div key={i} className="bg-white rounded-xl p-5 border border-neutral-100 text-center">
                     <div className="text-2xl mb-2">{item.icon}</div>
@@ -224,15 +223,15 @@ export default function RecruitmentPage() {
             <FadeIn direction="right" delay={0.2}>
               <div className="order-1 lg:order-2">
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
-                  Premium selectieproces
+                  Selectieproces voor vaste functies
                 </h2>
                 <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
                   Elke kandidaat doorloopt een uitgebreid selectietraject.
                   Zo weet u zeker dat wie wij presenteren ook echt geschikt is.
                 </p>
                 <p className="text-lg text-neutral-600 leading-relaxed">
-                  Wij presenteren geen tientallen CV&apos;s. Wij presenteren 2-3 topkandidaten
-                  die écht passen. Kwaliteit boven kwantiteit.
+                  Wij presenteren geen tientallen CV&apos;s. U ontvangt 2-3 geschikte kandidaten
+                  die passen bij uw rol. Kwaliteit boven kwantiteit.
                 </p>
               </div>
             </FadeIn>
@@ -252,11 +251,11 @@ export default function RecruitmentPage() {
 
               <div className="relative z-10 max-w-2xl mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                  Op zoek naar vast personeel?
+                  Op zoek naar vaste medewerkers?
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  Vertel ons wie u zoekt. Wij gaan voor u aan de slag en presenteren
-                  binnen twee weken de beste kandidaten.
+                  Vertel ons welke rol u wilt invullen. Wij gaan voor u aan de slag en presenteren
+                  binnen twee weken een shortlist met passende kandidaten.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link

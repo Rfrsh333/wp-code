@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Recruitment - Vaste Horeca Medewerkers Werven",
-  description: "Op zoek naar vast horeca personeel? TopTalent Jobs helpt u de perfecte kandidaat te vinden. Recruitment en werving voor restaurants, hotels en catering.",
+  title: "Recruitment horeca personeel | vaste medewerkers",
+  description: "Recruitment voor vast horecapersoneel. Wij werven en selecteren vaste medewerkers voor restaurants, hotels en catering met een helder proces en nazorg.",
   alternates: {
     canonical: "https://toptalentjobs.nl/diensten/recruitment",
   },
