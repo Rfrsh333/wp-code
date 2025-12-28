@@ -1,3 +1,5 @@
+"use client";
+
 type FaqService = "uitzenden" | "detachering";
 
 type FaqJsonLdProps = {
