@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
+import RelatedLocations from "@/components/RelatedLocations";
 import { getLocation } from "@/data/locations";
 
 export default function UtrechtPage() {
@@ -127,12 +128,6 @@ export default function UtrechtPage() {
                   <li>• Koks & keukenpersoneel</li>
                   <li>• Gastheren & gastvrouwen</li>
                 </ul>
-                <Link
-                  href="/inschrijven"
-                  className="inline-block mt-4 text-[#F97316] font-semibold hover:underline"
-                >
-                  Schrijf je in als kandidaat →
-                </Link>
               </div>
             </div>
 
@@ -218,47 +213,10 @@ export default function UtrechtPage() {
         </Section.Container>
       </Section>
 
-      {/* Related Cities */}
+      {/* Related Locations */}
       <Section variant="white" spacing="default">
         <Section.Container>
-          <div className="border-t border-neutral-200 pt-8">
-            <h3 className="text-2xl font-bold text-neutral-900 mb-6 text-center">
-              Ook actief in andere steden
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-6">
-              <Link
-                href="/locaties/amsterdam"
-                className="group bg-white rounded-xl p-6 border border-neutral-200 hover:border-[#F97316] hover:shadow-lg transition-all"
-              >
-                <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316]">
-                  Amsterdam
-                </h4>
-                <p className="text-neutral-600 text-sm mb-3">
-                  Horeca personeel in Amsterdam centrum, Zuidas en omgeving.
-                </p>
-              </Link>
-
-              <Link
-                href="/locaties/rotterdam"
-                className="group bg-white rounded-xl p-6 border border-neutral-200 hover:border-[#F97316] hover:shadow-lg transition-all"
-              >
-                <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316]">
-                  Rotterdam
-                </h4>
-                <p className="text-neutral-600 text-sm mb-3">
-                  Flexibel horeca personeel in Rotterdam en havengebied.
-                </p>
-              </Link>
-            </div>
-            <div className="text-center">
-              <Link
-                href="/locaties"
-                className="inline-block text-[#F97316] font-semibold hover:underline"
-              >
-                Bekijk alle locaties →
-              </Link>
-            </div>
-          </div>
+          <RelatedLocations currentSlug={location.slug} />
         </Section.Container>
       </Section>
     </>

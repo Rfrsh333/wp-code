@@ -135,12 +135,6 @@ export default function CityPage() {
                     <li key={index}>• {func}</li>
                   ))}
                 </ul>
-                <Link
-                  href="/inschrijven"
-                  className="inline-block mt-4 text-[#F97316] font-semibold hover:underline"
-                >
-                  Schrijf je in als kandidaat →
-                </Link>
               </div>
             </div>
 

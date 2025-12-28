@@ -6,8 +6,9 @@ import { getLocation } from "@/data/locations";
 import Section from "@/components/Section/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import PremiumImage from "@/components/PremiumImage";
-import FAQ, { FAQItem } from "@/components/FAQ";
+import FAQ from "@/components/FAQ";
 import LocatieSubNav from "@/components/LocatieSubNav";
+import { getLocationServiceFAQs } from "@/data/location-service-faqs";
 
 const validServices = ["uitzenden", "detachering"];
 
@@ -175,97 +176,6 @@ const ctaContent = {
   }
 };
 
-// FAQ items per combinatie
-const faqItems = {
-  uitzenden: {
-    utrecht: [
-      {
-        question: "Hoe snel kan ik horeca personeel krijgen in Utrecht?",
-        answer: "Vaak binnen 24 uur. Voor Jaarbeurs events of UIT-week kunnen we soms dezelfde dag personeel leveren in Utrecht centrum en omgeving, afhankelijk van beschikbaarheid."
-      },
-      {
-        question: "Leveren jullie ook personeel voor Jaarbeurs evenementen?",
-        answer: "Ja, wij hebben ruime ervaring met grote evenementen bij de Jaarbeurs Utrecht en TivoliVredenburg. Van congrespersoneel tot horecamedewerkers voor festivals."
-      },
-      {
-        question: "Wat zijn de kosten voor uitzendpersoneel in Utrecht?",
-        answer: "Tarieven variëren per functie en ervaring. Gebruik onze kosten calculator voor een indicatie of neem contact op voor een prijs op maat voor uw Utrechtse zaak."
-      }
-    ],
-    amsterdam: [
-      {
-        question: "Hoe snel kan ik horeca personeel krijgen in Amsterdam?",
-        answer: "Vaak binnen 24 uur. Voor centrum, Zuidas of Schiphol area kunnen we soms dezelfde dag meertalig personeel leveren, afhankelijk van beschikbaarheid."
-      },
-      {
-        question: "Hebben jullie meertalig personeel voor internationale gasten?",
-        answer: "Ja, ons personeel in Amsterdam spreekt vaak Nederlands, Engels, Duits en Frans. Ideaal voor hotels, restaurants met internationale gasten en RAI events."
-      },
-      {
-        question: "Leveren jullie ook personeel voor RAI evenementen?",
-        answer: "Ja, wij hebben uitgebreide ervaring met grote events in de RAI Amsterdam, ADE en andere conferenties. Van barpersoneel tot gastheren en gastvrouwen."
-      }
-    ],
-    rotterdam: [
-      {
-        question: "Hoe snel kan ik horeca personeel krijgen in Rotterdam?",
-        answer: "Vaak binnen 24 uur. Voor centrum, Markthal of havengebied kunnen we soms dezelfde dag personeel leveren in heel Rotterdam, afhankelijk van beschikbaarheid."
-      },
-      {
-        question: "Leveren jullie ook personeel voor Ahoy evenementen?",
-        answer: "Ja, wij hebben ruime ervaring met grootschalige events in Ahoy Rotterdam, North Sea Jazz en cruise terminal hospitality. Van barmedewerkers tot bediening."
-      },
-      {
-        question: "Werken jullie ook in het havengebied van Rotterdam?",
-        answer: "Ja, wij leveren personeel in heel Rotterdam inclusief het havengebied, Schiedam en Vlaardingen. Onze medewerkers kennen de regio goed."
-      }
-    ]
-  },
-  detachering: {
-    utrecht: [
-      {
-        question: "Wat is het verschil tussen uitzenden en detachering in Utrecht?",
-        answer: "Bij detachering plaatsen we een medewerker voor langere tijd (3-12 maanden) bij uw Utrechtse zaak. Bij uitzenden gaat het om kortere, flexibele inzet voor piekdrukte of events."
-      },
-      {
-        question: "Hoe lang duurt een detacheringsperiode gemiddeld?",
-        answer: "Gemiddeld 3 tot 12 maanden. Dit biedt stabiliteit voor uw team zonder langdurige verplichtingen. Na afloop kunt u de medewerker eventueel overnemen."
-      },
-      {
-        question: "Wat zijn de kosten van detachering in Utrecht?",
-        answer: "Tarieven zijn afhankelijk van functie, ervaring en duur. Neem contact op voor een vrijblijvende offerte op maat voor uw Utrechtse restaurant of hotel."
-      }
-    ],
-    amsterdam: [
-      {
-        question: "Wat is het verschil tussen uitzenden en detachering in Amsterdam?",
-        answer: "Bij detachering plaatsen we een medewerker voor langere tijd (3-12 maanden) bij uw Amsterdamse zaak. Bij uitzenden gaat het om kortere, flexibele inzet."
-      },
-      {
-        question: "Kan ik een gedetacheerde medewerker overnemen?",
-        answer: "Ja, na de detacheringsperiode heeft u de optie om de medewerker in vaste dienst te nemen. Dit is ideaal om eerst te ervaren of de match goed is."
-      },
-      {
-        question: "Regelen jullie ook de administratie?",
-        answer: "Ja, wij verzorgen alle HR-administratie, loonadministratie, verzekeringen en belastingen. U heeft geen werkgeversrisico en administratieve rompslomp."
-      }
-    ],
-    rotterdam: [
-      {
-        question: "Wat is het verschil tussen uitzenden en detachering in Rotterdam?",
-        answer: "Bij detachering plaatsen we een medewerker voor langere tijd (3-12 maanden) bij uw Rotterdamse zaak. Bij uitzenden gaat het om kortere, tijdelijke inzet."
-      },
-      {
-        question: "Is detachering geschikt voor mijn restaurant in Rotterdam?",
-        answer: "Detachering is ideaal als u structureel extra capaciteit nodig heeft, maar geen vaste medewerker wilt aannemen. Perfect voor seizoenswerk of langere projecten."
-      },
-      {
-        question: "Wat als de gedetacheerde medewerker niet bevalt?",
-        answer: "U kunt het contract beëindigen met een korte opzegtermijn. Wij zorgen dan voor een passende vervanging. Uw tevredenheid staat voorop."
-      }
-    ]
-  }
-};
 
 export default function CityServicePage() {
   const params = useParams();
@@ -281,7 +191,12 @@ export default function CityServicePage() {
   const whatIs = whatIsContent[service as keyof typeof whatIsContent][city as keyof typeof whatIsContent.uitzenden];
   const when = whenContent[service as keyof typeof whenContent][city as keyof typeof whenContent.uitzenden];
   const cta = ctaContent[service as keyof typeof ctaContent][city as keyof typeof ctaContent.uitzenden];
-  const faqs = faqItems[service as keyof typeof faqItems][city as keyof typeof faqItems.uitzenden] as FAQItem[];
+
+  // FAQ uit centrale data bron (single source of truth)
+  const faqs = getLocationServiceFAQs(
+    service as "uitzenden" | "detachering",
+    city as "utrecht" | "amsterdam" | "rotterdam"
+  );
 
   const serviceLabels = {
     uitzenden: "Uitzenden",
