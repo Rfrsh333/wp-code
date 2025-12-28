@@ -1,5 +1,4 @@
 import { MetadataRoute } from 'next'
-import { blogArticles } from '@/data/blogArticles'
 import { cityOrder } from '@/data/locations'
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -8,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Static pages - gebruik vaste datum voor stabiele crawl signalen
   const contentDate = new Date('2024-12-19')
 
+  // ALLEEN indexeerbare pagina's (zie src/proxy.ts whitelist)
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -40,94 +40,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/over-ons`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/lp/personeel`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/inschrijven`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/personeel-aanvragen`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/testimonials`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: contentDate,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/kosten-calculator`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/locaties`,
       lastModified: contentDate,
       changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/voorwaarden`,
-      lastModified: contentDate,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${baseUrl}/cookies`,
-      lastModified: contentDate,
-      changeFrequency: 'yearly',
-      priority: 0.2,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: contentDate,
-      changeFrequency: 'yearly',
-      priority: 0.3,
+      priority: 0.9,
     },
   ]
 
-  // Location pages - dynamisch gegenereerd
+  // Location overview pages
   const locationPages = cityOrder.map((city) => ({
     url: `${baseUrl}/locaties/${city}`,
     lastModified: contentDate,
     changeFrequency: 'monthly' as const,
-    priority: 0.7,
+    priority: 0.8,
   }))
 
-  // Blog articles
-  const blogPages = Object.keys(blogArticles).map((slug) => ({
-    url: `${baseUrl}/blog/${slug}`,
-    lastModified: new Date(blogArticles[slug].datePublished),
-    changeFrequency: 'monthly' as const,
-    priority: 0.6,
-  }))
+  // Location service pages - NIEUW! (alle stad/dienst combinaties)
+  const servicePages: MetadataRoute.Sitemap = []
+  const services = ['uitzenden', 'detachering']
 
-  return [...staticPages, ...locationPages, ...blogPages]
+  for (const city of cityOrder) {
+    for (const service of services) {
+      servicePages.push({
+        url: `${baseUrl}/locaties/${city}/${service}`,
+        lastModified: contentDate,
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      })
+    }
+  }
+
+  return [...staticPages, ...locationPages, ...servicePages]
 }
