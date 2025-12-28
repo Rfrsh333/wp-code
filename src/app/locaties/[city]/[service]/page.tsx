@@ -30,6 +30,18 @@ const heroContent = {
       intro: "Van Markthal tot havengebied, van Ahoy events tot cruise terminal. Wij leveren snel en flexibel horecapersoneel in heel Rotterdam. Ervaring met grootschalige evenementen.",
       image: "/images/locatie-rotterdam-uitzenden.png",
       alt: "Tijdelijk horecapersoneel tijdens event in Rotterdam Ahoy"
+    },
+    "den-haag": {
+      title: "Horeca uitzenden Den Haag",
+      intro: "Van politiek centrum tot Scheveningen strand, van World Forum tot strandpaviljoens. Wij leveren snel meertalig horecapersoneel in heel Den Haag. Ervaring met diplomatieke events.",
+      image: "/images/locatie-utrecht-uitzenden.png",
+      alt: "Flexibel horecapersoneel in Den Haag centrum"
+    },
+    eindhoven: {
+      title: "Horeca uitzenden Eindhoven",
+      intro: "Van High Tech Campus tot Stratumseind, van Strijp-S tot PSV Stadion. Wij leveren snel horecapersoneel voor innovatieve en zakelijke horeca in heel Eindhoven.",
+      image: "/images/locatie-utrecht-uitzenden.png",
+      alt: "Tijdelijk horecapersoneel in Eindhoven Strijp-S"
     }
   },
   detachering: {
@@ -50,6 +62,18 @@ const heroContent = {
       intro: "Stabiel teamlid voor uw Rotterdamse horeca zonder werkgeversrisico. Langdurige inzet met flexibel contract. Ervaring met Rotterdamse diversiteit en dynamiek.",
       image: "/images/locatie-rotterdam-detachering.png",
       alt: "Gedetacheerde horecamedewerker in Rotterdam Markthal"
+    },
+    "den-haag": {
+      title: "Horeca detachering Den Haag",
+      intro: "Vaste horecakracht voor uw Haagse restaurant, hotel of strandpaviljoen. Langdurige inzet zonder werkgeversrisico. Ervaring met politieke events en internationale gasten.",
+      image: "/images/locatie-utrecht-detachering.png",
+      alt: "Gedetacheerde horecamedewerker in Den Haag centrum"
+    },
+    eindhoven: {
+      title: "Horeca detachering Eindhoven",
+      intro: "Stabiel teamlid voor uw Eindhovense zaak zonder vaste lasten. Langdurige inzet met flexibiliteit. Ervaring met zakelijke horeca, High Tech Campus en innovatieve concepten.",
+      image: "/images/locatie-utrecht-detachering.png",
+      alt: "Gedetacheerde horecamedewerker in Eindhoven Strijp-S"
     }
   }
 };
@@ -83,6 +107,24 @@ const whatIsContent = {
         "Markthal en Fenix Food Factory drukte",
         "North Sea Jazz en andere festivals"
       ]
+    },
+    "den-haag": {
+      intro: "Bij uitzenden werkt het horecapersoneel bij uw Haagse zaak, maar blijft in dienst bij TopTalent Jobs. Ideaal voor World Forum congressen, Scheveningen piekdrukte of politieke events.",
+      examples: [
+        "World Forum congressen en diplomatieke bijeenkomsten",
+        "Strandpaviljoens Scheveningen (zomer en winter)",
+        "Parkpop festival en Haagse Hopweek",
+        "Politieke events en internationale delegaties"
+      ]
+    },
+    eindhoven: {
+      intro: "Bij uitzenden werkt het horecapersoneel bij uw Eindhovense zaak, maar blijft in dienst bij TopTalent Jobs. Perfect voor High Tech Campus events, Dutch Design Week of PSV wedstrijden.",
+      examples: [
+        "High Tech Campus zakelijke horeca en events",
+        "Dutch Design Week en GLOW Lichtfestival",
+        "PSV wedstrijden hospitality en business seats",
+        "Innovatieve food concepts Strijp-S"
+      ]
     }
   },
   detachering: {
@@ -112,6 +154,24 @@ const whatIsContent = {
         "Stabiele kracht voor wisselende teams",
         "Geen werkgeversrisico bij langdurige inzet"
       ]
+    },
+    "den-haag": {
+      intro: "Bij detachering plaatsen wij een professionele medewerker voor langere tijd (3-12 maanden) bij uw Haagse zaak. Ervaring met politieke events en internationale gasten. Volledig geïntegreerd in uw team.",
+      benefits: [
+        "Meertalig personeel voor internationale delegaties",
+        "Ervaring met World Forum en diplomatieke events",
+        "Kennis van Haagse horeca centrum tot Scheveningen",
+        "Stabiliteit voor strandhoreca zomer- en winterseizoen"
+      ]
+    },
+    eindhoven: {
+      intro: "Bij detachering plaatsen wij een professionele medewerker voor langere tijd (3-12 maanden) bij uw Eindhovense zaak. Ervaring met zakelijke en innovatieve horeca. Volledig geïntegreerd in uw team.",
+      benefits: [
+        "Kennis van High Tech Campus zakelijke horeca",
+        "Ervaring met innovatieve food & beverage concepten",
+        "Stabiele kracht voor Strijp-S en Stratumseind",
+        "Flexibel contract voor Eindhovense horeca dynamiek"
+      ]
     }
   }
 };
@@ -136,6 +196,18 @@ const whenContent = {
       { scenario: "Cruise terminal", description: "Hospitality voor cruise passagiers (100.000+/jaar).", color: "from-amber-500/10 to-amber-500/5" },
       { scenario: "North Sea Jazz", description: "Festival personeel en horeca ondersteuning.", color: "from-orange-500/10 to-orange-500/5" },
       { scenario: "Markthal drukte", description: "Piekdagen in Markthal en Fenix Food Factory.", color: "from-amber-500/10 to-amber-500/5" }
+    ],
+    "den-haag": [
+      { scenario: "World Forum events", description: "Congressen, diplomatieke bijeenkomsten en conferenties.", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "Scheveningen seizoen", description: "Strandpaviljoens en kusthoreca zomer en winter.", color: "from-amber-500/10 to-amber-500/5" },
+      { scenario: "Parkpop & festivals", description: "Grote evenementen en culturele festivals.", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "Politieke events", description: "High-level bijeenkomsten en internationale delegaties.", color: "from-amber-500/10 to-amber-500/5" }
+    ],
+    eindhoven: [
+      { scenario: "Dutch Design Week", description: "Design evenementen en hospitality (250.000+ bezoekers).", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "GLOW Lichtfestival", description: "Festival personeel en horeca ondersteuning.", color: "from-amber-500/10 to-amber-500/5" },
+      { scenario: "PSV wedstrijden", description: "Stadion hospitality en business seats events.", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "High Tech Campus", description: "Zakelijke events en dagelijkse campus horeca.", color: "from-amber-500/10 to-amber-500/5" }
     ]
   },
   detachering: {
@@ -156,6 +228,18 @@ const whenContent = {
       { scenario: "Haven horeca", description: "Stabiel personeel voor horecagelegenheid havengebied.", color: "from-amber-500/10 to-amber-500/5" },
       { scenario: "Cruise terminal", description: "Seizoenspersoneel voor drukke cruiseperiodes.", color: "from-orange-500/10 to-orange-500/5" },
       { scenario: "Restaurant centrum", description: "Langdurige versterking team zonder vaste lasten.", color: "from-amber-500/10 to-amber-500/5" }
+    ],
+    "den-haag": [
+      { scenario: "Strandpaviljoen seizoen", description: "Vaste kracht voor zomer- of winterexploitatie Scheveningen.", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "World Forum horeca", description: "Stabiel personeel voor congreslocatie hospitality.", color: "from-amber-500/10 to-amber-500/5" },
+      { scenario: "Restaurant centrum", description: "Langdurige versterking team Haagse binnenstad.", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "Hotel diplomatiek", description: "Professioneel personeel voor internationale gasten.", color: "from-amber-500/10 to-amber-500/5" }
+    ],
+    eindhoven: [
+      { scenario: "High Tech Campus", description: "Vaste kracht voor zakelijke horeca op campus.", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "Restaurant Strijp-S", description: "Stabiel personeel voor innovatief food concept.", color: "from-amber-500/10 to-amber-500/5" },
+      { scenario: "PSV Stadion horeca", description: "Langdurige inzet voor stadion hospitality.", color: "from-orange-500/10 to-orange-500/5" },
+      { scenario: "Hotel centrum", description: "Vaste medewerker voor Eindhovens hotel zonder risico.", color: "from-amber-500/10 to-amber-500/5" }
     ]
   }
 };
@@ -165,12 +249,16 @@ const ctaContent = {
   uitzenden: {
     utrecht: "Van Jaarbeurs tot binnenstad - wij leveren snel en betrouwbaar tijdelijk personeel voor uw Utrechtse zaak.",
     amsterdam: "Van centrum tot Zuidas - meertalig personeel binnen 24 uur voor uw Amsterdamse horeca.",
-    rotterdam: "Van Markthal tot haven - flexibel personeel voor uw Rotterdamse zaak, snel inzetbaar."
+    rotterdam: "Van Markthal tot haven - flexibel personeel voor uw Rotterdamse zaak, snel inzetbaar.",
+    "den-haag": "Van World Forum tot Scheveningen - meertalig personeel binnen 24 uur voor uw Haagse horeca.",
+    eindhoven: "Van High Tech Campus tot Strijp-S - snel inzetbaar personeel voor uw Eindhovense zaak."
   },
   detachering: {
     utrecht: "Ontdek of detachering past bij uw Utrechtse restaurant, hotel of congreslocatie. Vrijblijvend adviesgesprek.",
     amsterdam: "Plan een gesprek over langdurige inzet voor uw Amsterdamse zaak. Meertalig en professioneel.",
-    rotterdam: "Bespreek uw behoefte aan stabiel personeel voor uw Rotterdamse horeca. Flexibel en zonder risico."
+    rotterdam: "Bespreek uw behoefte aan stabiel personeel voor uw Rotterdamse horeca. Flexibel en zonder risico.",
+    "den-haag": "Plan een gesprek over langdurige inzet voor uw Haagse restaurant of strandpaviljoen. Zonder werkgeversrisico.",
+    eindhoven: "Ontdek of detachering past bij uw Eindhovense zaak of High Tech Campus locatie. Vrijblijvend advies."
   }
 };
 

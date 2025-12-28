@@ -49,6 +49,34 @@ export const locationServiceFAQs = {
         question: "Werken jullie ook in het havengebied van Rotterdam?",
         answer: "Ja, wij leveren personeel in heel Rotterdam inclusief het havengebied, Schiedam en Vlaardingen. Onze medewerkers kennen de regio goed."
       }
+    ],
+    "den-haag": [
+      {
+        question: "Hoe snel kan ik horeca personeel krijgen in Den Haag?",
+        answer: "Vaak binnen 24 uur. Voor centrum, Scheveningen of World Forum kunnen we soms dezelfde dag meertalig personeel leveren in heel Den Haag, afhankelijk van beschikbaarheid."
+      },
+      {
+        question: "Leveren jullie ook personeel voor Scheveningen?",
+        answer: "Ja, wij hebben ruime ervaring met strandpaviljoens in Scheveningen, zowel voor zomer- als winterseizoen. Van barpersoneel tot bediening en gastvrouwen."
+      },
+      {
+        question: "Hebben jullie ervaring met politieke en diplomatieke events?",
+        answer: "Ja, ons personeel in Den Haag heeft ervaring met high-level events bij World Forum, Congresgebouw en politieke bijeenkomsten. Discreet en professioneel."
+      }
+    ],
+    eindhoven: [
+      {
+        question: "Hoe snel kan ik horeca personeel krijgen in Eindhoven?",
+        answer: "Vaak binnen 24 uur. Voor centrum, Strijp-S of High Tech Campus kunnen we soms dezelfde dag personeel leveren in heel Eindhoven en omgeving, afhankelijk van beschikbaarheid."
+      },
+      {
+        question: "Leveren jullie ook personeel voor High Tech Campus?",
+        answer: "Ja, wij hebben ervaring met zakelijke horeca op de High Tech Campus en innovatieve food concepts in Eindhoven. Van barista's tot bedieningspersoneel."
+      },
+      {
+        question: "Werken jullie ook tijdens Dutch Design Week en GLOW?",
+        answer: "Ja, wij hebben uitgebreide ervaring met grote evenementen zoals Dutch Design Week, GLOW Lichtfestival en PSV wedstrijden. Van hospitality tot event catering."
+      }
     ]
   },
   detachering: {
@@ -93,6 +121,34 @@ export const locationServiceFAQs = {
         question: "Wat als de gedetacheerde medewerker niet bevalt?",
         answer: "U kunt het contract beëindigen met een korte opzegtermijn. Wij zorgen dan voor een passende vervanging. Uw tevredenheid staat voorop."
       }
+    ],
+    "den-haag": [
+      {
+        question: "Wat is het verschil tussen uitzenden en detachering in Den Haag?",
+        answer: "Bij detachering plaatsen we een medewerker voor langere tijd (3-12 maanden) bij uw Haagse zaak. Bij uitzenden gaat het om kortere, flexibele inzet voor piekdrukte."
+      },
+      {
+        question: "Is detachering geschikt voor mijn strandpaviljoen in Scheveningen?",
+        answer: "Ja, detachering is ideaal voor het hele zomerseizoen of winterexploitatie. U heeft een vaste kracht zonder werkgeversrisico en flexibiliteit na het seizoen."
+      },
+      {
+        question: "Regelen jullie ook de administratie bij detachering?",
+        answer: "Ja, wij verzorgen alle HR-administratie, loonadministratie, verzekeringen en belastingen. U heeft geen werkgeversrisico en administratieve rompslomp."
+      }
+    ],
+    eindhoven: [
+      {
+        question: "Wat is het verschil tussen uitzenden en detachering in Eindhoven?",
+        answer: "Bij detachering plaatsen we een medewerker voor langere tijd (3-12 maanden) bij uw Eindhovense zaak. Bij uitzenden gaat het om kortere, tijdelijke inzet."
+      },
+      {
+        question: "Kan ik een gedetacheerde medewerker overnemen na de periode?",
+        answer: "Ja, na de detacheringsperiode heeft u de optie om de medewerker in vaste dienst te nemen. Ideaal voor zakelijke horeca of High Tech Campus locaties."
+      },
+      {
+        question: "Wat zijn de kosten van detachering in Eindhoven?",
+        answer: "Tarieven zijn afhankelijk van functie, ervaring en duur. Neem contact op voor een vrijblijvende offerte op maat voor uw Eindhovense restaurant, hotel of campus."
+      }
     ]
   }
 };
@@ -100,7 +156,7 @@ export const locationServiceFAQs = {
 // Helper function om FAQ items op te halen
 export function getLocationServiceFAQs(
   service: "uitzenden" | "detachering",
-  city: "utrecht" | "amsterdam" | "rotterdam"
+  city: "utrecht" | "amsterdam" | "rotterdam" | "den-haag" | "eindhoven"
 ): FAQItem[] {
   return locationServiceFAQs[service][city];
 }

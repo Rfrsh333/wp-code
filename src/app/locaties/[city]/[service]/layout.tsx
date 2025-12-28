@@ -34,12 +34,16 @@ const getServiceMetadata = (city: string, service: string, locationName: string)
     uitzenden: {
       utrecht: `Horeca Uitzenden Utrecht | Tijdelijk personeel binnen 24 uur`,
       amsterdam: `Horeca Uitzenden Amsterdam | Flexibel personeel centrum & Zuidas`,
-      rotterdam: `Horeca Uitzenden Rotterdam | Snel personeel haven & centrum`
+      rotterdam: `Horeca Uitzenden Rotterdam | Snel personeel haven & centrum`,
+      "den-haag": `Horeca Uitzenden Den Haag | Flexibel personeel Scheveningen & centrum`,
+      eindhoven: `Horeca Uitzenden Eindhoven | Snel personeel Strijp-S & HTC`
     },
     detachering: {
       utrecht: `Detachering Utrecht | Vaste horecakracht zonder werkgeversrisico`,
       amsterdam: `Detachering Amsterdam | Langdurig horeca personeel centrum`,
-      rotterdam: `Detachering Rotterdam | Stabiel personeel voor uw zaak`
+      rotterdam: `Detachering Rotterdam | Stabiel personeel voor uw zaak`,
+      "den-haag": `Detachering Den Haag | Vaste horecakracht voor uw zaak`,
+      eindhoven: `Detachering Eindhoven | Langdurig personeel voor Brabant`
     }
   };
 
@@ -47,19 +51,28 @@ const getServiceMetadata = (city: string, service: string, locationName: string)
     uitzenden: {
       utrecht: `Horeca uitzenden in Utrecht en omgeving. Snel tijdelijk personeel voor restaurants, hotels en Jaarbeurs events. Binnen 24 uur beschikbaar. Lokale expertise sinds jaren.`,
       amsterdam: `Flexibel horeca personeel uitzenden in Amsterdam. Van centrum tot Zuidas, voor restaurants, hotels en RAI events. Meertalig personeel binnen 24 uur beschikbaar.`,
-      rotterdam: `Horeca uitzendbureau Rotterdam. Tijdelijk personeel voor Markthal, havengebied en Ahoy events. Snel inzetbaar, binnen 24 uur op locatie.`
+      rotterdam: `Horeca uitzendbureau Rotterdam. Tijdelijk personeel voor Markthal, havengebied en Ahoy events. Snel inzetbaar, binnen 24 uur op locatie.`,
+      "den-haag": `Horeca uitzenden Den Haag. Flexibel personeel van Scheveningen tot centrum, voor restaurants, hotels en World Forum congressen. Meertalig, binnen 24 uur beschikbaar.`,
+      eindhoven: `Horeca uitzendbureau Eindhoven. Tijdelijk personeel voor Strijp-S, High Tech Campus en Stratumseind. Ervaring met innovatieve horeca, binnen 24 uur inzetbaar.`
     },
     detachering: {
       utrecht: `Horeca detachering Utrecht. Vaste medewerker voor langere periode zonder werkgeversrisico. Ideaal voor restaurants, hotels en TivoliVredenburg. Stabiel en betrouwbaar.`,
       amsterdam: `Detachering horeca Amsterdam. Langdurig personeel voor uw zaak zonder vaste lasten. Ervaring met high-end horeca en internationale gasten. Flexibel contract.`,
-      rotterdam: `Horeca detachering Rotterdam. Stabiele kracht voor uw team zonder werkgeversrisico. Ervaring met Rotterdamse horeca van Markthal tot cruise terminal.`
+      rotterdam: `Horeca detachering Rotterdam. Stabiele kracht voor uw team zonder werkgeversrisico. Ervaring met Rotterdamse horeca van Markthal tot cruise terminal.`,
+      "den-haag": `Horeca detachering Den Haag. Langdurig personeel zonder werkgeversrisico voor restaurants, hotels en strandpaviljoens. Ervaring met politieke en internationale events.`,
+      eindhoven: `Detachering horeca Eindhoven. Vaste medewerker voor uw team zonder vaste lasten. Ervaring met zakelijke horeca, High Tech Campus en innovatieve concepten.`
     }
   };
 
-  return {
-    title: titles[service as keyof typeof titles][city as keyof typeof titles.uitzenden],
-    description: descriptions[service as keyof typeof descriptions][city as keyof typeof descriptions.uitzenden]
-  };
+  const serviceKey = service as keyof typeof titles;
+  const cityTitles = titles[serviceKey];
+  const cityDescriptions = descriptions[serviceKey];
+
+  // Type-safe access met fallback
+  const title = (cityTitles as any)[city] || `${serviceName} ${locationName} | TopTalent Jobs`;
+  const description = (cityDescriptions as any)[city] || `Horeca ${service} in ${locationName}. TopTalent Jobs levert snel en betrouwbaar personeel.`;
+
+  return { title, description };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

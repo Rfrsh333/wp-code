@@ -23,16 +23,22 @@ export default async function CityPage({ params }: PageProps) {
   const cityIntros: Record<string, string> = {
     amsterdam: "Van centrum tot Zuidas, van evenementen tot internationale horeca. Wij leveren snel en betrouwbaar horeca personeel in heel Amsterdam en omgeving.",
     rotterdam: "Van havengebied tot zakencentra, van Markthal tot Ahoy. Wij leveren snel en betrouwbaar horeca personeel in heel Rotterdam en omgeving.",
+    "den-haag": "Van politiek centrum tot Scheveningen strand. Wij leveren snel en betrouwbaar horeca personeel in heel Den Haag en omgeving.",
+    eindhoven: "Van High Tech Campus tot Stratumseind. Wij leveren snel en betrouwbaar horeca personeel in heel Eindhoven en omgeving.",
   };
 
   const cityIcons: Record<string, string> = {
     amsterdam: "🌷",
     rotterdam: "🏙️",
+    "den-haag": "🏛️",
+    eindhoven: "💡",
   };
 
   const cityHighlights: Record<string, string> = {
     amsterdam: "Centrum • Zuidas • De Pijp",
     rotterdam: "Centrum • Kop van Zuid • Haven",
+    "den-haag": "Centrum • Scheveningen • Statenkwartier",
+    eindhoven: "Centrum • Strijp-S • HTC",
   };
 
   return (
