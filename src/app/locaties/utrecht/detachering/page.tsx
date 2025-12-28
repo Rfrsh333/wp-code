@@ -64,13 +64,15 @@ export default function DetacheringUtrechtPage() {
         <Section.Container>
           <FadeIn>
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
-                Detachering in Utrecht
-              </h2>
-              <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
-                Detachering geeft u structurele personele bezetting zonder werkgeversrisico&apos;s.
-                De medewerker werkt bij u op locatie en blijft bij ons in dienst.
-              </p>
+              <div className="bg-white rounded-2xl p-8 md:p-10 border border-neutral-100 shadow-sm">
+                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
+                  Detachering in Utrecht
+                </h2>
+                <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
+                  Detachering geeft u structurele personele bezetting zonder werkgeversrisico&apos;s.
+                  De medewerker werkt bij u op locatie en blijft bij ons in dienst.
+                </p>
+              </div>
             </div>
           </FadeIn>
         </Section.Container>
@@ -80,16 +82,24 @@ export default function DetacheringUtrechtPage() {
       <Section variant="white" spacing="default">
         <Section.Container>
           <FadeIn>
-            <div className="text-center mb-12">
+            <div className="text-center mb-10 md:mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 Waarom detachering
               </h2>
-              <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
-                U houdt continuiteit in het rooster en kunt bouwen op vaste medewerkers.
-                Wij regelen administratie, verloning en begeleiding tijdens de inzet.
-              </p>
             </div>
           </FadeIn>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {[
+              "U houdt continuiteit in het rooster en kunt bouwen op vaste medewerkers.",
+              "Wij regelen administratie, verloning en begeleiding tijdens de inzet.",
+            ].map((item, i) => (
+              <FadeIn key={item} delay={0.1 * i}>
+                <div className="bg-white rounded-2xl p-6 border border-neutral-100 shadow-sm text-neutral-600 leading-relaxed">
+                  {item}
+                </div>
+              </FadeIn>
+            ))}
+          </div>
         </Section.Container>
       </Section>
 
@@ -98,15 +108,29 @@ export default function DetacheringUtrechtPage() {
         <Section.Container>
           <FadeIn>
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
-                Beschikbare functies
-              </h2>
-              <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
-                Wij leveren horecapersoneel voor keuken, bediening, bar en events.
-                De inzet is afgestemd op uw locatie en servicelevel.
-              </p>
+              <div className="bg-white rounded-2xl p-8 md:p-10 border border-neutral-100 shadow-sm">
+                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
+                  Beschikbare functies
+                </h2>
+              </div>
             </div>
           </FadeIn>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            {[
+              "Keuken",
+              "Bediening",
+              "Bar",
+              "Events",
+              "Afgestemd op uw locatie",
+              "Servicelevel",
+            ].map((item, i) => (
+              <FadeIn key={item} delay={0.1 * i}>
+                <div className="bg-white rounded-xl p-5 border border-neutral-100 shadow-sm text-center text-neutral-700 font-medium">
+                  {item}
+                </div>
+              </FadeIn>
+            ))}
+          </div>
         </Section.Container>
       </Section>
 
@@ -132,7 +156,7 @@ export default function DetacheringUtrechtPage() {
       <Section variant="white" spacing="large">
         <Section.Container>
           <FadeIn>
-            <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
+            <div className="mt-6 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden shadow-xl shadow-orange-500/20">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                 <div className="absolute bottom-0 right-0 w-60 h-60 border border-white/20 rounded-full translate-x-1/3 translate-y-1/3"></div>
