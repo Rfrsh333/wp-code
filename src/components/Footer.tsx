@@ -94,13 +94,13 @@ export default function Footer() {
               Diensten
             </h2>
             <nav className="space-y-4">
-              <Link href="/diensten#uitzenden" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/uitzenden" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Uitzenden
               </Link>
-              <Link href="/diensten#detachering" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/detachering" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Detachering
               </Link>
-              <Link href="/diensten#recruitment" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/recruitment" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Recruitment
               </Link>
             </nav>
