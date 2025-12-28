@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import FadeIn from "@/components/animations/FadeIn";
-import Section from "@/components/Section";
+import { Section, Container } from "@/components/Section";
 
 type RelatedLocationsProps = {
   currentCity: "amsterdam" | "utrecht" | "rotterdam";
@@ -45,7 +45,7 @@ export default function RelatedLocations({ currentCity, service }: RelatedLocati
 
   return (
     <Section variant="tinted" spacing="default">
-      <Section.Container>
+      <Container>
         <FadeIn>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
@@ -71,7 +71,7 @@ export default function RelatedLocations({ currentCity, service }: RelatedLocati
             </FadeIn>
           ))}
         </div>
-      </Section.Container>
+      </Container>
     </Section>
   );
 }
