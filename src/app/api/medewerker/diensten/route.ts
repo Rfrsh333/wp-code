@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 
+type UrenRegistratie = { status: string };
+
+type UrenAanpassing = {
+  id: string;
+  start_tijd: string;
+  eind_tijd: string;
+  pauze_minuten: number;
+  gewerkte_uren: number;
+  klant_start_tijd: string | null;
+  klant_eind_tijd: string | null;
+  klant_pauze_minuten: number | null;
+  klant_gewerkte_uren: number | null;
+  klant_opmerking: string | null;
+  aanmelding: {
+    medewerker_id: string;
+    dienst: { datum: string; klant_naam: string; locatie: string } | null;
+  } | null;
+};
+
 export async function GET() {
   // KRITIEK: Verify signed JWT instead of trusting JSON
   const cookieStore = await cookies();
@@ -32,7 +51,7 @@ export async function GET() {
   const aanmeldMap = new Map(
     aanmeldingen?.map((a) => [
       a.dienst_id,
-      { id: a.id, status: a.status, uren_status: (a.uren_registraties as any[])?.[0]?.status },
+      { id: a.id, status: a.status, uren_status: (a.uren_registraties as UrenRegistratie[])?.[0]?.status },
     ]) || []
   );
 
@@ -55,16 +74,19 @@ export async function GET() {
     .eq("status", "klant_aangepast")
     .eq("aanmelding.medewerker_id", medewerker.id);
 
-  const mapped = (aanpassingen || []).map((u: any) => ({
-    id: u.id, start_tijd: u.start_tijd, eind_tijd: u.eind_tijd,
-    pauze_minuten: u.pauze_minuten, gewerkte_uren: u.gewerkte_uren,
-    klant_start_tijd: u.klant_start_tijd, klant_eind_tijd: u.klant_eind_tijd,
-    klant_pauze_minuten: u.klant_pauze_minuten, klant_gewerkte_uren: u.klant_gewerkte_uren,
-    klant_opmerking: u.klant_opmerking,
-    dienst_datum: u.aanmelding?.dienst?.datum || "",
-    klant_naam: u.aanmelding?.dienst?.klant_naam || "",
-    locatie: u.aanmelding?.dienst?.locatie || "",
-  }));
+  const mapped = (aanpassingen || []).map((u) => {
+    const typedU = u as unknown as UrenAanpassing;
+    return {
+      id: typedU.id, start_tijd: typedU.start_tijd, eind_tijd: typedU.eind_tijd,
+      pauze_minuten: typedU.pauze_minuten, gewerkte_uren: typedU.gewerkte_uren,
+      klant_start_tijd: typedU.klant_start_tijd, klant_eind_tijd: typedU.klant_eind_tijd,
+      klant_pauze_minuten: typedU.klant_pauze_minuten, klant_gewerkte_uren: typedU.klant_gewerkte_uren,
+      klant_opmerking: typedU.klant_opmerking,
+      dienst_datum: typedU.aanmelding?.dienst?.datum || "",
+      klant_naam: typedU.aanmelding?.dienst?.klant_naam || "",
+      locatie: typedU.aanmelding?.dienst?.locatie || "",
+    };
+  });
 
   return NextResponse.json({ diensten, aanpassingen: mapped });
 }

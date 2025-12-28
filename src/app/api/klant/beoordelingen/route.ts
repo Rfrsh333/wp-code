@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 
+type DienstAanmelding = {
+  id: string;
+  medewerker: { id: string; naam: string } | null;
+  dienst: { id: string; datum: string; locatie: string; klant_id: string } | null;
+};
+
 export async function GET() {
   // KRITIEK: Verify signed JWT instead of trusting JSON
   const cookieStore = await cookies();
@@ -34,15 +40,19 @@ export async function GET() {
 
   const beoordeeldSet = new Set((beoordeeld || []).map(b => `${b.dienst_id}-${b.medewerker_id}`));
 
-  const teBeoordeelen = (data || []).filter((a: any) =>
-    !beoordeeldSet.has(`${a.dienst?.id}-${a.medewerker?.id}`)
-  ).map((a: any) => ({
-    dienst_id: a.dienst?.id,
-    medewerker_id: a.medewerker?.id,
-    medewerker_naam: a.medewerker?.naam,
-    datum: a.dienst?.datum,
-    locatie: a.dienst?.locatie,
-  }));
+  const teBeoordeelen = (data || []).filter((a) => {
+    const typedA = a as unknown as DienstAanmelding;
+    return !beoordeeldSet.has(`${typedA.dienst?.id}-${typedA.medewerker?.id}`);
+  }).map((a) => {
+    const typedA = a as unknown as DienstAanmelding;
+    return {
+      dienst_id: typedA.dienst?.id || '',
+      medewerker_id: typedA.medewerker?.id || '',
+      medewerker_naam: typedA.medewerker?.naam || '',
+      datum: typedA.dienst?.datum || '',
+      locatie: typedA.dienst?.locatie || '',
+    };
+  });
 
   return NextResponse.json({ teBeoordeelen });
 }

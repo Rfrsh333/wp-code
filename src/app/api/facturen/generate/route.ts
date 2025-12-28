@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 
+type UrenRegistratie = {
+  id: string;
+  gewerkte_uren: number;
+  start_tijd: string;
+  eind_tijd: string;
+  aanmelding: {
+    medewerker: { naam: string } | null;
+    dienst: { datum: string; klant_naam: string; locatie: string; uurtarief: number; klant_id: string } | null;
+  } | null;
+};
+
+type FactuurRegel = {
+  uren_registratie_id: string;
+  omschrijving: string;
+  datum: string;
+  medewerker_naam: string;
+  uren: number;
+  uurtarief: number;
+  reiskosten: number;
+  bedrag: number;
+  factuur_id?: string;
+};
+
 export async function POST(request: NextRequest) {
   // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen genereren
   const { isAdmin, email } = await verifyAdmin(request);
@@ -41,16 +64,17 @@ export async function POST(request: NextRequest) {
 
     // Bereken totalen
     let subtotaal = 0;
-    const regels = uren.map((u: any) => {
-      const bedrag = u.gewerkte_uren * (u.aanmelding?.dienst?.uurtarief || 0);
+    const regels = (uren || []).map((u): FactuurRegel => {
+      const typedU = u as unknown as UrenRegistratie;
+      const bedrag = typedU.gewerkte_uren * (typedU.aanmelding?.dienst?.uurtarief || 0);
       subtotaal += bedrag;
       return {
-        uren_registratie_id: u.id,
-        omschrijving: `${u.aanmelding?.dienst?.locatie} - ${u.aanmelding?.medewerker?.naam}`,
-        datum: u.aanmelding?.dienst?.datum,
-        medewerker_naam: u.aanmelding?.medewerker?.naam,
-        uren: u.gewerkte_uren,
-        uurtarief: u.aanmelding?.dienst?.uurtarief,
+        uren_registratie_id: typedU.id,
+        omschrijving: `${typedU.aanmelding?.dienst?.locatie || ''} - ${typedU.aanmelding?.medewerker?.naam || ''}`,
+        datum: typedU.aanmelding?.dienst?.datum || '',
+        medewerker_naam: typedU.aanmelding?.medewerker?.naam || '',
+        uren: typedU.gewerkte_uren,
+        uurtarief: typedU.aanmelding?.dienst?.uurtarief || 0,
         reiskosten: 0,
         bedrag,
       };
@@ -85,14 +109,14 @@ export async function POST(request: NextRequest) {
 
     // Voeg regels toe
     await supabase.from("factuur_regels").insert(
-      regels.map((r: any) => ({ ...r, factuur_id: factuur.id }))
+      regels.map((r) => ({ ...r, factuur_id: factuur.id }))
     );
 
     // Update uren status naar gefactureerd
     await supabase
       .from("uren_registraties")
       .update({ status: "gefactureerd" })
-      .in("id", uren.map((u: any) => u.id));
+      .in("id", (uren || []).map((u) => (u as unknown as UrenRegistratie).id));
 
     return NextResponse.json({ success: true, factuur });
   } catch (error) {

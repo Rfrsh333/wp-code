@@ -3,6 +3,14 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { verifyFactuurToken } from "@/lib/session";
 
+type FactuurRegel = {
+  datum: string;
+  omschrijving: string;
+  uren: number;
+  uurtarief: number;
+  bedrag: number;
+};
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { searchParams } = new URL(request.url);
@@ -118,7 +126,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       </tr>
     </thead>
     <tbody>
-      ${factuur.regels.map((r: any) => `
+      ${(factuur.regels as FactuurRegel[]).map((r) => `
         <tr>
           <td>${new Date(r.datum).toLocaleDateString("nl-NL")}</td>
           <td>${r.omschrijving}</td>

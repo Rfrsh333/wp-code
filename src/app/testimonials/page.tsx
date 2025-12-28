@@ -123,13 +123,16 @@ export default function TestimonialsPage() {
                   </div>
                   <div className="space-y-4 pt-8">
                     <div className="rounded-2xl overflow-hidden aspect-square bg-neutral-100">
-                      <Image
-                        src="/images/dienst-recruitment.png"
-                        alt="Recruitment kandidaat gesprek TopTalent horeca"
-                        width={280}
-                        height={280}
-                        className="w-full h-full object-cover"
-                      />
+                      <picture>
+                        <source srcSet="/images/dienst-recruitment.webp" type="image/webp" />
+                        <Image
+                          src="/images/dienst-recruitment.png"
+                          alt="Recruitment kandidaat gesprek TopTalent horeca"
+                          width={280}
+                          height={280}
+                          className="w-full h-full object-cover"
+                        />
+                      </picture>
                     </div>
                     <div className="rounded-2xl overflow-hidden aspect-[4/5] bg-neutral-100">
                       <Image

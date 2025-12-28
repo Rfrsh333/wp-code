@@ -4,6 +4,16 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+type EmailResult = {
+  medewerker: string;
+  klant?: string;
+  status: string;
+  error?: string;
+};
+
+type Medewerker = { naam: string; email: string } | null;
+type Dienst = { klant_naam: string; locatie: string; datum: string; start_tijd: string; eind_tijd: string } | null;
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -24,12 +34,12 @@ export async function GET(request: NextRequest) {
     .eq("status", "geaccepteerd")
     .eq("dienst.datum", morgenStr);
 
-  const results: any[] = [];
+  const results: EmailResult[] = [];
 
-  for (const aanmelding of data || []) {
-    const m = aanmelding.medewerker as any;
-    const d = aanmelding.dienst as any;
-    if (!m?.email) continue;
+  for (const aanmelding of (data || [])) {
+    const m = (aanmelding as unknown as { medewerker: Medewerker }).medewerker;
+    const d = (aanmelding as unknown as { dienst: Dienst }).dienst;
+    if (!m?.email || !d) continue;
 
     try {
       await resend.emails.send({

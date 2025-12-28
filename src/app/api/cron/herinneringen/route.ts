@@ -4,6 +4,13 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+type ReminderResult = {
+  factuur_nummer: string;
+  status: string;
+  dagen?: number;
+  error?: string;
+};
+
 export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get("authorization");
@@ -11,7 +18,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const results: any[] = [];
+  const results: ReminderResult[] = [];
 
   // Haal facturen op die > 14 dagen geleden verzonden zijn en nog niet betaald
   const veertienDagenGeleden = new Date();

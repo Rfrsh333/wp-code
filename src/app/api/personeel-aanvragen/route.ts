@@ -239,11 +239,38 @@ export async function POST(request: NextRequest) {
     });
 
     if (dbError) {
-      console.error("Supabase error:", dbError);
+      console.error("[DATABASE ERROR] Failed to save personeel aanvraag to Supabase:", dbError);
+      console.error("[DATABASE ERROR] Request data:", JSON.stringify({
+        bedrijfsnaam: data.bedrijfsnaam,
+        email: data.email,
+        timestamp: new Date().toISOString()
+      }));
+
+      // Stuur Telegram alert met database error waarschuwing
+      sendTelegramAlert(
+        `⚠️ <b>NIEUWE PERSONEEL AANVRAAG (DATABASE ERROR)</b>\n\n` +
+        `🏢 ${data.bedrijfsnaam}\n` +
+        `👤 ${data.contactpersoon}\n` +
+        `📧 ${data.email}\n` +
+        `📞 ${data.telefoon}\n\n` +
+        `💼 ${data.typePersoneel.join(', ')}\n` +
+        `📊 ${data.aantalPersonen} personen\n` +
+        `📍 ${data.locatie}\n` +
+        `📅 Start: ${data.startDatum}\n\n` +
+        `⚠️ <b>LET OP: Database opslag mislukt!</b>\n` +
+        `Email is verzonden maar data is niet opgeslagen in Supabase.\n` +
+        `Error: ${dbError.message || JSON.stringify(dbError)}`
+      ).catch(console.error);
+
       // We laten de request toch slagen want de email is al verstuurd
+      // Maar we geven wel een waarschuwing terug
+      return NextResponse.json({
+        success: true,
+        warning: "Email verzonden, maar opslag in database is mislukt. Neem contact op als dit probleem zich blijft voordoen."
+      });
     }
 
-    // Send Telegram alert
+    // Send Telegram alert (normale flow zonder database error)
     sendTelegramAlert(
       `👥 <b>NIEUWE PERSONEEL AANVRAAG!</b>\n\n` +
       `🏢 ${data.bedrijfsnaam}\n` +

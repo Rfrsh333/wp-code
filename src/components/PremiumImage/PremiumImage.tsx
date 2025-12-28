@@ -24,6 +24,16 @@ export default function PremiumImage({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRevealed, setIsRevealed] = useState(false);
 
+  // Helper to get WebP version of image if .png
+  const getWebPSrc = (originalSrc: string): string | null => {
+    if (originalSrc.endsWith('.png')) {
+      return originalSrc.replace(/\.png$/, '.webp');
+    }
+    return null;
+  };
+
+  const webpSrc = getWebPSrc(src);
+
   useEffect(() => {
     const element = containerRef.current;
     if (!element) return;
@@ -75,14 +85,28 @@ export default function PremiumImage({
 
       {/* Main frame with image */}
       <div className={styles.frame}>
-        <Image
-          src={src}
-          alt={alt}
-          width={width}
-          height={height}
-          className={styles.image}
-          priority={priority}
-        />
+        {webpSrc ? (
+          <picture>
+            <source srcSet={webpSrc} type="image/webp" />
+            <Image
+              src={src}
+              alt={alt}
+              width={width}
+              height={height}
+              className={styles.image}
+              priority={priority}
+            />
+          </picture>
+        ) : (
+          <Image
+            src={src}
+            alt={alt}
+            width={width}
+            height={height}
+            className={styles.image}
+            priority={priority}
+          />
+        )}
       </div>
 
       {/* Corner accents */}

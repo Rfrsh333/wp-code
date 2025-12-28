@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 
 export default function AdminSettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   // 2FA state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -41,7 +42,7 @@ export default function AdminSettingsPage() {
     setLoading(false);
   }
 
-  async function check2FAStatus(session: any) {
+  async function check2FAStatus(session: Session) {
     try {
       const res = await fetch("/api/admin/2fa/status", {
         headers: {
@@ -59,6 +60,11 @@ export default function AdminSettingsPage() {
   async function startSetup() {
     setError("");
     setMessage("");
+
+    if (!session) {
+      setError("Session expired. Please log in again.");
+      return;
+    }
 
     try {
       const res = await fetch("/api/admin/2fa/setup", {
@@ -90,6 +96,11 @@ export default function AdminSettingsPage() {
       return;
     }
 
+    if (!session) {
+      setError("Session expired. Please log in again.");
+      return;
+    }
+
     try {
       const res = await fetch("/api/admin/2fa/enable", {
         method: "POST",
@@ -110,8 +121,8 @@ export default function AdminSettingsPage() {
       setTwoFactorEnabled(true);
       setSetupMode(false);
       setVerificationCode("");
-    } catch (err: any) {
-      setError(err.message || "Failed to enable 2FA");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to enable 2FA");
     }
   }
 
@@ -121,6 +132,11 @@ export default function AdminSettingsPage() {
 
     setError("");
     setMessage("");
+
+    if (!session) {
+      setError("Session expired. Please log in again.");
+      return;
+    }
 
     try {
       const res = await fetch("/api/admin/2fa/enable", {
@@ -140,8 +156,8 @@ export default function AdminSettingsPage() {
 
       setMessage("✅ 2FA uitgeschakeld");
       setTwoFactorEnabled(false);
-    } catch (err: any) {
-      setError(err.message || "Failed to disable 2FA");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to disable 2FA");
     }
   }
 
