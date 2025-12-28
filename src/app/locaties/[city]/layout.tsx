@@ -2,10 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocation, cityOrder } from "@/data/locations";
 import { generateBreadcrumbSchema } from "@/components/Breadcrumbs";
-import {
-  generateLocalBusinessSchema,
-  generateLocationFAQSchema,
-} from "@/lib/schema-helpers";
+import { generateLocalBusinessSchema } from "@/lib/schema-helpers";
 
 interface Props {
   params: Promise<{ city: string }>;
@@ -62,7 +59,6 @@ export default async function CityLayout({ params, children }: Props) {
 
   const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
   const localBusinessSchema = generateLocalBusinessSchema(location);
-  const faqSchema = generateLocationFAQSchema(location);
 
   return (
     <>
@@ -75,10 +71,6 @@ export default async function CityLayout({ params, children }: Props) {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(localBusinessSchema),
         }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       {children}
     </>
