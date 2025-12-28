@@ -1,16 +1,18 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { notFound } from "next/navigation";
 import { getLocation } from "@/data/locations";
 import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
 import RelatedLocations from "@/components/RelatedLocations";
 
-export default function CityPage() {
-  const params = useParams();
-  const city = params.city as string;
+interface PageProps {
+  params: Promise<{
+    city: string;
+  }>;
+}
+
+export default async function CityPage({ params }: PageProps) {
+  const { city } = await params;
   const location = getLocation(city);
 
   if (!location) {

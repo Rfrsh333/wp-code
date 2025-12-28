@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
