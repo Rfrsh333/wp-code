@@ -114,9 +114,29 @@ export default function CityPage() {
                   Onze diensten in {location.name}
                 </h3>
                 <ul className="space-y-2 text-neutral-700">
-                  {location.services.map((service, index) => (
-                    <li key={index}>• {service}</li>
-                  ))}
+                  {location.services.map((service, index) => {
+                    // Map service text to URL
+                    let serviceUrl = "/diensten";
+                    if (service.toLowerCase().includes("uitzenden")) {
+                      serviceUrl = `/locaties/${city}/uitzenden`;
+                    } else if (service.toLowerCase().includes("detachering")) {
+                      serviceUrl = `/locaties/${city}/detachering`;
+                    } else if (service.toLowerCase().includes("recruitment")) {
+                      serviceUrl = "/diensten/recruitment";
+                    }
+
+                    return (
+                      <li key={index}>
+                        <Link
+                          href={serviceUrl}
+                          className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
+                        >
+                          <span>•</span>
+                          <span className="group-hover:underline">{service}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
                 <Link
                   href="/diensten"

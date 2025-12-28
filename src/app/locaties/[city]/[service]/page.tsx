@@ -433,6 +433,52 @@ export default function CityServicePage() {
           </FadeIn>
         </Section.Container>
       </Section>
+
+      {/* RELATED CITIES - WHITE */}
+      <Section variant="white" spacing="default">
+        <Section.Container>
+          <FadeIn>
+            <div className="border-t border-neutral-200 pt-8">
+              <h3 className="text-2xl font-bold text-neutral-900 mb-6 text-center">
+                {service === "uitzenden" ? "Horeca uitzenden" : "Detachering"} ook beschikbaar in andere steden
+              </h3>
+              <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-6">
+                {["utrecht", "amsterdam", "rotterdam"]
+                  .filter((otherCity) => otherCity !== city)
+                  .map((otherCity) => {
+                    const otherLocation = getLocation(otherCity);
+                    if (!otherLocation) return null;
+
+                    return (
+                      <Link
+                        key={otherCity}
+                        href={`/locaties/${otherCity}/${service}`}
+                        className="group bg-white rounded-xl p-6 border border-neutral-200 hover:border-[#F97316] hover:shadow-lg transition-all"
+                      >
+                        <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316]">
+                          {otherLocation.name}
+                        </h4>
+                        <p className="text-neutral-600 text-sm">
+                          {service === "uitzenden"
+                            ? `Tijdelijk personeel in ${otherLocation.name}`
+                            : `Langdurige inzet in ${otherLocation.name}`}
+                        </p>
+                      </Link>
+                    );
+                  })}
+              </div>
+              <div className="text-center">
+                <Link
+                  href="/locaties"
+                  className="inline-block text-[#F97316] font-semibold hover:underline"
+                >
+                  Bekijk alle locaties →
+                </Link>
+              </div>
+            </div>
+          </FadeIn>
+        </Section.Container>
+      </Section>
     </>
   );
 }
