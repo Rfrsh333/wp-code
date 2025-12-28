@@ -20,6 +20,7 @@ export default function GtmLoader() {
 
     window.addEventListener("ttj-cookie-consent", onConsentChange);
     return () => window.removeEventListener("ttj-cookie-consent", onConsentChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!hasConsent) {

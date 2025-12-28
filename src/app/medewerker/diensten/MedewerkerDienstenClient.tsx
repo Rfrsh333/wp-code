@@ -60,7 +60,10 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
     setIsLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const aanmelden = async (dienstId: string) => {
     await fetch("/api/medewerker/diensten", {

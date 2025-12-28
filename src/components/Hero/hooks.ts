@@ -34,6 +34,7 @@ export function useInView(
     observer.observe(element);
 
     return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options]);
 
   return [ref, isInView];
@@ -115,6 +116,7 @@ export function useScrollPosition(): number {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleScroll]);
 
   return scrollY;

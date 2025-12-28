@@ -19,6 +19,7 @@ export default function CookieConsent() {
     const onOpen = () => setIsVisible(true);
     window.addEventListener("ttj-cookie-open", onOpen);
     return () => window.removeEventListener("ttj-cookie-open", onOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleConsent = (value: ConsentValue) => {

@@ -13,6 +13,7 @@ export default function CookiesPage() {
   useEffect(() => {
     const stored = window.localStorage.getItem(CONSENT_KEY) as ConsentValue | null;
     setCurrentConsent(stored);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateConsent = (value: ConsentValue) => {

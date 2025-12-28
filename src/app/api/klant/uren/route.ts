@@ -34,6 +34,9 @@ export async function GET() {
     .in("aanmelding.dienst_id", diensten.map(d => d.id))
     .order("created_at", { ascending: false });
 
+  type UrenWithRelations = typeof data extends (infer U)[] ? U : never;
+  type Aanmelding = UrenWithRelations extends { aanmelding: infer A } ? A : never;
+
   const uren = (data || []).filter(u => u.aanmelding).map(u => ({
     id: u.id,
     start_tijd: u.start_tijd,
@@ -42,10 +45,10 @@ export async function GET() {
     gewerkte_uren: u.gewerkte_uren,
     status: u.status,
     created_at: u.created_at,
-    medewerker_naam: (u.aanmelding as any)?.medewerker?.naam || "Onbekend",
-    dienst_datum: (u.aanmelding as any)?.dienst?.datum || "",
-    dienst_locatie: (u.aanmelding as any)?.dienst?.locatie || "",
-    uurtarief: (u.aanmelding as any)?.dienst?.uurtarief || 0,
+    medewerker_naam: (u.aanmelding as Aanmelding & { medewerker?: { naam?: string } })?.medewerker?.naam || "Onbekend",
+    dienst_datum: (u.aanmelding as Aanmelding & { dienst?: { datum?: string } })?.dienst?.datum || "",
+    dienst_locatie: (u.aanmelding as Aanmelding & { dienst?: { locatie?: string } })?.dienst?.locatie || "",
+    uurtarief: (u.aanmelding as Aanmelding & { dienst?: { uurtarief?: number } })?.dienst?.uurtarief || 0,
   }));
 
   return NextResponse.json({ uren });

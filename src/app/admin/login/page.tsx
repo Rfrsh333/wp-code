@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminLoginPage() {
@@ -104,9 +105,9 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-neutral-500 hover:text-[#F27501]">
+          <Link href="/" className="text-sm text-neutral-500 hover:text-[#F27501]">
             ← Terug naar website
-          </a>
+          </Link>
         </div>
       </div>
     </div>
