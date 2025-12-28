@@ -1,10 +1,10 @@
-"use client";
-
 import Link from "next/link";
 import Section from "@/components/Section";
-import FadeIn from "@/components/animations/FadeIn";
+import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
-import FAQ, { FAQItem } from "@/components/FAQ";
+import FAQ from "@/components/FAQ";
+
+import type { FAQItem } from "@/data/location-service-faqs";
 
 const faqItems: FAQItem[] = [
   {
@@ -41,7 +41,7 @@ export default function UitzendenPage() {
       <Section variant="white" spacing="large">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                   <Link href="/diensten">Diensten</Link> › Uitzenden
@@ -74,9 +74,9 @@ export default function UitzendenPage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-uitzenden.png"
@@ -85,7 +85,7 @@ export default function UitzendenPage() {
                   height={480}
                 />
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -94,7 +94,7 @@ export default function UitzendenPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div className="max-w-4xl mx-auto">
-            <FadeIn>
+            <ClientAnimationWrapper>
               <div className="text-center mb-12">
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                   Wat is uitzenden?
@@ -106,7 +106,7 @@ export default function UitzendenPage() {
                   van werving tot salarisadministratie.
                 </p>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
@@ -138,7 +138,7 @@ export default function UitzendenPage() {
                   ),
                 },
               ].map((item, i) => (
-                <FadeIn key={i} delay={0.1 * i}>
+                <ClientAnimationWrapper key={i} delay={0.1 * i}>
                   <div className="bg-white rounded-2xl p-8 shadow-sm border border-neutral-100 h-full">
                     <div className="w-14 h-14 bg-[#FEF3E7] rounded-xl flex items-center justify-center text-[#F97316] mb-5">
                       {item.icon}
@@ -146,7 +146,7 @@ export default function UitzendenPage() {
                     <h3 className="text-xl font-bold text-neutral-900 mb-3">{item.title}</h3>
                     <p className="text-neutral-600 leading-relaxed">{item.description}</p>
                   </div>
-                </FadeIn>
+                </ClientAnimationWrapper>
               ))}
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function UitzendenPage() {
       {/* WANNEER KIEZEN VOOR UITZENDEN - WIT */}
       <Section variant="white" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 Wanneer kies je voor uitzenden?
@@ -165,7 +165,7 @@ export default function UitzendenPage() {
                 Uitzenden is de ideale oplossing wanneer u tijdelijk extra medewerkers nodig heeft.
               </p>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {[
@@ -190,12 +190,12 @@ export default function UitzendenPage() {
                 color: "from-amber-500/10 to-amber-500/5",
               },
             ].map((item, i) => (
-              <FadeIn key={i} delay={0.1 * i}>
+              <ClientAnimationWrapper key={i} delay={0.1 * i}>
                 <div className={`bg-gradient-to-br ${item.color} rounded-2xl p-8 border border-neutral-100`}>
                   <h3 className="text-xl font-bold text-neutral-900 mb-2">{item.scenario}</h3>
                   <p className="text-neutral-600">{item.description}</p>
                 </div>
-              </FadeIn>
+              </ClientAnimationWrapper>
             ))}
           </div>
         </Section.Container>
@@ -204,7 +204,7 @@ export default function UitzendenPage() {
       {/* ZO WERKT HET - TINTED */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 Zo werkt uitzenden bij ons
@@ -213,7 +213,7 @@ export default function UitzendenPage() {
                 Van aanvraag tot inzet: een helder en snel proces.
               </p>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
 
           <div className="max-w-4xl mx-auto">
             <div className="relative">
@@ -227,7 +227,7 @@ export default function UitzendenPage() {
                   { step: "3", title: "Inzet", description: "Horecapersoneel start bij u op locatie" },
                   { step: "4", title: "Nazorg", description: "Wij blijven betrokken en evalueren" },
                 ].map((item, i) => (
-                  <FadeIn key={i} delay={0.15 * i}>
+                  <ClientAnimationWrapper key={i} delay={0.15 * i}>
                     <div className="text-center relative">
                       <div className="w-14 h-14 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 relative z-10">
                         {item.step}
@@ -235,7 +235,7 @@ export default function UitzendenPage() {
                       <h3 className="font-bold text-neutral-900 mb-2">{item.title}</h3>
                       <p className="text-neutral-600 text-sm">{item.description}</p>
                     </div>
-                  </FadeIn>
+                  </ClientAnimationWrapper>
                 ))}
               </div>
             </div>
@@ -246,16 +246,16 @@ export default function UitzendenPage() {
       {/* FAQ - TINTED */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <FAQ items={faqItems} />
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
 
       {/* CTA - WIT */}
       <Section variant="white" spacing="large">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -292,7 +292,7 @@ export default function UitzendenPage() {
                 </div>
               </div>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
     </>

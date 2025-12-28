@@ -1,10 +1,11 @@
-"use client";
+
 
 import Link from "next/link";
 import Section from "@/components/Section";
-import FadeIn from "@/components/animations/FadeIn";
+import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 
+import type { FAQItem } from "@/data/location-service-faqs";
 export default function RecruitmentPage() {
   return (
     <>
@@ -17,7 +18,7 @@ export default function RecruitmentPage() {
       <Section variant="white" spacing="large">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                   <Link href="/diensten">Diensten</Link> › Recruitment
@@ -50,9 +51,9 @@ export default function RecruitmentPage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-recruitment.png"
@@ -61,7 +62,7 @@ export default function RecruitmentPage() {
                   height={480}
                 />
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -69,7 +70,7 @@ export default function RecruitmentPage() {
       {/* ONZE AANPAK - TINTED */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 Onze aanpak
@@ -78,7 +79,7 @@ export default function RecruitmentPage() {
                 Van intake tot indiensttreding: een helder proces voor vaste medewerkers.
               </p>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
 
           <div className="max-w-5xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -109,7 +110,7 @@ export default function RecruitmentPage() {
                   description: "Begeleiding tot indiensttreding en nazorg.",
                 },
               ].map((item, i) => (
-                <FadeIn key={i} delay={0.1 * i}>
+                <ClientAnimationWrapper key={i} delay={0.1 * i}>
                   <div className="bg-white rounded-2xl p-6 border border-neutral-100 h-full relative group hover:shadow-lg transition-all duration-300">
                     <div className="text-4xl font-bold text-[#F97316]/20 mb-3 group-hover:text-[#F97316]/40 transition-colors duration-300">
                       {item.step}
@@ -117,7 +118,7 @@ export default function RecruitmentPage() {
                     <h3 className="text-lg font-bold text-neutral-900 mb-2">{item.title}</h3>
                     <p className="text-neutral-600 text-sm leading-relaxed">{item.description}</p>
                   </div>
-                </FadeIn>
+                </ClientAnimationWrapper>
               ))}
             </div>
           </div>
@@ -128,7 +129,7 @@ export default function RecruitmentPage() {
       <Section variant="white" spacing="default">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                   Waarom recruitment via TopTalent?
@@ -172,9 +173,9 @@ export default function RecruitmentPage() {
                   ))}
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="bg-gradient-to-br from-[#F97316]/5 to-orange-100/30 rounded-3xl p-10 lg:p-12">
                 <div className="text-center">
                   <div className="text-6xl font-bold text-[#F97316] mb-4">95%</div>
@@ -194,7 +195,7 @@ export default function RecruitmentPage() {
                   </div>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -203,7 +204,7 @@ export default function RecruitmentPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div className="order-2 lg:order-1 grid grid-cols-2 gap-4">
                 {[
                   { icon: "IN", label: "Intake en profiel" },
@@ -219,9 +220,9 @@ export default function RecruitmentPage() {
                   </div>
                 ))}
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="order-1 lg:order-2">
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                   Selectieproces voor vaste functies
@@ -235,7 +236,7 @@ export default function RecruitmentPage() {
                   die passen bij uw rol. Kwaliteit boven kwantiteit.
                 </p>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -243,7 +244,7 @@ export default function RecruitmentPage() {
       {/* CTA - WIT */}
       <Section variant="white" spacing="large">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -276,7 +277,7 @@ export default function RecruitmentPage() {
                 </div>
               </div>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
     </>

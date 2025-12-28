@@ -1,8 +1,6 @@
-"use client";
-
 import Link from "next/link";
 import Section from "@/components/Section";
-import FadeIn from "@/components/animations/FadeIn";
+import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 
 export default function DienstenPage() {
@@ -17,7 +15,7 @@ export default function DienstenPage() {
       {/* Hero Section - WHITE */}
       <Section variant="white" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="text-center max-w-3xl mx-auto">
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                 Diensten horeca uitzendbureau
@@ -33,7 +31,7 @@ export default function DienstenPage() {
                 Wij regelen selectie, inzet en administratie voor horeca en events.
               </p>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
 
@@ -41,7 +39,7 @@ export default function DienstenPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div id="uitzenden" className="scroll-mt-32">
-            <FadeIn>
+            <ClientAnimationWrapper>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
                 <div className="order-2 lg:order-1 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Uitzenden horeca</h2>
@@ -90,7 +88,7 @@ export default function DienstenPage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -99,7 +97,7 @@ export default function DienstenPage() {
       <Section variant="white" spacing="default">
         <Section.Container>
           <div id="detachering" className="scroll-mt-32">
-            <FadeIn>
+            <ClientAnimationWrapper>
               <div className="grid grid-cols-1 lg:grid-cols-[42%_1fr] gap-8 lg:gap-12 items-center">
                 <div className="order-1">
                   <Link href="/diensten/detachering" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 group">
@@ -147,7 +145,7 @@ export default function DienstenPage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -156,7 +154,7 @@ export default function DienstenPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div id="recruitment" className="scroll-mt-32">
-            <FadeIn>
+            <ClientAnimationWrapper>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
                 <div className="order-2 lg:order-1 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Recruitment</h2>
@@ -204,7 +202,7 @@ export default function DienstenPage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -212,7 +210,7 @@ export default function DienstenPage() {
       {/* CTA Section - WHITE */}
       <Section variant="white" spacing="large">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -236,7 +234,7 @@ export default function DienstenPage() {
                 </Link>
               </div>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
     </>

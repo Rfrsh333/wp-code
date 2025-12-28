@@ -1,10 +1,11 @@
-"use client";
+
 
 import Link from "next/link";
 import Section from "@/components/Section";
-import FadeIn from "@/components/animations/FadeIn";
+import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 
+import type { FAQItem } from "@/data/location-service-faqs";
 export default function DetacheringPage() {
   return (
     <>
@@ -17,7 +18,7 @@ export default function DetacheringPage() {
       <Section variant="white" spacing="large">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                   <Link href="/diensten">Diensten</Link> › Detachering
@@ -50,9 +51,9 @@ export default function DetacheringPage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src="/images/dienst-detachering.png"
@@ -61,7 +62,7 @@ export default function DetacheringPage() {
                   height={480}
                 />
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -70,7 +71,7 @@ export default function DetacheringPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                   Wat is detachering?
@@ -90,9 +91,9 @@ export default function DetacheringPage() {
                   </p>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { value: "3-12", label: "maanden gemiddelde duur" },
@@ -106,7 +107,7 @@ export default function DetacheringPage() {
                   </div>
                 ))}
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -114,7 +115,7 @@ export default function DetacheringPage() {
       {/* VOORDELEN - WIT */}
       <Section variant="white" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 Voordelen voor uw organisatie
@@ -123,7 +124,7 @@ export default function DetacheringPage() {
                 Waarom steeds meer horeca-ondernemers kiezen voor detachering.
               </p>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
@@ -187,7 +188,7 @@ export default function DetacheringPage() {
                 ),
               },
             ].map((item, i) => (
-              <FadeIn key={i} delay={0.1 * i}>
+              <ClientAnimationWrapper key={i} delay={0.1 * i}>
                 <div className="group p-6 rounded-2xl border border-neutral-100 hover:border-[#F97316]/20 hover:shadow-lg transition-all duration-300 h-full">
                   <div className="w-12 h-12 bg-[#FEF3E7] rounded-xl flex items-center justify-center text-[#F97316] mb-4 group-hover:bg-[#F97316] group-hover:text-white transition-all duration-300">
                     {item.icon}
@@ -195,7 +196,7 @@ export default function DetacheringPage() {
                   <h3 className="text-lg font-bold text-neutral-900 mb-2">{item.title}</h3>
                   <p className="text-neutral-600 text-sm leading-relaxed">{item.description}</p>
                 </div>
-              </FadeIn>
+              </ClientAnimationWrapper>
             ))}
           </div>
         </Section.Container>
@@ -205,7 +206,7 @@ export default function DetacheringPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div className="order-2 lg:order-1">
                 <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm border border-neutral-100">
                   <blockquote className="text-xl text-neutral-700 leading-relaxed mb-6">
@@ -223,9 +224,9 @@ export default function DetacheringPage() {
                   </div>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="order-1 lg:order-2">
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                   Langdurig partnership
@@ -239,7 +240,7 @@ export default function DetacheringPage() {
                   zorgen ervoor dat de samenwerking voor iedereen succesvol is.
                 </p>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -247,7 +248,7 @@ export default function DetacheringPage() {
       {/* CTA - WIT */}
       <Section variant="white" spacing="large">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-5">
                 <div className="absolute top-0 right-0 w-80 h-80 border border-white rounded-full translate-x-1/3 -translate-y-1/3"></div>
@@ -280,7 +281,7 @@ export default function DetacheringPage() {
                 </div>
               </div>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
     </>
