@@ -4,7 +4,7 @@ import { getLocation } from "@/data/locations";
 import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
 import RelatedLocations from "@/components/RelatedLocations";
-import PremiumImage from "@/components/PremiumImage";
+import PremiumImage from "@/components/PremiumImage/PremiumImage";
 
 interface PageProps {
   params: Promise<{

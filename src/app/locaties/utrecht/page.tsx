@@ -3,7 +3,7 @@ import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
 import RelatedLocations from "@/components/RelatedLocations";
 import { getLocation } from "@/data/locations";
-import PremiumImage from "@/components/PremiumImage";
+import PremiumImage from "@/components/PremiumImage/PremiumImage";
 
 export default function UtrechtPage() {
   const location = getLocation("utrecht");
