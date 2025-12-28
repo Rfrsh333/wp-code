@@ -3,6 +3,7 @@ import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
 import RelatedLocations from "@/components/RelatedLocations";
 import { getLocation } from "@/data/locations";
+import PremiumImage from "@/components/PremiumImage";
 
 export default function UtrechtPage() {
   const location = getLocation("utrecht");
@@ -55,13 +56,12 @@ export default function UtrechtPage() {
             </div>
 
             <div className="hidden lg:flex justify-center lg:justify-end">
-              <div className="w-full max-w-md aspect-square bg-gradient-to-br from-orange-50 to-white rounded-3xl border border-orange-100 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="text-6xl mb-4">🏙️</div>
-                  <p className="text-neutral-600 font-medium">Utrecht</p>
-                  <p className="text-sm text-neutral-500 mt-2">Binnenstad • Jaarbeurs • Leidsche Rijn</p>
-                </div>
-              </div>
+              <PremiumImage
+                src="/images/locatie-utrecht-hero.png"
+                alt="Horeca personeel Utrecht centrum en Jaarbeurs"
+                width={600}
+                height={600}
+              />
             </div>
           </div>
         </Section.Container>

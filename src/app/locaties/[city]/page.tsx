@@ -4,6 +4,7 @@ import { getLocation } from "@/data/locations";
 import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
 import RelatedLocations from "@/components/RelatedLocations";
+import PremiumImage from "@/components/PremiumImage";
 
 interface PageProps {
   params: Promise<{
@@ -39,6 +40,29 @@ export default async function CityPage({ params }: PageProps) {
     rotterdam: "Centrum • Kop van Zuid • Haven",
     "den-haag": "Centrum • Scheveningen • Statenkwartier",
     eindhoven: "Centrum • Strijp-S • HTC",
+  };
+
+  const cityImages: Record<string, { src: string; alt: string }> = {
+    utrecht: {
+      src: "/images/locatie-utrecht-hero.png",
+      alt: "Horeca personeel Utrecht centrum en Jaarbeurs"
+    },
+    amsterdam: {
+      src: "/images/locatie-amsterdam-hero.png",
+      alt: "Horeca personeel Amsterdam centrum en Zuidas"
+    },
+    rotterdam: {
+      src: "/images/locatie-rotterdam-hero.png",
+      alt: "Horeca personeel Rotterdam Markthal en haven"
+    },
+    "den-haag": {
+      src: "/images/locatie-den-haag-hero.png",
+      alt: "Horeca personeel Den Haag Scheveningen en centrum"
+    },
+    eindhoven: {
+      src: "/images/locatie-eindhoven-hero.png",
+      alt: "Horeca personeel Eindhoven Strijp-S en High Tech Campus"
+    }
   };
 
   return (
@@ -84,13 +108,14 @@ export default async function CityPage({ params }: PageProps) {
             </div>
 
             <div className="hidden lg:flex justify-center lg:justify-end">
-              <div className="w-full max-w-md aspect-square bg-gradient-to-br from-orange-50 to-white rounded-3xl border border-orange-100 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="text-6xl mb-4">{cityIcons[city] || "🏙️"}</div>
-                  <p className="text-neutral-600 font-medium">{location.name}</p>
-                  <p className="text-sm text-neutral-500 mt-2">{cityHighlights[city] || "Horeca personeel"}</p>
-                </div>
-              </div>
+              {cityImages[city] && (
+                <PremiumImage
+                  src={cityImages[city].src}
+                  alt={cityImages[city].alt}
+                  width={600}
+                  height={600}
+                />
+              )}
             </div>
           </div>
         </Section.Container>
