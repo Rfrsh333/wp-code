@@ -35,7 +35,9 @@ export function proxy(request: NextRequest) {
     normalizedPath === "/diensten" ||
     normalizedPath === "/diensten/uitzenden" ||
     normalizedPath === "/diensten/detachering" ||
-    normalizedPath === "/diensten/recruitment";
+    normalizedPath === "/diensten/recruitment" ||
+    normalizedPath === "/locaties" ||
+    normalizedPath.startsWith("/locaties/");
 
   if (!isIndexablePath) {
     const response = NextResponse.next();
