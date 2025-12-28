@@ -13,11 +13,11 @@ export default function LocatieSubNav({ city }: LocatieSubNavProps) {
   const links = [
     {
       label: "Horeca uitzenden",
-      href: `/locaties/${city}/uitzenden`,
+      href: "/diensten/uitzenden",
     },
     {
       label: "Detachering",
-      href: `/locaties/${city}/detachering`,
+      href: "/diensten/detachering",
     },
   ];
 
