@@ -84,15 +84,6 @@ export const locations: Record<string, LocationData> = {
       hotels: 15,
       events: 30
     },
-    address: {
-      street: "Kanaalstraat 15",
-      postalCode: "3531 CJ",
-      city: "Utrecht"
-    },
-    geo: {
-      latitude: 52.0907,
-      longitude: 5.1214
-    },
     localEvents: [
       "Utrecht Culinair",
       "Le Guess Who? Festival",

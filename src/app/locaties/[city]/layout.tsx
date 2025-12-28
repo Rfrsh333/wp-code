@@ -13,7 +13,8 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  return cityOrder.map((city) => ({
+  // Exclude utrecht - it has its own standalone route
+  return cityOrder.filter((city) => city !== "utrecht").map((city) => ({
     city,
   }));
 }
