@@ -8,7 +8,10 @@ export interface LocationData {
     icon: string;
     text: string;
   }>;
-  services: string[];
+  services: Array<{
+    label: string;
+    href: string;
+  }>;
   functions: string[];
   ctaText: string;
   serviceAreas: string[];
@@ -56,10 +59,10 @@ export const locations: Record<string, LocationData> = {
       }
     ],
     services: [
-      "Uitzenden voor tijdelijke inzet",
-      "Detachering voor langere periode",
-      "Recruitment voor vaste medewerkers",
-      "Evenementenpersoneel"
+      { label: "Uitzenden voor tijdelijke inzet", href: "/locaties/utrecht/uitzenden" },
+      { label: "Detachering voor langere periode", href: "/locaties/utrecht/detachering" },
+      { label: "Recruitment voor vaste medewerkers", href: "/diensten/recruitment" },
+      { label: "Evenementenpersoneel", href: "/diensten" }
     ],
     functions: [
       "Barista's & bartenders",
@@ -124,10 +127,10 @@ export const locations: Record<string, LocationData> = {
       }
     ],
     services: [
-      "Uitzenden voor tijdelijke inzet",
-      "Detachering voor langere periode",
-      "Recruitment voor vaste medewerkers",
-      "Evenementen & festivals personeel"
+      { label: "Uitzenden voor tijdelijke inzet", href: "/locaties/amsterdam/uitzenden" },
+      { label: "Detachering voor langere periode", href: "/locaties/amsterdam/detachering" },
+      { label: "Recruitment voor vaste medewerkers", href: "/diensten/recruitment" },
+      { label: "Evenementen & festivals personeel", href: "/diensten" }
     ],
     functions: [
       "Barista's & bartenders",
@@ -197,10 +200,10 @@ export const locations: Record<string, LocationData> = {
       }
     ],
     services: [
-      "Uitzenden voor piekdrukte",
-      "Detachering voor langere projecten",
-      "Recruitment voor vaste posities",
-      "Evenementen & beurzen personeel"
+      { label: "Uitzenden voor piekdrukte", href: "/locaties/rotterdam/uitzenden" },
+      { label: "Detachering voor langere projecten", href: "/locaties/rotterdam/detachering" },
+      { label: "Recruitment voor vaste posities", href: "/diensten/recruitment" },
+      { label: "Evenementen & beurzen personeel", href: "/diensten" }
     ],
     functions: [
       "Barista's & bartenders",

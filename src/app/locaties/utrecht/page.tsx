@@ -105,34 +105,17 @@ export default function UtrechtPage() {
                   Onze diensten in Utrecht
                 </h3>
                 <ul className="space-y-2 text-neutral-700">
-                  <li>
-                    <Link
-                      href="/locaties/utrecht/uitzenden"
-                      className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
-                    >
-                      <span>•</span>
-                      <span className="group-hover:underline">Uitzenden voor tijdelijke inzet</span>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/locaties/utrecht/detachering"
-                      className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
-                    >
-                      <span>•</span>
-                      <span className="group-hover:underline">Detachering voor langere periode</span>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/diensten/recruitment"
-                      className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
-                    >
-                      <span>•</span>
-                      <span className="group-hover:underline">Recruitment voor vaste medewerkers</span>
-                    </Link>
-                  </li>
-                  <li>• Evenementenpersoneel</li>
+                  {location.services.map((service, index) => (
+                    <li key={index}>
+                      <Link
+                        href={service.href}
+                        className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
+                      >
+                        <span>•</span>
+                        <span className="group-hover:underline">{service.label}</span>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
                 <Link
                   href="/diensten"

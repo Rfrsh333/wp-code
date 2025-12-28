@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
-import { getLocation } from "@/data/locations";
+import { getLocation, cityOrder } from "@/data/locations";
 import Section from "@/components/Section/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import PremiumImage from "@/components/PremiumImage";
@@ -443,7 +443,7 @@ export default function CityServicePage() {
                 {service === "uitzenden" ? "Horeca uitzenden" : "Detachering"} ook beschikbaar in andere steden
               </h3>
               <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-6">
-                {["utrecht", "amsterdam", "rotterdam"]
+                {cityOrder
                   .filter((otherCity) => otherCity !== city)
                   .map((otherCity) => {
                     const otherLocation = getLocation(otherCity);
