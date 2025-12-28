@@ -13,7 +13,7 @@ const services = [
     title: "Uitzenden horeca",
     description:
       "Flexibele inzet van horecapersoneel voor piekuren, evenementen of seizoensdrukte. Snel beschikbaar en direct inzetbaar.",
-    href: "/diensten#uitzenden",
+    href: "/diensten/uitzenden",
     icon: (
       <svg
         className={styles.icon}
@@ -36,7 +36,7 @@ const services = [
     title: "Detachering horeca",
     description:
       "Structurele versterking met ervaren krachten voor langere periodes, met behoud van flexibiliteit.",
-    href: "/diensten#detachering",
+    href: "/diensten/detachering",
     icon: (
       <svg
         className={styles.icon}
@@ -59,7 +59,7 @@ const services = [
     title: "Werving en selectie",
     description:
       "Werving en selectie voor vaste functies. Wij vinden kandidaten die passen bij uw team en tempo.",
-    href: "/diensten#recruitment",
+    href: "/diensten/recruitment",
     icon: (
       <svg
         className={styles.icon}
