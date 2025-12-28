@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:redis": "node scripts/test-redis.js",
+    "optimize-images": "node scripts/optimize-images.js"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.1",
