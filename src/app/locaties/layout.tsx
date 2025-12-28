@@ -1,7 +1,7 @@
 import Breadcrumbs from "@/components/Breadcrumbs";
 import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd";
 import LocatieSubNav from "@/components/LocatieSubNav";
-import Section from "@/components/Section";
+import { Section, Container } from "@/components/Section";
 
 export default function LocatiesLayout({
   children,
@@ -11,10 +11,10 @@ export default function LocatiesLayout({
   return (
     <>
       <Section variant="white" spacing="small">
-        <Section.Container>
+        <Container>
           <Breadcrumbs />
           <LocatieSubNav />
-        </Section.Container>
+        </Container>
       </Section>
       <LocalBusinessJsonLd />
       {children}
