@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { blogArticles } from '@/data/blogArticles'
+import { cityOrder } from '@/data/locations'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://toptalentjobs.nl'
@@ -93,18 +94,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/locaties/utrecht`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/locaties/amsterdam`,
-      lastModified: contentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
       url: `${baseUrl}/voorwaarden`,
       lastModified: contentDate,
       changeFrequency: 'yearly',
@@ -124,6 +113,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
+  // Location pages - dynamisch gegenereerd
+  const locationPages = cityOrder.map((city) => ({
+    url: `${baseUrl}/locaties/${city}`,
+    lastModified: contentDate,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
+
   // Blog articles
   const blogPages = Object.keys(blogArticles).map((slug) => ({
     url: `${baseUrl}/blog/${slug}`,
@@ -132,5 +129,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
-  return [...staticPages, ...blogPages]
+  return [...staticPages, ...locationPages, ...blogPages]
 }

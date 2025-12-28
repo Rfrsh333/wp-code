@@ -1,93 +1,62 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-const BASE_URL = "https://toptalentjobs.nl";
-
-const LABELS: Record<string, string> = {
-  locaties: "Locaties",
-  uitzenden: "Uitzenden",
-  detachering: "Detachering",
-};
-
-function toTitleCase(value: string) {
-  return value
-    .split("-")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+export interface BreadcrumbItem {
+  label: string;
+  href: string;
 }
 
-function buildCrumbs(pathname: string) {
-  const segments = pathname.split("/").filter(Boolean);
-  const crumbs: { name: string; href: string }[] = [
-    { name: "Home", href: "/" },
-  ];
-
-  if (segments.length === 0 || segments[0] !== "locaties") {
-    return crumbs;
-  }
-
-  crumbs.push({ name: LABELS.locaties, href: "/locaties" });
-
-  if (segments[1]) {
-    const city = segments[1];
-    crumbs.push({ name: toTitleCase(city), href: `/locaties/${city}` });
-  }
-
-  if (segments[2]) {
-    const leaf = segments[2];
-    crumbs.push({ name: LABELS[leaf] || toTitleCase(leaf), href: pathname });
-  }
-
-  return crumbs;
+interface BreadcrumbsProps {
+  items: BreadcrumbItem[];
 }
 
-function buildJsonLd(pathname: string) {
-  const crumbs = buildCrumbs(pathname);
+export default function Breadcrumbs({ items }: BreadcrumbsProps) {
+  return (
+    <nav aria-label="Breadcrumb" className="mb-6">
+      <ol className="flex items-center gap-2 text-sm text-neutral-600">
+        {items.map((item, index) => (
+          <li key={index} className="flex items-center gap-2">
+            {index > 0 && (
+              <svg
+                className="w-4 h-4 text-neutral-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            )}
+            {index === items.length - 1 ? (
+              <span className="text-neutral-900 font-medium">{item.label}</span>
+            ) : (
+              <Link
+                href={item.href}
+                className="hover:text-[#F97316] transition-colors"
+              >
+                {item.label}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+// Helper function to generate breadcrumb schema
+export function generateBreadcrumbSchema(items: BreadcrumbItem[]) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: crumbs.map((crumb, index) => ({
+    itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      name: crumb.name,
-      item: crumb.href === "/" ? BASE_URL : `${BASE_URL}${crumb.href}`,
+      name: item.label,
+      item: `https://toptalentjobs.nl${item.href}`,
     })),
   };
-}
-
-export default function Breadcrumbs() {
-  const pathname = usePathname() || "/";
-  const crumbs = buildCrumbs(pathname);
-  const breadcrumbSchema = buildJsonLd(pathname);
-
-  return (
-    <>
-      <nav aria-label="Breadcrumb" className="text-xs sm:text-sm text-neutral-600">
-        <ol className="flex flex-wrap items-center gap-2">
-          {crumbs.map((crumb, index) => {
-            const isLast = index === crumbs.length - 1;
-            return (
-              <li key={crumb.href} className="flex items-center gap-2">
-                {isLast ? (
-                  <span className="text-[#F97316] font-semibold">{crumb.name}</span>
-                ) : (
-                  <Link href={crumb.href} className="hover:text-[#F97316] transition-colors">
-                    {crumb.name}
-                  </Link>
-                )}
-                {!isLast && <span className="text-neutral-400">›</span>}
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-    </>
-  );
 }

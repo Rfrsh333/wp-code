@@ -1,77 +1,96 @@
-"use client";
-
 import Link from "next/link";
-import FadeIn from "@/components/animations/FadeIn";
-import { Section, Container } from "@/components/Section";
+import { getOtherLocations } from "@/data/locations";
 
-type RelatedLocationsProps = {
-  currentCity: "amsterdam" | "utrecht" | "rotterdam";
-  service: "uitzenden" | "detachering";
-};
+interface RelatedLocationsProps {
+  currentSlug: string;
+}
 
-const CITIES = ["amsterdam", "utrecht", "rotterdam"] as const;
+export default function RelatedLocations({ currentSlug }: RelatedLocationsProps) {
+  const otherLocations = getOtherLocations(currentSlug);
 
-const CITY_LABELS: Record<(typeof CITIES)[number], string> = {
-  amsterdam: "Amsterdam",
-  utrecht: "Utrecht",
-  rotterdam: "Rotterdam",
-};
-
-const DESCRIPTIONS = {
-  uitzenden: {
-    amsterdam: "Tijdelijke inzet voor drukke locaties in en rond Amsterdam.",
-    utrecht: "Tijdelijke inzet voor restaurants, hotels en events in Utrecht.",
-    rotterdam: "Flexibele inzet voor havengebied, events en zakelijke horeca.",
-  },
-  detachering: {
-    amsterdam: "Structurele bezetting voor hotels, events en locaties in Amsterdam.",
-    utrecht: "Structurele bezetting voor restaurants, hotels en events in Utrecht.",
-    rotterdam: "Vaste krachten voor zakelijke horeca, events en piekdrukte.",
-  },
-} satisfies Record<
-  RelatedLocationsProps["service"],
-  Record<(typeof CITIES)[number], string>
->;
-
-export default function RelatedLocations({ currentCity, service }: RelatedLocationsProps) {
-  const items = CITIES.filter((city) => city !== currentCity).map((city) => ({
-    href: `/locaties/${city}/${service}`,
-    title:
-      service === "detachering"
-        ? `Detachering ${CITY_LABELS[city]}`
-        : `Horeca uitzenden ${CITY_LABELS[city]}`,
-    description: DESCRIPTIONS[service][city],
-  }));
+  if (otherLocations.length === 0) {
+    return null;
+  }
 
   return (
-    <Section variant="tinted" spacing="default">
-      <Container>
-        <FadeIn>
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
-              Ook actief in deze steden
-            </h2>
-            <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
-              {service === "detachering"
-                ? "Detachering in andere steden met dezelfde aanpak."
-                : "Horeca uitzenden in andere steden met dezelfde aanpak."}
-            </p>
-          </div>
-        </FadeIn>
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {items.map((item, index) => (
-            <FadeIn key={item.href} delay={0.1 * index}>
-              <Link
-                href={item.href}
-                className="block bg-white rounded-2xl p-6 border border-neutral-100 shadow-sm hover:shadow-md transition-shadow"
+    <section className="mt-16 pt-12 border-t border-neutral-200">
+      <div className="text-center mb-8">
+        <h3 className="text-2xl font-bold text-neutral-900 mb-3">
+          Ook actief in andere regio's
+        </h3>
+        <p className="text-neutral-600">
+          Bekijk onze diensten in andere steden
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {otherLocations.map((location) => (
+          <Link
+            key={location.slug}
+            href={`/locaties/${location.slug}`}
+            className="group rounded-2xl border border-neutral-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-[#F97316]/40 hover:shadow-lg"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                  {location.name}
+                </h4>
+                <p className="text-neutral-600 text-sm mb-3">
+                  {location.description.substring(0, 120)}...
+                </p>
+                <div className="flex items-center gap-2 text-sm text-neutral-500">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>{location.serviceAreas.slice(0, 3).join(", ")}</span>
+                </div>
+              </div>
+              <svg
+                className="w-6 h-6 text-[#F97316] flex-shrink-0 group-hover:translate-x-1 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">{item.title}</h3>
-                <p className="text-neutral-600 text-sm">{item.description}</p>
-              </Link>
-            </FadeIn>
-          ))}
-        </div>
-      </Container>
-    </Section>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-neutral-100">
+              <div className="flex gap-4 text-xs text-neutral-500">
+                <span>🍽️ {location.statistics.restaurants}+ restaurants</span>
+                <span>🏨 {location.statistics.hotels}+ hotels</span>
+                <span>🎉 {location.statistics.events}+ events</span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="text-center mt-8">
+        <Link
+          href="/locaties"
+          className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:underline"
+        >
+          Bekijk alle locaties
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </Link>
+      </div>
+    </section>
   );
 }
