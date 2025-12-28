@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Section from "@/components/Section/Section";
+import LocatieSubNav from "@/components/LocatieSubNav";
 import { getLocation } from "@/data/locations";
 
 export default function UtrechtPage() {
@@ -21,6 +22,10 @@ export default function UtrechtPage() {
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                 <Link href="/locaties">Locaties</Link> › Utrecht
               </span>
+
+              {/* Sub-navigatie */}
+              <LocatieSubNav city="utrecht" />
+
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
                 Horeca personeel Utrecht
               </h1>

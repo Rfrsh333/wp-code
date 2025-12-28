@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { notFound } from "next/navigation";
 import { getLocation } from "@/data/locations";
 import Section from "@/components/Section/Section";
+import LocatieSubNav from "@/components/LocatieSubNav";
 import RelatedLocations from "@/components/RelatedLocations";
 
 export default function CityPage() {
@@ -42,6 +43,10 @@ export default function CityPage() {
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                 <Link href="/locaties">Locaties</Link> › {location.name}
               </span>
+
+              {/* Sub-navigatie */}
+              <LocatieSubNav city={city} />
+
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
                 Horeca personeel {location.name}
               </h1>
