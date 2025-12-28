@@ -1,10 +1,8 @@
-"use client";
-
 import Link from "next/link";
-import { useParams, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getLocation, cityOrder } from "@/data/locations";
 import Section from "@/components/Section/Section";
-import FadeIn from "@/components/animations/FadeIn";
+import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 import FAQ from "@/components/FAQ";
 import LocatieSubNav from "@/components/LocatieSubNav";
@@ -176,11 +174,15 @@ const ctaContent = {
   }
 };
 
+interface PageProps {
+  params: Promise<{
+    city: string;
+    service: string;
+  }>;
+}
 
-export default function CityServicePage() {
-  const params = useParams();
-  const city = params.city as string;
-  const service = params.service as string;
+export default async function CityServicePage({ params }: PageProps) {
+  const { city, service } = await params;
   const location = getLocation(city);
 
   if (!location || !validServices.includes(service)) {
@@ -209,7 +211,7 @@ export default function CityServicePage() {
       <Section variant="white" spacing="large">
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <FadeIn direction="left">
+            <ClientAnimationWrapper direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                   <Link href="/locaties">Locaties</Link> › <Link href={`/locaties/${city}`}>{location.name}</Link> › {serviceLabels[service as keyof typeof serviceLabels]}
@@ -245,9 +247,9 @@ export default function CityServicePage() {
                   </Link>
                 </div>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
-            <FadeIn direction="right" delay={0.2}>
+            <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
                   src={hero.image}
@@ -256,7 +258,7 @@ export default function CityServicePage() {
                   height={480}
                 />
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -265,7 +267,7 @@ export default function CityServicePage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div className="max-w-4xl mx-auto">
-            <FadeIn>
+            <ClientAnimationWrapper>
               <div className="text-center mb-12">
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                   {service === "uitzenden" ? `Horeca uitzenden in ${location.name}` : `Detachering in ${location.name}`}
@@ -274,29 +276,29 @@ export default function CityServicePage() {
                   {whatIs.intro}
                 </p>
               </div>
-            </FadeIn>
+            </ClientAnimationWrapper>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {service === "uitzenden"
                 ? (whatIs as typeof whatIsContent.uitzenden.utrecht).examples.map((example, i) => (
-                    <FadeIn key={i} delay={0.1 * i}>
+                    <ClientAnimationWrapper key={i} delay={0.1 * i}>
                       <div className="bg-white rounded-xl p-6 border border-neutral-100">
                         <div className="flex items-start gap-3">
                           <span className="text-[#F97316] text-xl mt-1">✓</span>
                           <p className="text-neutral-700">{example}</p>
                         </div>
                       </div>
-                    </FadeIn>
+                    </ClientAnimationWrapper>
                   ))
                 : (whatIs as typeof whatIsContent.detachering.utrecht).benefits.map((benefit, i) => (
-                    <FadeIn key={i} delay={0.1 * i}>
+                    <ClientAnimationWrapper key={i} delay={0.1 * i}>
                       <div className="bg-white rounded-xl p-6 border border-neutral-100">
                         <div className="flex items-start gap-3">
                           <span className="text-[#F97316] text-xl mt-1">✓</span>
                           <p className="text-neutral-700">{benefit}</p>
                         </div>
                       </div>
-                    </FadeIn>
+                    </ClientAnimationWrapper>
                   ))
               }
             </div>
@@ -307,7 +309,7 @@ export default function CityServicePage() {
       {/* WANNEER/SCENARIO - WHITE */}
       <Section variant="white" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 {service === "uitzenden"
@@ -322,16 +324,16 @@ export default function CityServicePage() {
                 }
               </p>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {when.map((item, i) => (
-              <FadeIn key={i} delay={0.1 * i}>
+              <ClientAnimationWrapper key={i} delay={0.1 * i}>
                 <div className={`bg-gradient-to-br ${item.color} rounded-2xl p-8 border border-neutral-100`}>
                   <h3 className="text-xl font-bold text-neutral-900 mb-2">{item.scenario}</h3>
                   <p className="text-neutral-600">{item.description}</p>
                 </div>
-              </FadeIn>
+              </ClientAnimationWrapper>
             ))}
           </div>
         </Section.Container>
@@ -340,7 +342,7 @@ export default function CityServicePage() {
       {/* ZO WERKT HET - TINTED */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 Zo werkt {service} in {location.name}
@@ -349,7 +351,7 @@ export default function CityServicePage() {
                 Van aanvraag tot inzet: een helder en snel proces.
               </p>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
 
           <div className="max-w-4xl mx-auto">
             <div className="relative">
@@ -363,7 +365,7 @@ export default function CityServicePage() {
                   { step: "3", title: "Inzet", description: "Personeel start op uw locatie" },
                   { step: "4", title: "Nazorg", description: "Wij blijven betrokken en evalueren" },
                 ].map((item, i) => (
-                  <FadeIn key={i} delay={0.15 * i}>
+                  <ClientAnimationWrapper key={i} delay={0.15 * i}>
                     <div className="text-center relative">
                       <div className="w-14 h-14 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 relative z-10">
                         {item.step}
@@ -371,7 +373,7 @@ export default function CityServicePage() {
                       <h3 className="font-bold text-neutral-900 mb-2">{item.title}</h3>
                       <p className="text-neutral-600 text-sm">{item.description}</p>
                     </div>
-                  </FadeIn>
+                  </ClientAnimationWrapper>
                 ))}
               </div>
             </div>
@@ -382,16 +384,16 @@ export default function CityServicePage() {
       {/* FAQ - TINTED */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <FAQ items={faqs} />
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
 
       {/* CTA - WHITE */}
       <Section variant="white" spacing="large">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -430,14 +432,14 @@ export default function CityServicePage() {
                 </div>
               </div>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
 
       {/* RELATED CITIES - WHITE */}
       <Section variant="white" spacing="default">
         <Section.Container>
-          <FadeIn>
+          <ClientAnimationWrapper>
             <div className="border-t border-neutral-200 pt-8">
               <h3 className="text-2xl font-bold text-neutral-900 mb-6 text-center">
                 {service === "uitzenden" ? "Horeca uitzenden" : "Detachering"} ook beschikbaar in andere steden
@@ -476,7 +478,7 @@ export default function CityServicePage() {
                 </Link>
               </div>
             </div>
-          </FadeIn>
+          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
     </>
