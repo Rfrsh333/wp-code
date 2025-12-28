@@ -4,6 +4,8 @@ import Link from "next/link";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import PremiumImage from "@/components/PremiumImage";
+import FaqJsonLd from "@/components/FaqJsonLd";
+import RelatedLocations from "@/components/RelatedLocations";
 
 export default function DetacheringAmsterdamPage() {
   return (
@@ -141,11 +143,21 @@ export default function DetacheringAmsterdamPage() {
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
                 Waarom TopTalent in Amsterdam
               </h2>
-              <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
-                Wij kennen de stad, leveren snel inzetbare medewerkers en zijn gewend
-                aan hoge volumes en wisselende bezetting. Bekijk{" "}
-                <Link href="/diensten/detachering">onze detacheringsdienst</Link>.
-              </p>
+              <div className="bg-white rounded-2xl p-8 md:p-10 border border-neutral-100 shadow-sm max-w-3xl mx-auto">
+                <p className="text-lg text-neutral-600">
+                  Wij kennen de stad, leveren snel inzetbare medewerkers en zijn gewend
+                  aan hoge volumes en wisselende bezetting. Bekijk{" "}
+                  <Link href="/diensten/detachering">onze detacheringsdienst</Link>.
+                </p>
+                <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center text-sm font-medium">
+                  <Link href="/locaties/amsterdam" className="text-[#F97316] hover:underline">
+                    Terug naar locatie Amsterdam
+                  </Link>
+                  <Link href="/diensten/detachering" className="text-[#F97316] hover:underline">
+                    Bekijk detachering
+                  </Link>
+                </div>
+              </div>
             </div>
           </FadeIn>
         </Section.Container>
@@ -189,6 +201,9 @@ export default function DetacheringAmsterdamPage() {
           </FadeIn>
         </Section.Container>
       </Section>
+
+      <RelatedLocations currentCity="amsterdam" service="detachering" />
+      <FaqJsonLd city="Amsterdam" service="detachering" />
     </>
   );
 }

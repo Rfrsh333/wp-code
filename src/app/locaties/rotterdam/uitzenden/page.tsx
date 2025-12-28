@@ -4,6 +4,8 @@ import Link from "next/link";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import PremiumImage from "@/components/PremiumImage";
+import FaqJsonLd from "@/components/FaqJsonLd";
+import RelatedLocations from "@/components/RelatedLocations";
 
 export default function UitzendenRotterdamPage() {
   return (
@@ -166,6 +168,9 @@ export default function UitzendenRotterdamPage() {
           </FadeIn>
         </Section.Container>
       </Section>
+
+      <RelatedLocations currentCity="rotterdam" service="uitzenden" />
+      <FaqJsonLd city="Rotterdam" service="uitzenden" />
     </>
   );
 }

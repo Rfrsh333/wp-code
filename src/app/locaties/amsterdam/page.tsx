@@ -81,6 +81,26 @@ export default function AmsterdamPage() {
           </div>
         </div>
 
+        <div className="bg-neutral-50 rounded-2xl p-8 mb-12 border border-neutral-200">
+          <h3 className="text-2xl font-bold text-neutral-900 mb-6">Diensten in Amsterdam</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Link
+              href="/locaties/amsterdam/uitzenden"
+              className="block bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <h4 className="text-lg font-semibold text-neutral-900 mb-2">Uitzenden</h4>
+              <p className="text-neutral-600 text-sm">Tijdelijke inzet voor piekmomenten en events.</p>
+            </Link>
+            <Link
+              href="/locaties/amsterdam/detachering"
+              className="block bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <h4 className="text-lg font-semibold text-neutral-900 mb-2">Detachering</h4>
+              <p className="text-neutral-600 text-sm">Vaste krachten voor structurele bezetting.</p>
+            </Link>
+          </div>
+        </div>
+
         <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl p-8 text-white text-center">
           <h2 className="text-2xl font-bold mb-4">Personeel nodig in Amsterdam?</h2>
           <p className="mb-6 text-white/90">
