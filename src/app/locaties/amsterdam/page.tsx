@@ -47,8 +47,18 @@ export default function AmsterdamPage() {
           <div className="bg-white rounded-xl p-6 border border-neutral-200">
             <h3 className="text-xl font-bold text-neutral-900 mb-3">Onze diensten in Amsterdam</h3>
             <ul className="space-y-2 text-neutral-700">
-              <li>• Uitzenden voor tijdelijke inzet</li>
-              <li>• Detachering voor langere periode</li>
+              <li>
+                •{" "}
+                <Link href="/locaties/amsterdam/uitzenden" className="hover:underline">
+                  Uitzenden voor tijdelijke inzet
+                </Link>
+              </li>
+              <li>
+                •{" "}
+                <Link href="/locaties/amsterdam/detachering" className="hover:underline">
+                  Detachering voor langere periode
+                </Link>
+              </li>
               <li>• Recruitment voor vaste medewerkers</li>
               <li>• Evenementen & festivals personeel</li>
             </ul>

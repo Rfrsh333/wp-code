@@ -118,6 +118,9 @@ export default function Footer() {
               <Link href="/locaties/amsterdam" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Amsterdam
               </Link>
+              <Link href="/locaties/rotterdam" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Rotterdam
+              </Link>
             </nav>
           </div>
 
