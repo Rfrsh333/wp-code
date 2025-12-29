@@ -242,6 +242,7 @@ export async function POST(request: NextRequest) {
       werktijden: data.werktijden,
       locatie: data.locatie,
       opmerkingen: data.opmerkingen || null,
+      status: 'nieuw', // BELANGRIJK: status voor dashboard
       // Lead tracking
       lead_source: data.leadSource || 'website',
       campaign_name: data.campaignName || null,
