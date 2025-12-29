@@ -79,15 +79,15 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay2}`}
             >
-              Binnen 24 uur{" "}
+              Stop{" "}
               <span
                 className={`${styles.highlight} ${
                   highlightAnimated ? styles.highlightAnimated : ""
                 }`}
               >
-                ervaren
+                omzetverlies
               </span>{" "}
-              horecapersoneel op de vloer.
+              door personeelsuitval — extra horecapersoneel binnen 24 u
             </h1>
 
             {/* Subtext */}
@@ -96,8 +96,7 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay3}`}
             >
-              Ziekmelding, piekdrukte of last-minute uitval? Wij leveren gescreend
-              horecapersoneel dat direct meedraait - zonder gedoe.
+              Geen paniek meer bij ziekte of last-minute uitval. Wij hebben gescreend personeel klaarstaan.
             </p>
 
             {/* CTA Buttons */}
@@ -107,11 +106,11 @@ export default function Hero() {
               } ${styles.delay4}`}
             >
               <Link href="/personeel-aanvragen" className={styles.ctaPrimary}>
-                Vraag personeel aan
+                Bekijk hoeveel personeel ik kan krijgen
                 <ArrowIcon />
               </Link>
-              <Link href="/inschrijven" className={styles.ctaSecondary}>
-                Ik zoek werk
+              <Link href="/contact" className={styles.ctaSecondary}>
+                Laat mij direct bellen door een expert
               </Link>
             </div>
             <p className="text-sm text-neutral-500 mb-6 tracking-wide">
