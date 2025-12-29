@@ -34,7 +34,7 @@ export default function KPIBar() {
   ];
 
   return (
-    <section className="py-6 bg-gradient-to-r from-green-50 via-orange-50 to-green-50 border-y border-neutral-200 -mt-16 md:-mt-20">
+    <section className="py-6 bg-gradient-to-r from-green-50 via-orange-50 to-green-50 border-y border-neutral-200 -mt-20 md:-mt-24 relative z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
