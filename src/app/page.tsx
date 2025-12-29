@@ -75,11 +75,11 @@ export default function Home() {
       {/* KPI Bar - Above the fold */}
       <KPIBar />
 
-      {/* Service Banner - Premium Marquee */}
-      <MarqueeBanner />
-
       {/* How We Work - Outcome-driven steps */}
       <HowWeWorkCarousel />
+
+      {/* Service Banner - Premium Marquee (moved after first content section for better visual separation) */}
+      <MarqueeBanner />
 
       {/* Why TopTalent - Tinted background */}
       <WhyTopTalent />
