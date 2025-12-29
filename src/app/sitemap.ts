@@ -45,6 +45,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.9,
     },
+    {
+      url: `${baseUrl}/home2`,
+      lastModified: contentDate,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
   ]
 
   // Location overview pages

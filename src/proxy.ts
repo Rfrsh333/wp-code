@@ -32,6 +32,7 @@ export function proxy(request: NextRequest) {
 
   const isIndexablePath =
     normalizedPath === "/" ||
+    normalizedPath === "/home2" ||
     normalizedPath === "/diensten" ||
     normalizedPath === "/diensten/uitzenden" ||
     normalizedPath === "/diensten/detachering" ||
