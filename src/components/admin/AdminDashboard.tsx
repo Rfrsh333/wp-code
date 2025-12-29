@@ -130,6 +130,17 @@ export default function AdminDashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
+  // Helper to get auth headers for admin API calls
+  const getAuthHeaders = async (): Promise<HeadersInit> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token
+      ? {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json"
+        }
+      : { "Content-Type": "application/json" };
+  };
+
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -148,7 +159,7 @@ export default function AdminDashboard() {
     if (confirm(`Weet je zeker dat je ${selectedIds.size} items wilt verwijderen?`)) {
       await fetch("/api/admin/data", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ action: "delete_many", table, data: { ids: Array.from(selectedIds) } }),
       });
       setSelectedIds(new Set());
@@ -166,12 +177,18 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setIsLoading(true);
 
+    // Get session token for admin API auth
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: HeadersInit = session?.access_token
+      ? { "Authorization": `Bearer ${session.access_token}` }
+      : {};
+
     // Fetch all data via admin API (bypasses RLS)
     const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes] = await Promise.all([
-      fetch("/api/admin/data?table=personeel_aanvragen").then(r => r.json()),
-      fetch("/api/admin/data?table=inschrijvingen").then(r => r.json()),
-      fetch("/api/admin/data?table=contact_berichten").then(r => r.json()),
-      fetch("/api/admin/data?table=calculator_leads").then(r => r.json()),
+      fetch("/api/admin/data?table=personeel_aanvragen", { headers }).then(r => r.json()),
+      fetch("/api/admin/data?table=inschrijvingen", { headers }).then(r => r.json()),
+      fetch("/api/admin/data?table=contact_berichten", { headers }).then(r => r.json()),
+      fetch("/api/admin/data?table=calculator_leads", { headers }).then(r => r.json()),
     ]);
 
     if (aanvragenRes.data) setAanvragen(aanvragenRes.data);
@@ -221,7 +238,7 @@ export default function AdminDashboard() {
   const updateStatus = async (table: string, id: string, status: Status) => {
     await fetch("/api/admin/data", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await getAuthHeaders(),
       body: JSON.stringify({ action: "update", table, id, data: { status } }),
     });
     fetchData();
@@ -232,7 +249,7 @@ export default function AdminDashboard() {
     if (confirm("Weet je zeker dat je dit item wilt verwijderen?")) {
       await fetch("/api/admin/data", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ action: "delete", table, id }),
       });
       fetchData();
@@ -1311,7 +1328,7 @@ export default function AdminDashboard() {
                         const newValue = !(selectedItem as CalculatorLead).contacted;
                         await fetch("/api/admin/data", {
                           method: "POST",
-                          headers: { "Content-Type": "application/json" },
+                          headers: await getAuthHeaders(),
                           body: JSON.stringify({
                             action: "update",
                             table: "calculator_leads",
