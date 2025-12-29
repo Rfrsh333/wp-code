@@ -6,7 +6,6 @@ import WhyTopTalent from "@/components/WhyTopTalent";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 import MarqueeBanner from "@/components/MarqueeBanner";
 import KPIBar from "@/components/KPIBar";
-import TrustBadges from "@/components/TrustBadges";
 import TestimonialCarousel from "@/components/TestimonialCarousel";
 import FAQObjections from "@/components/FAQObjections";
 import DynamicCTA from "@/components/DynamicCTA";
@@ -81,9 +80,6 @@ export default function Home() {
 
       {/* How We Work - Outcome-driven steps */}
       <HowWeWorkCarousel />
-
-      {/* Trust Badges */}
-      <TrustBadges />
 
       {/* Why TopTalent - Tinted background */}
       <WhyTopTalent />
