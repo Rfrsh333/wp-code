@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { basisTarieven } from "@/lib/calculator/tarieven";
 
@@ -26,6 +26,12 @@ interface FormData {
   // Stap 4: Extra informatie
   locatie: string;
   opmerkingen: string;
+  // Lead tracking
+  leadSource?: string;
+  campaignName?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
 }
 
 const initialFormData: FormData = {
@@ -118,8 +124,27 @@ export default function PersoneelAanvragenWizard() {
   const [direction, setDirection] = useState(1);
   const { executeRecaptcha } = useRecaptcha();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const totalSteps = 4;
+
+  // Read URL parameters for lead source tracking
+  useEffect(() => {
+    const source = searchParams.get('source') || 'website';
+    const campaign = searchParams.get('campaign') || '';
+    const utmSource = searchParams.get('utm_source') || '';
+    const utmMedium = searchParams.get('utm_medium') || '';
+    const utmCampaign = searchParams.get('utm_campaign') || '';
+
+    setFormData(prev => ({
+      ...prev,
+      leadSource: source,
+      campaignName: campaign,
+      utmSource: utmSource,
+      utmMedium: utmMedium,
+      utmCampaign: utmCampaign,
+    }));
+  }, [searchParams]);
 
   const updateField = (field: keyof FormData, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

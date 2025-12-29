@@ -21,6 +21,12 @@ interface FormData {
   locatie: string;
   opmerkingen: string;
   recaptchaToken?: string;
+  // Lead tracking
+  leadSource?: string;
+  campaignName?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
 }
 
 const contractTypeLabels: Record<string, string> = {
@@ -236,6 +242,12 @@ export async function POST(request: NextRequest) {
       werktijden: data.werktijden,
       locatie: data.locatie,
       opmerkingen: data.opmerkingen || null,
+      // Lead tracking
+      lead_source: data.leadSource || 'website',
+      campaign_name: data.campaignName || null,
+      utm_source: data.utmSource || null,
+      utm_medium: data.utmMedium || null,
+      utm_campaign: data.utmCampaign || null,
     });
 
     if (dbError) {

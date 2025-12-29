@@ -29,6 +29,12 @@ interface PersoneelAanvraag {
   locatie: string;
   opmerkingen: string | null;
   status: Status;
+  // Lead tracking
+  lead_source?: string;
+  campaign_name?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
 }
 
 interface Inschrijving {
@@ -50,6 +56,9 @@ interface Inschrijving {
   beschikbaarheid?: { [key: string]: string[] };
   beschikbaar_vanaf?: string;
   max_uren_per_week?: number;
+  // Lead tracking
+  lead_source?: string;
+  campaign_name?: string;
 }
 
 interface ContactBericht {
@@ -61,6 +70,9 @@ interface ContactBericht {
   onderwerp: string;
   bericht: string;
   status: Status;
+  // Lead tracking
+  lead_source?: string;
+  campaign_name?: string;
 }
 
 interface CalculatorLead {
@@ -100,6 +112,8 @@ export default function AdminDashboard() {
   const [zoekQuery, setZoekQuery] = useState("");
   const [zoekResultaten, setZoekResultaten] = useState<{ medewerkers: any[]; diensten: any[]; klanten: any[] } | null>(null);
   const [zoekOpen, setZoekOpen] = useState(false);
+  const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
+  const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [stats, setStats] = useState<Stats>({
     aanvragen: { total: 0, nieuw: 0 },
     inschrijvingen: { total: 0, nieuw: 0 },
@@ -567,15 +581,59 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Personeel Aanvragen</h2>
-                  <button
-                    onClick={() => exportToCSV(aanvragen, "personeel_aanvragen")}
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Exporteer CSV
-                  </button>
+                  <div className="flex items-center gap-4">
+                    {/* Lead Source Filter */}
+                    <select
+                      value={leadSourceFilter}
+                      onChange={(e) => setLeadSourceFilter(e.target.value)}
+                      className="px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] bg-white text-neutral-900"
+                    >
+                      <option value="all">Alle bronnen</option>
+                      <option value="website">Website</option>
+                      <option value="outreach">Cold Outreach</option>
+                      <option value="google">Google Ads</option>
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="other">Overig</option>
+                    </select>
+
+                    {/* Campaign Filter */}
+                    {(() => {
+                      const campaigns = Array.from(new Set(
+                        aanvragen
+                          .map(a => a.campaign_name)
+                          .filter(Boolean)
+                      )).sort();
+                      return campaigns.length > 0 ? (
+                        <select
+                          value={campaignFilter}
+                          onChange={(e) => setCampaignFilter(e.target.value)}
+                          className="px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] bg-white text-neutral-900"
+                        >
+                          <option value="all">Alle campagnes</option>
+                          {campaigns.map(campaign => (
+                            <option key={campaign} value={campaign}>{campaign}</option>
+                          ))}
+                        </select>
+                      ) : null;
+                    })()}
+
+                    <button
+                      onClick={() => exportToCSV(
+                        aanvragen.filter(a =>
+                          (leadSourceFilter === "all" || a.lead_source === leadSourceFilter) &&
+                          (campaignFilter === "all" || a.campaign_name === campaignFilter)
+                        ),
+                        "personeel_aanvragen"
+                      )}
+                      className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Exporteer CSV
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -591,7 +649,12 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
-                      {aanvragen.map((item) => (
+                      {aanvragen
+                        .filter(a =>
+                          (leadSourceFilter === "all" || a.lead_source === leadSourceFilter) &&
+                          (campaignFilter === "all" || a.campaign_name === campaignFilter)
+                        )
+                        .map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
                           <td className="px-6 py-4">
                             <p className="font-medium text-neutral-900">{item.bedrijfsnaam}</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Section from "@/components/Section";
 import PersoneelAanvragenWizard from "@/components/forms/PersoneelAanvragenWizard";
 
@@ -28,7 +29,16 @@ export default function PersoneelAanvragenPage() {
             </p>
           </div>
 
-          <PersoneelAanvragenWizard />
+          <Suspense fallback={
+            <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center max-w-3xl mx-auto">
+              <div className="animate-pulse">
+                <div className="h-8 bg-neutral-200 rounded w-3/4 mx-auto mb-4"></div>
+                <div className="h-4 bg-neutral-200 rounded w-1/2 mx-auto"></div>
+              </div>
+            </div>
+          }>
+            <PersoneelAanvragenWizard />
+          </Suspense>
 
           {/* Trust Indicators */}
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
