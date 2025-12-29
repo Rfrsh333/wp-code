@@ -44,14 +44,14 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
                 {/* Content */}
                 <div className="relative z-10">
                   {/* Quote icon */}
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                     </svg>
                   </div>
 
                   {/* Context tag */}
-                  <div className="inline-flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full mb-4 border border-orange-100">
+                  <div className="inline-flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full mb-3 border border-orange-100">
                     <span className="w-1.5 h-1.5 bg-[#F97316] rounded-full"></span>
                     <span className="text-xs font-medium text-[#F97316] uppercase tracking-wide">
                       {item.context}
@@ -59,13 +59,13 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
                   </div>
 
                   {/* Result quote */}
-                  <p className="text-lg font-medium text-neutral-900 mb-6 leading-relaxed">
+                  <p className="text-base font-medium text-neutral-900 mb-5 leading-relaxed">
                     "{item.result}"
                   </p>
 
                   {/* Attribution */}
-                  <div className="pt-6 border-t border-neutral-100">
-                    <p className="font-semibold text-neutral-900 mb-1">
+                  <div className="pt-5 border-t border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 text-sm">
                       {item.name}
                     </p>
                     <p className="text-sm text-neutral-600">
@@ -82,7 +82,7 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
           <div className="text-center mt-12 lg:mt-16">
             <Link
               href="/testimonials"
-              className="inline-flex items-center gap-2 bg-white text-neutral-700 px-8 py-4 rounded-xl font-semibold border-2 border-neutral-200 hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300 group shadow-sm hover:shadow-md"
+              className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#F97316] transition-colors font-medium group"
             >
               Bekijk alle ervaringen
               <svg
