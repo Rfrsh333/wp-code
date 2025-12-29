@@ -7,11 +7,38 @@ import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
 import MarqueeBanner from "@/components/MarqueeBanner";
 import KPIBar from "@/components/KPIBar";
 import TrustBadges from "@/components/TrustBadges";
-import ResultStories from "@/components/ResultStories";
+import TestimonialCarousel from "@/components/TestimonialCarousel";
 import FAQObjections from "@/components/FAQObjections";
 import DynamicCTA from "@/components/DynamicCTA";
 import { Section, Container } from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
+
+/* ==========================================================================
+   Testimonials Data
+   ========================================================================== */
+const testimonials = [
+  {
+    context: "Zomerdrukte in het restaurant",
+    result: "Binnen 24 uur extra bediening op de vloer.",
+    name: "Martijn de Vries",
+    role: "Eigenaar",
+    company: "Restaurant De Smaak",
+  },
+  {
+    context: "Hotel met wisselende roosters",
+    result: "Altijd passend personeel zonder gedoe.",
+    name: "Sophie Jansen",
+    role: "HR Manager",
+    company: "Grand Hotel Amsterdam",
+  },
+  {
+    context: "Events met piekbelasting",
+    result: "Betrouwbare teams die meteen meedraaien.",
+    name: "Rick van den Berg",
+    role: "Operations Manager",
+    company: "Catering Company",
+  },
+];
 
 /* ==========================================================================
    Industries Data
@@ -26,15 +53,15 @@ const industries = [
 ];
 
 export const metadata: Metadata = {
-  title: "Stop omzetverlies door personeelsuitval | TopTalent Horeca Uitzendbureau",
+  title: "Extra horecapersoneel binnen 24 u | Stop omzetverlies | TopTalent",
   description:
     "Geen paniek meer bij ziekte of last-minute uitval. TopTalent levert gescreend horecapersoneel binnen 24 uur voor restaurants, hotels en events in Utrecht en omstreken.",
   alternates: {
     canonical: "https://toptalentjobs.nl/",
   },
   openGraph: {
-    title: "Stop omzetverlies door personeelsuitval | TopTalent",
-    description: "Gescreend horecapersoneel binnen 24 uur. 95% van onze klanten heeft direct personeel.",
+    title: "Extra horecapersoneel binnen 24 u | TopTalent",
+    description: "Stop omzetverlies door personeelsuitval. Gescreend horecapersoneel binnen 24 uur. 95% van onze klanten heeft direct personeel.",
     type: "website",
     url: "https://toptalentjobs.nl/",
   },
@@ -64,8 +91,8 @@ export default function Home() {
       {/* Services - Tinted section */}
       <ServicesSection />
 
-      {/* Result Stories - Replacing generic testimonials */}
-      <ResultStories />
+      {/* Testimonials Section */}
+      <TestimonialCarousel testimonials={testimonials} />
 
       {/* Industries Section */}
       <Section variant="white" spacing="large">

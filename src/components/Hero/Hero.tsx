@@ -70,7 +70,7 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay1}`}
             >
-              Personeeltekort?
+              Stop omzetverlies
             </span>
 
             {/* Headline */}
@@ -79,15 +79,14 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay2}`}
             >
-              Stop{" "}
+              Extra horecapersoneel{" "}
               <span
                 className={`${styles.highlight} ${
                   highlightAnimated ? styles.highlightAnimated : ""
                 }`}
               >
-                omzetverlies
-              </span>{" "}
-              door personeelsuitval — extra horecapersoneel binnen 24 u
+                binnen 24 u
+              </span>
             </h1>
 
             {/* Subtext */}
