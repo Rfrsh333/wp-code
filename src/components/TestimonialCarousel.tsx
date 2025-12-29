@@ -37,12 +37,12 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {testimonials.map((item, index) => (
             <FadeIn key={item.name} delay={0.1 * index}>
-              <div className="bg-white rounded-2xl p-8 border border-neutral-200 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full group relative overflow-hidden">
+              <div className="bg-white rounded-2xl p-8 border border-neutral-200 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full group relative overflow-hidden flex flex-col">
                 {/* Subtle gradient accent on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl"></div>
 
                 {/* Content */}
-                <div className="relative z-10">
+                <div className="relative z-10 flex flex-col h-full">
                   {/* Quote icon */}
                   <div className="w-8 h-8 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                     <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -51,24 +51,24 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
                   </div>
 
                   {/* Context tag */}
-                  <div className="inline-flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full mb-3 border border-orange-100">
+                  <div className="inline-flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full mb-3 border border-orange-100 self-start">
                     <span className="w-1.5 h-1.5 bg-[#F97316] rounded-full"></span>
-                    <span className="text-xs font-medium text-[#F97316] uppercase tracking-wide">
+                    <span className="text-[11px] font-medium text-[#F97316] uppercase tracking-wide">
                       {item.context}
                     </span>
                   </div>
 
                   {/* Result quote */}
-                  <p className="text-base font-medium text-neutral-900 mb-5 leading-relaxed">
+                  <p className="text-base font-medium text-neutral-900 mb-auto leading-relaxed">
                     "{item.result}"
                   </p>
 
                   {/* Attribution */}
-                  <div className="pt-5 border-t border-neutral-100">
+                  <div className="pt-5 mt-5 border-t border-neutral-100">
                     <p className="font-semibold text-neutral-900 mb-1 text-sm">
                       {item.name}
                     </p>
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-xs text-neutral-600">
                       {item.role} · {item.company}
                     </p>
                   </div>
