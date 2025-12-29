@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
@@ -16,6 +16,12 @@ interface LeadFormData {
   telefoon: string;
   rol: string;
   bericht: string;
+  // Lead tracking
+  leadSource?: string;
+  campaignName?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
 }
 
 const initialFormData: LeadFormData = {
@@ -48,12 +54,31 @@ const testimonials = [
   },
 ];
 
-export default function PersoneelLandingPage() {
+function PersoneelLandingPageContent() {
   const [formData, setFormData] = useState<LeadFormData>(initialFormData);
   const [errors, setErrors] = useState<Partial<LeadFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { executeRecaptcha } = useRecaptcha();
+  const searchParams = useSearchParams();
+
+  // Read URL parameters for lead source tracking
+  useEffect(() => {
+    const source = searchParams.get('source') || 'website';
+    const campaign = searchParams.get('campaign') || '';
+    const utmSource = searchParams.get('utm_source') || '';
+    const utmMedium = searchParams.get('utm_medium') || '';
+    const utmCampaign = searchParams.get('utm_campaign') || '';
+
+    setFormData(prev => ({
+      ...prev,
+      leadSource: source,
+      campaignName: campaign,
+      utmSource: utmSource,
+      utmMedium: utmMedium,
+      utmCampaign: utmCampaign,
+    }));
+  }, [searchParams]);
 
   const updateField = (field: keyof LeadFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -102,6 +127,12 @@ export default function PersoneelLandingPage() {
           onderwerp,
           bericht,
           recaptchaToken,
+          // Lead tracking
+          leadSource: formData.leadSource,
+          campaignName: formData.campaignName,
+          utmSource: formData.utmSource,
+          utmMedium: formData.utmMedium,
+          utmCampaign: formData.utmCampaign,
         }),
       });
 
@@ -359,5 +390,34 @@ export default function PersoneelLandingPage() {
         </Section.Container>
       </Section>
     </>
+  );
+}
+
+export default function PersoneelLandingPage() {
+  return (
+    <Suspense fallback={
+      <Section variant="white" spacing="default">
+        <Section.Container>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <div className="animate-pulse">
+              <div className="h-8 bg-neutral-200 rounded w-3/4 mb-4"></div>
+              <div className="h-12 bg-neutral-200 rounded w-full mb-6"></div>
+              <div className="h-4 bg-neutral-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-neutral-200 rounded w-5/6"></div>
+            </div>
+            <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-lg animate-pulse">
+              <div className="h-6 bg-neutral-200 rounded w-1/2 mb-8"></div>
+              <div className="space-y-4">
+                <div className="h-12 bg-neutral-200 rounded"></div>
+                <div className="h-12 bg-neutral-200 rounded"></div>
+                <div className="h-12 bg-neutral-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </Section.Container>
+      </Section>
+    }>
+      <PersoneelLandingPageContent />
+    </Suspense>
   );
 }

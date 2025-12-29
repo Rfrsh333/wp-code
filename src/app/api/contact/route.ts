@@ -12,6 +12,12 @@ interface ContactFormData {
   onderwerp: string;
   bericht: string;
   recaptchaToken?: string;
+  // Lead tracking
+  leadSource?: string;
+  campaignName?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -129,6 +135,12 @@ export async function POST(request: NextRequest) {
       telefoon: data.telefoon || null,
       onderwerp: data.onderwerp,
       bericht: data.bericht,
+      // Lead tracking
+      lead_source: data.leadSource || 'website',
+      campaign_name: data.campaignName || null,
+      utm_source: data.utmSource || null,
+      utm_medium: data.utmMedium || null,
+      utm_campaign: data.utmCampaign || null,
     });
 
     if (dbError) {

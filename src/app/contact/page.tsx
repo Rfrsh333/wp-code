@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
@@ -105,12 +105,37 @@ const faqData: FAQItem[] = [
 
 const categories = ["Alle", "Voor Opdrachtgevers", "Voor Werkzoekenden", "Over TopTalent"];
 
-export default function ContactPage() {
+function ContactPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(0);
   const [activeCategory, setActiveCategory] = useState("Alle");
+  const [trackingData, setTrackingData] = useState({
+    leadSource: '',
+    campaignName: '',
+    utmSource: '',
+    utmMedium: '',
+    utmCampaign: ''
+  });
   const router = useRouter();
   const { executeRecaptcha } = useRecaptcha();
+  const searchParams = useSearchParams();
+
+  // Read URL parameters for lead source tracking
+  useEffect(() => {
+    const source = searchParams.get('source') || 'website';
+    const campaign = searchParams.get('campaign') || '';
+    const utmSource = searchParams.get('utm_source') || '';
+    const utmMedium = searchParams.get('utm_medium') || '';
+    const utmCampaign = searchParams.get('utm_campaign') || '';
+
+    setTrackingData({
+      leadSource: source,
+      campaignName: campaign,
+      utmSource: utmSource,
+      utmMedium: utmMedium,
+      utmCampaign: utmCampaign,
+    });
+  }, [searchParams]);
 
   const filteredFAQ = activeCategory === "Alle"
     ? faqData
@@ -141,6 +166,12 @@ export default function ContactPage() {
           onderwerp: formData.get("onderwerp"),
           bericht: formData.get("bericht"),
           recaptchaToken,
+          // Lead tracking
+          leadSource: trackingData.leadSource,
+          campaignName: trackingData.campaignName,
+          utmSource: trackingData.utmSource,
+          utmMedium: trackingData.utmMedium,
+          utmCampaign: trackingData.utmCampaign,
         }),
       });
 
@@ -460,5 +491,23 @@ export default function ContactPage() {
         </Section.Container>
       </Section>
     </>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={
+      <Section variant="white" spacing="default">
+        <Section.Container>
+          <div className="animate-pulse">
+            <div className="h-8 bg-neutral-200 rounded w-1/4 mx-auto mb-4"></div>
+            <div className="h-12 bg-neutral-200 rounded w-2/3 mx-auto mb-6"></div>
+            <div className="h-4 bg-neutral-200 rounded w-1/2 mx-auto"></div>
+          </div>
+        </Section.Container>
+      </Section>
+    }>
+      <ContactPageContent />
+    </Suspense>
   );
 }
