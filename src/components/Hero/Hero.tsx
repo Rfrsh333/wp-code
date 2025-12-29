@@ -114,7 +114,7 @@ export default function Hero() {
                 Ik zoek werk
               </Link>
             </div>
-            <p className="text-sm text-neutral-500 mb-6">
+            <p className="text-sm text-neutral-500 mb-6 tracking-wide">
               Reactie binnen 15 minuten tijdens openingstijden.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
