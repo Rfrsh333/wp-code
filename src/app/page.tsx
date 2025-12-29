@@ -14,25 +14,25 @@ import TestimonialCarousel from "@/components/TestimonialCarousel";
    ========================================================================== */
 const testimonials = [
   {
+    context: "Zomerdrukte in het restaurant",
+    result: "Binnen 24 uur extra bediening op de vloer.",
     name: "Martijn de Vries",
     role: "Eigenaar",
     company: "Restaurant De Smaak",
-    content: "Tijdens de drukte stonden er binnen 24 uur extra krachten op de vloer. Betrouwbaar horecapersoneel en prettig contact.",
-    image: "/images/testimonials/martijn.jpg",
   },
   {
+    context: "Hotel met wisselende roosters",
+    result: "Altijd passend personeel zonder gedoe.",
     name: "Sophie Jansen",
     role: "HR Manager",
     company: "Grand Hotel Amsterdam",
-    content: "Heldere communicatie en snel de juiste kandidaten voor ons hotel. Ze begrijpen onze planning en service-eisen.",
-    image: "/images/testimonials/sophie.jpg",
   },
   {
+    context: "Events met piekbelasting",
+    result: "Betrouwbare teams die meteen meedraaien.",
     name: "Rick van den Berg",
     role: "Operations Manager",
     company: "Catering Company",
-    content: "Voor events kunnen we op ze rekenen: flexibel, professioneel en altijd op tijd. Een fijn horeca uitzendbureau.",
-    image: "/images/testimonials/rick.jpg",
   },
 ];
 
