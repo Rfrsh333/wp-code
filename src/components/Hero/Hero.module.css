@@ -53,6 +53,8 @@
 
 .content {
   max-width: 36rem;
+  position: relative;
+  z-index: 20;
 }
 
 /* Eyebrow */
@@ -319,6 +321,7 @@
   justify-content: center;
   align-items: center;
   min-height: 400px;
+  z-index: 1;
 }
 
 @media (min-width: 1024px) {
