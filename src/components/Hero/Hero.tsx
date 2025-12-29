@@ -34,6 +34,12 @@ const ArrowIcon = () => (
 export default function Hero() {
   // Intersection observer for scroll reveals
   const [heroRef, isHeroInView] = useInView({ threshold: 0.1 });
+  const trustItems = [
+    "Binnen 24 uur inzetbaar",
+    "Gescreend op horeca-ervaring",
+    "Snelle vervanging bij uitval",
+    "Actief in meerdere regio's",
+  ];
 
   // Track if highlight animation has played
   const [highlightAnimated, setHighlightAnimated] = useState(false);
@@ -64,7 +70,7 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay1}`}
             >
-              Horeca uitzendbureau voor werkgevers
+              Personeeltekort?
             </span>
 
             {/* Headline */}
@@ -73,15 +79,15 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay2}`}
             >
-              Uw partner voor{" "}
+              Binnen 24 uur{" "}
               <span
                 className={`${styles.highlight} ${
                   highlightAnimated ? styles.highlightAnimated : ""
                 }`}
               >
-                betrouwbaar
+                ervaren
               </span>{" "}
-              horecapersoneel
+              horecapersoneel op de vloer.
             </h1>
 
             {/* Subtext */}
@@ -90,9 +96,8 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay3}`}
             >
-              Wij leveren snel inzetbaar horecapersoneel voor restaurants,
-              hotels en evenementen. Binnen 24 uur een passende bezetting
-              voor uw planning.
+              Ziekmelding, piekdrukte of last-minute uitval? Wij leveren gescreend
+              horecapersoneel dat direct meedraait - zonder gedoe.
             </p>
 
             {/* CTA Buttons */}
@@ -106,8 +111,36 @@ export default function Hero() {
                 <ArrowIcon />
               </Link>
               <Link href="/inschrijven" className={styles.ctaSecondary}>
-                Inschrijven
+                Ik zoek werk
               </Link>
+            </div>
+            <p className="text-sm text-neutral-500 mb-6">
+              Reactie binnen 15 minuten tijdens openingstijden.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {trustItems.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 text-sm font-medium text-neutral-700"
+                >
+                  <span className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </span>
+                  {item}
+                </div>
+              ))}
             </div>
 
           </div>
