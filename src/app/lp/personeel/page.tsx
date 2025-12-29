@@ -113,6 +113,11 @@ function PersoneelLandingPageContent() {
         ? formData.rol.split(/[,;\/]/).map(r => r.trim()).filter(Boolean)
         : ["Niet gespecificeerd"];
 
+      // Bereken morgen als default startdatum (landingspagina = spoed)
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const startDatumFormatted = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+
       const response = await fetch("/api/personeel-aanvragen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,17 +129,17 @@ function PersoneelLandingPageContent() {
           telefoon: formData.telefoon,
           // Personeel velden (met defaults voor landingspagina)
           typePersoneel: typePersoneel,
-          aantalPersonen: "Niet opgegeven",
+          aantalPersonen: "1-2",
           contractType: ["uitzendkracht"],
           gewenstUurtarief: "",
           // Planning velden (met defaults)
-          startDatum: "Zo snel mogelijk",
+          startDatum: startDatumFormatted, // Morgen als default
           eindDatum: "",
-          werkdagen: ["Niet gespecificeerd"],
-          werktijden: "Niet gespecificeerd",
+          werkdagen: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
+          werktijden: "Flexibel / In overleg",
           // Extra info
-          locatie: "Niet opgegeven",
-          opmerkingen: formData.bericht || "Aanvraag via landingspagina",
+          locatie: "Zie contactgegevens",
+          opmerkingen: `Via landingspagina - Spoed aanvraag\n${formData.bericht || "Geen extra opmerkingen"}`,
           recaptchaToken,
           // Lead tracking
           leadSource: formData.leadSource,
