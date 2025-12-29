@@ -107,25 +107,34 @@ function PersoneelLandingPageContent() {
     setIsSubmitting(true);
     try {
       const recaptchaToken = await executeRecaptcha("b2b_landing");
-      const onderwerp = "B2B landing - personeel aanvraag";
-      const bericht = [
-        `Bedrijfsnaam: ${formData.bedrijfsnaam}`,
-        `Rol/functies: ${formData.rol || "-"}`,
-        `Telefoon: ${formData.telefoon}`,
-        formData.bericht ? `Bericht: ${formData.bericht}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
 
-      const response = await fetch("/api/contact", {
+      // Parse rol veld naar typePersoneel array
+      const typePersoneel = formData.rol
+        ? formData.rol.split(/[,;\/]/).map(r => r.trim()).filter(Boolean)
+        : ["Niet gespecificeerd"];
+
+      const response = await fetch("/api/personeel-aanvragen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          naam: formData.naam,
+          // Basis velden
+          bedrijfsnaam: formData.bedrijfsnaam,
+          contactpersoon: formData.naam,
           email: formData.email,
           telefoon: formData.telefoon,
-          onderwerp,
-          bericht,
+          // Personeel velden (met defaults voor landingspagina)
+          typePersoneel: typePersoneel,
+          aantalPersonen: "Niet opgegeven",
+          contractType: ["uitzendkracht"],
+          gewenstUurtarief: "",
+          // Planning velden (met defaults)
+          startDatum: "Zo snel mogelijk",
+          eindDatum: "",
+          werkdagen: ["Niet gespecificeerd"],
+          werktijden: "Niet gespecificeerd",
+          // Extra info
+          locatie: "Niet opgegeven",
+          opmerkingen: formData.bericht || "Aanvraag via landingspagina",
           recaptchaToken,
           // Lead tracking
           leadSource: formData.leadSource,
