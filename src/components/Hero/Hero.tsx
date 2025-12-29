@@ -108,7 +108,7 @@ export default function Hero() {
                 Vraag personeel aan
                 <ArrowIcon />
               </Link>
-              <Link href="/ik-wil-werken" className={styles.ctaSecondary}>
+              <Link href="/inschrijven" className={styles.ctaSecondary}>
                 Ik wil werken
               </Link>
             </div>
