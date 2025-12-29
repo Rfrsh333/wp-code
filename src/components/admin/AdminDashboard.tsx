@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MedewerkersTab from "./MedewerkersTab";
@@ -146,7 +146,11 @@ export default function AdminDashboard() {
   const deleteSelected = async (table: string) => {
     if (selectedIds.size === 0) return;
     if (confirm(`Weet je zeker dat je ${selectedIds.size} items wilt verwijderen?`)) {
-      await supabase.from(table).delete().in("id", Array.from(selectedIds));
+      await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete_many", table, data: { ids: Array.from(selectedIds) } }),
+      });
       setSelectedIds(new Set());
       fetchData();
     }
@@ -162,12 +166,12 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setIsLoading(true);
 
-    // Fetch all data
+    // Fetch all data via admin API (bypasses RLS)
     const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes] = await Promise.all([
-      supabase.from("personeel_aanvragen").select("*").order("created_at", { ascending: false }),
-      supabase.from("inschrijvingen").select("*").order("created_at", { ascending: false }),
-      supabase.from("contact_berichten").select("*").order("created_at", { ascending: false }),
-      supabase.from("calculator_leads").select("*").order("created_at", { ascending: false }),
+      fetch("/api/admin/data?table=personeel_aanvragen").then(r => r.json()),
+      fetch("/api/admin/data?table=inschrijvingen").then(r => r.json()),
+      fetch("/api/admin/data?table=contact_berichten").then(r => r.json()),
+      fetch("/api/admin/data?table=calculator_leads").then(r => r.json()),
     ]);
 
     if (aanvragenRes.data) setAanvragen(aanvragenRes.data);
@@ -179,19 +183,19 @@ export default function AdminDashboard() {
     setStats({
       aanvragen: {
         total: aanvragenRes.data?.length || 0,
-        nieuw: aanvragenRes.data?.filter((a) => a.status === "nieuw").length || 0,
+        nieuw: aanvragenRes.data?.filter((a: PersoneelAanvraag) => a.status === "nieuw").length || 0,
       },
       inschrijvingen: {
         total: inschrijvingenRes.data?.length || 0,
-        nieuw: inschrijvingenRes.data?.filter((i) => i.status === "nieuw").length || 0,
+        nieuw: inschrijvingenRes.data?.filter((i: Inschrijving) => i.status === "nieuw").length || 0,
       },
       contact: {
         total: contactRes.data?.length || 0,
-        nieuw: contactRes.data?.filter((c) => c.status === "nieuw").length || 0,
+        nieuw: contactRes.data?.filter((c: ContactBericht) => c.status === "nieuw").length || 0,
       },
       calculator: {
         total: calculatorRes.data?.length || 0,
-        downloaded: calculatorRes.data?.filter((c) => c.pdf_downloaded).length || 0,
+        downloaded: calculatorRes.data?.filter((c: CalculatorLead) => c.pdf_downloaded).length || 0,
       },
     });
 
@@ -215,14 +219,22 @@ export default function AdminDashboard() {
   };
 
   const updateStatus = async (table: string, id: string, status: Status) => {
-    await supabase.from(table).update({ status }).eq("id", id);
+    await fetch("/api/admin/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update", table, id, data: { status } }),
+    });
     fetchData();
     setSelectedItem(null);
   };
 
   const deleteItem = async (table: string, id: string) => {
     if (confirm("Weet je zeker dat je dit item wilt verwijderen?")) {
-      await supabase.from(table).delete().eq("id", id);
+      await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", table, id }),
+      });
       fetchData();
       setSelectedItem(null);
     }
@@ -1297,10 +1309,16 @@ export default function AdminDashboard() {
                     <button
                       onClick={async () => {
                         const newValue = !(selectedItem as CalculatorLead).contacted;
-                        await supabase
-                          .from("calculator_leads")
-                          .update({ contacted: newValue })
-                          .eq("id", selectedItem.id);
+                        await fetch("/api/admin/data", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            action: "update",
+                            table: "calculator_leads",
+                            id: selectedItem.id,
+                            data: { contacted: newValue }
+                          }),
+                        });
                         fetchData();
                         setSelectedItem({ ...selectedItem, contacted: newValue } as CalculatorLead);
                       }}
