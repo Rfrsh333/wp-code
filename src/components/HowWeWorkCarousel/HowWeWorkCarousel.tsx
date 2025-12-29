@@ -296,7 +296,7 @@ export default function HowWeWorkCarousel({
             </h2>
 
             <p className={styles.subtitle}>
-              Snel schakelen, duidelijke afspraken en betrokken nazorg.
+              Je weet precies wanneer we leveren en wat je kunt verwachten.
             </p>
 
             {/* Dots Pagination - Desktop (under text) */}
