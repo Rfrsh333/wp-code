@@ -105,11 +105,11 @@ export default function Hero() {
               } ${styles.delay4}`}
             >
               <Link href="/personeel-aanvragen" className={styles.ctaPrimary}>
-                Bekijk hoeveel personeel ik kan krijgen
+                Vraag personeel aan
                 <ArrowIcon />
               </Link>
-              <Link href="/contact" className={styles.ctaSecondary}>
-                Laat mij direct bellen door een expert
+              <Link href="/ik-wil-werken" className={styles.ctaSecondary}>
+                Ik wil werken
               </Link>
             </div>
             <p className="text-sm text-neutral-500 mb-6 tracking-wide">
