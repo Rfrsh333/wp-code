@@ -1079,6 +1079,49 @@ export default function AdminDashboard() {
                       <p className="font-medium whitespace-pre-wrap">{(selectedItem as PersoneelAanvraag).opmerkingen}</p>
                     </div>
                   )}
+
+                  {/* Lead Tracking Info */}
+                  {((selectedItem as PersoneelAanvraag).lead_source || (selectedItem as PersoneelAanvraag).campaign_name) && (
+                    <div className="pt-4 border-t border-neutral-100 mt-4">
+                      <p className="text-sm font-semibold text-neutral-700 mb-3">📊 Lead Tracking</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        {(selectedItem as PersoneelAanvraag).lead_source && (
+                          <div>
+                            <p className="text-sm text-neutral-500">Lead Source</p>
+                            <span className="inline-block px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm font-medium">
+                              {(selectedItem as PersoneelAanvraag).lead_source}
+                            </span>
+                          </div>
+                        )}
+                        {(selectedItem as PersoneelAanvraag).campaign_name && (
+                          <div>
+                            <p className="text-sm text-neutral-500">Campaign</p>
+                            <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                              {(selectedItem as PersoneelAanvraag).campaign_name}
+                            </span>
+                          </div>
+                        )}
+                        {(selectedItem as PersoneelAanvraag).utm_source && (
+                          <div>
+                            <p className="text-sm text-neutral-500">UTM Source</p>
+                            <p className="font-medium text-neutral-600">{(selectedItem as PersoneelAanvraag).utm_source}</p>
+                          </div>
+                        )}
+                        {(selectedItem as PersoneelAanvraag).utm_medium && (
+                          <div>
+                            <p className="text-sm text-neutral-500">UTM Medium</p>
+                            <p className="font-medium text-neutral-600">{(selectedItem as PersoneelAanvraag).utm_medium}</p>
+                          </div>
+                        )}
+                        {(selectedItem as PersoneelAanvraag).utm_campaign && (
+                          <div>
+                            <p className="text-sm text-neutral-500">UTM Campaign</p>
+                            <p className="font-medium text-neutral-600">{(selectedItem as PersoneelAanvraag).utm_campaign}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
