@@ -221,13 +221,6 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
-
-    // Auto-refresh elke 30 seconden
-    const interval = setInterval(() => {
-      fetchData();
-    }, 30000); // 30 seconden
-
-    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {
@@ -482,24 +475,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-auto relative">
-        {/* Refresh Button - Floating */}
-        <button
-          onClick={() => {
-            fetchData();
-            alert("Dashboard vernieuwd! ✅");
-          }}
-          className="fixed bottom-8 right-8 bg-[#F27501] text-white p-4 rounded-full shadow-lg hover:bg-[#EA580C] transition-all duration-300 hover:scale-110 z-50 group"
-          title="Ververs dashboard"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-neutral-900 text-white text-xs px-3 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-            Ververs data
-          </span>
-        </button>
-
+      <main className="flex-1 p-8 overflow-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
