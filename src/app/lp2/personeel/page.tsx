@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Section from "@/components/Section";
 import PersoneelLandingBase from "@/components/lp/PersoneelLandingBase";
@@ -15,6 +15,12 @@ interface LeadFormData {
   telefoon: string;
   rol: string;
   bericht: string;
+  // Lead tracking
+  leadSource: string;
+  campaignName: string;
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
 }
 
 const initialFormData: LeadFormData = {
@@ -24,6 +30,12 @@ const initialFormData: LeadFormData = {
   telefoon: "",
   rol: "",
   bericht: "",
+  // Lead tracking
+  leadSource: "website",
+  campaignName: "",
+  utmSource: "",
+  utmMedium: "",
+  utmCampaign: "",
 };
 
 const testimonials = [
@@ -126,12 +138,31 @@ const highlights = [
   },
 ];
 
-export default function PersoneelLandingVariantA() {
+function PersoneelLandingVariantAContent() {
   const [formData, setFormData] = useState<LeadFormData>(initialFormData);
   const [errors, setErrors] = useState<Partial<LeadFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { executeRecaptcha } = useRecaptcha();
+
+  // Capture URL parameters for lead tracking
+  useEffect(() => {
+    const source = searchParams.get('source') || 'website';
+    const campaign = searchParams.get('campaign') || '';
+    const utmSource = searchParams.get('utm_source') || '';
+    const utmMedium = searchParams.get('utm_medium') || '';
+    const utmCampaign = searchParams.get('utm_campaign') || '';
+
+    setFormData(prev => ({
+      ...prev,
+      leadSource: source,
+      campaignName: campaign,
+      utmSource: utmSource,
+      utmMedium: utmMedium,
+      utmCampaign: utmCampaign,
+    }));
+  }, [searchParams]);
 
   const updateField = (field: keyof LeadFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -160,26 +191,42 @@ export default function PersoneelLandingVariantA() {
     setIsSubmitting(true);
     try {
       const recaptchaToken = await executeRecaptcha("b2b_landing");
-      const onderwerp = "B2B landing - personeel aanvraag (LP2)";
-      const bericht = [
-        `Bedrijfsnaam: ${formData.bedrijfsnaam}`,
-        `Rol/functies: ${formData.rol || "-"}`,
-        `Telefoon: ${formData.telefoon}`,
-        formData.bericht ? `Bericht: ${formData.bericht}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
 
-      const response = await fetch("/api/contact", {
+      // Parse rol field to typePersoneel array
+      const typePersoneel = formData.rol
+        ? formData.rol.split(/[,;\/]/).map(r => r.trim()).filter(Boolean)
+        : ["Niet gespecificeerd"];
+
+      // Calculate tomorrow's date for start_datum
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const startDatumFormatted = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      const response = await fetch("/api/personeel-aanvragen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          naam: formData.naam,
+          bedrijfsnaam: formData.bedrijfsnaam,
+          contactpersoon: formData.naam,
           email: formData.email,
           telefoon: formData.telefoon,
-          onderwerp,
-          bericht,
+          typePersoneel: typePersoneel,
+          aantalPersonen: "1-2",
+          contractType: ["uitzendkracht"],
+          gewenstUurtarief: "",
+          startDatum: startDatumFormatted,
+          eindDatum: "",
+          werkdagen: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
+          werktijden: "Flexibel / In overleg",
+          locatie: "Zie contactgegevens",
+          opmerkingen: `Via landingspagina LP2 (Variant A)\n${formData.bericht || "Geen extra opmerkingen"}`,
           recaptchaToken,
+          // Lead tracking
+          leadSource: formData.leadSource,
+          campaignName: formData.campaignName,
+          utmSource: formData.utmSource,
+          utmMedium: formData.utmMedium,
+          utmCampaign: formData.utmCampaign,
         }),
       });
 
@@ -462,5 +509,23 @@ export default function PersoneelLandingVariantA() {
         </Section.Container>
       </Section>
     </div>
+  );
+}
+
+// Loading fallback component
+function LoadingState() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
+    </div>
+  );
+}
+
+// Suspense wrapper required for useSearchParams()
+export default function PersoneelLandingVariantA() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <PersoneelLandingVariantAContent />
+    </Suspense>
   );
 }
