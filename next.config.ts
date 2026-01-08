@@ -47,6 +47,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  trailingSlash: true, // Fix voor redirect errors op diensten pagina's
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
@@ -66,6 +67,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Non-www naar www redirect
       {
         source: '/:path*',
         has: [
@@ -75,6 +77,61 @@ const nextConfig: NextConfig = {
           },
         ],
         destination: 'https://www.toptalentjobs.nl/:path*',
+        permanent: true,
+      },
+      // Oude WordPress pagina redirects
+      {
+        source: '/horeca-evenementen',
+        destination: '/diensten/uitzenden/',
+        permanent: true,
+      },
+      {
+        source: '/horeca-evenementen/',
+        destination: '/diensten/uitzenden/',
+        permanent: true,
+      },
+      {
+        source: '/employer-public',
+        destination: '/contact/',
+        permanent: true,
+      },
+      {
+        source: '/employer-public/',
+        destination: '/contact/',
+        permanent: true,
+      },
+      // Oude WordPress query parameters redirects
+      {
+        source: '/',
+        has: [
+          {
+            type: 'query',
+            key: 'page_id',
+          },
+        ],
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/',
+        has: [
+          {
+            type: 'query',
+            key: 'wpr_templates',
+          },
+        ],
+        destination: '/',
+        permanent: true,
+      },
+      // Blokkeer oude WordPress paths
+      {
+        source: '/wp-content/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/wp-includes/:path*',
+        destination: '/',
         permanent: true,
       },
     ];

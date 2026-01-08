@@ -5,8 +5,19 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/api/', '/bedankt/', '/klant/', '/medewerker/'],
+      disallow: [
+        '/admin/',
+        '/api/',
+        '/bedankt/',
+        '/klant/',
+        '/medewerker/',
+        '/wp-content/',
+        '/wp-includes/',
+        '/wp-admin/',
+        '/*?page_id=*',
+        '/*?wpr_templates=*',
+      ],
     },
-    sitemap: 'https://toptalentjobs.nl/sitemap.xml',
+    sitemap: 'https://www.toptalentjobs.nl/sitemap.xml',
   }
 }
