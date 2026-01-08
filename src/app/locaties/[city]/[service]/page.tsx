@@ -16,64 +16,64 @@ const heroContent = {
     utrecht: {
       title: "Horeca uitzenden Utrecht",
       intro: "Van studentenevenementen tot Jaarbeurs congressen, van TivoliVredenburg tot binnenstad horeca. Wij leveren snel en betrouwbaar tijdelijk horecapersoneel in heel Utrecht en omgeving.",
-      image: "/images/locatie-utrecht-uitzenden.png",
-      alt: "Horeca uitzendpersoneel tijdens druk event in Utrecht Jaarbeurs"
+      image: "/images/locatie-utrecht-hero.png",
+      alt: "Horeca personeel Utrecht centrum en Jaarbeurs"
     },
     amsterdam: {
       title: "Horeca uitzenden Amsterdam",
       intro: "Van centrum tot Zuidas, van RAI events tot Schiphol hotels. Wij leveren snel meertalig horecapersoneel voor uw Amsterdamse zaak. Binnen 24 uur inzetbaar.",
-      image: "/images/locatie-amsterdam-uitzenden.png",
-      alt: "Flexibel horecapersoneel in Amsterdam centrum restaurant"
+      image: "/images/locatie-amsterdam-hero.png",
+      alt: "Horeca personeel Amsterdam centrum en Zuidas"
     },
     rotterdam: {
       title: "Horeca uitzenden Rotterdam",
       intro: "Van Markthal tot havengebied, van Ahoy events tot cruise terminal. Wij leveren snel en flexibel horecapersoneel in heel Rotterdam. Ervaring met grootschalige evenementen.",
-      image: "/images/locatie-rotterdam-uitzenden.png",
-      alt: "Tijdelijk horecapersoneel tijdens event in Rotterdam Ahoy"
+      image: "/images/locatie-rotterdam-hero.png",
+      alt: "Horeca personeel Rotterdam Markthal en haven"
     },
     "den-haag": {
       title: "Horeca uitzenden Den Haag",
       intro: "Van politiek centrum tot Scheveningen strand, van World Forum tot strandpaviljoens. Wij leveren snel meertalig horecapersoneel in heel Den Haag. Ervaring met diplomatieke events.",
-      image: "/images/locatie-utrecht-uitzenden.png",
-      alt: "Flexibel horecapersoneel in Den Haag centrum"
+      image: "/images/locatie-den-haag-hero.png",
+      alt: "Horeca personeel Den Haag Scheveningen en centrum"
     },
     eindhoven: {
       title: "Horeca uitzenden Eindhoven",
       intro: "Van High Tech Campus tot Stratumseind, van Strijp-S tot PSV Stadion. Wij leveren snel horecapersoneel voor innovatieve en zakelijke horeca in heel Eindhoven.",
-      image: "/images/locatie-utrecht-uitzenden.png",
-      alt: "Tijdelijk horecapersoneel in Eindhoven Strijp-S"
+      image: "/images/locatie-eindhoven-hero.png",
+      alt: "Horeca personeel Eindhoven Strijp-S en High Tech Campus"
     }
   },
   detachering: {
     utrecht: {
       title: "Horeca detachering Utrecht",
       intro: "Stabiele horecakracht voor uw Utrechtse restaurant, hotel of congreslocatie. Langdurige inzet zonder werkgeversrisico. Ideaal voor Jaarbeurs, TivoliVredenburg en binnenstad horeca.",
-      image: "/images/locatie-utrecht-detachering.png",
-      alt: "Gedetacheerde horecamedewerker in restaurant Utrecht centrum"
+      image: "/images/locatie-utrecht-hero.png",
+      alt: "Horeca personeel Utrecht centrum en Jaarbeurs"
     },
     amsterdam: {
       title: "Horeca detachering Amsterdam",
       intro: "Vaste horecakracht voor uw Amsterdamse zaak zonder vaste lasten. Langdurige inzet van professioneel, meertalig personeel. Perfect voor high-end restaurants en hotels.",
-      image: "/images/locatie-amsterdam-detachering.png",
-      alt: "Gedetacheerde barista in Amsterdam Zuidas restaurant"
+      image: "/images/locatie-amsterdam-hero.png",
+      alt: "Horeca personeel Amsterdam centrum en Zuidas"
     },
     rotterdam: {
       title: "Horeca detachering Rotterdam",
       intro: "Stabiel teamlid voor uw Rotterdamse horeca zonder werkgeversrisico. Langdurige inzet met flexibel contract. Ervaring met Rotterdamse diversiteit en dynamiek.",
-      image: "/images/locatie-rotterdam-detachering.png",
-      alt: "Gedetacheerde horecamedewerker in Rotterdam Markthal"
+      image: "/images/locatie-rotterdam-hero.png",
+      alt: "Horeca personeel Rotterdam Markthal en haven"
     },
     "den-haag": {
       title: "Horeca detachering Den Haag",
       intro: "Vaste horecakracht voor uw Haagse restaurant, hotel of strandpaviljoen. Langdurige inzet zonder werkgeversrisico. Ervaring met politieke events en internationale gasten.",
-      image: "/images/locatie-utrecht-detachering.png",
-      alt: "Gedetacheerde horecamedewerker in Den Haag centrum"
+      image: "/images/locatie-den-haag-hero.png",
+      alt: "Horeca personeel Den Haag Scheveningen en centrum"
     },
     eindhoven: {
       title: "Horeca detachering Eindhoven",
       intro: "Stabiel teamlid voor uw Eindhovense zaak zonder vaste lasten. Langdurige inzet met flexibiliteit. Ervaring met zakelijke horeca, High Tech Campus en innovatieve concepten.",
-      image: "/images/locatie-utrecht-detachering.png",
-      alt: "Gedetacheerde horecamedewerker in Eindhoven Strijp-S"
+      image: "/images/locatie-eindhoven-hero.png",
+      alt: "Horeca personeel Eindhoven Strijp-S en High Tech Campus"
     }
   }
 };
