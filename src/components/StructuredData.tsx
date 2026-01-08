@@ -17,13 +17,13 @@ export default function StructuredData() {
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+31649200412",
+      "telephone": "+31649713766",
       "contactType": "customer service",
       "availableLanguage": ["Dutch", "English"],
       "areaServed": "NL"
     },
     "sameAs": [
-      "https://wa.me/31649200412"
+      "https://wa.me/31649713766"
     ]
   };
 

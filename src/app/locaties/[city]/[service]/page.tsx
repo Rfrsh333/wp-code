@@ -327,7 +327,7 @@ export default async function CityServicePage({ params }: PageProps) {
                     </svg>
                   </Link>
                   <Link
-                    href="tel:+31649200412"
+                    href="tel:+31649713766"
                     className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
                     hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
                   >

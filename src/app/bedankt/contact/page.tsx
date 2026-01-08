@@ -86,7 +86,7 @@ export default function BedanktContactPage() {
 
           <p className="text-neutral-600 leading-relaxed">
             We doen ons best om zo snel mogelijk te reageren. Heb je een dringende vraag?
-            Bel ons gerust op <a href="tel:+31649200412" className="text-[#FF7A00] font-semibold hover:underline">+31 6 49 20 04 12</a>.
+            Bel ons gerust op <a href="tel:+31649713766" className="text-[#FF7A00] font-semibold hover:underline">+31 6 49 71 37 66</a>.
           </p>
         </div>
 

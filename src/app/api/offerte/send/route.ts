@@ -140,10 +140,10 @@ export async function POST(request: NextRequest) {
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="tel:+31649200412"
+              <a href="tel:+31649713766"
                  style="display: inline-block; background: #F27501; color: white; padding: 12px 30px;
                         text-decoration: none; border-radius: 6px; font-weight: bold;">
-                Bel ons: +31 6 49 20 04 12
+                Bel ons: +31 6 49 71 37 66
               </a>
             </div>
 
