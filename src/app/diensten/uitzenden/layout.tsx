@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Uitzenden horeca personeel | diensten voor werkgevers",
   description: "Uitzenden van horecapersoneel voor restaurants, hotels en events. Snel tijdelijke inzet bij piekdrukte of uitval, met één contactpunt en duidelijke tarieven.",
   alternates: {
-    canonical: "https://toptalentjobs.nl/diensten/uitzenden",
+    canonical: "https://www.toptalentjobs.nl/diensten/uitzenden",
   },
 };
 
@@ -68,19 +68,19 @@ export default function UitzendenLayout({
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://toptalentjobs.nl"
+        "item": "https://www.toptalentjobs.nl"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Diensten",
-        "item": "https://toptalentjobs.nl/diensten"
+        "item": "https://www.toptalentjobs.nl/diensten"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Uitzenden",
-        "item": "https://toptalentjobs.nl/diensten/uitzenden"
+        "item": "https://www.toptalentjobs.nl/diensten/uitzenden"
       }
     ]
   };

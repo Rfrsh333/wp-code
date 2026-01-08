@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Recruitment horeca personeel | vaste medewerkers",
   description: "Recruitment voor vast horecapersoneel. Wij werven en selecteren vaste medewerkers voor restaurants, hotels en catering met een helder proces en nazorg.",
   alternates: {
-    canonical: "https://toptalentjobs.nl/diensten/recruitment",
+    canonical: "https://www.toptalentjobs.nl/diensten/recruitment",
   },
 };
 
@@ -21,19 +21,19 @@ export default function RecruitmentLayout({
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://toptalentjobs.nl"
+        "item": "https://www.toptalentjobs.nl"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Diensten",
-        "item": "https://toptalentjobs.nl/diensten"
+        "item": "https://www.toptalentjobs.nl/diensten"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Recruitment",
-        "item": "https://toptalentjobs.nl/diensten/recruitment"
+        "item": "https://www.toptalentjobs.nl/diensten/recruitment"
       }
     ]
   };

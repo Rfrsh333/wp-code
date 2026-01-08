@@ -24,7 +24,7 @@ interface LeadRequest {
 
 function generateLeadEmail(lead: LeadFormData, inputs: CalculatorInputs, resultaten: Resultaten, pdfToken: string): string {
   const dagenLabel = inputs.dagenPerWeek.map((d) => dagen[d]).join(", ");
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://toptalentjobs.nl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
 
   // Build results table
   const buildResultRow = (type: string, result?: { uurtarief: number; perDienst: number; perWeek: number; perMaand: number }) => {

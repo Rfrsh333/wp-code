@@ -30,12 +30,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: location.title,
     description: location.description,
     alternates: {
-      canonical: `https://toptalentjobs.nl/locaties/${location.slug}`,
+      canonical: `https://www.toptalentjobs.nl/locaties/${location.slug}`,
     },
     openGraph: {
       title: location.title,
       description: location.description,
-      url: `https://toptalentjobs.nl/locaties/${location.slug}`,
+      url: `https://www.toptalentjobs.nl/locaties/${location.slug}`,
       siteName: "TopTalent Jobs",
       locale: "nl_NL",
       type: "website",

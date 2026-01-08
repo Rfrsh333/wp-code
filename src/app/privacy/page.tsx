@@ -43,7 +43,7 @@ export default function PrivacyPolicyPage() {
               <p className="mb-2">Gevestigd te Utrecht, Nederland</p>
               <p className="mb-2">E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a></p>
               <p className="mb-2">Telefoon: <a href="tel:+31649713766" className="text-[#FF7A00] hover:underline">+31 6 49 71 37 66</a></p>
-              <p className="mb-0">Website: <a href="https://toptalentjobs.nl" className="text-[#FF7A00] hover:underline">www.toptalentjobs.nl</a></p>
+              <p className="mb-0">Website: <a href="https://www.toptalentjobs.nl" className="text-[#FF7A00] hover:underline">www.toptalentjobs.nl</a></p>
             </div>
             <p>Voor vragen over deze privacy policy of over de verwerking van uw persoonsgegevens kunt u contact opnemen via bovenstaande contactgegevens.</p>
 

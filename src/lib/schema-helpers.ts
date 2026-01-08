@@ -4,10 +4,10 @@ export function generateLocalBusinessSchema(location: LocationData) {
   const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "EmploymentAgency",
-    "@id": `https://toptalentjobs.nl/locaties/${location.slug}#business`,
+    "@id": `https://www.toptalentjobs.nl/locaties/${location.slug}#business`,
     "name": `TopTalent Jobs ${location.name}`,
-    "image": "https://toptalentjobs.nl/logo.png",
-    "url": `https://toptalentjobs.nl/locaties/${location.slug}`,
+    "image": "https://www.toptalentjobs.nl/logo.png",
+    "url": `https://www.toptalentjobs.nl/locaties/${location.slug}`,
     "telephone": "+31649713766",
     "email": "info@toptalentjobs.nl",
     "priceRange": "$$",
@@ -60,7 +60,7 @@ export function generateLocalBusinessSchema(location: LocationData) {
       ],
     },
     "parentOrganization": {
-      "@id": "https://toptalentjobs.nl/#organization",
+      "@id": "https://www.toptalentjobs.nl/#organization",
     },
   };
 
@@ -94,7 +94,7 @@ export function generateLocationFAQSchema(location: LocationData) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "@id": `https://toptalentjobs.nl/locaties/${location.slug}#faq`,
+    "@id": `https://www.toptalentjobs.nl/locaties/${location.slug}#faq`,
     "mainEntity": [
       {
         "@type": "Question",

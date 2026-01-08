@@ -23,7 +23,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://toptalentjobs.nl"),
+  metadataBase: new URL("https://www.toptalentjobs.nl"),
   title: {
     default: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
     template: "%s | TopTalent Jobs",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
     description: "Snel en betrouwbaar horeca personeel nodig? TopTalent Jobs levert binnen 24 uur ervaren krachten voor restaurants, hotels en evenementen.",
-    url: "https://toptalentjobs.nl",
+    url: "https://www.toptalentjobs.nl",
     siteName: "TopTalent Jobs",
     locale: "nl_NL",
     type: "website",

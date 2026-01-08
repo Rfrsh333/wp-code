@@ -23,13 +23,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  const imageUrl = `https://toptalentjobs.nl${article.image}`;
+  const imageUrl = `https://www.toptalentjobs.nl${article.image}`;
 
   return {
     title: `${article.title} | TopTalent Jobs Blog`,
     description: article.excerpt,
     alternates: {
-      canonical: `https://toptalentjobs.nl/blog/${slug}`,
+      canonical: `https://www.toptalentjobs.nl/blog/${slug}`,
     },
     openGraph: {
       title: article.title,
@@ -67,8 +67,8 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
     .map((relSlug) => ({ slug: relSlug, ...blogArticles[relSlug] }))
     .filter((a) => a.title);
 
-  const imageUrl = `https://toptalentjobs.nl${article.image}`;
-  const articleUrl = `https://toptalentjobs.nl/blog/${slug}`;
+  const imageUrl = `https://www.toptalentjobs.nl${article.image}`;
+  const articleUrl = `https://www.toptalentjobs.nl/blog/${slug}`;
 
   // Article schema for blog post
   const articleSchema = {
@@ -85,7 +85,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
       "name": "TopTalent Jobs",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://toptalentjobs.nl/logo.png"
+        "url": "https://www.toptalentjobs.nl/logo.png"
       }
     },
     "datePublished": article.datePublished,
@@ -106,13 +106,13 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://toptalentjobs.nl"
+        "item": "https://www.toptalentjobs.nl"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Blog",
-        "item": "https://toptalentjobs.nl/blog"
+        "item": "https://www.toptalentjobs.nl/blog"
       },
       {
         "@type": "ListItem",
@@ -197,7 +197,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
               <p className="text-sm font-medium text-neutral-600 mb-4">Deel dit artikel:</p>
               <div className="flex gap-3">
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=https://toptalentjobs.nl/blog/${slug}`}
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=https://www.toptalentjobs.nl/blog/${slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 bg-[#0077B5] text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -207,7 +207,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                   </svg>
                 </a>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(article.title + ' - https://toptalentjobs.nl/blog/' + slug)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(article.title + ' - https://www.toptalentjobs.nl/blog/' + slug)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -217,7 +217,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                   </svg>
                 </a>
                 <a
-                  href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://toptalentjobs.nl/blog/' + slug)}`}
+                  href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://www.toptalentjobs.nl/blog/' + slug)}`}
                   className="w-10 h-10 bg-neutral-600 text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

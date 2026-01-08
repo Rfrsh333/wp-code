@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Detachering horeca personeel voor werkgevers",
   description: "Detachering van horecapersoneel voor structurele bezetting. Een vaste horecakracht in uw team, zonder werkgeversrisico en met heldere afspraken.",
   alternates: {
-    canonical: "https://toptalentjobs.nl/diensten/detachering",
+    canonical: "https://www.toptalentjobs.nl/diensten/detachering",
   },
 };
 
@@ -21,19 +21,19 @@ export default function DetacheringLayout({
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://toptalentjobs.nl"
+        "item": "https://www.toptalentjobs.nl"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Diensten",
-        "item": "https://toptalentjobs.nl/diensten"
+        "item": "https://www.toptalentjobs.nl/diensten"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Detachering",
-        "item": "https://toptalentjobs.nl/diensten/detachering"
+        "item": "https://www.toptalentjobs.nl/diensten/detachering"
       }
     ]
   };

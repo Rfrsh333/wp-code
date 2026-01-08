@@ -2,11 +2,11 @@ export default function StructuredData() {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "@id": "https://toptalentjobs.nl/#organization",
+    "@id": "https://www.toptalentjobs.nl/#organization",
     "name": "TopTalent Jobs",
     "alternateName": "TopTalent",
-    "url": "https://toptalentjobs.nl",
-    "logo": "https://toptalentjobs.nl/logo.png",
+    "url": "https://www.toptalentjobs.nl",
+    "logo": "https://www.toptalentjobs.nl/logo.png",
     "description": "Horeca uitzendbureau in Utrecht, Amsterdam en Rotterdam. Snel en betrouwbaar personeel voor restaurants, hotels en evenementen.",
     "address": {
       "@type": "PostalAddress",
@@ -30,11 +30,11 @@ export default function StructuredData() {
   const webSiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": "https://toptalentjobs.nl/#website",
+    "@id": "https://www.toptalentjobs.nl/#website",
     "name": "TopTalent Jobs",
-    "url": "https://toptalentjobs.nl",
+    "url": "https://www.toptalentjobs.nl",
     "publisher": {
-      "@id": "https://toptalentjobs.nl/#organization"
+      "@id": "https://www.toptalentjobs.nl/#organization"
     }
   };
 

@@ -8,12 +8,12 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: {
-    canonical: "https://toptalentjobs.nl/lp3/personeel",
+    canonical: "https://www.toptalentjobs.nl/lp3/personeel",
   },
   openGraph: {
     title,
     description,
-    url: "https://toptalentjobs.nl/lp3/personeel",
+    url: "https://www.toptalentjobs.nl/lp3/personeel",
     siteName: "TopTalent Jobs",
     locale: "nl_NL",
     type: "website",

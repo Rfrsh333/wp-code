@@ -91,12 +91,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: `https://toptalentjobs.nl/locaties/${city}/${service}`
+      canonical: `https://www.toptalentjobs.nl/locaties/${city}/${service}`
     },
     openGraph: {
       title,
       description,
-      url: `https://toptalentjobs.nl/locaties/${city}/${service}`,
+      url: `https://www.toptalentjobs.nl/locaties/${city}/${service}`,
       siteName: "TopTalent Jobs",
       locale: "nl_NL",
       type: "website"

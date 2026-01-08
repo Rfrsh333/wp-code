@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
               Met vriendelijke groet,<br><br>
               <strong>Rachid</strong><br>
               TopTalent Jobs<br>
-              <a href="https://toptalentjobs.nl" style="color: #F27501;">toptalentjobs.nl</a>
+              <a href="https://www.toptalentjobs.nl" style="color: #F27501;">toptalentjobs.nl</a>
             </p>
           </div>
         </div>

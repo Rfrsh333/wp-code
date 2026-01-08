@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { cityOrder } from '@/data/locations'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://toptalentjobs.nl'
+  const baseUrl = 'https://www.toptalentjobs.nl'
 
   // Static pages - gebruik vaste datum voor stabiele crawl signalen
   const contentDate = new Date('2024-12-19')

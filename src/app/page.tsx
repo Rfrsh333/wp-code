@@ -55,13 +55,13 @@ export const metadata: Metadata = {
   description:
     "Geen paniek meer bij ziekte of last-minute uitval. TopTalent levert gescreend horecapersoneel binnen 24 uur voor restaurants, hotels en events in Utrecht en omstreken.",
   alternates: {
-    canonical: "https://toptalentjobs.nl/",
+    canonical: "https://www.toptalentjobs.nl/",
   },
   openGraph: {
     title: "Extra horecapersoneel binnen 24 u | TopTalent",
     description: "Stop omzetverlies door personeelsuitval. Gescreend horecapersoneel binnen 24 uur. 95% van onze klanten heeft direct personeel.",
     type: "website",
-    url: "https://toptalentjobs.nl/",
+    url: "https://www.toptalentjobs.nl/",
   },
 };
 

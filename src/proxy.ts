@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const REDIRECT_TARGET = "https://toptalentjobs.nl/";
+const REDIRECT_TARGET = "https://www.toptalentjobs.nl/";
 
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;

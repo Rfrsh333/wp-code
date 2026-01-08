@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Genereer een signed token voor veilige PDF toegang (geldig 30 dagen)
     const pdfToken = await signFactuurToken(factuur_id, factuur.klant_id);
-    const pdfUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://toptalentjobs.nl"}/api/facturen/${factuur_id}/pdf?token=${pdfToken}`;
+    const pdfUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl"}/api/facturen/${factuur_id}/pdf?token=${pdfToken}`;
 
     await resend.emails.send({
       from: "TopTalent Jobs <facturen@toptalentjobs.nl>",

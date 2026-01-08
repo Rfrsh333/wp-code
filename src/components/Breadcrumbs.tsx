@@ -56,7 +56,7 @@ export function generateBreadcrumbSchema(items: BreadcrumbItem[]) {
       "@type": "ListItem",
       position: index + 1,
       name: item.label,
-      item: `https://toptalentjobs.nl${item.href}`,
+      item: `https://www.toptalentjobs.nl${item.href}`,
     })),
   };
 }

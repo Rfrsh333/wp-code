@@ -421,7 +421,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
         {/* Header content */}
         <View style={styles.headerContent}>
           <Image
-            src="https://toptalentjobs.nl/logo.png"
+            src="https://www.toptalentjobs.nl/logo.png"
             style={styles.logo}
           />
           <View style={styles.headerRight}>
