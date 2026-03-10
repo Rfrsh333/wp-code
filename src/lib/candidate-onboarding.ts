@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Resend } from "resend";
 import {
   applyCandidateEmailVars,
@@ -295,10 +296,63 @@ function generateUploadToken(kandidaatId: string, expiryDays = 7): string {
   return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
 }
 
+// 4. Documenten reminder - Friendly nudge voor kandidaten die nog niet uploaden
+export async function sendDocumentenReminder(kandidaat: Kandidaat, portalToken: string) {
+  const uploadUrl = `${getBaseUrl()}/kandidaat/documenten?token=${portalToken}`;
+  const isZZP = kandidaat.uitbetalingswijze === "zzp";
+
+  const content = `
+    <span class="emoji">👋</span>
+
+    <h1>Hey ${kandidaat.voornaam}, nog heel eventjes!</h1>
+
+    <p>
+      We hebben een paar dagen geleden je documenten aangevraagd, maar we zien dat je ze
+      nog niet hebt geüpload. Geen stress! We snappen dat het druk kan zijn. 😊
+    </p>
+
+    <div class="card">
+      <p><strong>We hebben nog nodig:</strong></p>
+      <ul style="margin: 12px 0; padding-left: 20px;">
+        <li>📸 <strong>Geldig identiteitsbewijs</strong></li>
+        <li>📝 <strong>CV</strong></li>
+        ${isZZP ? '<li>🏢 <strong>KVK uittreksel</strong></li>' : ''}
+      </ul>
+      <p style="margin-top: 16px; font-size: 14px; color: #666;">
+        💡 <strong>Tip:</strong> Duurt maar 2 minuten! Gewoon foto maken met je telefoon werkt prima.
+      </p>
+    </div>
+
+    <p>
+      Upload je documenten hier:
+    </p>
+
+    <center>
+      <a href="${uploadUrl}" class="cta-button">
+        📤 Upload Nu (2 min)
+      </a>
+    </center>
+
+    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+      Zodra we je documenten hebben, kunnen we je snel goedkeuren en ben je klaar voor inzet! 🚀
+    </p>
+  `;
+
+  const result = await resend.emails.send({
+    from: "TopTalent <info@toptalentjobs.nl>",
+    to: [kandidaat.email],
+    replyTo: "info@toptalentjobs.nl",
+    subject: `${kandidaat.voornaam}, vergeet je documenten niet! 📄`,
+    html: getEmailLayout(content),
+  });
+
+  return result;
+}
+
 // Email logging helper met Resend tracking
 export async function logEmail(
   kandidaatId: string,
-  emailType: "bevestiging" | "documenten_opvragen" | "inzetbaar",
+  emailType: "bevestiging" | "documenten_opvragen" | "inzetbaar" | "documenten_reminder",
   recipient: string,
   subject: string,
   resendEmailId?: string

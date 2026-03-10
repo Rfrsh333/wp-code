@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_email_log_resend_id ON email_log(resend_email_id)
 -- Check constraint voor email_type
 ALTER TABLE email_log DROP CONSTRAINT IF EXISTS email_log_type_check;
 ALTER TABLE email_log ADD CONSTRAINT email_log_type_check
-CHECK (email_type IN ('bevestiging', 'documenten_opvragen', 'inzetbaar', 'custom'));
+CHECK (email_type IN ('bevestiging', 'documenten_opvragen', 'inzetbaar', 'documenten_reminder', 'custom'));
 
 -- Check constraint voor status
 ALTER TABLE email_log DROP CONSTRAINT IF EXISTS email_log_status_check;
@@ -62,6 +62,7 @@ ALTER TABLE inschrijvingen
 ALTER TABLE inschrijvingen
   ADD COLUMN IF NOT EXISTS intake_bevestiging_verstuurd_op TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS documenten_verzoek_verstuurd_op TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS documenten_reminder_verstuurd_op TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS welkom_mail_verstuurd_op TIMESTAMPTZ;
 
 -- Index voor token lookup (super snel)
