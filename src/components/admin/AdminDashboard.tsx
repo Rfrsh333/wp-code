@@ -87,6 +87,23 @@ interface Inschrijving {
   campaign_name?: string;
 }
 
+type KandidaatDocumentStatus = "ontvangen" | "goedgekeurd" | "afgekeurd";
+
+interface KandidaatDocument {
+  id: string;
+  inschrijving_id: string;
+  type: string;
+  bestandsnaam: string;
+  bestand_pad: string;
+  mime_type: string | null;
+  bestand_grootte: number | null;
+  status: KandidaatDocumentStatus;
+  notitie: string | null;
+  uploaded_at: string;
+  reviewed_at: string | null;
+  download_url?: string | null;
+}
+
 interface ContactBericht {
   id: string;
   created_at: string;
@@ -162,6 +179,28 @@ const onboardingChecklistItems: { key: ChecklistKey; label: string }[] = [
   { key: "klaar_voor_inzet", label: "Klaar voor inzet" },
 ];
 
+const kandidaatDocumentTypeOptions = [
+  { value: "id", label: "ID" },
+  { value: "cv", label: "CV" },
+  { value: "kvk", label: "KvK" },
+  { value: "btw", label: "BTW" },
+  { value: "certificaat", label: "Certificaat" },
+  { value: "contract", label: "Contract" },
+  { value: "bankbewijs", label: "Bankbewijs" },
+] as const;
+
+const kandidaatDocumentStatusLabels: Record<KandidaatDocumentStatus, string> = {
+  ontvangen: "Ontvangen",
+  goedgekeurd: "Goedgekeurd",
+  afgekeurd: "Afgekeurd",
+};
+
+const kandidaatDocumentStatusColors: Record<KandidaatDocumentStatus, string> = {
+  ontvangen: "bg-blue-100 text-blue-700",
+  goedgekeurd: "bg-green-100 text-green-700",
+  afgekeurd: "bg-red-100 text-red-700",
+};
+
 function getInschrijvingOnboardingStatus(inschrijving: Inschrijving): OnboardingStatus {
   if (inschrijving.onboarding_status) {
     return inschrijving.onboarding_status;
@@ -206,10 +245,16 @@ export default function AdminDashboard() {
   const [detailType, setDetailType] = useState<Tab | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [inschrijvingNotitieDraft, setInschrijvingNotitieDraft] = useState("");
+  const [kandidaatDocumenten, setKandidaatDocumenten] = useState<KandidaatDocument[]>([]);
+  const [documentenLoading, setDocumentenLoading] = useState(false);
+  const [documentTypeDraft, setDocumentTypeDraft] = useState("id");
+  const [documentNotitieDraft, setDocumentNotitieDraft] = useState("");
+  const [documentFileDraft, setDocumentFileDraft] = useState<File | null>(null);
+  const [documentUploading, setDocumentUploading] = useState(false);
   const router = useRouter();
 
   // Helper to get auth headers for admin API calls
-  const getAuthHeaders = async (): Promise<HeadersInit> => {
+  const getAuthHeaders = useCallback(async (): Promise<HeadersInit> => {
     const { data: { session } } = await supabase.auth.getSession();
     return session?.access_token
       ? {
@@ -217,7 +262,7 @@ export default function AdminDashboard() {
           "Content-Type": "application/json"
         }
       : { "Content-Type": "application/json" };
-  };
+  }, []);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -379,6 +424,100 @@ export default function AdminDashboard() {
       prev && prev.id === inschrijving.id ? ({ ...prev, ...data } as Inschrijving) : prev
     );
   };
+
+  const fetchKandidaatDocumenten = useCallback(async (inschrijvingId: string) => {
+    setDocumentenLoading(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/kandidaat-documenten?inschrijvingId=${inschrijvingId}`,
+        { headers: await getAuthHeaders() }
+      );
+      const result = await response.json();
+
+      if (response.ok) {
+        setKandidaatDocumenten(result.data || []);
+      }
+    } finally {
+      setDocumentenLoading(false);
+    }
+  }, [getAuthHeaders]);
+
+  const uploadKandidaatDocument = async (inschrijving: Inschrijving) => {
+    if (!documentFileDraft) {
+      alert("Kies eerst een bestand om te uploaden.");
+      return;
+    }
+
+    setDocumentUploading(true);
+
+    try {
+      const headers = await getAuthHeaders();
+      const authHeader = typeof headers === "object" && "Authorization" in headers
+        ? headers.Authorization
+        : undefined;
+      const submitData = new FormData();
+
+      submitData.append("inschrijvingId", inschrijving.id);
+      submitData.append("type", documentTypeDraft);
+      submitData.append("notitie", documentNotitieDraft);
+      submitData.append("file", documentFileDraft);
+
+      const response = await fetch("/api/admin/kandidaat-documenten", {
+        method: "POST",
+        headers: authHeader ? { Authorization: String(authHeader) } : undefined,
+        body: submitData,
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        alert(result.error || "Document upload mislukt.");
+        return;
+      }
+
+      setDocumentFileDraft(null);
+      setDocumentNotitieDraft("");
+      setDocumentTypeDraft("id");
+      await fetchKandidaatDocumenten(inschrijving.id);
+    } finally {
+      setDocumentUploading(false);
+    }
+  };
+
+  const updateKandidaatDocument = async (
+    inschrijving: Inschrijving,
+    documentId: string,
+    data: { status?: KandidaatDocumentStatus; notitie?: string }
+  ) => {
+    const response = await fetch("/api/admin/kandidaat-documenten", {
+      method: "PATCH",
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({
+        id: documentId,
+        ...data,
+      }),
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      alert(result.error || "Document kon niet worden bijgewerkt.");
+      return;
+    }
+
+    await fetchKandidaatDocumenten(inschrijving.id);
+  };
+
+  useEffect(() => {
+    if (detailType === "inschrijvingen" && selectedItem) {
+      setDocumentTypeDraft("id");
+      setDocumentNotitieDraft("");
+      setDocumentFileDraft(null);
+      void fetchKandidaatDocumenten(selectedItem.id);
+      return;
+    }
+
+    setKandidaatDocumenten([]);
+  }, [detailType, fetchKandidaatDocumenten, selectedItem]);
 
   const toggleInschrijvingChecklistItem = async (
     inschrijving: Inschrijving,
@@ -1458,6 +1597,119 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   )}
+                  <div className="p-4 bg-white border border-neutral-200 rounded-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-sm text-neutral-500">Kandidaat documenten</p>
+                        <p className="text-sm font-medium text-neutral-900">
+                          {kandidaatDocumenten.length} document(en) gekoppeld
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                      <select
+                        value={documentTypeDraft}
+                        onChange={(e) => setDocumentTypeDraft(e.target.value)}
+                        className="px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]"
+                      >
+                        {kandidaatDocumentTypeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="file"
+                        onChange={(e) => setDocumentFileDraft(e.target.files?.[0] || null)}
+                        className="px-4 py-3 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]"
+                      />
+                      <button
+                        onClick={() => uploadKandidaatDocument(selectedItem as Inschrijving)}
+                        disabled={documentUploading}
+                        className="px-4 py-3 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 disabled:opacity-60 transition-colors"
+                      >
+                        {documentUploading ? "Uploaden..." : "Document uploaden"}
+                      </button>
+                    </div>
+
+                    <textarea
+                      value={documentNotitieDraft}
+                      onChange={(e) => setDocumentNotitieDraft(e.target.value)}
+                      rows={2}
+                      className="w-full mb-4 px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] resize-y"
+                      placeholder="Optionele notitie bij deze upload..."
+                    />
+
+                    {documentenLoading ? (
+                      <div className="text-sm text-neutral-500">Documenten laden...</div>
+                    ) : kandidaatDocumenten.length === 0 ? (
+                      <div className="text-sm text-neutral-500 bg-neutral-50 rounded-xl px-4 py-3">
+                        Nog geen documenten gekoppeld aan deze kandidaat.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {kandidaatDocumenten.map((document) => (
+                          <div key={document.id} className="p-4 rounded-xl border border-neutral-200 bg-neutral-50">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <span className="font-medium text-neutral-900">{document.bestandsnaam}</span>
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${kandidaatDocumentStatusColors[document.status]}`}>
+                                    {kandidaatDocumentStatusLabels[document.status]}
+                                  </span>
+                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-white border border-neutral-200 text-neutral-600">
+                                    {document.type}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-neutral-500">
+                                  Geupload op {formatDate(document.uploaded_at)}
+                                  {document.bestand_grootte ? ` · ${(document.bestand_grootte / 1024 / 1024).toFixed(2)} MB` : ""}
+                                </p>
+                                {document.notitie ? (
+                                  <p className="text-sm text-neutral-700 mt-2 whitespace-pre-wrap">{document.notitie}</p>
+                                ) : null}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {document.download_url ? (
+                                  <a
+                                    href={document.download_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-3 py-2 bg-white border border-neutral-200 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors"
+                                  >
+                                    Openen
+                                  </a>
+                                ) : null}
+                                <button
+                                  onClick={() =>
+                                    updateKandidaatDocument(selectedItem as Inschrijving, document.id, {
+                                      status: "goedgekeurd",
+                                      notitie: document.notitie || "",
+                                    })
+                                  }
+                                  className="px-3 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition-colors"
+                                >
+                                  Goedkeuren
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    updateKandidaatDocument(selectedItem as Inschrijving, document.id, {
+                                      status: "afgekeurd",
+                                      notitie: document.notitie || "",
+                                    })
+                                  }
+                                  className="px-3 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
+                                >
+                                  Afkeuren
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div>
                     <p className="text-sm text-neutral-500">Interne notitie</p>
                     <div className="space-y-3">
