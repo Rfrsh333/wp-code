@@ -252,6 +252,7 @@ export default function AdminDashboard() {
   const [documentFileDraft, setDocumentFileDraft] = useState<File | null>(null);
   const [documentUploading, setDocumentUploading] = useState(false);
   const [bulkOnboardingStatus, setBulkOnboardingStatus] = useState<OnboardingStatus | "">("");
+  const [bulkEmailSending, setBulkEmailSending] = useState(false);
   const router = useRouter();
 
   // Helper to get auth headers for admin API calls
@@ -647,6 +648,125 @@ export default function AdminDashboard() {
     link.href = URL.createObjectURL(blob);
     link.download = `${filename}_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
+  };
+
+  const generateKandidaatPortalLink = async (kandidaatId: string) => {
+    try {
+      const response = await fetch("/api/kandidaat/status", {
+        method: "POST",
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({ kandidaat_id: kandidaatId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Link genereren mislukt");
+      }
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(result.statusUrl);
+      alert(`✅ Kandidaat portal link gekopieerd!\n\n${result.statusUrl}\n\nDeze link kun je nu naar de kandidaat sturen via WhatsApp, email, of SMS.`);
+    } catch (error) {
+      console.error("Generate link error:", error);
+      alert(`❌ Fout bij genereren link: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
+    }
+  };
+
+  const bulkSendEmail = async () => {
+    if (selectedIds.size === 0) return;
+
+    // Safety check: max 50 emails per batch
+    if (selectedIds.size > 50) {
+      alert("Je kunt maximaal 50 kandidaten tegelijk emailen om rate limits te respecteren. Selecteer minder kandidaten.");
+      return;
+    }
+
+    const selectedKandidaten = inschrijvingen.filter(ins => selectedIds.has(ins.id));
+    const confirmMessage = `Je gaat een email sturen naar ${selectedIds.size} kandidaten:\n\n${selectedKandidaten.slice(0, 5).map(k => `- ${k.voornaam} ${k.achternaam} (${k.email})`).join('\n')}${selectedIds.size > 5 ? `\n... en ${selectedIds.size - 5} anderen` : ''}\n\nWeet je het zeker?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    setBulkEmailSending(true);
+
+    try {
+      const response = await fetch("/api/admin/bulk-email", {
+        method: "POST",
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({
+          kandidaat_ids: Array.from(selectedIds),
+          template: "onboarding_update", // Can be extended later
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Email verzenden mislukt");
+      }
+
+      alert(`✅ Emails succesvol verzonden naar ${result.sent} kandidaten!\n${result.failed > 0 ? `⚠️ ${result.failed} emails konden niet worden verzonden.` : ''}`);
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error("Bulk email error:", error);
+      alert(`❌ Fout bij verzenden emails: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
+    } finally {
+      setBulkEmailSending(false);
+    }
+  };
+
+  const exportOnboardingMetrics = () => {
+    const { metrics, avgProcessingTime } = calculateOnboardingMetrics();
+
+    // Summary report
+    const summaryData = [
+      { metric: "Totaal Actief (excl. afgewezen)", waarde: Object.entries(metrics).filter(([k]) => k !== "afgewezen").reduce((sum, [, v]) => sum + v, 0) },
+      { metric: "Nieuw", waarde: metrics.nieuw },
+      { metric: "In beoordeling", waarde: metrics.in_beoordeling },
+      { metric: "Documenten opvragen", waarde: metrics.documenten_opvragen },
+      { metric: "Wacht op kandidaat", waarde: metrics.wacht_op_kandidaat },
+      { metric: "Goedgekeurd", waarde: metrics.goedgekeurd },
+      { metric: "Inzetbaar", waarde: metrics.inzetbaar },
+      { metric: "Afgewezen", waarde: metrics.afgewezen },
+      { metric: "Gemiddelde doorlooptijd (dagen)", waarde: avgProcessingTime > 0 ? avgProcessingTime.toFixed(1) : "N/A" },
+    ];
+
+    exportToCSV(summaryData, "onboarding_metrics_summary");
+
+    // Detailed candidate report
+    const detailedData = inschrijvingen.map(ins => {
+      const status = getInschrijvingOnboardingStatus(ins);
+      const daysSinceCreated = (Date.now() - new Date(ins.created_at).getTime()) / (1000 * 60 * 60 * 24);
+      const daysToApproval = ins.goedgekeurd_op
+        ? (new Date(ins.goedgekeurd_op).getTime() - new Date(ins.created_at).getTime()) / (1000 * 60 * 60 * 24)
+        : null;
+      const daysToDeployable = ins.inzetbaar_op
+        ? (new Date(ins.inzetbaar_op).getTime() - new Date(ins.created_at).getTime()) / (1000 * 60 * 60 * 24)
+        : null;
+
+      return {
+        naam: `${ins.voornaam} ${ins.tussenvoegsel || ''} ${ins.achternaam}`.trim(),
+        email: ins.email,
+        telefoon: ins.telefoon,
+        stad: ins.stad,
+        onboarding_status: onboardingStatusLabels[status],
+        documenten_compleet: ins.documenten_compleet ? "Ja" : "Nee",
+        inzetbaar: ins.inzetbaar_op ? "Ja" : "Nee",
+        inschrijfdatum: ins.created_at.split("T")[0],
+        dagen_sinds_inschrijving: daysSinceCreated.toFixed(0),
+        goedgekeurd_op: ins.goedgekeurd_op?.split("T")[0] || "",
+        dagen_tot_goedkeuring: daysToApproval ? daysToApproval.toFixed(1) : "",
+        inzetbaar_op: ins.inzetbaar_op?.split("T")[0] || "",
+        dagen_tot_inzetbaar: daysToDeployable ? daysToDeployable.toFixed(1) : "",
+        horeca_ervaring: ins.horeca_ervaring || "",
+        functies: ins.gewenste_functies?.join("; ") || "",
+        talen: ins.talen?.join("; ") || "",
+        eigen_vervoer: ins.eigen_vervoer ? "Ja" : "Nee",
+        uitbetalingswijze: ins.uitbetalingswijze,
+      };
+    });
+
+    exportToCSV(detailedData, "onboarding_metrics_detailed");
   };
 
   const formatDate = (date: string) => {
@@ -1153,6 +1273,14 @@ export default function AdminDashboard() {
                             </button>
                           )}
                         </div>
+                        <button
+                          onClick={bulkSendEmail}
+                          disabled={bulkEmailSending}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                          {bulkEmailSending ? "Verzenden..." : `Email ({selectedIds.size})`}
+                        </button>
                         <button onClick={() => deleteSelected("inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                           Verwijder ({selectedIds.size})
@@ -1162,6 +1290,10 @@ export default function AdminDashboard() {
                     <button onClick={() => exportSelected(filteredInschrijvingen, "inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       {selectedIds.size > 0 ? `Exporteer (${selectedIds.size})` : "Exporteer alle"}
+                    </button>
+                    <button onClick={exportOnboardingMetrics} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                      Metrics rapport
                     </button>
                   </div>
                 </div>
@@ -2151,7 +2283,7 @@ export default function AdminDashboard() {
                   {detailType === "inschrijvingen" ? (
                     <>
                       <p className="text-sm text-neutral-500 mb-2">Onboarding status wijzigen</p>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap mb-4">
                         {([
                           "nieuw",
                           "in_beoordeling",
@@ -2180,6 +2312,16 @@ export default function AdminDashboard() {
                           </button>
                         ))}
                       </div>
+                      <button
+                        onClick={() => generateKandidaatPortalLink((selectedItem as Inschrijving).id)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 font-medium shadow-lg"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Genereer kandidaat portal link (kopiëren)
+                      </button>
                     </>
                   ) : (
                     <>
