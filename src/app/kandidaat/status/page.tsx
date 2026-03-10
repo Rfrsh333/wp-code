@@ -153,6 +153,14 @@ function KandidaatStatusContent() {
     (Date.now() - new Date(kandidaat.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
+  // Calculate progress percentage
+  const statusSteps = ["nieuw", "in_beoordeling", "documenten_opvragen", "wacht_op_kandidaat", "goedgekeurd", "inzetbaar"];
+  const currentStepIndex = statusSteps.indexOf(status);
+  const progressPercentage = status === "afgewezen" ? 0 : ((currentStepIndex + 1) / statusSteps.length) * 100;
+
+  // Get upload token from URL if available
+  const uploadToken = searchParams.get("upload_token");
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -170,16 +178,61 @@ function KandidaatStatusContent() {
             <Image src="/icon.png" alt="TopTalent" width={64} height={64} className="w-16 h-16" />
           </div>
 
+          {/* Progress Bar */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-neutral-600">Onboarding voortgang</span>
+              <span className="text-sm font-bold text-[#F27501]">{Math.round(progressPercentage)}%</span>
+            </div>
+            <div className="h-3 bg-neutral-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#F27501] to-[#d96800] transition-all duration-500 ease-out"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+
           {/* Status Card */}
           <div className={`border-2 rounded-xl p-6 ${statusDetails.color}`}>
             <div className="flex items-center gap-4 mb-4">
               <div className="text-5xl">{statusDetails.icon}</div>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-2xl font-bold">{statusDetails.label}</h2>
                 <p className="text-sm opacity-80">Huidige status</p>
               </div>
             </div>
-            <p className="text-lg">{statusDetails.description}</p>
+            <p className="text-lg mb-4">{statusDetails.description}</p>
+
+            {/* Action Buttons */}
+            {status === "documenten_opvragen" && uploadToken && (
+              <div className="mt-6 pt-6 border-t border-current/20">
+                <Link
+                  href={`/kandidaat/documenten?token=${uploadToken}`}
+                  className="block w-full px-6 py-4 bg-gradient-to-r from-[#F27501] to-[#d96800] text-white rounded-xl font-bold text-center hover:shadow-lg transform hover:scale-105 transition-all"
+                >
+                  📤 Upload Documenten Nu →
+                </Link>
+                <p className="text-center text-sm mt-3 opacity-75">
+                  Klik hier om direct je documenten te uploaden
+                </p>
+              </div>
+            )}
+
+            {status === "wacht_op_kandidaat" && (
+              <div className="mt-6 pt-6 border-t border-current/20">
+                <p className="text-center font-medium">
+                  ✅ Documenten ontvangen! We reviewen ze zo snel mogelijk.
+                </p>
+              </div>
+            )}
+
+            {status === "inzetbaar" && (
+              <div className="mt-6 pt-6 border-t border-current/20">
+                <p className="text-center text-lg font-bold">
+                  🎉 Je bent klaar! We gaan direct voor je aan de slag.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

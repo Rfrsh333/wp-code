@@ -92,6 +92,10 @@ CREATE TABLE IF NOT EXISTS kandidaat_documenten (
   reviewed_at TIMESTAMPTZ,
   review_notes TEXT, -- Reden voor afwijzing of opmerkingen
 
+  -- Document expiry (voor ID, paspoort, rijbewijs, etc.)
+  document_expires_at DATE, -- Vervaldatum van document (optioneel)
+  expiry_reminder_sent_at TIMESTAMPTZ, -- Wanneer reminder verstuurd (30 dagen voor expiry)
+
   uploaded_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -101,6 +105,8 @@ CREATE INDEX IF NOT EXISTS idx_kandidaat_documenten_inschrijving ON kandidaat_do
 CREATE INDEX IF NOT EXISTS idx_kandidaat_documenten_type ON kandidaat_documenten(document_type);
 CREATE INDEX IF NOT EXISTS idx_kandidaat_documenten_status ON kandidaat_documenten(review_status);
 CREATE INDEX IF NOT EXISTS idx_kandidaat_documenten_uploaded ON kandidaat_documenten(uploaded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_kandidaat_documenten_expiry ON kandidaat_documenten(document_expires_at)
+  WHERE document_expires_at IS NOT NULL;
 
 -- Check constraints
 ALTER TABLE kandidaat_documenten DROP CONSTRAINT IF EXISTS kandidaat_documenten_type_check;
@@ -114,6 +120,7 @@ CHECK (review_status IN ('in_review', 'approved', 'rejected'));
 COMMENT ON TABLE kandidaat_documenten IS 'Geüploade documenten van kandidaten met review workflow';
 COMMENT ON COLUMN kandidaat_documenten.document_type IS 'Type document: id (identiteitsbewijs), cv, kvk (uittreksel), overig';
 COMMENT ON COLUMN kandidaat_documenten.review_status IS 'Review status: in_review (nog te beoordelen), approved (goedgekeurd), rejected (afgekeurd)';
+COMMENT ON COLUMN kandidaat_documenten.document_expires_at IS 'Vervaldatum van document (bijv. paspoort, ID-kaart, rijbewijs). System stuurt reminder 30 dagen voor expiry.';
 
 -- ============================================================================
 -- 4. Supabase Storage Bucket voor Kandidaat Documenten
