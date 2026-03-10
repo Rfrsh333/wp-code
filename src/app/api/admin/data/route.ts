@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
-  const { action, table, id, data } = await request.json();
+  const { action, table, id, ids, data } = await request.json();
 
   // KRITIEK: Check table whitelist
   if (!table || !isAllowedTable(table)) {
@@ -72,6 +72,9 @@ export async function POST(request: NextRequest) {
   }
   if (action === "delete_many") {
     await supabaseAdmin.from(table).delete().in("id", data.ids);
+  }
+  if (action === "bulk_update") {
+    await supabaseAdmin.from(table).update(data).in("id", ids);
   }
   if (action === "insert") {
     await supabaseAdmin.from(table).insert(data);

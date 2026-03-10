@@ -251,6 +251,7 @@ export default function AdminDashboard() {
   const [documentNotitieDraft, setDocumentNotitieDraft] = useState("");
   const [documentFileDraft, setDocumentFileDraft] = useState<File | null>(null);
   const [documentUploading, setDocumentUploading] = useState(false);
+  const [bulkOnboardingStatus, setBulkOnboardingStatus] = useState<OnboardingStatus | "">("");
   const router = useRouter();
 
   // Helper to get auth headers for admin API calls
@@ -531,6 +532,84 @@ export default function AdminDashboard() {
     await updateInschrijvingFields(inschrijving, {
       onboarding_checklist: nextChecklist,
     });
+  };
+
+  const bulkUpdateOnboardingStatus = async (status: OnboardingStatus) => {
+    if (selectedIds.size === 0) return;
+
+    const confirmMessage = `Weet je zeker dat je ${selectedIds.size} kandidaten wilt updaten naar "${onboardingStatusLabels[status]}"?`;
+    if (!confirm(confirmMessage)) return;
+
+    const payload: Record<string, string | boolean | null> = {
+      onboarding_status: status,
+    };
+
+    if (status === "goedgekeurd") {
+      payload.goedgekeurd_op = new Date().toISOString();
+    }
+
+    if (status === "inzetbaar") {
+      payload.documenten_compleet = true;
+      payload.inzetbaar_op = new Date().toISOString();
+    }
+
+    if (status === "afgewezen") {
+      payload.inzetbaar_op = null;
+    }
+
+    await fetch("/api/admin/data", {
+      method: "POST",
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({
+        action: "bulk_update",
+        table: "inschrijvingen",
+        ids: Array.from(selectedIds),
+        data: payload,
+      }),
+    });
+
+    setSelectedIds(new Set());
+    setBulkOnboardingStatus("");
+    await fetchData();
+  };
+
+  const calculateOnboardingMetrics = () => {
+    const metrics: Record<OnboardingStatus, number> = {
+      nieuw: 0,
+      in_beoordeling: 0,
+      documenten_opvragen: 0,
+      wacht_op_kandidaat: 0,
+      goedgekeurd: 0,
+      inzetbaar: 0,
+      afgewezen: 0,
+    };
+
+    const processingTimes: number[] = [];
+
+    inschrijvingen.forEach((inschrijving) => {
+      const status = getInschrijvingOnboardingStatus(inschrijving);
+      metrics[status]++;
+
+      // Calculate processing time for completed candidates (goedgekeurd or inzetbaar)
+      if (inschrijving.inzetbaar_op) {
+        const created = new Date(inschrijving.created_at).getTime();
+        const completed = new Date(inschrijving.inzetbaar_op).getTime();
+        const days = (completed - created) / (1000 * 60 * 60 * 24);
+        processingTimes.push(days);
+      } else if (inschrijving.goedgekeurd_op) {
+        const created = new Date(inschrijving.created_at).getTime();
+        const approved = new Date(inschrijving.goedgekeurd_op).getTime();
+        const days = (approved - created) / (1000 * 60 * 60 * 24);
+        processingTimes.push(days);
+      }
+    });
+
+    const avgProcessingTime =
+      processingTimes.length > 0
+        ? processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
+        : 0;
+
+    return { metrics, avgProcessingTime };
   };
 
   const deleteItem = async (table: string, id: string) => {
@@ -1050,10 +1129,35 @@ export default function AdminDashboard() {
                       <option value="afgewezen">Afgewezen</option>
                     </select>
                     {selectedIds.size > 0 && (
-                      <button onClick={() => deleteSelected("inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        Verwijder ({selectedIds.size})
-                      </button>
+                      <>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={bulkOnboardingStatus}
+                            onChange={(e) => setBulkOnboardingStatus(e.target.value as OnboardingStatus | "")}
+                            className="px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] bg-white text-neutral-900"
+                          >
+                            <option value="">Bulk actie...</option>
+                            <option value="in_beoordeling">→ In beoordeling</option>
+                            <option value="documenten_opvragen">→ Documenten opvragen</option>
+                            <option value="wacht_op_kandidaat">→ Wacht op kandidaat</option>
+                            <option value="goedgekeurd">→ Goedgekeurd</option>
+                            <option value="inzetbaar">→ Inzetbaar</option>
+                            <option value="afgewezen">→ Afgewezen</option>
+                          </select>
+                          {bulkOnboardingStatus && (
+                            <button
+                              onClick={() => bulkUpdateOnboardingStatus(bulkOnboardingStatus)}
+                              className="px-4 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] font-medium"
+                            >
+                              Update ({selectedIds.size})
+                            </button>
+                          )}
+                        </div>
+                        <button onClick={() => deleteSelected("inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          Verwijder ({selectedIds.size})
+                        </button>
+                      </>
                     )}
                     <button onClick={() => exportSelected(filteredInschrijvingen, "inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -1061,6 +1165,77 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                 </div>
+
+                {/* Onboarding Metrics Widget */}
+                {(() => {
+                  const { metrics, avgProcessingTime } = calculateOnboardingMetrics();
+                  const totalActive = Object.entries(metrics)
+                    .filter(([status]) => status !== "afgewezen")
+                    .reduce((sum, [, count]) => sum + count, 0);
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+                      {/* Active Pipeline */}
+                      <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-2xl shadow-sm p-6 border border-sky-100">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold text-sky-900">Actieve Pipeline</h3>
+                          <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                        </div>
+                        <p className="text-3xl font-bold text-sky-900">{totalActive}</p>
+                        <p className="text-sm text-sky-600 mt-1">Kandidaten in onboarding</p>
+                      </div>
+
+                      {/* Phase Breakdown */}
+                      <div className="bg-white rounded-2xl shadow-sm p-6 border border-neutral-100 lg:col-span-2">
+                        <h3 className="text-sm font-semibold text-neutral-900 mb-4">Per fase</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg">
+                            <span className="text-xs font-medium text-sky-700">Nieuw</span>
+                            <span className="text-lg font-bold text-sky-900">{metrics.nieuw}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                            <span className="text-xs font-medium text-amber-700">In beoordeling</span>
+                            <span className="text-lg font-bold text-amber-900">{metrics.in_beoordeling}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                            <span className="text-xs font-medium text-orange-700">Documenten</span>
+                            <span className="text-lg font-bold text-orange-900">{metrics.documenten_opvragen}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                            <span className="text-xs font-medium text-yellow-700">Wacht op resp.</span>
+                            <span className="text-lg font-bold text-yellow-900">{metrics.wacht_op_kandidaat}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+                            <span className="text-xs font-medium text-emerald-700">Goedgekeurd</span>
+                            <span className="text-lg font-bold text-emerald-900">{metrics.goedgekeurd}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                            <span className="text-xs font-medium text-green-700">Inzetbaar</span>
+                            <span className="text-lg font-bold text-green-900">{metrics.inzetbaar}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Average Processing Time */}
+                      <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl shadow-sm p-6 border border-emerald-100">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold text-emerald-900">Gem. doorlooptijd</h3>
+                          <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <p className="text-3xl font-bold text-emerald-900">
+                          {avgProcessingTime > 0 ? avgProcessingTime.toFixed(1) : "—"}
+                        </p>
+                        <p className="text-sm text-emerald-600 mt-1">
+                          {avgProcessingTime > 0 ? "dagen tot goedkeuring" : "Geen data beschikbaar"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                   <table className="w-full">
