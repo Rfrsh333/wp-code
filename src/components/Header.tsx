@@ -160,13 +160,6 @@ export default function Header() {
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
-                href="/blog"
-                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
-              >
-                Blog
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-              </Link>
-              <Link
                 href="/contact"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
@@ -294,13 +287,6 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Kosten calculator
-              </Link>
-              <Link
-                href="/blog"
-                className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Blog
               </Link>
               <Link
                 href="/contact"
