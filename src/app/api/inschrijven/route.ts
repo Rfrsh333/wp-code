@@ -3,7 +3,6 @@ import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import { verifyRecaptcha } from "@/lib/recaptcha";
-import { sendCandidateIntakeConfirmation } from "@/lib/candidate-onboarding";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -187,7 +186,7 @@ export async function POST(request: NextRequest) {
 
     const parsedMaxUren = maxUrenPerWeek ? Number.parseInt(maxUrenPerWeek, 10) : null;
 
-    const { data: insertedCandidate, error: dbError } = await supabase.from("inschrijvingen").insert({
+    const { data: insertedData, error: dbError } = await supabase.from("inschrijvingen").insert({
       voornaam,
       tussenvoegsel: tussenvoegsel || null,
       achternaam,
@@ -207,26 +206,37 @@ export async function POST(request: NextRequest) {
       beschikbaarheid,
       beschikbaar_vanaf: beschikbaarVanaf,
       max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
-    }).select("id").single();
+      onboarding_status: "nieuw", // Explicitly set initial status
+    }).select().single();
 
     if (dbError) {
       console.error("Supabase error:", dbError);
+      return NextResponse.json({ error: "Database fout" }, { status: 500 });
     }
 
-    try {
-      await sendCandidateIntakeConfirmation({
-        voornaam,
-        email,
-      });
+    // ✨ Send bevestigingsmail to kandidaat
+    if (insertedData) {
+      try {
+        const { sendIntakeBevestiging, logEmail } = await import("@/lib/candidate-onboarding");
 
-      if (insertedCandidate?.id) {
-        await supabase
-          .from("inschrijvingen")
-          .update({ intake_bevestiging_verstuurd_op: new Date().toISOString() })
-          .eq("id", insertedCandidate.id);
+        await sendIntakeBevestiging({
+          id: insertedData.id,
+          voornaam,
+          achternaam,
+          email,
+          uitbetalingswijze,
+        });
+
+        await logEmail(
+          insertedData.id,
+          "bevestiging",
+          email,
+          `Hey ${voornaam}! 👋 Je inschrijving is binnen`
+        );
+      } catch (emailError) {
+        console.error("Bevestigingsmail error:", emailError);
+        // Don't fail registration if email fails
       }
-    } catch (emailError) {
-      console.error("Kandidaat bevestigingsmail mislukt:", emailError);
     }
 
     return NextResponse.json({ success: true });

@@ -1,269 +1,311 @@
-import crypto from "crypto";
 import { Resend } from "resend";
 
-const FROM_EMAIL = "TopTalent Jobs <info@toptalentjobs.nl>";
-const BRAND_ORANGE = "#F27501";
-const BRAND_ORANGE_DARK = "#d96800";
-const TEXT_DARK = "#1F1F1F";
-const TEXT_MUTED = "#666666";
-const BG_SOFT = "#FFF7F1";
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-function getBaseUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl";
-}
-
-function getLogoUrl() {
-  return `${getBaseUrl()}/logo.png`;
-}
-
-function getResendClient() {
-  if (!process.env.RESEND_API_KEY) {
-    return null;
-  }
-
-  return new Resend(process.env.RESEND_API_KEY);
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function renderParagraphs(paragraphs: string[]) {
-  return paragraphs
-    .map(
-      (paragraph) =>
-        `<p style="margin: 0 0 16px; color: ${TEXT_MUTED}; font-size: 16px; line-height: 1.7;">${paragraph}</p>`
-    )
-    .join("");
-}
-
-function renderChecklist(items: string[]) {
-  if (items.length === 0) return "";
-
+// Base layout voor alle kandidaat emails - consistent oranje gradient design
+function getEmailLayout(content: string): string {
   return `
-    <div style="margin: 24px 0; background: ${BG_SOFT}; border-radius: 16px; padding: 20px;">
-      ${items
-        .map(
-          (item) => `
-            <div style="margin-bottom: 12px; color: ${TEXT_DARK}; font-size: 15px; line-height: 1.6;">
-              <span style="display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 999px; background: ${BRAND_ORANGE}; color: #ffffff; font-weight: 700; margin-right: 10px;">+</span>
-              ${item}
-            </div>
-          `
-        )
-        .join("")}
-    </div>
-  `;
-}
-
-function renderEmailLayout({
-  eyebrow,
-  title,
-  intro,
-  body,
-  ctaLabel,
-  ctaHref,
-  note,
-}: {
-  eyebrow: string;
-  title: string;
-  intro: string;
-  body: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-  note?: string;
-}) {
-  const cta = ctaLabel && ctaHref
-    ? `
-      <div style="margin: 28px 0 24px;">
-        <a
-          href="${ctaHref}"
-          style="
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f8f8;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+          }
+          .header {
+            background: linear-gradient(135deg, #F27501 0%, #d96800 100%);
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            margin: 0;
+          }
+          .content {
+            padding: 40px 30px;
+            color: #333;
+            line-height: 1.6;
+          }
+          .card {
+            background: #fff;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+          }
+          .cta-button {
             display: inline-block;
-            background: linear-gradient(135deg, ${BRAND_ORANGE} 0%, ${BRAND_ORANGE_DARK} 100%);
-            color: #ffffff;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #F27501 0%, #d96800 100%);
+            color: white !important;
             text-decoration: none;
-            padding: 15px 22px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 15px;
-          "
-        >
-          ${ctaLabel}
-        </a>
-      </div>
-    `
-    : "";
-
-  const noteBlock = note
-    ? `<p style="margin: 20px 0 0; color: #8a8a8a; font-size: 12px; line-height: 1.6;">${note}</p>`
-    : "";
-
-  return `
-    <div style="margin: 0; padding: 24px 12px; background: linear-gradient(180deg, #ffffff 0%, ${BG_SOFT} 100%);">
-      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <div style="overflow: hidden; border-radius: 28px; box-shadow: 0 18px 40px rgba(0,0,0,0.08);">
-          <div style="padding: 28px 28px 24px; background: linear-gradient(135deg, ${BRAND_ORANGE} 0%, ${BRAND_ORANGE_DARK} 100%); text-align: center;">
-            <img
-              src="${getLogoUrl()}"
-              alt="TopTalent Jobs"
-              style="height: 38px; width: auto; display: inline-block; margin-bottom: 18px;"
-            />
-            <div style="color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px;">
-              ${eyebrow}
-            </div>
-            <h1 style="margin: 0; color: #ffffff; font-size: 30px; line-height: 1.2;">
-              ${title}
-            </h1>
-            <p style="margin: 14px 0 0; color: rgba(255,255,255,0.92); font-size: 16px; line-height: 1.6;">
-              ${intro}
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(242, 117, 1, 0.3);
+          }
+          .footer {
+            padding: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+          }
+          h1 {
+            color: #F27501;
+            font-size: 24px;
+            margin: 0 0 20px 0;
+          }
+          p {
+            margin: 16px 0;
+          }
+          .emoji {
+            font-size: 32px;
+            display: block;
+            margin: 20px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="logo">TopTalent</h1>
+          </div>
+          <div class="content">
+            ${content}
+          </div>
+          <div class="footer">
+            <p><strong>TopTalent Jobs</strong></p>
+            <p>
+              📧 <a href="mailto:info@toptalentjobs.nl" style="color: #F27501;">info@toptalentjobs.nl</a><br>
+              📱 <a href="tel:+31649713766" style="color: #F27501;">+31 6 49 71 37 66</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px; color: #aaa;">
+              © ${new Date().getFullYear()} TopTalent Jobs. Alle rechten voorbehouden.
             </p>
           </div>
-
-          <div style="background: #ffffff; padding: 30px 28px;">
-            ${body}
-            ${cta}
-            ${noteBlock}
-          </div>
-
-          <div style="background: ${TEXT_DARK}; padding: 20px 28px; color: rgba(255,255,255,0.72); font-size: 13px; line-height: 1.6;">
-            TopTalent Jobs · info@toptalentjobs.nl · www.toptalentjobs.nl
-          </div>
         </div>
-      </div>
-    </div>
+      </body>
+    </html>
   `;
 }
 
-export function buildCandidateFullName(candidate: {
+interface Kandidaat {
+  id: string;
   voornaam: string;
-  tussenvoegsel?: string | null;
   achternaam: string;
-}) {
-  return candidate.tussenvoegsel
-    ? `${candidate.voornaam} ${candidate.tussenvoegsel} ${candidate.achternaam}`
-    : `${candidate.voornaam} ${candidate.achternaam}`;
-}
-
-export function generateOnboardingPortalToken() {
-  return crypto.randomBytes(32).toString("hex");
-}
-
-export function createOnboardingPortalLink(token: string) {
-  return `${getBaseUrl()}/kandidaat/documenten?token=${token}`;
-}
-
-export async function sendCandidateIntakeConfirmation(candidate: {
-  voornaam: string;
   email: string;
-}) {
-  const resend = getResendClient();
-  if (!resend) return;
+  uitbetalingswijze: string;
+}
 
-  const firstName = escapeHtml(candidate.voornaam);
+// 1. Intake bevestiging - Losser en geruststellend
+export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
+  const statusUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to: [candidate.email],
-    subject: "Lekker, je inschrijving is binnen",
-    html: renderEmailLayout({
-      eyebrow: "TopTalent Intake",
-      title: "Je staat op onze radar",
-      intro: `Hi ${firstName}, je inschrijving is goed binnengekomen.`,
-      body: `
-        ${renderParagraphs([
-          "Nice. We gaan je intake nu even rustig bekijken om te checken waar jij het best tot je recht komt.",
-          "Je hoeft nu nog niets extra's te doen. Documenten vragen we pas later op als we doorpakken.",
-          "Zodra we een goede match zien, hoor je van ons.",
-        ])}
-        ${renderChecklist([
-          "Wij checken je profiel en beschikbaarheid",
-          "Als het matcht, nemen we contact met je op",
-          "Documenten komen pas later in de flow",
-        ])}
-      `,
-      ctaLabel: "Check TopTalent Jobs",
-      ctaHref: getBaseUrl(),
-      note: "Geen stress als je niet direct iets hoort. We willen eerst even goed kijken waar je het best past.",
-    }),
+  const content = `
+    <span class="emoji">👋</span>
+
+    <h1>Hey ${kandidaat.voornaam}, welkom bij TopTalent!</h1>
+
+    <p>
+      Top dat je je hebt ingeschreven! We hebben je gegevens binnen en gaan er zo mee aan de slag.
+    </p>
+
+    <div class="card">
+      <p><strong>Wat gebeurt er nu?</strong></p>
+      <ul style="margin: 12px 0; padding-left: 20px;">
+        <li>We checken je profiel (duurt meestal 1-2 werkdagen)</li>
+        <li>Als we nog wat nodig hebben, hoor je van ons</li>
+        <li>Zodra je goedgekeurd bent, gaan we matches voor je zoeken! 🎯</li>
+      </ul>
+    </div>
+
+    <p>
+      Je kunt je status altijd live volgen via onderstaande link:
+    </p>
+
+    <center>
+      <a href="${statusUrl}" class="cta-button">
+        📊 Bekijk je status
+      </a>
+    </center>
+
+    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+      Vragen? Gewoon appen of mailen, we helpen je graag! 💬
+    </p>
+  `;
+
+  const result = await resend.emails.send({
+    from: "TopTalent <info@toptalentjobs.nl>",
+    to: [kandidaat.email],
+    replyTo: "info@toptalentjobs.nl",
+    subject: `Hey ${kandidaat.voornaam}! 👋 Je inschrijving is binnen`,
+    html: getEmailLayout(content),
   });
+
+  return result;
 }
 
-export async function sendCandidateDocumentsRequest(candidate: {
-  voornaam: string;
-  email: string;
-  portalToken: string;
-}) {
-  const resend = getResendClient();
-  if (!resend) return;
+// 2. Documenten verzoek - Upbeat en duidelijk
+export async function sendDocumentenVerzoek(kandidaat: Kandidaat) {
+  const uploadToken = generateUploadToken(kandidaat.id);
+  const uploadUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/documenten?token=${uploadToken}`;
 
-  const portalLink = createOnboardingPortalLink(candidate.portalToken);
-  const firstName = escapeHtml(candidate.voornaam);
+  const isZZP = kandidaat.uitbetalingswijze === "zzp";
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to: [candidate.email],
-    subject: "Tijd voor de volgende stap: upload je documenten",
-    html: renderEmailLayout({
-      eyebrow: "Onboarding",
-      title: "Nog even dit regelen",
-      intro: `Hi ${firstName}, we willen door met je profiel. Daarvoor hebben we nog wat documenten van je nodig.`,
-      body: `
-        ${renderParagraphs([
-          "Goed nieuws: je intake ziet er interessant uit.",
-          "Om je onboarding netjes af te ronden, kun je via de knop hieronder veilig je documenten uploaden.",
-        ])}
-        ${renderChecklist([
-          "ID",
-          "CV",
-          "KvK / btw-gegevens als je als ZZP werkt",
-          "Eventuele certificaten als je die hebt",
-        ])}
-      `,
-      ctaLabel: "Documenten uploaden",
-      ctaHref: portalLink,
-      note: `Werkt de knop niet? Gebruik dan deze link: ${portalLink}`,
-    }),
+  const content = `
+    <span class="emoji">📄</span>
+
+    <h1>Goed nieuws ${kandidaat.voornaam}! 🎉</h1>
+
+    <p>
+      Je profiel ziet er goed uit! Om verder te gaan hebben we alleen nog een paar documenten nodig.
+      Geen zorgen, dit duurt maar 2 minuten. 😊
+    </p>
+
+    <div class="card">
+      <p><strong>Dit hebben we nodig:</strong></p>
+      <ul style="margin: 12px 0; padding-left: 20px;">
+        <li>📸 <strong>Geldig identiteitsbewijs</strong> (paspoort of ID-kaart)</li>
+        <li>📝 <strong>CV</strong> (mag kort, gewoon je ervaring)</li>
+        ${isZZP ? '<li>🏢 <strong>KVK uittreksel</strong> (niet ouder dan 3 maanden)</li>' : ''}
+      </ul>
+      <p style="margin-top: 16px; font-size: 14px; color: #666;">
+        💡 <strong>Tip:</strong> Maak gewoon een foto met je telefoon - hoeft niet super professioneel!
+      </p>
+    </div>
+
+    <p>
+      Upload je documenten hier:
+    </p>
+
+    <center>
+      <a href="${uploadUrl}" class="cta-button">
+        📤 Upload documenten (2 min)
+      </a>
+    </center>
+
+    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+      🔒 Deze link is beveiligd en 7 dagen geldig.<br>
+      Nadat we alles hebben, ben je zo goedgekeurd! 🚀
+    </p>
+  `;
+
+  const result = await resend.emails.send({
+    from: "TopTalent <info@toptalentjobs.nl>",
+    to: [kandidaat.email],
+    replyTo: "info@toptalentjobs.nl",
+    subject: `${kandidaat.voornaam}, we hebben je documenten nodig! 📄`,
+    html: getEmailLayout(content),
   });
+
+  return result;
 }
 
-export async function sendCandidateWelcomeEmail(candidate: {
-  voornaam: string;
-  email: string;
-}) {
-  const resend = getResendClient();
-  if (!resend) return;
+// 3. Welkomst mail - "Yes, je bent klaar" vibe
+export async function sendWelkomstmail(kandidaat: Kandidaat) {
+  const statusUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
 
-  const firstName = escapeHtml(candidate.voornaam);
+  const content = `
+    <span class="emoji">🎉</span>
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to: [candidate.email],
-    subject: "Yes, je bent klaar voor inzet",
-    html: renderEmailLayout({
-      eyebrow: "Welkom bij TopTalent",
-      title: "Je onboarding is rond",
-      intro: `Hi ${firstName}, nice. Je profiel staat nu klaar voor inzet.`,
-      body: `
-        ${renderParagraphs([
-          "Alles staat goed aan onze kant en je bent nu officieel door de onboarding heen.",
-          "Dat betekent dat we je kunnen meenemen zodra er een passende dienst of opdracht voor je langskomt.",
-          "Kort gezegd: jij staat klaar, wij gaan voor je aan.",
-        ])}
-        ${renderChecklist([
-          "Je profiel is goedgekeurd",
-          "Je documenten zijn binnen",
-          "Je bent klaar om ingepland te worden zodra er een match is",
-        ])}
-      `,
-      ctaLabel: "Naar de website",
-      ctaHref: getBaseUrl(),
-      note: "Zodra we iets hebben dat goed past bij jouw profiel en beschikbaarheid, hoor je van ons.",
-    }),
+    <h1>Yes ${kandidaat.voornaam}, je bent inzetbaar!</h1>
+
+    <p style="font-size: 18px; color: #F27501; font-weight: 600;">
+      Welkom in het team! 🙌
+    </p>
+
+    <p>
+      Je bent officieel goedgekeurd en klaar voor inzet. Vanaf nu kunnen we je matchen
+      met gave opdrachten in de horeca!
+    </p>
+
+    <div class="card">
+      <p><strong>Wat nu?</strong></p>
+      <p>
+        We gaan actief voor je uitkijken naar shifts die bij jou passen. Zodra we iets hebben:
+      </p>
+      <ul style="margin: 12px 0; padding-left: 20px;">
+        <li>📞 Bellen we je of sturen een berichtje</li>
+        <li>📅 Matchen we je met een leuke opdracht</li>
+        <li>💰 Regel je snel je eerste shift!</li>
+      </ul>
+    </div>
+
+    <p>
+      Houd je telefoon in de gaten - je eerste match kan zomaar binnenkomen! 📱
+    </p>
+
+    <center>
+      <a href="${statusUrl}" class="cta-button">
+        🚀 Bekijk je profiel
+      </a>
+    </center>
+
+    <p style="margin-top: 30px; font-size: 18px; text-align: center;">
+      <strong>Let's go! 🔥</strong>
+    </p>
+
+    <p style="margin-top: 20px; color: #666; font-size: 14px; text-align: center;">
+      Vragen? We zijn er! Bel, app of mail ons. 💬
+    </p>
+  `;
+
+  const result = await resend.emails.send({
+    from: "TopTalent <info@toptalentjobs.nl>",
+    to: [kandidaat.email],
+    replyTo: "info@toptalentjobs.nl",
+    subject: `🎉 ${kandidaat.voornaam}, je bent inzetbaar!`,
+    html: getEmailLayout(content),
+  });
+
+  return result;
+}
+
+// Helper functions voor token generation
+function generateStatusToken(email: string, kandidaatId: string): string {
+  const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
+  const crypto = require("crypto");
+  const data = `${email}:${kandidaatId}:${secret}`;
+  return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
+}
+
+function generateUploadToken(kandidaatId: string, expiryDays = 7): string {
+  const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
+  const crypto = require("crypto");
+  const expiryDate = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
+  const data = `${kandidaatId}:${expiryDate}:${secret}`;
+  return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
+}
+
+// Email logging helper
+export async function logEmail(
+  kandidaatId: string,
+  emailType: "bevestiging" | "documenten_opvragen" | "inzetbaar",
+  recipient: string,
+  subject: string
+) {
+  const { supabaseAdmin } = await import("@/lib/supabase");
+
+  await supabaseAdmin.from("email_log").insert({
+    kandidaat_id: kandidaatId,
+    email_type: emailType,
+    recipient,
+    subject,
+    sent_at: new Date().toISOString(),
+    status: "sent",
   });
 }

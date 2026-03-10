@@ -1,103 +1,194 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { createHash } from "crypto";
 
-const DOCUMENT_BUCKET = process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten";
-
-function sanitizeFilename(filename: string) {
-  return filename.replace(/[^a-zA-Z0-9._-]/g, "-");
+// Token validation helper
+function generateUploadToken(kandidaatId: string, expiryDays = 7): string {
+  const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
+  const expiryDate = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
+  const data = `${kandidaatId}:${expiryDate}:${secret}`;
+  return createHash("sha256").update(data).digest("hex").substring(0, 32);
 }
 
-async function getCandidateByToken(token: string) {
-  const { data, error } = await supabaseAdmin
+async function validateUploadToken(token: string): Promise<{ valid: boolean; kandidaatId?: string }> {
+  // Try to find kandidaat with matching token
+  const { data: kandidaten } = await supabaseAdmin
     .from("inschrijvingen")
-    .select("id, voornaam, achternaam, email, onboarding_portal_token_expires_at")
-    .eq("onboarding_portal_token", token)
-    .gt("onboarding_portal_token_expires_at", new Date().toISOString())
-    .single();
+    .select("id");
 
-  if (error || !data) {
-    return null;
+  if (!kandidaten) {
+    return { valid: false };
   }
 
-  return data;
+  // Check if token matches any kandidaat (within expiry)
+  for (const k of kandidaten) {
+    const expectedToken = generateUploadToken(k.id);
+    if (token === expectedToken) {
+      return { valid: true, kandidaatId: k.id };
+    }
+  }
+
+  return { valid: false };
 }
 
+// GET: Validate token and return kandidaat info + uploaded docs
 export async function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get("token");
-  if (!token) {
-    return NextResponse.json({ error: "Token ontbreekt" }, { status: 400 });
+  try {
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get("token");
+
+    if (!token) {
+      return NextResponse.json({ error: "Token vereist" }, { status: 400 });
+    }
+
+    const validation = await validateUploadToken(token);
+
+    if (!validation.valid || !validation.kandidaatId) {
+      return NextResponse.json({ error: "Ongeldige of verlopen link" }, { status: 403 });
+    }
+
+    // Fetch kandidaat info
+    const { data: kandidaat } = await supabaseAdmin
+      .from("inschrijvingen")
+      .select("voornaam, achternaam, uitbetalingswijze")
+      .eq("id", validation.kandidaatId)
+      .single();
+
+    // Fetch already uploaded documents
+    const { data: documents } = await supabaseAdmin
+      .from("kandidaat_documenten")
+      .select("document_type, file_name, file_size")
+      .eq("inschrijving_id", validation.kandidaatId);
+
+    return NextResponse.json({
+      kandidaat,
+      uploaded_documents: documents || [],
+    });
+  } catch (error) {
+    console.error("Validate token error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  const kandidaat = await getCandidateByToken(token);
-  if (!kandidaat) {
-    return NextResponse.json({ error: "Uploadlink is ongeldig of verlopen" }, { status: 403 });
-  }
-
-  const { data: documenten, error } = await supabaseAdmin
-    .from("kandidaat_documenten")
-    .select("id, type, bestandsnaam, status, uploaded_at")
-    .eq("inschrijving_id", kandidaat.id)
-    .order("uploaded_at", { ascending: false });
-
-  if (error) {
-    return NextResponse.json({ error: "Documenten konden niet worden opgehaald" }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    kandidaat: {
-      voornaam: kandidaat.voornaam,
-      achternaam: kandidaat.achternaam,
-      email: kandidaat.email,
-    },
-    documenten: documenten || [],
-  });
 }
 
+// POST: Upload document
 export async function POST(request: NextRequest) {
-  const formData = await request.formData();
-  const token = String(formData.get("token") || "");
-  const type = String(formData.get("type") || "");
-  const file = formData.get("file");
+  try {
+    const formData = await request.formData();
+    const token = formData.get("token") as string;
+    const file = formData.get("file") as File;
+    const documentType = formData.get("document_type") as string || "overig";
 
-  if (!token || !type || !(file instanceof File)) {
-    return NextResponse.json({ error: "Token, type en bestand zijn verplicht" }, { status: 400 });
-  }
+    // Validate token
+    if (!token) {
+      return NextResponse.json({ error: "Token vereist" }, { status: 400 });
+    }
 
-  const kandidaat = await getCandidateByToken(token);
-  if (!kandidaat) {
-    return NextResponse.json({ error: "Uploadlink is ongeldig of verlopen" }, { status: 403 });
-  }
+    const validation = await validateUploadToken(token);
 
-  const safeFilename = sanitizeFilename(file.name);
-  const path = `${kandidaat.id}/${Date.now()}-${safeFilename}`;
-  const fileBuffer = Buffer.from(await file.arrayBuffer());
+    if (!validation.valid || !validation.kandidaatId) {
+      return NextResponse.json({ error: "Ongeldige of verlopen link" }, { status: 403 });
+    }
 
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from(DOCUMENT_BUCKET)
-    .upload(path, fileBuffer, {
-      contentType: file.type || "application/octet-stream",
-      upsert: false,
+    // Validate file
+    if (!file) {
+      return NextResponse.json({ error: "Geen bestand geselecteerd" }, { status: 400 });
+    }
+
+    // File type validation
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json({ error: "Alleen PDF, JPG of PNG bestanden toegestaan" }, { status: 400 });
+    }
+
+    // File size validation (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return NextResponse.json({ error: "Bestand te groot (max 10MB)" }, { status: 400 });
+    }
+
+    // Rate limiting check - max 20 uploads per kandidaat total
+    const { data: existingDocs, error: countError } = await supabaseAdmin
+      .from("kandidaat_documenten")
+      .select("id", { count: 'exact' })
+      .eq("inschrijving_id", validation.kandidaatId);
+
+    if (countError) {
+      console.error("Count error:", countError);
+    }
+
+    if (existingDocs && existingDocs.length >= 20) {
+      return NextResponse.json({ error: "Maximum aantal uploads bereikt" }, { status: 429 });
+    }
+
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${validation.kandidaatId}/${documentType}_${timestamp}.${fileExt}`;
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin
+      .storage
+      .from('kandidaat-documenten')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
+    }
+
+    // Get public URL
+    const { data: urlData } = supabaseAdmin
+      .storage
+      .from('kandidaat-documenten')
+      .getPublicUrl(fileName);
+
+    // Save to database
+    const { error: dbError } = await supabaseAdmin
+      .from("kandidaat_documenten")
+      .insert({
+        inschrijving_id: validation.kandidaatId,
+        document_type: documentType,
+        file_name: file.name,
+        file_path: fileName,
+        file_size: file.size,
+        file_url: urlData.publicUrl,
+        review_status: "in_review",
+        uploaded_at: new Date().toISOString(),
+      });
+
+    if (dbError) {
+      console.error("Database error:", dbError);
+      // Try to cleanup uploaded file
+      await supabaseAdmin.storage.from('kandidaat-documenten').remove([fileName]);
+      return NextResponse.json({ error: "Database fout" }, { status: 500 });
+    }
+
+    // Update kandidaat status if this was first upload
+    if (!existingDocs || existingDocs.length === 0) {
+      await supabaseAdmin
+        .from("inschrijvingen")
+        .update({
+          onboarding_status: "wacht_op_kandidaat", // Waiting for admin review
+          laatste_contact_op: new Date().toISOString(),
+        })
+        .eq("id", validation.kandidaatId);
+    }
+
+    return NextResponse.json({
+      success: true,
+      document_type: documentType,
+      file_name: file.name,
+      file_size: file.size,
     });
-
-  if (uploadError) {
-    console.error("Kandidaat document upload mislukt:", uploadError);
-    return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
+  } catch (error) {
+    console.error("Upload error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  const { error: insertError } = await supabaseAdmin.from("kandidaat_documenten").insert({
-    inschrijving_id: kandidaat.id,
-    type,
-    bestandsnaam: file.name,
-    bestand_pad: path,
-    mime_type: file.type || null,
-    bestand_grootte: file.size,
-    status: "ontvangen",
-  });
-
-  if (insertError) {
-    console.error("Kandidaat document metadata insert mislukt:", insertError);
-    return NextResponse.json({ error: "Upload metadata kon niet worden opgeslagen" }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true });
 }
