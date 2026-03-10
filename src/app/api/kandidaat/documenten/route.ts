@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${validation.kandidaatId}/${documentType}_${timestamp}.${fileExt}`;
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabaseAdmin
+    const { error: uploadError } = await supabaseAdmin
       .storage
       .from('kandidaat-documenten')
       .upload(fileName, buffer, {

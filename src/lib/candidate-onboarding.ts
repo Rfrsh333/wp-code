@@ -1,4 +1,9 @@
 import { Resend } from "resend";
+import {
+  applyCandidateEmailVars,
+  candidateEmailCopy,
+  getDocumentChecklist,
+} from "@/content/candidateEmails";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -111,40 +116,48 @@ interface Kandidaat {
   uitbetalingswijze: string;
 }
 
+function getBaseUrl() {
+  return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
+}
+
+function renderCard(title: string | undefined, items: readonly string[] | undefined) {
+  if (!title || !items || items.length === 0) {
+    return "";
+  }
+
+  return `
+    <div class="card">
+      <p><strong>${title}</strong></p>
+      <ul style="margin: 12px 0; padding-left: 20px;">
+        ${items.map((item) => `<li>${item}</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
 // 1. Intake bevestiging - Losser en geruststellend
 export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
-  const statusUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
-
+  const statusUrl = `${getBaseUrl()}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
+  const copy = candidateEmailCopy.bevestiging;
   const content = `
     <span class="emoji">👋</span>
 
-    <h1>Hey ${kandidaat.voornaam}, welkom bij TopTalent!</h1>
+    <h1>${applyCandidateEmailVars(copy.heading, { voornaam: kandidaat.voornaam })}</h1>
 
-    <p>
-      Top dat je je hebt ingeschreven! We hebben je gegevens binnen en gaan er zo mee aan de slag.
-    </p>
+    <p>${copy.intro}</p>
 
-    <div class="card">
-      <p><strong>Wat gebeurt er nu?</strong></p>
-      <ul style="margin: 12px 0; padding-left: 20px;">
-        <li>We checken je profiel (duurt meestal 1-2 werkdagen)</li>
-        <li>Als we nog wat nodig hebben, hoor je van ons</li>
-        <li>Zodra je goedgekeurd bent, gaan we matches voor je zoeken! 🎯</li>
-      </ul>
-    </div>
+    ${renderCard(copy.cardTitle, copy.cardItems)}
 
-    <p>
-      Je kunt je status altijd live volgen via onderstaande link:
-    </p>
+    <p>${copy.bodyAfterCard}</p>
 
     <center>
       <a href="${statusUrl}" class="cta-button">
-        📊 Bekijk je status
+        ${copy.ctaLabel}
       </a>
     </center>
 
     <p style="margin-top: 30px; color: #666; font-size: 14px;">
-      Vragen? Gewoon appen of mailen, we helpen je graag! 💬
+      ${copy.outro}
     </p>
   `;
 
@@ -152,7 +165,7 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
-    subject: `Hey ${kandidaat.voornaam}! 👋 Je inschrijving is binnen`,
+    subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
 
@@ -160,47 +173,37 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
 }
 
 // 2. Documenten verzoek - Upbeat en duidelijk
-export async function sendDocumentenVerzoek(kandidaat: Kandidaat) {
-  const uploadToken = await generateAndSaveUploadToken(kandidaat.id);
-  const uploadUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/documenten?token=${uploadToken}`;
+export async function sendDocumentenVerzoek(kandidaat: Kandidaat, portalToken?: string) {
+  const uploadToken = portalToken || await generateAndSaveUploadToken(kandidaat.id);
+  const uploadUrl = `${getBaseUrl()}/kandidaat/documenten?token=${uploadToken}`;
 
   const isZZP = kandidaat.uitbetalingswijze === "zzp";
+  const copy = candidateEmailCopy.documenten;
 
   const content = `
     <span class="emoji">📄</span>
 
-    <h1>Goed nieuws ${kandidaat.voornaam}! 🎉</h1>
+    <h1>${applyCandidateEmailVars(copy.heading, { voornaam: kandidaat.voornaam })}</h1>
 
-    <p>
-      Je profiel ziet er goed uit! Om verder te gaan hebben we alleen nog een paar documenten nodig.
-      Geen zorgen, dit duurt maar 2 minuten. 😊
-    </p>
+    <p>${copy.intro}</p>
 
-    <div class="card">
-      <p><strong>Dit hebben we nodig:</strong></p>
-      <ul style="margin: 12px 0; padding-left: 20px;">
-        <li>📸 <strong>Geldig identiteitsbewijs</strong> (paspoort of ID-kaart)</li>
-        <li>📝 <strong>CV</strong> (mag kort, gewoon je ervaring)</li>
-        ${isZZP ? '<li>🏢 <strong>KVK uittreksel</strong> (niet ouder dan 3 maanden)</li>' : ''}
-      </ul>
+    ${renderCard(copy.cardTitle, getDocumentChecklist(isZZP))}
+    <div class="card" style="margin-top: -8px;">
       <p style="margin-top: 16px; font-size: 14px; color: #666;">
         💡 <strong>Tip:</strong> Maak gewoon een foto met je telefoon - hoeft niet super professioneel!
       </p>
     </div>
 
-    <p>
-      Upload je documenten hier:
-    </p>
+    <p>${copy.bodyAfterCard}</p>
 
     <center>
       <a href="${uploadUrl}" class="cta-button">
-        📤 Upload documenten (2 min)
+        ${copy.ctaLabel}
       </a>
     </center>
 
     <p style="margin-top: 30px; color: #666; font-size: 14px;">
-      🔒 Deze link is beveiligd en 7 dagen geldig.<br>
-      Nadat we alles hebben, ben je zo goedgekeurd! 🚀
+      ${copy.outro}
     </p>
   `;
 
@@ -208,7 +211,7 @@ export async function sendDocumentenVerzoek(kandidaat: Kandidaat) {
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
-    subject: `${kandidaat.voornaam}, we hebben je documenten nodig! 📄`,
+    subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
 
@@ -217,50 +220,32 @@ export async function sendDocumentenVerzoek(kandidaat: Kandidaat) {
 
 // 3. Welkomst mail - "Yes, je bent klaar" vibe
 export async function sendWelkomstmail(kandidaat: Kandidaat) {
-  const statusUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
+  const statusUrl = `${getBaseUrl()}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
+  const copy = candidateEmailCopy.welkom;
 
   const content = `
     <span class="emoji">🎉</span>
 
-    <h1>Yes ${kandidaat.voornaam}, je bent inzetbaar!</h1>
+    <h1>${applyCandidateEmailVars(copy.heading, { voornaam: kandidaat.voornaam })}</h1>
 
     <p style="font-size: 18px; color: #F27501; font-weight: 600;">
       Welkom in het team! 🙌
     </p>
 
-    <p>
-      Je bent officieel goedgekeurd en klaar voor inzet. Vanaf nu kunnen we je matchen
-      met gave opdrachten in de horeca!
-    </p>
+    <p>${copy.intro}</p>
 
-    <div class="card">
-      <p><strong>Wat nu?</strong></p>
-      <p>
-        We gaan actief voor je uitkijken naar shifts die bij jou passen. Zodra we iets hebben:
-      </p>
-      <ul style="margin: 12px 0; padding-left: 20px;">
-        <li>📞 Bellen we je of sturen een berichtje</li>
-        <li>📅 Matchen we je met een leuke opdracht</li>
-        <li>💰 Regel je snel je eerste shift!</li>
-      </ul>
-    </div>
+    ${renderCard(copy.cardTitle, copy.cardItems)}
 
-    <p>
-      Houd je telefoon in de gaten - je eerste match kan zomaar binnenkomen! 📱
-    </p>
+    <p>${copy.bodyAfterCard}</p>
 
     <center>
       <a href="${statusUrl}" class="cta-button">
-        🚀 Bekijk je profiel
+        ${copy.ctaLabel}
       </a>
     </center>
 
-    <p style="margin-top: 30px; font-size: 18px; text-align: center;">
-      <strong>Let's go! 🔥</strong>
-    </p>
-
-    <p style="margin-top: 20px; color: #666; font-size: 14px; text-align: center;">
-      Vragen? We zijn er! Bel, app of mail ons. 💬
+    <p style="margin-top: 30px; font-size: 18px; text-align: center; color: #666;">
+      ${copy.outro}
     </p>
   `;
 
@@ -268,7 +253,7 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
-    subject: `🎉 ${kandidaat.voornaam}, je bent inzetbaar!`,
+    subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
 
@@ -278,7 +263,6 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
 // Helper functions voor token generation
 function generateStatusToken(email: string, kandidaatId: string): string {
   const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
-  const crypto = require("crypto");
   const data = `${email}:${kandidaatId}:${secret}`;
   return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
 }
@@ -286,7 +270,6 @@ function generateStatusToken(email: string, kandidaatId: string): string {
 // 🚀 Optimized: Generate token and save to database for O(1) lookup
 export async function generateAndSaveUploadToken(kandidaatId: string, expiryDays = 7): Promise<string> {
   const { supabaseAdmin } = await import("@/lib/supabase");
-  const crypto = require("crypto");
 
   // Generate random secure token
   const token = crypto.randomBytes(32).toString("hex").substring(0, 32);
@@ -307,7 +290,6 @@ export async function generateAndSaveUploadToken(kandidaatId: string, expiryDays
 // Legacy function (deprecated but kept for backwards compatibility)
 function generateUploadToken(kandidaatId: string, expiryDays = 7): string {
   const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
-  const crypto = require("crypto");
   const expiryDate = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
   const data = `${kandidaatId}:${expiryDate}:${secret}`;
   return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
