@@ -75,6 +75,11 @@ interface Inschrijving {
   goedgekeurd_op?: string | null;
   inzetbaar_op?: string | null;
   onboarding_checklist?: Partial<Record<ChecklistKey, boolean>>;
+  onboarding_portal_token?: string | null;
+  onboarding_portal_token_expires_at?: string | null;
+  intake_bevestiging_verstuurd_op?: string | null;
+  documenten_verzoek_verstuurd_op?: string | null;
+  welkom_mail_verstuurd_op?: string | null;
   horeca_ervaring?: string | null;
   gewenste_functies?: string[] | null;
   talen?: string[] | null;
@@ -370,39 +375,26 @@ export default function AdminDashboard() {
     inschrijving: Inschrijving,
     onboardingStatus: OnboardingStatus
   ) => {
-    const payload: Record<string, string | boolean | null> = {
-      onboarding_status: onboardingStatus,
-    };
-
-    if (onboardingStatus === "goedgekeurd" && !inschrijving.goedgekeurd_op) {
-      payload.goedgekeurd_op = new Date().toISOString();
-    }
-
-    if (onboardingStatus === "inzetbaar") {
-      payload.documenten_compleet = true;
-      if (!inschrijving.inzetbaar_op) {
-        payload.inzetbaar_op = new Date().toISOString();
-      }
-    }
-
-    if (onboardingStatus === "afgewezen") {
-      payload.inzetbaar_op = null;
-    }
-
-    await fetch("/api/admin/data", {
+    const response = await fetch("/api/admin/inschrijvingen/onboarding", {
       method: "POST",
       headers: await getAuthHeaders(),
       body: JSON.stringify({
-        action: "update",
-        table: "inschrijvingen",
         id: inschrijving.id,
-        data: payload,
+        onboardingStatus,
       }),
     });
 
+    if (!response.ok) {
+      const result = await response.json();
+      alert(result.error || "Onboarding status kon niet worden bijgewerkt.");
+      return;
+    }
+
+    const result = await response.json();
+
     await fetchData();
     setSelectedItem((prev) =>
-      prev && prev.id === inschrijving.id ? ({ ...prev, ...payload } as Inschrijving) : prev
+      prev && prev.id === inschrijving.id ? ({ ...prev, ...result.data } as Inschrijving) : prev
     );
   };
 
@@ -1809,6 +1801,30 @@ export default function AdminDashboard() {
                             : "Nog niet inzetbaar"}
                         </p>
                       </div>
+                      <div>
+                        <p className="text-neutral-500">Intake bevestiging</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).intake_bevestiging_verstuurd_op
+                            ? formatDate((selectedItem as Inschrijving).intake_bevestiging_verstuurd_op!)
+                            : "Nog niet verstuurd"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Documentenverzoek</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).documenten_verzoek_verstuurd_op
+                            ? formatDate((selectedItem as Inschrijving).documenten_verzoek_verstuurd_op!)
+                            : "Nog niet verstuurd"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Welkomstmail</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).welkom_mail_verstuurd_op
+                            ? formatDate((selectedItem as Inschrijving).welkom_mail_verstuurd_op!)
+                            : "Nog niet verstuurd"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1877,6 +1893,19 @@ export default function AdminDashboard() {
                     <p className="text-sm text-neutral-500">Motivatie</p>
                     <p className="font-medium whitespace-pre-wrap">{(selectedItem as Inschrijving).motivatie}</p>
                   </div>
+                  {(selectedItem as Inschrijving).onboarding_portal_token ? (
+                    <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                      <p className="text-sm text-neutral-500 mb-1">Kandidaat uploadlink</p>
+                      <a
+                        href={`/kandidaat/documenten?token=${(selectedItem as Inschrijving).onboarding_portal_token}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-medium text-[#F27501]"
+                      >
+                        Open kandidaat documentenpagina
+                      </a>
+                    </div>
+                  ) : null}
                   {(selectedItem as Inschrijving).beschikbaarheid && (
                     <div className="mt-4 p-4 bg-neutral-50 rounded-xl">
                       <h4 className="font-semibold mb-2">Beschikbaarheid</h4>

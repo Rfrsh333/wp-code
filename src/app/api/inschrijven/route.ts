@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import { verifyRecaptcha } from "@/lib/recaptcha";
+import { sendCandidateIntakeConfirmation } from "@/lib/candidate-onboarding";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
 
     const parsedMaxUren = maxUrenPerWeek ? Number.parseInt(maxUrenPerWeek, 10) : null;
 
-    const { error: dbError } = await supabase.from("inschrijvingen").insert({
+    const { data: insertedCandidate, error: dbError } = await supabase.from("inschrijvingen").insert({
       voornaam,
       tussenvoegsel: tussenvoegsel || null,
       achternaam,
@@ -206,10 +207,26 @@ export async function POST(request: NextRequest) {
       beschikbaarheid,
       beschikbaar_vanaf: beschikbaarVanaf,
       max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
-    });
+    }).select("id").single();
 
     if (dbError) {
       console.error("Supabase error:", dbError);
+    }
+
+    try {
+      await sendCandidateIntakeConfirmation({
+        voornaam,
+        email,
+      });
+
+      if (insertedCandidate?.id) {
+        await supabase
+          .from("inschrijvingen")
+          .update({ intake_bevestiging_verstuurd_op: new Date().toISOString() })
+          .eq("id", insertedCandidate.id);
+      }
+    } catch (emailError) {
+      console.error("Kandidaat bevestigingsmail mislukt:", emailError);
     }
 
     return NextResponse.json({ success: true });
