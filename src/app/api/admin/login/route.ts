@@ -1,29 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyTOTP, verifyBackupCode } from "@/lib/two-factor";
-
-// Strikte rate limiting voor admin login: max 5 pogingen per 15 minuten
-const LOGIN_RATE_LIMIT = {
-  windowMs: 15 * 60 * 1000, // 15 minuten
-  maxRequests: 5,
-};
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
 
   // Rate limiting check
-  const rateLimit = checkRateLimit(`admin-login:${clientIP}`, LOGIN_RATE_LIMIT);
+  const rateLimit = await checkRedisRateLimit(`admin-login:${clientIP}`, loginRateLimit);
 
   if (!rateLimit.success) {
     console.warn(`[ADMIN LOGIN] Rate limit exceeded for IP: ${clientIP}`);
     return NextResponse.json(
       {
-        error: `Te veel inlogpogingen. Probeer opnieuw over ${Math.ceil(rateLimit.resetIn! / 60)} minuten.`
+        error: "Te veel inlogpogingen. Probeer het later opnieuw."
       },
-      { status: 429 }
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))),
+        },
+      }
     );
   }
 

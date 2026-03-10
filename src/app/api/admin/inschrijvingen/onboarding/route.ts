@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { logAuditEvent } from "@/lib/audit-log";
 import {
   sendIntakeBevestiging,
   sendDocumentenVerzoek,
@@ -17,7 +18,7 @@ interface OnboardingRequest {
 export async function POST(request: NextRequest) {
   try {
     // Verify admin access
-    const { isAdmin, email: adminEmail } = await verifyAdmin(request);
+    const { isAdmin, email: adminEmail, role } = await verifyAdmin(request);
     if (!isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -67,16 +68,31 @@ export async function POST(request: NextRequest) {
       case "bevestiging":
         emailResult = await sendIntakeBevestiging(kandidaat);
         subject = `Hey ${kandidaat.voornaam}! 👋 Je inschrijving is binnen`;
+        await supabaseAdmin
+          .from("inschrijvingen")
+          .update({ intake_bevestiging_verstuurd_op: new Date().toISOString() })
+          .eq("id", kandidaat_id);
         break;
 
       case "documenten_opvragen":
         emailResult = await sendDocumentenVerzoek(kandidaat);
         subject = `${kandidaat.voornaam}, we hebben je documenten nodig! 📄`;
+        await supabaseAdmin
+          .from("inschrijvingen")
+          .update({
+            documenten_verzoek_verstuurd_op: new Date().toISOString(),
+            documenten_reminder_verstuurd_op: null,
+          })
+          .eq("id", kandidaat_id);
         break;
 
       case "inzetbaar":
         emailResult = await sendWelkomstmail(kandidaat);
         subject = `🎉 ${kandidaat.voornaam}, je bent inzetbaar!`;
+        await supabaseAdmin
+          .from("inschrijvingen")
+          .update({ welkom_mail_verstuurd_op: new Date().toISOString() })
+          .eq("id", kandidaat_id);
         break;
 
       default:
@@ -93,6 +109,18 @@ export async function POST(request: NextRequest) {
 
     // Log admin action
     console.log(`[ONBOARDING EMAIL] Admin ${adminEmail} triggered ${action} email for kandidaat ${kandidaat.voornaam} ${kandidaat.achternaam}`);
+    await logAuditEvent({
+      actorEmail: adminEmail,
+      actorRole: role,
+      action: `send_${action}_email`,
+      targetTable: "inschrijvingen",
+      targetId: kandidaat_id,
+      summary: `${action} mail verstuurd naar ${kandidaat.email}`,
+      metadata: {
+        recipient: kandidaat.email,
+        emailId: emailResult.data?.id || null,
+      },
+    });
 
     return NextResponse.json({
       success: true,

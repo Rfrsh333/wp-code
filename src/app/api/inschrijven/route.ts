@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
-import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
 
 function formatBoolean(value: boolean) {
@@ -15,15 +15,19 @@ function formatList(values: string[]) {
 export async function POST(request: NextRequest) {
   try {
     const clientIP = getClientIP(request);
-    const rateLimit = checkRateLimit(`inschrijven:${clientIP}`, {
-      windowMs: 60 * 1000,
-      maxRequests: 3,
-    });
+    const rateLimit = await checkRedisRateLimit(`inschrijven:${clientIP}`, formRateLimit);
 
     if (!rateLimit.success) {
       return NextResponse.json(
-        { error: `Te veel verzoeken. Probeer opnieuw over ${rateLimit.resetIn} seconden.` },
-        { status: 429 }
+        {
+          error: `Te veel verzoeken. Probeer het zo opnieuw.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))),
+          },
+        }
       );
     }
 

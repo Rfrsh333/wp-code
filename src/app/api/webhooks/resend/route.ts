@@ -33,6 +33,12 @@ interface ResendWebhookEvent {
   };
 }
 
+interface EmailLogRow {
+  id: string;
+  opened_at: string | null;
+  clicked_at: string | null;
+}
+
 // Verify webhook signature from Resend
 function verifyWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
@@ -69,7 +75,7 @@ export async function POST(request: NextRequest) {
       .from("email_log")
       .select("*")
       .eq("resend_email_id", emailId)
-      .single();
+      .single<EmailLogRow>();
 
     if (!emailLog) {
       console.warn(`⚠️ Email log not found for Resend email ID: ${emailId}`);
@@ -77,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update email_log based on event type
-    const updates: Record<string, any> = {};
+    const updates: Record<string, string> = {};
 
     switch (event.type) {
       case "email.delivered":

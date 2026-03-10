@@ -1,3 +1,24 @@
 {
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/onboarding-cleanup",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/herinneringen",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/facturen",
+      "schedule": "15 8 * * *"
+    },
+    {
+      "path": "/api/cron/dienst-herinnering",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/document-reminders",
+      "schedule": "0 10 * * *"
+    }
+  ]
 }

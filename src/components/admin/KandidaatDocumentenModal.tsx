@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface KandidaatDocument {
   id: string;
@@ -43,11 +43,7 @@ export default function KandidaatDocumentenModal({
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<KandidaatDocument | null>(null);
 
-  useEffect(() => {
-    loadDocuments();
-  }, [inschrijvingId]);
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     try {
       setLoading(true);
       const headers = await getAuthHeaders();
@@ -67,7 +63,11 @@ export default function KandidaatDocumentenModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders, inschrijvingId]);
+
+  useEffect(() => {
+    void loadDocuments();
+  }, [loadDocuments]);
 
   const handleReview = async (documentId: string, reviewStatus: "approved" | "rejected") => {
     const notes = reviewStatus === "rejected"

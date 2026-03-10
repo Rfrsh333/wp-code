@@ -36,6 +36,17 @@ export const candidateEmailCopy = {
     outro:
       "🔒 Deze link is beveiligd en 7 dagen geldig.<br>Nadat we alles hebben, ben je zo goedgekeurd! 🚀",
   },
+  documentenReminder: {
+    subject: "{voornaam}, vergeet je documenten niet! 📄",
+    heading: "Hey {voornaam}, nog heel eventjes!",
+    intro:
+      "We hebben een paar dagen geleden je documenten aangevraagd, maar we zien dat je ze nog niet hebt geüpload. Geen stress, we snappen dat het druk kan zijn. 😊",
+    cardTitle: "Upload deze nog even:",
+    bodyAfterCard: "Gebruik hieronder direct je beveiligde uploadlink:",
+    ctaLabel: "📤 Upload documenten",
+    outro:
+      "Duurt echt maar 2 minuutjes. Gewoon een foto maken met je telefoon is helemaal prima. 🙌",
+  },
   welkom: {
     subject: "🎉 {voornaam}, je bent inzetbaar!",
     heading: "Yes {voornaam}, je bent inzetbaar!",

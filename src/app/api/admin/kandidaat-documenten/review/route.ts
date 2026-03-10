@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { logAuditEvent } from "@/lib/audit-log";
 
 interface ReviewRequest {
   document_id: string;
@@ -14,7 +15,7 @@ interface ReviewRequest {
 export async function POST(request: NextRequest) {
   try {
     // Verify admin access
-    const { isAdmin, email } = await verifyAdmin(request);
+    const { isAdmin, email, role } = await verifyAdmin(request);
     if (!isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -89,6 +90,20 @@ export async function POST(request: NextRequest) {
         console.log(`✅ Kandidaat ${document.inschrijving_id} auto-goedgekeurd (alle documenten approved)`);
       }
     }
+
+    await logAuditEvent({
+      actorEmail: email,
+      actorRole: role,
+      action: "review_candidate_document",
+      targetTable: "kandidaat_documenten",
+      targetId: document_id,
+      summary: `Document ${document_id} ${review_status === "approved" ? "goedgekeurd" : "afgekeurd"}`,
+      metadata: {
+        inschrijvingId: document.inschrijving_id,
+        reviewStatus: review_status,
+        reviewNotes: review_notes || null,
+      },
+    });
 
     return NextResponse.json({
       success: true,

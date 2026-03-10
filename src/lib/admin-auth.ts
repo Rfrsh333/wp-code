@@ -3,12 +3,52 @@ import { createClient } from "@supabase/supabase-js";
 
 // Admin authenticatie helpers
 
+export type AdminRole = "owner" | "operations" | "recruiter" | "finance";
+
+const DEFAULT_ADMIN_ROLE: AdminRole = "operations";
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function parseAdminRoleMap(): Map<string, AdminRole> {
+  const roleMap = new Map<string, AdminRole>();
+  const raw = process.env.ADMIN_ROLE_MAP || "";
+
+  raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .forEach((entry) => {
+      const [email, role] = entry.split(":").map((value) => value.trim().toLowerCase());
+      if (!email || !role) return;
+      if (["owner", "operations", "recruiter", "finance"].includes(role)) {
+        roleMap.set(normalizeEmail(email), role as AdminRole);
+      }
+    });
+
+  return roleMap;
+}
+
+export function getAdminRole(email: string): AdminRole {
+  const normalizedEmail = normalizeEmail(email);
+  const roleMap = parseAdminRoleMap();
+  return roleMap.get(normalizedEmail) || DEFAULT_ADMIN_ROLE;
+}
+
+export function hasRequiredAdminRole(
+  role: AdminRole | undefined,
+  allowedRoles: AdminRole[]
+): boolean {
+  return Boolean(role && allowedRoles.includes(role));
+}
+
 /**
  * Checkt of een email adres een admin is
  */
 export function isAdminEmail(email: string): boolean {
-  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
-  return adminEmails.includes(email.toLowerCase());
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => normalizeEmail(e)) || [];
+  return adminEmails.includes(normalizeEmail(email));
 }
 
 /**
@@ -22,7 +62,9 @@ export function getAdminEmails(): string[] {
  * Verifieert of een request van een admin komt
  * Checkt zowel of de user geauthenticeerd is ALS of het een admin email is
  */
-export async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: boolean; email?: string }> {
+export async function verifyAdmin(
+  request: NextRequest
+): Promise<{ isAdmin: boolean; email?: string; role?: AdminRole }> {
   const authHeader = request.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return { isAdmin: false };
@@ -45,5 +87,9 @@ export async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: bool
     return { isAdmin: false, email: user.email };
   }
 
-  return { isAdmin: true, email: user.email };
+  return {
+    isAdmin: true,
+    email: user.email,
+    role: getAdminRole(user.email),
+  };
 }

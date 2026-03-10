@@ -156,6 +156,32 @@ interface Stats {
   calculator: { total: number; downloaded: number };
 }
 
+interface OpsSnapshot {
+  health: {
+    resendConfigured: boolean;
+    redisConfigured: boolean;
+    cronConfigured: boolean;
+    serviceRoleConfigured: boolean;
+  };
+  counters: {
+    expiredUploadLinks: number;
+    candidatesWaitingTooLong: number;
+    inzetbaarWithoutProfile: number;
+    pendingDocumentReviews: number;
+    bouncedEmails: number;
+  };
+  recentAudit: Array<{
+    id: string;
+    actor_email: string | null;
+    actor_role: string | null;
+    action: string;
+    target_table: string;
+    target_id: string | null;
+    summary: string;
+    created_at: string;
+  }>;
+}
+
 const onboardingStatusColors: Record<OnboardingStatus, string> = {
   nieuw: "bg-sky-100 text-sky-700",
   in_beoordeling: "bg-amber-100 text-amber-700",
@@ -246,6 +272,7 @@ export default function AdminDashboard() {
   const [inschrijvingen, setInschrijvingen] = useState<Inschrijving[]>([]);
   const [contactBerichten, setContactBerichten] = useState<ContactBericht[]>([]);
   const [calculatorLeads, setCalculatorLeads] = useState<CalculatorLead[]>([]);
+  const [opsSnapshot, setOpsSnapshot] = useState<OpsSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<PersoneelAanvraag | Inschrijving | ContactBericht | CalculatorLead | null>(null);
   const [detailType, setDetailType] = useState<Tab | null>(null);
@@ -315,17 +342,19 @@ export default function AdminDashboard() {
       : {};
 
     // Fetch all data via admin API (bypasses RLS)
-    const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes] = await Promise.all([
+    const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes, opsRes] = await Promise.all([
       fetch("/api/admin/data?table=personeel_aanvragen", { headers }).then(r => r.json()),
       fetch("/api/admin/data?table=inschrijvingen", { headers }).then(r => r.json()),
       fetch("/api/admin/data?table=contact_berichten", { headers }).then(r => r.json()),
       fetch("/api/admin/data?table=calculator_leads", { headers }).then(r => r.json()),
+      fetch("/api/admin/ops", { headers }).then(r => r.json()),
     ]);
 
     if (aanvragenRes.data) setAanvragen(aanvragenRes.data);
     if (inschrijvingenRes.data) setInschrijvingen(inschrijvingenRes.data);
     if (contactRes.data) setContactBerichten(contactRes.data);
     if (calculatorRes.data) setCalculatorLeads(calculatorRes.data);
+    if (!opsRes.error) setOpsSnapshot(opsRes);
 
     // Calculate stats
     setStats({
@@ -1096,7 +1125,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Recent Activity */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+                  <div className="bg-white rounded-2xl p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recente activiteit</h3>
                   <div className="space-y-4">
                     {[...aanvragen.slice(0, 3).map((a) => ({ ...a, type: "aanvraag" as const })),
@@ -1138,6 +1168,77 @@ export default function AdminDashboard() {
                           <StatusBadge status={item.status} />
                         </div>
                       ))}
+                  </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-neutral-900">Operations</h3>
+                        <span className="text-xs text-neutral-500">Live checks</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="rounded-xl bg-neutral-50 p-4">
+                          <p className="text-sm text-neutral-500">Verlopen uploadlinks</p>
+                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.expiredUploadLinks ?? 0}</p>
+                        </div>
+                        <div className="rounded-xl bg-neutral-50 p-4">
+                          <p className="text-sm text-neutral-500">Kandidaten wachten te lang</p>
+                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.candidatesWaitingTooLong ?? 0}</p>
+                        </div>
+                        <div className="rounded-xl bg-neutral-50 p-4">
+                          <p className="text-sm text-neutral-500">In review documenten</p>
+                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.pendingDocumentReviews ?? 0}</p>
+                        </div>
+                        <div className="rounded-xl bg-neutral-50 p-4">
+                          <p className="text-sm text-neutral-500">Inzetbaar zonder profiel</p>
+                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.inzetbaarWithoutProfile ?? 0}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-2 text-sm">
+                        <div className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
+                          <span>Redis rate limiting</span>
+                          <span className={opsSnapshot?.health.redisConfigured ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {opsSnapshot?.health.redisConfigured ? "Actief" : "Mist"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
+                          <span>Cron secret</span>
+                          <span className={opsSnapshot?.health.cronConfigured ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {opsSnapshot?.health.cronConfigured ? "Actief" : "Mist"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
+                          <span>Resend</span>
+                          <span className={opsSnapshot?.health.resendConfigured ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {opsSnapshot?.health.resendConfigured ? "Actief" : "Mist"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 shadow-sm">
+                      <h3 className="text-lg font-semibold text-neutral-900 mb-4">Audit log</h3>
+                      <div className="space-y-3">
+                        {(opsSnapshot?.recentAudit || []).slice(0, 5).map((item) => (
+                          <div key={item.id} className="rounded-xl bg-neutral-50 p-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-neutral-900">{item.summary}</p>
+                              <span className="text-xs text-neutral-500">
+                                {new Date(item.created_at).toLocaleString("nl-NL")}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-xs text-neutral-500">
+                              {(item.actor_email || "onbekend")} · {item.target_table} · {item.action}
+                            </p>
+                          </div>
+                        ))}
+                        {(!opsSnapshot?.recentAudit || opsSnapshot.recentAudit.length === 0) && (
+                          <p className="text-sm text-neutral-500">Nog geen audit events gevonden.</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
