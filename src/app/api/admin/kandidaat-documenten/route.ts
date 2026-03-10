@@ -33,11 +33,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Documenten konden niet worden opgehaald" }, { status: 500 });
   }
 
+  // Generate signed URLs for all documents
   const enrichedDocuments = await Promise.all(
     (data || []).map(async (document) => {
+      // Support both old and new column names during migration
+      const filePath = document.file_path || document.bestand_pad;
+
       const { data: signedData } = await supabaseAdmin.storage
         .from(DOCUMENT_BUCKET)
-        .createSignedUrl(document.bestand_pad, 60 * 60);
+        .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
 
       return {
         ...document,

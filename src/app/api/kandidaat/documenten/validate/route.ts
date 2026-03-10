@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { createHash } from "crypto";
-
-function generateUploadToken(kandidaatId: string, expiryDays = 7): string {
-  const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
-  const expiryDate = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
-  const data = `${kandidaatId}:${expiryDate}:${secret}`;
-  return createHash("sha256").update(data).digest("hex").substring(0, 32);
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,26 +10,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Token vereist" }, { status: 400 });
     }
 
-    // Find kandidaat with matching token
-    const { data: kandidaten } = await supabaseAdmin
+    // 🚀 Optimized: Direct O(1) database lookup
+    const { data: matchedKandidaat } = await supabaseAdmin
       .from("inschrijvingen")
-      .select("id, voornaam, achternaam, uitbetalingswijze");
-
-    if (!kandidaten) {
-      return NextResponse.json({ error: "Geen kandidaten gevonden" }, { status: 500 });
-    }
-
-    let matchedKandidaat = null;
-    for (const k of kandidaten) {
-      const expectedToken = generateUploadToken(k.id);
-      if (token === expectedToken) {
-        matchedKandidaat = k;
-        break;
-      }
-    }
+      .select("id, voornaam, achternaam, uitbetalingswijze, onboarding_portal_token_expires_at")
+      .eq("onboarding_portal_token", token)
+      .single();
 
     if (!matchedKandidaat) {
       return NextResponse.json({ error: "Ongeldige of verlopen link" }, { status: 403 });
+    }
+
+    // Check if token is expired
+    const expiresAt = new Date(matchedKandidaat.onboarding_portal_token_expires_at);
+    if (expiresAt < new Date()) {
+      return NextResponse.json({ error: "Link is verlopen" }, { status: 403 });
     }
 
     // Fetch already uploaded documents

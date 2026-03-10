@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -112,10 +111,6 @@ interface Kandidaat {
   uitbetalingswijze: string;
 }
 
-function getBaseUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
-}
-
 // 1. Intake bevestiging - Losser en geruststellend
 export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
   const statusUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
@@ -165,13 +160,9 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
 }
 
 // 2. Documenten verzoek - Upbeat en duidelijk
-export function generateOnboardingPortalToken() {
-  return crypto.randomBytes(32).toString("hex");
-}
-
-export async function sendDocumentenVerzoek(kandidaat: Kandidaat, portalToken?: string) {
-  const uploadToken = portalToken || generateUploadToken(kandidaat.id);
-  const uploadUrl = `${getBaseUrl()}/kandidaat/documenten?token=${uploadToken}`;
+export async function sendDocumentenVerzoek(kandidaat: Kandidaat) {
+  const uploadToken = await generateAndSaveUploadToken(kandidaat.id);
+  const uploadUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/kandidaat/documenten?token=${uploadToken}`;
 
   const isZZP = kandidaat.uitbetalingswijze === "zzp";
 
@@ -287,23 +278,48 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
 // Helper functions voor token generation
 function generateStatusToken(email: string, kandidaatId: string): string {
   const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
+  const crypto = require("crypto");
   const data = `${email}:${kandidaatId}:${secret}`;
   return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
 }
 
+// 🚀 Optimized: Generate token and save to database for O(1) lookup
+export async function generateAndSaveUploadToken(kandidaatId: string, expiryDays = 7): Promise<string> {
+  const { supabaseAdmin } = await import("@/lib/supabase");
+  const crypto = require("crypto");
+
+  // Generate random secure token
+  const token = crypto.randomBytes(32).toString("hex").substring(0, 32);
+  const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
+
+  // Save to database
+  await supabaseAdmin
+    .from("inschrijvingen")
+    .update({
+      onboarding_portal_token: token,
+      onboarding_portal_token_expires_at: expiresAt.toISOString(),
+    })
+    .eq("id", kandidaatId);
+
+  return token;
+}
+
+// Legacy function (deprecated but kept for backwards compatibility)
 function generateUploadToken(kandidaatId: string, expiryDays = 7): string {
   const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
+  const crypto = require("crypto");
   const expiryDate = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
   const data = `${kandidaatId}:${expiryDate}:${secret}`;
   return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
 }
 
-// Email logging helper
+// Email logging helper met Resend tracking
 export async function logEmail(
   kandidaatId: string,
   emailType: "bevestiging" | "documenten_opvragen" | "inzetbaar",
   recipient: string,
-  subject: string
+  subject: string,
+  resendEmailId?: string
 ) {
   const { supabaseAdmin } = await import("@/lib/supabase");
 
@@ -314,5 +330,6 @@ export async function logEmail(
     subject,
     sent_at: new Date().toISOString(),
     status: "sent",
+    resend_email_id: resendEmailId || null,
   });
 }

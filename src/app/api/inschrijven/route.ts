@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
       try {
         const { sendIntakeBevestiging, logEmail } = await import("@/lib/candidate-onboarding");
 
-        await sendIntakeBevestiging({
+        const emailResult = await sendIntakeBevestiging({
           id: insertedData.id,
           voornaam,
           achternaam,
@@ -231,7 +231,8 @@ export async function POST(request: NextRequest) {
           insertedData.id,
           "bevestiging",
           email,
-          `Hey ${voornaam}! 👋 Je inschrijving is binnen`
+          `Hey ${voornaam}! 👋 Je inschrijving is binnen`,
+          emailResult.data?.id
         );
       } catch (emailError) {
         console.error("Bevestigingsmail error:", emailError);

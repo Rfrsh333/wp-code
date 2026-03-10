@@ -1,34 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { createHash } from "crypto";
 
-// Token validation helper
-function generateUploadToken(kandidaatId: string, expiryDays = 7): string {
-  const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
-  const expiryDate = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
-  const data = `${kandidaatId}:${expiryDate}:${secret}`;
-  return createHash("sha256").update(data).digest("hex").substring(0, 32);
-}
-
+// 🚀 Optimized: O(1) token validation via database lookup
 async function validateUploadToken(token: string): Promise<{ valid: boolean; kandidaatId?: string }> {
-  // Try to find kandidaat with matching token
-  const { data: kandidaten } = await supabaseAdmin
+  // Direct database lookup - super fast!
+  const { data: kandidaat } = await supabaseAdmin
     .from("inschrijvingen")
-    .select("id");
+    .select("id, onboarding_portal_token_expires_at")
+    .eq("onboarding_portal_token", token)
+    .single();
 
-  if (!kandidaten) {
+  if (!kandidaat) {
     return { valid: false };
   }
 
-  // Check if token matches any kandidaat (within expiry)
-  for (const k of kandidaten) {
-    const expectedToken = generateUploadToken(k.id);
-    if (token === expectedToken) {
-      return { valid: true, kandidaatId: k.id };
-    }
+  // Check if token is expired
+  const expiresAt = new Date(kandidaat.onboarding_portal_token_expires_at);
+  if (expiresAt < new Date()) {
+    return { valid: false };
   }
 
-  return { valid: false };
+  return { valid: true, kandidaatId: kandidaat.id };
 }
 
 // GET: Validate token and return kandidaat info + uploaded docs
