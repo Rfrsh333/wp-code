@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -12,6 +12,21 @@ import StatsTab from "./StatsTab";
 
 type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
+type OnboardingStatus =
+  | "nieuw"
+  | "in_beoordeling"
+  | "documenten_opvragen"
+  | "wacht_op_kandidaat"
+  | "goedgekeurd"
+  | "inzetbaar"
+  | "afgewezen";
+type ChecklistKey =
+  | "identiteit_gecheckt"
+  | "ervaring_beoordeeld"
+  | "beschikbaarheid_bevestigd"
+  | "documenten_gecontroleerd"
+  | "contracttype_bepaald"
+  | "klaar_voor_inzet";
 
 interface PersoneelAanvraag {
   id: string;
@@ -53,7 +68,18 @@ interface Inschrijving {
   uitbetalingswijze: string;
   kvk_nummer: string | null;
   status: Status;
-  beschikbaarheid?: { [key: string]: string[] };
+  onboarding_status?: OnboardingStatus;
+  documenten_compleet?: boolean;
+  interne_notitie?: string | null;
+  laatste_contact_op?: string | null;
+  goedgekeurd_op?: string | null;
+  inzetbaar_op?: string | null;
+  onboarding_checklist?: Partial<Record<ChecklistKey, boolean>>;
+  horeca_ervaring?: string | null;
+  gewenste_functies?: string[] | null;
+  talen?: string[] | null;
+  eigen_vervoer?: boolean | null;
+  beschikbaarheid?: string | { [key: string]: string[] };
   beschikbaar_vanaf?: string;
   max_uren_per_week?: number;
   // Lead tracking
@@ -107,10 +133,64 @@ interface Stats {
   calculator: { total: number; downloaded: number };
 }
 
+const onboardingStatusColors: Record<OnboardingStatus, string> = {
+  nieuw: "bg-sky-100 text-sky-700",
+  in_beoordeling: "bg-amber-100 text-amber-700",
+  documenten_opvragen: "bg-orange-100 text-orange-700",
+  wacht_op_kandidaat: "bg-yellow-100 text-yellow-700",
+  goedgekeurd: "bg-emerald-100 text-emerald-700",
+  inzetbaar: "bg-green-100 text-green-700",
+  afgewezen: "bg-red-100 text-red-700",
+};
+
+const onboardingStatusLabels: Record<OnboardingStatus, string> = {
+  nieuw: "Nieuw",
+  in_beoordeling: "In beoordeling",
+  documenten_opvragen: "Documenten opvragen",
+  wacht_op_kandidaat: "Wacht op kandidaat",
+  goedgekeurd: "Goedgekeurd",
+  inzetbaar: "Inzetbaar",
+  afgewezen: "Afgewezen",
+};
+
+const onboardingChecklistItems: { key: ChecklistKey; label: string }[] = [
+  { key: "identiteit_gecheckt", label: "Identiteit gecheckt" },
+  { key: "ervaring_beoordeeld", label: "Ervaring beoordeeld" },
+  { key: "beschikbaarheid_bevestigd", label: "Beschikbaarheid bevestigd" },
+  { key: "documenten_gecontroleerd", label: "Documenten gecontroleerd" },
+  { key: "contracttype_bepaald", label: "Contracttype bepaald" },
+  { key: "klaar_voor_inzet", label: "Klaar voor inzet" },
+];
+
+function getInschrijvingOnboardingStatus(inschrijving: Inschrijving): OnboardingStatus {
+  if (inschrijving.onboarding_status) {
+    return inschrijving.onboarding_status;
+  }
+
+  if (inschrijving.status === "in_behandeling") {
+    return "in_beoordeling";
+  }
+
+  if (inschrijving.status === "afgehandeld") {
+    return "goedgekeurd";
+  }
+
+  return "nieuw";
+}
+
+function OnboardingStatusBadge({ status }: { status: OnboardingStatus }) {
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${onboardingStatusColors[status]}`}>
+      {onboardingStatusLabels[status]}
+    </span>
+  );
+}
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overzicht");
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
+  const [inschrijvingStatusFilter, setInschrijvingStatusFilter] = useState<OnboardingStatus | "all">("all");
   const [stats, setStats] = useState<Stats>({
     aanvragen: { total: 0, nieuw: 0 },
     inschrijvingen: { total: 0, nieuw: 0 },
@@ -125,6 +205,7 @@ export default function AdminDashboard() {
   const [selectedItem, setSelectedItem] = useState<PersoneelAanvraag | Inschrijving | ContactBericht | CalculatorLead | null>(null);
   const [detailType, setDetailType] = useState<Tab | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [inschrijvingNotitieDraft, setInschrijvingNotitieDraft] = useState("");
   const router = useRouter();
 
   // Helper to get auth headers for admin API calls
@@ -171,7 +252,7 @@ export default function AdminDashboard() {
     exportToCSV(toExport, filename);
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
 
     // Get session token for admin API auth
@@ -201,7 +282,10 @@ export default function AdminDashboard() {
       },
       inschrijvingen: {
         total: inschrijvingenRes.data?.length || 0,
-        nieuw: inschrijvingenRes.data?.filter((i: Inschrijving) => i.status === "nieuw").length || 0,
+        nieuw:
+          inschrijvingenRes.data?.filter(
+            (i: Inschrijving) => getInschrijvingOnboardingStatus(i) === "nieuw"
+          ).length || 0,
       },
       contact: {
         total: contactRes.data?.length || 0,
@@ -214,11 +298,11 @@ export default function AdminDashboard() {
     });
 
     setIsLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    void fetchData();
+  }, [fetchData]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -233,6 +317,81 @@ export default function AdminDashboard() {
     });
     fetchData();
     setSelectedItem(null);
+  };
+
+  const updateInschrijvingOnboardingStatus = async (
+    inschrijving: Inschrijving,
+    onboardingStatus: OnboardingStatus
+  ) => {
+    const payload: Record<string, string | boolean | null> = {
+      onboarding_status: onboardingStatus,
+    };
+
+    if (onboardingStatus === "goedgekeurd" && !inschrijving.goedgekeurd_op) {
+      payload.goedgekeurd_op = new Date().toISOString();
+    }
+
+    if (onboardingStatus === "inzetbaar") {
+      payload.documenten_compleet = true;
+      if (!inschrijving.inzetbaar_op) {
+        payload.inzetbaar_op = new Date().toISOString();
+      }
+    }
+
+    if (onboardingStatus === "afgewezen") {
+      payload.inzetbaar_op = null;
+    }
+
+    await fetch("/api/admin/data", {
+      method: "POST",
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({
+        action: "update",
+        table: "inschrijvingen",
+        id: inschrijving.id,
+        data: payload,
+      }),
+    });
+
+    await fetchData();
+    setSelectedItem((prev) =>
+      prev && prev.id === inschrijving.id ? ({ ...prev, ...payload } as Inschrijving) : prev
+    );
+  };
+
+  const updateInschrijvingFields = async (
+    inschrijving: Inschrijving,
+    data: Record<string, unknown>
+  ) => {
+    await fetch("/api/admin/data", {
+      method: "POST",
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({
+        action: "update",
+        table: "inschrijvingen",
+        id: inschrijving.id,
+        data,
+      }),
+    });
+
+    await fetchData();
+    setSelectedItem((prev) =>
+      prev && prev.id === inschrijving.id ? ({ ...prev, ...data } as Inschrijving) : prev
+    );
+  };
+
+  const toggleInschrijvingChecklistItem = async (
+    inschrijving: Inschrijving,
+    key: ChecklistKey
+  ) => {
+    const nextChecklist = {
+      ...(inschrijving.onboarding_checklist || {}),
+      [key]: !Boolean(inschrijving.onboarding_checklist?.[key]),
+    };
+
+    await updateInschrijvingFields(inschrijving, {
+      onboarding_checklist: nextChecklist,
+    });
   };
 
   const deleteItem = async (table: string, id: string) => {
@@ -299,6 +458,14 @@ export default function AdminDashboard() {
       </span>
     );
   };
+
+  const filteredInschrijvingen = inschrijvingen.filter((item) => {
+    if (inschrijvingStatusFilter === "all") {
+      return true;
+    }
+
+    return getInschrijvingOnboardingStatus(item) === inschrijvingStatusFilter;
+  });
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     {
@@ -727,13 +894,29 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Inschrijvingen</h2>
                   <div className="flex gap-2">
+                    <select
+                      value={inschrijvingStatusFilter}
+                      onChange={(e) =>
+                        setInschrijvingStatusFilter(e.target.value as OnboardingStatus | "all")
+                      }
+                      className="px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] bg-white text-neutral-900"
+                    >
+                      <option value="all">Alle onboarding statussen</option>
+                      <option value="nieuw">Nieuw</option>
+                      <option value="in_beoordeling">In beoordeling</option>
+                      <option value="documenten_opvragen">Documenten opvragen</option>
+                      <option value="wacht_op_kandidaat">Wacht op kandidaat</option>
+                      <option value="goedgekeurd">Goedgekeurd</option>
+                      <option value="inzetbaar">Inzetbaar</option>
+                      <option value="afgewezen">Afgewezen</option>
+                    </select>
                     {selectedIds.size > 0 && (
                       <button onClick={() => deleteSelected("inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         Verwijder ({selectedIds.size})
                       </button>
                     )}
-                    <button onClick={() => exportSelected(inschrijvingen, "inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800">
+                    <button onClick={() => exportSelected(filteredInschrijvingen, "inschrijvingen")} className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       {selectedIds.size > 0 ? `Exporteer (${selectedIds.size})` : "Exporteer alle"}
                     </button>
@@ -744,18 +927,18 @@ export default function AdminDashboard() {
                   <table className="w-full">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
-                        <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(inschrijvingen.map(i => i.id))} checked={selectedIds.size === inschrijvingen.length && inschrijvingen.length > 0} className="w-4 h-4 rounded" /></th>
+                        <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(filteredInschrijvingen.map(i => i.id))} checked={selectedIds.size === filteredInschrijvingen.length && filteredInschrijvingen.length > 0} className="w-4 h-4 rounded" /></th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Naam</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Contact</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Locatie</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Type</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Datum</th>
-                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Status</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Onboarding</th>
                         <th className="text-right px-6 py-4 text-sm font-semibold text-neutral-600">Acties</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
-                      {inschrijvingen.map((item) => (
+                      {filteredInschrijvingen.map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
                           <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 rounded" /></td>
                           <td className="px-6 py-4">
@@ -779,11 +962,31 @@ export default function AdminDashboard() {
                             {formatDate(item.created_at)}
                           </td>
                           <td className="px-6 py-4">
-                            <StatusBadge status={item.status} />
+                            <div className="flex flex-col gap-2 items-start">
+                              <OnboardingStatusBadge status={getInschrijvingOnboardingStatus(item)} />
+                              <div className="flex flex-wrap gap-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  item.documenten_compleet
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-neutral-100 text-neutral-600"
+                                }`}>
+                                  {item.documenten_compleet ? "Documenten compleet" : "Documenten open"}
+                                </span>
+                                {item.inzetbaar_op && (
+                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                                    Inzetbaar
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
-                              onClick={() => { setSelectedItem(item); setDetailType("inschrijvingen"); }}
+                              onClick={() => {
+                                setSelectedItem(item);
+                                setDetailType("inschrijvingen");
+                                setInschrijvingNotitieDraft(item.interne_notitie || "");
+                              }}
                               className="text-[#F27501] hover:text-[#d96800] font-medium text-sm"
                             >
                               Bekijken
@@ -793,7 +996,7 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
-                  {inschrijvingen.length === 0 && (
+                  {filteredInschrijvingen.length === 0 && (
                     <div className="text-center py-12 text-neutral-500">
                       Geen inschrijvingen gevonden
                     </div>
@@ -1124,6 +1327,44 @@ export default function AdminDashboard() {
 
               {detailType === "inschrijvingen" && (
                 <>
+                  <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-200">
+                    <div className="flex flex-wrap gap-2 items-center mb-3">
+                      <OnboardingStatusBadge status={getInschrijvingOnboardingStatus(selectedItem as Inschrijving)} />
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        (selectedItem as Inschrijving).documenten_compleet
+                          ? "bg-green-100 text-green-700"
+                          : "bg-neutral-100 text-neutral-600"
+                      }`}>
+                        {(selectedItem as Inschrijving).documenten_compleet ? "Documenten compleet" : "Documenten nog open"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-neutral-500">Laatste contact</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).laatste_contact_op
+                            ? formatDate((selectedItem as Inschrijving).laatste_contact_op!)
+                            : "Nog niet vastgelegd"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Goedgekeurd op</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).goedgekeurd_op
+                            ? formatDate((selectedItem as Inschrijving).goedgekeurd_op!)
+                            : "Nog niet goedgekeurd"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Inzetbaar op</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).inzetbaar_op
+                            ? formatDate((selectedItem as Inschrijving).inzetbaar_op!)
+                            : "Nog niet inzetbaar"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-neutral-500">Naam</p>
@@ -1156,6 +1397,10 @@ export default function AdminDashboard() {
                       <p className="font-medium">{(selectedItem as Inschrijving).geslacht}</p>
                     </div>
                     <div>
+                      <p className="text-sm text-neutral-500">Horeca-ervaring</p>
+                      <p className="font-medium">{(selectedItem as Inschrijving).horeca_ervaring || "-"}</p>
+                    </div>
+                    <div>
                       <p className="text-sm text-neutral-500">Uitbetalingswijze</p>
                       <p className="font-medium">{(selectedItem as Inschrijving).uitbetalingswijze === "zzp" ? "ZZP" : "Loondienst"}</p>
                     </div>
@@ -1168,6 +1413,18 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-sm text-neutral-500">Hoe bij ons gekomen</p>
                       <p className="font-medium">{(selectedItem as Inschrijving).hoe_gekomen}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Eigen vervoer</p>
+                      <p className="font-medium">{(selectedItem as Inschrijving).eigen_vervoer ? "Ja" : "Nee"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Functies</p>
+                      <p className="font-medium">{(selectedItem as Inschrijving).gewenste_functies?.join(", ") || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-neutral-500">Talen</p>
+                      <p className="font-medium">{(selectedItem as Inschrijving).talen?.join(", ") || "-"}</p>
                     </div>
                   </div>
                   <div>
@@ -1185,15 +1442,107 @@ export default function AdminDashboard() {
                           <div><span className="text-neutral-500">Max uren/week:</span> <span className="font-medium">{(selectedItem as Inschrijving).max_uren_per_week}</span></div>
                         )}
                       </div>
-                      <div className="mt-2 space-y-1 text-sm">
-                        {Object.entries((selectedItem as Inschrijving).beschikbaarheid || {}).map(([dag, slots]) =>
-                          slots.length > 0 && (
-                            <div key={dag}><span className="font-medium capitalize">{dag}:</span> {slots.join(', ')}</div>
-                          )
-                        )}
-                      </div>
+                      {typeof (selectedItem as Inschrijving).beschikbaarheid === "string" ? (
+                        <div className="mt-2 text-sm">
+                          <span className="text-neutral-500">Patroon:</span>{" "}
+                          <span className="font-medium">{String((selectedItem as Inschrijving).beschikbaarheid)}</span>
+                        </div>
+                      ) : (
+                        <div className="mt-2 space-y-1 text-sm">
+                          {Object.entries(((selectedItem as Inschrijving).beschikbaarheid as { [key: string]: string[] }) || {}).map(([dag, slots]) =>
+                            slots.length > 0 ? (
+                              <div key={dag}><span className="font-medium capitalize">{dag}:</span> {slots.join(", ")}</div>
+                            ) : null
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
+                  <div>
+                    <p className="text-sm text-neutral-500">Interne notitie</p>
+                    <div className="space-y-3">
+                      <textarea
+                        value={inschrijvingNotitieDraft}
+                        onChange={(e) => setInschrijvingNotitieDraft(e.target.value)}
+                        rows={4}
+                        className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] resize-y"
+                        placeholder="Voeg interne onboarding-notities toe..."
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() =>
+                            updateInschrijvingFields(selectedItem as Inschrijving, {
+                              interne_notitie: inschrijvingNotitieDraft || null,
+                            })
+                          }
+                          className="px-4 py-2 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors"
+                        >
+                          Notitie opslaan
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateInschrijvingFields(selectedItem as Inschrijving, {
+                              documenten_compleet: !Boolean((selectedItem as Inschrijving).documenten_compleet),
+                            })
+                          }
+                          className="px-4 py-2 bg-white border border-neutral-200 text-neutral-700 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors"
+                        >
+                          {(selectedItem as Inschrijving).documenten_compleet
+                            ? "Markeer documenten als open"
+                            : "Markeer documenten als compleet"}
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateInschrijvingFields(selectedItem as Inschrijving, {
+                              laatste_contact_op: new Date().toISOString(),
+                            })
+                          }
+                          className="px-4 py-2 bg-white border border-neutral-200 text-neutral-700 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors"
+                        >
+                          Laatste contact = nu
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-white border border-neutral-200 rounded-xl">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm text-neutral-500">Onboarding checklist</p>
+                        <p className="text-sm font-medium text-neutral-900">
+                          {onboardingChecklistItems.filter(
+                            (item) => (selectedItem as Inschrijving).onboarding_checklist?.[item.key]
+                          ).length}
+                          /{onboardingChecklistItems.length} afgerond
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {onboardingChecklistItems.map((item) => {
+                        const checked = Boolean((selectedItem as Inschrijving).onboarding_checklist?.[item.key]);
+
+                        return (
+                          <button
+                            key={item.key}
+                            onClick={() => toggleInschrijvingChecklistItem(selectedItem as Inschrijving, item.key)}
+                            className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
+                              checked
+                                ? "border-green-200 bg-green-50 text-green-800"
+                                : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
+                            }`}
+                          >
+                            <span className="text-sm font-medium">{item.label}</span>
+                            <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs ${
+                              checked
+                                ? "border-green-500 bg-green-500 text-white"
+                                : "border-neutral-300 bg-white text-transparent"
+                            }`}>
+                              ✓
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </>
               )}
 
@@ -1372,27 +1721,63 @@ export default function AdminDashboard() {
               {/* Status Update - not for calculator leads */}
               {detailType !== "calculator" && (
                 <div className="pt-4 border-t border-neutral-100">
-                  <p className="text-sm text-neutral-500 mb-2">Status wijzigen</p>
-                  <div className="flex gap-2">
-                    {(["nieuw", "in_behandeling", "afgehandeld"] as Status[]).map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => updateStatus(
-                          detailType === "aanvragen" ? "personeel_aanvragen" :
-                          detailType === "inschrijvingen" ? "inschrijvingen" : "contact_berichten",
-                          selectedItem.id,
-                          status
-                        )}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                          (selectedItem as PersoneelAanvraag | Inschrijving | ContactBericht).status === status
-                            ? "bg-[#F27501] text-white"
-                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                        }`}
-                      >
-                        {status === "nieuw" ? "Nieuw" : status === "in_behandeling" ? "In behandeling" : "Afgehandeld"}
-                      </button>
-                    ))}
-                  </div>
+                  {detailType === "inschrijvingen" ? (
+                    <>
+                      <p className="text-sm text-neutral-500 mb-2">Onboarding status wijzigen</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {([
+                          "nieuw",
+                          "in_beoordeling",
+                          "documenten_opvragen",
+                          "wacht_op_kandidaat",
+                          "goedgekeurd",
+                          "inzetbaar",
+                          "afgewezen",
+                        ] as OnboardingStatus[]).map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => updateInschrijvingOnboardingStatus(selectedItem as Inschrijving, status)}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                              getInschrijvingOnboardingStatus(selectedItem as Inschrijving) === status
+                                ? "bg-[#F27501] text-white"
+                                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                            }`}
+                          >
+                            {status === "nieuw" ? "Nieuw" :
+                              status === "in_beoordeling" ? "In beoordeling" :
+                              status === "documenten_opvragen" ? "Documenten opvragen" :
+                              status === "wacht_op_kandidaat" ? "Wacht op kandidaat" :
+                              status === "goedgekeurd" ? "Goedgekeurd" :
+                              status === "inzetbaar" ? "Inzetbaar" :
+                              "Afgewezen"}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-neutral-500 mb-2">Status wijzigen</p>
+                      <div className="flex gap-2">
+                        {(["nieuw", "in_behandeling", "afgehandeld"] as Status[]).map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => updateStatus(
+                              detailType === "aanvragen" ? "personeel_aanvragen" : "contact_berichten",
+                              selectedItem.id,
+                              status
+                            )}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                              (selectedItem as PersoneelAanvraag | ContactBericht).status === status
+                                ? "bg-[#F27501] text-white"
+                                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                            }`}
+                          >
+                            {status === "nieuw" ? "Nieuw" : status === "in_behandeling" ? "In behandeling" : "Afgehandeld"}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
