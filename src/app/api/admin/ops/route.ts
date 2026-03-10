@@ -17,6 +17,9 @@ export async function GET(request: NextRequest) {
     inzetbaarWithoutProfileResult,
     pendingDocumentsResult,
     bouncedEmailsResult,
+    openTasksResult,
+    overdueTasksResult,
+    testCandidatesResult,
     auditResult,
   ] = await Promise.all([
     supabaseAdmin
@@ -43,6 +46,19 @@ export async function GET(request: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("status", "bounced"),
     supabaseAdmin
+      .from("kandidaat_taken")
+      .select("id", { count: "exact", head: true })
+      .is("completed_at", null),
+    supabaseAdmin
+      .from("kandidaat_taken")
+      .select("id", { count: "exact", head: true })
+      .is("completed_at", null)
+      .lt("due_at", nowIso),
+    supabaseAdmin
+      .from("inschrijvingen")
+      .select("id", { count: "exact", head: true })
+      .eq("is_test_candidate", true),
+    supabaseAdmin
       .from("audit_log")
       .select("id, actor_email, actor_role, action, target_table, target_id, summary, created_at")
       .order("created_at", { ascending: false })
@@ -62,6 +78,9 @@ export async function GET(request: NextRequest) {
       inzetbaarWithoutProfile: inzetbaarWithoutProfileResult.count || 0,
       pendingDocumentReviews: pendingDocumentsResult.count || 0,
       bouncedEmails: bouncedEmailsResult.count || 0,
+      openTasks: openTasksResult.count || 0,
+      overdueTasks: overdueTasksResult.count || 0,
+      testCandidates: testCandidatesResult.count || 0,
     },
     recentAudit: auditResult.data || [],
     requestedBy: email,

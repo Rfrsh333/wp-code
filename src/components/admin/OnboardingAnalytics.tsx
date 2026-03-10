@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 type OnboardingStatus =
   | "nieuw"
@@ -24,7 +24,11 @@ interface Props {
 }
 
 export default function OnboardingAnalytics({ inschrijvingen }: Props) {
+  const [referenceNow] = useState(() => Date.now());
+
   const analytics = useMemo(() => {
+    const now = referenceNow;
+
     // Filter out afgewezen for cleaner conversion funnel
     const activeKandidaten = inschrijvingen.filter(k => k.onboarding_status !== "afgewezen");
 
@@ -98,7 +102,6 @@ export default function OnboardingAnalytics({ inschrijvingen }: Props) {
       : 0;
 
     // Identify slowest kandidaten (> 7 days in same status)
-    const now = Date.now();
     const slowKandidaten = activeKandidaten
       .filter(k => {
         const daysInStatus = (now - new Date(k.created_at).getTime()) / (1000 * 60 * 60 * 24);
@@ -113,11 +116,12 @@ export default function OnboardingAnalytics({ inschrijvingen }: Props) {
       dropOffs,
       avgDaysToInzetbaar: avgDaysToInzetbaar.toFixed(1),
       slowKandidaten,
+      now,
       totalActive: activeKandidaten.length,
       totalInzetbaar: statusCounts.inzetbaar,
       conversionRate: total > 0 ? ((statusCounts.inzetbaar / total) * 100).toFixed(1) : "0",
     };
-  }, [inschrijvingen]);
+  }, [inschrijvingen, referenceNow]);
 
   return (
     <div className="space-y-6">
@@ -207,7 +211,7 @@ export default function OnboardingAnalytics({ inschrijvingen }: Props) {
           <div className="space-y-2">
             {analytics.slowKandidaten.map((k) => {
               const daysWaiting = Math.floor(
-                (Date.now() - new Date(k.created_at).getTime()) / (1000 * 60 * 60 * 24)
+                (analytics.now - new Date(k.created_at).getTime()) / (1000 * 60 * 60 * 24)
               );
 
               return (

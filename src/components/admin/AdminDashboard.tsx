@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import DienstenTab from "./DienstenTab";
 import UrenTab from "./UrenTab";
 import FacturenTab from "./FacturenTab";
 import StatsTab from "./StatsTab";
+import KandidaatWorkflowPanel from "./KandidaatWorkflowPanel";
 
 type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
@@ -76,6 +77,7 @@ interface Inschrijving {
   inzetbaar_op?: string | null;
   onboarding_checklist?: Partial<Record<ChecklistKey, boolean>>;
   medewerker_id?: string | null;
+  is_test_candidate?: boolean;
   onboarding_portal_token?: string | null;
   onboarding_portal_token_expires_at?: string | null;
   intake_bevestiging_verstuurd_op?: string | null;
@@ -169,6 +171,9 @@ interface OpsSnapshot {
     inzetbaarWithoutProfile: number;
     pendingDocumentReviews: number;
     bouncedEmails: number;
+    openTasks: number;
+    overdueTasks: number;
+    testCandidates: number;
   };
   recentAudit: Array<{
     id: string;
@@ -678,6 +683,33 @@ export default function AdminDashboard() {
     return { metrics, avgProcessingTime };
   };
 
+  const workflowAlerts = useMemo(() => {
+    if (!opsSnapshot) return [];
+
+    return [
+      {
+        label: "Kandidaten wachten te lang",
+        value: opsSnapshot.counters.candidatesWaitingTooLong,
+        tone: "bg-amber-50 text-amber-800 border-amber-200",
+      },
+      {
+        label: "Documenten in review",
+        value: opsSnapshot.counters.pendingDocumentReviews,
+        tone: "bg-blue-50 text-blue-800 border-blue-200",
+      },
+      {
+        label: "Overdue taken",
+        value: opsSnapshot.counters.overdueTasks,
+        tone: "bg-red-50 text-red-800 border-red-200",
+      },
+      {
+        label: "Bounced mails",
+        value: opsSnapshot.counters.bouncedEmails,
+        tone: "bg-rose-50 text-rose-800 border-rose-200",
+      },
+    ].filter((alert) => alert.value > 0);
+  }, [opsSnapshot]);
+
   const deleteItem = async (table: string, id: string) => {
     if (confirm("Weet je zeker dat je dit item wilt verwijderen?")) {
       await fetch("/api/admin/data", {
@@ -1124,6 +1156,78 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6 mb-8">
+                  <div className="bg-white rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-neutral-900">Onboarding Funnel</h3>
+                      <button
+                        onClick={exportOnboardingMetrics}
+                        className="px-3 py-2 rounded-xl bg-neutral-100 text-sm font-medium text-neutral-700 hover:bg-neutral-200"
+                      >
+                        Exporteer funnel
+                      </button>
+                    </div>
+                    {(() => {
+                      const { metrics, avgProcessingTime } = calculateOnboardingMetrics();
+                      const totalActive = Math.max(
+                        1,
+                        Object.entries(metrics)
+                          .filter(([status]) => status !== "afgewezen")
+                          .reduce((sum, [, value]) => sum + value, 0)
+                      );
+
+                      return (
+                        <>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {([
+                              ["Nieuw", metrics.nieuw],
+                              ["Docs opvragen", metrics.documenten_opvragen],
+                              ["Goedgekeurd", metrics.goedgekeurd],
+                              ["Inzetbaar", metrics.inzetbaar],
+                            ] as const).map(([label, value]) => (
+                              <div key={label} className="rounded-xl bg-neutral-50 p-4">
+                                <p className="text-sm text-neutral-500">{label}</p>
+                                <p className="text-2xl font-bold text-neutral-900">{value}</p>
+                                <p className="text-xs text-neutral-500 mt-1">{Math.round((value / totalActive) * 100)}%</p>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-4 rounded-xl bg-orange-50 border border-orange-100 px-4 py-3 text-sm text-orange-900">
+                            Gemiddelde doorlooptijd: <strong>{avgProcessingTime > 0 ? `${avgProcessingTime.toFixed(1)} dagen` : "nog onvoldoende data"}</strong>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-neutral-900">Wat vraagt aandacht</h3>
+                      <span className="text-xs text-neutral-500">Vandaag</span>
+                    </div>
+                    <div className="space-y-3">
+                      {workflowAlerts.length === 0 ? (
+                        <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+                          Geen acute onboarding issues gevonden.
+                        </div>
+                      ) : (
+                        workflowAlerts.map((alert) => (
+                          <div key={alert.label} className={`rounded-xl border px-4 py-3 ${alert.tone}`}>
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-sm font-medium">{alert.label}</span>
+                              <span className="text-lg font-bold">{alert.value}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      <div className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3 text-sm text-neutral-700">
+                        Open taken: <strong>{opsSnapshot?.counters.openTasks ?? 0}</strong><br />
+                        Testkandidaten: <strong>{opsSnapshot?.counters.testCandidates ?? 0}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Recent Activity */}
                 <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
                   <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -1555,6 +1659,11 @@ export default function AdminDashboard() {
                                 }`}>
                                   {item.documenten_compleet ? "Documenten compleet" : "Documenten open"}
                                 </span>
+                                {item.is_test_candidate && (
+                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-fuchsia-100 text-fuchsia-700">
+                                    Test
+                                  </span>
+                                )}
                                 {item.inzetbaar_op && (
                                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                                     Inzetbaar
@@ -1976,6 +2085,12 @@ export default function AdminDashboard() {
                           {(selectedItem as Inschrijving).medewerker_id || "Nog niet aangemaakt"}
                         </p>
                       </div>
+                      <div>
+                        <p className="text-neutral-500">Type kandidaat</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).is_test_candidate ? "Test kandidaat" : "Normale kandidaat"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -2269,6 +2384,13 @@ export default function AdminDashboard() {
                       })}
                     </div>
                   </div>
+                  <KandidaatWorkflowPanel
+                    candidate={selectedItem as Inschrijving}
+                    getAuthHeaders={getAuthHeaders}
+                    onRefresh={fetchData}
+                    onUpdateCandidateFields={(data) => updateInschrijvingFields(selectedItem as Inschrijving, data)}
+                    onGeneratePortalLink={() => generateKandidaatPortalLink((selectedItem as Inschrijving).id)}
+                  />
                 </>
               )}
 

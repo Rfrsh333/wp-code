@@ -5,6 +5,8 @@ import {
   candidateEmailCopy,
   getDocumentChecklist,
 } from "@/content/candidateEmails";
+import type { AdminCandidateTemplateKey } from "@/content/adminCandidateEmailTemplates";
+import { adminCandidateEmailTemplates } from "@/content/adminCandidateEmailTemplates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -115,6 +117,7 @@ interface Kandidaat {
   achternaam: string;
   email: string;
   uitbetalingswijze: string;
+  onboarding_portal_token?: string | null;
 }
 
 function getBaseUrl() {
@@ -258,6 +261,34 @@ export async function sendDocumentenReminder(kandidaat: Kandidaat, portalToken?:
   return result;
 }
 
+export async function sendCandidateTemplateEmail(
+  kandidaat: Kandidaat,
+  template: (typeof adminCandidateEmailTemplates)[AdminCandidateTemplateKey]
+) {
+  const statusUrl = `${getBaseUrl()}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
+  const uploadToken = kandidaat.onboarding_portal_token || await generateAndSaveUploadToken(kandidaat.id);
+  const uploadUrl = `${getBaseUrl()}/kandidaat/documenten?token=${uploadToken}`;
+  const ctaUrl = template.ctaUrlType === "upload" ? uploadUrl : statusUrl;
+
+  const content = `
+    <span class="emoji">✉️</span>
+    <h1>${applyCandidateEmailVars(template.heading, { voornaam: kandidaat.voornaam })}</h1>
+    <p>${applyCandidateEmailVars(template.intro, { voornaam: kandidaat.voornaam })}</p>
+    ${renderCard(template.cardTitle, template.cardItems)}
+    ${template.bodyAfterCard ? `<p>${template.bodyAfterCard}</p>` : ""}
+    ${template.ctaLabel ? `<center><a href="${ctaUrl}" class="cta-button">${template.ctaLabel}</a></center>` : ""}
+    ${template.outro ? `<p style="margin-top: 30px; color: #666; font-size: 14px;">${template.outro}</p>` : ""}
+  `;
+
+  return resend.emails.send({
+    from: "TopTalent <info@toptalentjobs.nl>",
+    to: [kandidaat.email],
+    replyTo: "info@toptalentjobs.nl",
+    subject: applyCandidateEmailVars(template.subject, { voornaam: kandidaat.voornaam }),
+    html: getEmailLayout(content),
+  });
+}
+
 // 3. Welkomst mail - "Yes, je bent klaar" vibe
 export async function sendWelkomstmail(kandidaat: Kandidaat) {
   const statusUrl = `${getBaseUrl()}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
@@ -330,7 +361,7 @@ export async function generateAndSaveUploadToken(kandidaatId: string, expiryDays
 // Email logging helper met Resend tracking
 export async function logEmail(
   kandidaatId: string,
-  emailType: "bevestiging" | "documenten_opvragen" | "documenten_reminder" | "inzetbaar",
+  emailType: "bevestiging" | "documenten_opvragen" | "documenten_reminder" | "inzetbaar" | "custom",
   recipient: string,
   subject: string,
   resendEmailId?: string

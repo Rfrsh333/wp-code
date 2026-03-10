@@ -17,6 +17,8 @@ const ALLOWED_TABLES = [
   "uren_registraties",
   "facturen",
   "factuur_regels",
+  "kandidaat_contactmomenten",
+  "kandidaat_taken",
 ] as const;
 
 type AllowedTable = typeof ALLOWED_TABLES[number];
