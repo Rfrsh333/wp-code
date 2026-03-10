@@ -75,6 +75,12 @@ interface Inschrijving {
   goedgekeurd_op?: string | null;
   inzetbaar_op?: string | null;
   onboarding_checklist?: Partial<Record<ChecklistKey, boolean>>;
+  medewerker_id?: string | null;
+  onboarding_portal_token?: string | null;
+  onboarding_portal_token_expires_at?: string | null;
+  intake_bevestiging_verstuurd_op?: string | null;
+  documenten_verzoek_verstuurd_op?: string | null;
+  welkom_mail_verstuurd_op?: string | null;
   horeca_ervaring?: string | null;
   gewenste_functies?: string[] | null;
   talen?: string[] | null;
@@ -1837,6 +1843,36 @@ export default function AdminDashboard() {
                           {(selectedItem as Inschrijving).inzetbaar_op
                             ? formatDate((selectedItem as Inschrijving).inzetbaar_op!)
                             : "Nog niet inzetbaar"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Intake bevestiging</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).intake_bevestiging_verstuurd_op
+                            ? formatDate((selectedItem as Inschrijving).intake_bevestiging_verstuurd_op!)
+                            : "Nog niet verstuurd"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Documentenverzoek</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).documenten_verzoek_verstuurd_op
+                            ? formatDate((selectedItem as Inschrijving).documenten_verzoek_verstuurd_op!)
+                            : "Nog niet verstuurd"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Welkomstmail</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).welkom_mail_verstuurd_op
+                            ? formatDate((selectedItem as Inschrijving).welkom_mail_verstuurd_op!)
+                            : "Nog niet verstuurd"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-500">Medewerkerprofiel</p>
+                        <p className="font-medium text-neutral-900">
+                          {(selectedItem as Inschrijving).medewerker_id || "Nog niet aangemaakt"}
                         </p>
                       </div>
                     </div>

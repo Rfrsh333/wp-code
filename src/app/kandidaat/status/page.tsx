@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -81,7 +83,6 @@ const statusInfo: Record<OnboardingStatus, { label: string; color: string; icon:
 
 function KandidaatStatusContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [kandidaat, setKandidaat] = useState<KandidaatData | null>(null);
   const [documenten, setDocumenten] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,12 +136,12 @@ function KandidaatStatusContent() {
           <div className="text-6xl mb-4">❌</div>
           <h1 className="text-2xl font-bold text-neutral-900 mb-2">Toegang geweigerd</h1>
           <p className="text-neutral-600 mb-6">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-block px-6 py-3 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800]"
           >
             Terug naar homepage
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -166,7 +167,7 @@ function KandidaatStatusContent() {
                 Hier kun je de status van je inschrijving bij TopTalent volgen.
               </p>
             </div>
-            <img src="/icon.png" alt="TopTalent" className="w-16 h-16" />
+            <Image src="/icon.png" alt="TopTalent" width={64} height={64} className="w-16 h-16" />
           </div>
 
           {/* Status Card */}
