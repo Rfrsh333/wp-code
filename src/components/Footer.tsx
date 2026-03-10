@@ -109,7 +109,7 @@ export default function Footer() {
           {/* Locations */}
           <div>
             <h2 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
-              Regio's
+              Regio&apos;s
             </h2>
             <nav className="space-y-4">
               <Link href="/locaties/utrecht" className="block text-neutral-300 hover:text-white transition-colors duration-300">

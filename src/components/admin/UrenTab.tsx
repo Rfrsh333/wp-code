@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface UrenRegistratie {
@@ -27,16 +27,20 @@ export default function UrenTab() {
     return { Authorization: `Bearer ${session?.access_token}` };
   };
 
-  const fetchUren = async () => {
+  const fetchUren = useCallback(async () => {
     setIsLoading(true);
     const headers = await getAuthHeader();
     const res = await fetch(`/api/admin/uren?filter=${filter}`, { headers });
     const { data } = await res.json();
     setUren((data || []) as UrenRegistratie[]);
     setIsLoading(false);
-  };
+  }, [filter]);
 
-  useEffect(() => { fetchUren(); }, [filter]);
+  useEffect(() => {
+    void (async () => {
+      await fetchUren();
+    })();
+  }, [fetchUren]);
 
   const updateStatus = async (id: string, status: "goedgekeurd" | "afgewezen") => {
     const headers = await getAuthHeader();

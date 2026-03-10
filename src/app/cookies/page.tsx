@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 const CONSENT_KEY = "ttj_cookie_consent";
@@ -8,13 +8,11 @@ const CONSENT_KEY = "ttj_cookie_consent";
 type ConsentValue = "all" | "necessary";
 
 export default function CookiesPage() {
-  const [currentConsent, setCurrentConsent] = useState<ConsentValue | null>(null);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(CONSENT_KEY) as ConsentValue | null;
-    setCurrentConsent(stored);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [currentConsent, setCurrentConsent] = useState<ConsentValue | null>(
+    typeof window !== "undefined"
+      ? (window.localStorage.getItem(CONSENT_KEY) as ConsentValue | null)
+      : null
+  );
 
   const updateConsent = (value: ConsentValue) => {
     window.localStorage.setItem(CONSENT_KEY, value);

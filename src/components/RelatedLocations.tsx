@@ -16,7 +16,7 @@ export default function RelatedLocations({ currentSlug }: RelatedLocationsProps)
     <section className="mt-16 pt-12 border-t border-neutral-200">
       <div className="text-center mb-8">
         <h3 className="text-2xl font-bold text-neutral-900 mb-3">
-          Ook actief in andere regio's
+          Ook actief in andere regio&apos;s
         </h3>
         <p className="text-neutral-600">
           Bekijk onze diensten in andere steden

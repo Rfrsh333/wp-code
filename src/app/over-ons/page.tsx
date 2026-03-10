@@ -228,7 +228,9 @@ export default function OverOnsPage() {
               ].map((item, i) => (
                 <StaggerItem key={i}>
                   <div className="text-center p-8 bg-neutral-800/50 rounded-2xl border border-neutral-700/50">
-                    <p className="text-lg text-white mb-4 leading-relaxed">"{item.quote}"</p>
+                    <p className="text-lg text-white mb-4 leading-relaxed">
+                      &ldquo;{item.quote}&rdquo;
+                    </p>
                     <p className="text-sm text-neutral-400">— {item.company}</p>
                   </div>
                 </StaggerItem>

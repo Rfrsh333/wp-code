@@ -109,9 +109,6 @@ interface Stats {
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overzicht");
-  const [zoekQuery, setZoekQuery] = useState("");
-  const [zoekResultaten, setZoekResultaten] = useState<{ medewerkers: any[]; diensten: any[]; klanten: any[] } | null>(null);
-  const [zoekOpen, setZoekOpen] = useState(false);
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [stats, setStats] = useState<Stats>({

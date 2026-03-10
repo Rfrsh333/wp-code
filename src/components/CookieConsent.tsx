@@ -8,18 +8,14 @@ const CONSENT_KEY = "ttj_cookie_consent";
 type ConsentValue = "all" | "necessary";
 
 export default function CookieConsent() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(
+    typeof window !== "undefined" && !window.localStorage.getItem(CONSENT_KEY)
+  );
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(CONSENT_KEY) as ConsentValue | null;
-    if (!stored) {
-      setIsVisible(true);
-    }
-
     const onOpen = () => setIsVisible(true);
     window.addEventListener("ttj-cookie-open", onOpen);
     return () => window.removeEventListener("ttj-cookie-open", onOpen);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleConsent = (value: ConsentValue) => {

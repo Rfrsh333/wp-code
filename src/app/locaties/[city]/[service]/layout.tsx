@@ -10,6 +10,8 @@ interface Props {
 }
 
 const validServices = ["uitzenden", "detachering"];
+type CityMetadataMap = Record<string, string>;
+type ServiceMetadataMap = Record<(typeof validServices)[number], CityMetadataMap>;
 
 export async function generateStaticParams() {
   const params = [];
@@ -30,7 +32,7 @@ const getServiceMetadata = (city: string, service: string, locationName: string)
 
   const serviceName = serviceNames[service as keyof typeof serviceNames];
 
-  const titles = {
+  const titles: ServiceMetadataMap = {
     uitzenden: {
       utrecht: `Horeca Uitzenden Utrecht | Tijdelijk personeel binnen 24 uur`,
       amsterdam: `Horeca Uitzenden Amsterdam | Flexibel personeel centrum & Zuidas`,
@@ -47,7 +49,7 @@ const getServiceMetadata = (city: string, service: string, locationName: string)
     }
   };
 
-  const descriptions = {
+  const descriptions: ServiceMetadataMap = {
     uitzenden: {
       utrecht: `Horeca uitzenden in Utrecht en omgeving. Snel tijdelijk personeel voor restaurants, hotels en Jaarbeurs events. Binnen 24 uur beschikbaar. Lokale expertise sinds jaren.`,
       amsterdam: `Flexibel horeca personeel uitzenden in Amsterdam. Van centrum tot Zuidas, voor restaurants, hotels en RAI events. Meertalig personeel binnen 24 uur beschikbaar.`,
@@ -69,8 +71,10 @@ const getServiceMetadata = (city: string, service: string, locationName: string)
   const cityDescriptions = descriptions[serviceKey];
 
   // Type-safe access met fallback
-  const title = (cityTitles as any)[city] || `${serviceName} ${locationName} | TopTalent Jobs`;
-  const description = (cityDescriptions as any)[city] || `Horeca ${service} in ${locationName}. TopTalent Jobs levert snel en betrouwbaar personeel.`;
+  const title = cityTitles[city] || `${serviceName} ${locationName} | TopTalent Jobs`;
+  const description =
+    cityDescriptions[city] ||
+    `Horeca ${service} in ${locationName}. TopTalent Jobs levert snel en betrouwbaar personeel.`;
 
   return { title, description };
 };

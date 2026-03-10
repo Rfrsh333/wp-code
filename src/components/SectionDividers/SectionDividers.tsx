@@ -97,7 +97,9 @@ export function AccentUnderline({
    Exports
    ========================================================================== */
 
-export default {
+const sectionDividers = {
   CurveDivider,
   AccentUnderline,
 };
+
+export default sectionDividers;

@@ -28,20 +28,6 @@ export default async function CityPage({ params }: PageProps) {
     eindhoven: "Van High Tech Campus tot Stratumseind. Wij leveren snel en betrouwbaar horeca personeel in heel Eindhoven en omgeving.",
   };
 
-  const cityIcons: Record<string, string> = {
-    amsterdam: "🌷",
-    rotterdam: "🏙️",
-    "den-haag": "🏛️",
-    eindhoven: "💡",
-  };
-
-  const cityHighlights: Record<string, string> = {
-    amsterdam: "Centrum • Zuidas • De Pijp",
-    rotterdam: "Centrum • Kop van Zuid • Haven",
-    "den-haag": "Centrum • Scheveningen • Statenkwartier",
-    eindhoven: "Centrum • Strijp-S • HTC",
-  };
-
   const cityImages: Record<string, { src: string; alt: string }> = {
     utrecht: {
       src: "/images/locatie-utrecht-hero.png",

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import BeschikbaarheidForm from "@/components/medewerker/BeschikbaarheidForm";
 
@@ -61,8 +62,9 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
   };
 
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void (async () => {
+      await fetchData();
+    })();
   }, []);
 
   const aanmelden = async (dienstId: string) => {
@@ -260,7 +262,13 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                 {/* Image */}
                 <div className="relative aspect-[16/10] bg-neutral-100">
                   {dienst.afbeelding ? (
-                    <img src={dienst.afbeelding} alt={dienst.klant_naam} className="w-full h-full object-cover" />
+                    <Image
+                      src={dienst.afbeelding}
+                      alt={dienst.klant_naam}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
                       <svg className="w-16 h-16 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

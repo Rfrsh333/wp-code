@@ -7,12 +7,11 @@ const CONSENT_KEY = "ttj_cookie_consent";
 const GTM_ID = "GTM-5X3QX6Z6";
 
 export default function GtmLoader() {
-  const [hasConsent, setHasConsent] = useState(false);
+  const [hasConsent, setHasConsent] = useState(
+    typeof window !== "undefined" && window.localStorage.getItem(CONSENT_KEY) === "all"
+  );
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(CONSENT_KEY);
-    setHasConsent(stored === "all");
-
     const onConsentChange = (event: Event) => {
       const detail = (event as CustomEvent<string>).detail;
       setHasConsent(detail === "all");
@@ -20,7 +19,6 @@ export default function GtmLoader() {
 
     window.addEventListener("ttj-cookie-consent", onConsentChange);
     return () => window.removeEventListener("ttj-cookie-consent", onConsentChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!hasConsent) {

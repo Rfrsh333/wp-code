@@ -41,7 +41,7 @@ export default function MiniTestimonialCarousel({
         </div>
         <div className="flex-1">
           <p className="text-sm text-neutral-600 leading-relaxed mb-3">
-            "{active.content}"
+            &ldquo;{active.content}&rdquo;
           </p>
           <p className="text-xs font-semibold text-neutral-900">
             {active.name} · {active.company}

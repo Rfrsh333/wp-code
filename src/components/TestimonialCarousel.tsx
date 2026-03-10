@@ -60,7 +60,7 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
 
                   {/* Result quote */}
                   <p className="text-base font-medium text-neutral-900 mb-auto leading-relaxed">
-                    "{item.result}"
+                    &ldquo;{item.result}&rdquo;
                   </p>
 
                   {/* Attribution */}

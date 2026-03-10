@@ -5,7 +5,6 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
 } from "@react-pdf/renderer";
 import type { CalculatorInputs, Resultaten } from "@/lib/calculator/types";
 import { functieLabels, ervaringLabels, dagen, vergelijkingLabels } from "@/lib/calculator/tarieven";
@@ -429,7 +428,7 @@ export function CalculatorPDF({ lead, inputs, resultaten, createdAt }: Calculato
 
             {/* ZZP */}
             <View style={styles.prosConsBox}>
-              <Text style={styles.prosConsBoxTitle}>ZZP'er</Text>
+              <Text style={styles.prosConsBoxTitle}>ZZP&apos;er</Text>
               <View style={styles.prosItem}>
                 <Text style={styles.consIcon}>+</Text>
                 <Text style={styles.prosText}>Werving zelf regelen</Text>

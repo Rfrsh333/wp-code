@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface Factuur {
@@ -34,7 +34,7 @@ export default function FacturenTab() {
     return { Authorization: `Bearer ${session?.access_token}` };
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     const headers = await getAuthHeader();
     const res = await fetch("/api/admin/facturen", { headers });
@@ -42,10 +42,13 @@ export default function FacturenTab() {
     setFacturen((f || []) as Factuur[]);
     setKlanten(k || []);
     setIsLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
-
+  useEffect(() => {
+    void (async () => {
+      await fetchData();
+    })();
+  }, [fetchData]);
   const generateFactuur = async () => {
     setGenerating(true);
     const headers = await getAuthHeader();

@@ -128,7 +128,7 @@ export default function UtrechtPage() {
                   Beschikbare functies
                 </h3>
                 <ul className="space-y-2 text-neutral-700">
-                  <li>• Barista's & bartenders</li>
+                  <li>• Barista&apos;s & bartenders</li>
                   <li>• Bediening & horecamedewerkers</li>
                   <li>• Koks & keukenpersoneel</li>
                   <li>• Gastheren & gastvrouwen</li>

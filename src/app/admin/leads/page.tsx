@@ -66,7 +66,7 @@ export default function LeadsImportPage() {
       } else {
         setResult({ success: false, message: "❌ Upload mislukt" });
       }
-    } catch (error) {
+    } catch {
       setResult({ success: false, message: "❌ Fout bij uploaden" });
     } finally {
       setLoading(false);

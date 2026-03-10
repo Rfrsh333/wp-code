@@ -454,7 +454,9 @@ function PersoneelLandingVariantAContent() {
                 <h3 className="text-lg font-semibold text-neutral-900 mb-2">{item.title}</h3>
                 <p className="text-sm text-neutral-600 mb-3">{item.context}</p>
                 <p className="text-sm font-medium text-neutral-900 mb-4">{item.result}</p>
-                <p className="text-sm text-neutral-600 leading-relaxed mb-4">"{item.quote}"</p>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  &ldquo;{item.quote}&rdquo;
+                </p>
                 <p className="text-xs font-semibold text-neutral-900">
                   {item.name} · {item.company}
                 </p>

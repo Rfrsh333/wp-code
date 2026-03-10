@@ -5,7 +5,6 @@ import Section from "@/components/Section";
 import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 
-import type { FAQItem } from "@/data/location-service-faqs";
 export default function DetacheringPage() {
   return (
     <>

@@ -22,7 +22,10 @@ export default function PremiumImage({
   priority = false,
 }: PremiumImageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isRevealed, setIsRevealed] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(
+    typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 
   // Helper to get WebP version of image if .png
   const getWebPSrc = (originalSrc: string): string | null => {
@@ -44,7 +47,6 @@ export default function PremiumImage({
     ).matches;
 
     if (prefersReducedMotion) {
-      setIsRevealed(true);
       return;
     }
 

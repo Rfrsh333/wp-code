@@ -69,8 +69,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   };
 
   useEffect(() => {
-    fetchUren();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void (async () => {
+      await fetchUren();
+    })();
   }, []);
 
   const submitBeoordeling = async () => {

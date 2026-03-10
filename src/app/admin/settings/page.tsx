@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import type { Session } from "@supabase/supabase-js";
@@ -20,11 +21,7 @@ export default function AdminSettingsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  async function checkAuth() {
+  const checkAuth = useCallback(async () => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -40,7 +37,11 @@ export default function AdminSettingsPage() {
     setSession(session);
     await check2FAStatus(session);
     setLoading(false);
-  }
+  }, [router]);
+
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
 
   async function check2FAStatus(session: Session) {
     try {
@@ -82,7 +83,7 @@ export default function AdminSettingsPage() {
       setSecret(data.secret);
       setBackupCodes(data.backupCodes);
       setSetupMode(true);
-    } catch (err) {
+    } catch {
       setError("Failed to start 2FA setup");
     }
   }
@@ -259,7 +260,14 @@ export default function AdminSettingsPage() {
                   Open je authenticator app en scan deze QR code:
                 </p>
                 <div className="bg-white p-4 rounded-lg border-2 border-neutral-200 inline-block">
-                  <img src={qrCode} alt="2FA QR Code" className="w-64 h-64" />
+                  <Image
+                    src={qrCode}
+                    alt="2FA QR Code"
+                    width={256}
+                    height={256}
+                    className="w-64 h-64"
+                    unoptimized
+                  />
                 </div>
               </div>
 

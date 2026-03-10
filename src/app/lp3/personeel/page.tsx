@@ -480,7 +480,9 @@ function PersoneelLandingVariantBContent() {
                 key={item.name}
                 className="bg-white rounded-2xl p-6 border border-neutral-100 shadow-sm"
               >
-                <p className="text-sm text-neutral-600 leading-relaxed mb-4">"{item.content}"</p>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  &ldquo;{item.content}&rdquo;
+                </p>
                 <p className="text-xs font-semibold text-neutral-900">
                   {item.name} · {item.company}
                 </p>

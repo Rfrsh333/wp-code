@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface Dienst {
@@ -32,6 +32,10 @@ interface Aanmelding {
     email: string;
     telefoon: string | null;
   };
+}
+
+interface AanmeldingResponse extends Omit<Aanmelding, "medewerker"> {
+  medewerker?: Aanmelding["medewerker"];
 }
 
 const functieOptions = [
@@ -87,14 +91,14 @@ export default function DienstenTab() {
     return { Authorization: `Bearer ${session?.access_token}` };
   };
 
-  const fetchDiensten = async () => {
+  const fetchDiensten = useCallback(async () => {
     setIsLoading(true);
     const headers = await getAuthHeader();
     const res = await fetch("/api/admin/diensten", { headers });
     const { data } = await res.json();
     setDiensten(data || []);
     setIsLoading(false);
-  };
+  }, []);
 
   const fetchAanmeldingen = async (dienstId: string) => {
     const headers = await getAuthHeader();
@@ -104,15 +108,17 @@ export default function DienstenTab() {
       body: JSON.stringify({ action: "get_aanmeldingen", dienst_id: dienstId }),
     });
     const { data } = await res.json();
-    setAanmeldingen((data || []).map((a: any) => ({
+    setAanmeldingen(((data || []) as AanmeldingResponse[]).map((a) => ({
       ...a,
-      medewerker: a.medewerker as Aanmelding["medewerker"]
+      medewerker: a.medewerker,
     })));
   };
 
   useEffect(() => {
-    fetchDiensten();
-  }, []);
+    void (async () => {
+      await fetchDiensten();
+    })();
+  }, [fetchDiensten]);
 
   const openNewModal = () => {
     setEditingDienst(null);

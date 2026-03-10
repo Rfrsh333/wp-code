@@ -420,6 +420,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
 
         {/* Header content */}
         <View style={styles.headerContent}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image
             src="https://www.toptalentjobs.nl/logo.png"
             style={styles.logo}

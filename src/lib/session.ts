@@ -63,7 +63,7 @@ export async function verifyKlantSession(token: string): Promise<KlantSession | 
       contactpersoon: payload.contactpersoon as string,
       email: payload.email as string,
     };
-  } catch (error) {
+  } catch {
     console.warn("[SECURITY] Invalid or expired klant session token");
     return null;
   }
@@ -87,7 +87,7 @@ export async function verifyMedewerkerSession(token: string): Promise<Medewerker
       email: payload.email as string,
       functie: payload.functie as string | string[],
     };
-  } catch (error) {
+  } catch {
     console.warn("[SECURITY] Invalid or expired medewerker session token");
     return null;
   }
@@ -121,7 +121,7 @@ export async function verifyFactuurToken(token: string): Promise<{ factuurId: st
       factuurId: payload.factuurId as string,
       klantId: payload.klantId as string,
     };
-  } catch (error) {
+  } catch {
     console.warn("[SECURITY] Invalid or expired factuur token");
     return null;
   }

@@ -8,7 +8,10 @@ export function useInView(
   options: IntersectionObserverInit = { threshold: 0.1 }
 ): [React.RefObject<HTMLElement | null>, boolean] {
   const ref = useRef<HTMLElement | null>(null);
-  const [isInView, setIsInView] = useState(false);
+  const [isInView, setIsInView] = useState(
+    typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 
   useEffect(() => {
     const element = ref.current;
@@ -20,7 +23,6 @@ export function useInView(
     ).matches;
 
     if (prefersReducedMotion) {
-      setIsInView(true);
       return;
     }
 
@@ -34,7 +36,6 @@ export function useInView(
     observer.observe(element);
 
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options]);
 
   return [ref, isInView];
@@ -61,7 +62,7 @@ export function useCountUp(
     ).matches;
 
     if (prefersReducedMotion) {
-      setCount(target);
+      requestAnimationFrame(() => setCount(target));
       hasAnimated.current = true;
       return;
     }
@@ -97,7 +98,9 @@ export function useCountUp(
  * Returns the current scroll position with throttling via requestAnimationFrame
  */
 export function useScrollPosition(): number {
-  const [scrollY, setScrollY] = useState(0);
+  const [scrollY, setScrollY] = useState(
+    typeof window !== "undefined" ? window.scrollY : 0
+  );
   const ticking = useRef(false);
 
   const handleScroll = useCallback(() => {
@@ -111,12 +114,8 @@ export function useScrollPosition(): number {
   }, []);
 
   useEffect(() => {
-    // Set initial value
-    setScrollY(window.scrollY);
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleScroll]);
 
   return scrollY;

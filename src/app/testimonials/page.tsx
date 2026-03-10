@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 
 // ============================================================================
@@ -358,7 +356,7 @@ export default function TestimonialsPage() {
 
                   {/* Quote */}
                   <p className="text-neutral-900 font-medium mb-4 leading-relaxed">
-                    "{quote.quote}"
+                    &ldquo;{quote.quote}&rdquo;
                   </p>
 
                   {/* Attribution */}
@@ -410,7 +408,7 @@ export default function TestimonialsPage() {
                       Video testimonial: Restaurant De Smaak
                     </p>
                     <p className="text-sm text-neutral-500 mt-2">
-                      "Hoe we ons personeelsprobleem in 24 uur oplosten"
+                      &ldquo;Hoe we ons personeelsprobleem in 24 uur oplosten&rdquo;
                     </p>
                   </div>
                 </div>

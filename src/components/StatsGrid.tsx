@@ -85,13 +85,14 @@ function StatCard({ stat, index, isVisible, prefersReducedMotion }: StatCardProp
    ========================================================================== */
 export default function StatsGrid() {
   const [isVisible, setIsVisible] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+    typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    // Check for reduced motion preference
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(motionQuery.matches);
 
     const handleMotionChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);

@@ -12,7 +12,9 @@ declare global {
 }
 
 export function useRecaptcha() {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(
+    typeof window !== "undefined" && typeof window.grecaptcha !== "undefined"
+  );
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
@@ -23,7 +25,6 @@ export function useRecaptcha() {
 
     // Check if script is already loaded
     if (window.grecaptcha) {
-      setIsLoaded(true);
       return;
     }
 

@@ -1,4 +1,4 @@
-import type { CalculatorInputs, Resultaten, KostenResultaat, VergelijkingType } from "./types";
+import type { CalculatorInputs, Resultaten, VergelijkingType } from "./types";
 import { basisTarieven, ervaringsMultiplier, spoedToeslag } from "./tarieven";
 
 // ============================================================================

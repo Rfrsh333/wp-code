@@ -12,8 +12,6 @@ const ClickSpark = ({
 }) => {
   const canvasRef = useRef(null);
   const sparksRef = useRef([]);
-  const startTimeRef = useRef(null);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -50,7 +48,7 @@ const ClickSpark = ({
   const animationIdRef = useRef(null);
   const isAnimatingRef = useRef(false);
 
-  const draw = useCallback((timestamp) => {
+  const draw = useCallback(function drawFrame(timestamp) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -86,7 +84,7 @@ const ClickSpark = ({
 
     // Only continue animation if there are active sparks
     if (sparksRef.current.length > 0) {
-      animationIdRef.current = requestAnimationFrame(draw);
+      animationIdRef.current = requestAnimationFrame(drawFrame);
     } else {
       isAnimatingRef.current = false;
     }

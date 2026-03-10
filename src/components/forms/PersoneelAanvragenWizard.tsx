@@ -121,7 +121,6 @@ export default function PersoneelAanvragenWizard() {
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [direction, setDirection] = useState(1);
   const { executeRecaptcha } = useRecaptcha();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -197,13 +196,11 @@ export default function PersoneelAanvragenWizard() {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      setDirection(1);
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
     }
   };
 
   const prevStep = () => {
-    setDirection(-1);
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 

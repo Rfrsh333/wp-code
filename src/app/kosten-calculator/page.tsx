@@ -13,7 +13,6 @@ import type {
 } from "@/lib/calculator/types";
 import {
   berekenKosten,
-  formatCurrency,
   formatCurrencyDecimal,
 } from "@/lib/calculator/calculate";
 import {
@@ -306,7 +305,7 @@ export default function KostenCalculatorPage() {
           </h1>
           <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
             Bereken in 2 minuten uw personeelskosten. Vergelijk vast personeel,
-            uitzendkrachten en ZZP'ers — en ontvang een helder kostenoverzicht.
+            uitzendkrachten en ZZP&apos;ers - en ontvang een helder kostenoverzicht.
           </p>
         </div>
       </section>

@@ -9,6 +9,12 @@ interface Beschikbaarheid {
   [key: string]: string[];
 }
 
+interface BeschikbaarheidSaveData {
+  beschikbaarheid: Beschikbaarheid;
+  beschikbaar_vanaf: string;
+  max_uren_per_week: number;
+}
+
 export default function BeschikbaarheidForm({
   initialData,
   onSave
@@ -18,7 +24,7 @@ export default function BeschikbaarheidForm({
     beschikbaar_vanaf: string;
     max_uren_per_week: number;
   };
-  onSave: (data: any) => Promise<void>;
+  onSave: (data: BeschikbaarheidSaveData) => Promise<void>;
 }) {
   const [beschikbaarheid, setBeschikbaarheid] = useState<Beschikbaarheid>(
     initialData?.beschikbaarheid || DAGEN.reduce((acc, dag) => ({ ...acc, [dag]: [] }), {})

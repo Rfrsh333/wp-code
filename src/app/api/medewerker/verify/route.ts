@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Create session token
-  const sessionToken = crypto.randomBytes(32).toString("hex");
+  crypto.randomBytes(32).toString("hex");
   const sessionExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   await supabase
