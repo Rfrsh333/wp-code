@@ -15,6 +15,8 @@ interface UrenRegistratie {
   eind_tijd: string;
   pauze_minuten: number;
   gewerkte_uren: number;
+  reiskosten_km: number;
+  reiskosten_bedrag: number;
   status: string;
   created_at: string;
   medewerker_naam: string;
@@ -29,6 +31,7 @@ interface AanpassingModal {
   startTijd: string;
   eindTijd: string;
   pauzeMinuten: string;
+  reiskostenKm: string;
   opmerking: string;
 }
 
@@ -85,6 +88,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     startTijd: "",
     eindTijd: "",
     pauzeMinuten: "0",
+    reiskostenKm: "0",
     opmerking: "",
   });
 
@@ -144,6 +148,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       startTijd: u.start_tijd?.slice(0, 5) || "",
       eindTijd: u.eind_tijd?.slice(0, 5) || "",
       pauzeMinuten: String(u.pauze_minuten || 0),
+      reiskostenKm: String(u.reiskosten_km || 0),
       opmerking: "",
     });
   };
@@ -155,6 +160,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     const [eindH, eindM] = modal.eindTijd.split(":").map(Number);
     const pauze = parseInt(modal.pauzeMinuten) || 0;
     const gewerkteUren = Math.max(0, ((eindH * 60 + eindM) - (startH * 60 + startM) - pauze) / 60);
+    const reiskostenKm = Math.max(0, Number(modal.reiskostenKm) || 0);
 
     await fetch("/api/klant/uren", {
       method: "POST",
@@ -167,12 +173,13 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           eindTijd: modal.eindTijd,
           pauzeMinuten: pauze,
           gewerkteUren: Math.round(gewerkteUren * 100) / 100,
+          reiskostenKm,
           opmerking: modal.opmerking,
         },
       }),
     });
 
-    setModal({ open: false, uren: null, startTijd: "", eindTijd: "", pauzeMinuten: "0", opmerking: "" });
+    setModal({ open: false, uren: null, startTijd: "", eindTijd: "", pauzeMinuten: "0", reiskostenKm: "0", opmerking: "" });
     fetchUren();
   };
 
@@ -483,6 +490,11 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                       <span>{u.pauze_minuten}m pauze</span>
                       <span className="font-medium">{u.gewerkte_uren} uur</span>
                     </div>
+                    {u.reiskosten_km > 0 && (
+                      <p className="mt-2 text-sm text-neutral-600">
+                        Reiskosten: {u.reiskosten_km} km · medewerkervergoeding {formatCurrency(u.reiskosten_bedrag)}
+                      </p>
+                    )}
                     <p className="text-[#F27501] font-semibold mt-2">€{(u.gewerkte_uren * u.uurtarief).toFixed(2)}</p>
                   </div>
                   {tab === "pending" && (
@@ -562,6 +574,11 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 {modal.uren.start_tijd?.slice(0, 5)} - {modal.uren.eind_tijd?.slice(0, 5)}
                 ({modal.uren.pauze_minuten}m pauze) = {modal.uren.gewerkte_uren} uur
               </p>
+              {modal.uren.reiskosten_km > 0 && (
+                <p className="mt-1 text-sm text-neutral-600">
+                  Reiskosten: {modal.uren.reiskosten_km} km = {formatCurrency(modal.uren.reiskosten_bedrag)}
+                </p>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -584,6 +601,17 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 <input type="number" value={modal.pauzeMinuten}
                   onChange={(e) => setModal({ ...modal, pauzeMinuten: e.target.value })}
                   className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Reiskosten (km)</label>
+                <input type="number" value={modal.reiskostenKm}
+                  onChange={(e) => setModal({ ...modal, reiskostenKm: e.target.value })}
+                  min="0"
+                  step="0.1"
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+                <p className="mt-1 text-xs text-neutral-500">
+                  Medewerkervergoeding: {formatCurrency((Math.max(0, Number(modal.reiskostenKm) || 0)) * 0.21)}
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Reden aanpassing</label>

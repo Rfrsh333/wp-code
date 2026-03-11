@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 
 export async function GET() {
   // KRITIEK: Verify signed JWT instead of trusting JSON
@@ -25,7 +26,7 @@ export async function GET() {
   const { data } = await supabaseAdmin
     .from("uren_registraties")
     .select(`
-      id, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren, status, created_at,
+      id, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren, reiskosten_km, reiskosten_bedrag, status, created_at,
       aanmelding:dienst_aanmeldingen(
         medewerker:medewerkers(naam),
         dienst:diensten(datum, locatie, uurtarief)
@@ -43,6 +44,8 @@ export async function GET() {
     eind_tijd: u.eind_tijd,
     pauze_minuten: u.pauze_minuten,
     gewerkte_uren: u.gewerkte_uren,
+    reiskosten_km: u.reiskosten_km || 0,
+    reiskosten_bedrag: u.reiskosten_bedrag || 0,
     status: u.status,
     created_at: u.created_at,
     medewerker_naam: (u.aanmelding as Aanmelding & { medewerker?: { naam?: string } })?.medewerker?.naam || "Onbekend",
@@ -87,6 +90,8 @@ export async function POST(request: NextRequest) {
       klant_eind_tijd: data.eindTijd,
       klant_pauze_minuten: data.pauzeMinuten,
       klant_gewerkte_uren: data.gewerkteUren,
+      klant_reiskosten_km: sanitizeKilometers(data.reiskostenKm),
+      klant_reiskosten_bedrag: calculateMedewerkerReiskosten(data.reiskostenKm),
       klant_opmerking: data.opmerking,
     }).eq("id", id);
   }

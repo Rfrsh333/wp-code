@@ -9,6 +9,7 @@ type FactuurRegel = {
   omschrijving: string;
   uren: number;
   uurtarief: number;
+  reiskosten: number;
   bedrag: number;
 };
 
@@ -124,6 +125,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         <th>Omschrijving</th>
         <th>Uren</th>
         <th>Tarief</th>
+        <th>Reiskosten</th>
         <th style="text-align: right;">Bedrag</th>
       </tr>
     </thead>
@@ -134,6 +136,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           <td>${r.omschrijving}</td>
           <td>${r.uren}</td>
           <td>${formatCurrency(r.uurtarief)}</td>
+          <td>${formatCurrency(r.reiskosten || 0)}</td>
           <td style="text-align: right;">${formatCurrency(r.bedrag)}</td>
         </tr>
       `).join("")}

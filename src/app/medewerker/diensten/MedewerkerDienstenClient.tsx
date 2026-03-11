@@ -37,10 +37,14 @@ interface KlantAanpassing {
   eind_tijd: string;
   pauze_minuten: number;
   gewerkte_uren: number;
+  reiskosten_km: number;
+  reiskosten_bedrag: number;
   klant_start_tijd: string;
   klant_eind_tijd: string;
   klant_pauze_minuten: number;
   klant_gewerkte_uren: number;
+  klant_reiskosten_km: number;
+  klant_reiskosten_bedrag: number;
   klant_opmerking: string;
   dienst_datum: string;
   klant_naam: string;
@@ -53,7 +57,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
   const [tab, setTab] = useState<"beschikbaar" | "mijn" | "aanpassingen" | "beschikbaarheid">("beschikbaar");
   const [urenModal, setUrenModal] = useState<Dienst | null>(null);
   const [detailModal, setDetailModal] = useState<Dienst | null>(null);
-  const [urenForm, setUrenForm] = useState({ start: "", eind: "", pauze: "0" });
+  const [urenForm, setUrenForm] = useState({ start: "", eind: "", pauze: "0", reiskosten_km: "0" });
   const [aanpassingen, setAanpassingen] = useState<KlantAanpassing[]>([]);
 
   const fetchData = async () => {
@@ -90,7 +94,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
   };
 
   const openUrenModal = (dienst: Dienst) => {
-    setUrenForm({ start: dienst.start_tijd.slice(0, 5), eind: dienst.eind_tijd.slice(0, 5), pauze: "0" });
+    setUrenForm({ start: dienst.start_tijd.slice(0, 5), eind: dienst.eind_tijd.slice(0, 5), pauze: "0", reiskosten_km: "0" });
     setUrenModal(dienst);
   };
 
@@ -99,6 +103,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
     const start = urenForm.start.split(":").map(Number);
     const eind = urenForm.eind.split(":").map(Number);
     const uren = (eind[0] * 60 + eind[1] - start[0] * 60 - start[1] - parseInt(urenForm.pauze)) / 60;
+    const reiskostenKm = Math.max(0, Number(urenForm.reiskosten_km) || 0);
 
     await fetch("/api/medewerker/diensten", {
       method: "POST",
@@ -106,7 +111,13 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
       body: JSON.stringify({
         action: "uren_indienen",
         aanmelding_id: urenModal.aanmelding_id,
-        data: { start: urenForm.start, eind: urenForm.eind, pauze: parseInt(urenForm.pauze), uren: Math.round(uren * 100) / 100 },
+        data: {
+          start: urenForm.start,
+          eind: urenForm.eind,
+          pauze: parseInt(urenForm.pauze),
+          uren: Math.round(uren * 100) / 100,
+          reiskosten_km: reiskostenKm,
+        },
       }),
     });
     setUrenModal(null);
@@ -237,11 +248,17 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                     <p className="text-xs text-neutral-500 mb-1">Jouw uren (origineel)</p>
                     <p className="font-medium">{a.start_tijd?.slice(0,5)} - {a.eind_tijd?.slice(0,5)}</p>
                     <p className="text-sm text-neutral-600">{a.pauze_minuten}m pauze = {a.gewerkte_uren} uur</p>
+                    {a.reiskosten_km > 0 && (
+                      <p className="text-sm text-neutral-600">{a.reiskosten_km} km reiskosten = €{a.reiskosten_bedrag.toFixed(2)}</p>
+                    )}
                   </div>
                   <div className="bg-orange-50 rounded-xl p-3 border-2 border-orange-200">
                     <p className="text-xs text-orange-600 mb-1">Klant correctie</p>
                     <p className="font-medium text-orange-700">{a.klant_start_tijd?.slice(0,5)} - {a.klant_eind_tijd?.slice(0,5)}</p>
                     <p className="text-sm text-orange-600">{a.klant_pauze_minuten}m pauze = {a.klant_gewerkte_uren} uur</p>
+                    {a.klant_reiskosten_km > 0 && (
+                      <p className="text-sm text-orange-600">{a.klant_reiskosten_km} km reiskosten = €{a.klant_reiskosten_bedrag.toFixed(2)}</p>
+                    )}
                   </div>
                 </div>
 
@@ -414,6 +431,20 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                 <label className="block text-sm font-medium mb-1">Pauze (minuten)</label>
                 <input type="number" value={urenForm.pauze} onChange={(e) => setUrenForm({ ...urenForm, pauze: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg" min="0" step="5" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Reiskostenvergoeding (km)</label>
+                <input
+                  type="number"
+                  value={urenForm.reiskosten_km}
+                  onChange={(e) => setUrenForm({ ...urenForm, reiskosten_km: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  min="0"
+                  step="0.1"
+                />
+                <p className="mt-1 text-xs text-neutral-500">
+                  Bij uitbetaling rekenen we €{((Math.max(0, Number(urenForm.reiskosten_km) || 0)) * 0.21).toFixed(2)} voor {Math.max(0, Number(urenForm.reiskosten_km) || 0)} km.
+                </p>
               </div>
             </div>
             <div className="flex gap-2 mt-6">

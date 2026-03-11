@@ -9,6 +9,8 @@ interface UrenRegistratie {
   eind_tijd: string;
   pauze_minuten: number;
   gewerkte_uren: number;
+  reiskosten_km: number;
+  reiskosten_bedrag: number;
   status: string;
   created_at: string;
   aanmelding: {
@@ -26,6 +28,7 @@ export default function UrenTab() {
     start_tijd: "",
     eind_tijd: "",
     pauze_minuten: "0",
+    reiskosten_km: "0",
     opmerking: "",
   });
 
@@ -70,6 +73,7 @@ export default function UrenTab() {
       start_tijd: urenItem.start_tijd.slice(0, 5),
       eind_tijd: urenItem.eind_tijd.slice(0, 5),
       pauze_minuten: String(urenItem.pauze_minuten),
+      reiskosten_km: String(urenItem.reiskosten_km || 0),
       opmerking: "",
     });
   };
@@ -80,6 +84,8 @@ export default function UrenTab() {
     const start = adjustForm.start_tijd.split(":").map(Number);
     const eind = adjustForm.eind_tijd.split(":").map(Number);
     const gewerkteUren = Math.round((((eind[0] * 60 + eind[1]) - (start[0] * 60 + start[1]) - Number(adjustForm.pauze_minuten)) / 60) * 100) / 100;
+    const reiskostenKm = Math.max(0, Number(adjustForm.reiskosten_km) || 0);
+    const reiskostenBedrag = Math.round(reiskostenKm * 0.21 * 100) / 100;
 
     const headers = await getAuthHeader();
     const res = await fetch("/api/admin/uren", {
@@ -93,6 +99,8 @@ export default function UrenTab() {
           eind_tijd: adjustForm.eind_tijd,
           pauze_minuten: Number(adjustForm.pauze_minuten),
           gewerkte_uren: gewerkteUren,
+          reiskosten_km: reiskostenKm,
+          reiskosten_bedrag: reiskostenBedrag,
           opmerking: adjustForm.opmerking,
         },
       }),
@@ -163,9 +171,15 @@ export default function UrenTab() {
                 <td className="px-6 py-4">
                   <p className="font-medium">{u.gewerkte_uren} uur</p>
                   <p className="text-sm text-neutral-500">{u.start_tijd?.slice(0,5)} - {u.eind_tijd?.slice(0,5)} ({u.pauze_minuten}m pauze)</p>
+                  {u.reiskosten_km > 0 && (
+                    <p className="text-sm text-neutral-500">{u.reiskosten_km} km reiskosten (€{u.reiskosten_bedrag.toFixed(2)})</p>
+                  )}
                 </td>
                 <td className="px-6 py-4">
-                  <p className="font-medium text-green-600">€{(u.gewerkte_uren * (u.aanmelding?.dienst?.uurtarief || 0)).toFixed(2)}</p>
+                  <p className="font-medium text-green-600">€{((u.gewerkte_uren * (u.aanmelding?.dienst?.uurtarief || 0)) + ((u.reiskosten_km || 0) * 0.23)).toFixed(2)}</p>
+                  {u.reiskosten_km > 0 && (
+                    <p className="text-sm text-neutral-500">incl. €{((u.reiskosten_km || 0) * 0.23).toFixed(2)} reiskosten klant</p>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -232,6 +246,20 @@ export default function UrenTab() {
                   onChange={(e) => setAdjustForm({ ...adjustForm, pauze_minuten: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Reiskostenvergoeding (km)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={adjustForm.reiskosten_km}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, reiskosten_km: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+                <p className="mt-1 text-xs text-neutral-500">
+                  Medewerker ontvangt €{((Math.max(0, Number(adjustForm.reiskosten_km) || 0)) * 0.21).toFixed(2)} en klant wordt €{((Math.max(0, Number(adjustForm.reiskosten_km) || 0)) * 0.23).toFixed(2)} gefactureerd.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Opmerking voor medewerker</label>

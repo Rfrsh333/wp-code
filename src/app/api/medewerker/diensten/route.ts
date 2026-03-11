@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 
 type UrenRegistratie = { status: string };
 
@@ -10,10 +11,14 @@ type UrenAanpassing = {
   eind_tijd: string;
   pauze_minuten: number;
   gewerkte_uren: number;
+  reiskosten_km: number;
+  reiskosten_bedrag: number;
   klant_start_tijd: string | null;
   klant_eind_tijd: string | null;
   klant_pauze_minuten: number | null;
   klant_gewerkte_uren: number | null;
+  klant_reiskosten_km: number | null;
+  klant_reiskosten_bedrag: number | null;
   klant_opmerking: string | null;
   aanmelding: {
     medewerker_id: string;
@@ -67,8 +72,8 @@ export async function GET() {
   const { data: aanpassingen } = await supabaseAdmin
     .from("uren_registraties")
     .select(`
-      id, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren,
-      klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_opmerking,
+      id, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren, reiskosten_km, reiskosten_bedrag,
+      klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_reiskosten_km, klant_reiskosten_bedrag, klant_opmerking,
       aanmelding:dienst_aanmeldingen!inner(medewerker_id, dienst:diensten(datum, klant_naam, locatie))
     `)
     .eq("status", "klant_aangepast")
@@ -79,8 +84,10 @@ export async function GET() {
     return {
       id: typedU.id, start_tijd: typedU.start_tijd, eind_tijd: typedU.eind_tijd,
       pauze_minuten: typedU.pauze_minuten, gewerkte_uren: typedU.gewerkte_uren,
+      reiskosten_km: typedU.reiskosten_km, reiskosten_bedrag: typedU.reiskosten_bedrag,
       klant_start_tijd: typedU.klant_start_tijd, klant_eind_tijd: typedU.klant_eind_tijd,
       klant_pauze_minuten: typedU.klant_pauze_minuten, klant_gewerkte_uren: typedU.klant_gewerkte_uren,
+      klant_reiskosten_km: typedU.klant_reiskosten_km, klant_reiskosten_bedrag: typedU.klant_reiskosten_bedrag,
       klant_opmerking: typedU.klant_opmerking,
       dienst_datum: typedU.aanmelding?.dienst?.datum || "",
       klant_naam: typedU.aanmelding?.dienst?.klant_naam || "",
@@ -157,6 +164,8 @@ export async function POST(request: NextRequest) {
       eind_tijd: data.eind,
       pauze_minuten: data.pauze,
       gewerkte_uren: data.uren,
+      reiskosten_km: sanitizeKilometers(data.reiskosten_km),
+      reiskosten_bedrag: calculateMedewerkerReiskosten(data.reiskosten_km),
       status: "ingediend",
     });
   }
@@ -164,7 +173,7 @@ export async function POST(request: NextRequest) {
   if (action === "accepteer_aanpassing") {
     const { data: aanpassing } = await supabaseAdmin
       .from("uren_registraties")
-      .select("klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren")
+      .select("klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_reiskosten_km, klant_reiskosten_bedrag")
       .eq("id", uren_id)
       .single();
 
@@ -174,6 +183,8 @@ export async function POST(request: NextRequest) {
         eind_tijd: aanpassing.klant_eind_tijd,
         pauze_minuten: aanpassing.klant_pauze_minuten,
         gewerkte_uren: aanpassing.klant_gewerkte_uren,
+        reiskosten_km: aanpassing.klant_reiskosten_km ?? 0,
+        reiskosten_bedrag: aanpassing.klant_reiskosten_bedrag ?? 0,
         status: "klant_goedgekeurd",
       }).eq("id", uren_id);
     }
@@ -183,7 +194,8 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from("uren_registraties").update({
       status: "ingediend",
       klant_start_tijd: null, klant_eind_tijd: null,
-      klant_pauze_minuten: null, klant_gewerkte_uren: null, klant_opmerking: null,
+      klant_pauze_minuten: null, klant_gewerkte_uren: null,
+      klant_reiskosten_km: null, klant_reiskosten_bedrag: null, klant_opmerking: null,
     }).eq("id", uren_id);
   }
 

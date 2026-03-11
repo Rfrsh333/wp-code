@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
   if (action === "adjust") {
     const { data: urenRegistratie } = await supabaseAdmin
       .from("uren_registraties")
-      .select("status, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren")
+      .select("status, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren, reiskosten_km, reiskosten_bedrag")
       .eq("id", id)
       .single();
 
@@ -100,6 +100,8 @@ export async function POST(request: NextRequest) {
       klant_eind_tijd: data.eind_tijd,
       klant_pauze_minuten: data.pauze_minuten,
       klant_gewerkte_uren: data.gewerkte_uren,
+      klant_reiskosten_km: data.reiskosten_km,
+      klant_reiskosten_bedrag: data.reiskosten_bedrag,
       klant_opmerking: data.opmerking || null,
       goedgekeurd_at: null,
     }).eq("id", id);

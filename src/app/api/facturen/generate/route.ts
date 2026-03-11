@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { calculateVat } from "@/lib/factuur-config";
+import { calculateKlantReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 
 type UrenRegistratie = {
   id: string;
   gewerkte_uren: number;
   start_tijd: string;
   eind_tijd: string;
+  reiskosten_km: number;
   aanmelding: {
     medewerker: { naam: string } | null;
     dienst: { datum: string; klant_naam: string; locatie: string; uurtarief: number; klant_id: string } | null;
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
     const { data: uren } = await supabase
       .from("uren_registraties")
       .select(`
-        id, gewerkte_uren, start_tijd, eind_tijd,
+        id, gewerkte_uren, start_tijd, eind_tijd, reiskosten_km,
         aanmelding:dienst_aanmeldingen!inner(
           medewerker:medewerkers(naam),
           dienst:diensten!inner(datum, klant_naam, locatie, uurtarief, klant_id)
@@ -61,7 +63,10 @@ export async function POST(request: NextRequest) {
     let subtotaal = 0;
     const regels = (uren || []).map((u): FactuurRegel => {
       const typedU = u as unknown as UrenRegistratie;
-      const bedrag = typedU.gewerkte_uren * (typedU.aanmelding?.dienst?.uurtarief || 0);
+      const reiskostenKm = sanitizeKilometers(typedU.reiskosten_km);
+      const reiskosten = calculateKlantReiskosten(reiskostenKm);
+      const urenBedrag = typedU.gewerkte_uren * (typedU.aanmelding?.dienst?.uurtarief || 0);
+      const bedrag = urenBedrag + reiskosten;
       subtotaal += bedrag;
       return {
         uren_registratie_id: typedU.id,
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest) {
         medewerker_naam: typedU.aanmelding?.medewerker?.naam || '',
         uren: typedU.gewerkte_uren,
         uurtarief: typedU.aanmelding?.dienst?.uurtarief || 0,
-        reiskosten: 0,
+        reiskosten,
         bedrag,
       };
     });
