@@ -119,12 +119,45 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "uren_indienen") {
+    const { data: aanmelding } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, status, dienst:diensten(datum, eind_tijd)")
+      .eq("id", aanmelding_id)
+      .eq("medewerker_id", medewerker.id)
+      .single();
+
+    const dienst = Array.isArray(aanmelding?.dienst) ? aanmelding?.dienst[0] : aanmelding?.dienst;
+
+    if (!aanmelding || !dienst) {
+      return NextResponse.json({ error: "Aanmelding of dienst niet gevonden" }, { status: 404 });
+    }
+
+    if (aanmelding.status !== "geaccepteerd") {
+      return NextResponse.json({ error: "Je kunt alleen uren indienen voor geaccepteerde diensten" }, { status: 400 });
+    }
+
+    const dienstEinde = new Date(`${dienst.datum}T${dienst.eind_tijd}`);
+    if (dienstEinde > new Date()) {
+      return NextResponse.json({ error: "Uren kunnen pas worden ingevuld nadat de eindtijd van de dienst is verstreken" }, { status: 400 });
+    }
+
+    const { data: bestaandUrenItem } = await supabaseAdmin
+      .from("uren_registraties")
+      .select("id")
+      .eq("aanmelding_id", aanmelding_id)
+      .maybeSingle();
+
+    if (bestaandUrenItem) {
+      return NextResponse.json({ error: "Voor deze dienst zijn al uren ingediend" }, { status: 409 });
+    }
+
     await supabaseAdmin.from("uren_registraties").insert({
       aanmelding_id,
       start_tijd: data.start,
       eind_tijd: data.eind,
       pauze_minuten: data.pauze,
       gewerkte_uren: data.uren,
+      status: "ingediend",
     });
   }
 

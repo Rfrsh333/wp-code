@@ -20,7 +20,7 @@ interface UrenRegistratie {
 export default function UrenTab() {
   const [uren, setUren] = useState<UrenRegistratie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<"klant_goedgekeurd" | "ingediend" | "alle">("klant_goedgekeurd");
+  const [filter, setFilter] = useState<"klant_goedgekeurd" | "ingediend" | "alle">("ingediend");
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -70,7 +70,7 @@ export default function UrenTab() {
             Klaar voor factuur
           </button>
           <button onClick={() => setFilter("ingediend")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "ingediend" ? "bg-[#F27501] text-white" : "bg-white"}`}>
-            Wacht op klant
+            Nieuw van medewerker
           </button>
           <button onClick={() => setFilter("alle")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "alle" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Alle
