@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { hasRequiredAdminRole, verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import { ensureMedewerkerFromCandidate } from "@/lib/candidate-to-medewerker";
+import { sendMedewerkerActivationEmail } from "@/lib/medewerker-activation";
 
 // KRITIEK: Whitelist van toegestane tables om SQL injection te voorkomen
 const ALLOWED_TABLES = [
@@ -93,6 +94,15 @@ export async function POST(request: NextRequest) {
       if (candidate && !candidate.medewerker_id) {
         const medewerkerId = await ensureMedewerkerFromCandidate(candidate);
         await supabaseAdmin.from("inschrijvingen").update({ medewerker_id: medewerkerId }).eq("id", id);
+        const { data: medewerker } = await supabaseAdmin
+          .from("medewerkers")
+          .select("id, naam, email")
+          .eq("id", medewerkerId)
+          .single();
+
+        if (medewerker?.email) {
+          await sendMedewerkerActivationEmail(medewerker);
+        }
         generatedMedewerkerLinks = 1;
       }
     }
@@ -125,6 +135,15 @@ export async function POST(request: NextRequest) {
           .from("inschrijvingen")
           .update({ medewerker_id: medewerkerId })
           .eq("id", candidate.id);
+        const { data: medewerker } = await supabaseAdmin
+          .from("medewerkers")
+          .select("id, naam, email")
+          .eq("id", medewerkerId)
+          .single();
+
+        if (medewerker?.email) {
+          await sendMedewerkerActivationEmail(medewerker);
+        }
         generatedMedewerkerLinks += 1;
       }
     }
