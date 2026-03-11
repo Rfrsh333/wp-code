@@ -21,6 +21,13 @@ export default function UrenTab() {
   const [uren, setUren] = useState<UrenRegistratie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"klant_goedgekeurd" | "ingediend" | "alle">("ingediend");
+  const [adjustModal, setAdjustModal] = useState<UrenRegistratie | null>(null);
+  const [adjustForm, setAdjustForm] = useState({
+    start_tijd: "",
+    eind_tijd: "",
+    pauze_minuten: "0",
+    opmerking: "",
+  });
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -44,11 +51,60 @@ export default function UrenTab() {
 
   const updateStatus = async (id: string, status: "goedgekeurd" | "afgewezen") => {
     const headers = await getAuthHeader();
-    await fetch("/api/admin/uren", {
+    const res = await fetch("/api/admin/uren", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ action: "update_status", id, status }),
     });
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.error || "Status aanpassen mislukt");
+      return;
+    }
+    fetchUren();
+  };
+
+  const openAdjustModal = (urenItem: UrenRegistratie) => {
+    setAdjustModal(urenItem);
+    setAdjustForm({
+      start_tijd: urenItem.start_tijd.slice(0, 5),
+      eind_tijd: urenItem.eind_tijd.slice(0, 5),
+      pauze_minuten: String(urenItem.pauze_minuten),
+      opmerking: "",
+    });
+  };
+
+  const submitAdjustment = async () => {
+    if (!adjustModal) return;
+
+    const start = adjustForm.start_tijd.split(":").map(Number);
+    const eind = adjustForm.eind_tijd.split(":").map(Number);
+    const gewerkteUren = Math.round((((eind[0] * 60 + eind[1]) - (start[0] * 60 + start[1]) - Number(adjustForm.pauze_minuten)) / 60) * 100) / 100;
+
+    const headers = await getAuthHeader();
+    const res = await fetch("/api/admin/uren", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "adjust",
+        id: adjustModal.id,
+        data: {
+          start_tijd: adjustForm.start_tijd,
+          eind_tijd: adjustForm.eind_tijd,
+          pauze_minuten: Number(adjustForm.pauze_minuten),
+          gewerkte_uren: gewerkteUren,
+          opmerking: adjustForm.opmerking,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.error || "Correctie versturen mislukt");
+      return;
+    }
+
+    setAdjustModal(null);
     fetchUren();
   };
 
@@ -116,14 +172,12 @@ export default function UrenTab() {
                   }`}>{u.status === "klant_goedgekeurd" ? "Klant OK" : u.status}</span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  {u.status === "klant_goedgekeurd" && (
+                  {(u.status === "ingediend" || u.status === "klant_goedgekeurd") && (
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => updateStatus(u.id, "goedgekeurd")} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Goedkeuren</button>
+                      <button onClick={() => openAdjustModal(u)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm">Corrigeren</button>
                       <button onClick={() => updateStatus(u.id, "afgewezen")} className="px-3 py-1 bg-red-500 text-white rounded text-sm">Afwijzen</button>
                     </div>
-                  )}
-                  {u.status === "ingediend" && (
-                    <span className="text-xs text-neutral-500">Wacht op klantbeoordeling</span>
                   )}
                 </td>
               </tr>
@@ -132,6 +186,62 @@ export default function UrenTab() {
         </table>
         {uren.length === 0 && <div className="text-center py-12 text-neutral-500">Geen uren gevonden</div>}
       </div>
+
+      {adjustModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold mb-2">Uren corrigeren</h3>
+            <p className="text-sm text-neutral-500 mb-4">
+              {adjustModal.aanmelding?.medewerker?.naam} · {adjustModal.aanmelding?.dienst?.klant_naam}
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Starttijd</label>
+                <input
+                  type="time"
+                  value={adjustForm.start_tijd}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, start_tijd: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Eindtijd</label>
+                <input
+                  type="time"
+                  value={adjustForm.eind_tijd}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, eind_tijd: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Pauze (minuten)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="5"
+                  value={adjustForm.pauze_minuten}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, pauze_minuten: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Opmerking voor medewerker</label>
+                <textarea
+                  rows={4}
+                  value={adjustForm.opmerking}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, opmerking: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="Bijvoorbeeld: klant gaf door dat de dienst om 22:30 stopte en dat er 30 minuten pauze was."
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button onClick={() => setAdjustModal(null)} className="flex-1 py-2 border rounded-lg">Annuleren</button>
+              <button onClick={submitAdjustment} className="flex-1 py-2 bg-[#F27501] text-white rounded-lg font-medium">Stuur correctie</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

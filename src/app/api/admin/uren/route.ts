@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
-  const { action, id, status } = await request.json();
+  const { action, id, status, data } = await request.json();
 
   if (action === "update_status") {
     const { data: urenRegistratie } = await supabaseAdmin
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Urenregistratie niet gevonden" }, { status: 404 });
     }
 
-    if (status === "goedgekeurd" && urenRegistratie.status !== "klant_goedgekeurd") {
-      return NextResponse.json({ error: "Alleen klant goedgekeurde uren kunnen definitief worden goedgekeurd" }, { status: 400 });
+    if (status === "goedgekeurd" && !["ingediend", "klant_goedgekeurd"].includes(urenRegistratie.status)) {
+      return NextResponse.json({ error: "Alleen ingediende of klant goedgekeurde uren kunnen definitief worden goedgekeurd" }, { status: 400 });
     }
 
     const payload: { status: string; goedgekeurd_at?: string | null } = { status };
@@ -58,6 +58,32 @@ export async function POST(request: NextRequest) {
     }
 
     await supabaseAdmin.from("uren_registraties").update(payload).eq("id", id);
+  }
+
+  if (action === "adjust") {
+    const { data: urenRegistratie } = await supabaseAdmin
+      .from("uren_registraties")
+      .select("status, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren")
+      .eq("id", id)
+      .single();
+
+    if (!urenRegistratie) {
+      return NextResponse.json({ error: "Urenregistratie niet gevonden" }, { status: 404 });
+    }
+
+    if (!["ingediend", "klant_goedgekeurd"].includes(urenRegistratie.status)) {
+      return NextResponse.json({ error: "Deze urenregistratie kan niet meer worden aangepast" }, { status: 400 });
+    }
+
+    await supabaseAdmin.from("uren_registraties").update({
+      status: "klant_aangepast",
+      klant_start_tijd: data.start_tijd,
+      klant_eind_tijd: data.eind_tijd,
+      klant_pauze_minuten: data.pauze_minuten,
+      klant_gewerkte_uren: data.gewerkte_uren,
+      klant_opmerking: data.opmerking || null,
+      goedgekeurd_at: null,
+    }).eq("id", id);
   }
 
   return NextResponse.json({ success: true });
