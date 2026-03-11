@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -45,6 +46,35 @@ export async function POST(request: NextRequest) {
       .from("dienst_aanmeldingen")
       .update({ status: data.status, beoordeeld_at: new Date().toISOString() })
       .eq("id", id);
+
+    if (data.status === "geaccepteerd") {
+      const { data: aanmelding } = await supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .select(`
+          id,
+          medewerker:medewerkers(naam, email),
+          dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie, notities)
+        `)
+        .eq("id", id)
+        .single();
+
+      const medewerker = Array.isArray(aanmelding?.medewerker) ? aanmelding?.medewerker[0] : aanmelding?.medewerker;
+      const dienst = Array.isArray(aanmelding?.dienst) ? aanmelding?.dienst[0] : aanmelding?.dienst;
+
+      if (medewerker?.email && dienst) {
+        await sendMedewerkerShiftConfirmationEmail({
+          medewerkerNaam: medewerker.naam,
+          medewerkerEmail: medewerker.email,
+          functie: dienst.functie,
+          datum: dienst.datum,
+          startTijd: dienst.start_tijd,
+          eindTijd: dienst.eind_tijd,
+          locatie: dienst.locatie,
+          klantNaam: dienst.klant_naam,
+          kledingvoorschrift: dienst.notities,
+        });
+      }
+    }
   }
 
   return NextResponse.json({ success: true });
