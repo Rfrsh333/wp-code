@@ -168,8 +168,19 @@ export default function Header() {
               </Link>
             </nav>
 
-            {/* CTA Button */}
-            <div className="hidden lg:flex items-center gap-4">
+            {/* CTA Buttons */}
+            <div className="hidden lg:flex items-center gap-3">
+              <Link
+                href="/medewerker/login"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm
+                border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]
+                transition-all duration-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Login
+              </Link>
               <Link
                 href="/contact"
                 className="bg-[#F27501] text-white px-6 py-2.5 rounded-lg font-semibold text-sm
@@ -295,7 +306,19 @@ export default function Header() {
               >
                 Contact
               </Link>
-              <div className="mt-4 px-4">
+              <div className="mt-4 px-4 space-y-3">
+                <Link
+                  href="/medewerker/login"
+                  className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-lg font-semibold
+                  border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]
+                  transition-all duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Login
+                </Link>
                 <Link
                   href="/contact"
                   className="block w-full bg-[#F27501] text-white px-6 py-3 rounded-lg font-semibold text-center
