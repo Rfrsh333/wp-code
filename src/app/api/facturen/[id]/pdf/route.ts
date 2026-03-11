@@ -14,6 +14,7 @@ type FactuurRegel = {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const factuurConfig = getFactuurConfig();
+  const addressLines = [factuurConfig.adres, factuurConfig.postcodeStad].filter(Boolean);
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const token = searchParams.get("token");
@@ -100,8 +101,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     <div class="address">
       <div class="address-title">Van</div>
       <strong>${factuurConfig.bedrijfsnaam}</strong><br>
-      ${factuurConfig.adres}<br>
-      ${factuurConfig.postcodeStad}<br>
+      ${addressLines.length > 0 ? `${addressLines.join("<br>")}<br>` : ""}
       KVK: ${factuurConfig.kvk}<br>
       BTW: ${factuurConfig.btw}
     </div>
