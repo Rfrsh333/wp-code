@@ -14,6 +14,8 @@ interface Medewerker {
 interface Dienst {
   id: string;
   klant_naam: string;
+  klant_email: string | null;
+  klant_telefoon: string | null;
   locatie: string;
   datum: string;
   start_tijd: string;
@@ -22,6 +24,7 @@ interface Dienst {
   uurtarief: number | null;
   afbeelding: string | null;
   status: string;
+  notities: string | null;
   aangemeld?: boolean;
   aanmelding_id?: string;
   aanmelding_status?: string;
@@ -49,6 +52,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState<"beschikbaar" | "mijn" | "aanpassingen" | "beschikbaarheid">("beschikbaar");
   const [urenModal, setUrenModal] = useState<Dienst | null>(null);
+  const [detailModal, setDetailModal] = useState<Dienst | null>(null);
   const [urenForm, setUrenForm] = useState({ start: "", eind: "", pauze: "0" });
   const [aanpassingen, setAanpassingen] = useState<KlantAanpassing[]>([]);
 
@@ -129,6 +133,16 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+
+  const formatDateTimeLong = (date: string, time: string) =>
+    new Date(`${date}T${time}`).toLocaleString("nl-NL", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   const beschikbaar = diensten.filter((d) => !d.aangemeld);
   const mijnDiensten = diensten.filter((d) => d.aangemeld);
@@ -319,7 +333,13 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                     {dienst.uurtarief && (
                       <span className="text-[#F27501] font-bold">€{dienst.uurtarief}/uur</span>
                     )}
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        onClick={() => setDetailModal(dienst)}
+                        className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-xl text-sm font-medium hover:bg-neutral-200 transition-colors"
+                      >
+                        Details
+                      </button>
                       {!dienst.aangemeld ? (
                         <button onClick={() => aanmelden(dienst.id)} className="px-5 py-2 bg-[#F27501] text-white rounded-xl text-sm font-semibold hover:bg-[#d96800] transition-colors">
                           Aanmelden
@@ -377,6 +397,84 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
             <div className="flex gap-2 mt-6">
               <button onClick={() => setUrenModal(null)} className="flex-1 py-2 border rounded-lg">Annuleren</button>
               <button onClick={submitUren} className="flex-1 py-2 bg-[#F27501] text-white rounded-lg font-medium">Versturen</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {detailModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+            {detailModal.afbeelding && (
+              <div className="relative h-56">
+                <Image
+                  src={detailModal.afbeelding}
+                  alt={detailModal.klant_naam}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
+
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-neutral-900">{detailModal.klant_naam}</h3>
+                  <p className="text-sm text-neutral-500 capitalize">{detailModal.functie}</p>
+                </div>
+                <button
+                  onClick={() => setDetailModal(null)}
+                  className="p-2 hover:bg-neutral-100 rounded-xl transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-neutral-50 rounded-xl p-4">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Wanneer</p>
+                  <p className="font-semibold text-neutral-900">{formatDateTimeLong(detailModal.datum, detailModal.start_tijd)}</p>
+                  <p className="text-sm text-neutral-600">Tot {detailModal.eind_tijd.slice(0, 5)} uur</p>
+                </div>
+                <div className="bg-neutral-50 rounded-xl p-4">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Waar</p>
+                  <p className="font-semibold text-neutral-900">{detailModal.locatie}</p>
+                </div>
+                <div className="bg-neutral-50 rounded-xl p-4">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Tarief</p>
+                  <p className="font-semibold text-neutral-900">
+                    {detailModal.uurtarief ? `€${detailModal.uurtarief}/uur` : "Tarief volgt"}
+                  </p>
+                </div>
+                <div className="bg-neutral-50 rounded-xl p-4">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Status</p>
+                  <p className="font-semibold text-neutral-900 capitalize">
+                    {detailModal.aanmelding_status || "beschikbaar"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+                  <p className="text-sm font-semibold text-orange-700 mb-2">Notities / kledingvoorschriften</p>
+                  <p className="text-sm text-neutral-700">
+                    {detailModal.notities?.trim() || "Nog geen extra notities of kledingvoorschriften meegegeven."}
+                  </p>
+                </div>
+
+                {(detailModal.klant_email || detailModal.klant_telefoon) && (
+                  <div className="bg-neutral-50 rounded-xl p-4">
+                    <p className="text-sm font-semibold text-neutral-900 mb-2">Contactgegevens</p>
+                    <div className="space-y-1 text-sm text-neutral-700">
+                      {detailModal.klant_email && <p>E-mail: {detailModal.klant_email}</p>}
+                      {detailModal.klant_telefoon && <p>Telefoon: {detailModal.klant_telefoon}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
