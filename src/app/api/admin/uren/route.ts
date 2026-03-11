@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
     .select("*, aanmelding:dienst_aanmeldingen(medewerker:medewerkers(naam, email), dienst:diensten(klant_naam, datum, locatie, uurtarief))")
     .order("created_at", { ascending: false });
 
-  if (filter === "klant_goedgekeurd") query = query.eq("status", "klant_goedgekeurd");
+  if (filter === "goedgekeurd") query = query.eq("status", "goedgekeurd");
+  else if (filter === "klant_goedgekeurd") query = query.eq("status", "klant_goedgekeurd");
   else if (filter === "ingediend") query = query.eq("status", "ingediend");
 
   const { data } = await query;
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (action === "update_status") {
     const { data: urenRegistratie } = await supabaseAdmin
       .from("uren_registraties")
-      .select("status")
+      .select("status, aanmelding:dienst_aanmeldingen(dienst:diensten(klant_id))")
       .eq("id", id)
       .single();
 
@@ -58,6 +59,24 @@ export async function POST(request: NextRequest) {
     }
 
     await supabaseAdmin.from("uren_registraties").update(payload).eq("id", id);
+
+    if (status === "goedgekeurd") {
+      const aanmelding = Array.isArray(urenRegistratie.aanmelding)
+        ? urenRegistratie.aanmelding[0]
+        : urenRegistratie.aanmelding;
+      const dienst = Array.isArray(aanmelding?.dienst)
+        ? aanmelding?.dienst[0]
+        : aanmelding?.dienst;
+      const klantId = dienst?.klant_id;
+
+      if (klantId) {
+        await supabaseAdmin
+          .from("klanten")
+          .update({ eerste_goedkeuring: new Date().toISOString().split("T")[0] })
+          .eq("id", klantId)
+          .is("eerste_goedkeuring", null);
+      }
+    }
   }
 
   if (action === "adjust") {

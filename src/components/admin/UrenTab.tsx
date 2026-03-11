@@ -20,7 +20,7 @@ interface UrenRegistratie {
 export default function UrenTab() {
   const [uren, setUren] = useState<UrenRegistratie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<"klant_goedgekeurd" | "ingediend" | "alle">("ingediend");
+  const [filter, setFilter] = useState<"goedgekeurd" | "klant_goedgekeurd" | "ingediend" | "alle">("ingediend");
   const [adjustModal, setAdjustModal] = useState<UrenRegistratie | null>(null);
   const [adjustForm, setAdjustForm] = useState({
     start_tijd: "",
@@ -118,15 +118,18 @@ export default function UrenTab() {
         <div>
           <h2 className="text-2xl font-bold text-neutral-900">Uren Goedkeuren</h2>
           <p className="text-sm text-neutral-500 mt-1">
-            Medewerkers vullen uren in bij Mijn diensten. Na klantcontrole keur je ze hier definitief goed voor facturatie.
+            Medewerkers vullen uren in bij Mijn diensten. Nieuwe inzendingen beoordeel je hier, en zodra uren definitief goedgekeurd zijn verschijnen ze onder Klaar voor factuur.
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setFilter("klant_goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "klant_goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
+          <button onClick={() => setFilter("goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Klaar voor factuur
           </button>
           <button onClick={() => setFilter("ingediend")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "ingediend" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Nieuw van medewerker
+          </button>
+          <button onClick={() => setFilter("klant_goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "klant_goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
+            Klant akkoord
           </button>
           <button onClick={() => setFilter("alle")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "alle" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Alle
@@ -169,7 +172,13 @@ export default function UrenTab() {
                     u.status === "goedgekeurd" ? "bg-green-100 text-green-700" :
                     u.status === "klant_goedgekeurd" ? "bg-blue-100 text-blue-700" :
                     u.status === "afgewezen" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
-                  }`}>{u.status === "klant_goedgekeurd" ? "Klant OK" : u.status}</span>
+                  }`}>
+                    {u.status === "klant_goedgekeurd"
+                      ? "Klant OK"
+                      : u.status === "goedgekeurd"
+                        ? "Klaar voor factuur"
+                        : u.status}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   {(u.status === "ingediend" || u.status === "klant_goedgekeurd") && (

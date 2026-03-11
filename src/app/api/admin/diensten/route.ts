@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { ensureKlantForDienst } from "@/lib/klanten-sync";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 
 export async function GET(request: NextRequest) {
@@ -25,10 +26,18 @@ export async function POST(request: NextRequest) {
   const { action, id, dienst_id, data } = await request.json();
 
   if (action === "create") {
-    await supabaseAdmin.from("diensten").insert(data);
+    const payload = { ...data };
+    if (payload.klant_naam) {
+      payload.klant_id = await ensureKlantForDienst(payload);
+    }
+    await supabaseAdmin.from("diensten").insert(payload);
   }
   if (action === "update") {
-    await supabaseAdmin.from("diensten").update(data).eq("id", id);
+    const payload = { ...data };
+    if (payload.klant_naam) {
+      payload.klant_id = await ensureKlantForDienst(payload);
+    }
+    await supabaseAdmin.from("diensten").update(payload).eq("id", id);
   }
   if (action === "delete") {
     await supabaseAdmin.from("diensten").delete().eq("id", id);
