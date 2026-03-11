@@ -25,7 +25,7 @@ export default function KlantLogin() {
     setIsLoading(false);
 
     if (data.success) {
-      router.push("/klant/uren");
+      router.push("/klant/dashboard");
     } else {
       setError(data.error || "Er ging iets mis");
     }
