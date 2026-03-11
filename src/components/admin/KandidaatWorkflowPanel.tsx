@@ -52,6 +52,11 @@ interface Props {
   onGeneratePortalLink: () => Promise<void>;
 }
 
+type FeedbackState =
+  | { tone: "success"; message: string }
+  | { tone: "error"; message: string }
+  | null;
+
 function formatDate(date: string | null) {
   if (!date) return "-";
   return new Date(date).toLocaleString("nl-NL", {
@@ -81,6 +86,7 @@ export default function KandidaatWorkflowPanel({
   const [taskDueAt, setTaskDueAt] = useState("");
   const [sendingAction, setSendingAction] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<AdminCandidateTemplateKey>("missing_id");
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const loadWorkflow = useCallback(async () => {
     setLoading(true);
@@ -177,6 +183,7 @@ export default function KandidaatWorkflowPanel({
 
   const runQuickAction = async (action: "bevestiging" | "documenten_opvragen" | "inzetbaar") => {
     setSendingAction(action);
+    setFeedback(null);
     try {
       const response = await fetch("/api/admin/inschrijvingen/onboarding", {
         method: "POST",
@@ -193,8 +200,20 @@ export default function KandidaatWorkflowPanel({
       }
       await onRefresh();
       await loadWorkflow();
+      setFeedback({
+        tone: "success",
+        message:
+          action === "documenten_opvragen"
+            ? `Documentenverzoek verstuurd naar ${candidate.email}.`
+            : action === "inzetbaar"
+              ? `Welkomstmail verstuurd naar ${candidate.email}.`
+              : `Intake mail verstuurd naar ${candidate.email}.`,
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Actie mislukt");
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Actie mislukt",
+      });
     } finally {
       setSendingAction(null);
     }
@@ -202,6 +221,7 @@ export default function KandidaatWorkflowPanel({
 
   const sendTemplate = async () => {
     setSendingAction(selectedTemplate);
+    setFeedback(null);
     try {
       const response = await fetch("/api/admin/kandidaat-template-email", {
         method: "POST",
@@ -216,8 +236,15 @@ export default function KandidaatWorkflowPanel({
         throw new Error(result.error || "Template mail mislukt");
       }
       await loadWorkflow();
+      setFeedback({
+        tone: "success",
+        message: `Template mail verstuurd naar ${candidate.email}.`,
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Template mail mislukt");
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Template mail mislukt",
+      });
     } finally {
       setSendingAction(null);
     }
@@ -244,6 +271,17 @@ export default function KandidaatWorkflowPanel({
             </span>
           ) : null}
         </div>
+        {feedback ? (
+          <div
+            className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+              feedback.tone === "success"
+                ? "border-green-200 bg-green-50 text-green-800"
+                : "border-red-200 bg-red-50 text-red-800"
+            }`}
+          >
+            {feedback.message}
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <button onClick={onGeneratePortalLink} className="px-4 py-3 rounded-xl bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800">
             Kopieer portal link
@@ -259,21 +297,21 @@ export default function KandidaatWorkflowPanel({
             disabled={sendingAction !== null}
             className="px-4 py-3 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-60"
           >
-            Documentenverzoek opnieuw
+            {sendingAction === "documenten_opvragen" ? "Versturen..." : "Documentenverzoek opnieuw"}
           </button>
           <button
             onClick={() => void runQuickAction("inzetbaar")}
             disabled={sendingAction !== null}
             className="px-4 py-3 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-60"
           >
-            Welkomstmail opnieuw
+            {sendingAction === "inzetbaar" ? "Versturen..." : "Welkomstmail opnieuw"}
           </button>
           <button
             onClick={() => void runQuickAction("bevestiging")}
             disabled={sendingAction !== null}
             className="px-4 py-3 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
           >
-            Intake mail opnieuw
+            {sendingAction === "bevestiging" ? "Versturen..." : "Intake mail opnieuw"}
           </button>
           <button
             onClick={() => void onUpdateCandidateFields({ laatste_contact_op: new Date().toISOString() })}
@@ -308,7 +346,7 @@ export default function KandidaatWorkflowPanel({
             disabled={sendingAction !== null}
             className="px-4 py-3 rounded-xl bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 disabled:opacity-60"
           >
-            Template versturen
+            {sendingAction === selectedTemplate ? "Versturen..." : "Template versturen"}
           </button>
         </div>
       </div>
