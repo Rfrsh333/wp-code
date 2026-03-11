@@ -58,6 +58,18 @@ export default function MedewerkerLogin() {
             {isLoading ? "Inloggen..." : "Inloggen"}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-neutral-600 text-sm">
+            Nog geen account?{" "}
+            <a
+              href="/inschrijven"
+              className="text-[#F27501] font-semibold hover:text-[#d96800] transition-colors"
+            >
+              Registreer hier!
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
