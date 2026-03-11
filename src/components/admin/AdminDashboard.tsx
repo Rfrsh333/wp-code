@@ -10,8 +10,9 @@ import UrenTab from "./UrenTab";
 import FacturenTab from "./FacturenTab";
 import StatsTab from "./StatsTab";
 import KandidaatWorkflowPanel from "./KandidaatWorkflowPanel";
+import ShiftsTab from "./ShiftsTab";
 
-type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen";
+type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen" | "shifts";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -993,6 +994,15 @@ export default function AdminDashboard() {
         </svg>
       ),
     },
+    {
+      id: "shifts",
+      label: "Horeca Shifts",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -1782,6 +1792,9 @@ export default function AdminDashboard() {
 
             {/* Stats Tab */}
             {activeTab === "stats" && <StatsTab />}
+
+            {/* Shifts Tab */}
+            {activeTab === "shifts" && <ShiftsTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (
