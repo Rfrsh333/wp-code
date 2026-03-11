@@ -146,6 +146,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
 
   const beschikbaar = diensten.filter((d) => !d.aangemeld);
   const mijnDiensten = diensten.filter((d) => d.aangemeld);
+  const openstaandeUren = mijnDiensten.filter((d) => d.aanmelding_status === "geaccepteerd" && !d.uren_status).length;
 
   return (
     <div className="min-h-screen bg-neutral-100">
@@ -177,7 +178,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
               tab === "mijn" ? "bg-[#F27501] text-white" : "bg-white text-neutral-600"
             }`}
           >
-            Mijn diensten ({mijnDiensten.length})
+            Mijn diensten & uren ({mijnDiensten.length})
           </button>
           {aanpassingen.length > 0 && (
             <button
@@ -270,6 +271,16 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
             )}
           </div>
         ) : (
+          <>
+            {tab === "mijn" && openstaandeUren > 0 && (
+              <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                <p className="font-semibold text-orange-700">Uren invullen</p>
+                <p className="mt-1 text-sm text-orange-700/80">
+                  Je hebt {openstaandeUren} geaccepteerde dienst{openstaandeUren === 1 ? "" : "en"} zonder urenregistratie.
+                  Open de juiste dienst en klik op <strong>Uren invullen</strong>.
+                </p>
+              </div>
+            )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {(tab === "beschikbaar" ? beschikbaar : mijnDiensten).map((dienst) => (
               <div key={dienst.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
@@ -329,6 +340,16 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                     </span>
                   </div>
 
+                  {tab === "mijn" && dienst.aanmelding_status === "geaccepteerd" && !dienst.uren_status && (
+                    <div className="mb-4 rounded-xl border border-green-100 bg-green-50 p-3">
+                      <p className="text-sm font-medium text-green-700">
+                        {new Date(dienst.datum) <= new Date()
+                          ? "Deze dienst is klaar om uren voor in te vullen."
+                          : "Na de dienst kun je hier je gewerkte uren invullen."}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     {dienst.uurtarief && (
                       <span className="text-[#F27501] font-bold">€{dienst.uurtarief}/uur</span>
@@ -353,7 +374,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                           Uren invullen
                         </button>
                       ) : dienst.uren_status ? (
-                        <span className={`px-3 py-1.5 rounded-xl text-xs font-medium ${dienst.uren_status === "goedgekeurd" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-medium ${dienst.uren_status === "goedgekeurd" || dienst.uren_status === "gefactureerd" ? "bg-green-100 text-green-700" : dienst.uren_status === "klant_goedgekeurd" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}>
                           Uren {dienst.uren_status}
                         </span>
                       ) : null}
@@ -368,6 +389,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
               </div>
             )}
           </div>
+          </>
         )}
       </main>
 

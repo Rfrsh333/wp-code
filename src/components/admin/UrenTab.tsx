@@ -59,7 +59,12 @@ export default function UrenTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900">Uren Goedkeuren</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-neutral-900">Uren Goedkeuren</h2>
+          <p className="text-sm text-neutral-500 mt-1">
+            Medewerkers vullen uren in bij Mijn diensten. Na klantcontrole keur je ze hier definitief goed voor facturatie.
+          </p>
+        </div>
         <div className="flex gap-2">
           <button onClick={() => setFilter("klant_goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "klant_goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Klaar voor factuur
