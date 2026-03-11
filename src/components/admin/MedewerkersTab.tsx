@@ -13,6 +13,7 @@ interface Medewerker {
   status: "actief" | "inactief";
   notities: string | null;
   created_at: string;
+  heeft_wachtwoord?: boolean;
 }
 
 const functieOptions = [
@@ -38,6 +39,8 @@ export default function MedewerkersTab() {
     notities: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -61,6 +64,8 @@ export default function MedewerkersTab() {
 
   const openNewModal = () => {
     setEditingMedewerker(null);
+    setTemporaryPassword(null);
+    setFeedback(null);
     setFormData({
       naam: "",
       email: "",
@@ -76,6 +81,8 @@ export default function MedewerkersTab() {
 
   const openEditModal = (medewerker: Medewerker) => {
     setEditingMedewerker(medewerker);
+    setTemporaryPassword(null);
+    setFeedback(null);
     setFormData({
       naam: medewerker.naam,
       email: medewerker.email,
@@ -92,6 +99,8 @@ export default function MedewerkersTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setFeedback(null);
+    setTemporaryPassword(null);
 
     const headers = await getAuthHeader();
     const payload = {
@@ -105,7 +114,7 @@ export default function MedewerkersTab() {
       wachtwoord: formData.wachtwoord || undefined,
     };
 
-    await fetch("/api/admin/medewerkers", {
+    const response = await fetch("/api/admin/medewerkers", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -115,8 +124,17 @@ export default function MedewerkersTab() {
       }),
     });
 
+    const result = await response.json();
+
+    if (!response.ok) {
+      setIsSaving(false);
+      setFeedback(result.error || "Opslaan mislukt");
+      return;
+    }
+
     setIsSaving(false);
     setShowModal(false);
+    setFeedback(editingMedewerker ? "Medewerker bijgewerkt." : "Medewerker aangemaakt.");
     fetchMedewerkers();
   };
 
@@ -128,8 +146,36 @@ export default function MedewerkersTab() {
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", id }),
       });
+      setFeedback("Medewerker verwijderd.");
       fetchMedewerkers();
     }
+  };
+
+  const generateTemporaryPassword = async () => {
+    if (!editingMedewerker) return;
+
+    setIsSaving(true);
+    setFeedback(null);
+    setTemporaryPassword(null);
+
+    const headers = await getAuthHeader();
+    const response = await fetch("/api/admin/medewerkers", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reset_password", id: editingMedewerker.id }),
+    });
+    const result = await response.json();
+
+    setIsSaving(false);
+
+    if (!response.ok) {
+      setFeedback(result.error || "Tijdelijk wachtwoord genereren mislukt.");
+      return;
+    }
+
+    setTemporaryPassword(result.temporaryPassword || null);
+    setFeedback("Tijdelijk wachtwoord gegenereerd. Geef dit veilig aan de medewerker door.");
+    await fetchMedewerkers();
   };
 
   const toggleFunctie = (functie: string) => {
@@ -172,6 +218,12 @@ export default function MedewerkersTab() {
         </button>
       </div>
 
+      {feedback && (
+        <div className="mb-4 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700 shadow-sm">
+          {feedback}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -202,6 +254,7 @@ export default function MedewerkersTab() {
               <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Functie(s)</th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Uurtarief</th>
               <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Status</th>
+              <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Login</th>
               <th className="text-right px-6 py-4 text-sm font-semibold text-neutral-600">Acties</th>
             </tr>
           </thead>
@@ -240,6 +293,17 @@ export default function MedewerkersTab() {
                     }`}
                   >
                     {medewerker.status === "actief" ? "Actief" : "Inactief"}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      medewerker.heeft_wachtwoord
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {medewerker.heeft_wachtwoord ? "Wachtwoord ingesteld" : "Nog geen wachtwoord"}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -286,6 +350,41 @@ export default function MedewerkersTab() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {editingMedewerker && (
+                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                      <p className="text-sm font-semibold text-neutral-900">Accounttoegang</p>
+                      <p className="text-sm text-neutral-500">
+                        {editingMedewerker.heeft_wachtwoord
+                          ? "Deze medewerker heeft al een wachtwoord."
+                          : "Deze medewerker heeft nog geen wachtwoord ingesteld."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void generateTemporaryPassword()}
+                      disabled={isSaving}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                    >
+                      {isSaving ? "Bezig..." : editingMedewerker.heeft_wachtwoord ? "Reset tijdelijk wachtwoord" : "Maak tijdelijk wachtwoord"}
+                    </button>
+                  </div>
+
+                  {temporaryPassword && (
+                    <div className="rounded-lg bg-white border border-blue-200 px-3 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-1">
+                        Tijdelijk wachtwoord
+                      </p>
+                      <p className="font-mono text-sm text-neutral-900 break-all">{temporaryPassword}</p>
+                      <p className="mt-2 text-xs text-neutral-500">
+                        Dit wachtwoord wordt alleen nu getoond. Sla het veilig op of deel het direct met de medewerker.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Naam *
