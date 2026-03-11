@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/Toast";
 import type {
   CalculatorInputs,
   Resultaten,
@@ -139,6 +140,7 @@ export default function KostenCalculatorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pdfToken, setPdfToken] = useState<string | null>(null);
   const [isPdfDownloading, setIsPdfDownloading] = useState(false);
+  const toast = useToast();
 
   const [inputs, setInputs] = useState<CalculatorInputs>({
     functie: "bediening",
@@ -234,10 +236,10 @@ export default function KostenCalculatorPage() {
         });
         setShowLeadModal(false);
       } else {
-        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
+        toast.error(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
-      alert("Er is iets misgegaan. Probeer het opnieuw.");
+      toast.error("Er is iets misgegaan. Probeer het opnieuw.");
     } finally {
       setIsSubmitting(false);
     }
@@ -265,10 +267,10 @@ export default function KostenCalculatorPage() {
 
         trackEvent("calculator_pdf_download");
       } else {
-        alert("PDF kon niet worden gedownload. Probeer het opnieuw.");
+        toast.error("PDF kon niet worden gedownload. Probeer het opnieuw.");
       }
     } catch {
-      alert("Er is iets misgegaan bij het downloaden.");
+      toast.error("Er is iets misgegaan bij het downloaden.");
     } finally {
       setIsPdfDownloading(false);
     }

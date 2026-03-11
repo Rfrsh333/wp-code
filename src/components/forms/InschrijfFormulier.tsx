@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useToast } from "@/components/ui/Toast";
 
 declare global {
   interface Window {
@@ -69,41 +70,7 @@ const initialFormData: FormData = {
   talen: [],
 };
 
-function FormCard({
-  children,
-  title,
-  subtitle,
-  icon,
-  index,
-}: {
-  children: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  icon: React.ReactNode;
-  index: number;
-}) {
-  return (
-    <div
-      className="bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 overflow-hidden animate-fade-in"
-      style={{ animationDelay: `${index * 0.1}s` }}
-    >
-      <div className="px-6 py-5 border-b border-neutral-100 bg-gradient-to-r from-neutral-50 to-white">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#F27501]/10 flex items-center justify-center text-[#F27501]">
-            {icon}
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
-            {subtitle ? (
-              <p className="text-sm text-neutral-500 mt-0.5">{subtitle}</p>
-            ) : null}
-          </div>
-        </div>
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  );
-}
+const AUTOSAVE_KEY = "toptalent_inschrijf_draft";
 
 function FormInput({
   label,
@@ -315,18 +282,77 @@ function ToggleGroup({
   );
 }
 
+const stepTitles = [
+  "Persoonlijke gegevens",
+  "Werkprofiel",
+  "Beschikbaarheid",
+  "Extra context",
+];
+
+const stepDescriptions = [
+  "De basis om contact met je op te nemen",
+  "Hiermee kunnen we snel beoordelen of er een match is",
+  "Zodat we direct weten wanneer je inzetbaar kunt zijn",
+  "Dit helpt bij de eerste selectie",
+];
+
 export default function InschrijfFormulier() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [draftRestored, setDraftRestored] = useState(false);
   const { executeRecaptcha } = useRecaptcha();
   const router = useRouter();
+  const toast = useToast();
+  const totalSteps = 4;
 
+  // Restore draft from localStorage
   useEffect(() => {
     setMounted(true);
+    try {
+      const saved = localStorage.getItem(AUTOSAVE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.formData) {
+          setFormData(parsed.formData);
+          setCurrentStep(parsed.step || 0);
+          setDraftRestored(true);
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
   }, []);
+
+  // Autosave to localStorage
+  const saveDraft = useCallback(() => {
+    try {
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
+        formData,
+        step: currentStep,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch {
+      // ignore storage errors
+    }
+  }, [formData, currentStep]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const timer = setTimeout(saveDraft, 1000);
+    return () => clearTimeout(timer);
+  }, [formData, currentStep, mounted, saveDraft]);
+
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(AUTOSAVE_KEY);
+    } catch {
+      // ignore
+    }
+  };
 
   const updateField = (field: keyof FormData, value: string | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -342,43 +368,61 @@ export default function InschrijfFormulier() {
     );
   };
 
-  const validateForm = (): boolean => {
+  const validateStep = (step: number): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
-    if (!formData.voornaam.trim()) newErrors.voornaam = "Voornaam is verplicht";
-    if (!formData.achternaam.trim()) newErrors.achternaam = "Achternaam is verplicht";
-    if (!formData.email.trim()) {
-      newErrors.email = "E-mail is verplicht";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Voer een geldig e-mailadres in";
-    }
-    if (!formData.telefoon.trim()) newErrors.telefoon = "Telefoonnummer is verplicht";
-    if (!formData.stad.trim()) newErrors.stad = "Woonplaats is verplicht";
-    if (!formData.geboortedatum) newErrors.geboortedatum = "Geboortedatum is verplicht";
-    if (!formData.geslacht) newErrors.geslacht = "Selecteer een optie";
-    if (!formData.horecaErvaring) newErrors.horecaErvaring = "Selecteer je ervaringsniveau";
-    if (formData.functies.length === 0) newErrors.functies = "Kies minimaal 1 functie";
-    if (formData.talen.length === 0) newErrors.talen = "Kies minimaal 1 taal";
-    if (!formData.beschikbaarheid) newErrors.beschikbaarheid = "Selecteer je beschikbaarheid";
-    if (!formData.beschikbaarVanaf) newErrors.beschikbaarVanaf = "Kies wanneer je kunt starten";
-    if (!formData.hoeGekomen.trim()) newErrors.hoeGekomen = "Dit veld is verplicht";
-    if (!formData.uitbetalingswijze) newErrors.uitbetalingswijze = "Selecteer een optie";
-    if (!formData.motivatie.trim()) newErrors.motivatie = "Vertel kort iets over jezelf";
-    if (!formData.toestemming) {
-      newErrors.toestemming = "Je moet toestemming geven om door te gaan";
-    }
-    if (formData.uitbetalingswijze === "zzp" && !formData.kvkNummer.trim()) {
-      newErrors.kvkNummer = "KVK nummer is verplicht voor ZZP";
+    switch (step) {
+      case 0: // Persoonlijke gegevens + toestemming
+        if (!formData.toestemming) newErrors.toestemming = "Je moet toestemming geven om door te gaan";
+        if (!formData.voornaam.trim()) newErrors.voornaam = "Voornaam is verplicht";
+        if (!formData.achternaam.trim()) newErrors.achternaam = "Achternaam is verplicht";
+        if (!formData.email.trim()) {
+          newErrors.email = "E-mail is verplicht";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          newErrors.email = "Voer een geldig e-mailadres in";
+        }
+        if (!formData.telefoon.trim()) newErrors.telefoon = "Telefoonnummer is verplicht";
+        if (!formData.stad.trim()) newErrors.stad = "Woonplaats is verplicht";
+        if (!formData.geboortedatum) newErrors.geboortedatum = "Geboortedatum is verplicht";
+        break;
+      case 1: // Werkprofiel
+        if (!formData.geslacht) newErrors.geslacht = "Selecteer een optie";
+        if (!formData.horecaErvaring) newErrors.horecaErvaring = "Selecteer je ervaringsniveau";
+        if (formData.functies.length === 0) newErrors.functies = "Kies minimaal 1 functie";
+        if (formData.talen.length === 0) newErrors.talen = "Kies minimaal 1 taal";
+        break;
+      case 2: // Beschikbaarheid
+        if (!formData.beschikbaarheid) newErrors.beschikbaarheid = "Selecteer je beschikbaarheid";
+        if (!formData.beschikbaarVanaf) newErrors.beschikbaarVanaf = "Kies wanneer je kunt starten";
+        if (!formData.uitbetalingswijze) newErrors.uitbetalingswijze = "Selecteer een optie";
+        if (formData.uitbetalingswijze === "zzp" && !formData.kvkNummer.trim()) {
+          newErrors.kvkNummer = "KVK nummer is verplicht voor ZZP";
+        }
+        break;
+      case 3: // Extra context
+        if (!formData.hoeGekomen.trim()) newErrors.hoeGekomen = "Dit veld is verplicht";
+        // Motivatie is now OPTIONAL
+        break;
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
-    if (!validateForm()) return;
+  const prevStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep(currentStep)) return;
 
     setIsSubmitting(true);
 
@@ -405,7 +449,7 @@ export default function InschrijfFormulier() {
 
       if (!response.ok) {
         const data = await response.json();
-        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
+        toast.error(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
         return;
       }
 
@@ -414,10 +458,12 @@ export default function InschrijfFormulier() {
         event: "lead_submit",
         form: "inschrijven",
       });
+
+      clearDraft();
       setIsSubmitted(true);
       router.push("/bedankt/kandidaat");
     } catch {
-      alert("Er is iets misgegaan. Probeer het opnieuw.");
+      toast.error("Er is iets misgegaan. Probeer het opnieuw.");
     } finally {
       setIsSubmitting(false);
     }
@@ -442,6 +488,7 @@ export default function InschrijfFormulier() {
         <button
           onClick={() => {
             setFormData(initialFormData);
+            setCurrentStep(0);
             setIsSubmitted(false);
           }}
           className="inline-flex items-center gap-2 bg-neutral-100 text-neutral-700 px-6 py-3 rounded-xl font-medium hover:bg-neutral-200 transition-colors duration-200"
@@ -453,7 +500,7 @@ export default function InschrijfFormulier() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto">
       <div className="text-center mb-10 animate-fade-in">
         <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
           Inschrijven bij TopTalent
@@ -463,245 +510,305 @@ export default function InschrijfFormulier() {
         </p>
       </div>
 
-      <div
-        className={`animate-fade-in bg-gradient-to-r from-neutral-50 to-white rounded-2xl p-5 border-2 transition-colors duration-200 ${
-          errors.toestemming ? "border-red-200" : formData.toestemming ? "border-green-200" : "border-neutral-100"
-        }`}
-      >
-        <label className="flex items-start gap-4 cursor-pointer">
-          <div className="relative flex-shrink-0 mt-0.5">
-            <input
-              type="checkbox"
-              checked={formData.toestemming}
-              onChange={(e) => updateField("toestemming", e.target.checked)}
-              className="sr-only"
-            />
+      {/* Progress Bar */}
+      <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 px-6 py-5 mb-6">
+        <div className="flex items-center justify-between">
+          {stepTitles.map((title, index) => (
+            <div key={index} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
+                    index <= currentStep
+                      ? "bg-[#F27501] text-white"
+                      : "bg-neutral-200 text-neutral-500"
+                  }`}
+                >
+                  {index < currentStep ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <span className="hidden md:block text-xs mt-2 text-neutral-500 font-medium max-w-[80px] text-center">
+                  {title}
+                </span>
+              </div>
+              {index < 3 && (
+                <div
+                  className={`w-12 md:w-20 h-1 mx-2 rounded transition-colors duration-300 ${
+                    index < currentStep ? "bg-[#F27501]" : "bg-neutral-200"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Draft restored indicator */}
+        {draftRestored && currentStep > 0 && (
+          <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-500">
+            <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Concept hersteld
+          </div>
+        )}
+      </div>
+
+      {/* Step header */}
+      <div className="mb-6">
+        <h3 className="text-xl font-bold text-neutral-900">{stepTitles[currentStep]}</h3>
+        <p className="text-sm text-neutral-500 mt-1">{stepDescriptions[currentStep]}</p>
+      </div>
+
+      {/* Step Content */}
+      <div className="bg-white rounded-2xl shadow-sm shadow-neutral-900/5 border border-neutral-100 p-6 animate-fade-in">
+        {/* Step 1: Persoonlijke gegevens */}
+        {currentStep === 0 && (
+          <div className="space-y-6">
+            {/* Toestemming checkbox */}
             <div
-              className={`w-6 h-6 rounded-md border-2 transition-colors ${
-                formData.toestemming ? "bg-[#F27501] border-[#F27501]" : "bg-white border-neutral-300"
+              className={`bg-gradient-to-r from-neutral-50 to-white rounded-2xl p-5 border-2 transition-colors duration-200 ${
+                errors.toestemming ? "border-red-200" : formData.toestemming ? "border-green-200" : "border-neutral-100"
               }`}
             >
-              {formData.toestemming ? (
-                <svg className="w-4 h-4 text-white m-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : null}
+              <label className="flex items-start gap-4 cursor-pointer">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={formData.toestemming}
+                    onChange={(e) => updateField("toestemming", e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-6 h-6 rounded-md border-2 transition-colors ${
+                      formData.toestemming ? "bg-[#F27501] border-[#F27501]" : "bg-white border-neutral-300"
+                    }`}
+                  >
+                    {formData.toestemming ? (
+                      <svg className="w-4 h-4 text-white m-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : null}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-neutral-700 font-medium">
+                    Ik geef toestemming voor het verwerken van mijn gegevens voor werving en selectie.
+                  </span>
+                  <p className="text-sm text-neutral-500 mt-1">
+                    Documenten zoals ID, cv of KvK vragen we later apart op wanneer je onboarding start.
+                  </p>
+                  {errors.toestemming ? (
+                    <p className="text-red-500 text-sm mt-2">{errors.toestemming}</p>
+                  ) : null}
+                </div>
+              </label>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-5">
+              <FormInput label="Voornaam" value={formData.voornaam} onChange={(e) => updateField("voornaam", e.target.value)} error={errors.voornaam} required />
+              <FormInput label="Tussenvoegsel" value={formData.tussenvoegsel} onChange={(e) => updateField("tussenvoegsel", e.target.value)} />
+              <FormInput label="Achternaam" value={formData.achternaam} onChange={(e) => updateField("achternaam", e.target.value)} error={errors.achternaam} required />
+              <FormInput label="E-mail" type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)} error={errors.email} required />
+              <FormInput label="Telefoon" type="tel" value={formData.telefoon} onChange={(e) => updateField("telefoon", e.target.value)} error={errors.telefoon} required />
+              <FormInput label="Woonplaats" value={formData.stad} onChange={(e) => updateField("stad", e.target.value)} error={errors.stad} required />
+              <FormInput label="Geboortedatum" type="date" value={formData.geboortedatum} onChange={(e) => updateField("geboortedatum", e.target.value)} error={errors.geboortedatum} required />
             </div>
           </div>
-          <div>
-            <span className="text-neutral-700 font-medium">
-              Ik geef toestemming voor het verwerken van mijn gegevens voor werving en selectie.
-            </span>
-            <p className="text-sm text-neutral-500 mt-1">
-              Documenten zoals ID, cv of KvK vragen we later apart op wanneer je onboarding start.
-            </p>
-            {errors.toestemming ? (
-              <p className="text-red-500 text-sm mt-2">{errors.toestemming}</p>
+        )}
+
+        {/* Step 2: Werkprofiel */}
+        {currentStep === 1 && (
+          <div className="space-y-5">
+            <FormSelect
+              label="Geslacht"
+              value={formData.geslacht}
+              onChange={(e) => updateField("geslacht", e.target.value)}
+              error={errors.geslacht}
+              required
+              options={[
+                { value: "man", label: "Man" },
+                { value: "vrouw", label: "Vrouw" },
+                { value: "anders", label: "Anders / wil ik niet zeggen" },
+              ]}
+            />
+            <FormSelect
+              label="Horeca-ervaring"
+              value={formData.horecaErvaring}
+              onChange={(e) => updateField("horecaErvaring", e.target.value)}
+              error={errors.horecaErvaring}
+              required
+              options={[
+                { value: "geen", label: "Geen of weinig ervaring" },
+                { value: "basis", label: "Basiservaring" },
+                { value: "ervaren", label: "Ervaren" },
+                { value: "senior", label: "Senior / zelfstandig inzetbaar" },
+              ]}
+            />
+            <ToggleGroup
+              label="Welke functies kun je doen?"
+              options={functieOpties}
+              values={formData.functies}
+              onToggle={(value) => toggleArrayValue("functies", value)}
+              error={errors.functies}
+              required
+            />
+            <ToggleGroup
+              label="Welke talen spreek je?"
+              options={taalOpties}
+              values={formData.talen}
+              onToggle={(value) => toggleArrayValue("talen", value)}
+              error={errors.talen}
+              required
+            />
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.eigenVervoer}
+                  onChange={(e) => updateField("eigenVervoer", e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-neutral-300 text-[#F27501] focus:ring-[#F27501]"
+                />
+                <div>
+                  <p className="font-medium text-neutral-800">Ik heb eigen vervoer</p>
+                  <p className="text-sm text-neutral-500">Handig voor vroege diensten, evenementen en locaties buiten het centrum.</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Beschikbaarheid */}
+        {currentStep === 2 && (
+          <div className="grid md:grid-cols-2 gap-5">
+            <FormSelect
+              label="Beschikbaarheid"
+              value={formData.beschikbaarheid}
+              onChange={(e) => updateField("beschikbaarheid", e.target.value)}
+              error={errors.beschikbaarheid}
+              required
+              options={[
+                { value: "flexibel", label: "Flexibel inzetbaar" },
+                { value: "weekenden", label: "Vooral weekenden" },
+                { value: "avonden", label: "Vooral avonden" },
+                { value: "parttime", label: "Parttime vaste dagen" },
+                { value: "oproep", label: "Oproep / wisselend" },
+              ]}
+            />
+            <FormInput
+              label="Beschikbaar vanaf"
+              type="date"
+              value={formData.beschikbaarVanaf}
+              onChange={(e) => updateField("beschikbaarVanaf", e.target.value)}
+              error={errors.beschikbaarVanaf}
+              required
+            />
+            <FormInput
+              label="Max uren per week"
+              type="number"
+              value={formData.maxUrenPerWeek}
+              onChange={(e) => updateField("maxUrenPerWeek", e.target.value)}
+              placeholder="Bijvoorbeeld 24"
+              error={errors.maxUrenPerWeek}
+            />
+            <FormSelect
+              label="Voorkeur uitbetaling"
+              value={formData.uitbetalingswijze}
+              onChange={(e) => updateField("uitbetalingswijze", e.target.value)}
+              error={errors.uitbetalingswijze}
+              required
+              options={[
+                { value: "loondienst", label: "Loondienst" },
+                { value: "zzp", label: "ZZP" },
+              ]}
+            />
+            {formData.uitbetalingswijze === "zzp" ? (
+              <div className="md:col-span-2">
+                <FormInput
+                  label="KVK nummer"
+                  value={formData.kvkNummer}
+                  onChange={(e) => updateField("kvkNummer", e.target.value)}
+                  placeholder="Alleen invullen als je als ZZP werkt"
+                  error={errors.kvkNummer}
+                  required
+                />
+              </div>
             ) : null}
           </div>
-        </label>
-      </div>
+        )}
 
-      <FormCard
-        title="Persoonlijke gegevens"
-        subtitle="De basis om contact met je op te nemen"
-        index={0}
-        icon={
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A11.955 11.955 0 0112 15c2.243 0 4.343.616 6.121 1.69M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        }
-      >
-        <div className="grid md:grid-cols-2 gap-5">
-          <FormInput label="Voornaam" value={formData.voornaam} onChange={(e) => updateField("voornaam", e.target.value)} error={errors.voornaam} required />
-          <FormInput label="Tussenvoegsel" value={formData.tussenvoegsel} onChange={(e) => updateField("tussenvoegsel", e.target.value)} />
-          <FormInput label="Achternaam" value={formData.achternaam} onChange={(e) => updateField("achternaam", e.target.value)} error={errors.achternaam} required />
-          <FormInput label="E-mail" type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)} error={errors.email} required />
-          <FormInput label="Telefoon" type="tel" value={formData.telefoon} onChange={(e) => updateField("telefoon", e.target.value)} error={errors.telefoon} required />
-          <FormInput label="Woonplaats" value={formData.stad} onChange={(e) => updateField("stad", e.target.value)} error={errors.stad} required />
-          <FormInput label="Geboortedatum" type="date" value={formData.geboortedatum} onChange={(e) => updateField("geboortedatum", e.target.value)} error={errors.geboortedatum} required />
-          <FormSelect
-            label="Geslacht"
-            value={formData.geslacht}
-            onChange={(e) => updateField("geslacht", e.target.value)}
-            error={errors.geslacht}
-            required
-            options={[
-              { value: "man", label: "Man" },
-              { value: "vrouw", label: "Vrouw" },
-              { value: "anders", label: "Anders / wil ik niet zeggen" },
-            ]}
-          />
-        </div>
-      </FormCard>
-
-      <FormCard
-        title="Werkprofiel"
-        subtitle="Hiermee kunnen we snel beoordelen of er een match is"
-        index={1}
-        icon={
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
-          </svg>
-        }
-      >
-        <div className="space-y-5">
-          <FormSelect
-            label="Horeca-ervaring"
-            value={formData.horecaErvaring}
-            onChange={(e) => updateField("horecaErvaring", e.target.value)}
-            error={errors.horecaErvaring}
-            required
-            options={[
-              { value: "geen", label: "Geen of weinig ervaring" },
-              { value: "basis", label: "Basiservaring" },
-              { value: "ervaren", label: "Ervaren" },
-              { value: "senior", label: "Senior / zelfstandig inzetbaar" },
-            ]}
-          />
-
-          <ToggleGroup
-            label="Welke functies kun je doen?"
-            options={functieOpties}
-            values={formData.functies}
-            onToggle={(value) => toggleArrayValue("functies", value)}
-            error={errors.functies}
-            required
-          />
-
-          <ToggleGroup
-            label="Welke talen spreek je?"
-            options={taalOpties}
-            values={formData.talen}
-            onToggle={(value) => toggleArrayValue("talen", value)}
-            error={errors.talen}
-            required
-          />
-
-          <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.eigenVervoer}
-                onChange={(e) => updateField("eigenVervoer", e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-neutral-300 text-[#F27501] focus:ring-[#F27501]"
-              />
-              <div>
-                <p className="font-medium text-neutral-800">Ik heb eigen vervoer</p>
-                <p className="text-sm text-neutral-500">Handig voor vroege diensten, evenementen en locaties buiten het centrum.</p>
-              </div>
-            </label>
+        {/* Step 4: Extra context */}
+        {currentStep === 3 && (
+          <div className="space-y-5">
+            <FormTextarea
+              label="Vertel kort iets over jezelf (optioneel)"
+              value={formData.motivatie}
+              onChange={(e) => updateField("motivatie", e.target.value)}
+              placeholder="Bijvoorbeeld waar je ervaring ligt, waar je energie van krijgt en wat voor soort diensten je zoekt."
+              error={errors.motivatie}
+              rows={5}
+            />
+            <FormInput
+              label="Hoe ben je bij TopTalent terechtgekomen?"
+              value={formData.hoeGekomen}
+              onChange={(e) => updateField("hoeGekomen", e.target.value)}
+              placeholder="Google, Instagram, via-via, event, etc."
+              error={errors.hoeGekomen}
+              required
+            />
           </div>
-        </div>
-      </FormCard>
-
-      <FormCard
-        title="Beschikbaarheid"
-        subtitle="Zodat we direct weten wanneer je inzetbaar kunt zijn"
-        index={2}
-        icon={
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
-          </svg>
-        }
-      >
-        <div className="grid md:grid-cols-2 gap-5">
-          <FormSelect
-            label="Beschikbaarheid"
-            value={formData.beschikbaarheid}
-            onChange={(e) => updateField("beschikbaarheid", e.target.value)}
-            error={errors.beschikbaarheid}
-            required
-            options={[
-              { value: "flexibel", label: "Flexibel inzetbaar" },
-              { value: "weekenden", label: "Vooral weekenden" },
-              { value: "avonden", label: "Vooral avonden" },
-              { value: "parttime", label: "Parttime vaste dagen" },
-              { value: "oproep", label: "Oproep / wisselend" },
-            ]}
-          />
-          <FormInput
-            label="Beschikbaar vanaf"
-            type="date"
-            value={formData.beschikbaarVanaf}
-            onChange={(e) => updateField("beschikbaarVanaf", e.target.value)}
-            error={errors.beschikbaarVanaf}
-            required
-          />
-          <FormInput
-            label="Max uren per week"
-            type="number"
-            value={formData.maxUrenPerWeek}
-            onChange={(e) => updateField("maxUrenPerWeek", e.target.value)}
-            placeholder="Bijvoorbeeld 24"
-            error={errors.maxUrenPerWeek}
-          />
-          <FormSelect
-            label="Voorkeur"
-            value={formData.uitbetalingswijze}
-            onChange={(e) => updateField("uitbetalingswijze", e.target.value)}
-            error={errors.uitbetalingswijze}
-            required
-            options={[
-              { value: "loondienst", label: "Loondienst" },
-              { value: "zzp", label: "ZZP" },
-            ]}
-          />
-          {formData.uitbetalingswijze === "zzp" ? (
-            <div className="md:col-span-2">
-              <FormInput
-                label="KVK nummer"
-                value={formData.kvkNummer}
-                onChange={(e) => updateField("kvkNummer", e.target.value)}
-                placeholder="Alleen invullen als je als ZZP werkt"
-                error={errors.kvkNummer}
-                required
-              />
-            </div>
-          ) : null}
-        </div>
-      </FormCard>
-
-      <FormCard
-        title="Extra context"
-        subtitle="Dit helpt bij de eerste selectie"
-        index={3}
-        icon={
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h8m-8 4h6m8 2H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" />
-          </svg>
-        }
-      >
-        <div className="space-y-5">
-          <FormTextarea
-            label="Vertel kort iets over jezelf"
-            value={formData.motivatie}
-            onChange={(e) => updateField("motivatie", e.target.value)}
-            placeholder="Bijvoorbeeld waar je ervaring ligt, waar je energie van krijgt en wat voor soort diensten je zoekt."
-            error={errors.motivatie}
-            required
-            rows={5}
-          />
-          <FormInput
-            label="Hoe ben je bij TopTalent terechtgekomen?"
-            value={formData.hoeGekomen}
-            onChange={(e) => updateField("hoeGekomen", e.target.value)}
-            placeholder="Google, Instagram, via-via, event, etc."
-            error={errors.hoeGekomen}
-            required
-          />
-        </div>
-      </FormCard>
-
-      <div className="pt-4">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-[#F27501] text-white px-6 py-4 rounded-xl font-semibold hover:bg-[#d96800] disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200"
-        >
-          {isSubmitting ? "Bezig met versturen..." : "Inschrijving versturen"}
-        </button>
+        )}
       </div>
-    </form>
+
+      {/* Navigation Buttons */}
+      <div className="flex items-center justify-between mt-6">
+        {currentStep > 0 ? (
+          <button
+            type="button"
+            onClick={prevStep}
+            className="inline-flex items-center gap-2 text-neutral-600 font-medium hover:text-neutral-900 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Vorige
+          </button>
+        ) : (
+          <div />
+        )}
+
+        {currentStep < totalSteps - 1 ? (
+          <button
+            type="button"
+            onClick={nextStep}
+            className="inline-flex items-center gap-2 bg-[#F27501] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors"
+          >
+            Volgende
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 bg-[#F27501] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#d96800] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {isSubmitting ? "Bezig met versturen..." : "Inschrijving versturen"}
+          </button>
+        )}
+      </div>
+
+      {/* Autosave indicator */}
+      <div className="text-center mt-4">
+        <p className="text-xs text-neutral-400">
+          Je voortgang wordt automatisch opgeslagen
+        </p>
+      </div>
+    </div>
   );
 }

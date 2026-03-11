@@ -108,7 +108,7 @@ export default function MedewerkerShiftsClient({ medewerker }: { medewerker: Med
   };
 
   const handleWithdraw = async (applicationId: string) => {
-    if (!confirm("Weet je zeker dat je je sollicitatie wilt intrekken?")) return;
+    if (!window.confirm("Weet u zeker dat u uw sollicitatie wilt intrekken?")) return;
 
     try {
       const res = await fetch("/api/medewerker/shifts", {

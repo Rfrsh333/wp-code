@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface Company {
   id: string;
@@ -68,6 +69,7 @@ export default function ShiftsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const toast = useToast();
   const [newShift, setNewShift] = useState({
     company_id: "",
     title: "",
@@ -172,7 +174,7 @@ export default function ShiftsTab() {
         setSelectedShiftId(null);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Verwijderen mislukt");
+      toast.error(err instanceof Error ? err.message : "Verwijderen mislukt");
     }
   };
 
@@ -187,14 +189,14 @@ export default function ShiftsTab() {
 
       await loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Status update mislukt");
+      toast.error(err instanceof Error ? err.message : "Status update mislukt");
     }
   };
 
   const handleCreateShift = async () => {
     try {
       if (!newShift.company_id || !newShift.title || !newShift.start_at) {
-        alert("Bedrijf, titel en starttijd zijn verplicht");
+        toast.warning("Bedrijf, titel en starttijd zijn verplicht");
         return;
       }
 
@@ -225,7 +227,7 @@ export default function ShiftsTab() {
       });
       await loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Shift aanmaken mislukt");
+      toast.error(err instanceof Error ? err.message : "Shift aanmaken mislukt");
     }
   };
 

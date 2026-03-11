@@ -71,6 +71,60 @@ export default function Home() {
       {/* Hero Section */}
       <Hero />
 
+      {/* Split Navigation - Choice Cards */}
+      <Section variant="white" spacing="large">
+        <Container>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <FadeIn delay={0}>
+              <Link href="/personeel-aanvragen" className="block group">
+                <div className="bg-white rounded-2xl p-8 border-2 border-neutral-100 hover:border-[#F27501]/30 hover:shadow-xl transition-all duration-300 h-full">
+                  <div className="w-14 h-14 bg-[#F27501]/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-[#F27501]/20 transition-colors">
+                    <svg className="w-7 h-7 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F27501] transition-colors">
+                    Ik zoek personeel
+                  </h3>
+                  <p className="text-neutral-600 text-sm leading-relaxed mb-4">
+                    Direct ervaren horecapersoneel aanvragen. Binnen 24 uur een match, zonder verplichtingen.
+                  </p>
+                  <span className="inline-flex items-center gap-2 text-[#F27501] font-semibold text-sm group-hover:gap-3 transition-all">
+                    Personeel aanvragen
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </span>
+                </div>
+              </Link>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <Link href="/inschrijven" className="block group">
+                <div className="bg-white rounded-2xl p-8 border-2 border-neutral-100 hover:border-[#F27501]/30 hover:shadow-xl transition-all duration-300 h-full">
+                  <div className="w-14 h-14 bg-[#F27501]/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-[#F27501]/20 transition-colors">
+                    <svg className="w-7 h-7 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F27501] transition-colors">
+                    Ik zoek werk
+                  </h3>
+                  <p className="text-neutral-600 text-sm leading-relaxed mb-4">
+                    Schrijf je in als horecamedewerker. Flexibele shifts, eerlijk loon, en werk dat bij jou past.
+                  </p>
+                  <span className="inline-flex items-center gap-2 text-[#F27501] font-semibold text-sm group-hover:gap-3 transition-all">
+                    Nu inschrijven
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </span>
+                </div>
+              </Link>
+            </FadeIn>
+          </div>
+        </Container>
+      </Section>
+
       {/* Service Banner - Premium Marquee */}
       <MarqueeBanner />
 

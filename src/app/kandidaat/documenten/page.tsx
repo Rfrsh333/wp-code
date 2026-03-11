@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useToast } from "@/components/ui/Toast";
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ function DocumentenUploadContent() {
   const [uploading, setUploading] = useState(false);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     const tokenParam = searchParams.get("token");
@@ -62,11 +64,11 @@ function DocumentenUploadContent() {
 
     for (const file of fileArray) {
       if (!allowedTypes.includes(file.type)) {
-        alert(`${file.name}: Alleen PDF, JPG of PNG bestanden toegestaan`);
+        toast.warning(`${file.name}: Alleen PDF, JPG of PNG bestanden toegestaan`);
         return;
       }
       if (file.size > maxSize) {
-        alert(`${file.name}: Bestand te groot (max 10MB)`);
+        toast.warning(`${file.name}: Bestand te groot (max 10MB)`);
         return;
       }
     }
@@ -109,9 +111,9 @@ function DocumentenUploadContent() {
         }]);
       }
 
-      alert(`✅ ${fileArray.length} bestand(en) succesvol geüpload!`);
+      toast.success(`${fileArray.length} bestand(en) succesvol geüpload!`);
     } catch (err) {
-      alert(`❌ Upload fout: ${err instanceof Error ? err.message : 'Onbekende fout'}`);
+      toast.error(`Upload fout: ${err instanceof Error ? err.message : 'Onbekende fout'}`);
     } finally {
       setUploading(false);
     }

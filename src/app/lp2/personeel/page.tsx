@@ -7,6 +7,7 @@ import Section from "@/components/Section";
 import PersoneelLandingBase from "@/components/lp/PersoneelLandingBase";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import MiniTestimonialCarousel from "@/components/MiniTestimonialCarousel";
+import { useToast } from "@/components/ui/Toast";
 
 interface LeadFormData {
   naam: string;
@@ -145,6 +146,7 @@ function PersoneelLandingVariantAContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useRecaptcha();
+  const toast = useToast();
 
   // Capture URL parameters for lead tracking
   useEffect(() => {
@@ -240,10 +242,10 @@ function PersoneelLandingVariantAContent() {
         router.push("/bedankt/zakelijk");
       } else {
         const data = await response.json();
-        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
+        toast.error(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
-      alert("Er is iets misgegaan. Probeer het opnieuw.");
+      toast.error("Er is iets misgegaan. Probeer het opnieuw.");
     } finally {
       setIsSubmitting(false);
     }

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useToast } from "@/components/ui/Toast";
 
 interface FAQItem {
   question: string;
@@ -119,6 +120,7 @@ function ContactPageContent() {
   const router = useRouter();
   const { executeRecaptcha } = useRecaptcha();
   const searchParams = useSearchParams();
+  const toast = useToast();
 
   // Read URL parameters for lead source tracking
   useEffect(() => {
@@ -179,10 +181,10 @@ function ContactPageContent() {
         router.push("/bedankt/contact");
       } else {
         const data = await response.json();
-        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
+        toast.error(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
-      alert("Er is iets misgegaan. Probeer het opnieuw.");
+      toast.error("Er is iets misgegaan. Probeer het opnieuw.");
     } finally {
       setIsSubmitting(false);
     }

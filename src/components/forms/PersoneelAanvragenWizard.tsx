@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { basisTarieven } from "@/lib/calculator/tarieven";
+import { useToast } from "@/components/ui/Toast";
 
 type ContractType = "zzp" | "loondienst" | "uitzendkracht";
 
@@ -124,6 +125,7 @@ export default function PersoneelAanvragenWizard() {
   const { executeRecaptcha } = useRecaptcha();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
 
   const totalSteps = 4;
 
@@ -232,10 +234,10 @@ export default function PersoneelAanvragenWizard() {
         router.push("/bedankt/zakelijk");
       } else {
         const data = await response.json();
-        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
+        toast.error(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
-      alert("Er is iets misgegaan. Probeer het opnieuw.");
+      toast.error("Er is iets misgegaan. Probeer het opnieuw.");
     } finally {
       setIsSubmitting(false);
     }

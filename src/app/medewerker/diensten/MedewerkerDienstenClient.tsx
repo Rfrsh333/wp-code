@@ -217,7 +217,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
           </div>
         ) : tab === "beschikbaarheid" ? (
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold mb-4">Stel je beschikbaarheid in</h2>
+            <h2 className="text-xl font-bold mb-4">Stel uw beschikbaarheid in</h2>
             <BeschikbaarheidForm
               onSave={async (data) => {
                 await fetch("/api/medewerker/beschikbaarheid", {
@@ -225,7 +225,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ email: medewerker.email, ...data }),
                 });
-                alert("Beschikbaarheid opgeslagen!");
+                // Success feedback handled by BeschikbaarheidForm
               }}
             />
           </div>
@@ -245,7 +245,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="bg-neutral-50 rounded-xl p-3">
-                    <p className="text-xs text-neutral-500 mb-1">Jouw uren (origineel)</p>
+                    <p className="text-xs text-neutral-500 mb-1">Uw uren (origineel)</p>
                     <p className="font-medium">{a.start_tijd?.slice(0,5)} - {a.eind_tijd?.slice(0,5)}</p>
                     <p className="text-sm text-neutral-600">{a.pauze_minuten}m pauze = {a.gewerkte_uren} uur</p>
                     {a.reiskosten_km > 0 && (

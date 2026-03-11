@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminCandidateEmailTemplates, type AdminCandidateTemplateKey } from "@/content/adminCandidateEmailTemplates";
+import { useToast } from "@/components/ui/Toast";
 
 type ContactType = "telefoon" | "whatsapp" | "email" | "gesprek" | "notitie";
 
@@ -87,6 +88,7 @@ export default function KandidaatWorkflowPanel({
   const [sendingAction, setSendingAction] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<AdminCandidateTemplateKey>("missing_id");
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const toast = useToast();
 
   const loadWorkflow = useCallback(async () => {
     setLoading(true);
@@ -103,7 +105,7 @@ export default function KandidaatWorkflowPanel({
       setEmails(result.emails || []);
     } catch (error) {
       console.error("Workflow load error:", error);
-      alert(error instanceof Error ? error.message : "Workflow laden mislukt");
+      toast.error(error instanceof Error ? error.message : "Workflow laden mislukt");
     } finally {
       setLoading(false);
     }
@@ -132,7 +134,7 @@ export default function KandidaatWorkflowPanel({
     });
     const result = await response.json();
     if (!response.ok) {
-      alert(result.error || "Contactmoment opslaan mislukt");
+      toast.error(result.error || "Contactmoment opslaan mislukt");
       return;
     }
     setContactSummary("");
@@ -155,7 +157,7 @@ export default function KandidaatWorkflowPanel({
     });
     const result = await response.json();
     if (!response.ok) {
-      alert(result.error || "Taak opslaan mislukt");
+      toast.error(result.error || "Taak opslaan mislukt");
       return;
     }
     setTaskTitle("");
@@ -175,7 +177,7 @@ export default function KandidaatWorkflowPanel({
     });
     const result = await response.json();
     if (!response.ok) {
-      alert(result.error || "Taak bijwerken mislukt");
+      toast.error(result.error || "Taak bijwerken mislukt");
       return;
     }
     await loadWorkflow();

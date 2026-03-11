@@ -8,6 +8,7 @@ import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import MiniTestimonialCarousel from "@/components/MiniTestimonialCarousel";
 import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
+import { useToast } from "@/components/ui/Toast";
 
 interface LeadFormData {
   naam: string;
@@ -61,6 +62,7 @@ function PersoneelLandingPageContent() {
   const router = useRouter();
   const { executeRecaptcha } = useRecaptcha();
   const searchParams = useSearchParams();
+  const toast = useToast();
 
   // Read URL parameters for lead source tracking
   useEffect(() => {
@@ -159,10 +161,10 @@ function PersoneelLandingPageContent() {
         router.push("/bedankt/zakelijk");
       } else {
         const data = await response.json();
-        alert(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
+        toast.error(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
-      alert("Er is iets misgegaan. Probeer het opnieuw.");
+      toast.error("Er is iets misgegaan. Probeer het opnieuw.");
     } finally {
       setIsSubmitting(false);
     }

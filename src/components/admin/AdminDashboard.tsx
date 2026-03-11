@@ -10,6 +10,10 @@ import UrenTab from "./UrenTab";
 import FacturenTab from "./FacturenTab";
 import StatsTab from "./StatsTab";
 import KandidaatWorkflowPanel from "./KandidaatWorkflowPanel";
+import ShiftsTab from "./ShiftsTab";
+import Pagination from "@/components/ui/Pagination";
+import DropdownMenu from "@/components/ui/DropdownMenu";
+import { useToast } from "@/components/ui/Toast";
 
 type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
@@ -291,7 +295,11 @@ export default function AdminDashboard() {
   const [documentUploading, setDocumentUploading] = useState(false);
   const [bulkOnboardingStatus, setBulkOnboardingStatus] = useState<OnboardingStatus | "">("");
   const [bulkEmailSending, setBulkEmailSending] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
   const router = useRouter();
+  const toast = useToast();
 
   // Helper to get auth headers for admin API calls
   const getAuthHeaders = useCallback(async (): Promise<HeadersInit> => {
@@ -517,7 +525,7 @@ export default function AdminDashboard() {
 
   const uploadKandidaatDocument = async (inschrijving: Inschrijving) => {
     if (!documentFileDraft) {
-      alert("Kies eerst een bestand om te uploaden.");
+      toast.warning("Kies eerst een bestand om te uploaden.");
       return;
     }
 
@@ -543,7 +551,7 @@ export default function AdminDashboard() {
 
       const result = await response.json();
       if (!response.ok) {
-        alert(result.error || "Document upload mislukt.");
+        toast.error(result.error || "Document upload mislukt.");
         return;
       }
 
@@ -572,7 +580,7 @@ export default function AdminDashboard() {
 
     if (!response.ok) {
       const result = await response.json();
-      alert(result.error || "Document kon niet worden bijgewerkt.");
+      toast.error(result.error || "Document kon niet worden bijgewerkt.");
       return;
     }
 
@@ -763,10 +771,10 @@ export default function AdminDashboard() {
 
       // Copy to clipboard
       await navigator.clipboard.writeText(result.statusUrl);
-      alert(`✅ Kandidaat portal link gekopieerd!\n\n${result.statusUrl}\n\nDeze link kun je nu naar de kandidaat sturen via WhatsApp, email, of SMS.`);
+      toast.success("Kandidaat portal link gekopieerd naar klembord!");
     } catch (error) {
       console.error("Generate link error:", error);
-      alert(`❌ Fout bij genereren link: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
+      toast.error(`Fout bij genereren link: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
     }
   };
 
@@ -775,7 +783,7 @@ export default function AdminDashboard() {
 
     // Safety check: max 50 emails per batch
     if (selectedIds.size > 50) {
-      alert("Je kunt maximaal 50 kandidaten tegelijk emailen om rate limits te respecteren. Selecteer minder kandidaten.");
+      toast.warning("Je kunt maximaal 50 kandidaten tegelijk emailen. Selecteer minder kandidaten.");
       return;
     }
 
@@ -802,11 +810,11 @@ export default function AdminDashboard() {
         throw new Error(result.error || "Email verzenden mislukt");
       }
 
-      alert(`✅ Emails succesvol verzonden naar ${result.sent} kandidaten!\n${result.failed > 0 ? `⚠️ ${result.failed} emails konden niet worden verzonden.` : ''}`);
+      toast.success(`Emails succesvol verzonden naar ${result.sent} kandidaten!${result.failed > 0 ? ` ${result.failed} konden niet worden verzonden.` : ''}`);
       setSelectedIds(new Set());
     } catch (error) {
       console.error("Bulk email error:", error);
-      alert(`❌ Fout bij verzenden emails: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
+      toast.error(`Fout bij verzenden emails: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
     } finally {
       setBulkEmailSending(false);
     }
@@ -894,13 +902,37 @@ export default function AdminDashboard() {
     );
   };
 
-  const filteredInschrijvingen = inschrijvingen.filter((item) => {
-    if (inschrijvingStatusFilter === "all") {
-      return true;
-    }
+  // Global search helper
+  const matchesSearch = useCallback((searchStr: string, ...fields: (string | null | undefined)[]) => {
+    if (!searchStr.trim()) return true;
+    const lower = searchStr.toLowerCase();
+    return fields.some(f => f?.toLowerCase().includes(lower));
+  }, []);
 
-    return getInschrijvingOnboardingStatus(item) === inschrijvingStatusFilter;
+  const filteredInschrijvingen = inschrijvingen.filter((item) => {
+    if (inschrijvingStatusFilter !== "all" && getInschrijvingOnboardingStatus(item) !== inschrijvingStatusFilter) {
+      return false;
+    }
+    return matchesSearch(globalSearch, item.voornaam, item.achternaam, item.email, item.telefoon, item.stad);
   });
+
+  const filteredAanvragen = aanvragen.filter(item =>
+    matchesSearch(globalSearch, item.bedrijfsnaam, item.contactpersoon, item.email, item.telefoon, item.locatie)
+  );
+
+  const filteredContactBerichten = contactBerichten.filter(item =>
+    matchesSearch(globalSearch, item.naam, item.email, item.onderwerp, item.bericht)
+  );
+
+  const filteredCalculatorLeads = calculatorLeads.filter(item =>
+    matchesSearch(globalSearch, item.naam, item.bedrijfsnaam, item.email, item.functie)
+  );
+
+  // Pagination helpers
+  const paginateItems = <T,>(items: T[]): T[] => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return items.slice(start, start + ITEMS_PER_PAGE);
+  };
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     {
@@ -1008,7 +1040,7 @@ export default function AdminDashboard() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id); setSelectedIds(new Set()); }}
+              onClick={() => { setActiveTab(tab.id); setSelectedIds(new Set()); setCurrentPage(1); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                 activeTab === tab.id
                   ? "bg-[#F27501] text-white"
@@ -1066,6 +1098,32 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
+        {/* Global Search Bar */}
+        <div className="mb-6">
+          <div className="relative max-w-xl">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={globalSearch}
+              onChange={(e) => { setGlobalSearch(e.target.value); setCurrentPage(1); }}
+              placeholder="Zoek op naam, email, bedrijf, telefoon..."
+              className="w-full pl-12 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
+            />
+            {globalSearch && (
+              <button
+                onClick={() => setGlobalSearch("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
@@ -1412,11 +1470,11 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
-                      {aanvragen
+                      {paginateItems(filteredAanvragen
                         .filter(a =>
                           (leadSourceFilter === "all" || a.lead_source === leadSourceFilter) &&
                           (campaignFilter === "all" || a.campaign_name === campaignFilter)
-                        )
+                        ))
                         .map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
                           <td className="px-6 py-4">
@@ -1449,12 +1507,18 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
-                  {aanvragen.length === 0 && (
+                  {filteredAanvragen.length === 0 && (
                     <div className="text-center py-12 text-neutral-500">
-                      Geen aanvragen gevonden
+                      {globalSearch ? `Geen resultaten voor "${globalSearch}"` : "Geen aanvragen gevonden"}
                     </div>
                   )}
                 </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredAanvragen.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  onPageChange={setCurrentPage}
+                />
               </div>
             )}
 
@@ -1616,7 +1680,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
-                      {filteredInschrijvingen.map((item) => (
+                      {paginateItems(filteredInschrijvingen).map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
                           <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggleSelect(item.id)} className="w-4 h-4 rounded" /></td>
                           <td className="px-6 py-4">
@@ -1681,10 +1745,16 @@ export default function AdminDashboard() {
                   </table>
                   {filteredInschrijvingen.length === 0 && (
                     <div className="text-center py-12 text-neutral-500">
-                      Geen inschrijvingen gevonden
+                      {globalSearch ? `Geen resultaten voor "${globalSearch}"` : "Geen inschrijvingen gevonden"}
                     </div>
                   )}
                 </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredInschrijvingen.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  onPageChange={setCurrentPage}
+                />
               </div>
             )}
 

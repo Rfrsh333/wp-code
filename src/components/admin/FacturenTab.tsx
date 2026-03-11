@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface Factuur {
   id: string;
@@ -28,6 +29,7 @@ export default function FacturenTab() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ klant_id: "", periode_start: "", periode_eind: "" });
   const [generating, setGenerating] = useState(false);
+  const toast = useToast();
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -64,7 +66,7 @@ export default function FacturenTab() {
       setForm({ klant_id: "", periode_start: "", periode_eind: "" });
       fetchData();
     } else {
-      alert(data.error);
+      toast.error(data.error);
     }
   };
 
@@ -82,7 +84,7 @@ export default function FacturenTab() {
     const headers = await getAuthHeader();
     const res = await fetch(`/api/facturen/${id}/pdf`, { headers });
     if (!res.ok) {
-      alert("PDF kon niet worden geladen");
+      toast.error("PDF kon niet worden geladen");
       return;
     }
     const blob = await res.blob();

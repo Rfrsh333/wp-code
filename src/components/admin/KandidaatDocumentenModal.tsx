@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 
 interface KandidaatDocument {
   id: string;
@@ -42,6 +43,7 @@ export default function KandidaatDocumentenModal({
   const [loading, setLoading] = useState(true);
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<KandidaatDocument | null>(null);
+  const toast = useToast();
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -59,7 +61,7 @@ export default function KandidaatDocumentenModal({
       setDocuments(result.data || []);
     } catch (error) {
       console.error("Load documents error:", error);
-      alert("Documenten laden mislukt");
+      toast.error("Documenten laden mislukt");
     } finally {
       setLoading(false);
     }
@@ -103,10 +105,10 @@ export default function KandidaatDocumentenModal({
         onReviewComplete();
       }
 
-      alert(reviewStatus === "approved" ? "✅ Document goedgekeurd!" : "❌ Document afgekeurd");
+      toast.success(reviewStatus === "approved" ? "Document goedgekeurd!" : "Document afgekeurd");
     } catch (error) {
       console.error("Review error:", error);
-      alert(`Fout: ${error instanceof Error ? error.message : "Onbekend"}`);
+      toast.error(`Fout: ${error instanceof Error ? error.message : "Onbekend"}`);
     } finally {
       setReviewing(null);
     }
@@ -133,7 +135,7 @@ export default function KandidaatDocumentenModal({
       setPreviewDoc({ ...doc, download_url: result.signed_url });
     } catch (error) {
       console.error("Preview error:", error);
-      alert("Preview mislukt");
+      toast.error("Preview mislukt");
     }
   };
 
@@ -157,7 +159,7 @@ export default function KandidaatDocumentenModal({
       a.click();
     } catch (error) {
       console.error("Download error:", error);
-      alert("Download mislukt");
+      toast.error("Download mislukt");
     }
   };
 
