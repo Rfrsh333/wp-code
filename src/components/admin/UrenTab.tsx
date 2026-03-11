@@ -62,7 +62,7 @@ export default function UrenTab() {
         <h2 className="text-2xl font-bold text-neutral-900">Uren Goedkeuren</h2>
         <div className="flex gap-2">
           <button onClick={() => setFilter("klant_goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "klant_goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
-            Klant goedgekeurd
+            Klaar voor factuur
           </button>
           <button onClick={() => setFilter("ingediend")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "ingediend" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Wacht op klant
@@ -111,11 +111,14 @@ export default function UrenTab() {
                   }`}>{u.status === "klant_goedgekeurd" ? "Klant OK" : u.status}</span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  {(u.status === "ingediend" || u.status === "klant_goedgekeurd") && (
+                  {u.status === "klant_goedgekeurd" && (
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => updateStatus(u.id, "goedgekeurd")} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Goedkeuren</button>
                       <button onClick={() => updateStatus(u.id, "afgewezen")} className="px-3 py-1 bg-red-500 text-white rounded text-sm">Afwijzen</button>
                     </div>
+                  )}
+                  {u.status === "ingediend" && (
+                    <span className="text-xs text-neutral-500">Wacht op klantbeoordeling</span>
                   )}
                 </td>
               </tr>

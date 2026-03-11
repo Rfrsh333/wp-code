@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { verifyFactuurToken } from "@/lib/session";
+import { getFactuurConfig } from "@/lib/factuur-config";
 
 type FactuurRegel = {
   datum: string;
@@ -12,6 +13,7 @@ type FactuurRegel = {
 };
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const factuurConfig = getFactuurConfig();
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const token = searchParams.get("token");
@@ -97,11 +99,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   <div class="addresses">
     <div class="address">
       <div class="address-title">Van</div>
-      <strong>TopTalent Jobs</strong><br>
-      Uw Straat 123<br>
-      1234 AB Amsterdam<br>
-      KVK: 12345678<br>
-      BTW: NL123456789B01
+      <strong>${factuurConfig.bedrijfsnaam}</strong><br>
+      ${factuurConfig.adres}<br>
+      ${factuurConfig.postcodeStad}<br>
+      KVK: ${factuurConfig.kvk}<br>
+      BTW: ${factuurConfig.btw}
     </div>
     <div class="address">
       <div class="address-title">Aan</div>
@@ -146,13 +148,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   <div class="payment">
     <div class="payment-title">Betaalinformatie</div>
-    Gelieve het bedrag binnen 14 dagen over te maken naar:<br>
-    <strong>NL00 BANK 0000 0000 00</strong> t.n.v. TopTalent Jobs<br>
+    Gelieve het bedrag binnen ${factuurConfig.paymentTermDays} dagen over te maken naar:<br>
+    <strong>${factuurConfig.iban}</strong> t.n.v. ${factuurConfig.tenaamstelling}<br>
     o.v.v. factuurnummer ${factuur.factuur_nummer}
   </div>
 
   <div class="footer">
-    TopTalent Jobs • info@toptalentjobs.nl • www.toptalentjobs.nl
+    ${factuurConfig.bedrijfsnaam} • ${factuurConfig.email} • www.toptalentjobs.nl
   </div>
 </body>
 </html>`;

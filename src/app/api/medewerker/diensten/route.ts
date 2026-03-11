@@ -141,8 +141,7 @@ export async function POST(request: NextRequest) {
         eind_tijd: aanpassing.klant_eind_tijd,
         pauze_minuten: aanpassing.klant_pauze_minuten,
         gewerkte_uren: aanpassing.klant_gewerkte_uren,
-        status: "goedgekeurd",
-        goedgekeurd_at: new Date().toISOString(),
+        status: "klant_goedgekeurd",
       }).eq("id", uren_id);
     }
   }

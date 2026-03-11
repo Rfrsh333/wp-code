@@ -70,8 +70,7 @@ export async function POST(request: NextRequest) {
 
   if (action === "approve") {
     await supabaseAdmin.from("uren_registraties").update({
-      status: "goedgekeurd",
-      goedgekeurd_at: new Date().toISOString()
+      status: "klant_goedgekeurd"
     }).eq("id", id);
 
     await supabaseAdmin

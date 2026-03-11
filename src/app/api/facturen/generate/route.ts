@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { calculateVat } from "@/lib/factuur-config";
 
 type UrenRegistratie = {
   id: string;
@@ -26,18 +27,12 @@ type FactuurRegel = {
 };
 
 export async function POST(request: NextRequest) {
-  // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen genereren
-  const { isAdmin, email } = await verifyAdmin(request);
-  if (!isAdmin) {
-    console.warn(`[SECURITY] Unauthorized factuur generate attempt by: ${email || 'unknown'}`);
-    return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
-  }
-
   try {
     const authHeader = request.headers.get("authorization");
     const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
-    const { isAdmin } = await verifyAdmin(request);
+    const { isAdmin, email } = await verifyAdmin(request);
     if (!isAdmin && !cronAuthorized) {
+      console.warn(`[SECURITY] Unauthorized factuur generate attempt by: ${email || 'unknown'}`);
       return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
     }
 
@@ -81,42 +76,78 @@ export async function POST(request: NextRequest) {
     });
 
     const btw_percentage = 21;
-    const btw_bedrag = Math.round(subtotaal * btw_percentage) / 100;
+    const btw_bedrag = calculateVat(subtotaal, btw_percentage);
     const totaal = subtotaal + btw_bedrag;
 
-    // Genereer factuurnummer
+    const urenIds = (uren || []).map((u) => (u as unknown as UrenRegistratie).id);
+
+    const { data: bestaandeFactuurRegels } = await supabase
+      .from("factuur_regels")
+      .select("uren_registratie_id, factuur_id")
+      .in("uren_registratie_id", urenIds);
+
+    if (bestaandeFactuurRegels && bestaandeFactuurRegels.length > 0) {
+      return NextResponse.json({ error: "Een deel van deze uren is al gefactureerd" }, { status: 409 });
+    }
+
     const jaar = new Date().getFullYear();
-    const { count } = await supabase.from("facturen").select("*", { count: "exact", head: true }).ilike("factuur_nummer", `${jaar}%`);
-    const factuur_nummer = `${jaar}${String((count || 0) + 1).padStart(4, "0")}`;
+    let factuur_nummer = "";
+    let factuur: { id: string } | null = null;
+    let factuurInsertError: unknown = null;
 
-    // Maak factuur aan
-    const { data: factuur, error } = await supabase
-      .from("facturen")
-      .insert({
-        factuur_nummer,
-        klant_id,
-        periode_start,
-        periode_eind,
-        subtotaal,
-        btw_percentage,
-        btw_bedrag,
-        totaal,
-      })
-      .select()
-      .single();
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const { count } = await supabase
+        .from("facturen")
+        .select("*", { count: "exact", head: true })
+        .ilike("factuur_nummer", `${jaar}%`);
+      factuur_nummer = `${jaar}${String((count || 0) + 1 + attempt).padStart(4, "0")}`;
 
-    if (error) throw error;
+      const insertResult = await supabase
+        .from("facturen")
+        .insert({
+          factuur_nummer,
+          klant_id,
+          periode_start,
+          periode_eind,
+          subtotaal,
+          btw_percentage,
+          btw_bedrag,
+          totaal,
+        })
+        .select()
+        .single();
 
-    // Voeg regels toe
-    await supabase.from("factuur_regels").insert(
+      if (!insertResult.error && insertResult.data) {
+        factuur = insertResult.data;
+        factuurInsertError = null;
+        break;
+      }
+
+      factuurInsertError = insertResult.error;
+    }
+
+    if (!factuur) throw factuurInsertError;
+
+    const regelsInsert = await supabase.from("factuur_regels").insert(
       regels.map((r) => ({ ...r, factuur_id: factuur.id }))
     );
 
-    // Update uren status naar gefactureerd
-    await supabase
+    if (regelsInsert.error) {
+      await supabase.from("facturen").delete().eq("id", factuur.id);
+      throw regelsInsert.error;
+    }
+
+    const urenUpdate = await supabase
       .from("uren_registraties")
       .update({ status: "gefactureerd" })
-      .in("id", (uren || []).map((u) => (u as unknown as UrenRegistratie).id));
+      .in("id", urenIds)
+      .eq("status", "goedgekeurd");
+
+    if (urenUpdate.error) {
+      await supabase.from("factuur_regels").delete().eq("factuur_id", factuur.id);
+      await supabase.from("facturen").delete().eq("id", factuur.id);
+      throw urenUpdate.error;
+    }
 
     return NextResponse.json({ success: true, factuur });
   } catch (error) {

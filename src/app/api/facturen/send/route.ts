@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { signFactuurToken } from "@/lib/session";
+import { getFactuurConfig } from "@/lib/factuur-config";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -16,11 +17,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const { factuur_id, email } = await request.json();
+    const factuurConfig = getFactuurConfig();
 
     // Haal factuur op
     const { data: factuur } = await supabase
       .from("facturen")
-      .select("*, klant:klanten(bedrijfsnaam, contactpersoon)")
+      .select("*, klant:klanten(bedrijfsnaam, contactpersoon, email)")
       .eq("id", factuur_id)
       .single();
 
@@ -31,10 +33,15 @@ export async function POST(request: NextRequest) {
     // Genereer een signed token voor veilige PDF toegang (geldig 30 dagen)
     const pdfToken = await signFactuurToken(factuur_id, factuur.klant_id);
     const pdfUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl"}/api/facturen/${factuur_id}/pdf?token=${pdfToken}`;
+    const recipient = email || factuur.klant?.email;
 
-    await resend.emails.send({
-      from: "TopTalent Jobs <facturen@toptalentjobs.nl>",
-      to: email,
+    if (!recipient) {
+      return NextResponse.json({ error: "Geen e-mailadres beschikbaar voor deze klant" }, { status: 400 });
+    }
+
+    const resendResult = await resend.emails.send({
+      from: `${factuurConfig.bedrijfsnaam} <${factuurConfig.email}>`,
+      to: recipient,
       subject: `Factuur ${factuur.factuur_nummer} - TopTalent Jobs`,
       html: `
         <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -55,7 +62,7 @@ export async function POST(request: NextRequest) {
               <p style="margin: 0; font-weight: 700; font-size: 24px; color: #F27501;">€ ${factuur.totaal.toFixed(2).replace(".", ",")}</p>
             </div>
             <p style="color: #374151; font-size: 16px;">
-              Gelieve het bedrag binnen 14 dagen over te maken.
+              Gelieve het bedrag binnen ${factuurConfig.paymentTermDays} dagen over te maken.
             </p>
             <a href="${pdfUrl}" style="display: inline-block; background: #F27501; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px;">
               Bekijk Factuur
@@ -67,6 +74,10 @@ export async function POST(request: NextRequest) {
         </div>
       `,
     });
+
+    if ("error" in resendResult && resendResult.error) {
+      return NextResponse.json({ error: "Verzenden via e-mailprovider mislukt" }, { status: 502 });
+    }
 
     // Update factuur status
     await supabase
