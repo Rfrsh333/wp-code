@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
@@ -37,20 +36,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("[ADMIN LOGIN] Supabase configuratie ontbreekt");
-      return NextResponse.json(
-        { error: "Server configuratie fout" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // Gebruik supabaseAdmin (service role key) voor login verificatie
+    // omdat NEXT_PUBLIC_SUPABASE_ANON_KEY op Vercel onbetrouwbaar kan zijn
+    const { data, error } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password,
     });
@@ -69,7 +57,7 @@ export async function POST(request: NextRequest) {
       console.warn(`[ADMIN LOGIN] Unauthorized access attempt by non-admin: ${email} from IP: ${clientIP}`);
 
       // Sign out de gebruiker direct
-      await supabase.auth.signOut();
+      await supabaseAdmin.auth.signOut();
 
       return NextResponse.json(
         { error: "Geen toegang. Alleen administrators kunnen inloggen." },
@@ -91,7 +79,7 @@ export async function POST(request: NextRequest) {
       console.log(`[ADMIN LOGIN] 2FA required for ${email}`);
 
       // Sign out voor nu (front-end moet opnieuw posten met 2FA code)
-      await supabase.auth.signOut();
+      await supabaseAdmin.auth.signOut();
 
       return NextResponse.json({
         success: false,
@@ -107,7 +95,7 @@ export async function POST(request: NextRequest) {
       if (isBackupCode) {
         // Verifieer backup code
         if (!twoFactorData.backup_codes || twoFactorData.backup_codes.length === 0) {
-          await supabase.auth.signOut();
+          await supabaseAdmin.auth.signOut();
           return NextResponse.json(
             { error: "Geen backup codes beschikbaar" },
             { status: 400 }
@@ -136,7 +124,7 @@ export async function POST(request: NextRequest) {
 
       if (!isValid) {
         console.warn(`[ADMIN LOGIN] Invalid 2FA code for ${email}`);
-        await supabase.auth.signOut();
+        await supabaseAdmin.auth.signOut();
         return NextResponse.json(
           { error: "Ongeldige 2FA code" },
           { status: 401 }

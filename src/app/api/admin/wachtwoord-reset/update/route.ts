@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin-auth";
 
@@ -88,27 +87,6 @@ export async function POST(request: NextRequest) {
 
     console.log(`[WACHTWOORD RESET] Password updated for user: ${userData.user.email}, id: ${userId}`);
     console.log(`[WACHTWOORD RESET] Updated_at: ${updateData.user.updated_at}`);
-
-    // Verify the new password works by attempting a sign-in
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const verifyClient = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false, detectSessionInUrl: false },
-    });
-
-    const { error: verifyError } = await verifyClient.auth.signInWithPassword({
-      email: userData.user.email!,
-      password,
-    });
-
-    if (verifyError) {
-      console.error("[WACHTWOORD RESET] Verification sign-in failed:", verifyError.message);
-      // Password was updated but verification failed - still return success
-      // but log for debugging
-    } else {
-      console.log("[WACHTWOORD RESET] Password verified successfully via sign-in test");
-      await verifyClient.auth.signOut();
-    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
