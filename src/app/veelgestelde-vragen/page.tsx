@@ -377,16 +377,25 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
 
   return (
     <>
-      {/* Floating button */}
-      <button
-        onClick={() => { setIsOpen(true); setIsSubmitted(false); }}
-        className="fixed bottom-6 right-6 z-50 bg-[#F27501] text-white px-5 py-3.5 rounded-full font-semibold shadow-lg hover:bg-[#d96800] hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Stel je vraag
-      </button>
+      {/* Floating button — centered, homepage style */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] rounded-full shadow-2xl shadow-orange-500/30 p-1">
+          <button
+            onClick={() => { setIsOpen(true); setIsSubmitted(false); }}
+            className="bg-white rounded-full px-6 py-3 flex items-center gap-4"
+          >
+            <span className="text-sm font-medium text-neutral-900 hidden sm:block">
+              Staat jouw vraag er niet bij?
+            </span>
+            <span className="bg-[#F97316] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#EA580C] transition-all duration-300 flex items-center gap-2 whitespace-nowrap">
+              Stel je vraag
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
 
       {/* Modal overlay */}
       {isOpen && (
