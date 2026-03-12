@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminWachtwoordResetClient() {
   const router = useRouter();
@@ -11,9 +11,6 @@ export default function AdminWachtwoordResetClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState("");
-  const [debugInfo, setDebugInfo] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const clientRef = useRef<any>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -21,12 +18,8 @@ export default function AdminWachtwoordResetClient() {
       const rawHash = window.location.hash;
       const hash = rawHash.replace(/^#/, "");
 
-      console.log("[RESET] Raw hash length:", rawHash.length);
-      console.log("[RESET] Hash starts with:", rawHash.substring(0, 50));
-
       if (!hash) {
         setError("Geen recovery tokens gevonden in de URL.");
-        setDebugInfo("Hash was leeg. Mogelijk is de link al eerder gebruikt.");
         return;
       }
 
@@ -36,40 +29,16 @@ export default function AdminWachtwoordResetClient() {
       const refreshToken = params.get("refresh_token");
       const tokenType = params.get("type");
 
-      console.log("[RESET] Parsed - type:", tokenType, "access:", !!accessToken, "refresh:", !!refreshToken);
-
-      if (!accessToken || !refreshToken) {
-        setError("Recovery tokens ontbreken in de URL.");
-        setDebugInfo(`type=${tokenType}, access=${!!accessToken}, refresh=${!!refreshToken}`);
+      if (!accessToken || !refreshToken || tokenType !== "recovery") {
+        setError("Deze resetlink is ongeldig of verlopen.");
         return;
       }
 
-      if (tokenType !== "recovery") {
-        setError("Dit is geen recovery link.");
-        setDebugInfo(`type=${tokenType} (verwacht: recovery)`);
-        return;
-      }
-
-      // 3. Clean hash from URL immediately to prevent double-processing
+      // 3. Clean hash from URL to prevent double-processing
       window.history.replaceState({}, document.title, window.location.pathname);
 
-      // 4. Create Supabase client with NO auto-detection
-      const sb = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          auth: {
-            detectSessionInUrl: false,
-            persistSession: true,
-            flowType: "implicit",
-          },
-        }
-      );
-      clientRef.current = sb;
-
-      // 5. Set session manually with the parsed tokens
-      console.log("[RESET] Calling setSession...");
-      const { data, error: sessionError } = await sb.auth.setSession({
+      // 4. Set session with the parsed tokens
+      const { data, error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       });
@@ -77,17 +46,14 @@ export default function AdminWachtwoordResetClient() {
       if (sessionError) {
         console.error("[RESET] setSession error:", sessionError);
         setError(`Kon sessie niet instellen: ${sessionError.message}`);
-        setDebugInfo(`Error code: ${sessionError.status || "unknown"}`);
         return;
       }
 
       if (!data.session) {
         setError("Sessie kon niet worden aangemaakt.");
-        setDebugInfo("setSession gaf geen error maar ook geen sessie terug.");
         return;
       }
 
-      console.log("[RESET] Session set successfully, user:", data.session.user.email);
       setIsReady(true);
     };
 
@@ -108,11 +74,8 @@ export default function AdminWachtwoordResetClient() {
       return;
     }
 
-    const sb = clientRef.current as SupabaseClient;
-    if (!sb) return;
-
     setIsLoading(true);
-    const { error: updateError } = await sb.auth.updateUser({ password: wachtwoord });
+    const { error: updateError } = await supabase.auth.updateUser({ password: wachtwoord });
     setIsLoading(false);
 
     if (updateError) {
@@ -120,7 +83,7 @@ export default function AdminWachtwoordResetClient() {
       return;
     }
 
-    await sb.auth.signOut();
+    await supabase.auth.signOut();
     router.push("/admin/login?reset=1");
   };
 
@@ -136,12 +99,7 @@ export default function AdminWachtwoordResetClient() {
         </div>
 
         {error && (
-          <div className="mb-5">
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
-            {debugInfo && (
-              <p className="text-xs text-neutral-400 mt-2 text-center font-mono">{debugInfo}</p>
-            )}
-          </div>
+          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-5">{error}</div>
         )}
 
         {!isReady && !error ? (
