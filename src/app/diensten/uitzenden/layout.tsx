@@ -13,6 +13,38 @@ export default function UitzendenLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": "https://www.toptalentjobs.nl/diensten/uitzenden/#service",
+    "name": "Horeca Uitzenden",
+    "serviceType": "Uitzenden horecapersoneel",
+    "description": "Tijdelijke inzet van gescreend horecapersoneel (koks, bediening, bar, afwas) binnen 24 uur. Flexibel inzetbaar bij piekdrukte, seizoensdrukte of personeelsuitval.",
+    "provider": {
+      "@id": "https://www.toptalentjobs.nl/#organization"
+    },
+    "areaServed": [
+      { "@type": "Country", "name": "Nederland" },
+      { "@type": "City", "name": "Utrecht" },
+      { "@type": "City", "name": "Amsterdam" },
+      { "@type": "City", "name": "Rotterdam" },
+      { "@type": "City", "name": "Den Haag" },
+      { "@type": "City", "name": "Eindhoven" }
+    ],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Uitzendpersoneel horeca",
+      "itemListElement": [
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kok / Sous-chef uitzenden" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Bediening uitzenden" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Barmedewerker uitzenden" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Afwas uitzenden" } },
+        { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Evenementenpersoneel uitzenden" } }
+      ]
+    },
+    "termsOfService": "https://www.toptalentjobs.nl/voorwaarden"
+  };
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -87,6 +119,10 @@ export default function UitzendenLayout({
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
