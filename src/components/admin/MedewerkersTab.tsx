@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import StarRating from "@/components/ui/StarRating";
+import MedewerkerDetailView from "./MedewerkerDetailView";
 
 interface Medewerker {
   id: string;
@@ -14,6 +16,8 @@ interface Medewerker {
   notities: string | null;
   created_at: string;
   heeft_wachtwoord?: boolean;
+  admin_score_aanwezigheid?: number | null;
+  admin_score_vaardigheden?: number | null;
 }
 
 const functieOptions = [
@@ -37,10 +41,13 @@ export default function MedewerkersTab() {
     uurtarief: "15.00",
     status: "actief" as "actief" | "inactief",
     notities: "",
+    admin_score_aanwezigheid: 0,
+    admin_score_vaardigheden: 0,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [viewingMedewerkerId, setViewingMedewerkerId] = useState<string | null>(null);
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -75,6 +82,8 @@ export default function MedewerkersTab() {
       uurtarief: "15.00",
       status: "actief",
       notities: "",
+      admin_score_aanwezigheid: 0,
+      admin_score_vaardigheden: 0,
     });
     setShowModal(true);
   };
@@ -92,6 +101,8 @@ export default function MedewerkersTab() {
       uurtarief: medewerker.uurtarief.toString(),
       status: medewerker.status,
       notities: medewerker.notities || "",
+      admin_score_aanwezigheid: medewerker.admin_score_aanwezigheid || 0,
+      admin_score_vaardigheden: medewerker.admin_score_vaardigheden || 0,
     });
     setShowModal(true);
   };
@@ -130,6 +141,22 @@ export default function MedewerkersTab() {
       setIsSaving(false);
       setFeedback(result.error || "Opslaan mislukt");
       return;
+    }
+
+    // Save admin scores if editing and scores are set
+    if (editingMedewerker && formData.admin_score_aanwezigheid > 0 && formData.admin_score_vaardigheden > 0) {
+      await fetch("/api/admin/medewerkers", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_scores",
+          id: editingMedewerker.id,
+          data: {
+            admin_score_aanwezigheid: formData.admin_score_aanwezigheid,
+            admin_score_vaardigheden: formData.admin_score_vaardigheden,
+          },
+        }),
+      });
     }
 
     setIsSaving(false);
@@ -202,6 +229,15 @@ export default function MedewerkersTab() {
     );
   }
 
+  if (viewingMedewerkerId) {
+    return (
+      <MedewerkerDetailView
+        medewerkerId={viewingMedewerkerId}
+        onBack={() => setViewingMedewerkerId(null)}
+      />
+    );
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -261,7 +297,22 @@ export default function MedewerkersTab() {
             {medewerkers.map((medewerker) => (
               <tr key={medewerker.id} className="hover:bg-neutral-50">
                 <td className="px-6 py-4">
-                  <p className="font-medium text-neutral-900">{medewerker.naam}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setViewingMedewerkerId(medewerker.id)}
+                      className="font-medium text-neutral-900 hover:text-[#F27501] transition-colors text-left"
+                    >
+                      {medewerker.naam}
+                    </button>
+                    {medewerker.admin_score_aanwezigheid && medewerker.admin_score_vaardigheden && (
+                      <span className="flex items-center gap-0.5 text-xs text-[#F27501]">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="#F27501" stroke="none">
+                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        {((medewerker.admin_score_aanwezigheid + medewerker.admin_score_vaardigheden) / 2).toFixed(1)}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-neutral-500">Sinds {formatDate(medewerker.created_at)}</p>
                 </td>
                 <td className="px-6 py-4">
@@ -306,6 +357,12 @@ export default function MedewerkersTab() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
+                  <button
+                    onClick={() => setViewingMedewerkerId(medewerker.id)}
+                    className="text-blue-600 hover:text-blue-800 font-medium text-sm mr-3"
+                  >
+                    Bekijk profiel
+                  </button>
                   <button
                     onClick={() => openEditModal(medewerker)}
                     className="text-[#F27501] hover:text-[#d96800] font-medium text-sm mr-3"
@@ -517,6 +574,28 @@ export default function MedewerkersTab() {
                   placeholder="Eventuele opmerkingen..."
                 />
               </div>
+
+              {editingMedewerker && (
+                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                  <p className="text-sm font-semibold text-neutral-900 mb-3">Admin Beoordeling</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-600">Aanwezigheid & op tijd</span>
+                      <StarRating
+                        value={formData.admin_score_aanwezigheid}
+                        onChange={(v) => setFormData({ ...formData, admin_score_aanwezigheid: v })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-600">Vaardigheden</span>
+                      <StarRating
+                        value={formData.admin_score_vaardigheden}
+                        onChange={(v) => setFormData({ ...formData, admin_score_vaardigheden: v })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button
