@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAdmin } from "@/lib/admin-auth";
+import { supabaseAdmin } from "@/lib/supabase";
+import { generateLeadResponse } from "@/lib/agents/lead-followup";
+import { isOpenAIConfigured } from "@/lib/openai";
+import { Resend } from "resend";
+
+export async function POST(request: NextRequest) {
+  const { isAdmin, email } = await verifyAdmin(request);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized AI lead response attempt by: ${email || "unknown"}`);
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  if (!isOpenAIConfigured()) {
+    return NextResponse.json({ error: "OpenAI is niet geconfigureerd" }, { status: 503 });
+  }
+
+  try {
+    const { aanvraag_id, email_content, action } = await request.json();
+
+    if (!aanvraag_id) {
+      return NextResponse.json({ error: "aanvraag_id is vereist" }, { status: 400 });
+    }
+
+    // Haal aanvraag op
+    const { data: aanvraag, error: dbError } = await supabaseAdmin
+      .from("personeel_aanvragen")
+      .select("*")
+      .eq("id", aanvraag_id)
+      .single();
+
+    if (dbError || !aanvraag) {
+      return NextResponse.json({ error: "Aanvraag niet gevonden" }, { status: 404 });
+    }
+
+    // Action: generate - Genereer AI reactie
+    if (!action || action === "generate") {
+      const draft = await generateLeadResponse({
+        bedrijfsnaam: aanvraag.bedrijfsnaam,
+        contactpersoon: aanvraag.contactpersoon,
+        email: aanvraag.email,
+        type_personeel: aanvraag.type_personeel || [],
+        aantal_personen: aanvraag.aantal_personen,
+        start_datum: aanvraag.start_datum,
+        eind_datum: aanvraag.eind_datum,
+        werkdagen: aanvraag.werkdagen || [],
+        werktijden: aanvraag.werktijden,
+        locatie: aanvraag.locatie,
+        opmerkingen: aanvraag.opmerkingen,
+      });
+
+      // Sla draft op
+      await supabaseAdmin
+        .from("personeel_aanvragen")
+        .update({ ai_response_draft: draft })
+        .eq("id", aanvraag_id);
+
+      return NextResponse.json({ draft });
+    }
+
+    // Action: send - Verstuur goedgekeurde email
+    if (action === "send" && email_content) {
+      if (!process.env.RESEND_API_KEY) {
+        return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
+      }
+
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const { error: emailError } = await resend.emails.send({
+        from: "TopTalent Jobs <info@toptalentjobs.nl>",
+        to: [aanvraag.email],
+        subject: `Re: Personeel aanvraag - ${aanvraag.bedrijfsnaam}`,
+        html: email_content.replace(/\n/g, "<br>"),
+      });
+
+      if (emailError) {
+        console.error("Email send error:", emailError);
+        return NextResponse.json({ error: "Email versturen mislukt" }, { status: 500 });
+      }
+
+      // Update aanvraag status
+      await supabaseAdmin
+        .from("personeel_aanvragen")
+        .update({
+          ai_response_sent: true,
+          ai_response_sent_at: new Date().toISOString(),
+          status: "in_behandeling",
+        })
+        .eq("id", aanvraag_id);
+
+      return NextResponse.json({ success: true, message: "Email verstuurd" });
+    }
+
+    return NextResponse.json({ error: "Ongeldige actie" }, { status: 400 });
+  } catch (error) {
+    console.error("AI lead response error:", error);
+    return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
+  }
+}

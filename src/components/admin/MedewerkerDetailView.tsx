@@ -77,7 +77,7 @@ interface MedewerkerDetail {
   };
 }
 
-type TabId = "profiel" | "diensten" | "financieel" | "documenten";
+type TabId = "profiel" | "diensten" | "financieel" | "documenten" | "ai-screening";
 
 interface Props {
   medewerkerId: string;
@@ -89,6 +89,14 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("profiel");
+  const [aiScreening, setAiScreening] = useState<{
+    score: number;
+    samenvatting: string;
+    sterke_punten: string[];
+    aandachtspunten: string[];
+    aanbeveling: string;
+  } | null>(null);
+  const [isScreeningLoading, setIsScreeningLoading] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     setIsLoading(true);
@@ -135,6 +143,7 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
     { id: "diensten", label: "Diensten", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
     { id: "financieel", label: "Financieel", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
     { id: "documenten", label: "Documenten", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+    { id: "ai-screening", label: "AI Screening", icon: "M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3" },
   ];
 
   if (isLoading) {
@@ -528,6 +537,115 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
           </div>
           {documenten.length === 0 && (
             <div className="text-center py-12 text-neutral-500">Nog geen documenten geupload</div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "ai-screening" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-neutral-800">AI Screening</h3>
+            <button
+              onClick={async () => {
+                setIsScreeningLoading(true);
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  // Find inschrijving by email
+                  const { data: inschr } = await supabase
+                    .from("inschrijvingen")
+                    .select("id")
+                    .eq("email", profiel.email)
+                    .maybeSingle();
+                  if (!inschr) {
+                    setAiScreening(null);
+                    return;
+                  }
+                  const res = await fetch("/api/admin/ai/screening", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${session?.access_token}`,
+                    },
+                    body: JSON.stringify({ inschrijving_id: inschr.id }),
+                  });
+                  if (res.ok) {
+                    const result = await res.json();
+                    setAiScreening(result);
+                  }
+                } catch {
+                  // silently fail
+                } finally {
+                  setIsScreeningLoading(false);
+                }
+              }}
+              disabled={isScreeningLoading}
+              className="px-4 py-2 bg-[#F27501] text-white text-sm rounded-xl hover:bg-[#d96800] transition-colors disabled:opacity-50"
+            >
+              {isScreeningLoading ? "Screenen..." : aiScreening ? "Opnieuw screenen" : "AI Screening starten"}
+            </button>
+          </div>
+
+          {aiScreening ? (
+            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold ${
+                  aiScreening.score >= 8 ? "bg-green-100 text-green-700" :
+                  aiScreening.score >= 6 ? "bg-blue-100 text-blue-700" :
+                  aiScreening.score >= 4 ? "bg-amber-100 text-amber-700" :
+                  "bg-red-100 text-red-700"
+                }`}>
+                  {aiScreening.score}
+                </div>
+                <div>
+                  <p className="font-semibold text-neutral-900">Score: {aiScreening.score}/10</p>
+                  <p className="text-sm text-neutral-600">{aiScreening.samenvatting}</p>
+                </div>
+              </div>
+
+              {aiScreening.sterke_punten.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-green-700 mb-1">Sterke punten</p>
+                  <ul className="space-y-1">
+                    {aiScreening.sterke_punten.map((punt, i) => (
+                      <li key={i} className="text-sm text-neutral-600 flex items-start gap-2">
+                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {punt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {aiScreening.aandachtspunten.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-amber-700 mb-1">Aandachtspunten</p>
+                  <ul className="space-y-1">
+                    {aiScreening.aandachtspunten.map((punt, i) => (
+                      <li key={i} className="text-sm text-neutral-600 flex items-start gap-2">
+                        <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        {punt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                <p className="text-sm font-semibold text-blue-700 mb-1">Aanbeveling</p>
+                <p className="text-sm text-blue-600">{aiScreening.aanbeveling}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm p-12 text-center text-neutral-400">
+              <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3" />
+              </svg>
+              <p className="text-sm">Klik op &quot;AI Screening starten&quot; om deze medewerker te evalueren</p>
+            </div>
           )}
         </div>
       )}

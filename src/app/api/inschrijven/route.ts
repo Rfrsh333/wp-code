@@ -255,6 +255,48 @@ export async function POST(request: NextRequest) {
         console.error("Bevestigingsmail error:", emailError);
         // Don't fail registration if email fails
       }
+
+      // Auto AI screening (fire-and-forget)
+      try {
+        const { isOpenAIConfigured } = await import("@/lib/openai");
+        if (isOpenAIConfigured()) {
+          const { screenKandidaat } = await import("@/lib/agents/kandidaat-screening");
+          const { sendTelegramAlert } = await import("@/lib/telegram");
+
+          const screeningResult = await screenKandidaat({
+            voornaam,
+            achternaam,
+            stad,
+            geboortedatum,
+            horeca_ervaring: horecaErvaring,
+            gewenste_functies: functies,
+            talen,
+            eigen_vervoer: eigenVervoer,
+            beschikbaarheid: beschikbaarheid as string,
+            beschikbaar_vanaf: beschikbaarVanaf,
+            max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
+            uitbetalingswijze,
+            motivatie,
+          });
+
+          await supabase.from("inschrijvingen").update({
+            ai_screening_score: screeningResult.score,
+            ai_screening_notes: JSON.stringify(screeningResult),
+            ai_screening_date: new Date().toISOString(),
+          }).eq("id", insertedData.id);
+
+          await sendTelegramAlert(
+            `🤖 <b>AI Screening</b>\n` +
+            `Kandidaat: ${volledigeNaam}\n` +
+            `Score: ${screeningResult.score}/10\n` +
+            `${screeningResult.samenvatting}\n` +
+            `Aanbeveling: ${screeningResult.aanbeveling}`
+          );
+        }
+      } catch (screeningError) {
+        console.error("Auto-screening error:", screeningError);
+        // Don't fail registration if screening fails
+      }
     }
 
     return NextResponse.json({ success: true });
