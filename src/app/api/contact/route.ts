@@ -4,6 +4,7 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { contactSchema, formatZodErrors } from "@/lib/validations";
 
 interface ContactFormData {
   naam: string;
@@ -39,6 +40,12 @@ export async function POST(request: NextRequest) {
     }
 
     const data: ContactFormData = await request.json();
+
+    // Zod validatie
+    const parsed = contactSchema.safeParse(data);
+    if (!parsed.success) {
+      return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
+    }
 
     // KRITIEK: Verify reCAPTCHA - VERPLICHT (was optioneel, nu required)
     if (!data.recaptchaToken) {

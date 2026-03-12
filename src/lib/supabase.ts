@@ -40,6 +40,9 @@ function getSupabaseClient(): SupabaseClient {
 function getSupabaseAdminClient(): SupabaseClient {
   if (!_supabaseAdmin) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey && process.env.NODE_ENV === 'production') {
+      throw new Error("[SECURITY] SUPABASE_SERVICE_ROLE_KEY is required in production. Admin client cannot fall back to anon key.");
+    }
     _supabaseAdmin = serviceKey
       ? createClient(getSupabaseUrl(), serviceKey, {
           auth: {

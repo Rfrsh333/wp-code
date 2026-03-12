@@ -14,10 +14,16 @@ export async function GET(request: NextRequest) {
 
   if (q.length < 2) return NextResponse.json({ medewerkers: [], diensten: [], klanten: [] });
 
+  if (q.length > 100) return NextResponse.json({ error: "Zoekopdracht te lang (max 100 tekens)" }, { status: 400 });
+
+  // Sanitize LIKE wildcards
+  const sanitizedQ = q.replace(/%/g, '').replace(/_/g, '');
+  if (sanitizedQ.length < 2) return NextResponse.json({ medewerkers: [], diensten: [], klanten: [] });
+
   const [{ data: medewerkers }, { data: diensten }, { data: klanten }] = await Promise.all([
-    supabaseAdmin.from("medewerkers").select("id, naam, email, telefoon, functie, status").or(`naam.ilike.%${q}%,email.ilike.%${q}%`).limit(5),
-    supabaseAdmin.from("diensten").select("id, klant_naam, locatie, datum, functie, status").or(`klant_naam.ilike.%${q}%,locatie.ilike.%${q}%`).limit(5),
-    supabaseAdmin.from("klanten").select("id, bedrijfsnaam, contactpersoon, email").or(`bedrijfsnaam.ilike.%${q}%,contactpersoon.ilike.%${q}%`).limit(5),
+    supabaseAdmin.from("medewerkers").select("id, naam, email, telefoon, functie, status").or(`naam.ilike.%${sanitizedQ}%,email.ilike.%${sanitizedQ}%`).limit(5),
+    supabaseAdmin.from("diensten").select("id, klant_naam, locatie, datum, functie, status").or(`klant_naam.ilike.%${sanitizedQ}%,locatie.ilike.%${sanitizedQ}%`).limit(5),
+    supabaseAdmin.from("klanten").select("id, bedrijfsnaam, contactpersoon, email").or(`bedrijfsnaam.ilike.%${sanitizedQ}%,contactpersoon.ilike.%${sanitizedQ}%`).limit(5),
   ]);
 
   return NextResponse.json({ medewerkers: medewerkers || [], diensten: diensten || [], klanten: klanten || [] });

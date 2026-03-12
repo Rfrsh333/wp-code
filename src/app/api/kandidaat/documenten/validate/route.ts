@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       .from("inschrijvingen")
       .select("id, voornaam, achternaam, uitbetalingswijze, onboarding_portal_token_expires_at")
       .eq("onboarding_portal_token", token)
-      .single();
+      .maybeSingle();
 
     if (!matchedKandidaat) {
       return NextResponse.json({ error: "Ongeldige of verlopen link" }, { status: 403 });

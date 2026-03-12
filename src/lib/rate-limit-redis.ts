@@ -73,12 +73,20 @@ export async function checkRedisRateLimit(
   limiter: Ratelimit | null
 ): Promise<RateLimitResult> {
   if (!limiter) {
-    // Development fallback - always allow (or use in-memory fallback)
-    console.warn("[RATE LIMIT] Redis not configured, allowing request");
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("[RATE LIMIT] Redis not configured (development mode), allowing request");
+      return {
+        success: true,
+        limit: 999,
+        remaining: 999,
+        reset: Date.now() + 60000,
+      };
+    }
+    console.warn("[RATE LIMIT] Redis not configured, blocking request");
     return {
-      success: true,
-      limit: 999,
-      remaining: 999,
+      success: false,
+      limit: 0,
+      remaining: 0,
       reset: Date.now() + 60000,
     };
   }
@@ -94,9 +102,16 @@ export async function checkRedisRateLimit(
     };
   } catch (error) {
     console.error("[RATE LIMIT] Error checking rate limit:", error);
-    // On error, allow the request (fail open)
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        success: true,
+        limit: 999,
+        remaining: 999,
+        reset: Date.now() + 60000,
+      };
+    }
     return {
-      success: true,
+      success: false,
       limit: 0,
       remaining: 0,
       reset: Date.now(),

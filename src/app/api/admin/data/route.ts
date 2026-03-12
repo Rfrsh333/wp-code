@@ -106,6 +106,30 @@ export async function POST(request: NextRequest) {
         generatedMedewerkerLinks = 1;
       }
     }
+
+    // Send rejection email when status changes to afgewezen
+    if (
+      table === "inschrijvingen" &&
+      data?.onboarding_status === "afgewezen"
+    ) {
+      const { data: kandidaat } = await supabaseAdmin
+        .from("inschrijvingen")
+        .select("id, voornaam, achternaam, email, uitbetalingswijze")
+        .eq("id", id)
+        .single();
+
+      if (kandidaat?.email) {
+        const { sendAfwijzingsmail, logEmail } = await import("@/lib/candidate-onboarding");
+        try {
+          const emailResult = await sendAfwijzingsmail(kandidaat);
+          if (emailResult.data?.id) {
+            await logEmail(kandidaat.id, "custom", kandidaat.email, `Afwijzingsmail`, emailResult.data.id);
+          }
+        } catch (emailError) {
+          console.error("Failed to send rejection email:", emailError);
+        }
+      }
+    }
   }
   if (action === "delete") {
     await supabaseAdmin.from(table).delete().eq("id", id);

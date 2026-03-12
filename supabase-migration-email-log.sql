@@ -1,3 +1,6 @@
+-- ⚠️ DEPRECATED: Dit bestand is vervangen door supabase-migration-complete-onboarding.sql
+-- Bewaar alleen als referentie. Voer deze migratie NIET uit als je de complete onboarding migratie al hebt gedraaid.
+
 -- ============================================================================
 -- Email Log Migration
 -- ============================================================================

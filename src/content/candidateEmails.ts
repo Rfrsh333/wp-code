@@ -62,6 +62,14 @@ export const candidateEmailCopy = {
     ctaLabel: "🚀 Bekijk je profiel",
     outro: "Let's go! 🔥<br><br>Vragen? We zijn er! Bel, app of mail ons. 💬",
   },
+  afwijzing: {
+    subject: "{voornaam}, update over je aanmelding bij TopTalent",
+    heading: "Beste {voornaam},",
+    intro:
+      "Bedankt voor je interesse in TopTalent Jobs. Na zorgvuldige overweging hebben we helaas besloten om op dit moment niet verder te gaan met je aanmelding.",
+    bodyAfterCard: "Dit betekent niet dat er in de toekomst geen mogelijkheden zijn. Je bent altijd welkom om je opnieuw in te schrijven.",
+    outro: "We wensen je veel succes! Heb je vragen? Neem gerust contact met ons op.",
+  },
 } as const;
 
 export function applyCandidateEmailVars(template: string, vars: Record<string, string>) {

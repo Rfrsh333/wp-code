@@ -102,6 +102,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, shift_id, cover_text, application_id } = body;
 
+    // Bescherming: voorkom wijzigingen aan gefactureerde records
+    if (["uren_indienen", "accept_adjustment", "reject_adjustment"].includes(action)) {
+      if (!shift_id && !application_id) {
+        return NextResponse.json({ error: "shift_id of application_id is vereist" }, { status: 400 });
+      }
+
+      const lookupId = shift_id || application_id;
+      const lookupColumn = shift_id ? "shift_id" : "id";
+
+      const { data: record } = await supabase
+        .from("applications")
+        .select("id, status")
+        .eq(lookupColumn, lookupId)
+        .eq("candidate_id", medewerker.id)
+        .single();
+
+      if (record && record.status === "gefactureerd") {
+        return NextResponse.json(
+          { error: "Gefactureerde uren kunnen niet meer worden gewijzigd" },
+          { status: 409 }
+        );
+      }
+    }
+
     // Apply to shift
     if (action === "apply") {
       if (!shift_id || !cover_text) {

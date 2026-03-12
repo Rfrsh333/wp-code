@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
+import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -47,6 +48,18 @@ export async function POST(request: NextRequest) {
         { error: recaptchaResult.error || "Spam detectie mislukt" },
         { status: 400 }
       );
+    }
+
+    // Zod validatie op kernvelden
+    const zodParsed = inschrijvenSchema.safeParse({
+      voornaam: formData.get("voornaam") || "",
+      achternaam: formData.get("achternaam") || "",
+      email: formData.get("email") || "",
+      telefoon: formData.get("telefoon") || "",
+      uitbetalingswijze: formData.get("uitbetalingswijze") || "",
+    });
+    if (!zodParsed.success) {
+      return NextResponse.json({ error: formatZodErrors(zodParsed.error) }, { status: 400 });
     }
 
     const voornaam = (formData.get("voornaam") as string) || "";

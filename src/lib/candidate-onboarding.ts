@@ -331,9 +331,37 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
   return result;
 }
 
+// 4. Afwijzingsmail - Respectvol en duidelijk
+export async function sendAfwijzingsmail(kandidaat: Kandidaat) {
+  const copy = candidateEmailCopy.afwijzing;
+
+  const content = `
+    <h1>${applyCandidateEmailVars(copy.heading, { voornaam: kandidaat.voornaam })}</h1>
+
+    <p>${copy.intro}</p>
+
+    ${copy.bodyAfterCard ? `<p>${copy.bodyAfterCard}</p>` : ""}
+
+    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+      ${copy.outro}
+    </p>
+  `;
+
+  const result = await resend.emails.send({
+    from: "TopTalent <info@toptalentjobs.nl>",
+    to: [kandidaat.email],
+    replyTo: "info@toptalentjobs.nl",
+    subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
+    html: getEmailLayout(content),
+  });
+
+  return result;
+}
+
 // Helper functions voor token generation
 function generateStatusToken(email: string, kandidaatId: string): string {
-  const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret";
+  const secret = process.env.KANDIDAAT_TOKEN_SECRET;
+  if (!secret) throw new Error("[SECURITY] KANDIDAAT_TOKEN_SECRET environment variable is required");
   const data = `${email}:${kandidaatId}:${secret}`;
   return crypto.createHash("sha256").update(data).digest("hex").substring(0, 32);
 }

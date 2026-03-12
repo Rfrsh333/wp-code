@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     overdueTasksResult,
     testCandidatesResult,
     auditResult,
-  ] = await Promise.all([
+  ] = await Promise.allSettled([
     supabaseAdmin
       .from("inschrijvingen")
       .select("id", { count: "exact", head: true })
@@ -73,16 +73,16 @@ export async function GET(request: NextRequest) {
       serviceRoleConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
     },
     counters: {
-      expiredUploadLinks: expiredLinksResult.count || 0,
-      candidatesWaitingTooLong: staleCandidatesResult.count || 0,
-      inzetbaarWithoutProfile: inzetbaarWithoutProfileResult.count || 0,
-      pendingDocumentReviews: pendingDocumentsResult.count || 0,
-      bouncedEmails: bouncedEmailsResult.count || 0,
-      openTasks: openTasksResult.count || 0,
-      overdueTasks: overdueTasksResult.count || 0,
-      testCandidates: testCandidatesResult.count || 0,
+      expiredUploadLinks: expiredLinksResult.status === "fulfilled" ? expiredLinksResult.value.count || 0 : 0,
+      candidatesWaitingTooLong: staleCandidatesResult.status === "fulfilled" ? staleCandidatesResult.value.count || 0 : 0,
+      inzetbaarWithoutProfile: inzetbaarWithoutProfileResult.status === "fulfilled" ? inzetbaarWithoutProfileResult.value.count || 0 : 0,
+      pendingDocumentReviews: pendingDocumentsResult.status === "fulfilled" ? pendingDocumentsResult.value.count || 0 : 0,
+      bouncedEmails: bouncedEmailsResult.status === "fulfilled" ? bouncedEmailsResult.value.count || 0 : 0,
+      openTasks: openTasksResult.status === "fulfilled" ? openTasksResult.value.count || 0 : 0,
+      overdueTasks: overdueTasksResult.status === "fulfilled" ? overdueTasksResult.value.count || 0 : 0,
+      testCandidates: testCandidatesResult.status === "fulfilled" ? testCandidatesResult.value.count || 0 : 0,
     },
-    recentAudit: auditResult.data || [],
+    recentAudit: auditResult.status === "fulfilled" ? auditResult.value.data || [] : [],
     requestedBy: email,
   });
 }

@@ -32,6 +32,7 @@ export default function BeschikbaarheidForm({
   const [vanaf, setVanaf] = useState(initialData?.beschikbaar_vanaf || "");
   const [maxUren, setMaxUren] = useState(initialData?.max_uren_per_week || 40);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const toggleSlot = (dag: string, slot: string) => {
     setBeschikbaarheid(prev => ({
@@ -44,9 +45,15 @@ export default function BeschikbaarheidForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (vanaf && new Date(vanaf) < new Date(new Date().toDateString())) {
+      return;
+    }
     setSaving(true);
+    setSaved(false);
     try {
       await onSave({ beschikbaarheid, beschikbaar_vanaf: vanaf, max_uren_per_week: maxUren });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } finally {
       setSaving(false);
     }
@@ -60,7 +67,8 @@ export default function BeschikbaarheidForm({
           type="date"
           value={vanaf}
           onChange={e => setVanaf(e.target.value)}
-          className="w-full px-4 py-2 border rounded-lg"
+          min={new Date().toISOString().split('T')[0]}
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none transition-all"
           required
         />
       </div>
@@ -73,7 +81,7 @@ export default function BeschikbaarheidForm({
           onChange={e => setMaxUren(Number(e.target.value))}
           min="1"
           max="60"
-          className="w-full px-4 py-2 border rounded-lg"
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none transition-all"
         />
       </div>
 
@@ -109,6 +117,9 @@ export default function BeschikbaarheidForm({
       >
         {saving ? "Opslaan..." : "Beschikbaarheid Opslaan"}
       </button>
+      {saved && (
+        <p className="text-green-600 text-sm text-center font-medium">Beschikbaarheid opgeslagen!</p>
+      )}
     </form>
   );
 }

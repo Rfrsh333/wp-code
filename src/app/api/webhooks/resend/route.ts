@@ -44,8 +44,8 @@ function verifyWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.warn("⚠️ RESEND_WEBHOOK_SECRET not set - webhook signature verification disabled");
-    return true; // Allow in dev, but log warning
+    console.warn("RESEND_WEBHOOK_SECRET not set - rejecting webhook");
+    return false;
   }
 
   const hmac = createHmac("sha256", secret);
@@ -94,6 +94,13 @@ export async function POST(request: NextRequest) {
       case "email.bounced":
         updates.status = "bounced";
         updates.bounced_at = new Date(event.created_at).toISOString();
+        // Mark email as bounced in inschrijvingen for future send checks
+        if (event.data.to?.[0]) {
+          await supabaseAdmin
+            .from("inschrijvingen")
+            .update({ email_bounced: true })
+            .eq("email", event.data.to[0]);
+        }
         break;
 
       case "email.opened":

@@ -139,16 +139,15 @@ export default function MedewerkersTab() {
   };
 
   const deleteMedewerker = async (id: string) => {
-    if (confirm("Weet je zeker dat je deze medewerker wilt verwijderen?")) {
-      const headers = await getAuthHeader();
-      await fetch("/api/admin/medewerkers", {
-        method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", id }),
-      });
-      setFeedback("Medewerker verwijderd.");
-      fetchMedewerkers();
-    }
+    if (!window.confirm("Weet u zeker dat u deze medewerker wilt verwijderen?")) return;
+    const headers = await getAuthHeader();
+    await fetch("/api/admin/medewerkers", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", id }),
+    });
+    setFeedback("Medewerker verwijderd.");
+    fetchMedewerkers();
   };
 
   const generateTemporaryPassword = async () => {

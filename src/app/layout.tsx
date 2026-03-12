@@ -9,6 +9,8 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import StructuredData from "@/components/StructuredData";
 import GtmLoader from "@/components/GtmLoader";
 import CookieConsent from "@/components/CookieConsent";
+import { ToastProvider } from "@/components/Toast";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -64,14 +66,18 @@ export default function RootLayout({
         className={`${inter.variable} ${plusJakarta.variable} antialiased`}
       >
         <GtmLoader />
-        <GradientBackground />
-        <ClickSparkWrapper>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-        </ClickSparkWrapper>
-        <WhatsAppButton />
-        <CookieConsent />
+        <ToastProvider>
+          <ConfirmProvider>
+            <GradientBackground />
+            <ClickSparkWrapper>
+              <Header />
+              <main>{children}</main>
+              <Footer />
+            </ClickSparkWrapper>
+            <WhatsAppButton />
+            <CookieConsent />
+          </ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );

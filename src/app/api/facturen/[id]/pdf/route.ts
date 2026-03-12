@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .from("facturen")
     .select(`*, klant:klanten(*), regels:factuur_regels(*)`)
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (!factuur) {
     return NextResponse.json({ error: "Factuur niet gevonden" }, { status: 404 });

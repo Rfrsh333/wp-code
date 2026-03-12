@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const startTime = Date.now();
+  let processed = 0;
+  let failed = 0;
+
   const results: ReminderResult[] = [];
 
   // Haal facturen op die > 14 dagen geleden verzonden zijn en nog niet betaald
@@ -39,8 +43,12 @@ export async function GET(request: NextRequest) {
       (Date.now() - new Date(factuur.verzonden_at).getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    // Stuur alleen herinnering op dag 14, 28, 42, etc.
-    if (dagenSindsVerzonden % 14 !== 0) continue;
+    // Send reminders at ~14, ~28, and ~42 days (with 2-day window for cron timing)
+    const isReminderWindow =
+      (dagenSindsVerzonden >= 14 && dagenSindsVerzonden < 16) ||
+      (dagenSindsVerzonden >= 28 && dagenSindsVerzonden < 30) ||
+      (dagenSindsVerzonden >= 42 && dagenSindsVerzonden < 44);
+    if (!isReminderWindow) continue;
 
     try {
       await resend.emails.send({
@@ -65,10 +73,15 @@ export async function GET(request: NextRequest) {
       });
 
       results.push({ factuur_nummer: factuur.factuur_nummer, status: "herinnering_verzonden", dagen: dagenSindsVerzonden });
+      processed++;
     } catch (error) {
       results.push({ factuur_nummer: factuur.factuur_nummer, status: "error", error: String(error) });
+      failed++;
     }
   }
 
-  return NextResponse.json({ success: true, results });
+  const duration = Date.now() - startTime;
+  console.log(`[CRON herinneringen] Completed: ${processed} sent, ${failed} failed, ${duration}ms`);
+
+  return NextResponse.json({ success: true, results, metrics: { processed, failed, duration_ms: duration } });
 }

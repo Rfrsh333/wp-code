@@ -8,7 +8,7 @@ async function validateUploadToken(token: string): Promise<{ valid: boolean; kan
     .from("inschrijvingen")
     .select("id, onboarding_portal_token_expires_at")
     .eq("onboarding_portal_token", token)
-    .single();
+    .maybeSingle();
 
   if (!kandidaat) {
     return { valid: false };
@@ -44,7 +44,11 @@ export async function GET(request: NextRequest) {
       .from("inschrijvingen")
       .select("voornaam, achternaam, uitbetalingswijze")
       .eq("id", validation.kandidaatId)
-      .single();
+      .maybeSingle();
+
+    if (!kandidaat) {
+      return NextResponse.json({ error: "Kandidaat niet gevonden" }, { status: 404 });
+    }
 
     // Fetch already uploaded documents
     const { data: documents } = await supabaseAdmin
@@ -171,6 +175,40 @@ export async function POST(request: NextRequest) {
           laatste_contact_op: new Date().toISOString(),
         })
         .eq("id", validation.kandidaatId);
+    }
+
+    // Send confirmation email on first document upload
+    if (!existingDocs || existingDocs.length === 0) {
+      try {
+        const { data: kandidaatInfo } = await supabaseAdmin
+          .from("inschrijvingen")
+          .select("voornaam, email")
+          .eq("id", validation.kandidaatId)
+          .maybeSingle();
+
+        if (kandidaatInfo?.email) {
+          const { Resend } = await import("resend");
+          const resendClient = new Resend(process.env.RESEND_API_KEY);
+          await resendClient.emails.send({
+            from: "TopTalent <info@toptalentjobs.nl>",
+            to: [kandidaatInfo.email],
+            subject: "Documenten ontvangen - TopTalent Jobs",
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #F27501 0%, #d96800 100%); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0;">TopTalent</h1>
+              </div>
+              <div style="padding: 30px;">
+                <p>Beste ${kandidaatInfo.voornaam},</p>
+                <p>We hebben uw document(en) goed ontvangen. Ons team zal deze zo snel mogelijk beoordelen.</p>
+                <p>U ontvangt bericht zodra alles is goedgekeurd.</p>
+                <p style="color: #666; margin-top: 20px;">Met vriendelijke groet,<br><strong style="color: #F27501;">TopTalent Jobs</strong></p>
+              </div>
+            </div>`,
+          });
+        }
+      } catch (emailError) {
+        console.error("Failed to send document confirmation email:", emailError);
+      }
     }
 
     return NextResponse.json({

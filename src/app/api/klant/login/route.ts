@@ -3,6 +3,7 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
+import { loginSchema, formatZodErrors } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   // Rate limiting: 5 login attempts per 15 minutes per IP
@@ -28,10 +29,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email, wachtwoord } = await request.json();
+    const body = await request.json();
+    const { email, wachtwoord } = body;
 
-    if (!email || !wachtwoord) {
-      return NextResponse.json({ error: "Email en wachtwoord zijn verplicht" }, { status: 400 });
+    // Zod validatie
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
     }
 
     const { data: klant, error } = await supabase

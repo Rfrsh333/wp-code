@@ -37,12 +37,17 @@ export async function GET(request: NextRequest) {
     .limit(5);
 
   // Totalen
-  const [{ count: totaalMedewerkers }, { count: totaalKlanten }, { count: totaalDiensten }, { data: urenData }] = await Promise.all([
+  const [medewerkersResult, klantenResult, dienstenResult, urenResult] = await Promise.allSettled([
     supabaseAdmin.from("medewerkers").select("*", { count: "exact", head: true }).eq("status", "actief"),
     supabaseAdmin.from("klanten").select("*", { count: "exact", head: true }).eq("status", "actief"),
     supabaseAdmin.from("diensten").select("*", { count: "exact", head: true }),
     supabaseAdmin.from("uren_registraties").select("gewerkte_uren").eq("status", "goedgekeurd"),
   ]);
+
+  const totaalMedewerkers = medewerkersResult.status === "fulfilled" ? medewerkersResult.value.count : 0;
+  const totaalKlanten = klantenResult.status === "fulfilled" ? klantenResult.value.count : 0;
+  const totaalDiensten = dienstenResult.status === "fulfilled" ? dienstenResult.value.count : 0;
+  const urenData = urenResult.status === "fulfilled" ? urenResult.value.data : [];
 
   const totaalUren = (urenData || []).reduce((sum, u) => sum + (u.gewerkte_uren || 0), 0);
   const totaalOmzet = Object.values(omzetPerMaand).reduce((a, b) => a + b, 0);

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { verifyAdmin } from "@/lib/admin-auth";
 import { createHash } from "crypto";
 
 // Generate a secure token based on kandidaat email and a secret
 function generateToken(email: string, kandidaatId: string): string {
-  const secret = process.env.KANDIDAAT_TOKEN_SECRET || "fallback-secret-change-in-production";
+  const secret = process.env.KANDIDAAT_TOKEN_SECRET;
+  if (!secret) throw new Error("[SECURITY] KANDIDAAT_TOKEN_SECRET environment variable is required");
   const data = `${email}:${kandidaatId}:${secret}`;
   return createHash("sha256").update(data).digest("hex").substring(0, 32);
 }
@@ -73,6 +75,13 @@ export async function GET(request: NextRequest) {
 // POST endpoint to generate and send a status link via email
 export async function POST(request: NextRequest) {
   try {
+    // KRITIEK: Verify admin before generating status tokens
+    const { isAdmin, email } = await verifyAdmin(request);
+    if (!isAdmin) {
+      console.warn(`[SECURITY] Unauthorized kandidaat status token generation attempt by: ${email || 'unknown'}`);
+      return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+    }
+
     const { kandidaat_id } = await request.json();
 
     if (!kandidaat_id) {
@@ -84,7 +93,7 @@ export async function POST(request: NextRequest) {
       .from("inschrijvingen")
       .select("id, email, voornaam, achternaam")
       .eq("id", kandidaat_id)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !kandidaat) {
       return NextResponse.json({ error: "Kandidaat niet gevonden" }, { status: 404 });

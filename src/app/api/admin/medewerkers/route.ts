@@ -86,6 +86,9 @@ export async function POST(request: NextRequest) {
   if (action === "create" || action === "update") {
     const payload: Record<string, unknown> = { ...data };
     if (data.wachtwoord) {
+      if (data.wachtwoord.length < 8) {
+        return NextResponse.json({ error: "Wachtwoord moet minimaal 8 tekens bevatten" }, { status: 400 });
+      }
       payload.wachtwoord = await bcrypt.hash(data.wachtwoord, 10);
     } else {
       delete payload.wachtwoord;

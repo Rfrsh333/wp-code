@@ -4,6 +4,7 @@ import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-lim
 import { isAdminEmail } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyTOTP, verifyBackupCode } from "@/lib/two-factor";
+import { loginSchema, formatZodErrors } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -27,13 +28,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email, password, twoFactorCode, isBackupCode = false } = await request.json();
+    const body = await request.json();
+    const { email, password, twoFactorCode, isBackupCode = false } = body;
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "E-mail en wachtwoord zijn verplicht" },
-        { status: 400 }
-      );
+    // Zod validatie
+    const parsed = loginSchema.safeParse({ email, wachtwoord: password });
+    if (!parsed.success) {
+      return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
