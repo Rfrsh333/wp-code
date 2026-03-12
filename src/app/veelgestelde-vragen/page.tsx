@@ -350,13 +350,13 @@ function SubmitQuestionSection({ toast }: { toast: ReturnType<typeof useToast> }
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/faq", {
+      const res = await fetch("/api/tickets/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: question.trim(),
-          email: email.trim() || undefined,
-          name: name.trim() || undefined,
+          visitor_email: email.trim() || undefined,
+          visitor_name: name.trim() || undefined,
         }),
       });
 
