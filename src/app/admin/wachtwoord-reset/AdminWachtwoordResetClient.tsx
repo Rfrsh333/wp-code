@@ -2,17 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
-
-// Direct Supabase client for recovery — NOT through the Proxy (which can
-// interfere with the auto-detection of hash-fragment tokens).
-function getRecoveryClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { detectSessionInUrl: true, flowType: "implicit" } }
-  );
-}
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export default function AdminWachtwoordResetClient() {
   const router = useRouter();
@@ -21,83 +11,88 @@ export default function AdminWachtwoordResetClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState("");
+  const [debugInfo, setDebugInfo] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clientRef = useRef<any>(null);
 
   useEffect(() => {
-    // Create a fresh Supabase client that will auto-detect the hash tokens
-    const sb = getRecoveryClient();
-    clientRef.current = sb;
+    const init = async () => {
+      // 1. Read hash BEFORE anything else can clear it
+      const rawHash = window.location.hash;
+      const hash = rawHash.replace(/^#/, "");
 
-    const { data: { subscription } } = sb.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("[WACHTWOORD RESET] Auth event:", event, "Session:", !!session);
-        if (session && (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-          setIsReady(true);
-          setError("");
-        }
-      }
-    );
+      console.log("[RESET] Raw hash length:", rawHash.length);
+      console.log("[RESET] Hash starts with:", rawHash.substring(0, 50));
 
-    // Fallback: manually parse hash and set session after a delay
-    const fallbackTimer = setTimeout(async () => {
-      if (isReady) return;
-
-      // Check if session was already established
-      const { data } = await sb.auth.getSession();
-      console.log("[WACHTWOORD RESET] Fallback session check:", !!data.session);
-      if (data.session) {
-        setIsReady(true);
-        return;
-      }
-
-      // Manual fallback: parse hash ourselves
-      const hash = window.location.hash.replace(/^#/, "");
       if (!hash) {
-        console.log("[WACHTWOORD RESET] No hash fragment found");
-        setError("Geen resetlink gevonden. Ga naar de inlogpagina en vraag een nieuwe aan.");
+        setError("Geen recovery tokens gevonden in de URL.");
+        setDebugInfo("Hash was leeg. Mogelijk is de link al eerder gebruikt.");
         return;
       }
 
-      const hashParams = new URLSearchParams(hash);
-      const accessToken = hashParams.get("access_token");
-      const refreshToken = hashParams.get("refresh_token");
-      const hashType = hashParams.get("type");
+      // 2. Parse hash params
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const tokenType = params.get("type");
 
-      console.log("[WACHTWOORD RESET] Manual parse - type:", hashType, "hasAccess:", !!accessToken, "hasRefresh:", !!refreshToken);
+      console.log("[RESET] Parsed - type:", tokenType, "access:", !!accessToken, "refresh:", !!refreshToken);
 
-      if (accessToken && refreshToken && hashType === "recovery") {
-        const { error: sessionError } = await sb.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
+      if (!accessToken || !refreshToken) {
+        setError("Recovery tokens ontbreken in de URL.");
+        setDebugInfo(`type=${tokenType}, access=${!!accessToken}, refresh=${!!refreshToken}`);
+        return;
+      }
 
-        if (sessionError) {
-          console.error("[WACHTWOORD RESET] Manual setSession failed:", sessionError.message);
-          setError(`Resetlink kon niet worden geverifieerd: ${sessionError.message}`);
-          return;
+      if (tokenType !== "recovery") {
+        setError("Dit is geen recovery link.");
+        setDebugInfo(`type=${tokenType} (verwacht: recovery)`);
+        return;
+      }
+
+      // 3. Clean hash from URL immediately to prevent double-processing
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // 4. Create Supabase client with NO auto-detection
+      const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            detectSessionInUrl: false,
+            persistSession: true,
+            flowType: "implicit",
+          },
         }
+      );
+      clientRef.current = sb;
 
-        setIsReady(true);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else {
-        setError("Deze resetlink is ongeldig of verlopen.");
+      // 5. Set session manually with the parsed tokens
+      console.log("[RESET] Calling setSession...");
+      const { data, error: sessionError } = await sb.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (sessionError) {
+        console.error("[RESET] setSession error:", sessionError);
+        setError(`Kon sessie niet instellen: ${sessionError.message}`);
+        setDebugInfo(`Error code: ${sessionError.status || "unknown"}`);
+        return;
       }
-    }, 2000);
 
-    // Final safety net
-    const finalTimer = setTimeout(() => {
-      if (!isReady && !error) {
-        setError("Er ging iets mis bij het laden van de resetpagina. Vraag een nieuwe link aan.");
+      if (!data.session) {
+        setError("Sessie kon niet worden aangemaakt.");
+        setDebugInfo("setSession gaf geen error maar ook geen sessie terug.");
+        return;
       }
-    }, 8000);
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(fallbackTimer);
-      clearTimeout(finalTimer);
+      console.log("[RESET] Session set successfully, user:", data.session.user.email);
+      setIsReady(true);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    void init();
+  }, []);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -113,7 +108,7 @@ export default function AdminWachtwoordResetClient() {
       return;
     }
 
-    const sb = clientRef.current;
+    const sb = clientRef.current as SupabaseClient;
     if (!sb) return;
 
     setIsLoading(true);
@@ -140,17 +135,27 @@ export default function AdminWachtwoordResetClient() {
           <p className="text-neutral-500 mt-2">Stel direct een nieuw wachtwoord in voor uw adminaccount</p>
         </div>
 
-        {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-5">{error}</div>}
+        {error && (
+          <div className="mb-5">
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
+            {debugInfo && (
+              <p className="text-xs text-neutral-400 mt-2 text-center font-mono">{debugInfo}</p>
+            )}
+          </div>
+        )}
 
         {!isReady && !error ? (
           <div className="flex flex-col items-center gap-3 py-8">
             <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
-            <p className="text-neutral-500 text-sm">Resetlink controleren...</p>
+            <p className="text-neutral-500 text-sm">Resetlink verwerken...</p>
           </div>
         ) : null}
 
         {isReady ? (
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm">
+              Link geverifieerd! Stel hieronder uw nieuwe wachtwoord in.
+            </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Nieuw wachtwoord</label>
               <input
