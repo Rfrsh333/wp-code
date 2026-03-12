@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import withBundleAnalyzer from "@next/bundle-analyzer";
 
 const securityHeaders = [
   {
@@ -27,9 +28,9 @@ const securityHeaders = [
     value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
   },
   {
-    // Forceert HTTPS voor 1 jaar
+    // Forceert HTTPS voor 2 jaar + preload
     key: 'Strict-Transport-Security',
-    value: 'max-age=31536000; includeSubDomains',
+    value: 'max-age=63072000; includeSubDomains; preload',
   },
   {
     // Content Security Policy - beschermt tegen XSS
@@ -48,6 +49,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   trailingSlash: true, // Fix voor redirect errors op diensten pagina's
+  productionBrowserSourceMaps: false,
+  compress: true,
+  poweredByHeader: false,
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
@@ -55,6 +59,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizeCss: true,
+    optimizePackageImports: ['recharts', 'zod', '@supabase/supabase-js'],
   },
   async headers() {
     return [
@@ -62,6 +67,27 @@ const nextConfig: NextConfig = {
         // Pas security headers toe op alle routes
         source: '/:path*',
         headers: securityHeaders,
+      },
+      {
+        // Cache statische images voor 1 jaar
+        source: '/images/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        // Cache Next.js static assets voor 1 jaar
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        // Cache fonts voor 1 jaar
+        source: '/fonts/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
       },
     ];
   },
@@ -138,4 +164,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const analyzeBundles = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
+export default analyzeBundles(nextConfig);

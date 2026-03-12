@@ -7,17 +7,20 @@ import GtmLoader from "@/components/GtmLoader";
 import CookieConsent from "@/components/CookieConsent";
 import { ToastProvider } from "@/components/Toast";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
   subsets: ["latin"],
   display: "swap",
+  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -69,6 +72,7 @@ export default function RootLayout({
             <CookieConsent />
           </ConfirmProvider>
         </ToastProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
