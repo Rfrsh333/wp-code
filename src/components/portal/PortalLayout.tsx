@@ -9,6 +9,7 @@ export interface PortalTab {
   label: string;
   icon: React.ReactNode;
   badge?: number;
+  group?: string;
 }
 
 interface PortalLayoutProps {

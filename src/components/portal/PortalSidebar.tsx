@@ -14,6 +14,35 @@ interface PortalSidebarProps {
   onToggleCollapse: () => void;
 }
 
+function NavButton({ tab, activeTab, collapsed, onTabChange }: { tab: PortalTab; activeTab: string; collapsed: boolean; onTabChange: (id: string) => void }) {
+  return (
+    <button
+      onClick={() => onTabChange(tab.id)}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors relative ${
+        activeTab === tab.id
+          ? "bg-[#F27501]/10 text-[#F27501]"
+          : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+      }`}
+      title={collapsed ? tab.label : undefined}
+    >
+      <span className="flex-shrink-0 w-5 h-5">{tab.icon}</span>
+      {!collapsed && (
+        <>
+          <span className="flex-1 text-left truncate">{tab.label}</span>
+          {tab.badge !== undefined && tab.badge > 0 && (
+            <span className="bg-[#F27501] text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+              {tab.badge > 99 ? "99+" : tab.badge}
+            </span>
+          )}
+        </>
+      )}
+      {collapsed && tab.badge !== undefined && tab.badge > 0 && (
+        <span className="absolute top-1 right-1 w-2 h-2 bg-[#F27501] rounded-full" />
+      )}
+    </button>
+  );
+}
+
 export default function PortalSidebar({
   tabs,
   activeTab,
@@ -54,34 +83,43 @@ export default function PortalSidebar({
 
       {/* Navigation items */}
       <nav className="flex-1 py-4 overflow-y-auto">
-        <div className="space-y-1 px-3">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? "bg-[#F27501]/10 text-[#F27501]"
-                  : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
-              }`}
-              title={collapsed ? tab.label : undefined}
-            >
-              <span className="flex-shrink-0 w-5 h-5">{tab.icon}</span>
-              {!collapsed && (
-                <>
-                  <span className="flex-1 text-left truncate">{tab.label}</span>
-                  {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className="bg-[#F27501] text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                      {tab.badge > 99 ? "99+" : tab.badge}
-                    </span>
-                  )}
-                </>
-              )}
-              {collapsed && tab.badge !== undefined && tab.badge > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#F27501] rounded-full" />
-              )}
-            </button>
-          ))}
+        <div className="px-3">
+          {(() => {
+            const hasGroups = tabs.some((t) => t.group);
+            if (!hasGroups) {
+              return (
+                <div className="space-y-1">
+                  {tabs.map((tab) => (
+                    <NavButton key={tab.id} tab={tab} activeTab={activeTab} collapsed={collapsed} onTabChange={onTabChange} />
+                  ))}
+                </div>
+              );
+            }
+            const groups: { name: string; items: typeof tabs }[] = [];
+            const seen = new Set<string>();
+            for (const tab of tabs) {
+              const g = tab.group || "";
+              if (!seen.has(g)) {
+                seen.add(g);
+                groups.push({ name: g, items: tabs.filter((t) => (t.group || "") === g) });
+              }
+            }
+            return groups.map((group) => (
+              <div key={group.name} className="mb-4">
+                {group.name && !collapsed && (
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider px-3 mb-2">
+                    {group.name}
+                  </p>
+                )}
+                {collapsed && group.name && <div className="border-t border-neutral-100 my-2" />}
+                <div className="space-y-1">
+                  {group.items.map((tab) => (
+                    <NavButton key={tab.id} tab={tab} activeTab={activeTab} collapsed={collapsed} onTabChange={onTabChange} />
+                  ))}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       </nav>
 
