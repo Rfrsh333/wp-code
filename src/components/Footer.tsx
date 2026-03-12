@@ -82,6 +82,9 @@ export default function Footer() {
               <Link href="/over-ons" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Over Ons
               </Link>
+              <Link href="/veelgestelde-vragen" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Veelgestelde Vragen
+              </Link>
               <Link href="/contact" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Contact
               </Link>
