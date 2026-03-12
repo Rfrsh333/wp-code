@@ -280,8 +280,8 @@ export default function MedewerkersTab() {
       </div>
 
       {/* Medewerkers list */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full min-w-[700px]">
           <thead className="bg-neutral-50 border-b border-neutral-100">
             <tr>
               <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Naam</th>

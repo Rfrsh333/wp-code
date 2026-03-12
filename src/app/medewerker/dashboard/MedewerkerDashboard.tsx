@@ -328,26 +328,26 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       {/* Uren Modal */}
       {urenModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-sm w-full p-6">
+          <div className="bg-white rounded-xl max-w-sm w-full p-4 sm:p-6">
             <h3 className="text-lg font-bold mb-4">Uren invullen</h3>
             <p className="text-sm text-neutral-500 mb-4">{urenModal.klant_naam} - {formatDate(urenModal.datum)}</p>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium mb-1">Starttijd</label>
-                <input type="time" value={urenForm.start} onChange={(e) => setUrenForm({ ...urenForm, start: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <input type="time" value={urenForm.start} onChange={(e) => setUrenForm({ ...urenForm, start: e.target.value })} className="w-full px-3 py-3 border rounded-lg text-base" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Eindtijd</label>
-                <input type="time" value={urenForm.eind} onChange={(e) => setUrenForm({ ...urenForm, eind: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <input type="time" value={urenForm.eind} onChange={(e) => setUrenForm({ ...urenForm, eind: e.target.value })} className="w-full px-3 py-3 border rounded-lg text-base" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Pauze (minuten)</label>
-                <input type="number" value={urenForm.pauze} onChange={(e) => setUrenForm({ ...urenForm, pauze: e.target.value })} className="w-full px-3 py-2 border rounded-lg" min="0" step="5" />
+                <input type="number" value={urenForm.pauze} onChange={(e) => setUrenForm({ ...urenForm, pauze: e.target.value })} className="w-full px-3 py-3 border rounded-lg text-base" min="0" step="5" />
               </div>
             </div>
             <div className="flex gap-2 mt-6">
-              <button onClick={() => setUrenModal(null)} className="flex-1 py-2 border rounded-lg">Annuleren</button>
-              <button onClick={submitUren} className="flex-1 py-2 bg-[#F27501] text-white rounded-lg font-medium">Versturen</button>
+              <button onClick={() => setUrenModal(null)} className="flex-1 py-3 border rounded-lg">Annuleren</button>
+              <button onClick={submitUren} className="flex-1 py-3 bg-[#F27501] text-white rounded-lg font-medium">Versturen</button>
             </div>
           </div>
         </div>

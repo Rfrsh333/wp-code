@@ -259,13 +259,13 @@ export default function AdminSettingsPage() {
                 <p className="text-sm text-neutral-600 mb-4">
                   Open je authenticator app en scan deze QR code:
                 </p>
-                <div className="bg-white p-4 rounded-lg border-2 border-neutral-200 inline-block">
+                <div className="bg-white p-4 rounded-lg border-2 border-neutral-200 w-full max-w-[280px]">
                   <Image
                     src={qrCode}
                     alt="2FA QR Code"
                     width={256}
                     height={256}
-                    className="w-64 h-64"
+                    className="w-full h-auto"
                     unoptimized
                   />
                 </div>
@@ -290,7 +290,7 @@ export default function AdminSettingsPage() {
                   Deze codes kun je gebruiken als je geen toegang hebt tot je authenticator app.
                   Elke code werkt maar 1 keer. Bewaar ze veilig!
                 </p>
-                <div className="bg-white p-4 rounded border border-yellow-300 grid grid-cols-2 gap-2 font-mono text-sm">
+                <div className="bg-white p-4 rounded border border-yellow-300 grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-sm">
                   {backupCodes.map((code, i) => (
                     <div key={i} className="text-neutral-700">{code}</div>
                   ))}

@@ -31,12 +31,12 @@ export default function PortalBottomNav({ tabs, activeTab, onTabChange }: Portal
               <div className="relative">
                 <span className="w-5 h-5 block">{tab.icon}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-[#F27501] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center leading-none">
+                  <span className="absolute -top-1.5 -right-2.5 bg-[#F27501] text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center leading-none">
                     {tab.badge > 99 ? "99+" : tab.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-medium truncate max-w-full">{tab.label}</span>
+              <span className="text-xs font-medium truncate max-w-full">{tab.label}</span>
             </button>
           ))}
           {hasMore && (
@@ -51,7 +51,7 @@ export default function PortalBottomNav({ tabs, activeTab, onTabChange }: Portal
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
                 </svg>
               </span>
-              <span className="text-[10px] font-medium">Meer</span>
+              <span className="text-xs font-medium">Meer</span>
             </button>
           )}
         </div>

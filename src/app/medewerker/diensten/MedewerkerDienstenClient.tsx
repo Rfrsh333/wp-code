@@ -243,7 +243,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="bg-neutral-50 rounded-xl p-3">
                     <p className="text-xs text-neutral-500 mb-1">Uw uren (origineel)</p>
                     <p className="font-medium">{a.start_tijd?.slice(0,5)} - {a.eind_tijd?.slice(0,5)}</p>
@@ -457,9 +457,9 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
 
       {detailModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] sm:max-h-[90vh] overflow-auto">
             {detailModal.afbeelding && (
-              <div className="relative h-56">
+              <div className="relative h-40 sm:h-56">
                 <Image
                   src={detailModal.afbeelding}
                   alt={detailModal.klant_naam}

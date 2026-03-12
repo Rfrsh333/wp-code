@@ -1457,8 +1457,8 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  <table className="w-full">
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Bedrijf</th>
@@ -1665,8 +1665,8 @@ export default function AdminDashboard() {
                   );
                 })()}
 
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  <table className="w-full">
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
                         <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(filteredInschrijvingen.map(i => i.id))} checked={selectedIds.size === filteredInschrijvingen.length && filteredInschrijvingen.length > 0} className="w-4 h-4 rounded" /></th>
@@ -1777,8 +1777,8 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  <table className="w-full">
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
                         <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(contactBerichten.map(c => c.id))} checked={selectedIds.size === contactBerichten.length && contactBerichten.length > 0} className="w-4 h-4 rounded" /></th>
@@ -1873,8 +1873,8 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  <table className="w-full">
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
                         <th className="px-6 py-4"><input type="checkbox" onChange={() => selectAll(calculatorLeads.map(c => c.id))} checked={selectedIds.size === calculatorLeads.length && calculatorLeads.length > 0} className="w-4 h-4 rounded" /></th>
