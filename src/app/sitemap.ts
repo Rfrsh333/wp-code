@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next'
 import { cityOrder } from '@/data/locations'
 import { getAllBlogSlugs } from '@/data/blogArticles'
+import { supabaseAdmin } from '@/lib/supabase'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.toptalentjobs.nl'
 
   // Static pages - gebruik vaste datum voor stabiele crawl signalen
@@ -134,5 +135,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
-  return [...staticPages, ...locationPages, ...servicePages, ...blogPages]
+  // FAQ hub + individual FAQ pages
+  const faqHubPage: MetadataRoute.Sitemap = [{
+    url: `${baseUrl}/veelgestelde-vragen`,
+    lastModified: contentDate,
+    changeFrequency: 'weekly' as const,
+    priority: 0.9,
+  }]
+
+  let faqPages: MetadataRoute.Sitemap = []
+  try {
+    const { data: faqSlugs } = await supabaseAdmin
+      .from('faq_items')
+      .select('slug')
+      .eq('status', 'published')
+
+    if (faqSlugs) {
+      faqPages = faqSlugs.map((item) => ({
+        url: `${baseUrl}/veelgestelde-vragen/${item.slug}`,
+        lastModified: contentDate,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
+    }
+  } catch {
+    // Silently fail if Supabase is unreachable during build
+  }
+
+  return [...staticPages, ...locationPages, ...servicePages, ...blogPages, ...faqHubPage, ...faqPages]
 }

@@ -81,7 +81,7 @@ export default function FAQTab() {
     return res.ok;
   };
 
-  const handleSave = async (item: Partial<FAQItem> & { question: string; answer: string; category: string }, id?: string) => {
+  const handleSave = async (item: { question: string; answer: string; category: string; status?: string; priority?: number }, id?: string) => {
     const success = await apiCall({
       action: id ? "update" : "create",
       id,
@@ -102,7 +102,7 @@ export default function FAQTab() {
     const ok = await confirm({
       title: "FAQ verwijderen?",
       message: "Deze actie kan niet ongedaan worden gemaakt.",
-      confirmText: "Verwijderen",
+      confirmLabel: "Verwijderen",
       variant: "danger",
     });
     if (!ok) return;
@@ -303,13 +303,13 @@ function FAQForm({
   onCancel,
 }: {
   item: FAQItem | null;
-  onSave: (data: { question: string; answer: string; category: string; status: string; priority: number }) => void;
+  onSave: (data: { question: string; answer: string; category: string; status: "published" | "draft"; priority: number }) => void;
   onCancel: () => void;
 }) {
   const [question, setQuestion] = useState(item?.question || "");
   const [answer, setAnswer] = useState(item?.answer || "");
   const [category, setCategory] = useState(item?.category || CATEGORIES[0]);
-  const [status, setStatus] = useState(item?.status || "draft");
+  const [status, setStatus] = useState<"published" | "draft">(item?.status === "published" ? "published" : "draft");
   const [priority, setPriority] = useState(item?.priority || 0);
 
   return (
@@ -357,7 +357,7 @@ function FAQForm({
             <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => setStatus(e.target.value as "published" | "draft")}
               className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white"
             >
               <option value="published">Gepubliceerd</option>
