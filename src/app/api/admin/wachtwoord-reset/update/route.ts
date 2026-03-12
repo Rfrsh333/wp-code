@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabase";
+import { isAdminEmail } from "@/lib/admin-auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const { access_token, refresh_token, password } = await request.json();
+    const { access_token, password } = await request.json();
 
-    if (!access_token || !refresh_token || !password) {
+    if (!access_token || !password) {
       return NextResponse.json(
-        { error: "access_token, refresh_token en password zijn verplicht" },
+        { error: "access_token en password zijn verplicht" },
         { status: 400 }
       );
     }
@@ -20,30 +20,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the recovery token by creating a temporary client and setting the session
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-    const tempClient = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false, detectSessionInUrl: false },
-    });
-
-    const { data: sessionData, error: sessionError } = await tempClient.auth.setSession({
-      access_token,
-      refresh_token,
-    });
-
-    if (sessionError || !sessionData.user) {
-      console.error("[WACHTWOORD RESET] Session verification failed:", sessionError?.message);
+    // Decode the JWT to get the user ID (without verifying signature -
+    // Supabase admin.updateUserById will reject if the user doesn't exist)
+    let payload: { sub?: string; email?: string; exp?: number };
+    try {
+      const parts = access_token.split(".");
+      if (parts.length !== 3) throw new Error("Invalid JWT format");
+      payload = JSON.parse(Buffer.from(parts[1], "base64url").toString());
+    } catch {
       return NextResponse.json(
-        { error: "Ongeldige of verlopen resetlink. Vraag een nieuwe aan." },
+        { error: "Ongeldig token formaat" },
+        { status: 400 }
+      );
+    }
+
+    // Check expiration
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return NextResponse.json(
+        { error: "Deze resetlink is verlopen. Vraag een nieuwe aan." },
         { status: 401 }
+      );
+    }
+
+    const userId = payload.sub;
+    const userEmail = payload.email;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Geen gebruiker gevonden in token" },
+        { status: 400 }
+      );
+    }
+
+    // Verify it's an admin email
+    if (userEmail && !isAdminEmail(userEmail)) {
+      return NextResponse.json(
+        { error: "Dit account is geen admin account" },
+        { status: 403 }
+      );
+    }
+
+    // Verify user exists via admin API
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+
+    if (userError || !userData.user) {
+      console.error("[WACHTWOORD RESET] User not found:", userError?.message);
+      return NextResponse.json(
+        { error: "Gebruiker niet gevonden" },
+        { status: 404 }
       );
     }
 
     // Update password using admin client
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      sessionData.user.id,
+      userId,
       { password }
     );
 
@@ -55,7 +85,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[WACHTWOORD RESET] Password updated for user: ${sessionData.user.email}`);
+    console.log(`[WACHTWOORD RESET] Password updated for user: ${userData.user.email}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
