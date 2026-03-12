@@ -18,7 +18,27 @@ export default function AdminWachtwoordResetClient() {
       const code = searchParams.get("code");
       const tokenHash = searchParams.get("token_hash");
       const type = searchParams.get("type");
+      const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const hashType = hashParams.get("type");
 
+      if (accessToken && refreshToken && hashType === "recovery") {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (sessionError) {
+          setError("Deze resetlink is ongeldig of verlopen.");
+          return;
+        }
+
+        if (typeof window !== "undefined" && window.location.hash) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } else 
       if (code) {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
         if (exchangeError) {
