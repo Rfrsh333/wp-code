@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
     const beschikbaarheid = (formData.get("beschikbaarheid") as string) || "";
     const beschikbaarVanaf = (formData.get("beschikbaarVanaf") as string) || "";
     const maxUrenPerWeek = (formData.get("maxUrenPerWeek") as string) || "";
+    const referralCode = (formData.get("referralCode") as string) || "";
     const eigenVervoer = formData.get("eigenVervoer") === "true";
     const functies = formData
       .getAll("functies")
@@ -224,11 +225,29 @@ export async function POST(request: NextRequest) {
       beschikbaar_vanaf: beschikbaarVanaf,
       max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
       onboarding_status: "nieuw", // Explicitly set initial status
+      referral_code: referralCode || null,
     }).select().single();
 
     if (dbError) {
       console.error("Supabase error:", dbError);
       return NextResponse.json({ error: "Database fout" }, { status: 500 });
+    }
+
+    // Referral tracking: koppel aan referrer
+    if (insertedData && referralCode) {
+      try {
+        await supabase.from("referrals")
+          .update({
+            referred_id: insertedData.id,
+            referred_naam: volledigeNaam,
+            referred_email: email,
+          })
+          .eq("referral_code", referralCode)
+          .eq("status", "pending")
+          .is("referred_id", null);
+      } catch (refError) {
+        console.error("Referral tracking error:", refError);
+      }
     }
 
     // ✨ Send bevestigingsmail to kandidaat

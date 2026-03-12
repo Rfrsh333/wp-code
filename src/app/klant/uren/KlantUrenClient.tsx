@@ -85,7 +85,17 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [upcomingDiensten, setUpcomingDiensten] = useState<UpcomingDienst[]>([]);
   const [recentFacturen, setRecentFacturen] = useState<Factuur[]>([]);
-  const [beoordeelModal, setBeoordeelModal] = useState<{ open: boolean; item: TeBeoordelen | null; score: number; opmerking: string }>({ open: false, item: null, score: 5, opmerking: "" });
+  const [beoordeelModal, setBeoordeelModal] = useState<{
+    open: boolean;
+    item: TeBeoordelen | null;
+    score: number;
+    opmerking: string;
+    score_punctualiteit: number;
+    score_professionaliteit: number;
+    score_vaardigheden: number;
+    score_communicatie: number;
+    zou_opnieuw_boeken: boolean;
+  }>({ open: false, item: null, score: 5, opmerking: "", score_punctualiteit: 5, score_professionaliteit: 5, score_vaardigheden: 5, score_communicatie: 5, zou_opnieuw_boeken: true });
   const [modal, setModal] = useState<AanpassingModal>({
     open: false,
     uren: null,
@@ -131,10 +141,15 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           medewerker_id: beoordeelModal.item.medewerker_id,
           score: beoordeelModal.score,
           opmerking: beoordeelModal.opmerking,
+          score_punctualiteit: beoordeelModal.score_punctualiteit,
+          score_professionaliteit: beoordeelModal.score_professionaliteit,
+          score_vaardigheden: beoordeelModal.score_vaardigheden,
+          score_communicatie: beoordeelModal.score_communicatie,
+          zou_opnieuw_boeken: beoordeelModal.zou_opnieuw_boeken,
         }),
       });
       toast.success("Beoordeling verstuurd");
-      setBeoordeelModal({ open: false, item: null, score: 5, opmerking: "" });
+      setBeoordeelModal({ open: false, item: null, score: 5, opmerking: "", score_punctualiteit: 5, score_professionaliteit: 5, score_vaardigheden: 5, score_communicatie: 5, zou_opnieuw_boeken: true });
       fetchUren();
     } catch {
       toast.error("Beoordeling versturen mislukt");
@@ -269,6 +284,15 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         </svg>
       ),
       badge: teBeoordeelen.length > 0 ? teBeoordeelen.length : undefined,
+    },
+    {
+      id: "referral",
+      label: "Verwijs & Bespaar",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
     },
   ];
 
@@ -528,6 +552,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
             )}
 
             {/* Tab: Beoordelingen */}
+            {activeTab === "referral" && <KlantReferralSection />}
+
             {activeTab === "beoordelingen" && (
               <div className="space-y-6">
                 <div>
@@ -555,7 +581,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                             <p className="text-sm text-neutral-500">{item.locatie} · {formatDate(item.datum)}</p>
                           </div>
                           <button
-                            onClick={() => setBeoordeelModal({ open: true, item, score: 5, opmerking: "" })}
+                            onClick={() => setBeoordeelModal({ open: true, item, score: 5, opmerking: "", score_punctualiteit: 5, score_professionaliteit: 5, score_vaardigheden: 5, score_communicatie: 5, zou_opnieuw_boeken: true })}
                             className="px-4 py-2 bg-[#F27501] text-white rounded-xl text-sm font-medium hover:bg-[#d96800] transition"
                           >
                             Beoordelen
@@ -574,11 +600,13 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       {/* Beoordeling Modal */}
       {beoordeelModal.open && beoordeelModal.item && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-neutral-900 mb-2">Medewerker Beoordelen</h3>
             <p className="text-sm text-neutral-500 mb-4">{beoordeelModal.item.medewerker_naam} · {beoordeelModal.item.locatie}</p>
+
+            {/* Algemene score */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Score</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Algemene score</label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <button key={s} onClick={() => setBeoordeelModal({ ...beoordeelModal, score: s })}
@@ -588,6 +616,43 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 ))}
               </div>
             </div>
+
+            {/* Categorie scores */}
+            <div className="mb-4 space-y-3">
+              <p className="text-sm font-medium text-neutral-700">Score per categorie</p>
+              {([
+                { key: "score_punctualiteit" as const, label: "Op tijd" },
+                { key: "score_professionaliteit" as const, label: "Professionaliteit" },
+                { key: "score_vaardigheden" as const, label: "Vaardigheden" },
+                { key: "score_communicatie" as const, label: "Communicatie" },
+              ]).map(({ key, label }) => (
+                <div key={key} className="flex items-center justify-between">
+                  <span className="text-sm text-neutral-600">{label}</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button key={s} onClick={() => setBeoordeelModal({ ...beoordeelModal, [key]: s })}
+                        className={`w-7 h-7 rounded-full text-sm transition ${beoordeelModal[key] >= s ? "bg-yellow-400 text-white" : "bg-neutral-100 text-neutral-400"}`}>
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Zou opnieuw boeken */}
+            <div className="mb-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={beoordeelModal.zou_opnieuw_boeken}
+                  onChange={(e) => setBeoordeelModal({ ...beoordeelModal, zou_opnieuw_boeken: e.target.checked })}
+                  className="w-5 h-5 rounded border-neutral-300 text-[#F27501] focus:ring-[#F27501]"
+                />
+                <span className="text-sm font-medium text-neutral-700">Ik zou deze medewerker opnieuw boeken</span>
+              </label>
+            </div>
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-neutral-700 mb-1">Opmerking (optioneel)</label>
               <textarea value={beoordeelModal.opmerking} onChange={(e) => setBeoordeelModal({ ...beoordeelModal, opmerking: e.target.value })}
@@ -681,6 +746,88 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         </div>
       )}
     </>
+  );
+}
+
+/* Klant Referral Section */
+function KlantReferralSection() {
+  const [data, setData] = useState<{ referral_code: string; referral_link: string; stats: { totaal_verwezen: number; qualified: number; totaal_korting: number }; referrals: { naam: string; status: string; created_at: string }[] } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/klant/referral").then(r => r.json()).then(d => setData(d)).catch(() => {});
+  }, []);
+
+  if (!data) return <div className="flex justify-center py-12"><div className="animate-spin w-6 h-6 border-2 border-[#F27501] border-t-transparent rounded-full" /></div>;
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">Verwijs & Bespaar</h2>
+        <p className="mt-1 text-sm text-neutral-500">Verwijs een collega-ondernemer en ontvang €100 korting!</p>
+      </div>
+
+      <div className="bg-gradient-to-r from-[#F27501] to-[#d96800] rounded-2xl p-6 text-white">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-3xl">🎁</span>
+          <h3 className="text-xl font-bold">€100 korting per verwijzing!</h3>
+        </div>
+        <p className="text-white/80 text-sm">Wanneer uw verwezen collega de eerste dienst boekt, ontvangt u €100 korting op uw volgende factuur.</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+          <p className="text-2xl font-bold text-neutral-900">{data.stats.totaal_verwezen}</p>
+          <p className="text-xs text-neutral-500">Verwezen</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+          <p className="text-2xl font-bold text-green-600">{data.stats.qualified}</p>
+          <p className="text-xs text-neutral-500">Gekwalificeerd</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+          <p className="text-2xl font-bold text-[#F27501]">€{data.stats.totaal_korting}</p>
+          <p className="text-xs text-neutral-500">Korting verdiend</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <h3 className="font-bold text-neutral-900 mb-3">Uw verwijzingslink</h3>
+        <div className="flex gap-2">
+          <div className="flex-1 bg-neutral-50 rounded-xl px-4 py-3 text-sm text-neutral-600 font-mono truncate border border-neutral-200">
+            {data.referral_link}
+          </div>
+          <button
+            onClick={() => { navigator.clipboard.writeText(data.referral_link); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+            className={`px-4 py-3 rounded-xl font-medium text-sm transition-colors ${copied ? "bg-green-500 text-white" : "bg-[#F27501] text-white hover:bg-[#d96800]"}`}
+          >
+            {copied ? "✓ Gekopieerd" : "Kopieer"}
+          </button>
+        </div>
+      </div>
+
+      {data.referrals.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 className="font-bold text-neutral-900 mb-3">Uw verwijzingen</h3>
+          <div className="space-y-2">
+            {data.referrals.map((r, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-neutral-50 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-neutral-900">{r.naam}</p>
+                  <p className="text-xs text-neutral-500">{new Date(r.created_at).toLocaleDateString("nl-NL")}</p>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  r.status === "rewarded" ? "bg-[#F27501]/10 text-[#F27501]" :
+                  r.status === "qualified" ? "bg-green-100 text-green-700" :
+                  "bg-orange-100 text-orange-700"
+                }`}>
+                  {r.status === "rewarded" ? "Uitbetaald" : r.status === "qualified" ? "Gekwalificeerd" : "In afwachting"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

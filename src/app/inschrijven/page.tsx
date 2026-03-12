@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Section from "@/components/Section";
 import InschrijfFormulier from "@/components/forms/InschrijfFormulier";
 
@@ -33,7 +34,9 @@ export default function InschrijvenPage() {
             ))}
           </div>
 
-          <InschrijfFormulier />
+          <Suspense fallback={<div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" /></div>}>
+            <InschrijfFormulier />
+          </Suspense>
 
           {/* Trust badges */}
           <div className="mt-16 pt-12 border-t border-neutral-200/50">

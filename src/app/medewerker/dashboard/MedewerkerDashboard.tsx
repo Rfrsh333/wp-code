@@ -10,6 +10,7 @@ import UrenTab from "@/components/medewerker/UrenTab";
 import ProfielPage from "@/components/medewerker/ProfielPage";
 import FinancieelOverzicht from "@/components/medewerker/FinancieelOverzicht";
 import DocumentenPage from "@/components/medewerker/DocumentenPage";
+import ReferralPage from "@/components/medewerker/ReferralPage";
 import { useToast } from "@/components/ui/Toast";
 
 interface Medewerker {
@@ -62,7 +63,7 @@ interface KlantAanpassing {
   locatie: string;
 }
 
-type TabId = "diensten" | "uren" | "beschikbaarheid" | "profiel" | "financieel" | "documenten";
+type TabId = "diensten" | "uren" | "beschikbaarheid" | "profiel" | "financieel" | "documenten" | "referral";
 
 export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewerker }) {
   const router = useRouter();
@@ -257,6 +258,12 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       group: "DOCUMENTEN",
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
     },
+    {
+      id: "referral",
+      label: "Verwijs & Verdien",
+      group: "ACCOUNT",
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+    },
   ];
 
   return (
@@ -322,6 +329,8 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
           {activeTab === "financieel" && <FinancieelOverzicht />}
 
           {activeTab === "documenten" && <DocumentenPage />}
+
+          {activeTab === "referral" && <ReferralPage />}
         </>
       )}
 

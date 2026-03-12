@@ -1,0 +1,237 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAdmin } from "@/lib/admin-auth";
+import { supabaseAdmin } from "@/lib/supabase";
+import { applyTemplate } from "@/lib/agents/outreach-email";
+import { Resend } from "resend";
+
+export async function GET(request: NextRequest) {
+  const { isAdmin, email } = await verifyAdmin(request);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized campagnes access by: ${email || "unknown"}`);
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("acquisitie_campagnes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ data });
+}
+
+export async function POST(request: NextRequest) {
+  const { isAdmin, email } = await verifyAdmin(request);
+  if (!isAdmin) {
+    console.warn(`[SECURITY] Unauthorized campagne mutation by: ${email || "unknown"}`);
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const { action, id, ...campagneData } = body;
+
+    // Update campagne
+    if (action === "update" && id) {
+      const { error } = await supabaseAdmin
+        .from("acquisitie_campagnes")
+        .update(campagneData)
+        .eq("id", id);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // Delete campagne
+    if (action === "delete" && id) {
+      const { error } = await supabaseAdmin
+        .from("acquisitie_campagnes")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // Send campagne
+    if (action === "send" && id) {
+      return await sendCampagne(id);
+    }
+
+    // Add leads to campagne
+    if (action === "add_leads" && id && body.lead_ids) {
+      const inserts = body.lead_ids.map((leadId: string) => ({
+        campagne_id: id,
+        lead_id: leadId,
+        status: "queued",
+        next_send_date: new Date().toISOString().split("T")[0],
+      }));
+
+      const { error } = await supabaseAdmin
+        .from("acquisitie_campagne_leads")
+        .upsert(inserts, { onConflict: "campagne_id,lead_id" });
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, added: inserts.length });
+    }
+
+    // Get campagne leads
+    if (action === "get_leads" && id) {
+      const { data, error } = await supabaseAdmin
+        .from("acquisitie_campagne_leads")
+        .select("*, acquisitie_leads(*)")
+        .eq("campagne_id", id);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ data });
+    }
+
+    // Create new campagne
+    if (!campagneData.naam) {
+      return NextResponse.json({ error: "Naam is vereist" }, { status: 400 });
+    }
+
+    const { data: newCampagne, error } = await supabaseAdmin
+      .from("acquisitie_campagnes")
+      .insert(campagneData)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ data: newCampagne }, { status: 201 });
+  } catch (error) {
+    console.error("Campagne error:", error);
+    return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
+  }
+}
+
+async function sendCampagne(campagneId: string) {
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
+  }
+
+  const { data: campagne } = await supabaseAdmin
+    .from("acquisitie_campagnes")
+    .select("*")
+    .eq("id", campagneId)
+    .single();
+
+  if (!campagne) {
+    return NextResponse.json({ error: "Campagne niet gevonden" }, { status: 404 });
+  }
+
+  // Get queued leads
+  const { data: queuedLeads } = await supabaseAdmin
+    .from("acquisitie_campagne_leads")
+    .select("*, acquisitie_leads(*)")
+    .eq("campagne_id", campagneId)
+    .eq("status", "queued");
+
+  if (!queuedLeads?.length) {
+    return NextResponse.json({ error: "Geen leads in de wachtrij" }, { status: 400 });
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  let sent = 0;
+
+  for (const cl of queuedLeads) {
+    const lead = cl.acquisitie_leads;
+    if (!lead?.email) continue;
+
+    const variables: Record<string, string> = {
+      bedrijfsnaam: lead.bedrijfsnaam || "",
+      contactpersoon: lead.contactpersoon || "",
+      stad: lead.stad || "",
+      branche: lead.branche || "",
+    };
+
+    const onderwerp = applyTemplate(campagne.onderwerp_template || "", variables);
+    const inhoud = applyTemplate(campagne.inhoud_template || "", variables);
+
+    try {
+      const { data: emailResult } = await resend.emails.send({
+        from: "TopTalent Jobs <info@toptalentjobs.nl>",
+        to: [lead.email],
+        subject: onderwerp,
+        html: inhoud.replace(/\n/g, "<br>"),
+      });
+
+      // Log contactmoment
+      await supabaseAdmin.from("acquisitie_contactmomenten").insert({
+        lead_id: lead.id,
+        type: "email",
+        richting: "uitgaand",
+        onderwerp,
+        inhoud,
+        email_id: emailResult?.id || null,
+      });
+
+      // Update campagne lead status
+      await supabaseAdmin
+        .from("acquisitie_campagne_leads")
+        .update({
+          status: "sent",
+          emails_sent_count: (cl.emails_sent_count || 0) + 1,
+          current_drip_step: (cl.current_drip_step || 0) + 1,
+          next_send_date: campagne.is_drip_campaign
+            ? getNextDripDate(campagne.drip_sequence, (cl.current_drip_step || 0) + 1)
+            : null,
+        })
+        .eq("id", cl.id);
+
+      // Update lead stats
+      await supabaseAdmin
+        .from("acquisitie_leads")
+        .update({
+          emails_verzonden_count: (lead.emails_verzonden_count || 0) + 1,
+          laatste_email_verzonden_op: new Date().toISOString(),
+          laatste_contact_datum: new Date().toISOString(),
+          laatste_contact_type: "email",
+          pipeline_stage: lead.pipeline_stage === "nieuw" ? "benaderd" : lead.pipeline_stage,
+        })
+        .eq("id", lead.id);
+
+      sent++;
+    } catch (err) {
+      console.error(`Email naar ${lead.email} mislukt:`, err);
+    }
+  }
+
+  // Update campagne stats
+  await supabaseAdmin
+    .from("acquisitie_campagnes")
+    .update({
+      emails_sent: (campagne.emails_sent || 0) + sent,
+      status: "actief",
+    })
+    .eq("id", campagneId);
+
+  return NextResponse.json({ success: true, sent });
+}
+
+function getNextDripDate(
+  sequence: Array<{ dag: number }> | null,
+  currentStep: number
+): string | null {
+  if (!sequence || !Array.isArray(sequence)) return null;
+  const nextStep = sequence[currentStep];
+  if (!nextStep) return null;
+
+  const nextDate = new Date();
+  nextDate.setDate(nextDate.getDate() + (nextStep.dag || 3));
+  return nextDate.toISOString().split("T")[0];
+}

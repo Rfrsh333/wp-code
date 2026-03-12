@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const { data: profiel } = await supabaseAdmin
       .from("medewerkers")
-      .select("stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon")
+      .select("stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count")
       .eq("id", medewerker.id)
       .single();
 
@@ -40,12 +40,23 @@ export async function GET(request: NextRequest) {
       ? Math.round(((completedDiensten || 0) / totalDiensten) * 100)
       : 0;
 
+    // Get average rating from beoordelingen
+    const { data: beoordelingen } = await supabaseAdmin
+      .from("beoordelingen")
+      .select("score")
+      .eq("medewerker_id", medewerker.id);
+
+    const scores = beoordelingen?.map(b => b.score).filter(Boolean) || [];
+    const avgRating = scores.length > 0
+      ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 10) / 10
+      : 0;
+
     return NextResponse.json({
       profiel: profiel || {},
       stats: {
         opkomst_percentage: opkomst,
         op_tijd_percentage: opkomst > 0 ? Math.min(opkomst + 2, 100) : 0,
-        rating: 0,
+        rating: avgRating,
       },
     }, {
       headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },

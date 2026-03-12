@@ -4,20 +4,33 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import MedewerkersTab from "./MedewerkersTab";
-import DienstenTab from "./DienstenTab";
-import UrenTab from "./UrenTab";
-import FacturenTab from "./FacturenTab";
-import StatsTab from "./StatsTab";
-import KandidaatWorkflowPanel from "./KandidaatWorkflowPanel";
-import MatchingTab from "./MatchingTab";
-import AITab from "./AITab";
+import dynamic from "next/dynamic";
 
 import Pagination from "@/components/ui/Pagination";
 import DropdownMenu from "@/components/ui/DropdownMenu";
 import { useToast } from "@/components/ui/Toast";
 
-type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen" | "matching" | "ai";
+const TabSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-8 w-48 bg-neutral-200 rounded" />
+    <div className="h-64 bg-neutral-100 rounded-xl" />
+  </div>
+);
+
+const MedewerkersTab = dynamic(() => import("./MedewerkersTab"), { loading: () => <TabSkeleton />, ssr: false });
+const DienstenTab = dynamic(() => import("./DienstenTab"), { loading: () => <TabSkeleton />, ssr: false });
+const UrenTab = dynamic(() => import("./UrenTab"), { loading: () => <TabSkeleton />, ssr: false });
+const FacturenTab = dynamic(() => import("./FacturenTab"), { loading: () => <TabSkeleton />, ssr: false });
+const StatsTab = dynamic(() => import("./StatsTab"), { loading: () => <TabSkeleton />, ssr: false });
+const KandidaatWorkflowPanel = dynamic(() => import("./KandidaatWorkflowPanel"), { ssr: false });
+const MatchingTab = dynamic(() => import("./MatchingTab"), { loading: () => <TabSkeleton />, ssr: false });
+const AITab = dynamic(() => import("./AITab"), { loading: () => <TabSkeleton />, ssr: false });
+const AcquisitieTab = dynamic(() => import("./AcquisitieTab"), { loading: () => <TabSkeleton />, ssr: false });
+const OnboardingPipelineView = dynamic(() => import("./onboarding/PipelineView"), { loading: () => <TabSkeleton />, ssr: false });
+const KlantenTab = dynamic(() => import("./KlantenTab"), { loading: () => <TabSkeleton />, ssr: false });
+const ReferralsTab = dynamic(() => import("./ReferralsTab"), { loading: () => <TabSkeleton />, ssr: false });
+
+type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen" | "matching" | "ai" | "acquisitie" | "klanten" | "referrals";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -99,6 +112,11 @@ interface Inschrijving {
   // Lead tracking
   lead_source?: string;
   campaign_name?: string;
+  // Onboarding autopilot
+  onboarding_auto?: boolean;
+  onboarding_step?: string | null;
+  ai_screening_score?: number | null;
+  laatste_onboarding_actie?: string | null;
 }
 
 type KandidaatDocumentStatus = "ontvangen" | "goedgekeurd" | "afgekeurd";
@@ -273,6 +291,7 @@ export default function AdminDashboard() {
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [inschrijvingStatusFilter, setInschrijvingStatusFilter] = useState<OnboardingStatus | "all">("all");
+  const [inschrijvingView, setInschrijvingView] = useState<"tabel" | "pipeline">("tabel");
   const [stats, setStats] = useState<Stats>({
     aanvragen: { total: 0, nieuw: 0 },
     inschrijvingen: { total: 0, nieuw: 0 },
@@ -1045,6 +1064,33 @@ export default function AdminDashboard() {
         </svg>
       ),
     },
+    {
+      id: "acquisitie",
+      label: "Acquisitie",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+    },
+    {
+      id: "klanten",
+      label: "Klanten",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+    },
+    {
+      id: "referrals",
+      label: "Referrals",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -1546,7 +1592,29 @@ export default function AdminDashboard() {
             {activeTab === "inschrijvingen" && (
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900">Inschrijvingen</h2>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-2xl font-bold text-neutral-900">Inschrijvingen</h2>
+                    <div className="flex bg-neutral-100 rounded-xl p-1">
+                      <button
+                        onClick={() => setInschrijvingView("tabel")}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          inschrijvingView === "tabel" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+                        }`}
+                      >
+                        <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                        Tabel
+                      </button>
+                      <button
+                        onClick={() => setInschrijvingView("pipeline")}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          inschrijvingView === "pipeline" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+                        }`}
+                      >
+                        <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>
+                        Pipeline
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <select
                       value={inschrijvingStatusFilter}
@@ -1685,6 +1753,24 @@ export default function AdminDashboard() {
                   );
                 })()}
 
+                {/* Pipeline View */}
+                {inschrijvingView === "pipeline" && (
+                  <OnboardingPipelineView
+                    inschrijvingen={filteredInschrijvingen as never[]}
+                    onSelectKandidaat={(id) => {
+                      const item = filteredInschrijvingen.find((i) => i.id === id);
+                      if (item) {
+                        setSelectedItem(item);
+                        setDetailType("inschrijvingen");
+                        setInschrijvingNotitieDraft(item.interne_notitie || "");
+                      }
+                    }}
+                    onRefresh={fetchData}
+                  />
+                )}
+
+                {/* Tabel View */}
+                {inschrijvingView === "tabel" && (<>
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
                   <table className="w-full min-w-[600px]">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
@@ -1775,6 +1861,7 @@ export default function AdminDashboard() {
                   itemsPerPage={ITEMS_PER_PAGE}
                   onPageChange={setCurrentPage}
                 />
+                </>)}
               </div>
             )}
 
@@ -1869,6 +1956,15 @@ export default function AdminDashboard() {
 
             {/* AI Agents Tab */}
             {activeTab === "ai" && <AITab />}
+
+            {/* Acquisitie Tab */}
+            {activeTab === "acquisitie" && <AcquisitieTab />}
+
+            {/* Klanten Tab */}
+            {activeTab === "klanten" && <KlantenTab />}
+
+            {/* Referrals Tab */}
+            {activeTab === "referrals" && <ReferralsTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { useToast } from "@/components/ui/Toast";
 
@@ -306,7 +306,9 @@ export default function InschrijfFormulier() {
   const [draftRestored, setDraftRestored] = useState(false);
   const { executeRecaptcha } = useRecaptcha();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+  const refCode = searchParams.get("ref") || "";
   const totalSteps = 4;
 
   // Restore draft from localStorage
@@ -440,6 +442,9 @@ export default function InschrijfFormulier() {
 
       if (recaptchaToken) {
         submitData.append("recaptchaToken", recaptchaToken);
+      }
+      if (refCode) {
+        submitData.append("referralCode", refCode);
       }
 
       const response = await fetch("/api/inschrijven", {

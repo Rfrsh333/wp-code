@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getLocation } from "@/data/locations";
 import Section from "@/components/Section/Section";
 import LocatieSubNav from "@/components/LocatieSubNav";
+
+export const revalidate = 86400;
 import RelatedLocations from "@/components/RelatedLocations";
 import PremiumImage from "@/components/PremiumImage/PremiumImage";
 

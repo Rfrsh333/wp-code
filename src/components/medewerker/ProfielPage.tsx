@@ -23,12 +23,62 @@ interface Medewerker {
   factuur_stad?: string | null;
   btw_nummer?: string | null;
   iban?: string | null;
+  badge?: string | null;
+  gemiddelde_score?: number | null;
+  aantal_beoordelingen?: number | null;
+  totaal_diensten?: number | null;
+  streak_count?: number | null;
 }
 
 interface ProfielStats {
   opkomst_percentage: number;
   op_tijd_percentage: number;
   rating: number;
+}
+
+interface BadgeInfo {
+  badge: string;
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+}
+
+const BADGE_CONFIG: Record<string, BadgeInfo> = {
+  starter: { badge: "starter", label: "Starter", icon: "🌱", color: "text-neutral-600", bgColor: "bg-neutral-100" },
+  rising: { badge: "rising", label: "Rising Star", icon: "📈", color: "text-blue-600", bgColor: "bg-blue-50" },
+  star: { badge: "star", label: "Star", icon: "⭐", color: "text-yellow-600", bgColor: "bg-yellow-50" },
+  toptalent: { badge: "toptalent", label: "TopTalent", icon: "🏆", color: "text-[#F27501]", bgColor: "bg-[#F27501]/10" },
+};
+
+function getNextBadge(current: string, diensten: number, score: number): { label: string; progress: number; hint: string } | null {
+  if (current === "toptalent") return null;
+  if (current === "star") {
+    const dienstenProgress = Math.min(diensten / 50, 1);
+    const scoreOk = score >= 4.25;
+    return {
+      label: "TopTalent",
+      progress: Math.round(dienstenProgress * 100),
+      hint: `${diensten}/50 diensten${scoreOk ? "" : `, gem. ${score.toFixed(1)}/4.25 nodig`}`,
+    };
+  }
+  if (current === "rising") {
+    const dienstenProgress = Math.min(diensten / 20, 1);
+    const scoreOk = score >= 4;
+    return {
+      label: "Star",
+      progress: Math.round(dienstenProgress * 100),
+      hint: `${diensten}/20 diensten${scoreOk ? "" : `, gem. ${score.toFixed(1)}/4.0 nodig`}`,
+    };
+  }
+  // starter
+  const dienstenProgress = Math.min(diensten / 5, 1);
+  const scoreOk = score >= 3.5;
+  return {
+    label: "Rising Star",
+    progress: Math.round(dienstenProgress * 100),
+    hint: `${diensten}/5 diensten${scoreOk ? "" : `, gem. ${score.toFixed(1)}/3.5 nodig`}`,
+  };
 }
 
 interface Werkervaring {
@@ -203,6 +253,51 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
         <StatsBadge label="Op tijd" value={`${stats.op_tijd_percentage}%`} color="blue" />
         <StatsBadge label="Rating" value={stats.rating > 0 ? `★ ${stats.rating.toFixed(1)}` : "—"} color="yellow" />
       </div>
+
+      {/* Badge & Gamification */}
+      {(() => {
+        const currentBadge = BADGE_CONFIG[profielData.badge || "starter"] || BADGE_CONFIG.starter;
+        const totaalDiensten = profielData.totaal_diensten || 0;
+        const gemScore = profielData.gemiddelde_score || 0;
+        const nextBadge = getNextBadge(currentBadge.badge, totaalDiensten, gemScore);
+
+        return (
+          <div className={`${currentBadge.bgColor} rounded-2xl p-5 mb-4`}>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-3xl">{currentBadge.icon}</span>
+              <div>
+                <h3 className={`text-lg font-bold ${currentBadge.color}`}>{currentBadge.label}</h3>
+                <p className="text-sm text-neutral-500">
+                  {totaalDiensten} diensten afgerond
+                  {gemScore > 0 ? ` · ★ ${gemScore.toFixed(1)}` : ""}
+                </p>
+              </div>
+            </div>
+
+            {nextBadge && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-neutral-600">Volgende: {nextBadge.label}</span>
+                  <span className="text-xs text-neutral-500">{nextBadge.progress}%</span>
+                </div>
+                <div className="w-full bg-white/60 rounded-full h-2.5">
+                  <div
+                    className="bg-[#F27501] h-2.5 rounded-full transition-all duration-500"
+                    style={{ width: `${nextBadge.progress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-neutral-500 mt-1.5">{nextBadge.hint}</p>
+              </div>
+            )}
+
+            {!nextBadge && (
+              <p className="text-sm text-[#F27501] font-medium">
+                Je hebt het hoogste niveau bereikt!
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Vaardigheden */}
       <div className="mb-4">

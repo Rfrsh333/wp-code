@@ -3,6 +3,8 @@ import Section from "@/components/Section";
 import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 
+export const revalidate = 86400;
+
 export default function DienstenPage() {
   return (
     <>

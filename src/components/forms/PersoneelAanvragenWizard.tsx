@@ -33,6 +33,7 @@ interface FormData {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  referralCode?: string;
 }
 
 const initialFormData: FormData = {
@@ -137,6 +138,8 @@ export default function PersoneelAanvragenWizard() {
     const utmMedium = searchParams.get('utm_medium') || '';
     const utmCampaign = searchParams.get('utm_campaign') || '';
 
+    const refCode = searchParams.get('ref') || '';
+
     setFormData(prev => ({
       ...prev,
       leadSource: source,
@@ -144,6 +147,7 @@ export default function PersoneelAanvragenWizard() {
       utmSource: utmSource,
       utmMedium: utmMedium,
       utmCampaign: utmCampaign,
+      referralCode: refCode,
     }));
   }, [searchParams]);
 

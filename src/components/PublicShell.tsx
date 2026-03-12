@@ -1,13 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ClickSparkWrapper from "@/components/ClickSparkWrapper";
-import GradientBackground from "@/components/animations/GradientBackground";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
-const PORTAL_PREFIXES = ["/admin", "/klant", "/medewerker", "/kandidaat"];
+const GradientBackground = dynamic(() => import("@/components/animations/GradientBackground"), { ssr: false });
+const WhatsAppButton = dynamic(() => import("@/components/WhatsAppButton"), { ssr: false });
+
+const PORTAL_PREFIXES = ["/admin", "/klant", "/medewerker", "/kandidaat", "/spoeddienst"];
 
 export default function PublicShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

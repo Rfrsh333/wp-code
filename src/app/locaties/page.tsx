@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { getAllLocations } from "@/data/locations";
 
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
   title: "Locaties - Horeca Uitzendbureau | TopTalent Jobs",
   description:

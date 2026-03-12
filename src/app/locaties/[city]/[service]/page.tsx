@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getLocation, cityOrder } from "@/data/locations";
 import Section from "@/components/Section/Section";
 import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
+
+export const revalidate = 86400;
 import PremiumImage from "@/components/PremiumImage";
 import FAQ from "@/components/FAQ";
 import LocatieSubNav from "@/components/LocatieSubNav";

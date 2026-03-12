@@ -19,6 +19,20 @@ interface Dienst {
   status: "open" | "vol" | "bezig" | "afgerond" | "geannuleerd";
   notities: string | null;
   created_at: string;
+  is_spoeddienst: boolean;
+  spoeddienst_token: string | null;
+  spoeddienst_whatsapp_tekst: string | null;
+}
+
+interface SpoedResponse {
+  id: string;
+  dienst_id: string;
+  token: string;
+  medewerker_id: string | null;
+  naam: string;
+  telefoon: string;
+  status: "beschikbaar" | "bevestigd" | "afgewezen";
+  created_at: string;
 }
 
 interface Aanmelding {
@@ -82,10 +96,16 @@ export default function DienstenTab() {
     uurtarief: "",
     afbeelding: "",
     notities: "",
+    is_spoeddienst: false,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [filter, setFilter] = useState<"alle" | "open" | "vol" | "afgerond">("alle");
   const [zoekterm, setZoekterm] = useState("");
+  // Spoeddienst state
+  const [showSpoedModal, setShowSpoedModal] = useState(false);
+  const [spoedDienst, setSpoedDienst] = useState<Dienst | null>(null);
+  const [spoedResponses, setSpoedResponses] = useState<SpoedResponse[]>([]);
+  const [spoedCopied, setSpoedCopied] = useState(false);
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -138,6 +158,7 @@ export default function DienstenTab() {
       uurtarief: "",
       afbeelding: "",
       notities: "",
+      is_spoeddienst: false,
     });
     setShowModal(true);
   };
@@ -157,6 +178,7 @@ export default function DienstenTab() {
       aantal_nodig: dienst.aantal_nodig.toString(),
       uurtarief: dienst.uurtarief?.toString() || "",
       notities: dienst.notities || "",
+      is_spoeddienst: dienst.is_spoeddienst || false,
     });
     setShowModal(true);
   };
@@ -185,6 +207,7 @@ export default function DienstenTab() {
       uurtarief: formData.uurtarief ? parseFloat(formData.uurtarief) : null,
       afbeelding: formData.afbeelding || null,
       notities: formData.notities || null,
+      is_spoeddienst: formData.is_spoeddienst,
     };
 
     await fetch("/api/admin/diensten", {
@@ -259,6 +282,47 @@ export default function DienstenTab() {
 
   const formatTime = (time: string) => {
     return time.substring(0, 5);
+  };
+
+  // Spoeddienst functies
+  const openSpoedModal = async (dienst: Dienst) => {
+    setSpoedDienst(dienst);
+    setSpoedCopied(false);
+    const headers = await getAuthHeader();
+    const res = await fetch("/api/admin/diensten", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_spoeddienst_responses", dienst_id: dienst.id }),
+    });
+    const { data } = await res.json();
+    setSpoedResponses(data || []);
+    setShowSpoedModal(true);
+  };
+
+  const copyWhatsApp = async (tekst: string) => {
+    await navigator.clipboard.writeText(tekst);
+    setSpoedCopied(true);
+    setTimeout(() => setSpoedCopied(false), 2000);
+  };
+
+  const updateSpoedResponse = async (responseId: string, status: "bevestigd" | "afgewezen") => {
+    const headers = await getAuthHeader();
+    await fetch("/api/admin/diensten", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update_spoeddienst_response", id: responseId, data: { status } }),
+    });
+    // Refresh responses
+    if (spoedDienst) {
+      const res = await fetch("/api/admin/diensten", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "get_spoeddienst_responses", dienst_id: spoedDienst.id }),
+      });
+      const { data } = await res.json();
+      setSpoedResponses(data || []);
+    }
+    fetchDiensten();
   };
 
   const filteredDiensten = diensten
@@ -355,13 +419,18 @@ export default function DienstenTab() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold capitalize">
                       {dienst.functie}
                     </span>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColors[dienst.status]}`}>
                       {statusLabels[dienst.status]}
                     </span>
+                    {dienst.is_spoeddienst && (
+                      <span className="px-2.5 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                        SPOED
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-lg font-bold text-neutral-900 mt-2">{dienst.klant_naam}</h3>
                 </div>
@@ -394,12 +463,25 @@ export default function DienstenTab() {
                 <p>👥 {dienst.aantal_nodig} nodig</p>
               </div>
 
-              <button
-                onClick={() => openAanmeldingenModal(dienst)}
-                className="w-full px-4 py-2 bg-neutral-100 text-neutral-700 font-medium rounded-xl hover:bg-neutral-200 transition-colors text-sm"
-              >
-                Aanmeldingen bekijken
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={() => openAanmeldingenModal(dienst)}
+                  className="w-full px-4 py-2 bg-neutral-100 text-neutral-700 font-medium rounded-xl hover:bg-neutral-200 transition-colors text-sm"
+                >
+                  Aanmeldingen bekijken
+                </button>
+                {dienst.is_spoeddienst && dienst.spoeddienst_token && (
+                  <button
+                    onClick={() => openSpoedModal(dienst)}
+                    className="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-xl hover:bg-green-600 transition-colors text-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                    </svg>
+                    Spoeddienst beheren
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -588,6 +670,32 @@ export default function DienstenTab() {
                     placeholder="Extra informatie voor medewerkers..."
                   />
                 </div>
+
+                {/* Spoeddienst toggle */}
+                <div className="col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-neutral-200 hover:bg-orange-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_spoeddienst}
+                      onChange={(e) => setFormData({ ...formData, is_spoeddienst: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_spoeddienst ? "bg-[#F27501]" : "bg-neutral-300"}`}>
+                      <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formData.is_spoeddienst ? "translate-x-5" : ""}`} />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-neutral-900">Spoeddienst</span>
+                      <p className="text-xs text-neutral-500">
+                        Genereert een WhatsApp bericht met link om snel medewerkers te vinden
+                      </p>
+                    </div>
+                    {formData.is_spoeddienst && (
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-bold animate-pulse">
+                        SPOED
+                      </span>
+                    )}
+                  </label>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -711,6 +819,156 @@ export default function DienstenTab() {
             <div className="p-6 border-t border-neutral-100">
               <button
                 onClick={() => setShowAanmeldingenModal(false)}
+                className="w-full px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Spoeddienst Modal */}
+      {showSpoedModal && spoedDienst && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-6 border-b border-neutral-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-bold">SPOED</span>
+                  <div>
+                    <h3 className="text-xl font-bold text-neutral-900">Spoeddienst beheren</h3>
+                    <p className="text-sm text-neutral-500">
+                      {spoedDienst.klant_naam} - {formatDate(spoedDienst.datum)} · {formatTime(spoedDienst.start_tijd)} - {formatTime(spoedDienst.eind_tijd)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSpoedModal(false)}
+                  className="p-2 hover:bg-neutral-100 rounded-xl transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* WhatsApp tekst */}
+            <div className="p-6 border-b border-neutral-100">
+              <h4 className="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                </svg>
+                WhatsApp bericht
+              </h4>
+              <div className="bg-neutral-50 rounded-xl p-4 font-mono text-sm whitespace-pre-wrap text-neutral-700 mb-3">
+                {spoedDienst.spoeddienst_whatsapp_tekst || "Geen tekst beschikbaar"}
+              </div>
+              <button
+                onClick={() => spoedDienst.spoeddienst_whatsapp_tekst && copyWhatsApp(spoedDienst.spoeddienst_whatsapp_tekst)}
+                className={`w-full px-4 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
+                  spoedCopied
+                    ? "bg-green-500 text-white"
+                    : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                }`}
+              >
+                {spoedCopied ? (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Gekopieerd!
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                    Kopieer naar WhatsApp
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Responses */}
+            <div className="p-6">
+              <h4 className="text-sm font-semibold text-neutral-700 mb-3">
+                Reacties ({spoedResponses.length})
+              </h4>
+
+              {spoedResponses.length === 0 ? (
+                <div className="text-center py-8 text-neutral-500">
+                  <p>Nog geen reacties ontvangen</p>
+                  <p className="text-xs mt-1">Deel het WhatsApp bericht om reacties te ontvangen</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {spoedResponses.map((response) => (
+                    <div
+                      key={response.id}
+                      className={`p-4 rounded-xl border ${
+                        response.status === "bevestigd"
+                          ? "border-green-200 bg-green-50"
+                          : response.status === "afgewezen"
+                          ? "border-red-200 bg-red-50"
+                          : "border-orange-200 bg-orange-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-neutral-900">{response.naam}</p>
+                          <p className="text-sm text-neutral-500">{response.telefoon}</p>
+                          <p className="text-xs text-neutral-400 mt-1">
+                            {new Date(response.created_at).toLocaleString("nl-NL", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {response.medewerker_id && (
+                              <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                                Bekend
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        {response.status === "beschikbaar" ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => updateSpoedResponse(response.id, "bevestigd")}
+                              className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                            >
+                              Bevestig
+                            </button>
+                            <button
+                              onClick={() => updateSpoedResponse(response.id, "afgewezen")}
+                              className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+                            >
+                              Afwijzen
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                              response.status === "bevestigd"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {response.status === "bevestigd" ? "Bevestigd" : "Afgewezen"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-neutral-100">
+              <button
+                onClick={() => setShowSpoedModal(false)}
                 className="w-full px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
               >
                 Sluiten

@@ -20,6 +20,20 @@ const ALLOWED_TABLES = [
   "factuur_regels",
   "kandidaat_contactmomenten",
   "kandidaat_taken",
+  "acquisitie_leads",
+  "acquisitie_contactmomenten",
+  "acquisitie_campagnes",
+  "acquisitie_campagne_leads",
+  "acquisitie_sales_reps",
+  "acquisitie_concurrenten",
+  "acquisitie_win_loss",
+  "acquisitie_prediction_log",
+  "acquisitie_segmenten",
+  "acquisitie_tag_definities",
+  "acquisitie_kosten",
+  "acquisitie_deals",
+  "offertes",
+  "referrals",
 ] as const;
 
 type AllowedTable = typeof ALLOWED_TABLES[number];
@@ -49,8 +63,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Table not allowed" }, { status: 403 });
   }
 
-  const { data } = await supabaseAdmin.from(table).select("*").order("created_at", { ascending: false });
-  return NextResponse.json({ data });
+  const { data } = await supabaseAdmin.from(table).select("*").order("created_at", { ascending: false }).limit(500);
+  return NextResponse.json({ data }, {
+    headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+  });
 }
 
 export async function POST(request: NextRequest) {

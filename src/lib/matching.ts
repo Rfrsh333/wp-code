@@ -11,6 +11,8 @@ interface Medewerker {
   admin_score_aanwezigheid: number | null;
   admin_score_vaardigheden: number | null;
   profile_photo_url: string | null;
+  badge: string | null;
+  gemiddelde_score: number | null;
 }
 
 interface Beschikbaarheid {
@@ -39,6 +41,7 @@ export interface MatchResult {
     beschikbaarheid_score: number;
     admin_score: number;
     locatie_score: number;
+    badge_bonus: number;
   };
   beschikbaar: boolean;
 }
@@ -75,6 +78,7 @@ function calculateMatchScore(
     beschikbaarheid_score: 0,
     admin_score: 0,
     locatie_score: 0,
+    badge_bonus: 0,
   };
 
   // 1. Functie match (40%)
@@ -131,11 +135,18 @@ function calculateMatchScore(
     }
   }
 
+  // 5. Badge bonus (extra punten bovenop de 100)
+  const badge = medewerker.badge || "starter";
+  if (badge === "toptalent") breakdown.badge_bonus = 10;
+  else if (badge === "star") breakdown.badge_bonus = 5;
+  else if (badge === "rising") breakdown.badge_bonus = 2;
+
   const totalScore =
     breakdown.functie_score +
     breakdown.beschikbaarheid_score +
     breakdown.admin_score +
-    breakdown.locatie_score;
+    breakdown.locatie_score +
+    breakdown.badge_bonus;
 
   return {
     medewerker,
@@ -166,7 +177,7 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
   // Haal actieve medewerkers op
   const { data: medewerkers } = await supabaseAdmin
     .from("medewerkers")
-    .select("id, naam, email, telefoon, functie, status, stad, admin_score_aanwezigheid, admin_score_vaardigheden, profile_photo_url")
+    .select("id, naam, email, telefoon, functie, status, stad, admin_score_aanwezigheid, admin_score_vaardigheden, profile_photo_url, badge, gemiddelde_score")
     .eq("status", "actief");
 
   if (!medewerkers || medewerkers.length === 0) {

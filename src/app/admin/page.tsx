@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import AdminDashboard from "@/components/admin/AdminDashboard";
+import dynamic from "next/dynamic";
+
+const AdminDashboard = dynamic(() => import("@/components/admin/AdminDashboard"), {
+  loading: () => (
+    <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" />
+    </div>
+  ),
+  ssr: false,
+});
 
 export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);

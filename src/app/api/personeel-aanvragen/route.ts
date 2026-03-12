@@ -27,6 +27,7 @@ interface FormData {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  referralCode?: string;
 }
 
 const contractTypeLabels: Record<string, string> = {
@@ -251,7 +252,8 @@ export async function POST(request: NextRequest) {
       utm_source: data.utmSource || null,
       utm_medium: data.utmMedium || null,
       utm_campaign: data.utmCampaign || null,
-    });
+      referral_code: data.referralCode || null,
+    }).select().single();
 
     if (dbError) {
       console.error("[DATABASE ERROR] Failed to save personeel aanvraag to Supabase:", dbError);
@@ -283,6 +285,22 @@ export async function POST(request: NextRequest) {
         success: true,
         warning: "Email verzonden, maar opslag in database is mislukt. Neem contact op als dit probleem zich blijft voordoen."
       });
+    }
+
+    // Referral tracking: koppel aan referrer
+    if (data.referralCode) {
+      try {
+        await supabase.from("referrals")
+          .update({
+            referred_naam: data.bedrijfsnaam,
+            referred_email: data.email,
+          })
+          .eq("referral_code", data.referralCode)
+          .eq("status", "pending")
+          .is("referred_id", null);
+      } catch (refError) {
+        console.error("Referral tracking error:", refError);
+      }
     }
 
     // Send Telegram alert (normale flow zonder database error)

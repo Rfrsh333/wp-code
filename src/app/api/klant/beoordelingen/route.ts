@@ -69,10 +69,19 @@ export async function POST(request: NextRequest) {
     console.warn("[SECURITY] Invalid klant session token");
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
   }
-  const { dienst_id, medewerker_id, score, opmerking } = await request.json();
+  const {
+    dienst_id, medewerker_id, score, opmerking,
+    score_punctualiteit, score_professionaliteit, score_vaardigheden, score_communicatie,
+    zou_opnieuw_boeken,
+  } = await request.json();
 
   await supabaseAdmin.from("beoordelingen").insert({
-    dienst_id, medewerker_id, klant_id: klant.id, score, opmerking
+    dienst_id, medewerker_id, klant_id: klant.id, score, opmerking,
+    score_punctualiteit: score_punctualiteit || null,
+    score_professionaliteit: score_professionaliteit || null,
+    score_vaardigheden: score_vaardigheden || null,
+    score_communicatie: score_communicatie || null,
+    zou_opnieuw_boeken: zou_opnieuw_boeken ?? null,
   });
 
   // Update gemiddelde score
@@ -84,9 +93,18 @@ export async function POST(request: NextRequest) {
   const scores = data?.map(b => b.score) || [];
   const gem = scores.reduce((a, b) => a + b, 0) / scores.length;
 
+  // Bereken badge
+  const totalDiensten = scores.length;
+  let badge = "starter";
+  if (totalDiensten > 50 && gem >= 4.25) badge = "toptalent";      // 50+ diensten, gem >= 8.5/10 (4.25/5)
+  else if (totalDiensten > 20 && gem >= 4) badge = "star";          // 21+ diensten, gem >= 8/10 (4/5)
+  else if (totalDiensten > 5 && gem >= 3.5) badge = "rising";       // 6+ diensten, gem >= 7/10 (3.5/5)
+
   await supabaseAdmin.from("medewerkers").update({
     gemiddelde_score: Math.round(gem * 10) / 10,
-    aantal_beoordelingen: scores.length
+    aantal_beoordelingen: scores.length,
+    badge,
+    totaal_diensten: totalDiensten,
   }).eq("id", medewerker_id);
 
   return NextResponse.json({ success: true });
