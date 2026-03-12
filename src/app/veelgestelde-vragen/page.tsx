@@ -148,6 +148,9 @@ export default function FAQPage() {
         </Container>
       </Section>
 
+      {/* Submit Question Form — bovenaan */}
+      <SubmitQuestionSection toast={toast} />
+
       {/* Category Nav */}
       <div className="sticky top-0 z-30 bg-white border-b border-neutral-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -281,9 +284,6 @@ export default function FAQPage() {
           )}
         </Container>
       </Section>
-
-      {/* Submit Question Form */}
-      <SubmitQuestionSection toast={toast} />
 
       {/* CTA */}
       <Section variant="white" spacing="large">
