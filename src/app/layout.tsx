@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ClickSparkWrapper from "@/components/ClickSparkWrapper";
-import GradientBackground from "@/components/animations/GradientBackground";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import PublicShell from "@/components/PublicShell";
 import StructuredData from "@/components/StructuredData";
 import GtmLoader from "@/components/GtmLoader";
 import CookieConsent from "@/components/CookieConsent";
@@ -68,13 +64,7 @@ export default function RootLayout({
         <GtmLoader />
         <ToastProvider>
           <ConfirmProvider>
-            <GradientBackground />
-            <ClickSparkWrapper>
-              <Header />
-              <main>{children}</main>
-              <Footer />
-            </ClickSparkWrapper>
-            <WhatsAppButton />
+            <PublicShell>{children}</PublicShell>
             <CookieConsent />
           </ConfirmProvider>
         </ToastProvider>
