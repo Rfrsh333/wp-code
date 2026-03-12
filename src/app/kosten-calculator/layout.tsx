@@ -1,22 +1,22 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Klantervaringen - Wat Horeca-ondernemers Zeggen | TopTalent Jobs",
-  description: "Lees ervaringen van tevreden horecaklanten van TopTalent Jobs. Restaurants, hotels en evenementenbureaus vertellen hoe wij hun personeelsproblemen oplosten.",
+  title: "Kosten Calculator - Wat Kost Horecapersoneel? | TopTalent Jobs",
+  description: "Bereken in 60 seconden wat horecapersoneel kost via TopTalent Jobs. Transparante tarieven voor uitzendkrachten: bediening, koks, bar en meer.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/testimonials",
+    canonical: "https://www.toptalentjobs.nl/kosten-calculator",
   },
   openGraph: {
-    title: "Klantervaringen | TopTalent Jobs",
-    description: "Horeca-ondernemers vertellen hoe TopTalent Jobs hun personeelstekort oploste. Van restaurants tot festivals.",
-    url: "https://www.toptalentjobs.nl/testimonials",
+    title: "Wat Kost Horecapersoneel? | TopTalent Jobs Calculator",
+    description: "Bereken direct de kosten voor horecapersoneel. Transparante uurtarieven, geen verborgen kosten.",
+    url: "https://www.toptalentjobs.nl/kosten-calculator",
     siteName: "TopTalent Jobs",
     locale: "nl_NL",
     type: "website",
   },
 };
 
-export default function TestimonialsLayout({
+export default function KostenCalculatorLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -34,8 +34,8 @@ export default function TestimonialsLayout({
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "Klantervaringen",
-        "item": "https://www.toptalentjobs.nl/testimonials"
+        "name": "Kosten Calculator",
+        "item": "https://www.toptalentjobs.nl/kosten-calculator"
       }
     ]
   };
