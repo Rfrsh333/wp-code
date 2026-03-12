@@ -5,7 +5,7 @@ export default function GradientBackground() {
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       {/* Gradient blob 1 - Orange */}
       <div
-        className="absolute w-[600px] h-[600px] rounded-full opacity-[0.25] animate-blob1"
+        className="absolute w-[300px] h-[300px] lg:w-[600px] lg:h-[600px] rounded-full opacity-[0.25] animate-blob1"
         style={{
           background: "radial-gradient(circle, #F27501 0%, transparent 70%)",
           top: "-10%",
@@ -16,7 +16,7 @@ export default function GradientBackground() {
 
       {/* Gradient blob 2 - Light Orange */}
       <div
-        className="absolute w-[500px] h-[500px] rounded-full opacity-[0.20] animate-blob2"
+        className="absolute w-[250px] h-[250px] lg:w-[500px] lg:h-[500px] rounded-full opacity-[0.20] animate-blob2"
         style={{
           background: "radial-gradient(circle, #FFB347 0%, transparent 70%)",
           bottom: "10%",
@@ -27,7 +27,7 @@ export default function GradientBackground() {
 
       {/* Gradient blob 3 - Subtle warm */}
       <div
-        className="absolute w-[400px] h-[400px] rounded-full opacity-[0.15] animate-blob3"
+        className="absolute w-[200px] h-[200px] lg:w-[400px] lg:h-[400px] rounded-full opacity-[0.15] animate-blob3"
         style={{
           background: "radial-gradient(circle, #F27501 0%, transparent 70%)",
           top: "50%",

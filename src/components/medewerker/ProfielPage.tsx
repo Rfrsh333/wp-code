@@ -124,7 +124,6 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
                 width={80}
                 height={80}
                 className="w-20 h-20 rounded-full object-cover border-3 border-[#F27501]/20"
-                unoptimized
               />
             ) : (
               <div className="w-20 h-20 bg-[#F27501]/10 rounded-full flex items-center justify-center border-3 border-[#F27501]/20">

@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
         op_tijd_percentage: opkomst > 0 ? Math.min(opkomst + 2, 100) : 0,
         rating: 0,
       },
+    }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
   } catch (error) {
     console.error("Profile fetch error:", error);

@@ -139,7 +139,9 @@
 /* Mobile */
 @media (max-width: 640px) {
   .wrapper {
-    transform: rotate(0deg) scale(1);
+    width: 100%;
+    margin-left: 0;
+    transform: none;
     padding: 0.875rem 0;
   }
 

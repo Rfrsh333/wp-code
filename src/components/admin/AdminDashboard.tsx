@@ -10,7 +10,7 @@ import UrenTab from "./UrenTab";
 import FacturenTab from "./FacturenTab";
 import StatsTab from "./StatsTab";
 import KandidaatWorkflowPanel from "./KandidaatWorkflowPanel";
-import ShiftsTab from "./ShiftsTab";
+
 import Pagination from "@/components/ui/Pagination";
 import DropdownMenu from "@/components/ui/DropdownMenu";
 import { useToast } from "@/components/ui/Toast";

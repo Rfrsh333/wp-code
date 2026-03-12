@@ -50,6 +50,9 @@ export async function GET() {
       checks,
       failingChecks,
     },
-    { status: failingChecks.length === 0 ? 200 : 503 }
+    {
+      status: failingChecks.length === 0 ? 200 : 503,
+      headers: { "Cache-Control": "no-cache, max-age=60" },
+    }
   );
 }

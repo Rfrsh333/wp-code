@@ -309,7 +309,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                       alt={dienst.klant_naam}
                       fill
                       className="object-cover"
-                      unoptimized
+                      sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
@@ -465,7 +465,7 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                   alt={detailModal.klant_naam}
                   fill
                   className="object-cover"
-                  unoptimized
+                  sizes="672px"
                 />
               </div>
             )}

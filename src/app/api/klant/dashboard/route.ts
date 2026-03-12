@@ -92,5 +92,7 @@ export async function GET() {
     },
     upcomingDiensten,
     recentFacturen,
+  }, {
+    headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
   });
 }

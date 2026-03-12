@@ -121,6 +121,45 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  if (action === "update_scores") {
+    if (!id) {
+      return NextResponse.json({ error: "Medewerker id ontbreekt" }, { status: 400 });
+    }
+
+    const { admin_score_aanwezigheid, admin_score_vaardigheden } = data || {};
+
+    const isValidScore = (s: unknown) => typeof s === "number" && s >= 1 && s <= 5;
+    if (!isValidScore(admin_score_aanwezigheid) || !isValidScore(admin_score_vaardigheden)) {
+      return NextResponse.json({ error: "Scores moeten tussen 1 en 5 liggen" }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("medewerkers")
+      .update({
+        admin_score_aanwezigheid,
+        admin_score_vaardigheden,
+        admin_score_updated_at: new Date().toISOString(),
+        admin_score_updated_by: email,
+      })
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    await logAuditEvent({
+      actorEmail: email,
+      actorRole: role,
+      action: "admin_medewerker_update_scores",
+      targetTable: "medewerkers",
+      targetId: id,
+      summary: "Admin scores bijgewerkt",
+      metadata: { admin_score_aanwezigheid, admin_score_vaardigheden },
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
   if (action === "delete") {
     const { error } = await supabaseAdmin.from("medewerkers").delete().eq("id", id);
     if (error) {

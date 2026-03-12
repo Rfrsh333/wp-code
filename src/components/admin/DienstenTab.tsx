@@ -46,8 +46,8 @@ const functieOptions = [
 ];
 
 const statusColors: Record<string, string> = {
-  open: "bg-blue-100 text-blue-700",
-  vol: "bg-green-100 text-green-700",
+  open: "bg-green-100 text-green-700",
+  vol: "bg-blue-100 text-blue-700",
   bezig: "bg-yellow-100 text-yellow-700",
   afgerond: "bg-neutral-100 text-neutral-600",
   geannuleerd: "bg-red-100 text-red-700",
@@ -85,6 +85,7 @@ export default function DienstenTab() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [filter, setFilter] = useState<"alle" | "open" | "vol" | "afgerond">("alle");
+  const [zoekterm, setZoekterm] = useState("");
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -260,21 +261,23 @@ export default function DienstenTab() {
     return time.substring(0, 5);
   };
 
-  const filteredDiensten = diensten.filter((d) => {
-    if (filter === "alle") return true;
-    if (filter === "open") return d.status === "open";
-    if (filter === "vol") return d.status === "vol" || d.status === "bezig";
-    if (filter === "afgerond") return d.status === "afgerond" || d.status === "geannuleerd";
-    return true;
-  });
-
-  // Group diensten by date
-  const dienstenByDate = filteredDiensten.reduce((acc, dienst) => {
-    const date = dienst.datum;
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(dienst);
-    return acc;
-  }, {} as Record<string, Dienst[]>);
+  const filteredDiensten = diensten
+    .filter((d) => {
+      if (filter === "alle") return true;
+      if (filter === "open") return d.status === "open";
+      if (filter === "vol") return d.status === "vol" || d.status === "bezig";
+      if (filter === "afgerond") return d.status === "afgerond" || d.status === "geannuleerd";
+      return true;
+    })
+    .filter((d) => {
+      if (!zoekterm) return true;
+      const term = zoekterm.toLowerCase();
+      return (
+        d.klant_naam.toLowerCase().includes(term) ||
+        d.locatie.toLowerCase().includes(term) ||
+        d.functie.toLowerCase().includes(term)
+      );
+    });
 
   if (isLoading) {
     return (
@@ -299,30 +302,41 @@ export default function DienstenTab() {
         </button>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-6">
-        {(["alle", "open", "vol", "afgerond"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              filter === f
-                ? "bg-[#F27501] text-white"
-                : "bg-white text-neutral-600 hover:bg-neutral-100"
-            }`}
-          >
-            {f === "alle" ? "Alle" : f === "open" ? "Open" : f === "vol" ? "Gevuld" : "Afgerond"}
-            {f === "open" && (
-              <span className="ml-1 text-xs">
-                ({diensten.filter((d) => d.status === "open").length})
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Filter tabs + zoek */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex gap-2">
+          {(["alle", "open", "vol", "afgerond"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                filter === f
+                  ? "bg-[#F27501] text-white"
+                  : "bg-white text-neutral-600 hover:bg-neutral-100"
+              }`}
+            >
+              {f === "alle" ? "Alle" : f === "open" ? "Open" : f === "vol" ? "Gevuld" : "Afgerond"}
+              {f === "open" && (
+                <span className="ml-1 text-xs">
+                  ({diensten.filter((d) => d.status === "open").length})
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="flex-1 max-w-xs">
+          <input
+            type="text"
+            placeholder="Zoek op klant, locatie, functie..."
+            value={zoekterm}
+            onChange={(e) => setZoekterm(e.target.value)}
+            className="w-full px-4 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+          />
+        </div>
       </div>
 
-      {/* Diensten grouped by date */}
-      {Object.keys(dienstenByDate).length === 0 ? (
+      {/* Diensten grid */}
+      {filteredDiensten.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
           <p className="text-neutral-500">Geen diensten gevonden</p>
           <button
@@ -333,88 +347,59 @@ export default function DienstenTab() {
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {Object.entries(dienstenByDate).map(([date, dateDiensten]) => (
-            <div key={date}>
-              <h3 className="text-sm font-semibold text-neutral-500 mb-3">
-                {formatDate(date)}
-              </h3>
-              <div className="space-y-3">
-                {dateDiensten.map((dienst) => (
-                  <div
-                    key={dienst.id}
-                    className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold text-neutral-900">
-                            {dienst.klant_naam}
-                          </h4>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              statusColors[dienst.status]
-                            }`}
-                          >
-                            {statusLabels[dienst.status]}
-                          </span>
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium capitalize">
-                            {dienst.functie}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-neutral-500">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            {dienst.locatie}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            {dienst.aantal_nodig} nodig
-                          </span>
-                          {dienst.uurtarief && (
-                            <span className="text-[#F27501] font-medium">
-                              €{dienst.uurtarief.toFixed(2)}/uur
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => openAanmeldingenModal(dienst)}
-                          className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
-                        >
-                          Aanmeldingen
-                        </button>
-                        <button
-                          onClick={() => openEditModal(dienst)}
-                          className="px-3 py-1.5 bg-neutral-100 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-200 transition-colors"
-                        >
-                          Bewerken
-                        </button>
-                        <button
-                          onClick={() => deleteDienst(dienst.id)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDiensten.map((dienst) => (
+            <div
+              key={dienst.id}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold capitalize">
+                      {dienst.functie}
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColors[dienst.status]}`}>
+                      {statusLabels[dienst.status]}
+                    </span>
                   </div>
-                ))}
+                  <h3 className="text-lg font-bold text-neutral-900 mt-2">{dienst.klant_naam}</h3>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => openEditModal(dienst)}
+                    className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
+                    title="Bewerken"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => deleteDienst(dienst.id)}
+                    className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Verwijderen"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
+
+              <div className="space-y-2 mb-4 text-sm text-neutral-600">
+                <p>📍 {dienst.locatie}</p>
+                <p>🕐 {formatDate(dienst.datum)} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}</p>
+                {dienst.uurtarief && <p>💰 <span className="font-semibold text-neutral-900">€{dienst.uurtarief.toFixed(2)}/uur</span></p>}
+                <p>👥 {dienst.aantal_nodig} nodig</p>
+              </div>
+
+              <button
+                onClick={() => openAanmeldingenModal(dienst)}
+                className="w-full px-4 py-2 bg-neutral-100 text-neutral-700 font-medium rounded-xl hover:bg-neutral-200 transition-colors text-sm"
+              >
+                Aanmeldingen bekijken
+              </button>
             </div>
           ))}
         </div>
@@ -565,7 +550,7 @@ export default function DienstenTab() {
 
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Uurtarief (€)
+                    Uurtarief
                   </label>
                   <input
                     type="number"

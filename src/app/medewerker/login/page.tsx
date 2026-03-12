@@ -53,7 +53,7 @@ export default function MedewerkerLogin() {
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">Medewerker Portal</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
-            Bekijk beschikbare shifts, registreer je uren en beheer je beschikbaarheid. Alles op een plek.
+            Bekijk beschikbare diensten, registreer je uren en beheer je beschikbaarheid. Alles op een plek.
           </p>
           <div className="mt-10 space-y-4">
             <div className="flex items-center gap-4 bg-white/5 rounded-xl px-5 py-3 text-left">
@@ -63,7 +63,7 @@ export default function MedewerkerLogin() {
                 </svg>
               </div>
               <div>
-                <p className="text-white font-medium text-sm">Shifts bekijken</p>
+                <p className="text-white font-medium text-sm">Diensten bekijken</p>
                 <p className="text-neutral-500 text-xs">Reageer op beschikbare diensten</p>
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function MedewerkerLogin() {
           <div className="bg-white rounded-2xl shadow-xl shadow-neutral-900/5 p-8 border border-neutral-100">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-neutral-900">Medewerker Login</h2>
-              <p className="text-neutral-500 mt-2">Bekijk shifts en registreer uren</p>
+              <p className="text-neutral-500 mt-2">Bekijk diensten en registreer uren</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">

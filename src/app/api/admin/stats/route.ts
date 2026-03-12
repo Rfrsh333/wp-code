@@ -56,5 +56,7 @@ export async function GET(request: NextRequest) {
     omzetPerMaand: Object.entries(omzetPerMaand).map(([maand, omzet]) => ({ maand, omzet })),
     besteMedewerkers: medewerkers || [],
     totalen: { medewerkers: totaalMedewerkers, klanten: totaalKlanten, diensten: totaalDiensten, uren: Math.round(totaalUren), omzet: totaalOmzet }
+  }, {
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=120" },
   });
 }

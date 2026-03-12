@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import PortalLayout from "@/components/portal/PortalLayout";
 import type { PortalTab } from "@/components/portal/PortalLayout";
 import BeschikbaarheidForm from "@/components/medewerker/BeschikbaarheidForm";
-import ShiftsTab from "@/components/medewerker/ShiftsTab";
 import DienstenTab from "@/components/medewerker/DienstenTab";
 import UrenTab from "@/components/medewerker/UrenTab";
 import ProfielPage from "@/components/medewerker/ProfielPage";
@@ -28,30 +27,6 @@ interface Medewerker {
   factuur_stad?: string | null;
   btw_nummer?: string | null;
   iban?: string | null;
-}
-
-interface Shift {
-  id: string;
-  company_id: string;
-  title: string;
-  description: string | null;
-  location: string | null;
-  start_at: string;
-  end_at: string | null;
-  wage: number;
-  seats: number;
-  status: string;
-  company?: { name: string; logo_url: string | null };
-  has_applied?: boolean;
-  application_status?: string;
-}
-
-interface Application {
-  id: string;
-  shift_id: string;
-  status: string;
-  applied_at: string;
-  shift?: Shift;
 }
 
 interface Dienst {
@@ -87,16 +62,14 @@ interface KlantAanpassing {
   locatie: string;
 }
 
-type TabId = "shifts" | "diensten" | "uren" | "beschikbaarheid" | "profiel" | "financieel" | "documenten";
+type TabId = "diensten" | "uren" | "beschikbaarheid" | "profiel" | "financieel" | "documenten";
 
 export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewerker }) {
   const router = useRouter();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<TabId>("shifts");
+  const [activeTab, setActiveTab] = useState<TabId>("diensten");
 
   // Data state
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
   const [diensten, setDiensten] = useState<Dienst[]>([]);
   const [aanpassingen, setAanpassingen] = useState<KlantAanpassing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,14 +83,8 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   const fetchAllData = async () => {
     setIsLoading(true);
     try {
-      const [shiftsRes, dienstenRes] = await Promise.all([
-        fetch("/api/medewerker/shifts"),
-        fetch("/api/medewerker/diensten"),
-      ]);
-      const shiftsData = await shiftsRes.json();
+      const dienstenRes = await fetch("/api/medewerker/diensten");
       const dienstenData = await dienstenRes.json();
-      setShifts(shiftsData.shifts || []);
-      setApplications(shiftsData.applications || []);
       setDiensten(dienstenData.diensten || []);
       setAanpassingen(dienstenData.aanpassingen || []);
     } catch (error) {
@@ -131,35 +98,6 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   useEffect(() => {
     fetchAllData();
   }, []);
-
-  // Shifts actions
-  const handleApply = async (shiftId: string, coverText: string) => {
-    const res = await fetch("/api/medewerker/shifts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "apply", shift_id: shiftId, cover_text: coverText }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Sollicitatie mislukt");
-    toast.success("Sollicitatie verstuurd!");
-    await fetchAllData();
-  };
-
-  const handleWithdraw = async (applicationId: string) => {
-    if (!window.confirm("Weet je zeker dat je je sollicitatie wilt intrekken?")) return;
-    try {
-      const res = await fetch("/api/medewerker/shifts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "withdraw", application_id: applicationId }),
-      });
-      if (!res.ok) throw new Error("Intrekken mislukt");
-      toast.success("Sollicitatie ingetrokken");
-      await fetchAllData();
-    } catch {
-      toast.error("Kon sollicitatie niet intrekken");
-    }
-  };
 
   // Diensten actions
   const aanmelden = async (dienstId: string) => {
@@ -278,23 +216,15 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
 
-  const availableShifts = shifts.filter((s) => s.status === "open" && !s.has_applied);
   const beschikbareDiensten = diensten.filter((d) => !d.aangemeld);
 
   const tabs: PortalTab[] = [
-    {
-      id: "shifts",
-      label: "Shifts",
-      badge: availableShifts.length,
-      group: "WERK",
-      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-    },
     {
       id: "diensten",
       label: "Diensten",
       badge: beschikbareDiensten.length,
       group: "WERK",
-      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
     },
     {
       id: "uren",
@@ -344,22 +274,12 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
         </div>
       ) : (
         <>
-          {activeTab === "shifts" && (
-            <ShiftsTab
-              shifts={shifts}
-              applications={applications}
-              onApply={handleApply}
-              onWithdraw={handleWithdraw}
-            />
-          )}
-
           {activeTab === "diensten" && (
             <DienstenTab
               diensten={diensten}
               onAanmelden={aanmelden}
               onAfmelden={afmelden}
               onUrenInvullen={openUrenModal}
-              onGoToShifts={() => setActiveTab("shifts")}
             />
           )}
 
