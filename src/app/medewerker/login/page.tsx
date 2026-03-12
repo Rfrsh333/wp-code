@@ -36,7 +36,7 @@ export default function MedewerkerLogin() {
   };
 
   const handleForgotPassword = () => {
-    toast.info("Neem contact op via info@toptalentjobs.nl of stuur een WhatsApp voor een wachtwoord reset.");
+    router.push("/medewerker/wachtwoord-vergeten");
   };
 
   return (
