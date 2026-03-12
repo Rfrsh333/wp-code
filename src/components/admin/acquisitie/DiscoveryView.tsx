@@ -15,13 +15,8 @@ interface CsvFile {
 }
 
 export default function DiscoveryView({ onRefresh }: Props) {
-  const [activeMode, setActiveMode] = useState<"maps" | "bestanden" | "csv" | "handmatig">("bestanden");
+  const [activeMode, setActiveMode] = useState<"bestanden" | "csv" | "handmatig">("bestanden");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  // Google Maps state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [maxResults, setMaxResults] = useState(50);
-  const [isSearching, setIsSearching] = useState(false);
 
   // Bestaande bestanden state
   const [availableFiles, setAvailableFiles] = useState<CsvFile[]>([]);
@@ -110,33 +105,6 @@ export default function DiscoveryView({ onRefresh }: Props) {
       setMessage({ type: "error", text: err.error || "Import mislukt" });
     }
     setImportingFile(null);
-  };
-
-  // Google Maps discovery
-  const handleMapsSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    setMessage({ type: "success", text: "Scraper gestart met Smartproxy... Dit kan enkele minuten duren. Er opent een browser venster." });
-
-    const token = await getToken();
-    const res = await fetch("/api/admin/acquisitie/discover", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ query: searchQuery, max_results: maxResults }),
-    });
-
-    if (res.ok) {
-      const result = await res.json();
-      setMessage({
-        type: "success",
-        text: `${result.imported} nieuwe leads gevonden, ${result.skipped} overgeslagen (duplicaten)`,
-      });
-      onRefresh();
-    } else {
-      const err = await res.json();
-      setMessage({ type: "error", text: err.error || "Zoeken mislukt" });
-    }
-    setIsSearching(false);
   };
 
   // CSV file upload handling
@@ -263,7 +231,6 @@ export default function DiscoveryView({ onRefresh }: Props) {
       <div className="flex gap-2 mb-6 flex-wrap">
         {([
           { id: "bestanden" as const, label: "Bestaande Data", icon: "M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" },
-          { id: "maps" as const, label: "Google Maps", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" },
           { id: "csv" as const, label: "CSV Upload", icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" },
           { id: "handmatig" as const, label: "Handmatig", icon: "M12 4v16m8-8H4" },
         ]).map((mode) => (
@@ -343,46 +310,6 @@ export default function DiscoveryView({ onRefresh }: Props) {
               </button>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Google Maps Discovery */}
-      {activeMode === "maps" && (
-        <div className="bg-white p-6 rounded-xl border border-neutral-200">
-          <h3 className="font-semibold text-neutral-800 mb-2">Google Maps Discovery</h3>
-          <p className="text-sm text-neutral-500 mb-4">
-            Zoek bedrijven op Google Maps via de Python scraper met Smartproxy. Er opent een browser venster — los eventuele CAPTCHA&apos;s handmatig op.
-          </p>
-          <div className="flex gap-3 mb-4">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="bijv. restaurant Utrecht, cafe Amsterdam..."
-              className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:border-[#F27501]"
-            />
-            <input
-              type="number"
-              value={maxResults}
-              onChange={(e) => setMaxResults(parseInt(e.target.value) || 50)}
-              className="w-24 px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none"
-              placeholder="Max"
-              min={5}
-              max={500}
-            />
-            <button
-              onClick={handleMapsSearch}
-              disabled={isSearching || !searchQuery.trim()}
-              className="px-6 py-2 bg-[#F27501] text-white rounded-lg text-sm font-medium hover:bg-[#d96800] disabled:opacity-50"
-            >
-              {isSearching ? "Scraping..." : "Start Scrape"}
-            </button>
-          </div>
-          <div className="bg-neutral-50 p-3 rounded-lg text-xs text-neutral-500 space-y-1">
-            <p>Gebruikt: Python Playwright + Smartproxy rotatie</p>
-            <p>CAPTCHA: Handmatig oplossen in het browser venster</p>
-            <p>Timeout: max 10 minuten per zoekopdracht</p>
-          </div>
         </div>
       )}
 

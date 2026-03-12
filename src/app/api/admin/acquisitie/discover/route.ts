@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
-import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs";
 import path from "path";
 import os from "os";
-
-const execAsync = promisify(exec);
 
 // Pad naar de werkende Python scraper
 const SCRAPER_DIR = path.join(os.homedir(), "Desktop", "scrappe");
@@ -33,164 +29,10 @@ export async function POST(request: NextRequest) {
       return listAvailableCsvFiles();
     }
 
-    // Google Maps scrape via Python scraper
-    const { query, max_results } = body;
-    if (!query) {
-      return NextResponse.json({ error: "Zoekterm is vereist" }, { status: 400 });
-    }
-
-    return await runPythonScraper(query, max_results || 50);
+    return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
     console.error("Discovery error:", error);
     return NextResponse.json({ error: "Discovery mislukt" }, { status: 500 });
-  }
-}
-
-async function runPythonScraper(query: string, maxResults: number) {
-  const timestamp = Date.now();
-  const outputFile = path.join(SCRAPER_DIR, `discover_${timestamp}.csv`);
-
-  // Maak een scraper script dat de resultaten naar een CSV schrijft
-  const scriptContent = `#!/usr/bin/env python3
-import csv, sys, time
-from playwright.sync_api import sync_playwright
-
-QUERY = ${JSON.stringify(query)}
-MAX_RESULTS = ${maxResults}
-OUTPUT = ${JSON.stringify(outputFile)}
-
-def scrape():
-    results = []
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=False,
-            proxy={"server":"http://proxy.smartproxy.net:3120","username":"smart-w2m198ltz0j7","password":"1IBdKh16HP8DglVQ"}
-        )
-        page = browser.new_page()
-        url = f"https://www.google.com/maps/search/{QUERY}"
-        print(f"Navigating to: {url}", file=sys.stderr)
-        page.goto(url, timeout=60000)
-        time.sleep(4)
-        for sel in ['button:has-text("Alles accepteren")', 'button:has-text("Accept all")']:
-            try:
-                btn = page.query_selector(sel)
-                if btn and btn.is_visible():
-                    btn.click()
-                    time.sleep(1)
-                    break
-            except: pass
-        scrollable = page.query_selector('div[role="feed"]')
-        if not scrollable:
-            print("No results feed found", file=sys.stderr)
-            browser.close()
-            return
-        prev_count, no_change = 0, 0
-        for i in range(200):
-            scrollable.evaluate("el => el.scrollTo(0, el.scrollHeight)")
-            time.sleep(0.6)
-            links = page.query_selector_all('a[href*="/maps/place/"]')
-            if len(links) >= MAX_RESULTS: break
-            if len(links) == prev_count:
-                no_change += 1
-                if no_change >= 5: break
-            else: no_change = 0
-            prev_count = len(links)
-            if i % 20 == 0: print(f"  {len(links)} results so far...", file=sys.stderr)
-        links = page.query_selector_all('a[href*="/maps/place/"]')
-        print(f"Processing {min(len(links), MAX_RESULTS)} results...", file=sys.stderr)
-        for idx, link in enumerate(links[:MAX_RESULTS], 1):
-            try:
-                link.click()
-                time.sleep(0.8)
-                h1 = page.query_selector('h1.DUwDvf')
-                name = h1.inner_text() if h1 else ""
-                if not name or name in ["Resultaten","Results"] or len(name)<2: continue
-                addr_btn = page.query_selector('button[data-item-id="address"]')
-                address = addr_btn.inner_text() if addr_btn else ""
-                phone = ""
-                phone_btn = page.query_selector('button[data-item-id*="phone"]')
-                if phone_btn:
-                    aria = phone_btn.get_attribute('aria-label') or ""
-                    phone = aria.replace('Phone: ','').replace('Copy phone number','').strip()
-                website = ""
-                web_link = page.query_selector('a[data-item-id="authority"]')
-                if web_link: website = web_link.get_attribute('href') or ""
-                results.append({'name':name,'address':address,'phone':phone,'website':website})
-                if idx % 25 == 0: print(f"  {idx} processed...", file=sys.stderr)
-            except: continue
-        browser.close()
-    if results:
-        with open(OUTPUT,'w',newline='',encoding='utf-8') as f:
-            w = csv.DictWriter(f, fieldnames=['name','address','phone','website'])
-            w.writeheader()
-            for r in results: w.writerow(r)
-    print(f"DONE:{len(results)}")
-
-scrape()
-`;
-
-  const tempScript = path.join(SCRAPER_DIR, `_discover_${timestamp}.py`);
-  fs.writeFileSync(tempScript, scriptContent, "utf8");
-
-  // Start scraper als detached process via open (macOS) zodat de browser kan openen
-  try {
-    // Gebruik osascript om een Terminal venster te openen dat de scraper runt
-    // Na afloop importeren we het resultaat
-    const terminalCmd = `cd "${SCRAPER_DIR}" && python3 "${tempScript}" && echo "\\n\\nScrape klaar! Dit venster mag dicht." && sleep 5`;
-
-    exec(`osascript -e 'tell application "Terminal" to do script "${terminalCmd.replace(/"/g, '\\"')}"'`);
-
-    // Wacht tot de output file verschijnt (poll elke 5 sec, max 10 min)
-    const maxWait = 600000;
-    const pollInterval = 5000;
-    let waited = 0;
-
-    while (waited < maxWait) {
-      await new Promise((resolve) => setTimeout(resolve, pollInterval));
-      waited += pollInterval;
-
-      // Check of het bestand bestaat EN of het "DONE:" in de output heeft
-      if (fs.existsSync(outputFile)) {
-        // Wacht nog even tot het bestand klaar is met schrijven
-        const size1 = fs.statSync(outputFile).size;
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const size2 = fs.statSync(outputFile).size;
-        if (size2 > 0 && size1 === size2) {
-          break; // Bestand is klaar
-        }
-      }
-    }
-
-    // Clean up temp script
-    try { fs.unlinkSync(tempScript); } catch { /* ignore */ }
-
-    // Parse results and import
-    if (!fs.existsSync(outputFile)) {
-      return NextResponse.json({
-        success: true,
-        imported: 0,
-        skipped: 0,
-        message: "Scraper is gestart in een Terminal venster. Als de scrape klaar is, gebruik 'Bestaande Data' om het resultaat te importeren.",
-      });
-    }
-
-    const result = await importCsvToDatabase(outputFile, "google_maps");
-
-    // Clean up output
-    try { fs.unlinkSync(outputFile); } catch { /* ignore */ }
-
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error("Scraper launch error:", error);
-    // Clean up
-    try { fs.unlinkSync(tempScript); } catch { /* ignore */ }
-
-    return NextResponse.json({
-      success: false,
-      imported: 0,
-      skipped: 0,
-      error: "Kon scraper niet starten. Gebruik de terminal: cd ~/Desktop/scrappe && python3 gmaps_robust_scraper.py",
-    });
   }
 }
 
