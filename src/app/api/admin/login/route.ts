@@ -56,10 +56,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      // Log mislukte poging (zonder wachtwoord)
-      console.warn(`[ADMIN LOGIN] Failed attempt for email: ${email} from IP: ${clientIP}`);
+      // Log mislukte poging met Supabase error details
+      console.warn(`[ADMIN LOGIN] Failed attempt for email: ${email} from IP: ${clientIP} - Error: ${error.message}`);
       return NextResponse.json(
-        { error: "Ongeldige inloggegevens" },
+        { error: "Ongeldige inloggegevens", debug: error.message },
         { status: 401 }
       );
     }
