@@ -1,8 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 
 export default function AdminWachtwoordResetClient() {
   const router = useRouter();
@@ -11,53 +10,31 @@ export default function AdminWachtwoordResetClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState("");
+  const tokensRef = useRef<{ access_token: string; refresh_token: string } | null>(null);
 
   useEffect(() => {
-    const init = async () => {
-      // 1. Read hash BEFORE anything else can clear it
-      const rawHash = window.location.hash;
-      const hash = rawHash.replace(/^#/, "");
+    // Read hash fragment immediately
+    const hash = window.location.hash.replace(/^#/, "");
 
-      if (!hash) {
-        setError("Geen recovery tokens gevonden in de URL.");
-        return;
-      }
+    if (!hash) {
+      setError("Geen recovery tokens gevonden in de URL.");
+      return;
+    }
 
-      // 2. Parse hash params
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-      const tokenType = params.get("type");
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const tokenType = params.get("type");
 
-      if (!accessToken || !refreshToken || tokenType !== "recovery") {
-        setError("Deze resetlink is ongeldig of verlopen.");
-        return;
-      }
+    if (!accessToken || !refreshToken || tokenType !== "recovery") {
+      setError("Deze resetlink is ongeldig.");
+      return;
+    }
 
-      // 3. Clean hash from URL to prevent double-processing
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // 4. Set session with the parsed tokens
-      const { data, error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-
-      if (sessionError) {
-        console.error("[RESET] setSession error:", sessionError);
-        setError(`Kon sessie niet instellen: ${sessionError.message}`);
-        return;
-      }
-
-      if (!data.session) {
-        setError("Sessie kon niet worden aangemaakt.");
-        return;
-      }
-
-      setIsReady(true);
-    };
-
-    void init();
+    // Store tokens for later use and clean URL
+    tokensRef.current = { access_token: accessToken, refresh_token: refreshToken };
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setIsReady(true);
   }, []);
 
   const handleSubmit = async (event: FormEvent) => {
@@ -74,17 +51,37 @@ export default function AdminWachtwoordResetClient() {
       return;
     }
 
-    setIsLoading(true);
-    const { error: updateError } = await supabase.auth.updateUser({ password: wachtwoord });
-    setIsLoading(false);
-
-    if (updateError) {
-      setError(updateError.message || "Wachtwoord wijzigen mislukt.");
+    if (!tokensRef.current) {
+      setError("Recovery tokens niet meer beschikbaar. Vraag een nieuwe link aan.");
       return;
     }
 
-    await supabase.auth.signOut();
-    router.push("/admin/login?reset=1");
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/wachtwoord-reset/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          access_token: tokensRef.current.access_token,
+          refresh_token: tokensRef.current.refresh_token,
+          password: wachtwoord,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Wachtwoord wijzigen mislukt.");
+        setIsLoading(false);
+        return;
+      }
+
+      router.push("/admin/login?reset=1");
+    } catch {
+      setError("Er ging iets mis. Probeer het opnieuw.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -111,9 +108,6 @@ export default function AdminWachtwoordResetClient() {
 
         {isReady ? (
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm">
-              Link geverifieerd! Stel hieronder uw nieuwe wachtwoord in.
-            </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Nieuw wachtwoord</label>
               <input
