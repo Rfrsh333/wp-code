@@ -341,10 +341,17 @@ Schrijf een blogartikel voor horecaondernemers.
 - Geen conclusie die letterlijk herhaalt wat er al stond
 - Maximaal 0-2 emoji's in het hele artikel
 
+BELANGRIJK OVER LENGTE:
+- Het artikel MOET minimaal 1000 woorden zijn, ideaal 1200-1500 woorden
+- Gebruik minimaal 4-5 subkoppen (## H2)
+- Elke sectie moet 150-250 woorden bevatten
+- Als het artikel te kort is, voeg meer praktische voorbeelden, data en tips toe
+- Tel je woorden — onder de 1000 is NIET acceptabel
+
 Antwoord ALLEEN in JSON (geen markdown codeblocks):
 {
   "titel": "...",
-  "inhoud": "... (markdown met ## koppen, minimaal 800 woorden)",
+  "inhoud": "... (markdown met ## koppen, MINIMAAL 1000 woorden)",
   "meta_description": "... (max 155 tekens)",
   "keywords": ["...", "...", "...", "..."]
 }`
@@ -378,7 +385,7 @@ Type post: ${linkedinType}
    - NOOIT een harde sales CTA ("Neem nu contact op!" / "Bel ons voor een offerte!")
 
 ### Regels
-- Sweet spot: 100-150 woorden (6-12 regels op LinkedIn)
+- De post MOET minimaal 120 woorden zijn, sweet spot is 130-170 woorden
 - Gebruik witregels tussen alinea's — een muur van tekst scrollt niemand doorheen
 - Korte alinea's: max 2-3 zinnen per blok
 - Max 2-3 emoji's, niet elke zin
@@ -421,7 +428,7 @@ Schrijf nu een ${type === "blog" ? "blogartikel" : "LinkedIn post"} in de TopTal
   ];
 
   try {
-    const response = await chatCompletion(messages, { temperature: 0.8, maxTokens: type === "blog" ? 2000 : 500 });
+    const response = await chatCompletion(messages, { temperature: 0.8, maxTokens: type === "blog" ? 4000 : 800 });
     const cleaned = response.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned);
 
