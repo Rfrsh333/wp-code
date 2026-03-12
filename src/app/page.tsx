@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import Hero from "@/components/Hero";
-import ServicesSection from "@/components/ServicesSection";
-import WhyTopTalent from "@/components/WhyTopTalent";
-import HowWeWorkCarousel from "@/components/HowWeWorkCarousel";
-import MarqueeBanner from "@/components/MarqueeBanner";
-import TestimonialCarousel from "@/components/TestimonialCarousel";
-import FAQObjections from "@/components/FAQObjections";
-import DynamicCTA from "@/components/DynamicCTA";
 import { Section, Container } from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
+
+const MarqueeBanner = dynamic(() => import("@/components/MarqueeBanner"));
+const HowWeWorkCarousel = dynamic(() => import("@/components/HowWeWorkCarousel"));
+const WhyTopTalent = dynamic(() => import("@/components/WhyTopTalent"));
+const ServicesSection = dynamic(() => import("@/components/ServicesSection"));
+const TestimonialCarousel = dynamic(() => import("@/components/TestimonialCarousel"));
+const FAQObjections = dynamic(() => import("@/components/FAQObjections"));
+const DynamicCTA = dynamic(() => import("@/components/DynamicCTA"));
 
 /* ==========================================================================
    Testimonials Data
@@ -50,6 +52,8 @@ const industries = [
   { name: "Festivals", icon: "🎪", count: "5+" },
 ];
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Extra horecapersoneel binnen 24 u | Stop omzetverlies | TopTalent",
   description:
@@ -65,9 +69,44 @@ export const metadata: Metadata = {
   },
 };
 
+const homeFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Wat als het horecapersoneel niet past?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "TopTalent Jobs biedt directe vervanging binnen 24 uur. Geen gedoe, geen extra kosten. Je betaalt alleen voor personeel dat werkt."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Hoe zit het met last-minute horecapersoneel?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Onze flexpool staat klaar voor acute uitval. Vaak kunnen we nog dezelfde dag personeel leveren als je belt voor 12:00 uur."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Hoe snel kan ik horecapersoneel krijgen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Na intake krijg je binnen 15 minuten een matchscore. Bij beschikbaarheid start het personeel binnen 24 uur — vaak zelfs sneller."
+      }
+    }
+  ]
+};
+
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }}
+      />
       {/* Hero Section */}
       <Hero />
 
