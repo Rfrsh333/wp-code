@@ -11,6 +11,7 @@ export default function MedewerkerLoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activated = searchParams.get("activated") === "1";
+  const resetDone = searchParams.get("reset") === "1";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +48,11 @@ export default function MedewerkerLoginClient() {
               Je wachtwoord is ingesteld. Je kunt nu inloggen.
             </div>
           )}
+          {resetDone && (
+            <div className="bg-green-50 text-green-700 p-3 rounded-xl text-sm">
+              Je wachtwoord is opnieuw ingesteld. Je kunt nu inloggen.
+            </div>
+          )}
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{error}</div>}
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
@@ -69,6 +75,11 @@ export default function MedewerkerLoginClient() {
               className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
               placeholder="••••••••"
             />
+            <div className="mt-2 text-right">
+              <a href="/medewerker/wachtwoord-vergeten" className="text-sm text-[#F27501] font-medium hover:text-[#d96800] transition-colors">
+                Wachtwoord vergeten?
+              </a>
+            </div>
           </div>
           <button
             type="submit"
