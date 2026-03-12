@@ -148,8 +148,8 @@ export default function FAQPage() {
         </Container>
       </Section>
 
-      {/* Submit Question Form — bovenaan */}
-      <SubmitQuestionSection toast={toast} />
+      {/* Floating Question Button + Modal */}
+      <SubmitQuestionFloating toast={toast} />
 
       {/* Category Nav */}
       <div className="sticky top-0 z-30 bg-white border-b border-neutral-200 shadow-sm">
@@ -334,7 +334,8 @@ export default function FAQPage() {
    Vraag-indienformulier
    ========================================================================== */
 
-function SubmitQuestionSection({ toast }: { toast: ReturnType<typeof useToast> }) {
+function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -375,25 +376,43 @@ function SubmitQuestionSection({ toast }: { toast: ReturnType<typeof useToast> }
   };
 
   return (
-    <Section variant="tinted" spacing="large">
-      <Container>
-        <FadeIn>
-          <div className="max-w-2xl mx-auto text-center">
-            <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
-              Stel je vraag
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-              Staat jouw vraag er niet bij?
-            </h2>
-            <p className="text-neutral-600 mb-8">
-              Stel je vraag en wij beantwoorden deze zo snel mogelijk. Je vraag
-              kan ook worden toegevoegd aan onze FAQ.
-            </p>
+    <>
+      {/* Floating button */}
+      <button
+        onClick={() => { setIsOpen(true); setIsSubmitted(false); }}
+        className="fixed bottom-6 right-6 z-50 bg-[#F27501] text-white px-5 py-3.5 rounded-full font-semibold shadow-lg hover:bg-[#d96800] hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Stel je vraag
+      </button>
+
+      {/* Modal overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
+            {/* Close button */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
 
             {isSubmitted ? (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-8">
+              <div className="text-center py-6">
                 <svg
-                  className="w-12 h-12 text-green-500 mx-auto mb-4"
+                  className="w-16 h-16 text-green-500 mx-auto mb-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -408,86 +427,94 @@ function SubmitQuestionSection({ toast }: { toast: ReturnType<typeof useToast> }
                 <h3 className="text-xl font-bold text-green-800 mb-2">
                   Bedankt voor je vraag!
                 </h3>
-                <p className="text-green-700">
+                <p className="text-green-700 mb-6">
                   We beantwoorden je vraag zo snel mogelijk.
-                  {email && " Je ontvangt een bericht zodra het antwoord klaar is."}
                 </p>
                 <button
-                  onClick={() => setIsSubmitted(false)}
-                  className="mt-4 text-green-700 font-medium hover:underline"
+                  onClick={() => setIsOpen(false)}
+                  className="bg-[#F27501] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#d96800] transition-colors"
                 >
-                  Nog een vraag stellen
+                  Sluiten
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                <div>
-                  <label
-                    htmlFor="faq-question"
-                    className="block text-sm font-medium text-neutral-700 mb-1"
-                  >
-                    Je vraag *
-                  </label>
-                  <textarea
-                    id="faq-question"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    rows={3}
-                    maxLength={500}
-                    required
-                    placeholder="Bijv. Hoeveel kost een uitzendkracht kok per uur?"
-                    className="w-full px-4 py-3 bg-white rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316]"
-                  />
+              <>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-neutral-900">
+                    Staat jouw vraag er niet bij?
+                  </h2>
+                  <p className="text-neutral-500 text-sm mt-1">
+                    Stel je vraag en wij beantwoorden deze zo snel mogelijk.
+                  </p>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label
-                      htmlFor="faq-name"
+                      htmlFor="faq-question"
                       className="block text-sm font-medium text-neutral-700 mb-1"
                     >
-                      Naam <span className="text-neutral-400">(optioneel)</span>
+                      Je vraag *
                     </label>
-                    <input
-                      id="faq-name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Je naam"
-                      className="w-full px-4 py-3 bg-white rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316]"
+                    <textarea
+                      id="faq-question"
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      rows={3}
+                      maxLength={500}
+                      required
+                      autoFocus
+                      placeholder="Bijv. Hoeveel kost een uitzendkracht kok per uur?"
+                      className="w-full px-4 py-3 bg-neutral-50 rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316] focus:bg-white transition-colors"
                     />
                   </div>
-                  <div>
-                    <label
-                      htmlFor="faq-email"
-                      className="block text-sm font-medium text-neutral-700 mb-1"
-                    >
-                      E-mail{" "}
-                      <span className="text-neutral-400">(optioneel)</span>
-                    </label>
-                    <input
-                      id="faq-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="je@email.nl"
-                      className="w-full px-4 py-3 bg-white rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316]"
-                    />
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="faq-name"
+                        className="block text-sm font-medium text-neutral-700 mb-1"
+                      >
+                        Naam <span className="text-neutral-400">(optioneel)</span>
+                      </label>
+                      <input
+                        id="faq-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Je naam"
+                        className="w-full px-4 py-3 bg-neutral-50 rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316] focus:bg-white transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="faq-email"
+                        className="block text-sm font-medium text-neutral-700 mb-1"
+                      >
+                        E-mail <span className="text-neutral-400">(optioneel)</span>
+                      </label>
+                      <input
+                        id="faq-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="je@email.nl"
+                        className="w-full px-4 py-3 bg-neutral-50 rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316] focus:bg-white transition-colors"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="text-center pt-2">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-[#F27501] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#F27501] text-white py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Versturen..." : "Vraag insturen"}
                   </button>
-                </div>
-              </form>
+                </form>
+              </>
             )}
           </div>
-        </FadeIn>
-      </Container>
-    </Section>
+        </div>
+      )}
+    </>
   );
 }
