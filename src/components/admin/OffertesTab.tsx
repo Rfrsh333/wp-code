@@ -80,7 +80,7 @@ export default function OffertesTab() {
   const generateOfferte = async (aanvraagId: string) => {
     setGenerating(aanvraagId);
     try {
-      const token = document.cookie.match(/admin-token=([^;]+)/)?.[1] || "";
+      const token = await getToken();
       const res = await fetch("/api/admin/ai/offerte-generator", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

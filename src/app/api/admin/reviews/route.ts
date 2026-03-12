@@ -141,6 +141,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === "update") {
+      const { review_id, reviewer_naam, score, tekst, review_datum } = body;
+      if (!review_id) return NextResponse.json({ error: "review_id verplicht" }, { status: 400 });
+      const updates: Record<string, unknown> = {};
+      if (reviewer_naam !== undefined) updates.reviewer_naam = reviewer_naam;
+      if (score !== undefined) updates.score = parseInt(score);
+      if (tekst !== undefined) updates.tekst = tekst;
+      if (review_datum !== undefined) updates.review_datum = review_datum;
+      await supabaseAdmin.from("google_reviews").update(updates).eq("id", review_id);
+      return NextResponse.json({ success: true });
+    }
+
     if (action === "delete") {
       const { review_id } = body;
       if (!review_id) return NextResponse.json({ error: "review_id verplicht" }, { status: 400 });

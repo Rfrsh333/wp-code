@@ -32,6 +32,8 @@ export default function ReviewsTab() {
   const [generating, setGenerating] = useState<string | null>(null);
   const [newReview, setNewReview] = useState({ reviewer_naam: "", score: "5", tekst: "", review_datum: new Date().toISOString().split("T")[0] });
   const [error, setError] = useState<string | null>(null);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [editForm, setEditForm] = useState({ reviewer_naam: "", score: "5", tekst: "", review_datum: "" });
 
   const getToken = async () => {
     const { supabase } = await import("@/lib/supabase");
@@ -104,6 +106,37 @@ export default function ReviewsTab() {
   const saveResponse = async (reviewId: string, antwoord: string) => {
     await adminAction({ action: "save_response", review_id: reviewId, antwoord });
     fetchData();
+  };
+
+  const startEdit = (review: Review) => {
+    setEditingReview(review);
+    setEditForm({
+      reviewer_naam: review.reviewer_naam,
+      score: String(review.score),
+      tekst: review.tekst || "",
+      review_datum: review.review_datum || "",
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editingReview) return;
+    const result = await adminAction({ action: "update", review_id: editingReview.id, ...editForm });
+    if (result) {
+      setEditingReview(null);
+      fetchData();
+    } else {
+      setError("Fout bij bewerken review");
+    }
+  };
+
+  const deleteReview = async (id: string) => {
+    if (!confirm("Weet je zeker dat je deze review wilt verwijderen?")) return;
+    const result = await adminAction({ action: "delete", review_id: id });
+    if (result) {
+      fetchData();
+    } else {
+      setError("Fout bij verwijderen review");
+    }
   };
 
   const stars = (score: number) => "★".repeat(score) + "☆".repeat(5 - score);
@@ -225,6 +258,69 @@ export default function ReviewsTab() {
         </div>
       )}
 
+      {/* Bewerk review form */}
+      {editingReview && (
+        <div className="bg-white rounded-xl border-2 border-blue-200 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-neutral-900">Review bewerken</h3>
+            <button onClick={() => setEditingReview(null)} className="text-neutral-400 hover:text-neutral-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Reviewer naam</label>
+              <input
+                type="text"
+                value={editForm.reviewer_naam}
+                onChange={e => setEditForm({ ...editForm, reviewer_naam: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Score</label>
+              <select
+                value={editForm.score}
+                onChange={e => setEditForm({ ...editForm, score: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                {[5, 4, 3, 2, 1].map(s => (
+                  <option key={s} value={s}>{s} {s === 1 ? "ster" : "sterren"}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Review tekst</label>
+              <textarea
+                value={editForm.tekst}
+                onChange={e => setEditForm({ ...editForm, tekst: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Datum</label>
+              <input
+                type="date"
+                value={editForm.review_datum}
+                onChange={e => setEditForm({ ...editForm, review_datum: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={saveEdit} className="px-4 py-2 bg-[#1B2E4A] text-white text-sm font-medium rounded-lg hover:bg-[#2A4365] transition-colors">
+              Opslaan
+            </button>
+            <button onClick={() => setEditingReview(null)} className="px-4 py-2 bg-neutral-100 text-neutral-600 text-sm font-medium rounded-lg hover:bg-neutral-200 transition-colors">
+              Annuleren
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Reviews lijst */}
       <div className="space-y-4">
         {reviews.length === 0 ? (
@@ -254,6 +350,18 @@ export default function ReviewsTab() {
                       {generating === review.id ? "Genereren..." : "AI Antwoord"}
                     </button>
                   )}
+                  <button
+                    onClick={() => startEdit(review)}
+                    className="px-3 py-1.5 text-xs bg-neutral-100 text-neutral-600 rounded-lg hover:bg-neutral-200 transition-colors"
+                  >
+                    Bewerken
+                  </button>
+                  <button
+                    onClick={() => deleteReview(review.id)}
+                    className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    Verwijderen
+                  </button>
                 </div>
               </div>
 

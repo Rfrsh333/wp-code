@@ -34,6 +34,9 @@ const ALLOWED_TABLES = [
   "acquisitie_deals",
   "offertes",
   "referrals",
+  "pricing_rules",
+  "google_reviews",
+  "content_posts",
 ] as const;
 
 type AllowedTable = typeof ALLOWED_TABLES[number];
