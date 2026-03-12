@@ -1,81 +1,103 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+
+// Direct Supabase client for recovery — NOT through the Proxy (which can
+// interfere with the auto-detection of hash-fragment tokens).
+function getRecoveryClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { detectSessionInUrl: true, flowType: "implicit" } }
+  );
+}
 
 export default function AdminWachtwoordResetClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [wachtwoord, setWachtwoord] = useState("");
   const [bevestigWachtwoord, setBevestigWachtwoord] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const clientRef = useRef<any>(null);
 
   useEffect(() => {
-    const initializeRecovery = async () => {
-      const code = searchParams.get("code");
-      const tokenHash = searchParams.get("token_hash");
-      const type = searchParams.get("type");
-      const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
-      const hashParams = new URLSearchParams(hash);
-      const accessToken = hashParams.get("access_token");
-      const refreshToken = hashParams.get("refresh_token");
-      const hashType = hashParams.get("type");
+    // Create a fresh Supabase client that will auto-detect the hash tokens
+    const sb = getRecoveryClient();
+    clientRef.current = sb;
 
-      if (accessToken && refreshToken && hashType === "recovery") {
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        if (sessionError) {
-          setError("Deze resetlink is ongeldig of verlopen.");
-          return;
-        }
-
-        if (typeof window !== "undefined" && window.location.hash) {
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      } else 
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) {
-          setError("Deze resetlink is ongeldig of verlopen.");
-          return;
-        }
-      } else if (tokenHash && type === "recovery") {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "recovery",
-        });
-
-        if (verifyError) {
-          setError("Deze resetlink is ongeldig of verlopen.");
-          return;
+    const { data: { subscription } } = sb.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("[WACHTWOORD RESET] Auth event:", event, "Session:", !!session);
+        if (session && (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+          setIsReady(true);
+          setError("");
         }
       }
+    );
 
-      const { data } = await supabase.auth.getSession();
+    // Fallback: manually parse hash and set session after a delay
+    const fallbackTimer = setTimeout(async () => {
+      if (isReady) return;
 
+      // Check if session was already established
+      const { data } = await sb.auth.getSession();
+      console.log("[WACHTWOORD RESET] Fallback session check:", !!data.session);
       if (data.session) {
         setIsReady(true);
         return;
       }
 
-      setTimeout(async () => {
-        const { data: delayed } = await supabase.auth.getSession();
-        if (delayed.session) {
-          setIsReady(true);
-        } else {
-          setError("Deze resetlink is ongeldig of verlopen.");
-        }
-      }, 400);
-    };
+      // Manual fallback: parse hash ourselves
+      const hash = window.location.hash.replace(/^#/, "");
+      if (!hash) {
+        console.log("[WACHTWOORD RESET] No hash fragment found");
+        setError("Geen resetlink gevonden. Ga naar de inlogpagina en vraag een nieuwe aan.");
+        return;
+      }
 
-    void initializeRecovery();
-  }, [searchParams]);
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const hashType = hashParams.get("type");
+
+      console.log("[WACHTWOORD RESET] Manual parse - type:", hashType, "hasAccess:", !!accessToken, "hasRefresh:", !!refreshToken);
+
+      if (accessToken && refreshToken && hashType === "recovery") {
+        const { error: sessionError } = await sb.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (sessionError) {
+          console.error("[WACHTWOORD RESET] Manual setSession failed:", sessionError.message);
+          setError(`Resetlink kon niet worden geverifieerd: ${sessionError.message}`);
+          return;
+        }
+
+        setIsReady(true);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        setError("Deze resetlink is ongeldig of verlopen.");
+      }
+    }, 2000);
+
+    // Final safety net
+    const finalTimer = setTimeout(() => {
+      if (!isReady && !error) {
+        setError("Er ging iets mis bij het laden van de resetpagina. Vraag een nieuwe link aan.");
+      }
+    }, 8000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(fallbackTimer);
+      clearTimeout(finalTimer);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -91,8 +113,11 @@ export default function AdminWachtwoordResetClient() {
       return;
     }
 
+    const sb = clientRef.current;
+    if (!sb) return;
+
     setIsLoading(true);
-    const { error: updateError } = await supabase.auth.updateUser({ password: wachtwoord });
+    const { error: updateError } = await sb.auth.updateUser({ password: wachtwoord });
     setIsLoading(false);
 
     if (updateError) {
@@ -100,7 +125,7 @@ export default function AdminWachtwoordResetClient() {
       return;
     }
 
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
     router.push("/admin/login?reset=1");
   };
 
@@ -108,6 +133,9 @@ export default function AdminWachtwoordResetClient() {
     <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-xl">TT</span>
+          </div>
           <h1 className="text-2xl font-bold text-neutral-900">Nieuw admin wachtwoord</h1>
           <p className="text-neutral-500 mt-2">Stel direct een nieuw wachtwoord in voor uw adminaccount</p>
         </div>
@@ -115,7 +143,10 @@ export default function AdminWachtwoordResetClient() {
         {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-5">{error}</div>}
 
         {!isReady && !error ? (
-          <div className="text-center text-neutral-500">Resetlink controleren...</div>
+          <div className="flex flex-col items-center gap-3 py-8">
+            <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div>
+            <p className="text-neutral-500 text-sm">Resetlink controleren...</p>
+          </div>
         ) : null}
 
         {isReady ? (
@@ -127,7 +158,9 @@ export default function AdminWachtwoordResetClient() {
                 value={wachtwoord}
                 onChange={(e) => setWachtwoord(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                placeholder="Minimaal 8 tekens"
                 required
+                minLength={8}
               />
             </div>
             <div>
@@ -137,7 +170,9 @@ export default function AdminWachtwoordResetClient() {
                 value={bevestigWachtwoord}
                 onChange={(e) => setBevestigWachtwoord(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                placeholder="Herhaal uw wachtwoord"
                 required
+                minLength={8}
               />
             </div>
             <button
@@ -149,6 +184,15 @@ export default function AdminWachtwoordResetClient() {
             </button>
           </form>
         ) : null}
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => router.push("/admin/login")}
+            className="text-sm text-neutral-500 hover:text-[#F27501] transition-colors"
+          >
+            &larr; Terug naar inlogpagina
+          </button>
+        </div>
       </div>
     </div>
   );
