@@ -268,7 +268,7 @@ export async function generateSlots(
   const defaultEnd = settingsMap.default_end_time || "17:00";
   const workingDays = (settingsMap.working_days || "1,2,3,4,5")
     .split(",")
-    .map((d) => parseInt(d.trim()));
+    .map((d: string) => parseInt(d.trim()));
 
   const startMinutes = timeToMinutes(defaultStart);
   const endMinutes = timeToMinutes(defaultEnd);

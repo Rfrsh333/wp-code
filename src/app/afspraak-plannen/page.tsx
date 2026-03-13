@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { generateICS } from "@/lib/ics";
 
@@ -34,6 +34,21 @@ interface BookingResult {
 }
 
 export default function AfspraakPlannenPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neutral-600">Laden...</p>
+        </div>
+      </div>
+    }>
+      <AfspraakPlannenContent />
+    </Suspense>
+  );
+}
+
+function AfspraakPlannenContent() {
   const searchParams = useSearchParams();
   const inquiryRef = searchParams.get("ref");
 
