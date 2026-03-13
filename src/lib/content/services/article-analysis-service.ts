@@ -82,7 +82,7 @@ export async function analyzeNormalizedArticle(normalizedArticleId: string) {
       },
       analysis,
       rules: mapSourceRules((rules ?? []) as Array<Record<string, unknown>>),
-      modelName: process.env.OPENAI_CONTENT_MODEL || "gpt-5-mini",
+      modelName: process.env.OPENAI_CONTENT_MODEL || "gpt-4o-mini",
     });
 
     await finishJobRun(jobRunId, {

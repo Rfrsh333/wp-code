@@ -45,7 +45,7 @@ function extractContent(response: OpenAIResponse): string {
 
 export class OpenAIContentClient implements AiTextClient {
   constructor(
-    private readonly model = process.env.OPENAI_CONTENT_MODEL || "gpt-5-mini",
+    private readonly model = process.env.OPENAI_CONTENT_MODEL || "gpt-4o-mini",
     private readonly baseUrl = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
   ) {}
 
@@ -77,7 +77,7 @@ export class OpenAIContentClient implements AiTextClient {
     if (!response.ok) {
       const errorBody = await response.text();
       throw new ContentPipelineError(
-        "OpenAI request failed.",
+        `OpenAI request failed (${response.status}): ${errorBody.slice(0, 200)}`,
         "openai_request_failed",
         {
           status: response.status,
