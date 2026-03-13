@@ -37,6 +37,8 @@ export async function seedCuratedSources() {
     }
   }
 
+  const updateErrors: string[] = [];
+
   for (const seed of seedSourceProfiles) {
     const existing = existingByName.get(seed.name);
     if (!existing) {
@@ -61,7 +63,8 @@ export async function seedCuratedSources() {
       .eq("id", existing.id as string);
 
     if (error) {
-      throw error;
+      console.error(`[seed] Failed to update source "${seed.name}":`, error.message);
+      updateErrors.push(seed.name);
     }
   }
 
@@ -102,6 +105,8 @@ export async function seedCuratedSources() {
 
   return {
     insertedSources: sourcesToInsert.length,
+    updatedSources: seedSourceProfiles.length - sourcesToInsert.length - updateErrors.length,
+    updateErrors,
     insertedRules: rulesToInsert.length,
     totalSources: sourceIdByName.size,
   };

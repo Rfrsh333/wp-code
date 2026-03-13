@@ -15,9 +15,18 @@ function stripCdata(value: string): string {
 
 function extractTag(block: string, tagNames: string[]): string | null {
   for (const tag of tagNames) {
+    // Standard opening+closing tag: <tag>content</tag>
     const match = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
     if (match?.[1]) {
       return decodeXmlEntities(stripCdata(match[1].trim()));
+    }
+
+    // Atom self-closing link: <link href="..." /> or <link rel="alternate" href="..." />
+    if (tag === "link") {
+      const hrefMatch = block.match(/<link[^>]*\bhref=["']([^"']+)["'][^>]*\/?>/i);
+      if (hrefMatch?.[1]) {
+        return decodeXmlEntities(hrefMatch[1].trim());
+      }
     }
   }
 

@@ -11,6 +11,18 @@ export const adminTabs = [
   "diensten",
   "uren",
   "facturen",
+  "matching",
+  "ai",
+  "acquisitie",
+  "klanten",
+  "referrals",
+  "offertes",
+  "faq",
+  "tickets",
+  "pricing",
+  "content",
+  "agenda",
+  "berichten",
 ] as const;
 
 export type AdminTab = (typeof adminTabs)[number];

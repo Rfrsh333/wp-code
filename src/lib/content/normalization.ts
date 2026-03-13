@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import type { IngestedFeedItem, RawArticleRecord } from "@/lib/content/types";
+import type { IngestedFeedItem } from "@/lib/content/types";
 
 export function normalizeUrl(rawUrl: string): string {
   const url = new URL(rawUrl);
@@ -30,27 +30,27 @@ export function buildRawArticleFromFeedItem(
   sourceId: string,
   sourceUrl: string,
   item: IngestedFeedItem,
-): Omit<RawArticleRecord, "id" | "createdAt" | "updatedAt"> {
+): Record<string, unknown> {
   const canonicalUrl = normalizeUrl(item.link);
   const excerpt = item.excerpt ? stripHtmlTags(item.excerpt).slice(0, 400) : null;
   const title = item.title.trim();
   const fingerprint = computeContentHash(`${canonicalUrl}|${title}|${excerpt ?? ""}`);
 
   return {
-    sourceId,
-    externalId: item.guid,
-    sourceUrl,
-    canonicalUrl,
+    source_id: sourceId,
+    external_id: item.guid,
+    source_url: sourceUrl,
+    canonical_url: canonicalUrl,
     title,
     author: item.author,
-    publishedAt: item.publishedAt,
+    published_at: item.publishedAt,
     excerpt,
-    rawHtml: item.excerpt ?? null,
-    rawText: excerpt,
+    raw_html: item.excerpt ?? null,
+    raw_text: excerpt,
     language: "nl",
     hash: fingerprint,
-    fetchStatus: "pending",
-    fetchError: null,
+    fetch_status: "pending",
+    fetch_error: null,
     provenance: {
       ingest_method: "rss",
       discovered_from: sourceUrl,

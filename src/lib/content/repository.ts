@@ -134,7 +134,7 @@ export async function listActiveSources(): Promise<SourceRecord[]> {
     return (data ?? []).map((row) => mapSourceRow(row as GenericRow));
   } catch (error) {
     handleQueryError("sources", error);
-    return [];
+    throw error;
   }
 }
 
