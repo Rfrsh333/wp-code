@@ -4,6 +4,13 @@ const REDIRECT_TARGET = "https://www.toptalentjobs.nl/";
 
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
+
+  if (pathname.startsWith("/api/") && pathname.length > 5 && pathname.endsWith("/")) {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = pathname.slice(0, -1);
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   const normalizedPath = pathname !== "/" && pathname.endsWith("/")
     ? pathname.slice(0, -1)
     : pathname;

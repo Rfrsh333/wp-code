@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import type { Session } from "@supabase/supabase-js";
+import AdminShell from "@/components/navigation/AdminShell";
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -171,17 +172,20 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <AdminShell>
+      <div className="mx-auto max-w-3xl py-4">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.push("/admin")}
-            className="text-[#F27501] hover:text-[#d96800] mb-4 flex items-center gap-2"
+            className="mb-4 flex items-center gap-2 text-sm font-medium text-[#F27501] transition hover:text-[#d96800]"
           >
             ← Terug naar Dashboard
           </button>
           <h1 className="text-3xl font-bold text-neutral-900">Admin Instellingen</h1>
+          <p className="mt-2 text-sm text-neutral-500">
+            Beheer accountbeveiliging en toegangsinstellingen zonder de bestaande adminflow te wijzigen.
+          </p>
         </div>
 
         {/* Messages */}
@@ -347,6 +351,6 @@ export default function AdminSettingsPage() {
           )}
         </div>
       </div>
-    </div>
+    </AdminShell>
   );
 }
