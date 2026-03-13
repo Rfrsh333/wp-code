@@ -37,6 +37,7 @@ const PricingTab = dynamic(() => import("./PricingTab"), { loading: () => <TabSk
 const ContentTab = dynamic(() => import("./ContentTab"), { loading: () => <TabSkeleton />, ssr: false });
 const AgendaTab = dynamic(() => import("./AgendaTab"), { loading: () => <TabSkeleton />, ssr: false });
 const BerichtenTab = dynamic(() => import("./BerichtenTab"), { loading: () => <TabSkeleton />, ssr: false });
+const PlanningTab = dynamic(() => import("./PlanningTab"), { loading: () => <TabSkeleton />, ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -1856,6 +1857,9 @@ export default function AdminDashboard() {
 
             {/* Berichten Tab */}
             {activeTab === "berichten" && <BerichtenTab />}
+
+            {/* Planning Tab */}
+            {activeTab === "planning" && <PlanningTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

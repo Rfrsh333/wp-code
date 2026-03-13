@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import ShiftAanbiedingenPanel from "./ShiftAanbiedingenPanel";
+import ShiftAanbiedingenPanel from "./ShiftAanbiedingenPanelV2";
 
 interface Dienst {
   id: string;
@@ -212,15 +212,30 @@ export default function DienstenTab() {
       is_spoeddienst: formData.is_spoeddienst,
     };
 
-    await fetch("/api/admin/diensten", {
+    const body = {
+      action: editingDienst ? "update" : "create",
+      id: editingDienst?.id,
+      data: payload,
+    };
+    console.log("[DienstenTab] Sending:", JSON.stringify(body));
+    const res = await fetch("/api/admin/diensten", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: editingDienst ? "update" : "create",
-        id: editingDienst?.id,
-        data: payload,
-      }),
+      body: JSON.stringify(body),
     });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Dienst opslaan mislukt:", res.status, text);
+      try {
+        const err = JSON.parse(text);
+        alert(`Fout bij opslaan: ${err.error || text}`);
+      } catch {
+        alert(`Fout bij opslaan (${res.status}): ${text.substring(0, 200)}`);
+      }
+      setIsSaving(false);
+      return;
+    }
 
     setIsSaving(false);
     setShowModal(false);
@@ -992,6 +1007,10 @@ export default function DienstenTab() {
         <ShiftAanbiedingenPanel
           dienst={aanbiedenDienst}
           onClose={() => setAanbiedenDienst(null)}
+          getAuthHeader={async () => {
+            const headers = await getAuthHeader();
+            return headers as Record<string, string>;
+          }}
         />
       )}
     </div>

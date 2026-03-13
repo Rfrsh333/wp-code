@@ -52,10 +52,69 @@ export async function GET(request: NextRequest) {
   const totaalUren = (urenData || []).reduce((sum, u) => sum + (u.gewerkte_uren || 0), 0);
   const totaalOmzet = Object.values(omzetPerMaand).reduce((a, b) => a + b, 0);
 
+  // Bezettingsgraad: % diensten die volledig bezet zijn
+  const { data: alleDiensten } = await supabaseAdmin
+    .from("diensten")
+    .select("id, aantal_nodig, status")
+    .in("status", ["vol", "open", "bezig"]);
+  const { data: aanmeldCounts } = await supabaseAdmin
+    .from("dienst_aanmeldingen")
+    .select("dienst_id")
+    .eq("status", "geaccepteerd");
+  const aanmeldMap = new Map<string, number>();
+  (aanmeldCounts || []).forEach(a => {
+    aanmeldMap.set(a.dienst_id, (aanmeldMap.get(a.dienst_id) || 0) + 1);
+  });
+  const dienstenArr = alleDiensten || [];
+  const bezettingsgraad = dienstenArr.length > 0
+    ? Math.round(dienstenArr.reduce((sum, d) => {
+        const gevuld = aanmeldMap.get(d.id) || 0;
+        return sum + Math.min(gevuld / (d.aantal_nodig || 1), 1);
+      }, 0) / dienstenArr.length * 100)
+    : 0;
+
+  // Top klanten (omzet)
+  const { data: klantFacturen } = await supabaseAdmin
+    .from("facturen")
+    .select("totaal, klant:klanten(bedrijfsnaam)")
+    .in("status", ["verzonden", "betaald"]);
+  const klantOmzetMap = new Map<string, { omzet: number; diensten: number }>();
+  (klantFacturen || []).forEach(f => {
+    const klant = Array.isArray(f.klant) ? f.klant[0] : f.klant;
+    const naam = klant?.bedrijfsnaam || "Onbekend";
+    const cur = klantOmzetMap.get(naam) || { omzet: 0, diensten: 0 };
+    cur.omzet += f.totaal;
+    cur.diensten += 1;
+    klantOmzetMap.set(naam, cur);
+  });
+  const topKlanten = [...klantOmzetMap.entries()]
+    .map(([naam, d]) => ({ naam, ...d }))
+    .sort((a, b) => b.omzet - a.omzet)
+    .slice(0, 5);
+
+  // Gemiddelde responstijd (in uren)
+  const { data: aanbiedingen } = await supabaseAdmin
+    .from("dienst_aanmeldingen")
+    .select("aangemeld_at, beoordeeld_at")
+    .not("beoordeeld_at", "is", null)
+    .order("aangemeld_at", { ascending: false })
+    .limit(50);
+  let responstijd = 0;
+  if (aanbiedingen && aanbiedingen.length > 0) {
+    const totaalUrenResp = aanbiedingen.reduce((sum, a) => {
+      const diff = new Date(a.beoordeeld_at!).getTime() - new Date(a.aangemeld_at).getTime();
+      return sum + diff / (1000 * 60 * 60);
+    }, 0);
+    responstijd = Math.round(totaalUrenResp / aanbiedingen.length);
+  }
+
   return NextResponse.json({
     omzetPerMaand: Object.entries(omzetPerMaand).map(([maand, omzet]) => ({ maand, omzet })),
     besteMedewerkers: medewerkers || [],
-    totalen: { medewerkers: totaalMedewerkers, klanten: totaalKlanten, diensten: totaalDiensten, uren: Math.round(totaalUren), omzet: totaalOmzet }
+    totalen: { medewerkers: totaalMedewerkers, klanten: totaalKlanten, diensten: totaalDiensten, uren: Math.round(totaalUren), omzet: totaalOmzet },
+    bezettingsgraad,
+    topKlanten,
+    responstijd,
   }, {
     headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=120" },
   });

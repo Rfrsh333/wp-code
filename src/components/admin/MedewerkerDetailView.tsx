@@ -25,6 +25,17 @@ interface MedewerkerDetail {
     iban: string | null;
     admin_score_aanwezigheid: number | null;
     admin_score_vaardigheden: number | null;
+    experience_years?: number | null;
+    bio?: string | null;
+    languages?: string[];
+    has_drivers_license?: boolean;
+    has_own_transport?: boolean;
+    shirt_size?: string | null;
+    emergency_contact_naam?: string | null;
+    emergency_contact_telefoon?: string | null;
+    emergency_contact_relatie?: string | null;
+    notes_admin?: string | null;
+    last_active_at?: string | null;
   };
   werkervaring: {
     id: string;
@@ -47,6 +58,7 @@ interface MedewerkerDetail {
     file_url: string;
     file_size: number;
     uploaded_at: string;
+    expiry_date?: string | null;
   }[];
   diensten: {
     id: string;
@@ -311,6 +323,43 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
             )}
           </div>
 
+          {/* Extra velden */}
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <h4 className="text-lg font-semibold text-neutral-900 mb-4">Extra informatie</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {profiel.experience_years != null && (
+                <div><span className="text-neutral-500">Ervaring:</span> <span className="font-medium">{profiel.experience_years} jaar</span></div>
+              )}
+              {profiel.languages && profiel.languages.length > 0 && (
+                <div><span className="text-neutral-500">Talen:</span> <span className="font-medium">{profiel.languages.join(", ")}</span></div>
+              )}
+              <div><span className="text-neutral-500">Rijbewijs:</span> <span className="font-medium">{profiel.has_drivers_license ? "Ja" : "Nee"}</span></div>
+              <div><span className="text-neutral-500">Eigen vervoer:</span> <span className="font-medium">{profiel.has_own_transport ? "Ja" : "Nee"}</span></div>
+              {profiel.shirt_size && (
+                <div><span className="text-neutral-500">Shirtmaat:</span> <span className="font-medium">{profiel.shirt_size}</span></div>
+              )}
+              {profiel.emergency_contact_naam && (
+                <div className="col-span-2">
+                  <span className="text-neutral-500">Noodcontact:</span>{" "}
+                  <span className="font-medium">
+                    {profiel.emergency_contact_naam}
+                    {profiel.emergency_contact_relatie ? ` (${profiel.emergency_contact_relatie})` : ""}
+                    {profiel.emergency_contact_telefoon ? ` — ${profiel.emergency_contact_telefoon}` : ""}
+                  </span>
+                </div>
+              )}
+              {profiel.bio && (
+                <div className="col-span-2"><span className="text-neutral-500">Bio:</span> <p className="font-medium mt-1">{profiel.bio}</p></div>
+              )}
+              {profiel.notes_admin && (
+                <div className="col-span-2 bg-yellow-50 rounded-lg p-3"><span className="text-neutral-500">Admin notities:</span> <p className="font-medium mt-1">{profiel.notes_admin}</p></div>
+              )}
+              {profiel.last_active_at && (
+                <div><span className="text-neutral-500">Laatst actief:</span> <span className="font-medium">{new Date(profiel.last_active_at).toLocaleDateString("nl-NL")}</span></div>
+              )}
+            </div>
+          </div>
+
           {/* Vaardigheden */}
           {vaardigheden.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -522,6 +571,17 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
                     <p className="text-xs text-neutral-500">
                       {doc.document_type} &middot; {(doc.file_size / 1024).toFixed(0)} KB &middot; {formatDate(doc.uploaded_at)}
                     </p>
+                    {doc.expiry_date && (() => {
+                      const expiry = new Date(doc.expiry_date);
+                      const daysLeft = Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                      const isExpired = daysLeft < 0;
+                      const isExpiringSoon = daysLeft >= 0 && daysLeft <= 30;
+                      return (
+                        <p className={`text-xs ${isExpired ? "text-red-600 font-semibold" : isExpiringSoon ? "text-orange-600" : "text-neutral-400"}`}>
+                          {isExpired ? "Verlopen" : isExpiringSoon ? `Verloopt over ${daysLeft} dagen` : `Geldig tot ${formatDate(doc.expiry_date)}`}
+                        </p>
+                      );
+                    })()}
                   </div>
                 </div>
                 <a

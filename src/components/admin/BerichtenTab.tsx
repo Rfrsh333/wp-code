@@ -21,6 +21,15 @@ interface Medewerker {
   id: string;
   naam: string;
   email: string;
+  functie?: string[];
+}
+
+interface BerichtTemplate {
+  id: string;
+  naam: string;
+  onderwerp: string | null;
+  inhoud: string;
+  categorie: string;
 }
 
 export default function BerichtenTab() {
@@ -33,6 +42,13 @@ export default function BerichtenTab() {
   const [nieuwForm, setNieuwForm] = useState({ aan_id: "", onderwerp: "", inhoud: "" });
   const [isSending, setIsSending] = useState(false);
   const [zoekterm, setZoekterm] = useState("");
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkFilter, setBulkFilter] = useState<"alle" | "functie">("alle");
+  const [bulkFunctie, setBulkFunctie] = useState("");
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const [templates, setTemplates] = useState<BerichtTemplate[]>([]);
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [templateForm, setTemplateForm] = useState({ naam: "", onderwerp: "", inhoud: "", categorie: "algemeen" });
 
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("admin_token") || sessionStorage.getItem("admin_token") || "";
@@ -42,7 +58,71 @@ export default function BerichtenTab() {
   useEffect(() => {
     fetchBerichten();
     fetchMedewerkers();
+    fetchTemplates();
   }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const res = await fetch("/api/admin/berichten?templates=true", { headers: getAuthHeaders() });
+      const data = await res.json();
+      setTemplates(data.templates || []);
+    } catch { /* non-critical */ }
+  };
+
+  const saveTemplate = async () => {
+    if (!templateForm.naam || !templateForm.inhoud) return;
+    try {
+      await fetch("/api/admin/berichten", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: "save_template", ...templateForm }),
+      });
+      toast.success("Template opgeslagen");
+      setShowTemplateForm(false);
+      setTemplateForm({ naam: "", onderwerp: "", inhoud: "", categorie: "algemeen" });
+      fetchTemplates();
+    } catch {
+      toast.error("Kon template niet opslaan");
+    }
+  };
+
+  const applyTemplate = (t: BerichtTemplate) => {
+    setNieuwForm(prev => ({ ...prev, onderwerp: t.onderwerp || "", inhoud: t.inhoud }));
+  };
+
+  const bulkVerstuur = async () => {
+    const targets = bulkFilter === "alle"
+      ? medewerkers.map(m => m.id)
+      : bulkFilter === "functie"
+        ? medewerkers.filter(m => m.functie?.includes(bulkFunctie)).map(m => m.id)
+        : [...bulkSelected];
+
+    if (targets.length === 0 || !nieuwForm.inhoud.trim()) {
+      toast.error("Selecteer ontvangers en vul een bericht in");
+      return;
+    }
+    setIsSending(true);
+    try {
+      await fetch("/api/admin/berichten", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: "bulk_send",
+          aan_ids: targets,
+          onderwerp: nieuwForm.onderwerp,
+          inhoud: nieuwForm.inhoud,
+        }),
+      });
+      toast.success(`Bericht verstuurd naar ${targets.length} medewerkers`);
+      setShowBulk(false);
+      setNieuwForm({ aan_id: "", onderwerp: "", inhoud: "" });
+      fetchBerichten();
+    } catch {
+      toast.error("Bulk versturen mislukt");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const fetchBerichten = async () => {
     try {
@@ -245,6 +325,17 @@ export default function BerichtenTab() {
                 ))}
               </select>
             </div>
+            {templates.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Template</label>
+                <div className="flex flex-wrap gap-2">
+                  {templates.map(t => (
+                    <button key={t.id} type="button" onClick={() => applyTemplate(t)}
+                      className="px-3 py-1 text-xs border border-neutral-200 rounded-lg hover:bg-neutral-50">{t.naam}</button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Onderwerp (optioneel)</label>
               <input
@@ -278,6 +369,104 @@ export default function BerichtenTab() {
     );
   }
 
+  // Bulk bericht view
+  if (showBulk) {
+    const functieOptions = [...new Set(medewerkers.flatMap(m => m.functie || []))];
+    const targetCount = bulkFilter === "alle"
+      ? medewerkers.length
+      : bulkFilter === "functie"
+        ? medewerkers.filter(m => m.functie?.includes(bulkFunctie)).length
+        : bulkSelected.size;
+
+    return (
+      <div>
+        <button onClick={() => setShowBulk(false)} className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-700 mb-4">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          Terug
+        </button>
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-neutral-900 mb-4">Bulk bericht</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Ontvangers</label>
+              <div className="flex gap-2 mb-2">
+                {(["alle", "functie"] as const).map(f => (
+                  <button key={f} type="button" onClick={() => setBulkFilter(f)}
+                    className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${bulkFilter === f ? "bg-[#F27501] text-white border-[#F27501]" : "border-neutral-200 hover:bg-neutral-50"}`}>
+                    {f === "alle" ? "Alle medewerkers" : "Per functie"}
+                  </button>
+                ))}
+              </div>
+              {bulkFilter === "functie" && (
+                <select value={bulkFunctie} onChange={e => setBulkFunctie(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Selecteer functie...</option>
+                  {functieOptions.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              )}
+              <p className="text-xs text-neutral-500 mt-1">{targetCount} ontvangers</p>
+            </div>
+            {templates.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Template gebruiken</label>
+                <div className="flex flex-wrap gap-2">
+                  {templates.map(t => (
+                    <button key={t.id} type="button" onClick={() => applyTemplate(t)}
+                      className="px-3 py-1 text-xs border border-neutral-200 rounded-lg hover:bg-neutral-50">{t.naam}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium mb-1">Onderwerp</label>
+              <input type="text" value={nieuwForm.onderwerp} onChange={e => setNieuwForm({ ...nieuwForm, onderwerp: e.target.value })}
+                className="w-full px-4 py-3 border rounded-xl text-sm" placeholder="Onderwerp" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Bericht</label>
+              <textarea value={nieuwForm.inhoud} onChange={e => setNieuwForm({ ...nieuwForm, inhoud: e.target.value })}
+                rows={6} className="w-full px-4 py-3 border rounded-xl text-sm resize-none" placeholder="Typ je bericht..." />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={bulkVerstuur} disabled={isSending || targetCount === 0}
+                className="px-6 py-3 bg-[#F27501] text-white font-semibold rounded-xl disabled:opacity-50">
+                {isSending ? "Verzenden..." : `Verstuur naar ${targetCount} medewerkers`}
+              </button>
+              <button onClick={() => { setShowTemplateForm(true); setTemplateForm({ naam: "", onderwerp: nieuwForm.onderwerp, inhoud: nieuwForm.inhoud, categorie: "algemeen" }); }}
+                className="px-4 py-3 border border-neutral-200 text-sm rounded-xl hover:bg-neutral-50">
+                Opslaan als template
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Template opslaan modal */}
+        {showTemplateForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6">
+              <h3 className="text-lg font-bold mb-4">Template opslaan</h3>
+              <div className="space-y-3">
+                <input type="text" value={templateForm.naam} onChange={e => setTemplateForm({ ...templateForm, naam: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Template naam" />
+                <select value={templateForm.categorie} onChange={e => setTemplateForm({ ...templateForm, categorie: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="algemeen">Algemeen</option>
+                  <option value="shifts">Shifts</option>
+                  <option value="administratie">Administratie</option>
+                  <option value="welkom">Welkom</option>
+                </select>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setShowTemplateForm(false)} className="flex-1 py-2 border rounded-xl text-sm">Annuleren</button>
+                <button onClick={saveTemplate} className="flex-1 py-2 bg-[#F27501] text-white rounded-xl text-sm font-medium">Opslaan</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Gesprekken lijst
   return (
     <div>
@@ -288,12 +477,20 @@ export default function BerichtenTab() {
             <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">{totalOngelezen}</span>
           )}
         </div>
-        <button
-          onClick={() => setShowNieuw(true)}
-          className="px-4 py-2 bg-[#F27501] hover:bg-[#d96800] text-white text-sm font-semibold rounded-xl"
-        >
-          Nieuw bericht
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowBulk(true)}
+            className="px-4 py-2 border border-[#F27501] text-[#F27501] text-sm font-semibold rounded-xl hover:bg-[#F27501]/5"
+          >
+            Bulk bericht
+          </button>
+          <button
+            onClick={() => setShowNieuw(true)}
+            className="px-4 py-2 bg-[#F27501] hover:bg-[#d96800] text-white text-sm font-semibold rounded-xl"
+          >
+            Nieuw bericht
+          </button>
+        </div>
       </div>
 
       {/* Zoeken */}

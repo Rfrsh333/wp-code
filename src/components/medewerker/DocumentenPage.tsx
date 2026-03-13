@@ -13,6 +13,7 @@ interface Document {
   review_status?: string | null;
   review_opmerking?: string | null;
   reviewed_at?: string | null;
+  expiry_date?: string | null;
 }
 
 const DOCUMENT_TYPES = [
@@ -172,6 +173,18 @@ export default function DocumentenPage() {
                 <p className="text-xs text-neutral-500">
                   {getTypeLabel(doc.document_type)} · {formatFileSize(doc.file_size)} · {formatDate(doc.uploaded_at)}
                 </p>
+                {doc.expiry_date && (() => {
+                  const expiry = new Date(doc.expiry_date);
+                  const today = new Date();
+                  const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  const isExpired = daysLeft < 0;
+                  const isExpiringSoon = daysLeft >= 0 && daysLeft <= 30;
+                  return (
+                    <p className={`text-xs mt-0.5 flex items-center gap-1 ${isExpired ? "text-red-600 font-semibold" : isExpiringSoon ? "text-orange-600" : "text-neutral-400"}`}>
+                      {isExpired ? "⚠️ Verlopen" : isExpiringSoon ? `⚠️ Verloopt over ${daysLeft} dagen` : `Geldig tot ${formatDate(doc.expiry_date)}`}
+                    </p>
+                  );
+                })()}
                 {doc.review_status === "afgekeurd" && doc.review_opmerking && (
                   <p className="text-xs text-red-600 mt-1">Opmerking: {doc.review_opmerking}</p>
                 )}

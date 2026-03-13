@@ -451,6 +451,123 @@ export function buildKandidaatBookingNotificatie(params: {
 // 11. Kandidaat booking annulering
 // ============================================
 
+// ============================================
+// PORTAAL NOTIFICATIE TEMPLATES
+// ============================================
+
+// N1. Shift aangeboden aan medewerker
+export function buildShiftAangebodenHtml(params: {
+  naam: string; klantNaam: string; functie: string;
+  datum: string; startTijd: string; eindTijd: string; locatie: string;
+}): string {
+  const firstName = params.naam.split(" ")[0];
+  return emailWrapper(`
+    <p style="font-size: 32px; margin: 0 0 16px;">📋</p>
+    <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Hey ${firstName}, er is een shift voor je!</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Er is een nieuwe dienst die bij je past. Bekijk de details en meld je aan als je beschikbaar bent.</p>
+    ${infoBlock([
+      { label: "Klant", value: params.klantNaam },
+      { label: "Functie", value: params.functie },
+      { label: "Datum", value: params.datum },
+      { label: "Tijd", value: `${params.startTijd.substring(0, 5)} - ${params.eindTijd.substring(0, 5)}` },
+      { label: "Locatie", value: params.locatie },
+    ])}
+    ${bookingButton("https://www.toptalentjobs.nl/medewerker/dashboard", "Bekijk & Reageer")}
+  `);
+}
+
+// N2. Uren goedgekeurd
+export function buildUrenGoedgekeurdHtml(params: {
+  naam: string; klantNaam: string; datum: string; uren: number;
+}): string {
+  const firstName = params.naam.split(" ")[0];
+  return emailWrapper(`
+    <p style="font-size: 32px; margin: 0 0 16px;">✅</p>
+    <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Uren goedgekeurd!</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Hey ${firstName}, je uren voor onderstaande dienst zijn goedgekeurd.</p>
+    ${infoBlock([
+      { label: "Klant", value: params.klantNaam },
+      { label: "Datum", value: params.datum },
+      { label: "Uren", value: String(params.uren) },
+    ])}
+    ${bookingButton("https://www.toptalentjobs.nl/medewerker/dashboard", "Bekijk financieel overzicht")}
+  `);
+}
+
+// N3. Document afgewezen
+export function buildDocumentAfgewezen(params: {
+  naam: string; documentType: string; opmerking?: string;
+}): string {
+  const firstName = params.naam.split(" ")[0];
+  return emailWrapper(`
+    <p style="font-size: 32px; margin: 0 0 16px;">📄</p>
+    <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Document afgekeurd</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Hey ${firstName}, je document "${params.documentType}" is helaas afgekeurd.</p>
+    ${params.opmerking ? `<div style="background: #fee2e2; border-radius: 8px; padding: 16px; margin: 16px 0;">
+      <p style="margin: 0; font-size: 14px; color: #991b1b;"><strong>Reden:</strong> ${params.opmerking}</p>
+    </div>` : ""}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Upload een nieuw document via je portaal.</p>
+    ${bookingButton("https://www.toptalentjobs.nl/medewerker/dashboard", "Upload nieuw document")}
+  `);
+}
+
+// N4. Document verloopt binnenkort
+export function buildDocumentVerlooptHtml(params: {
+  naam: string; documentType: string; verloopDatum: string;
+}): string {
+  const firstName = params.naam.split(" ")[0];
+  return emailWrapper(`
+    <p style="font-size: 32px; margin: 0 0 16px;">⚠️</p>
+    <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Document verloopt binnenkort</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Hey ${firstName}, je ${params.documentType} verloopt op <strong>${params.verloopDatum}</strong>.</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Upload zo snel mogelijk een nieuw document om onderbrekingen te voorkomen.</p>
+    ${bookingButton("https://www.toptalentjobs.nl/medewerker/dashboard", "Document vernieuwen")}
+  `);
+}
+
+// N5. Medewerker accepteert/weigert shift — notify admin
+export function buildAanbiedingReactieHtml(params: {
+  medewerkerNaam: string; klantNaam: string; datum: string; actie: "geaccepteerd" | "geweigerd";
+}): string {
+  const emoji = params.actie === "geaccepteerd" ? "✅" : "❌";
+  return emailWrapper(`
+    <p style="font-size: 32px; margin: 0 0 16px;">${emoji}</p>
+    <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Aanbieding ${params.actie}</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;"><strong>${params.medewerkerNaam}</strong> heeft de dienst bij ${params.klantNaam} op ${params.datum} <strong>${params.actie}</strong>.</p>
+    ${bookingButton("https://www.toptalentjobs.nl/admin?tab=planning", "Bekijk planning")}
+  `);
+}
+
+// N6. Uren ingediend — notify admin
+export function buildUrenIngediendHtml(params: {
+  medewerkerNaam: string; klantNaam: string; datum: string; uren: number;
+}): string {
+  return emailWrapper(`
+    <p style="font-size: 32px; margin: 0 0 16px;">🕐</p>
+    <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Nieuwe uren ter goedkeuring</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;"><strong>${params.medewerkerNaam}</strong> heeft ${params.uren} uur ingediend voor ${params.klantNaam} op ${params.datum}.</p>
+    ${bookingButton("https://www.toptalentjobs.nl/admin?tab=uren", "Uren beoordelen")}
+  `);
+}
+
+// N7. Factuur onbetaald herinnering
+export function buildFactuurHerinneringHtml(params: {
+  bedrijfsnaam: string; factuurNummer: string; totaal: number; vervalDatum: string;
+}): string {
+  return emailWrapper(`
+    <p style="font-size: 32px; margin: 0 0 16px;">💰</p>
+    <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Betalingsherinnering</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.bedrijfsnaam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Wij hebben nog geen betaling ontvangen voor onderstaande factuur.</p>
+    ${infoBlock([
+      { label: "Factuurnummer", value: params.factuurNummer },
+      { label: "Bedrag", value: `€${params.totaal.toFixed(2)}` },
+      { label: "Vervaldatum", value: params.vervalDatum },
+    ])}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Wij verzoeken u vriendelijk het openstaande bedrag zo spoedig mogelijk over te maken.</p>
+  `);
+}
+
 export function buildKandidaatBookingAnnulering(params: {
   naam: string;
   herboekenLink?: string;

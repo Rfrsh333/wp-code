@@ -2,11 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import dynamic from "next/dynamic";
+
+const RechartsLineChart = dynamic(() => import("recharts").then(m => m.LineChart), { ssr: false });
+const RechartsBarChart = dynamic(() => import("recharts").then(m => m.BarChart), { ssr: false });
+const Line = dynamic(() => import("recharts").then(m => m.Line), { ssr: false });
+const Bar = dynamic(() => import("recharts").then(m => m.Bar), { ssr: false });
+const XAxis = dynamic(() => import("recharts").then(m => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import("recharts").then(m => m.YAxis), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then(m => m.Tooltip), { ssr: false });
+const ResponsiveContainer = dynamic(() => import("recharts").then(m => m.ResponsiveContainer), { ssr: false });
+const CartesianGrid = dynamic(() => import("recharts").then(m => m.CartesianGrid), { ssr: false });
 
 interface Stats {
   omzetPerMaand: { maand: string; omzet: number }[];
   besteMedewerkers: { naam: string; gemiddelde_score: number; aantal_beoordelingen: number }[];
   totalen: { medewerkers: number; klanten: number; diensten: number; uren: number; omzet: number };
+  bezettingsgraad?: number;
+  topKlanten?: { naam: string; omzet: number; diensten: number }[];
+  responstijd?: number;
 }
 
 export default function StatsTab() {
@@ -27,11 +41,12 @@ export default function StatsTab() {
 
   if (isLoading || !stats) return <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div></div>;
 
-  const maxOmzet = Math.max(...stats.omzetPerMaand.map(o => o.omzet), 1);
+  const bezettingsgraad = stats.bezettingsgraad ?? 0;
+  const responstijd = stats.responstijd ?? 0;
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-neutral-900 mb-6">Dashboard</h2>
+      <h2 className="text-2xl font-bold text-neutral-900 mb-6">Dashboard & Rapportages</h2>
 
       {/* Totalen */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -49,21 +64,77 @@ export default function StatsTab() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Omzet grafiek */}
+      {/* Extra KPI's */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-sm text-neutral-500">Bezettingsgraad</p>
+          <div className="flex items-center gap-3 mt-2">
+            <div className="flex-1 h-3 bg-neutral-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${bezettingsgraad}%`,
+                  backgroundColor: bezettingsgraad > 80 ? "#22c55e" : bezettingsgraad > 50 ? "#F27501" : "#ef4444",
+                }}
+              />
+            </div>
+            <span className="text-xl font-bold text-neutral-900">{bezettingsgraad}%</span>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-sm text-neutral-500">Gem. responstijd</p>
+          <p className="text-2xl font-bold text-neutral-900 mt-1">{responstijd > 0 ? `${responstijd}u` : "—"}</p>
+          <p className="text-xs text-neutral-400">medewerker reactie op aanbieding</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-sm text-neutral-500">Gem. omzet/medewerker</p>
+          <p className="text-2xl font-bold text-[#F27501] mt-1">
+            {stats.totalen.medewerkers > 0
+              ? `€${Math.round(stats.totalen.omzet / stats.totalen.medewerkers).toLocaleString("nl-NL")}`
+              : "—"}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Omzet lijn grafiek */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h3 className="font-semibold text-neutral-900 mb-4">Omzet per maand</h3>
-          <div className="flex items-end gap-2 h-40">
-            {stats.omzetPerMaand.map(o => (
-              <div key={o.maand} className="flex-1 flex flex-col items-center">
-                <div className="w-full bg-[#F27501] rounded-t" style={{ height: `${(o.omzet / maxOmzet) * 100}%`, minHeight: o.omzet > 0 ? 4 : 0 }}></div>
-                <p className="text-xs text-neutral-500 mt-2">{o.maand}</p>
-                <p className="text-xs font-medium">€{o.omzet > 0 ? (o.omzet / 1000).toFixed(1) + "k" : "0"}</p>
-              </div>
-            ))}
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsLineChart data={stats.omzetPerMaand}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="maand" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `€${(Number(v) / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value) => [`€${Number(value).toLocaleString("nl-NL")}`, "Omzet"]} />
+                <Line type="monotone" dataKey="omzet" stroke="#F27501" strokeWidth={2} dot={{ fill: "#F27501", r: 4 }} />
+              </RechartsLineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
+        {/* Top klanten */}
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h3 className="font-semibold text-neutral-900 mb-4">Top klanten (omzet)</h3>
+          {stats.topKlanten && stats.topKlanten.length > 0 ? (
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={stats.topKlanten} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={(v) => `€${(Number(v) / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="naam" tick={{ fontSize: 11 }} width={100} />
+                  <Tooltip formatter={(value) => [`€${Number(value).toLocaleString("nl-NL")}`, "Omzet"]} />
+                  <Bar dataKey="omzet" fill="#F27501" radius={[0, 4, 4, 0]} />
+                </RechartsBarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-neutral-500 text-sm">Nog geen klantgegevens</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
         {/* Beste medewerkers */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h3 className="font-semibold text-neutral-900 mb-4">Beste medewerkers</h3>
@@ -86,6 +157,31 @@ export default function StatsTab() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Bezettingsgraad gauge */}
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h3 className="font-semibold text-neutral-900 mb-4">Samenvatting</h3>
+          <div className="space-y-4">
+            {[
+              { label: "Actieve medewerkers", value: stats.totalen.medewerkers, max: stats.totalen.medewerkers + 10, color: "#3b82f6" },
+              { label: "Actieve klanten", value: stats.totalen.klanten, max: stats.totalen.klanten + 5, color: "#22c55e" },
+              { label: "Bezettingsgraad", value: bezettingsgraad, max: 100, color: "#F27501", suffix: "%" },
+            ].map(item => (
+              <div key={item.label}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-neutral-600">{item.label}</span>
+                  <span className="text-sm font-bold">{item.value}{item.suffix || ""}</span>
+                </div>
+                <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(item.value / item.max) * 100}%`, backgroundColor: item.color }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

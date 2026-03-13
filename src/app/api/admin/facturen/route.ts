@@ -11,6 +11,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
+  // Return regels for a specific factuur
+  const regelsId = request.nextUrl.searchParams.get("regels");
+  if (regelsId) {
+    const { data: regels } = await supabaseAdmin
+      .from("factuur_regels")
+      .select("*")
+      .eq("factuur_id", regelsId)
+      .order("datum", { ascending: true });
+    return NextResponse.json({ regels });
+  }
+
   await syncDienstenKlantIds();
 
   const [{ data: facturen }, { data: klanten }] = await Promise.all([

@@ -11,7 +11,15 @@ export async function GET(request: NextRequest) {
     console.warn(`[SECURITY] Unauthorized diensten access attempt by: ${email || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
-  const { data } = await supabaseAdmin.from("diensten").select("*").order("datum", { ascending: true });
+  const week = request.nextUrl.searchParams.get("week");
+  let query = supabaseAdmin.from("diensten").select("*").order("datum", { ascending: true });
+  if (week) {
+    const start = new Date(week + "T00:00:00");
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    query = query.gte("datum", start.toISOString().split("T")[0]).lte("datum", end.toISOString().split("T")[0]);
+  }
+  const { data } = await query;
   return NextResponse.json({ data });
 }
 
@@ -23,10 +31,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
+  try {
   const { action, id, dienst_id, data } = await request.json();
 
   if (action === "create") {
-    const payload = { ...data };
+    const payload = { ...data, status: data.status || "open" };
     if (payload.klant_naam) {
       payload.klant_id = await ensureKlantForDienst(payload);
     }
@@ -35,7 +44,11 @@ export async function POST(request: NextRequest) {
       payload.spoeddienst_token = crypto.randomUUID().replace(/-/g, "").substring(0, 16);
       payload.spoeddienst_whatsapp_tekst = generateWhatsAppTekst(payload);
     }
-    await supabaseAdmin.from("diensten").insert(payload);
+    const { error } = await supabaseAdmin.from("diensten").insert(payload);
+    if (error) {
+      console.error("[DIENSTEN] Insert error:", error);
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
   }
   if (action === "update") {
     const payload = { ...data };
@@ -173,6 +186,11 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("[DIENSTEN] POST error:", message, err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 function generateWhatsAppTekst(dienst: {

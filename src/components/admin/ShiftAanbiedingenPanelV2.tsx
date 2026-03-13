@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 
 interface Medewerker {
@@ -33,9 +34,10 @@ interface Aanbieding {
 interface Props {
   dienst: Dienst;
   onClose: () => void;
+  getAuthHeader?: () => Promise<Record<string, string>>;
 }
 
-export default function ShiftAanbiedingenPanel({ dienst, onClose }: Props) {
+export default function ShiftAanbiedingenPanel({ dienst, onClose, getAuthHeader }: Props) {
   const toast = useToast();
   const [medewerkers, setMedewerkers] = useState<Medewerker[]>([]);
   const [aanbiedingen, setAanbiedingen] = useState<Aanbieding[]>([]);
@@ -44,10 +46,14 @@ export default function ShiftAanbiedingenPanel({ dienst, onClose }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
 
-  const getAuthHeaders = useCallback(() => {
-    const token = localStorage.getItem("admin_token") || sessionStorage.getItem("admin_token") || "";
-    return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-  }, []);
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    if (getAuthHeader) {
+      const h = await getAuthHeader();
+      return { ...h, "Content-Type": "application/json" };
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    return { Authorization: `Bearer ${session?.access_token || ""}`, "Content-Type": "application/json" };
+  }, [getAuthHeader]);
 
   useEffect(() => {
     fetchData();
@@ -55,13 +61,14 @@ export default function ShiftAanbiedingenPanel({ dienst, onClose }: Props) {
 
   const fetchData = async () => {
     try {
+      const headers = await getAuthHeaders();
       const [medRes, aanbRes] = await Promise.all([
-        fetch("/api/admin/medewerkers", { headers: getAuthHeaders() }),
-        fetch(`/api/admin/aanbiedingen?dienst_id=${dienst.id}`, { headers: getAuthHeaders() }),
+        fetch("/api/admin/medewerkers", { headers }),
+        fetch(`/api/admin/aanbiedingen?dienst_id=${dienst.id}`, { headers }),
       ]);
       const medData = await medRes.json();
       const aanbData = await aanbRes.json();
-      setMedewerkers(medData.medewerkers || []);
+      setMedewerkers(medData.data || medData.medewerkers || []);
       setAanbiedingen(aanbData.aanbiedingen || []);
     } catch {
       toast.error("Kon data niet laden");
@@ -77,9 +84,10 @@ export default function ShiftAanbiedingenPanel({ dienst, onClose }: Props) {
     }
     setIsSending(true);
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/aanbiedingen", {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers,
         body: JSON.stringify({
           dienst_id: dienst.id,
           medewerker_ids: Array.from(selectedIds),
@@ -110,7 +118,6 @@ export default function ShiftAanbiedingenPanel({ dienst, onClose }: Props) {
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-  // Filter medewerkers by matching functie
   const matchendeMedewerkers = medewerkers.filter((m) =>
     m.functie?.some((f) => f.toLowerCase() === dienst.functie.toLowerCase())
   );

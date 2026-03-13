@@ -97,12 +97,14 @@ export async function POST(request: NextRequest) {
     if (action === "create") {
       const { error } = await supabaseAdmin.from("medewerkers").insert(payload);
       if (error) {
-        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
+        console.error("[MEDEWERKERS] Insert error:", error);
+        return NextResponse.json({ error: error.message || "Er is een fout opgetreden" }, { status: 500 });
       }
     } else {
       const { error } = await supabaseAdmin.from("medewerkers").update(payload).eq("id", id);
       if (error) {
-        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
+        console.error("[MEDEWERKERS] Update error:", error);
+        return NextResponse.json({ error: error.message || "Er is een fout opgetreden" }, { status: 500 });
       }
     }
 

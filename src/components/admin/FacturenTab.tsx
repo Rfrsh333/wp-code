@@ -17,6 +17,17 @@ interface Factuur {
   created_at: string;
 }
 
+interface FactuurRegel {
+  id: string;
+  omschrijving: string;
+  datum: string;
+  medewerker_naam: string;
+  uren: number;
+  uurtarief: number;
+  reiskosten: number;
+  bedrag: number;
+}
+
 interface Klant {
   id: string;
   bedrijfsnaam: string;
@@ -29,6 +40,9 @@ export default function FacturenTab() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ klant_id: "", periode_start: "", periode_eind: "" });
   const [generating, setGenerating] = useState(false);
+  const [selectedFactuur, setSelectedFactuur] = useState<Factuur | null>(null);
+  const [regels, setRegels] = useState<FactuurRegel[]>([]);
+  const [regelsLoading, setRegelsLoading] = useState(false);
   const toast = useToast();
 
   const getAuthHeader = async () => {
@@ -93,6 +107,21 @@ export default function FacturenTab() {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   };
 
+  const openDetail = async (factuur: Factuur) => {
+    setSelectedFactuur(factuur);
+    setRegelsLoading(true);
+    try {
+      const headers = await getAuthHeader();
+      const res = await fetch(`/api/admin/facturen?regels=${factuur.id}`, { headers });
+      const data = await res.json();
+      setRegels(data.regels || []);
+    } catch {
+      setRegels([]);
+    } finally {
+      setRegelsLoading(false);
+    }
+  };
+
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
   const formatCurrency = (n: number) => `€${n.toFixed(2)}`;
 
@@ -127,7 +156,7 @@ export default function FacturenTab() {
           </thead>
           <tbody className="divide-y">
             {facturen.map((f) => (
-              <tr key={f.id} className="hover:bg-neutral-50">
+              <tr key={f.id} className="hover:bg-neutral-50 cursor-pointer" onClick={() => openDetail(f)}>
                 <td className="px-6 py-4 font-medium">{f.factuur_nummer}</td>
                 <td className="px-6 py-4">{f.klant?.bedrijfsnaam}</td>
                 <td className="px-6 py-4 text-sm text-neutral-500">{formatDate(f.periode_start)} - {formatDate(f.periode_eind)}</td>
@@ -154,6 +183,69 @@ export default function FacturenTab() {
         </table>
         {facturen.length === 0 && <div className="text-center py-12 text-neutral-500">Geen facturen</div>}
       </div>
+
+      {/* Detail panel met regels */}
+      {selectedFactuur && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedFactuur(null)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Factuur {selectedFactuur.factuur_nummer}</h3>
+              <button onClick={() => setSelectedFactuur(null)} className="p-1 hover:bg-neutral-100 rounded-lg">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+              <div><span className="text-neutral-500">Klant:</span> <strong>{selectedFactuur.klant?.bedrijfsnaam}</strong></div>
+              <div><span className="text-neutral-500">Status:</span> <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[selectedFactuur.status]}`}>{selectedFactuur.status}</span></div>
+              <div><span className="text-neutral-500">Periode:</span> {formatDate(selectedFactuur.periode_start)} - {formatDate(selectedFactuur.periode_eind)}</div>
+              <div><span className="text-neutral-500">Totaal:</span> <strong className="text-green-600">{formatCurrency(selectedFactuur.totaal)}</strong></div>
+            </div>
+            <h4 className="font-semibold text-sm text-neutral-700 mb-2">Factuurregels</h4>
+            {regelsLoading ? (
+              <div className="flex justify-center py-6"><div className="animate-spin w-6 h-6 border-3 border-[#F27501] border-t-transparent rounded-full" /></div>
+            ) : regels.length === 0 ? (
+              <p className="text-sm text-neutral-400 py-4 text-center">Geen regels gevonden</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-neutral-50">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-medium text-neutral-600">Omschrijving</th>
+                    <th className="text-left px-3 py-2 font-medium text-neutral-600">Datum</th>
+                    <th className="text-right px-3 py-2 font-medium text-neutral-600">Uren</th>
+                    <th className="text-right px-3 py-2 font-medium text-neutral-600">Tarief</th>
+                    <th className="text-right px-3 py-2 font-medium text-neutral-600">Bedrag</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {regels.map((r) => (
+                    <tr key={r.id}>
+                      <td className="px-3 py-2">{r.omschrijving}</td>
+                      <td className="px-3 py-2 text-neutral-500">{r.datum ? formatDate(r.datum) : "-"}</td>
+                      <td className="px-3 py-2 text-right">{r.uren}</td>
+                      <td className="px-3 py-2 text-right">{formatCurrency(r.uurtarief)}</td>
+                      <td className="px-3 py-2 text-right font-medium">{formatCurrency(r.bedrag)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="border-t-2">
+                  <tr>
+                    <td colSpan={4} className="px-3 py-2 text-right font-medium">Subtotaal:</td>
+                    <td className="px-3 py-2 text-right font-medium">{formatCurrency(selectedFactuur.subtotaal)}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={4} className="px-3 py-2 text-right text-neutral-500">BTW (21%):</td>
+                    <td className="px-3 py-2 text-right">{formatCurrency(selectedFactuur.btw_bedrag)}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={4} className="px-3 py-2 text-right font-bold">Totaal:</td>
+                    <td className="px-3 py-2 text-right font-bold text-green-600">{formatCurrency(selectedFactuur.totaal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

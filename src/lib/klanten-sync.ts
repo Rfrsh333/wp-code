@@ -43,14 +43,18 @@ export async function ensureKlantForDienst(input: DienstKlantInput) {
     return existingKlant.id as string;
   }
 
+  const insertData: Record<string, string> = {
+    bedrijfsnaam,
+    contactpersoon: bedrijfsnaam,
+    status: "actief",
+  };
+  if (email) {
+    insertData.email = email;
+  }
+
   const { data: createdKlant, error } = await supabaseAdmin
     .from("klanten")
-    .insert({
-      bedrijfsnaam,
-      contactpersoon: bedrijfsnaam,
-      email,
-      status: "actief",
-    })
+    .insert(insertData)
     .select("id")
     .single();
 

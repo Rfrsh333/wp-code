@@ -29,6 +29,15 @@ interface Medewerker {
   aantal_beoordelingen?: number | null;
   totaal_diensten?: number | null;
   streak_count?: number | null;
+  experience_years?: number | null;
+  bio?: string | null;
+  languages?: string[];
+  has_drivers_license?: boolean;
+  has_own_transport?: boolean;
+  shirt_size?: string | null;
+  emergency_contact_naam?: string | null;
+  emergency_contact_telefoon?: string | null;
+  emergency_contact_relatie?: string | null;
 }
 
 interface ProfielStats {
@@ -299,6 +308,55 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
           </div>
         );
       })()}
+
+      {/* Extra informatie */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
+        <h3 className="text-lg font-bold text-neutral-900 mb-4">Extra informatie</h3>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          {profielData.bio && (
+            <div className="col-span-2">
+              <span className="text-neutral-500">Bio</span>
+              <p className="font-medium mt-0.5">{profielData.bio}</p>
+            </div>
+          )}
+          {profielData.experience_years != null && (
+            <div>
+              <span className="text-neutral-500">Ervaring</span>
+              <p className="font-medium">{profielData.experience_years} jaar</p>
+            </div>
+          )}
+          {profielData.languages && profielData.languages.length > 0 && (
+            <div>
+              <span className="text-neutral-500">Talen</span>
+              <p className="font-medium">{profielData.languages.join(", ")}</p>
+            </div>
+          )}
+          <div>
+            <span className="text-neutral-500">Rijbewijs</span>
+            <p className="font-medium">{profielData.has_drivers_license ? "Ja" : "Nee"}</p>
+          </div>
+          <div>
+            <span className="text-neutral-500">Eigen vervoer</span>
+            <p className="font-medium">{profielData.has_own_transport ? "Ja" : "Nee"}</p>
+          </div>
+          {profielData.shirt_size && (
+            <div>
+              <span className="text-neutral-500">Shirtmaat</span>
+              <p className="font-medium">{profielData.shirt_size}</p>
+            </div>
+          )}
+          {profielData.emergency_contact_naam && (
+            <div className="col-span-2">
+              <span className="text-neutral-500">Noodcontact</span>
+              <p className="font-medium">
+                {profielData.emergency_contact_naam}
+                {profielData.emergency_contact_relatie ? ` (${profielData.emergency_contact_relatie})` : ""}
+                {profielData.emergency_contact_telefoon ? ` — ${profielData.emergency_contact_telefoon}` : ""}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Vaardigheden */}
       <div className="mb-4">

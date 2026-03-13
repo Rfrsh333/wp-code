@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import PortalLayout from "@/components/portal/PortalLayout";
+import MedewerkerLayout from "@/components/medewerker/MedewerkerLayout";
 import type { PortalTab } from "@/components/portal/PortalLayout";
 import BeschikbaarheidForm from "@/components/medewerker/BeschikbaarheidForm";
 import DienstenTab from "@/components/medewerker/DienstenTab";
@@ -13,6 +13,7 @@ import DocumentenPage from "@/components/medewerker/DocumentenPage";
 import ReferralPage from "@/components/medewerker/ReferralPage";
 import BerichtenTab from "@/components/medewerker/BerichtenTab";
 import AanbiedingenSection from "@/components/medewerker/AanbiedingenSection";
+import DashboardHome from "@/components/medewerker/DashboardHome";
 import { useToast } from "@/components/ui/Toast";
 
 interface Medewerker {
@@ -65,12 +66,12 @@ interface KlantAanpassing {
   locatie: string;
 }
 
-type TabId = "diensten" | "uren" | "beschikbaarheid" | "berichten" | "profiel" | "financieel" | "documenten" | "referral";
+type TabId = "home" | "diensten" | "uren" | "beschikbaarheid" | "berichten" | "profiel" | "financieel" | "documenten" | "referral";
 
 export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewerker }) {
   const router = useRouter();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<TabId>("diensten");
+  const [activeTab, setActiveTab] = useState<TabId>("home");
 
   // Data state
   const [diensten, setDiensten] = useState<Dienst[]>([]);
@@ -236,6 +237,12 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
 
   const tabs: PortalTab[] = [
     {
+      id: "home",
+      label: "Home",
+      group: "OVERZICHT",
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+    },
+    {
       id: "diensten",
       label: "Diensten",
       badge: beschikbareDiensten.length,
@@ -289,11 +296,10 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   ];
 
   return (
-    <PortalLayout
+    <MedewerkerLayout
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={(id) => setActiveTab(id as TabId)}
-      portalType="medewerker"
       userName={medewerker.naam}
       onLogout={handleLogout}
     >
@@ -303,6 +309,10 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
         </div>
       ) : (
         <>
+          {activeTab === "home" && (
+            <DashboardHome naam={medewerker.naam} onNavigate={(tab) => setActiveTab(tab as TabId)} />
+          )}
+
           {activeTab === "diensten" && (
             <>
               <AanbiedingenSection />
@@ -388,6 +398,6 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
           </div>
         </div>
       )}
-    </PortalLayout>
+    </MedewerkerLayout>
   );
 }
