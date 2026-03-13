@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { listActiveSources } from "@/lib/content/repository";
 import { ingestSourceFeed } from "@/lib/content/services/source-ingestion-service";
 import { extractRawArticle } from "@/lib/content/services/article-extraction-service";
+import { getErrorMessage } from "@/lib/content/errors";
 
 export async function runFeedIngestionPass() {
   const sources = await listActiveSources();
@@ -32,7 +33,7 @@ export async function runFeedIngestionPass() {
         sourceName: source.name,
         discoveredItems: 0,
         status: "failed",
-        error: error instanceof Error ? error.message : "Unknown ingest error",
+        error: getErrorMessage(error),
       });
     }
   }
@@ -77,7 +78,7 @@ export async function runPendingExtractionPass(limit = 10) {
       results.push({
         rawArticleId,
         status: "failed",
-        error: error instanceof Error ? error.message : "Unknown extraction error",
+        error: getErrorMessage(error),
       });
     }
   }

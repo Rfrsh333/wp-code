@@ -2,15 +2,19 @@ import { createHash } from "crypto";
 import type { IngestedFeedItem } from "@/lib/content/types";
 
 export function normalizeUrl(rawUrl: string): string {
-  const url = new URL(rawUrl);
-  url.hash = "";
-  url.searchParams.sort();
+  try {
+    const url = new URL(rawUrl);
+    url.hash = "";
+    url.searchParams.sort();
 
-  ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"].forEach((param) => {
-    url.searchParams.delete(param);
-  });
+    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"].forEach((param) => {
+      url.searchParams.delete(param);
+    });
 
-  return url.toString();
+    return url.toString();
+  } catch {
+    return rawUrl.trim();
+  }
 }
 
 export function stripHtmlTags(input: string): string {
@@ -38,7 +42,7 @@ export function buildRawArticleFromFeedItem(
 
   return {
     source_id: sourceId,
-    external_id: item.guid,
+    external_id: item.guid ?? item.link,
     source_url: sourceUrl,
     canonical_url: canonicalUrl,
     title,

@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { parseFeedXml } from "@/lib/rss/parse-feed";
 import { buildRawArticleFromFeedItem } from "@/lib/content/normalization";
 import { createJobRun, failJobRun, finishJobRun } from "@/lib/content/job-runs";
-import { ContentPipelineError } from "@/lib/content/errors";
+import { ContentPipelineError, getErrorMessage } from "@/lib/content/errors";
 import type { SourceRecord } from "@/lib/content/types";
 
 export async function ingestSourceFeed(source: Pick<SourceRecord, "id" | "sourceUrl" | "rssUrl">) {
@@ -38,11 +38,15 @@ export async function ingestSourceFeed(source: Pick<SourceRecord, "id" | "source
     if (rawArticles.length) {
       const { error } = await supabaseAdmin.from("raw_articles").upsert(rawArticles, {
         onConflict: "source_id,hash",
-        ignoreDuplicates: false,
+        ignoreDuplicates: true,
       });
 
       if (error) {
-        throw error;
+        throw new ContentPipelineError(
+          `Upsert raw_articles failed: ${getErrorMessage(error)}`,
+          "upsert_failed",
+          { sourceId: source.id, articleCount: rawArticles.length },
+        );
       }
     }
 
@@ -69,7 +73,7 @@ export async function ingestSourceFeed(source: Pick<SourceRecord, "id" | "source
       .from("sources")
       .update({
         last_error_at: new Date().toISOString(),
-        last_error_message: error instanceof Error ? error.message : "Unknown feed ingestion error",
+        last_error_message: getErrorMessage(error),
       })
       .eq("id", source.id);
 

@@ -10,5 +10,10 @@ export function getErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Unknown content pipeline error";
+  if (error && typeof error === "object" && "message" in error) {
+    const pgError = error as { message: string; code?: string; details?: string };
+    return [pgError.message, pgError.code, pgError.details].filter(Boolean).join(" | ");
+  }
+
+  return String(error ?? "Unknown content pipeline error");
 }
