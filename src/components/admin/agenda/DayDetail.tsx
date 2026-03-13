@@ -1,5 +1,6 @@
 "use client";
 
+import { X, Plus } from "lucide-react";
 import type { Booking, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen } from "./calendarReducer";
 import { getSlotsForDate, getBookingForSlot, getEventTypeName, getEventTypeColor, slotKleur } from "./agendaUtils";
@@ -52,9 +53,7 @@ export default function DayDetail({
             Override
           </button>
           <button onClick={() => store.selectDate(null)} className="p-1.5 hover:bg-neutral-100 rounded-lg">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -104,9 +103,7 @@ export default function DayDetail({
         onClick={() => onOpenBookingModal(selectedDate)}
         className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors text-sm font-medium"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
+        <Plus className="w-4 h-4" />
         Nieuwe boeking
       </button>
     </div>
