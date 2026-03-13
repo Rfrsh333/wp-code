@@ -93,45 +93,61 @@ function toArticleAnalysisRecord(row: ClusterSourceRow): ArticleAnalysisRecord {
 }
 
 export async function runClusteringPass(limit = 50) {
-  const { data, error } = await supabaseAdmin
+  const { data: articles, error: articlesError } = await supabaseAdmin
     .from("normalized_articles")
-    .select(`
-      id,
-      title,
-      published_at,
-      article_analysis (
-        category,
-        subtopics,
-        summary,
-        is_relevant,
-        business_relevance_score,
-        worker_relevance_score,
-        novelty_score,
-        confidence_score,
-        impact_level,
-        primary_audience
-      )
-    `)
+    .select("id, title, published_at")
     .order("published_at", { ascending: false })
     .limit(limit);
 
-  if (error) {
-    if (error.code === "42P01") {
-      return {
-        analyzedArticles: 0,
-        createdOrUpdatedClusters: 0,
-        linkedArticles: 0,
-      };
+  if (articlesError) {
+    if (articlesError.code === "42P01") {
+      return { analyzedArticles: 0, createdOrUpdatedClusters: 0, linkedArticles: 0 };
     }
-
-    throw error;
+    throw articlesError;
   }
 
-  const relevantRows = (data ?? [])
-    .map((row) => ({
-      ...row,
-      article_analysis: Array.isArray(row.article_analysis) ? row.article_analysis[0] : row.article_analysis,
-    }))
+  const articleIds = (articles ?? []).map((a) => String(a.id));
+  if (articleIds.length === 0) {
+    return { analyzedArticles: 0, createdOrUpdatedClusters: 0, linkedArticles: 0 };
+  }
+
+  const { data: analysisRows, error: analysisError } = await supabaseAdmin
+    .from("article_analysis")
+    .select("normalized_article_id, category, subtopics, summary, is_relevant, business_relevance_score, worker_relevance_score, novelty_score, confidence_score, impact_level, primary_audience")
+    .in("normalized_article_id", articleIds);
+
+  if (analysisError) {
+    if (analysisError.code === "42P01") {
+      return { analyzedArticles: 0, createdOrUpdatedClusters: 0, linkedArticles: 0 };
+    }
+    throw analysisError;
+  }
+
+  const analysisByArticleId = new Map(
+    (analysisRows ?? []).map((row) => [String(row.normalized_article_id), row]),
+  );
+
+  const relevantRows: ClusterSourceRow[] = (articles ?? [])
+    .map((article) => {
+      const analysis = analysisByArticleId.get(String(article.id));
+      return {
+        id: String(article.id),
+        title: String(article.title),
+        published_at: (article.published_at as string | null) ?? null,
+        article_analysis: analysis ? {
+          category: analysis.category as AnalysisCategory | null,
+          subtopics: (analysis.subtopics as string[] | null) ?? [],
+          summary: (analysis.summary as string | null) ?? null,
+          is_relevant: Boolean(analysis.is_relevant),
+          business_relevance_score: Number(analysis.business_relevance_score ?? 0),
+          worker_relevance_score: Number(analysis.worker_relevance_score ?? 0),
+          novelty_score: Number(analysis.novelty_score ?? 0),
+          confidence_score: Number(analysis.confidence_score ?? 0),
+          impact_level: (analysis.impact_level as ImpactLevel) ?? "low",
+          primary_audience: (analysis.primary_audience as AudienceType | null) ?? null,
+        } : null,
+      };
+    })
     .filter((row) => row.article_analysis?.is_relevant) as ClusterSourceRow[];
 
   const grouped = new Map<string, ClusterSourceRow[]>();
