@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
         console.warn("[DEV] Email verzenden mislukt, maar we gaan door in development mode");
       } else {
         return NextResponse.json(
-          { error: "Fout bij verzenden e-mail. Probeer het later opnieuw.", details: error.message || String(error) },
+          { error: "Fout bij verzenden e-mail. Probeer het later opnieuw." },
           { status: 500 }
         );
       }

@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       .update({ status: "rewarded", rewarded_at: new Date().toISOString() })
       .eq("id", referral_id);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     return NextResponse.json({ success: true });
   }
 

@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
       .order("periode_start", { ascending: false })
       .limit(100);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     return NextResponse.json({ data });
   }
 
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
       .order("gesloten_op", { ascending: false })
       .limit(100);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     return NextResponse.json({ data });
   }
 
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ data }, { status: 201 });
     }
 
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
         .delete()
         .eq("id", id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
 
       // Update lead stage als gekoppeld
       if (lead_id) {
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
         .delete()
         .eq("id", id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 

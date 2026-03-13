@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 
   return NextResponse.json({ data });
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ success: true });
     }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ success: true });
     }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         .upsert(inserts, { onConflict: "campagne_id,lead_id" });
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ success: true, added: inserts.length });
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         .eq("campagne_id", id);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ data });
     }
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     }
 
     return NextResponse.json({ data: newCampagne }, { status: 201 });

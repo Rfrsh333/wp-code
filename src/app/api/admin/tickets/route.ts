@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 
   return NextResponse.json({ data });
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         .from("tickets")
         .update(updateData)
         .eq("id", id);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
           answered_at: new Date().toISOString(),
         })
         .eq("id", id);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (faqError) return NextResponse.json({ error: faqError.message }, { status: 500 });
+      if (faqError) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
 
       // Link ticket to new FAQ
       await supabaseAdmin

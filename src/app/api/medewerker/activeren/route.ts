@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       .eq("id", medewerker.id);
 
     if (error) {
-      return NextResponse.json({ error: error.message || "Wachtwoord instellen mislukt" }, { status: 500 });
+      return NextResponse.json({ error: "Wachtwoord instellen mislukt" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

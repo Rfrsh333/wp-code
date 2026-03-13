@@ -153,14 +153,14 @@ export async function POST(request: NextRequest) {
 
           if (error) {
             failed++;
-            errors.push(`${kandidaat.email}: ${error.message}`);
+            errors.push(`${kandidaat.email}: Verzenden mislukt`);
             console.error(`Email error for ${kandidaat.email}:`, error);
           } else {
             sent++;
           }
         } catch (error) {
           failed++;
-          errors.push(`${kandidaat.email}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          errors.push(`${kandidaat.email}: Verzenden mislukt`);
           console.error(`Email error for ${kandidaat.email}:`, error);
         }
       });

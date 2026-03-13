@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Matching error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Matching mislukt" },
+      { error: "Matching mislukt" },
       { status: 500 }
     );
   }

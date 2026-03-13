@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       .select("*")
       .order("naam");
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
 
     // Herbereken lead counts
     for (const seg of segmenten || []) {
@@ -308,7 +308,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ data }, { status: 201 });
     }
 
@@ -322,7 +322,7 @@ export async function POST(request: NextRequest) {
         .update(updateData)
         .eq("id", id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
         .delete()
         .eq("id", id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ data }, { status: 201 });
     }
 
@@ -366,7 +366,7 @@ export async function POST(request: NextRequest) {
         .delete()
         .eq("id", id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -411,7 +411,7 @@ export async function POST(request: NextRequest) {
         .update({ pipeline_stage: stage })
         .in("id", lead_ids);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true, updated: lead_ids.length });
     }
 

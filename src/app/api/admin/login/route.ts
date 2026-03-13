@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       // Log mislukte poging met Supabase error details
       console.warn(`[ADMIN LOGIN] Failed attempt for email: ${email} from IP: ${clientIP} - Error: ${error.message}`);
       return NextResponse.json(
-        { error: "Ongeldige inloggegevens", debug: error.message },
+        { error: "Ongeldige inloggegevens" },
         { status: 401 }
       );
     }

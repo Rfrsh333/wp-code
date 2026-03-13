@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       .select("*")
       .order("naam");
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     return NextResponse.json({ data });
   }
 
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     if (concurrentId) query = query.eq("concurrent_id", concurrentId);
 
     const { data, error } = await query;
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     return NextResponse.json({ data });
   }
 
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ data }, { status: 201 });
     }
 
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
         .update(updateData)
         .eq("id", id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
         .delete()
         .eq("id", id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
@@ -289,7 +289,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
 
       // Update lead stage als gewonnen/verloren
       if (lead_id && resultaat === "gewonnen") {
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
         .update({ concurrent_info })
         .eq("id", lead_id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 

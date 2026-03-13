@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       .eq("slug", slug)
       .limit(1)
       .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     return NextResponse.json({ data }, {
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 
   return NextResponse.json({ data }, {

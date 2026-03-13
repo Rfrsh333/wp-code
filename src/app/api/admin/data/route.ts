@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error(`[DATA] Error fetching ${table}:`, error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 
   return NextResponse.json({ data }, {

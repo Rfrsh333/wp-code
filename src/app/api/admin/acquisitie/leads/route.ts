@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         .in("id", ids);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ success: true });
     }
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ success: true });
     }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ success: true });
     }
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
         .in("id", ids);
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
       return NextResponse.json({ success: true });
     }
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     }
 
     // Auto AI score bij aanmaken

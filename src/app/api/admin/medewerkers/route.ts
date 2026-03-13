@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     .order("naam");
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 
   const sanitized = (data || []).map((medewerker) => ({
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       .eq("id", id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     }
 
     await logAuditEvent({
@@ -97,12 +97,12 @@ export async function POST(request: NextRequest) {
     if (action === "create") {
       const { error } = await supabaseAdmin.from("medewerkers").insert(payload);
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
     } else {
       const { error } = await supabaseAdmin.from("medewerkers").update(payload).eq("id", id);
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       }
     }
 
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       .eq("id", id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     }
 
     await logAuditEvent({
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
       .eq("id", document_id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     }
 
     await logAuditEvent({
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
   if (action === "delete") {
     const { error } = await supabaseAdmin.from("medewerkers").delete().eq("id", id);
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     }
 
     await logAuditEvent({

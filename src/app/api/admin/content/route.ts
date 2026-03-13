@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query;
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
 
     // Stats
     const all = data || [];
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
       return NextResponse.json({ post });
     }
 

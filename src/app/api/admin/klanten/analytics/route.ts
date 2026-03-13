@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     .limit(500);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 
   // Bereken samenvattende stats
