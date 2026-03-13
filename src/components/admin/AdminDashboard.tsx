@@ -34,8 +34,9 @@ const FAQTab = dynamic(() => import("./FAQTab"), { loading: () => <TabSkeleton /
 const TicketsTab = dynamic(() => import("./TicketsTab"), { loading: () => <TabSkeleton />, ssr: false });
 const PricingTab = dynamic(() => import("./PricingTab"), { loading: () => <TabSkeleton />, ssr: false });
 const ContentTab = dynamic(() => import("./ContentTab"), { loading: () => <TabSkeleton />, ssr: false });
+const AgendaTab = dynamic(() => import("./AgendaTab"), { loading: () => <TabSkeleton />, ssr: false });
 
-type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen" | "matching" | "ai" | "acquisitie" | "klanten" | "referrals" | "offertes" | "faq" | "tickets" | "pricing" | "content";
+type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen" | "matching" | "ai" | "acquisitie" | "klanten" | "referrals" | "offertes" | "faq" | "tickets" | "pricing" | "content" | "agenda";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -323,6 +324,12 @@ export default function AdminDashboard() {
   const [bulkEmailSending, setBulkEmailSending] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [replyModal, setReplyModal] = useState(false);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [replySubject, setReplySubject] = useState("");
+  const [replyLoading, setReplyLoading] = useState(false);
+  const [replySending, setReplySending] = useState(false);
+  const [replyInquiry, setReplyInquiry] = useState<{ contactpersoon: string; bedrijfsnaam: string; email: string; type_personeel: string[]; aantal_personen: string; start_datum: string; locatie: string } | null>(null);
   const ITEMS_PER_PAGE = 25;
   const router = useRouter();
   const toast = useToast();
@@ -1141,6 +1148,15 @@ export default function AdminDashboard() {
         </svg>
       ),
     },
+    {
+      id: "agenda",
+      label: "Agenda",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -1609,15 +1625,61 @@ export default function AdminDashboard() {
                             {formatDate(item.created_at)}
                           </td>
                           <td className="px-6 py-4">
-                            <StatusBadge status={item.status} />
+                            <div className="flex flex-col gap-1">
+                              <StatusBadge status={item.status} />
+                              {(item as PersoneelAanvraag & { replied_at?: string }).replied_at && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 inline-block w-fit">
+                                  Reactie verstuurd
+                                </span>
+                              )}
+                              {(item as PersoneelAanvraag & { booking_id?: string }).booking_id && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 inline-block w-fit">
+                                  Afspraak gepland
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => { setSelectedItem(item); setDetailType("aanvragen"); }}
-                              className="text-[#F27501] hover:text-[#d96800] font-medium text-sm"
-                            >
-                              Bekijken
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              {!(item as PersoneelAanvraag & { replied_at?: string }).replied_at && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    setSelectedItem(item);
+                                    setDetailType("aanvragen");
+                                    setReplyModal(true);
+                                    setReplyLoading(true);
+                                    setReplyDraft("");
+                                    setReplySubject("");
+                                    setReplyInquiry(null);
+                                    try {
+                                      const res = await fetch("/api/inquiries/generate-reply", {
+                                        method: "POST",
+                                        headers: await getAuthHeaders(),
+                                        body: JSON.stringify({ inquiry_id: item.id }),
+                                      });
+                                      const data = await res.json();
+                                      if (data.body) setReplyDraft(data.body);
+                                      if (data.subject) setReplySubject(data.subject);
+                                      if (data.inquiry) setReplyInquiry(data.inquiry);
+                                    } catch {
+                                      setReplyDraft("Fout bij genereren.");
+                                    } finally {
+                                      setReplyLoading(false);
+                                    }
+                                  }}
+                                  className="text-xs px-3 py-1.5 bg-[#F27501] text-white rounded-lg hover:bg-[#d96800] transition-colors font-medium"
+                                >
+                                  Stuur reactie
+                                </button>
+                              )}
+                              <button
+                                onClick={() => { setSelectedItem(item); setDetailType("aanvragen"); }}
+                                className="text-[#F27501] hover:text-[#d96800] font-medium text-sm"
+                              >
+                                Bekijken
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -2028,6 +2090,9 @@ export default function AdminDashboard() {
 
             {/* Content Tab */}
             {activeTab === "content" && <ContentTab />}
+
+            {/* Agenda Tab */}
+            {activeTab === "agenda" && <AgendaTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (
@@ -2860,6 +2925,53 @@ export default function AdminDashboard() {
                     </>
                   ) : (
                     <>
+                      {/* Stuur reactie button - alleen voor personeel aanvragen */}
+                      {detailType === "aanvragen" && (
+                        <div className="mb-4">
+                          {!(selectedItem as PersoneelAanvraag & { replied_at?: string }).replied_at ? (
+                            <button
+                              onClick={async () => {
+                                setReplyModal(true);
+                                setReplyLoading(true);
+                                setReplyDraft("");
+                                setReplySubject("");
+                                setReplyInquiry(null);
+                                try {
+                                  const res = await fetch("/api/inquiries/generate-reply", {
+                                    method: "POST",
+                                    headers: await getAuthHeaders(),
+                                    body: JSON.stringify({ inquiry_id: selectedItem.id }),
+                                  });
+                                  const data = await res.json();
+                                  if (data.body) setReplyDraft(data.body);
+                                  if (data.subject) setReplySubject(data.subject);
+                                  if (data.inquiry) setReplyInquiry(data.inquiry);
+                                } catch {
+                                  setReplyDraft("Fout bij genereren van reactie.");
+                                } finally {
+                                  setReplyLoading(false);
+                                }
+                              }}
+                              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#F27501] to-[#d96800] text-white rounded-xl hover:from-[#d96800] hover:to-[#c05e00] font-medium shadow-lg shadow-orange-500/20 transition-all duration-300"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Stuur reactie
+                            </button>
+                          ) : (
+                            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                              Reactie verstuurd op {new Date((selectedItem as PersoneelAanvraag & { replied_at: string }).replied_at).toLocaleDateString("nl-NL")}
+                            </span>
+                          )}
+                          {(selectedItem as PersoneelAanvraag & { booking_id?: string }).booking_id && (
+                            <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                              Afspraak gepland
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       <p className="text-sm text-neutral-500 mb-2">Status wijzigen</p>
                       <div className="flex gap-2">
                         {(["nieuw", "in_behandeling", "afgehandeld"] as Status[]).map((status) => (
@@ -2903,6 +3015,121 @@ export default function AdminDashboard() {
                 className="px-6 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors"
               >
                 Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stuur Reactie Modal */}
+      {replyModal && selectedItem && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" onClick={() => setReplyModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-neutral-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-neutral-900">Stuur reactie</h3>
+                <p className="text-sm text-neutral-500">
+                  Naar: {(selectedItem as PersoneelAanvraag).email}
+                </p>
+              </div>
+              <button onClick={() => setReplyModal(false)} className="p-2 hover:bg-neutral-100 rounded-lg">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Aanvraag samenvatting */}
+            {replyInquiry && (
+              <div className="px-6 pt-4">
+                <div className="bg-neutral-50 rounded-xl p-4 text-sm">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><span className="text-neutral-500">Bedrijf:</span> <span className="font-medium">{replyInquiry.bedrijfsnaam}</span></div>
+                    <div><span className="text-neutral-500">Contact:</span> <span className="font-medium">{replyInquiry.contactpersoon}</span></div>
+                    <div><span className="text-neutral-500">Personeel:</span> <span className="font-medium">{replyInquiry.type_personeel?.join(", ")}</span></div>
+                    <div><span className="text-neutral-500">Aantal:</span> <span className="font-medium">{replyInquiry.aantal_personen}</span></div>
+                    <div><span className="text-neutral-500">Start:</span> <span className="font-medium">{replyInquiry.start_datum}</span></div>
+                    <div><span className="text-neutral-500">Locatie:</span> <span className="font-medium">{replyInquiry.locatie}</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="p-6 overflow-y-auto max-h-[45vh]">
+              {replyLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="w-10 h-10 border-4 border-[#F27501] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    <p className="text-neutral-500 text-sm">Reactie genereren...</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Onderwerp</label>
+                    <input
+                      value={replySubject}
+                      onChange={(e) => setReplySubject(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1">Bericht</label>
+                    <textarea
+                      value={replyDraft}
+                      onChange={(e) => setReplyDraft(e.target.value)}
+                      rows={12}
+                      className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none transition-all duration-300 bg-neutral-50 focus:bg-white resize-none text-sm"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="p-6 border-t border-neutral-100 flex gap-3 justify-end">
+              <button
+                onClick={() => setReplyModal(false)}
+                className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                disabled={replyLoading || replySending || !replyDraft.trim()}
+                onClick={async () => {
+                  setReplySending(true);
+                  try {
+                    const res = await fetch("/api/inquiries/send-reply", {
+                      method: "POST",
+                      headers: await getAuthHeaders(),
+                      body: JSON.stringify({
+                        inquiry_id: selectedItem.id,
+                        email_body: replyDraft,
+                        subject: replySubject,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      toast.success(data.message || "Email verstuurd!");
+                      setReplyModal(false);
+                      fetchData();
+                    } else {
+                      toast.error(data.error || "Versturen mislukt");
+                    }
+                  } catch {
+                    toast.error("Er ging iets mis bij het versturen");
+                  } finally {
+                    setReplySending(false);
+                  }
+                }}
+                className="px-6 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+              >
+                {replySending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Versturen...
+                  </>
+                ) : (
+                  "Verstuur nu"
+                )}
               </button>
             </div>
           </div>
