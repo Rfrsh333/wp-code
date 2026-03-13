@@ -46,13 +46,28 @@ export async function runFeedIngestionPass() {
   };
 }
 
+const RELEVANCE_KEYWORDS = [
+  "horeca", "hotel", "restaurant", "cafe", "catering", "hospitality",
+  "personeel", "uitzend", "staffing", "medewerker", "werknemer", "vacature",
+  "cao", "minimumloon", "loon", "contract", "arbeidsmarkt", "werkgever",
+  "zzp", "schijnzelfstandig", "handhaving", "vergunning", "exploitatie",
+  "terras", "keuken", "kok", "bediening", "housekeeping", "front office",
+  "uitzendbur", "flexwerk", "detachering", "payroll", "onboarding",
+  "recruitment", "werving", "selectie", "personeelstekort", "krapte",
+];
+
+function isLikelyRelevant(title: string | null, excerpt: string | null): boolean {
+  const text = `${title ?? ""} ${excerpt ?? ""}`.toLowerCase();
+  return RELEVANCE_KEYWORDS.some((keyword) => text.includes(keyword));
+}
+
 export async function runPendingExtractionPass(limit = 10) {
   const { data: pendingArticles, error } = await supabaseAdmin
     .from("raw_articles")
-    .select("id")
+    .select("id, title, excerpt")
     .eq("fetch_status", "pending")
     .order("published_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 5);
 
   if (error) {
     if (error.code === "42P01") {
@@ -67,7 +82,24 @@ export async function runPendingExtractionPass(limit = 10) {
     throw error;
   }
 
-  const articleIds = (pendingArticles ?? []).map((article) => String(article.id));
+  const allPending = pendingArticles ?? [];
+  const relevant = allPending.filter((a) =>
+    isLikelyRelevant(a.title as string | null, a.excerpt as string | null),
+  );
+  const irrelevant = allPending.filter((a) =>
+    !isLikelyRelevant(a.title as string | null, a.excerpt as string | null),
+  );
+
+  // Mark irrelevant articles as rejected so they're skipped next time
+  if (irrelevant.length > 0) {
+    const irrelevantIds = irrelevant.map((a) => String(a.id));
+    await supabaseAdmin
+      .from("raw_articles")
+      .update({ fetch_status: "rejected" })
+      .in("id", irrelevantIds);
+  }
+
+  const articleIds = relevant.slice(0, limit).map((article) => String(article.id));
   const results: Array<{ rawArticleId: string; status: "success" | "failed"; error?: string }> = [];
 
   for (const rawArticleId of articleIds) {
@@ -87,6 +119,7 @@ export async function runPendingExtractionPass(limit = 10) {
     attempted: articleIds.length,
     extracted: results.filter((result) => result.status === "success").length,
     failed: results.filter((result) => result.status === "failed").length,
+    skippedIrrelevant: irrelevant.length,
     results,
   };
 }
