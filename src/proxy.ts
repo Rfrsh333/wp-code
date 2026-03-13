@@ -32,12 +32,13 @@ export function proxy(request: NextRequest) {
   }
 
   // --- Admin pages auth ---
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/api/") && pathname !== ADMIN_LOGIN) {
-    const supabaseToken =
-      request.cookies.get("sb-access-token")?.value ||
-      request.cookies.get("supabase-auth-token")?.value;
+  const isAdminPublicPage = pathname === ADMIN_LOGIN || pathname === "/admin/wachtwoord-vergeten" || pathname === "/admin/wachtwoord-reset";
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/api/") && !isAdminPublicPage) {
+    const hasSupabaseCookie = request.cookies.getAll().some(
+      (c) => c.name.startsWith("sb-") || c.name === "supabase-auth-token",
+    );
 
-    if (!supabaseToken) {
+    if (!hasSupabaseCookie) {
       return NextResponse.redirect(new URL(ADMIN_LOGIN, request.url));
     }
   }
