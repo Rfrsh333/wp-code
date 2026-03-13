@@ -6,6 +6,11 @@ import {
   generateSlots,
   syncGoogleCalendarToSlots,
 } from "@/lib/google-calendar";
+import { Resend } from "resend";
+import {
+  buildBookingConfirmationHtml,
+  buildBookingNotificationHtml,
+} from "@/lib/email-templates";
 
 interface SlotRow {
   id: string;
@@ -226,13 +231,76 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Datum/tijd formatteren voor response
+    // Datum/tijd formatteren
     const datumFormatted = new Date(slot.date).toLocaleDateString("nl-NL", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+    const startFormatted = slot.start_time.slice(0, 5);
+    const endFormatted = slot.end_time.slice(0, 5);
+
+    // Haal afzender instellingen op
+    const { data: senderSettings } = await supabaseAdmin
+      .from("admin_settings")
+      .select("key, value")
+      .in("key", ["sender_email", "sender_name"]);
+
+    const sMap = Object.fromEntries((senderSettings || []).map((s) => [s.key, s.value]));
+    const senderEmail = sMap.sender_email || "info@toptalentjobs.nl";
+    const senderName = sMap.sender_name || "TopTalent Jobs";
+
+    // Verstuur bevestigingsmails
+    if (process.env.RESEND_API_KEY) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+
+      // 1. Bevestiging naar klant
+      try {
+        await resend.emails.send({
+          from: `${senderName} <${senderEmail}>`,
+          to: [client_email],
+          subject: `Je afspraak met ${senderName} is bevestigd`,
+          html: buildBookingConfirmationHtml({
+            clientName: client_name,
+            datumFormatted,
+            startTime: startFormatted,
+            endTime: endFormatted,
+            senderName,
+            notes,
+          }),
+        });
+
+        await supabaseAdmin
+          .from("bookings")
+          .update({ confirmation_email_sent: true })
+          .eq("id", booking.id);
+      } catch (emailErr) {
+        console.error("Booking confirmation email error:", emailErr);
+      }
+
+      // 2. Notificatie naar admin
+      try {
+        await resend.emails.send({
+          from: `${senderName} <${senderEmail}>`,
+          to: [senderEmail],
+          subject: `Nieuwe afspraak: ${client_name} op ${datumFormatted}`,
+          html: buildBookingNotificationHtml({
+            clientName: client_name,
+            clientEmail: client_email,
+            clientPhone: client_phone,
+            companyName: company_name,
+            datumFormatted,
+            startTime: startFormatted,
+            endTime: endFormatted,
+            notes,
+            inquiryId: inquiry_id,
+          }),
+        });
+      } catch (emailErr) {
+        console.error("Booking notification email error:", emailErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -240,8 +308,8 @@ export async function POST(request: NextRequest) {
         id: booking.id,
         datum: slot.date,
         datum_formatted: datumFormatted,
-        start_time: slot.start_time.slice(0, 5),
-        end_time: slot.end_time.slice(0, 5),
+        start_time: startFormatted,
+        end_time: endFormatted,
         client_name,
       },
     });
