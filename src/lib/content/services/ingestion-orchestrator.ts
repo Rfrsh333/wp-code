@@ -47,13 +47,32 @@ export async function runFeedIngestionPass() {
 }
 
 const RELEVANCE_KEYWORDS = [
+  // Horeca & hospitality
   "horeca", "hotel", "restaurant", "cafe", "catering", "hospitality",
+  "keuken", "kok", "bediening", "housekeeping", "front office", "terras",
+  "barista", "gastheer", "gastvrouw", "sommelier", "afwasser",
+  // Personeel & staffing
   "personeel", "uitzend", "staffing", "medewerker", "werknemer", "vacature",
-  "cao", "minimumloon", "loon", "contract", "arbeidsmarkt", "werkgever",
-  "zzp", "schijnzelfstandig", "handhaving", "vergunning", "exploitatie",
-  "terras", "keuken", "kok", "bediening", "housekeeping", "front office",
   "uitzendbur", "flexwerk", "detachering", "payroll", "onboarding",
   "recruitment", "werving", "selectie", "personeelstekort", "krapte",
+  "tijdelijk personeel", "inleen", "uitzendkracht", "flex",
+  // Loondienst & arbeidsvoorwaarden
+  "cao", "minimumloon", "loon", "salaris", "contract", "arbeidsmarkt",
+  "werkgever", "arbeidsovereenkomst", "arbeidsrecht", "ontslagrecht",
+  "pensioen", "toeslagen", "overwerk", "werktijd", "loondoorbetaling",
+  // ZZP & schijnzelfstandigheid
+  "zzp", "schijnzelfstandig", "handhaving", "zelfstandig", "freelance",
+  "opdrachtgever", "modelovereenkomst", "wet dba", "belastingdienst",
+  // Vergunningen & compliance
+  "vergunning", "exploitatie", "subsidie", "regelgeving", "compliance",
+  "inspectie", "boete", "nvwa", "voedselveiligheid", "haccp",
+  "arbeidsinspectie", "wet", "wetgeving", "regeling",
+  // Ondernemen
+  "ondernemer", "mkb", "bedrijf", "onderneming", "faillissement",
+  "omzet", "winst", "kosten", "investering", "groei",
+  // Arbeidsmigratie
+  "arbeidsmigratie", "arbeidsmigranten", "expat", "kennismigrant",
+  "werkvergunning", "tewerkstellingsvergunning",
 ];
 
 function isLikelyRelevant(title: string | null, excerpt: string | null): boolean {
