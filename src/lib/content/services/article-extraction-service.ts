@@ -3,7 +3,7 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase";
 import { normalizeFetchedArticle, stripHtmlTags } from "@/lib/content/normalization";
 import { createJobRun, failJobRun, finishJobRun } from "@/lib/content/job-runs";
-import { ContentPipelineError } from "@/lib/content/errors";
+import { ContentPipelineError, getErrorMessage } from "@/lib/content/errors";
 
 export async function extractRawArticle(rawArticleId: string) {
   const jobRunId = await createJobRun("content.extractArticle", { rawArticleId });
@@ -79,7 +79,11 @@ export async function extractRawArticle(rawArticleId: string) {
     );
 
     if (upsertError) {
-      throw upsertError;
+      throw new ContentPipelineError(
+        `Upsert normalized_articles failed: ${getErrorMessage(upsertError)}`,
+        "upsert_failed",
+        { rawArticleId },
+      );
     }
 
     await supabaseAdmin
@@ -101,7 +105,7 @@ export async function extractRawArticle(rawArticleId: string) {
       .from("raw_articles")
       .update({
         fetch_status: "error",
-        fetch_error: error instanceof Error ? error.message : "Unknown extraction error",
+        fetch_error: getErrorMessage(error),
       })
       .eq("id", rawArticleId);
 

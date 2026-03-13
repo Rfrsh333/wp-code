@@ -158,7 +158,7 @@ async function analyzeArticleIds(articleIds: string[]) {
       results.push({
         normalizedArticleId,
         status: "failed",
-        error: error instanceof Error ? error.message : "Unknown analysis error",
+        error: error instanceof Error ? error.message : (error && typeof error === "object" && "message" in error ? String((error as Record<string, unknown>).message) : "Unknown analysis error"),
       });
     }
   }
