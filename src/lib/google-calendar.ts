@@ -248,30 +248,65 @@ export async function syncGoogleCalendarToSlots(): Promise<{
 // ============================================
 
 /**
- * Genereer availability slots op basis van admin instellingen.
- * Wordt aangeroepen vanuit admin dashboard of cron.
+ * Genereer availability slots op basis van availability_schedules (Schema tab)
+ * met fallback naar admin_settings voor backwards compatibility.
  */
 export async function generateSlots(
   fromDate: string,
   toDate: string,
 ): Promise<number> {
-  // Haal instellingen op
+  // Haal availability_schedules op (de Schema tab in de Agenda)
+  const { data: schedules } = await supabaseAdmin
+    .from("availability_schedules")
+    .select("day_of_week, start_time, end_time, is_active");
+
+  // Haal slot_duration uit admin_settings
   const { data: settings } = await supabaseAdmin
     .from("admin_settings")
     .select("key, value")
     .in("key", ["slot_duration_minutes", "default_start_time", "default_end_time", "working_days"]);
 
   const settingsMap = Object.fromEntries((settings || []).map((s) => [s.key, s.value]));
-
   const slotDuration = parseInt(settingsMap.slot_duration_minutes || "30");
-  const defaultStart = settingsMap.default_start_time || "09:00";
-  const defaultEnd = settingsMap.default_end_time || "17:00";
-  const workingDays = (settingsMap.working_days || "1,2,3,4,5")
-    .split(",")
-    .map((d: string) => parseInt(d.trim()));
 
-  const startMinutes = timeToMinutes(defaultStart);
-  const endMinutes = timeToMinutes(defaultEnd);
+  // Bouw een map van dag → { start, end } vanuit schedules
+  const scheduleMap = new Map<number, { start: string; end: string }>();
+  if (schedules && schedules.length > 0) {
+    for (const s of schedules) {
+      if (s.is_active && s.start_time && s.end_time) {
+        scheduleMap.set(s.day_of_week, {
+          start: s.start_time.slice(0, 5),
+          end: s.end_time.slice(0, 5),
+        });
+      }
+    }
+  }
+
+  // Fallback: als er geen schedules zijn, gebruik admin_settings
+  if (scheduleMap.size === 0) {
+    const defaultStart = settingsMap.default_start_time || "09:00";
+    const defaultEnd = settingsMap.default_end_time || "17:00";
+    const workingDays = (settingsMap.working_days || "1,2,3,4,5")
+      .split(",")
+      .map((d: string) => parseInt(d.trim()));
+
+    for (const day of workingDays) {
+      scheduleMap.set(day, { start: defaultStart, end: defaultEnd });
+    }
+  }
+
+  // Haal overrides op om geblokkeerde dagen te respecteren
+  const { data: overrides } = await supabaseAdmin
+    .from("availability_overrides")
+    .select("date, is_blocked, start_time, end_time")
+    .gte("date", fromDate)
+    .lte("date", toDate);
+
+  const blockedDates = new Set(
+    (overrides || [])
+      .filter((o) => o.is_blocked && !o.start_time)
+      .map((o) => o.date)
+  );
 
   let created = 0;
   const current = new Date(fromDate);
@@ -281,13 +316,16 @@ export async function generateSlots(
     const dayOfWeek = current.getDay(); // 0=zo, 1=ma, ...
     const dateStr = current.toISOString().split("T")[0];
 
-    if (workingDays.includes(dayOfWeek)) {
+    const schedule = scheduleMap.get(dayOfWeek);
+    if (schedule && !blockedDates.has(dateStr)) {
+      const startMinutes = timeToMinutes(schedule.start);
+      const endMinutes = timeToMinutes(schedule.end);
+
       let time = startMinutes;
       while (time + slotDuration <= endMinutes) {
         const startTime = minutesToTime(time);
         const endTime = minutesToTime(time + slotDuration);
 
-        // Upsert: maak alleen aan als het slot nog niet bestaat
         const { error } = await supabaseAdmin
           .from("availability_slots")
           .upsert(

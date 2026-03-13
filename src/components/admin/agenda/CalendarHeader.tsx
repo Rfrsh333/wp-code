@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
 import type { CalendarView, TabView } from "./calendarReducer";
 import { useAgendaStore } from "@/stores/useAgendaStore";
+import { Button } from "@/components/ui/button";
 
 interface CalendarHeaderProps {
   view: TabView;
@@ -37,9 +38,9 @@ export default function CalendarHeader({
       {actionError && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
           <span>{actionError}</span>
-          <button onClick={() => store.setActionError(null)} className="ml-3 text-red-400 hover:text-red-600">
+          <Button variant="ghost" size="icon-xs" onClick={() => store.setActionError(null)} className="ml-3 text-red-400 hover:text-red-600">
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -50,25 +51,28 @@ export default function CalendarHeader({
           {savingMsg && <span className="text-sm text-green-600">{savingMsg}</span>}
         </div>
         <div className="flex items-center gap-3">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onSync}
             disabled={syncing}
-            className="flex items-center gap-2 px-3 py-2 bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 transition-colors text-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
             {syncing ? "Syncing..." : "Sync"}
-          </button>
+          </Button>
           <div className="flex gap-1 bg-neutral-100 rounded-xl p-1 flex-wrap">
             {(Object.keys(tabLabels) as TabView[]).map((v) => (
-              <button
+              <Button
                 key={v}
+                variant="ghost"
+                size="sm"
                 onClick={() => store.setView(v)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  view === v ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+                className={`rounded-lg ${
+                  view === v ? "bg-white text-neutral-900 shadow-sm hover:bg-white" : "text-neutral-500 hover:text-neutral-700"
                 }`}
               >
                 {tabLabels[v]}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -78,36 +82,37 @@ export default function CalendarHeader({
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-2">
             {(["maand", "week", "dag"] as CalendarView[]).map((cv) => (
-              <button
+              <Button
                 key={cv}
+                variant={calendarView === cv ? "brand" : "outline"}
+                size="sm"
                 onClick={() => store.setCalendarView(cv)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  calendarView === cv ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                }`}
               >
                 {cv === "maand" ? "Maand" : cv === "week" ? "Week" : "Dag"}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => store.navigateMonth(-1)}
-              className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
-            </button>
+            </Button>
             <div className="text-center min-w-[180px]">
               <p className="font-semibold text-neutral-900 capitalize">{monthName}</p>
               {monthOffset !== 0 && (
-                <button onClick={() => store.goToday()} className="text-sm text-[#F27501] hover:underline">Vandaag</button>
+                <Button variant="link" size="sm" onClick={() => store.goToday()} className="text-[#F27501] p-0 h-auto">Vandaag</Button>
               )}
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => store.navigateMonth(1)}
-              className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         </div>
       )}

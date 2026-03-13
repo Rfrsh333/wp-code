@@ -14,6 +14,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const bookingSchema = z.object({
   eventTypeId: z.string().optional(),
@@ -112,8 +116,8 @@ export default function BookingModal({
 
           {eventTypes.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Afspraaktype</label>
-              <select {...register("eventTypeId")} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none">
+              <Label>Afspraaktype</Label>
+              <select {...register("eventTypeId")} className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 <option value="">Geen type</option>
                 {eventTypes.filter((et) => et.is_active).map((et) => (
                   <option key={et.id} value={et.id}>{et.name} ({et.duration_minutes} min)</option>
@@ -123,8 +127,8 @@ export default function BookingModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Datum *</label>
-            <input
+            <Label>Datum *</Label>
+            <Input
               type="date"
               {...register("date")}
               onChange={(e) => {
@@ -134,55 +138,54 @@ export default function BookingModal({
                 setValue("customEnd", "");
                 setValue("showCustomTime", false);
               }}
-              className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none"
+              className="mt-1"
             />
             {errors.date && <p className="text-sm text-red-600 mt-1">{errors.date.message}</p>}
           </div>
 
           {watchDate && (
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Tijdslot *</label>
+              <Label>Tijdslot *</Label>
               {availableSlots.length > 0 && !watchShowCustomTime ? (
-                <div className="space-y-2">
+                <div className="space-y-2 mt-1">
                   <div className="flex flex-wrap gap-2">
                     {availableSlots.map((slot) => (
-                      <button
+                      <Button
                         key={slot.id}
                         type="button"
+                        variant={watchSlotId === slot.id ? "brand" : "outline"}
+                        size="sm"
                         onClick={() => {
                           setValue("slotId", slot.id);
                           setValue("customStart", "");
                           setValue("customEnd", "");
                           setValue("showCustomTime", false);
                         }}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          watchSlotId === slot.id ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
-                        }`}
                       >
                         {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                   {!watchSlotId && (
-                    <button type="button" onClick={() => { setValue("showCustomTime", true); setValue("slotId", ""); }} className="text-xs text-[#F27501] hover:underline">
+                    <Button type="button" variant="link" size="sm" onClick={() => { setValue("showCustomTime", true); setValue("slotId", ""); }} className="text-[#F27501] p-0 h-auto">
                       Of voer een aangepaste tijd in
-                    </button>
+                    </Button>
                   )}
                 </div>
               ) : (
-                <div>
+                <div className="mt-1">
                   {availableSlots.length === 0 && (
                     <p className="text-sm text-neutral-500 mb-2">Geen vooraf gegenereerde slots voor deze datum.</p>
                   )}
-                  <div className="flex items-center gap-2 mt-1">
-                    <input type="time" {...register("customStart")} onChange={(e) => { setValue("customStart", e.target.value); setValue("slotId", ""); }} className="flex-1 px-3 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none text-sm" />
+                  <div className="flex items-center gap-2">
+                    <Input type="time" {...register("customStart")} onChange={(e) => { setValue("customStart", e.target.value); setValue("slotId", ""); }} className="flex-1" />
                     <span className="text-neutral-400 text-sm">tot</span>
-                    <input type="time" {...register("customEnd")} onChange={(e) => { setValue("customEnd", e.target.value); setValue("slotId", ""); }} className="flex-1 px-3 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none text-sm" />
+                    <Input type="time" {...register("customEnd")} onChange={(e) => { setValue("customEnd", e.target.value); setValue("slotId", ""); }} className="flex-1" />
                   </div>
                   {availableSlots.length > 0 && (
-                    <button type="button" onClick={() => { setValue("showCustomTime", false); setValue("customStart", ""); setValue("customEnd", ""); }} className="text-xs text-neutral-500 hover:text-neutral-700 mt-2">
+                    <Button type="button" variant="link" size="sm" onClick={() => { setValue("showCustomTime", false); setValue("customStart", ""); setValue("customEnd", ""); }} className="text-neutral-500 p-0 h-auto mt-2">
                       Terug naar beschikbare slots
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
@@ -192,42 +195,43 @@ export default function BookingModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Naam *</label>
-              <input type="text" {...register("name")} placeholder="Jan de Vries" className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
+              <Label>Naam *</Label>
+              <Input type="text" {...register("name")} placeholder="Jan de Vries" className="mt-1" />
               {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">E-mail *</label>
-              <input type="email" {...register("email")} placeholder="jan@bedrijf.nl" className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
+              <Label>E-mail *</Label>
+              <Input type="email" {...register("email")} placeholder="jan@bedrijf.nl" className="mt-1" />
               {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Telefoon</label>
-              <input type="tel" {...register("phone")} placeholder="06-12345678" className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
+              <Label>Telefoon</Label>
+              <Input type="tel" {...register("phone")} placeholder="06-12345678" className="mt-1" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Bedrijf</label>
-              <input type="text" {...register("company")} placeholder="Bedrijfsnaam BV" className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
+              <Label>Bedrijf</Label>
+              <Input type="text" {...register("company")} placeholder="Bedrijfsnaam BV" className="mt-1" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Notities</label>
-            <textarea {...register("notes")} rows={3} placeholder="Opmerkingen..." className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none resize-none" />
+            <Label>Notities</Label>
+            <Textarea {...register("notes")} rows={3} placeholder="Opmerkingen..." className="mt-1" />
           </div>
 
           <DialogFooter>
-            <button type="button" onClick={() => store.closeModal()} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors">Annuleren</button>
-            <button
+            <Button type="button" variant="ghost" onClick={() => store.closeModal()}>Annuleren</Button>
+            <Button
               type="submit"
+              variant="brand"
               disabled={saving}
-              className="px-6 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+              className="flex items-center gap-2"
             >
               {saving ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Aanmaken...</>) : "Boeking aanmaken"}
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

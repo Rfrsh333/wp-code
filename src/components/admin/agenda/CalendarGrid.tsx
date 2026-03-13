@@ -3,10 +3,13 @@
 import { useMemo } from "react";
 import type { Booking, CalendarView, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen, dagNamenKort } from "./calendarReducer";
-import { getSlotsForDate, getSlotsFromMap, groupSlotsByDate, getBookingForSlot, getEventTypeColor, slotKleur } from "./agendaUtils";
+import { getSlotsFromMap, groupSlotsByDate, getBookingForSlot, getEventTypeColor, slotKleur } from "./agendaUtils";
 import { Calendar } from "@/components/ui/calendar";
 import { useAgendaStore } from "@/stores/useAgendaStore";
 import DayDetail from "./DayDetail";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import type { DayButton } from "react-day-picker";
 
 interface CalendarGridProps {
@@ -80,16 +83,24 @@ export default function CalendarGrid({
   return (
     <div>
       {/* Legenda */}
-      <div className="flex gap-4 mb-4 text-xs flex-wrap">
-        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-400 rounded-full" /> Beschikbaar</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[#F27501] rounded-full" /> Geboekt</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-purple-400 rounded-full" /> Google Cal</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-neutral-300 rounded-full" /> Geblokkeerd</span>
+      <div className="flex gap-3 mb-4 text-xs flex-wrap">
+        <Badge variant="outline" className="gap-1.5 font-normal">
+          <span className="w-2.5 h-2.5 bg-green-400 rounded-full" /> Beschikbaar
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 font-normal">
+          <span className="w-2.5 h-2.5 bg-[#F27501] rounded-full" /> Geboekt
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 font-normal">
+          <span className="w-2.5 h-2.5 bg-purple-400 rounded-full" /> Google Cal
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 font-normal">
+          <span className="w-2.5 h-2.5 bg-neutral-300 rounded-full" /> Geblokkeerd
+        </Badge>
         {eventTypes.map((et) => (
-          <span key={et.id} className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: et.color }} />
+          <Badge key={et.id} variant="outline" className="gap-1.5 font-normal">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: et.color }} />
             {et.name}
-          </span>
+          </Badge>
         ))}
       </div>
 
@@ -168,12 +179,12 @@ export default function CalendarGrid({
               return (
                 <button
                   {...props}
-                  className={`relative rounded-xl p-2 min-h-[72px] w-full text-left transition-all ${
-                    isOutside ? "bg-neutral-50 text-neutral-300"
-                    : data?.isBlocked ? "bg-red-50 border border-red-200"
-                    : isSelected ? "bg-[#FEF3E7] border-2 border-[#F27501]"
-                    : isToday ? "bg-[#FEF3E7]/50 border border-[#F27501]/40"
-                    : "bg-white border border-neutral-100 hover:border-neutral-300"
+                  className={`relative rounded-xl p-2 min-h-[72px] w-full text-left transition-all border ${
+                    isOutside ? "bg-neutral-50 text-neutral-300 border-transparent"
+                    : data?.isBlocked ? "bg-red-50 border-red-200"
+                    : isSelected ? "bg-[#FEF3E7] border-2 border-[#F27501] shadow-sm"
+                    : isToday ? "bg-[#FEF3E7]/50 border-[#F27501]/40"
+                    : "bg-white border-neutral-100 hover:border-neutral-300 hover:shadow-sm"
                   }`}
                 >
                   <span className={`text-sm font-semibold ${
@@ -224,7 +235,7 @@ export default function CalendarGrid({
               const isToday = dateStr === todayStr;
 
               return (
-                <div key={dateStr} className={`rounded-xl border p-3 min-h-[300px] ${isToday ? "border-[#F27501] bg-[#FEF3E7]/30" : "border-neutral-200"}`}>
+                <Card key={dateStr} className={`p-3 min-h-[300px] ${isToday ? "border-[#F27501] bg-[#FEF3E7]/30" : ""}`}>
                   <p className={`text-sm font-semibold mb-2 ${isToday ? "text-[#F27501]" : "text-neutral-700"}`}>
                     {dagNamenKort[(date.getDay() + 6) % 7]} {date.getDate()}
                   </p>
@@ -246,7 +257,7 @@ export default function CalendarGrid({
                       );
                     })}
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -255,7 +266,7 @@ export default function CalendarGrid({
 
       {/* DAGWEERGAVE */}
       {calendarView === "dag" && (
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
+        <Card className="p-6">
           <h3 className="font-semibold text-lg text-neutral-900 mb-4">
             {selectedDate
               ? `${dagNamen[new Date(selectedDate + "T12:00:00").getDay()]} ${new Date(selectedDate + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}`
@@ -289,14 +300,14 @@ export default function CalendarGrid({
                       </div>
                       <div className="flex gap-2">
                         {booking ? (
-                          <button onClick={() => onSelectBooking(booking)} className="px-3 py-1.5 text-sm bg-white/80 text-neutral-900 rounded-lg hover:bg-white">Details</button>
+                          <Button variant="ghost" size="sm" onClick={() => onSelectBooking(booking)}>Details</Button>
                         ) : slot.is_available ? (
                           <>
-                            <button onClick={() => onOpenBookingModal(dateStr, slot.id)} disabled={actionPending} className="px-3 py-1.5 text-sm bg-[#F27501] text-white rounded-lg hover:bg-[#d96800] font-medium disabled:opacity-50 disabled:cursor-not-allowed">Boek</button>
-                            <button onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending} className="px-3 py-1.5 text-sm bg-white/80 text-neutral-700 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed">Blokkeer</button>
+                            <Button variant="brand" size="sm" onClick={() => onOpenBookingModal(dateStr, slot.id)} disabled={actionPending}>Boek</Button>
+                            <Button variant="outline" size="sm" onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending}>Blokkeer</Button>
                           </>
                         ) : slot.google_calendar_event_id !== "google_blocked" ? (
-                          <button onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending} className="px-3 py-1.5 text-sm bg-white/80 text-neutral-700 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed">Vrijgeven</button>
+                          <Button variant="outline" size="sm" onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending}>Vrijgeven</Button>
                         ) : null}
                       </div>
                     </div>
@@ -305,7 +316,7 @@ export default function CalendarGrid({
               </div>
             );
           })()}
-        </div>
+        </Card>
       )}
 
       {/* Day detail panel (maand/week view) */}

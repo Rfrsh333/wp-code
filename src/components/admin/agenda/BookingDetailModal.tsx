@@ -1,7 +1,7 @@
 "use client";
 
 import type { Booking, Slot, EventType } from "./calendarReducer";
-import { statusKleur, statusLabel, getEventTypeName, getEventTypeColor } from "./agendaUtils";
+import { statusLabel, getEventTypeName, getEventTypeColor } from "./agendaUtils";
 import { useAgendaStore } from "@/stores/useAgendaStore";
 import {
   Dialog,
@@ -10,6 +10,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface BookingDetailModalProps {
   booking: Booking | null;
@@ -44,7 +47,7 @@ export default function BookingDetailModal({
               <p className="font-semibold text-lg">{booking.client_name}</p>
               <p className="text-sm text-neutral-500">{booking.client_email}</p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusKleur(booking.status)}`}>{statusLabel(booking.status)}</span>
+            <Badge variant={booking.status as "confirmed" | "completed" | "cancelled" | "no_show"}>{statusLabel(booking.status)}</Badge>
           </div>
           {booking.client_phone && <div><span className="text-sm text-neutral-500">Telefoon:</span> <span>{booking.client_phone}</span></div>}
           {booking.company_name && <div><span className="text-sm text-neutral-500">Bedrijf:</span> <span>{booking.company_name}</span></div>}
@@ -63,15 +66,19 @@ export default function BookingDetailModal({
           {booking.cancelled_at && <div><span className="text-sm text-neutral-500">Geannuleerd:</span> <span className="text-sm ml-1">{new Date(booking.cancelled_at).toLocaleString("nl-NL")}</span></div>}
           {booking.cancel_reason && <div><span className="text-sm text-neutral-500">Reden:</span> <span className="text-sm ml-1">{booking.cancel_reason}</span></div>}
 
-          <div className="border-t pt-3 mt-3">
+          <Separator />
+
+          <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-neutral-700">Interne notities</span>
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={() => onEditNotes(booking.id, booking.internal_notes || "")}
-                className="text-xs text-[#F27501] hover:underline"
+                className="text-[#F27501] p-0 h-auto"
               >
                 Bewerken
-              </button>
+              </Button>
             </div>
             <p className="text-sm text-neutral-500">{booking.internal_notes || "Geen interne notities"}</p>
           </div>
@@ -80,12 +87,12 @@ export default function BookingDetailModal({
         <DialogFooter>
           {booking.status === "confirmed" && (
             <>
-              <button onClick={() => { onStatusChange(booking.id, "completed"); close(); }} disabled={actionPending} className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">Voltooid</button>
-              <button onClick={() => { onStatusChange(booking.id, "no_show"); close(); }} disabled={actionPending} className="px-4 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">No-show</button>
-              <button onClick={() => { onStatusChange(booking.id, "cancelled"); close(); }} disabled={actionPending} className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">Annuleer</button>
+              <Button variant="outline" size="sm" onClick={() => { onStatusChange(booking.id, "completed"); close(); }} disabled={actionPending} className="text-blue-700 border-blue-200 hover:bg-blue-50">Voltooid</Button>
+              <Button variant="outline" size="sm" onClick={() => { onStatusChange(booking.id, "no_show"); close(); }} disabled={actionPending} className="text-yellow-700 border-yellow-200 hover:bg-yellow-50">No-show</Button>
+              <Button variant="destructive" size="sm" onClick={() => { onStatusChange(booking.id, "cancelled"); close(); }} disabled={actionPending}>Annuleer</Button>
             </>
           )}
-          <button onClick={close} className="px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 text-sm font-medium">Sluiten</button>
+          <Button variant="default" size="sm" onClick={close}>Sluiten</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -14,6 +14,12 @@ export async function verifyRecaptcha(token: string): Promise<{
   score: number;
   error?: string;
 }> {
+  // Skip reCAPTCHA in development
+  if (process.env.NODE_ENV === "development") {
+    console.log("[DEV] reCAPTCHA verification skipped in development mode");
+    return { success: true, score: 1.0 };
+  }
+
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
   if (!secretKey) {

@@ -8,6 +8,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 interface InternalNotesModalProps {
   open: boolean;
@@ -30,18 +32,17 @@ export default function InternalNotesModal({
         </DialogHeader>
 
         <div>
-          <textarea
+          <Textarea
             value={notes}
             onChange={(e) => store.updateModal({ notes: e.target.value })}
             rows={5}
             placeholder="Notities alleen zichtbaar voor admins..."
-            className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl outline-none resize-none"
           />
         </div>
 
         <DialogFooter>
-          <button onClick={() => store.closeModal()} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl">Annuleren</button>
-          <button onClick={onSave} disabled={actionPending} className="px-6 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] font-medium disabled:opacity-50 disabled:cursor-not-allowed">{actionPending ? "Bezig..." : "Opslaan"}</button>
+          <Button variant="ghost" onClick={() => store.closeModal()}>Annuleren</Button>
+          <Button variant="brand" onClick={onSave} disabled={actionPending}>{actionPending ? "Bezig..." : "Opslaan"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

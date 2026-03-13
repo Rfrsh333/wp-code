@@ -5,6 +5,8 @@ import type { Booking, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen } from "./calendarReducer";
 import { getSlotsForDate, getBookingForSlot, getEventTypeName, getEventTypeColor, slotKleur } from "./agendaUtils";
 import { useAgendaStore } from "@/stores/useAgendaStore";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface DayDetailProps {
   selectedDate: string;
@@ -31,7 +33,7 @@ export default function DayDetail({
   const allBlocked = toggleable.length > 0 && toggleable.every((s) => !s.is_available);
 
   return (
-    <div className="mt-4 bg-white rounded-xl border border-neutral-200 p-5">
+    <Card className="mt-4 p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-neutral-900">
           {dagNamen[new Date(selectedDate + "T12:00:00").getDay()]}{" "}
@@ -39,22 +41,22 @@ export default function DayDetail({
         </h3>
         <div className="flex gap-2">
           {toggleable.length > 0 && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => onToggleDay(selectedDate, !allBlocked)}
               disabled={actionPending}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                allBlocked ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-red-100 text-red-600 hover:bg-red-200"
-              }`}
+              className={allBlocked ? "text-green-700 border-green-200 hover:bg-green-50" : "text-red-600 border-red-200 hover:bg-red-50"}
             >
               {allBlocked ? "Maak dag vrij" : "Blokkeer hele dag"}
-            </button>
+            </Button>
           )}
-          <button onClick={() => onOpenOverrideModal(selectedDate)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200">
+          <Button variant="outline" size="sm" onClick={() => onOpenOverrideModal(selectedDate)} className="text-purple-700 border-purple-200 hover:bg-purple-50">
             Override
-          </button>
-          <button onClick={() => store.selectDate(null)} className="p-1.5 hover:bg-neutral-100 rounded-lg">
+          </Button>
+          <Button variant="ghost" size="icon-xs" onClick={() => store.selectDate(null)}>
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -81,14 +83,14 @@ export default function DayDetail({
                 </div>
                 <div className="flex gap-1">
                   {booking ? (
-                    <button onClick={() => onSelectBooking(booking)} className="px-2 py-1 text-xs bg-white/80 text-neutral-900 rounded-lg hover:bg-white transition-colors">Details</button>
+                    <Button variant="ghost" size="sm" onClick={() => onSelectBooking(booking)} className="text-xs h-7">Details</Button>
                   ) : slot.is_available && !isGoogle ? (
                     <>
-                      <button onClick={() => onOpenBookingModal(selectedDate, slot.id)} disabled={actionPending} className="px-2 py-1 text-xs bg-[#F27501] text-white rounded-lg hover:bg-[#d96800] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">Boek</button>
-                      <button onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending} className="px-2 py-1 text-xs bg-white/80 text-neutral-700 rounded-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Blokkeer</button>
+                      <Button variant="brand" size="sm" onClick={() => onOpenBookingModal(selectedDate, slot.id)} disabled={actionPending} className="text-xs h-7">Boek</Button>
+                      <Button variant="outline" size="sm" onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending} className="text-xs h-7">Blokkeer</Button>
                     </>
                   ) : !isGoogle ? (
-                    <button onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending} className="px-2 py-1 text-xs bg-white/80 text-neutral-700 rounded-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Vrijgeven</button>
+                    <Button variant="outline" size="sm" onClick={() => onToggleSlot(slot.id, slot.is_available)} disabled={actionPending} className="text-xs h-7">Vrijgeven</Button>
                   ) : null}
                 </div>
               </div>
@@ -99,13 +101,14 @@ export default function DayDetail({
         <p className="text-sm text-neutral-400 py-4 text-center">Geen slots op deze dag</p>
       )}
 
-      <button
+      <Button
+        variant="brand"
+        className="mt-3 w-full"
         onClick={() => onOpenBookingModal(selectedDate)}
-        className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors text-sm font-medium"
       >
         <Plus className="w-4 h-4" />
         Nieuwe boeking
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

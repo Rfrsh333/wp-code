@@ -58,22 +58,26 @@ export async function POST(request: NextRequest) {
 
     const data: FormData = await request.json();
 
-    // KRITIEK: Verify reCAPTCHA - VERPLICHT (was optioneel, nu required)
-    if (!data.recaptchaToken) {
-      console.warn("[SECURITY] Personeel-aanvragen form submission without reCAPTCHA token");
-      return NextResponse.json(
-        { error: "reCAPTCHA verificatie vereist" },
-        { status: 400 }
-      );
-    }
+    // Verify reCAPTCHA - verplicht in productie, overgeslagen in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("[DEV] reCAPTCHA check skipped in development mode");
+    } else {
+      if (!data.recaptchaToken) {
+        console.warn("[SECURITY] Personeel-aanvragen form submission without reCAPTCHA token");
+        return NextResponse.json(
+          { error: "reCAPTCHA verificatie vereist" },
+          { status: 400 }
+        );
+      }
 
-    const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
-    if (!recaptchaResult.success) {
-      console.warn("[SECURITY] Personeel-aanvragen form reCAPTCHA verification failed");
-      return NextResponse.json(
-        { error: recaptchaResult.error || "Spam detectie mislukt" },
-        { status: 400 }
-      );
+      const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
+      if (!recaptchaResult.success) {
+        console.warn("[SECURITY] Personeel-aanvragen form reCAPTCHA verification failed");
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Spam detectie mislukt" },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate required fields
@@ -220,16 +224,18 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Resend error details:", JSON.stringify(error, null, 2));
-      console.error("Resend error type:", typeof error);
-      console.error("Resend error keys:", Object.keys(error));
 
-      return NextResponse.json(
-        { error: "Fout bij verzenden e-mail. Probeer het later opnieuw.", details: error.message || String(error) },
-        { status: 500 }
-      );
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[DEV] Email verzenden mislukt, maar we gaan door in development mode");
+      } else {
+        return NextResponse.json(
+          { error: "Fout bij verzenden e-mail. Probeer het later opnieuw.", details: error.message || String(error) },
+          { status: 500 }
+        );
+      }
+    } else {
+      console.log("Email successfully sent! ID:", emailData?.id);
     }
-
-    console.log("Email successfully sent! ID:", emailData?.id);
 
     // Opslaan in Supabase
     const { error: dbError } = await supabase.from("personeel_aanvragen").insert({

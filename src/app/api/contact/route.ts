@@ -47,22 +47,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
     }
 
-    // KRITIEK: Verify reCAPTCHA - VERPLICHT (was optioneel, nu required)
-    if (!data.recaptchaToken) {
-      console.warn("[SECURITY] Contact form submission without reCAPTCHA token");
-      return NextResponse.json(
-        { error: "reCAPTCHA verificatie vereist" },
-        { status: 400 }
-      );
-    }
+    // Verify reCAPTCHA - verplicht in productie, overgeslagen in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("[DEV] reCAPTCHA check skipped in development mode");
+    } else {
+      if (!data.recaptchaToken) {
+        console.warn("[SECURITY] Contact form submission without reCAPTCHA token");
+        return NextResponse.json(
+          { error: "reCAPTCHA verificatie vereist" },
+          { status: 400 }
+        );
+      }
 
-    const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
-    if (!recaptchaResult.success) {
-      console.warn("[SECURITY] Contact form reCAPTCHA verification failed");
-      return NextResponse.json(
-        { error: recaptchaResult.error || "Spam detectie mislukt" },
-        { status: 400 }
-      );
+      const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
+      if (!recaptchaResult.success) {
+        console.warn("[SECURITY] Contact form reCAPTCHA verification failed");
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Spam detectie mislukt" },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate required fields

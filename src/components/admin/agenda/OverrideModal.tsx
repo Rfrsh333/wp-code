@@ -8,6 +8,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface OverrideModalProps {
   open: boolean;
@@ -39,8 +42,8 @@ export default function OverrideModal({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Datum</label>
-            <input type="date" value={date} onChange={(e) => update({ date: e.target.value })} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl outline-none" />
+            <Label>Datum</Label>
+            <Input type="date" value={date} onChange={(e) => update({ date: e.target.value })} className="mt-1" />
           </div>
           <div className="flex gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -54,23 +57,23 @@ export default function OverrideModal({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Start (leeg = hele dag)</label>
-              <input type="time" value={startTime} onChange={(e) => update({ startTime: e.target.value })} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl outline-none" />
+              <Label>Start (leeg = hele dag)</Label>
+              <Input type="time" value={startTime} onChange={(e) => update({ startTime: e.target.value })} className="mt-1" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Eind</label>
-              <input type="time" value={endTime} onChange={(e) => update({ endTime: e.target.value })} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl outline-none" />
+              <Label>Eind</Label>
+              <Input type="time" value={endTime} onChange={(e) => update({ endTime: e.target.value })} className="mt-1" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Reden (optioneel)</label>
-            <input type="text" value={reason} onChange={(e) => update({ reason: e.target.value })} placeholder="Bijv. Kerstvakantie" className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl outline-none" />
+            <Label>Reden (optioneel)</Label>
+            <Input type="text" value={reason} onChange={(e) => update({ reason: e.target.value })} placeholder="Bijv. Kerstvakantie" className="mt-1" />
           </div>
         </div>
 
         <DialogFooter>
-          <button onClick={() => store.closeModal()} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl">Annuleren</button>
-          <button onClick={onSubmit} disabled={actionPending} className="px-6 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] font-medium disabled:opacity-50 disabled:cursor-not-allowed">{actionPending ? "Bezig..." : "Toevoegen"}</button>
+          <Button variant="ghost" onClick={() => store.closeModal()}>Annuleren</Button>
+          <Button variant="brand" onClick={onSubmit} disabled={actionPending}>{actionPending ? "Bezig..." : "Toevoegen"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
