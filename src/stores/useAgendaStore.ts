@@ -66,7 +66,7 @@ interface AgendaActions {
   updateModal: (updates: Record<string, unknown>) => void;
 }
 
-export const useAgendaStore = create<AgendaState & AgendaActions>((set, get) => ({
+export const useAgendaStore = create<AgendaState & AgendaActions>((set) => ({
   // Initial state
   slots: [],
   bookings: [],

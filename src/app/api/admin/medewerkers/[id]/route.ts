@@ -87,7 +87,7 @@ export async function GET(
   // Monthly financials
   const maandMap = new Map<string, { uren: number; verdiensten: number; diensten: number }>();
   for (const u of goedgekeurdeUren) {
-    const aanmelding = u.dienst_aanmeldingen as any;
+    const aanmelding = u.dienst_aanmeldingen as { diensten?: { datum: string; uurtarief?: number } } | null;
     const dienst = aanmelding?.diensten;
     if (!dienst) continue;
     const d = new Date(dienst.datum);

@@ -27,8 +27,7 @@ export default function Error({
         </div>
 
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-8 max-w-2xl mx-auto">
-          <p className="text-red-800 font-medium mb-2">Foutmelding:</p>
-          <p className="text-red-700 text-sm">{error.message}</p>
+          <p className="text-red-800 font-medium">Er is een onverwachte fout opgetreden. Probeer het opnieuw.</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
