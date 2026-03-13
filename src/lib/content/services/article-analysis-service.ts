@@ -104,25 +104,6 @@ export async function analyzeNormalizedArticle(normalizedArticleId: string) {
 }
 
 export async function runPendingAnalysisPass(limit = 10) {
-  const { data: normalizedRows, error: normalizedError } = await supabaseAdmin
-    .from("normalized_articles")
-    .select("id")
-    .order("published_at", { ascending: false })
-    .limit(limit);
-
-  if (normalizedError) {
-    if (normalizedError.code === "42P01") {
-      return {
-        attempted: 0,
-        analyzed: 0,
-        failed: 0,
-        results: [],
-      };
-    }
-
-    throw normalizedError;
-  }
-
   const { data: analyzedRows, error: analyzedError } = await supabaseAdmin
     .from("article_analysis")
     .select("normalized_article_id");
@@ -131,12 +112,28 @@ export async function runPendingAnalysisPass(limit = 10) {
     throw analyzedError;
   }
 
-  const analyzedIds = new Set((analyzedRows ?? []).map((row) => String(row.normalized_article_id)));
-  const pendingIds = (normalizedRows ?? [])
-    .map((row) => String(row.id))
-    .filter((id) => !analyzedIds.has(id))
-    .slice(0, limit);
+  const analyzedIds = (analyzedRows ?? []).map((row) => String(row.normalized_article_id));
 
+  let query = supabaseAdmin
+    .from("normalized_articles")
+    .select("id")
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (analyzedIds.length > 0) {
+    query = query.not("id", "in", `(${analyzedIds.join(",")})`);
+  }
+
+  const { data: pendingRows, error: normalizedError } = await query;
+
+  if (normalizedError) {
+    if (normalizedError.code === "42P01") {
+      return { attempted: 0, analyzed: 0, failed: 0, results: [] };
+    }
+    throw normalizedError;
+  }
+
+  const pendingIds = (pendingRows ?? []).map((row) => String(row.id));
   return analyzeArticleIds(pendingIds);
 }
 
