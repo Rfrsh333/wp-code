@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import FadeIn from "@/components/animations/FadeIn";
 import { Section, Container } from "@/components/Section";
@@ -16,7 +17,7 @@ interface TestimonialCarouselProps {
   testimonials: Testimonial[];
 }
 
-export default function TestimonialCarousel({ testimonials }: TestimonialCarouselProps) {
+export default memo(function TestimonialCarousel({ testimonials }: TestimonialCarouselProps) {
   return (
     <Section variant="tinted" spacing="large">
       <Container>
@@ -99,4 +100,4 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
       </Container>
     </Section>
   );
-}
+});
