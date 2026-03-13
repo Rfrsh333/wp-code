@@ -1,8 +1,8 @@
 "use client";
 
-import type { Dispatch } from "react";
-import type { Booking, CalendarAction, Slot, EventType } from "./calendarReducer";
+import type { Booking, Slot, EventType } from "./calendarReducer";
 import { statusKleur, statusLabel, getEventTypeName, getEventTypeColor } from "./agendaUtils";
+import { useAgendaStore } from "@/stores/useAgendaStore";
 import {
   Dialog,
   DialogContent,
@@ -16,19 +16,20 @@ interface BookingDetailModalProps {
   slots: Slot[];
   eventTypes: EventType[];
   actionPending: boolean;
-  dispatch: Dispatch<CalendarAction>;
   onStatusChange: (id: string, status: string) => void;
   onEditNotes: (bookingId: string, notes: string) => void;
 }
 
 export default function BookingDetailModal({
   booking, slots, eventTypes, actionPending,
-  dispatch, onStatusChange, onEditNotes,
+  onStatusChange, onEditNotes,
 }: BookingDetailModalProps) {
+  const store = useAgendaStore();
+
   if (!booking) return null;
 
   const slot = slots.find((s) => s.id === booking.slot_id);
-  const close = () => dispatch({ type: "CLOSE_MODAL" });
+  const close = () => store.closeModal();
 
   return (
     <Dialog open={!!booking} onOpenChange={(isOpen) => { if (!isOpen) close(); }}>

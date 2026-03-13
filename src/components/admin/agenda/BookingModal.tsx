@@ -1,8 +1,8 @@
 "use client";
 
-import type { Dispatch } from "react";
-import type { CalendarAction, EventType, Slot } from "./calendarReducer";
+import type { EventType, Slot } from "./calendarReducer";
 import { getSlotsForDate } from "./agendaUtils";
+import { useAgendaStore } from "@/stores/useAgendaStore";
 import {
   Dialog,
   DialogContent,
@@ -28,21 +28,21 @@ interface BookingModalProps {
   error: string;
   slots: Slot[];
   eventTypes: EventType[];
-  dispatch: Dispatch<CalendarAction>;
   onSubmit: () => void;
 }
 
 export default function BookingModal({
   open, date, slotId, showCustomTime, name, email, phone, company, notes,
   eventTypeId, customStart, customEnd, saving, error,
-  slots, eventTypes, dispatch, onSubmit,
+  slots, eventTypes, onSubmit,
 }: BookingModalProps) {
+  const store = useAgendaStore();
   const availableSlots = date
     ? getSlotsForDate(slots, date).filter((s) => s.is_available && !s.is_booked)
     : [];
 
   const update = (updates: Record<string, unknown>) => {
-    dispatch({ type: "UPDATE_MODAL", updates });
+    store.updateModal(updates);
   };
 
   const canSubmit = !saving
@@ -51,7 +51,7 @@ export default function BookingModal({
     && !!email.trim();
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) dispatch({ type: "CLOSE_MODAL" }); }}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) store.closeModal(); }}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nieuwe boeking</DialogTitle>
@@ -155,7 +155,7 @@ export default function BookingModal({
         </div>
 
         <DialogFooter>
-          <button onClick={() => dispatch({ type: "CLOSE_MODAL" })} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors">Annuleren</button>
+          <button onClick={() => store.closeModal()} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors">Annuleren</button>
           <button
             onClick={onSubmit}
             disabled={!canSubmit}

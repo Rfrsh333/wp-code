@@ -1,7 +1,7 @@
 "use client";
 
-import type { Dispatch } from "react";
-import type { CalendarAction, EventType } from "./calendarReducer";
+import type { EventType } from "./calendarReducer";
+import { useAgendaStore } from "@/stores/useAgendaStore";
 import {
   Dialog,
   DialogContent,
@@ -15,23 +15,24 @@ interface EventTypeModalProps {
   eventType: EventType | null;
   isNew: boolean;
   actionPending: boolean;
-  dispatch: Dispatch<CalendarAction>;
   onSave: (et: Partial<EventType> & { id?: string }) => void;
   onDelete: (id: string) => void;
 }
 
 export default function EventTypeModal({
   open, eventType, actionPending,
-  dispatch, onSave, onDelete,
+  onSave, onDelete,
 }: EventTypeModalProps) {
+  const store = useAgendaStore();
+
   if (!eventType) return null;
 
   const update = (updates: Record<string, unknown>) => {
-    dispatch({ type: "UPDATE_MODAL", updates: { eventType: { ...eventType, ...updates } } });
+    store.updateModal({ eventType: { ...eventType, ...updates } });
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) dispatch({ type: "CLOSE_MODAL" }); }}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) store.closeModal(); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{eventType.id ? "Type bewerken" : "Nieuw afspraaktype"}</DialogTitle>
@@ -78,10 +79,10 @@ export default function EventTypeModal({
 
         <DialogFooter className="justify-between">
           {eventType.id && (
-            <button onClick={() => { onDelete(eventType.id); dispatch({ type: "CLOSE_MODAL" }); }} disabled={actionPending} className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">Verwijderen</button>
+            <button onClick={() => { onDelete(eventType.id); store.closeModal(); }} disabled={actionPending} className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">Verwijderen</button>
           )}
           <div className="flex gap-3 ml-auto">
-            <button onClick={() => dispatch({ type: "CLOSE_MODAL" })} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors">Annuleren</button>
+            <button onClick={() => store.closeModal()} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors">Annuleren</button>
             <button onClick={() => onSave(eventType)} disabled={actionPending} className="px-6 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] font-medium disabled:opacity-50 disabled:cursor-not-allowed">{actionPending ? "Bezig..." : "Opslaan"}</button>
           </div>
         </DialogFooter>

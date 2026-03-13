@@ -1,7 +1,6 @@
 "use client";
 
-import type { Dispatch } from "react";
-import type { CalendarAction } from "./calendarReducer";
+import { useAgendaStore } from "@/stores/useAgendaStore";
 import {
   Dialog,
   DialogContent,
@@ -18,20 +17,21 @@ interface OverrideModalProps {
   startTime: string;
   endTime: string;
   actionPending: boolean;
-  dispatch: Dispatch<CalendarAction>;
   onSubmit: () => void;
 }
 
 export default function OverrideModal({
   open, date, reason, blocked, startTime, endTime,
-  actionPending, dispatch, onSubmit,
+  actionPending, onSubmit,
 }: OverrideModalProps) {
+  const store = useAgendaStore();
+
   const update = (updates: Record<string, unknown>) => {
-    dispatch({ type: "UPDATE_MODAL", updates });
+    store.updateModal(updates);
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) dispatch({ type: "CLOSE_MODAL" }); }}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) store.closeModal(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Datum override</DialogTitle>
@@ -69,7 +69,7 @@ export default function OverrideModal({
         </div>
 
         <DialogFooter>
-          <button onClick={() => dispatch({ type: "CLOSE_MODAL" })} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl">Annuleren</button>
+          <button onClick={() => store.closeModal()} className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl">Annuleren</button>
           <button onClick={onSubmit} disabled={actionPending} className="px-6 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] font-medium disabled:opacity-50 disabled:cursor-not-allowed">{actionPending ? "Bezig..." : "Toevoegen"}</button>
         </DialogFooter>
       </DialogContent>

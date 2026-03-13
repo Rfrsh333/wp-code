@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Dispatch } from "react";
-import type { Booking, CalendarAction, CalendarView, EventType, Override, Slot } from "./calendarReducer";
+import type { Booking, CalendarView, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen, dagNamenKort } from "./calendarReducer";
-import { getSlotsForDate, getBookingsForDate, getBookingForSlot, getEventTypeColor, slotKleur } from "./agendaUtils";
+import { getSlotsForDate, getBookingForSlot, getEventTypeColor, slotKleur } from "./agendaUtils";
 import { Calendar } from "@/components/ui/calendar";
+import { useAgendaStore } from "@/stores/useAgendaStore";
 import DayDetail from "./DayDetail";
 import type { DayButton } from "react-day-picker";
 
@@ -18,7 +18,6 @@ interface CalendarGridProps {
   eventTypes: EventType[];
   overrides: Override[];
   actionPending: boolean;
-  dispatch: Dispatch<CalendarAction>;
   onToggleSlot: (slotId: string, isAvailable: boolean) => void;
   onToggleDay: (dateStr: string, block: boolean) => void;
   onOpenBookingModal: (dateStr: string, slotId?: string) => void;
@@ -33,9 +32,10 @@ function toDateStr(date: Date): string {
 export default function CalendarGrid({
   calendarView, monthOffset, selectedDate,
   slots, bookings, eventTypes, overrides,
-  actionPending, dispatch,
+  actionPending,
   onToggleSlot, onToggleDay, onOpenBookingModal, onOpenOverrideModal, onSelectBooking,
 }: CalendarGridProps) {
+  const store = useAgendaStore();
   const todayStr = new Date().toISOString().split("T")[0];
 
   // Compute the month to display based on monthOffset
@@ -98,16 +98,16 @@ export default function CalendarGrid({
           onMonthChange={(month) => {
             const now = new Date();
             const diff = (month.getFullYear() - now.getFullYear()) * 12 + (month.getMonth() - now.getMonth());
-            dispatch({ type: "SET_MONTH_OFFSET", offset: diff });
+            store.setMonthOffset(diff);
           }}
           selected={selectedDayObj}
           onSelect={(date) => {
             if (!date) {
-              dispatch({ type: "SELECT_DATE", date: null });
+              store.selectDate(null);
               return;
             }
             const dateStr = toDateStr(date);
-            dispatch({ type: "SELECT_DATE", date: selectedDate === dateStr ? null : dateStr });
+            store.selectDate(selectedDate === dateStr ? null : dateStr);
           }}
           locale={{
             localize: {
@@ -234,7 +234,7 @@ export default function CalendarGrid({
                           className={`text-xs px-2 py-1.5 rounded-lg cursor-pointer transition-colors ${slotKleur(slot)}`}
                           onClick={() => {
                             if (booking) onSelectBooking(booking);
-                            else dispatch({ type: "SELECT_DATE", date: dateStr });
+                            else store.selectDate(dateStr);
                           }}
                         >
                           <span className="font-medium">{slot.start_time.slice(0, 5)}</span>
@@ -314,7 +314,6 @@ export default function CalendarGrid({
           eventTypes={eventTypes}
           overrides={overrides}
           actionPending={actionPending}
-          dispatch={dispatch}
           onToggleSlot={onToggleSlot}
           onToggleDay={onToggleDay}
           onOpenBookingModal={onOpenBookingModal}

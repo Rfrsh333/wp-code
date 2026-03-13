@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { calendarReducer, initialState, dagNamen } from "./calendarReducer";
+import { useAgendaStore } from "@/stores/useAgendaStore";
+import { dagNamen } from "./calendarReducer";
 import type { Booking, EventType, Schedule } from "./calendarReducer";
 import { getSetting, getSlotsForDate, getStats, statusKleur, statusLabel, getEventTypeName, getEventTypeColor } from "./agendaUtils";
 import CalendarHeader from "./CalendarHeader";
@@ -15,13 +16,13 @@ import InternalNotesModal from "./InternalNotesModal";
 import { getMonthData } from "./agendaUtils";
 
 export default function AgendaTab() {
-  const [state, dispatch] = useReducer(calendarReducer, initialState);
+  const store = useAgendaStore();
   const {
     slots, bookings, settings, eventTypes, schedules, overrides,
     view, calendarView, monthOffset, selectedDate, bookingFilter,
     loading, refreshing, actionPending, actionError, syncing, savingMsg,
     modal,
-  } = state;
+  } = store;
 
   // ============================================
   // Auth & Fetch
@@ -35,8 +36,8 @@ export default function AgendaTab() {
   }, []);
 
   const fetchData = useCallback(async (isInitial = false) => {
-    if (isInitial) dispatch({ type: "SET_LOADING", loading: true });
-    else dispatch({ type: "SET_REFRESHING", refreshing: true });
+    if (isInitial) store.setLoading(true);
+    else store.setRefreshing(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -53,8 +54,7 @@ export default function AgendaTab() {
         fetch("/api/admin/data?table=availability_overrides", { headers }).then((r) => r.json()),
       ]);
 
-      dispatch({
-        type: "SET_DATA",
+      store.setData({
         slots: slotsRes.data || [],
         bookings: bookingsRes.data || [],
         settings: settingsRes.data || [],
@@ -63,13 +63,14 @@ export default function AgendaTab() {
         overrides: overRes.data || [],
       });
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon data niet ophalen" });
+      store.setActionError("Kon data niet ophalen");
     }
-  }, []);
+  }, [store]);
 
   useEffect(() => {
     void fetchData(true);
-  }, [fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ============================================
   // Admin API helper
@@ -85,14 +86,14 @@ export default function AgendaTab() {
       const result = await res.json();
       if (!res.ok || result.error) {
         console.error("Admin data error:", result.error);
-        dispatch({ type: "SET_ACTION_ERROR", error: result.error || "Er ging iets mis bij het opslaan" });
-        setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+        store.setActionError(result.error || "Er ging iets mis bij het opslaan");
+        setTimeout(() => store.setActionError(null), 5000);
       }
       return result;
     } catch (err) {
       console.error("Admin fetch network error:", err);
-      dispatch({ type: "SET_ACTION_ERROR", error: "Netwerkfout — controleer je verbinding" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Netwerkfout — controleer je verbinding");
+      setTimeout(() => store.setActionError(null), 5000);
       return { error: "network_error" };
     }
   };
@@ -103,50 +104,50 @@ export default function AgendaTab() {
 
   const handleSync = async () => {
     if (syncing) return;
-    dispatch({ type: "SET_SYNCING", syncing: true });
+    store.setSyncing(true);
     try {
       const headers = await getAuthHeaders();
       const res = await fetch("/api/calendar/sync", { headers });
       if (!res.ok) {
-        dispatch({ type: "SET_ACTION_ERROR", error: "Synchronisatie mislukt" });
-        setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+        store.setActionError("Synchronisatie mislukt");
+        setTimeout(() => store.setActionError(null), 5000);
       }
       await fetchData();
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Netwerkfout bij synchronisatie" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Netwerkfout bij synchronisatie");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_SYNCING", syncing: false });
+      store.setSyncing(false);
     }
   };
 
   const updateBookingStatus = async (id: string, status: string) => {
     if (actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
+    store.setActionPending(true);
     try {
       await adminFetch({ action: "update", table: "bookings", id, data: { status, ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}), ...(status === "no_show" ? { no_show: true } : {}) } });
-      dispatch({ type: "UPDATE_BOOKING", id, data: { status: status as Booking["status"], ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}), ...(status === "no_show" ? { no_show: true } : {}) } });
+      store.updateBooking(id, { status: status as Booking["status"], ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}), ...(status === "no_show" ? { no_show: true } : {}) });
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon status niet bijwerken" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon status niet bijwerken");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
 
   const toggleSlotAvailability = async (slotId: string, isAvailable: boolean) => {
     if (actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
-    dispatch({ type: "UPDATE_SLOT", id: slotId, data: { is_available: !isAvailable } });
+    store.setActionPending(true);
+    store.updateSlot(slotId, { is_available: !isAvailable });
     try {
       await adminFetch({ action: "update", table: "availability_slots", id: slotId, data: { is_available: !isAvailable } });
     } catch {
-      dispatch({ type: "UPDATE_SLOT", id: slotId, data: { is_available: isAvailable } });
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon slot niet bijwerken" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.updateSlot(slotId, { is_available: isAvailable });
+      store.setActionError("Kon slot niet bijwerken");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
@@ -156,23 +157,23 @@ export default function AgendaTab() {
     const daySlots = getSlotsForDate(slots, dateStr);
     const toggleableSlots = daySlots.filter((s) => !s.is_booked && s.google_calendar_event_id !== "google_blocked");
     if (toggleableSlots.length === 0) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
+    store.setActionPending(true);
     const ids = toggleableSlots.map((s) => s.id);
-    dispatch({ type: "UPDATE_SLOTS_BULK", ids, data: { is_available: !block } });
+    store.updateSlotsBulk(ids, { is_available: !block });
     try {
       await adminFetch({ action: "bulk_update", table: "availability_slots", ids, data: { is_available: !block } });
     } catch {
-      dispatch({ type: "UPDATE_SLOTS_BULK", ids, data: { is_available: block } });
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon dag niet bijwerken" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.updateSlotsBulk(ids, { is_available: block });
+      store.setActionError("Kon dag niet bijwerken");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
 
-  const updateSetting = async (key: string, value: string) => {
-    dispatch({ type: "UPDATE_SETTING", key, value });
+  const handleUpdateSetting = async (key: string, value: string) => {
+    store.updateSetting(key, value);
     try {
       const existing = settings.find((s) => s.key === key);
       if (existing) {
@@ -180,11 +181,11 @@ export default function AgendaTab() {
       } else {
         await adminFetch({ action: "insert", table: "admin_settings", data: { key, value } });
       }
-      dispatch({ type: "SET_SAVING_MSG", msg: "Opgeslagen" });
-      setTimeout(() => dispatch({ type: "SET_SAVING_MSG", msg: "" }), 2000);
+      store.setSavingMsg("Opgeslagen");
+      setTimeout(() => store.setSavingMsg(""), 2000);
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon instelling niet opslaan" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon instelling niet opslaan");
+      setTimeout(() => store.setActionError(null), 5000);
     }
     fetchData();
   };
@@ -194,24 +195,21 @@ export default function AgendaTab() {
   // ============================================
 
   const openNewBookingModal = (dateStr?: string, slotId?: string) => {
-    dispatch({
-      type: "OPEN_MODAL",
-      modal: {
-        type: "new_booking",
-        date: dateStr || "",
-        slotId: slotId || "",
-        showCustomTime: false,
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        notes: "",
-        eventTypeId: eventTypes[0]?.id || "",
-        customStart: "",
-        customEnd: "",
-        saving: false,
-        error: "",
-      },
+    store.openModal({
+      type: "new_booking",
+      date: dateStr || "",
+      slotId: slotId || "",
+      showCustomTime: false,
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      notes: "",
+      eventTypeId: eventTypes[0]?.id || "",
+      customStart: "",
+      customEnd: "",
+      saving: false,
+      error: "",
     });
   };
 
@@ -223,15 +221,15 @@ export default function AgendaTab() {
     const hasCustomTime = !!date && !!customStart && !!customEnd;
 
     if (!hasSlot && !hasCustomTime) {
-      dispatch({ type: "UPDATE_MODAL", updates: { error: "Kies een tijdslot of vul een aangepaste tijd in" } });
+      store.updateModal({ error: "Kies een tijdslot of vul een aangepaste tijd in" });
       return;
     }
     if (!name.trim() || !email.trim()) {
-      dispatch({ type: "UPDATE_MODAL", updates: { error: "Naam en e-mailadres zijn verplicht" } });
+      store.updateModal({ error: "Naam en e-mailadres zijn verplicht" });
       return;
     }
 
-    dispatch({ type: "UPDATE_MODAL", updates: { saving: true, error: "" } });
+    store.updateModal({ saving: true, error: "" });
     try {
       const body: Record<string, unknown> = {
         event_type_id: eventTypeId || null,
@@ -257,30 +255,29 @@ export default function AgendaTab() {
       });
       const data = await res.json();
       if (data.success) {
-        dispatch({ type: "CLOSE_MODAL" });
+        store.closeModal();
         await fetchData();
       } else {
-        dispatch({ type: "UPDATE_MODAL", updates: { error: data.error || "Kon boeking niet aanmaken", saving: false } });
+        store.updateModal({ error: data.error || "Kon boeking niet aanmaken", saving: false });
       }
     } catch {
-      dispatch({ type: "UPDATE_MODAL", updates: { error: "Netwerkfout — probeer opnieuw", saving: false } });
+      store.updateModal({ error: "Netwerkfout — probeer opnieuw", saving: false });
     }
   };
 
   const selectBooking = (booking: Booking) => {
-    dispatch({ type: "OPEN_MODAL", modal: { type: "booking_detail", booking } });
+    store.openModal({ type: "booking_detail", booking });
   };
 
   const openOverrideModal = (dateStr: string) => {
-    dispatch({
-      type: "OPEN_MODAL",
-      modal: { type: "override", date: dateStr, reason: "", blocked: true, startTime: "", endTime: "" },
+    store.openModal({
+      type: "override", date: dateStr, reason: "", blocked: true, startTime: "", endTime: "",
     });
   };
 
   const submitOverride = async () => {
     if (modal.type !== "override" || !modal.date || actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
+    store.setActionPending(true);
     try {
       await adminFetch({
         action: "insert",
@@ -300,34 +297,34 @@ export default function AgendaTab() {
           await adminFetch({ action: "bulk_update", table: "availability_slots", ids, data: { is_available: false } });
         }
       }
-      dispatch({ type: "CLOSE_MODAL" });
+      store.closeModal();
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon override niet toevoegen" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon override niet toevoegen");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
 
   const deleteOverride = async (id: string) => {
     if (actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
-    dispatch({ type: "REMOVE_OVERRIDE", id });
+    store.setActionPending(true);
+    store.removeOverride(id);
     try {
       await adminFetch({ action: "delete", table: "availability_overrides", id });
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon override niet verwijderen" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon override niet verwijderen");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
 
   const saveEventType = async (et: Partial<EventType> & { id?: string }) => {
     if (actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
+    store.setActionPending(true);
     try {
       if (et.id) {
         const { id, ...data } = et;
@@ -335,62 +332,62 @@ export default function AgendaTab() {
       } else {
         await adminFetch({ action: "insert", table: "event_types", data: et });
       }
-      dispatch({ type: "CLOSE_MODAL" });
+      store.closeModal();
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon event type niet opslaan" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon event type niet opslaan");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
 
   const deleteEventType = async (id: string) => {
     if (actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
-    dispatch({ type: "REMOVE_EVENT_TYPE", id });
+    store.setActionPending(true);
+    store.removeEventType(id);
     try {
       await adminFetch({ action: "delete", table: "event_types", id });
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon event type niet verwijderen" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon event type niet verwijderen");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
 
-  const updateSchedule = async (id: string, data: Partial<Schedule>) => {
+  const handleUpdateSchedule = async (id: string, data: Partial<Schedule>) => {
     if (actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
-    dispatch({ type: "UPDATE_SCHEDULE", id, data });
+    store.setActionPending(true);
+    store.updateSchedule(id, data);
     try {
       await adminFetch({ action: "update", table: "availability_schedules", id, data });
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon schema niet bijwerken" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon schema niet bijwerken");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
 
   const openEditNotes = (bookingId: string, notes: string) => {
-    dispatch({ type: "OPEN_MODAL", modal: { type: "internal_notes", bookingId, notes } });
+    store.openModal({ type: "internal_notes", bookingId, notes });
   };
 
   const saveInternalNotes = async () => {
     if (modal.type !== "internal_notes" || actionPending) return;
-    dispatch({ type: "SET_ACTION_PENDING", pending: true });
+    store.setActionPending(true);
     try {
       await adminFetch({ action: "update", table: "bookings", id: modal.bookingId, data: { internal_notes: modal.notes } });
-      dispatch({ type: "UPDATE_BOOKING", id: modal.bookingId, data: { internal_notes: modal.notes } });
-      dispatch({ type: "CLOSE_MODAL" });
+      store.updateBooking(modal.bookingId, { internal_notes: modal.notes });
+      store.closeModal();
     } catch {
-      dispatch({ type: "SET_ACTION_ERROR", error: "Kon notities niet opslaan" });
-      setTimeout(() => dispatch({ type: "SET_ACTION_ERROR", error: null }), 5000);
+      store.setActionError("Kon notities niet opslaan");
+      setTimeout(() => store.setActionError(null), 5000);
     } finally {
-      dispatch({ type: "SET_ACTION_PENDING", pending: false });
+      store.setActionPending(false);
     }
     fetchData();
   };
@@ -422,7 +419,6 @@ export default function AgendaTab() {
         syncing={syncing}
         savingMsg={savingMsg}
         actionError={actionError}
-        dispatch={dispatch}
         onSync={handleSync}
       />
 
@@ -437,7 +433,6 @@ export default function AgendaTab() {
           eventTypes={eventTypes}
           overrides={overrides}
           actionPending={actionPending}
-          dispatch={dispatch}
           onToggleSlot={toggleSlotAvailability}
           onToggleDay={toggleDayAvailability}
           onOpenBookingModal={openNewBookingModal}
@@ -452,7 +447,7 @@ export default function AgendaTab() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex gap-2 flex-wrap">
               {["all", "confirmed", "completed", "cancelled", "no_show"].map((f) => (
-                <button key={f} onClick={() => dispatch({ type: "SET_BOOKING_FILTER", filter: f })} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${bookingFilter === f ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}>
+                <button key={f} onClick={() => store.setBookingFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${bookingFilter === f ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}>
                   {f === "all" ? `Alles (${bookings.length})` : `${statusLabel(f)} (${bookings.filter((b) => b.status === f).length})`}
                 </button>
               ))}
@@ -539,13 +534,10 @@ export default function AgendaTab() {
             <p className="text-sm text-neutral-500">Beheer de verschillende typen afspraken die klanten kunnen boeken.</p>
             <button
               onClick={() => {
-                dispatch({
-                  type: "OPEN_MODAL",
-                  modal: {
-                    type: "event_type",
-                    eventType: { id: "", name: "", slug: "", description: "", duration_minutes: 60, buffer_before_minutes: 0, buffer_after_minutes: 15, color: "#F27501", is_active: true, max_bookings_per_day: null, requires_approval: false, sort_order: eventTypes.length } as EventType,
-                    isNew: true,
-                  },
+                store.openModal({
+                  type: "event_type",
+                  eventType: { id: "", name: "", slug: "", description: "", duration_minutes: 60, buffer_before_minutes: 0, buffer_after_minutes: 15, color: "#F27501", is_active: true, max_bookings_per_day: null, requires_approval: false, sort_order: eventTypes.length } as EventType,
+                  isNew: true,
                 });
               }}
               className="flex items-center gap-2 px-4 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors text-sm font-medium"
@@ -572,7 +564,7 @@ export default function AgendaTab() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => dispatch({ type: "OPEN_MODAL", modal: { type: "event_type", eventType: et, isNew: false } })}
+                    onClick={() => store.openModal({ type: "event_type", eventType: et, isNew: false })}
                     className="px-3 py-1.5 text-sm bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200"
                   >
                     Bewerken
@@ -613,10 +605,10 @@ export default function AgendaTab() {
                       onClick={() => {
                         if (actionPending) return;
                         if (schedule) {
-                          updateSchedule(schedule.id, { is_active: !schedule.is_active });
+                          handleUpdateSchedule(schedule.id, { is_active: !schedule.is_active });
                         } else {
-                          dispatch({ type: "SET_ACTION_PENDING", pending: true });
-                          adminFetch({ action: "insert", table: "availability_schedules", data: { day_of_week: day, start_time: "09:00", end_time: "17:00", is_active: true } }).then(() => fetchData()).finally(() => dispatch({ type: "SET_ACTION_PENDING", pending: false }));
+                          store.setActionPending(true);
+                          adminFetch({ action: "insert", table: "availability_schedules", data: { day_of_week: day, start_time: "09:00", end_time: "17:00", is_active: true } }).then(() => fetchData()).finally(() => store.setActionPending(false));
                         }
                       }}
                       disabled={actionPending}
@@ -627,9 +619,9 @@ export default function AgendaTab() {
                     <span className="w-24 font-medium text-neutral-900">{label}</span>
                     {schedule?.is_active ? (
                       <div className="flex items-center gap-2">
-                        <input type="time" value={schedule.start_time?.slice(0, 5) || "09:00"} onChange={(e) => updateSchedule(schedule.id, { start_time: e.target.value })} className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm" />
+                        <input type="time" value={schedule.start_time?.slice(0, 5) || "09:00"} onChange={(e) => handleUpdateSchedule(schedule.id, { start_time: e.target.value })} className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm" />
                         <span className="text-neutral-400">tot</span>
-                        <input type="time" value={schedule.end_time?.slice(0, 5) || "17:00"} onChange={(e) => updateSchedule(schedule.id, { end_time: e.target.value })} className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm" />
+                        <input type="time" value={schedule.end_time?.slice(0, 5) || "17:00"} onChange={(e) => handleUpdateSchedule(schedule.id, { end_time: e.target.value })} className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm" />
                       </div>
                     ) : (
                       <span className="text-sm text-neutral-400">Gesloten</span>
@@ -812,11 +804,11 @@ export default function AgendaTab() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Afzender e-mailadres</label>
-                <input type="email" value={getSetting(settings, "sender_email", "info@toptalentjobs.nl")} onBlur={(e) => updateSetting("sender_email", e.target.value)} onChange={(e) => dispatch({ type: "UPDATE_SETTING", key: "sender_email", value: e.target.value })} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
+                <input type="email" value={getSetting(settings, "sender_email", "info@toptalentjobs.nl")} onBlur={(e) => handleUpdateSetting("sender_email", e.target.value)} onChange={(e) => store.updateSetting("sender_email", e.target.value)} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Afzender naam</label>
-                <input type="text" value={getSetting(settings, "sender_name", "TopTalent Jobs")} onBlur={(e) => updateSetting("sender_name", e.target.value)} onChange={(e) => dispatch({ type: "UPDATE_SETTING", key: "sender_name", value: e.target.value })} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
+                <input type="text" value={getSetting(settings, "sender_name", "TopTalent Jobs")} onBlur={(e) => handleUpdateSetting("sender_name", e.target.value)} onChange={(e) => store.updateSetting("sender_name", e.target.value)} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none" />
               </div>
               <div className="flex items-center justify-between">
                 <div>
@@ -824,7 +816,7 @@ export default function AgendaTab() {
                   <p className="text-sm text-neutral-500">Automatisch reactie versturen bij nieuwe aanvraag</p>
                 </div>
                 <button
-                  onClick={() => updateSetting("auto_reply_enabled", getSetting(settings, "auto_reply_enabled") === "true" ? "false" : "true")}
+                  onClick={() => handleUpdateSetting("auto_reply_enabled", getSetting(settings, "auto_reply_enabled") === "true" ? "false" : "true")}
                   className={`w-12 h-7 rounded-full relative transition-colors ${getSetting(settings, "auto_reply_enabled") === "true" ? "bg-[#F27501]" : "bg-neutral-300"}`}
                 >
                   <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${getSetting(settings, "auto_reply_enabled") === "true" ? "left-[22px]" : "left-0.5"}`} />
@@ -838,7 +830,7 @@ export default function AgendaTab() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Vooruit boeken (dagen)</label>
-                <select value={getSetting(settings, "booking_horizon_days", "30")} onChange={(e) => updateSetting("booking_horizon_days", e.target.value)} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none">
+                <select value={getSetting(settings, "booking_horizon_days", "30")} onChange={(e) => handleUpdateSetting("booking_horizon_days", e.target.value)} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none">
                   <option value="7">7 dagen</option>
                   <option value="14">14 dagen</option>
                   <option value="21">21 dagen</option>
@@ -849,7 +841,7 @@ export default function AgendaTab() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Booking pagina introductie tekst</label>
-                <textarea value={getSetting(settings, "booking_page_intro_text")} onBlur={(e) => updateSetting("booking_page_intro_text", e.target.value)} onChange={(e) => dispatch({ type: "UPDATE_SETTING", key: "booking_page_intro_text", value: e.target.value })} rows={3} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none resize-none" />
+                <textarea value={getSetting(settings, "booking_page_intro_text")} onBlur={(e) => handleUpdateSetting("booking_page_intro_text", e.target.value)} onChange={(e) => store.updateSetting("booking_page_intro_text", e.target.value)} rows={3} className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none resize-none" />
               </div>
             </div>
           </div>
@@ -879,7 +871,6 @@ export default function AgendaTab() {
           slots={slots}
           eventTypes={eventTypes}
           actionPending={actionPending}
-          dispatch={dispatch}
           onStatusChange={updateBookingStatus}
           onEditNotes={openEditNotes}
         />
@@ -903,7 +894,6 @@ export default function AgendaTab() {
           error={modal.error}
           slots={slots}
           eventTypes={eventTypes}
-          dispatch={dispatch}
           onSubmit={submitNewBooking}
         />
       )}
@@ -914,7 +904,6 @@ export default function AgendaTab() {
           eventType={modal.eventType}
           isNew={modal.isNew}
           actionPending={actionPending}
-          dispatch={dispatch}
           onSave={saveEventType}
           onDelete={deleteEventType}
         />
@@ -929,7 +918,6 @@ export default function AgendaTab() {
           startTime={modal.startTime}
           endTime={modal.endTime}
           actionPending={actionPending}
-          dispatch={dispatch}
           onSubmit={submitOverride}
         />
       )}
@@ -940,7 +928,6 @@ export default function AgendaTab() {
           bookingId={modal.bookingId}
           notes={modal.notes}
           actionPending={actionPending}
-          dispatch={dispatch}
           onSave={saveInternalNotes}
         />
       )}

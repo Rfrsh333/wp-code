@@ -1,7 +1,7 @@
 "use client";
 
-import type { Dispatch } from "react";
-import type { CalendarAction, CalendarView, TabView } from "./calendarReducer";
+import type { CalendarView, TabView } from "./calendarReducer";
+import { useAgendaStore } from "@/stores/useAgendaStore";
 
 interface CalendarHeaderProps {
   view: TabView;
@@ -12,7 +12,6 @@ interface CalendarHeaderProps {
   syncing: boolean;
   savingMsg: string;
   actionError: string | null;
-  dispatch: Dispatch<CalendarAction>;
   onSync: () => void;
 }
 
@@ -28,14 +27,16 @@ const tabLabels: Record<TabView, string> = {
 export default function CalendarHeader({
   view, calendarView, monthName, monthOffset,
   refreshing, syncing, savingMsg, actionError,
-  dispatch, onSync,
+  onSync,
 }: CalendarHeaderProps) {
+  const store = useAgendaStore();
+
   return (
     <>
       {actionError && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
           <span>{actionError}</span>
-          <button onClick={() => dispatch({ type: "SET_ACTION_ERROR", error: null })} className="ml-3 text-red-400 hover:text-red-600">
+          <button onClick={() => store.setActionError(null)} className="ml-3 text-red-400 hover:text-red-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -64,7 +65,7 @@ export default function CalendarHeader({
             {(Object.keys(tabLabels) as TabView[]).map((v) => (
               <button
                 key={v}
-                onClick={() => dispatch({ type: "SET_VIEW", view: v })}
+                onClick={() => store.setView(v)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === v ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
                 }`}
@@ -82,7 +83,7 @@ export default function CalendarHeader({
             {(["maand", "week", "dag"] as CalendarView[]).map((cv) => (
               <button
                 key={cv}
-                onClick={() => dispatch({ type: "SET_CALENDAR_VIEW", calendarView: cv })}
+                onClick={() => store.setCalendarView(cv)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   calendarView === cv ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                 }`}
@@ -93,7 +94,7 @@ export default function CalendarHeader({
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => dispatch({ type: "NAVIGATE_MONTH", direction: -1 })}
+              onClick={() => store.navigateMonth(-1)}
               className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,11 +104,11 @@ export default function CalendarHeader({
             <div className="text-center min-w-[180px]">
               <p className="font-semibold text-neutral-900 capitalize">{monthName}</p>
               {monthOffset !== 0 && (
-                <button onClick={() => dispatch({ type: "GO_TODAY" })} className="text-sm text-[#F27501] hover:underline">Vandaag</button>
+                <button onClick={() => store.goToday()} className="text-sm text-[#F27501] hover:underline">Vandaag</button>
               )}
             </div>
             <button
-              onClick={() => dispatch({ type: "NAVIGATE_MONTH", direction: 1 })}
+              onClick={() => store.navigateMonth(1)}
               className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,9 +1,9 @@
 "use client";
 
-import type { Dispatch } from "react";
-import type { Booking, CalendarAction, EventType, Override, Slot } from "./calendarReducer";
+import type { Booking, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen } from "./calendarReducer";
 import { getSlotsForDate, getBookingForSlot, getEventTypeName, getEventTypeColor, slotKleur } from "./agendaUtils";
+import { useAgendaStore } from "@/stores/useAgendaStore";
 
 interface DayDetailProps {
   selectedDate: string;
@@ -12,7 +12,6 @@ interface DayDetailProps {
   eventTypes: EventType[];
   overrides: Override[];
   actionPending: boolean;
-  dispatch: Dispatch<CalendarAction>;
   onToggleSlot: (slotId: string, isAvailable: boolean) => void;
   onToggleDay: (dateStr: string, block: boolean) => void;
   onOpenBookingModal: (dateStr: string, slotId?: string) => void;
@@ -22,9 +21,10 @@ interface DayDetailProps {
 
 export default function DayDetail({
   selectedDate, slots, bookings, eventTypes,
-  actionPending, dispatch,
+  actionPending,
   onToggleSlot, onToggleDay, onOpenBookingModal, onOpenOverrideModal, onSelectBooking,
 }: DayDetailProps) {
+  const store = useAgendaStore();
   const daySlots = getSlotsForDate(slots, selectedDate);
   const toggleable = daySlots.filter((s) => !s.is_booked && s.google_calendar_event_id !== "google_blocked");
   const allBlocked = toggleable.length > 0 && toggleable.every((s) => !s.is_available);
@@ -51,7 +51,7 @@ export default function DayDetail({
           <button onClick={() => onOpenOverrideModal(selectedDate)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200">
             Override
           </button>
-          <button onClick={() => dispatch({ type: "SELECT_DATE", date: null })} className="p-1.5 hover:bg-neutral-100 rounded-lg">
+          <button onClick={() => store.selectDate(null)} className="p-1.5 hover:bg-neutral-100 rounded-lg">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
