@@ -7,7 +7,8 @@ const MEDEWERKER_LOGIN = "/medewerker/login";
 const CSRF_EXEMPT = ["/api/webhooks/"];
 
 export function proxy(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
+  const pathname = request.nextUrl.pathname.replace(/\/+$/, "") || "/";
 
   // --- CSRF: Origin validation for mutation API requests ---
   if (
@@ -64,21 +65,19 @@ export function proxy(request: NextRequest) {
   }
 
   // --- API trailing slash rewrite ---
-  if (pathname.startsWith("/api/") && pathname.length > 5 && pathname.endsWith("/")) {
+  const rawPathname = request.nextUrl.pathname;
+  if (rawPathname.startsWith("/api/") && rawPathname.length > 5 && rawPathname.endsWith("/")) {
     const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = pathname.slice(0, -1);
+    rewriteUrl.pathname = rawPathname.slice(0, -1);
     return NextResponse.rewrite(rewriteUrl);
   }
 
   // --- Legacy redirects ---
-  const normalizedPath = pathname !== "/" && pathname.endsWith("/")
-    ? pathname.slice(0, -1)
-    : pathname;
   const isGonePath =
-    normalizedPath === "/horeca-evenementen" ||
-    normalizedPath === "/employer-public";
+    pathname === "/horeca-evenementen" ||
+    pathname === "/employer-public";
   const isWpJsonPath =
-    normalizedPath === "/wp-json" || normalizedPath.startsWith("/wp-json/");
+    pathname === "/wp-json" || pathname.startsWith("/wp-json/");
   const hasLegacyWpQuery = searchParams.has("p") || searchParams.has("cat");
 
   if (isGonePath || isWpJsonPath || hasLegacyWpQuery) {
@@ -95,13 +94,13 @@ export function proxy(request: NextRequest) {
 
   // --- SEO: noindex for non-indexable paths ---
   const isIndexablePath =
-    normalizedPath === "/" ||
-    normalizedPath === "/diensten" ||
-    normalizedPath === "/diensten/uitzenden" ||
-    normalizedPath === "/diensten/detachering" ||
-    normalizedPath === "/diensten/recruitment" ||
-    normalizedPath === "/locaties" ||
-    normalizedPath.startsWith("/locaties/");
+    pathname === "/" ||
+    pathname === "/diensten" ||
+    pathname === "/diensten/uitzenden" ||
+    pathname === "/diensten/detachering" ||
+    pathname === "/diensten/recruitment" ||
+    pathname === "/locaties" ||
+    pathname.startsWith("/locaties/");
 
   if (!isIndexablePath) {
     const response = NextResponse.next();
