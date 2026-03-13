@@ -150,6 +150,25 @@ export async function runClusteringPass(limit = 50) {
     })
     .filter((row) => row.article_analysis?.is_relevant) as ClusterSourceRow[];
 
+  if (relevantRows.length === 0) {
+    const totalArticles = articles?.length ?? 0;
+    const totalAnalyses = analysisRows?.length ?? 0;
+    const matched = Array.from(analysisByArticleId.values());
+    const relevantCount = matched.filter((a) => a.is_relevant).length;
+    return {
+      analyzedArticles: 0,
+      createdOrUpdatedClusters: 0,
+      linkedArticles: 0,
+      debug: {
+        totalArticles,
+        totalAnalyses,
+        matchedAnalyses: matched.length,
+        relevantCount,
+        sampleAnalysis: matched[0] ?? null,
+      },
+    };
+  }
+
   const grouped = new Map<string, ClusterSourceRow[]>();
 
   for (const row of relevantRows) {
