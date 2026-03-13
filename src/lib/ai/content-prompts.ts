@@ -17,16 +17,16 @@ Business scope:
 - zzp'ers
 - hotel and hospitality operators
 
-Return strict JSON with:
+Return strict JSON with EXACTLY these fields and allowed values:
 - isRelevant: boolean
 - isNoise: boolean
-- primaryAudience
-- secondaryAudience: string[]
-- category
+- primaryAudience: one of "ondernemers"|"werkgevers"|"uitzendbureaus"|"medewerkers"|"zzpers"|"hotel_operators" or null
+- secondaryAudience: array of "ondernemers"|"werkgevers"|"uitzendbureaus"|"medewerkers"|"zzpers"|"hotel_operators"
+- category: one of "horeca_nieuws"|"hospitality_trends"|"arbeidsmarkt"|"recruitment"|"wetgeving"|"vergunningen"|"compliance"|"operations"|"hr"|"hotel_nieuws" or null
 - subtopics: string[]
-- contentType
-- impactLevel
-- urgencyLevel
+- contentType: one of "breaking_news"|"analysis"|"explainer"|"roundup"|"opinion"|"guide"
+- impactLevel: one of "low"|"medium"|"high"
+- urgencyLevel: one of "low"|"medium"|"high"|"critical"
 - confidenceScore: number 0-100
 - businessRelevanceScore: number 0-100
 - workerRelevanceScore: number 0-100
@@ -37,6 +37,8 @@ Return strict JSON with:
 - recommendedActions: string[]
 - factCheckFlags: string[]
 - summary: string
+
+IMPORTANT: Use ONLY the exact enum values listed above. Do not invent new values.
 
 Rules:
 - prioritize real operational, staffing, labour, compliance, hospitality and regulation value
