@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import StatsBadge from "@/components/ui/StatsBadge";
 import VaardighedenSection from "./VaardighedenSection";
 import WerkervaringSection from "./WerkervaringSection";
+import CertificeringenSection from "./CertificeringenSection";
 import ProfielEditModal from "./ProfielEditModal";
 
 interface Medewerker {
@@ -307,6 +308,11 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
       {/* Werkervaring */}
       <div className="mb-4">
         <WerkervaringSection werkervaring={werkervaring} onRefresh={fetchWerkervaring} />
+      </div>
+
+      {/* Certificeringen */}
+      <div className="mb-4">
+        <CertificeringenSection />
       </div>
 
       {/* Facturatie & Betaling */}

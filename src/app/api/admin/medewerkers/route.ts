@@ -160,6 +160,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  if (action === "review_document") {
+    const { document_id, review_status, review_opmerking } = data || {};
+
+    if (!document_id || !["goedgekeurd", "afgekeurd"].includes(review_status)) {
+      return NextResponse.json({ error: "Document ID en geldige review_status zijn verplicht" }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("medewerker_documenten")
+      .update({
+        review_status,
+        review_opmerking: review_opmerking || null,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", document_id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    await logAuditEvent({
+      actorEmail: email,
+      actorRole: role,
+      action: "admin_document_review",
+      targetTable: "medewerker_documenten",
+      targetId: document_id,
+      summary: `Document ${review_status}`,
+      metadata: { review_status, review_opmerking },
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
   if (action === "delete") {
     const { error } = await supabaseAdmin.from("medewerkers").delete().eq("id", id);
     if (error) {

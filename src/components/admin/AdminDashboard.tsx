@@ -35,8 +35,9 @@ const TicketsTab = dynamic(() => import("./TicketsTab"), { loading: () => <TabSk
 const PricingTab = dynamic(() => import("./PricingTab"), { loading: () => <TabSkeleton />, ssr: false });
 const ContentTab = dynamic(() => import("./ContentTab"), { loading: () => <TabSkeleton />, ssr: false });
 const AgendaTab = dynamic(() => import("./AgendaTab"), { loading: () => <TabSkeleton />, ssr: false });
+const BerichtenTab = dynamic(() => import("./BerichtenTab"), { loading: () => <TabSkeleton />, ssr: false });
 
-type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen" | "matching" | "ai" | "acquisitie" | "klanten" | "referrals" | "offertes" | "faq" | "tickets" | "pricing" | "content" | "agenda";
+type Tab = "overzicht" | "stats" | "aanvragen" | "inschrijvingen" | "contact" | "calculator" | "medewerkers" | "diensten" | "uren" | "facturen" | "matching" | "ai" | "acquisitie" | "klanten" | "referrals" | "offertes" | "faq" | "tickets" | "pricing" | "content" | "agenda" | "berichten";
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -1157,6 +1158,15 @@ export default function AdminDashboard() {
         </svg>
       ),
     },
+    {
+      id: "berichten",
+      label: "Berichten",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -2093,6 +2103,9 @@ export default function AdminDashboard() {
 
             {/* Agenda Tab */}
             {activeTab === "agenda" && <AgendaTab />}
+
+            {/* Berichten Tab */}
+            {activeTab === "berichten" && <BerichtenTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

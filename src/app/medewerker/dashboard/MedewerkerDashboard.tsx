@@ -11,6 +11,8 @@ import ProfielPage from "@/components/medewerker/ProfielPage";
 import FinancieelOverzicht from "@/components/medewerker/FinancieelOverzicht";
 import DocumentenPage from "@/components/medewerker/DocumentenPage";
 import ReferralPage from "@/components/medewerker/ReferralPage";
+import BerichtenTab from "@/components/medewerker/BerichtenTab";
+import AanbiedingenSection from "@/components/medewerker/AanbiedingenSection";
 import { useToast } from "@/components/ui/Toast";
 
 interface Medewerker {
@@ -63,7 +65,7 @@ interface KlantAanpassing {
   locatie: string;
 }
 
-type TabId = "diensten" | "uren" | "beschikbaarheid" | "profiel" | "financieel" | "documenten" | "referral";
+type TabId = "diensten" | "uren" | "beschikbaarheid" | "berichten" | "profiel" | "financieel" | "documenten" | "referral";
 
 export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewerker }) {
   const router = useRouter();
@@ -76,6 +78,7 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   const [isLoading, setIsLoading] = useState(true);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(medewerker.profile_photo_url || null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [ongelezen, setOngelezen] = useState(0);
 
   // Uren modal state
   const [urenModal, setUrenModal] = useState<Dienst | null>(null);
@@ -88,6 +91,18 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       const dienstenData = await dienstenRes.json();
       setDiensten(dienstenData.diensten || []);
       setAanpassingen(dienstenData.aanpassingen || []);
+
+      // Fetch ongelezen berichten count
+      try {
+        const berichtenRes = await fetch("/api/medewerker/berichten");
+        const berichtenData = await berichtenRes.json();
+        const inbox = (berichtenData.berichten || []).filter(
+          (b: { aan_type: string; gelezen: boolean }) => b.aan_type === "medewerker" && !b.gelezen
+        );
+        setOngelezen(inbox.length);
+      } catch {
+        // non-critical
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Kon data niet laden");
@@ -241,6 +256,13 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
     },
     {
+      id: "berichten",
+      label: "Contact",
+      badge: ongelezen,
+      group: "COMMUNICATIE",
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+    },
+    {
       id: "profiel",
       label: "Mijn Profiel",
       group: "ACCOUNT",
@@ -282,12 +304,15 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       ) : (
         <>
           {activeTab === "diensten" && (
-            <DienstenTab
-              diensten={diensten}
-              onAanmelden={aanmelden}
-              onAfmelden={afmelden}
-              onUrenInvullen={openUrenModal}
-            />
+            <>
+              <AanbiedingenSection />
+              <DienstenTab
+                diensten={diensten}
+                onAanmelden={aanmelden}
+                onAfmelden={afmelden}
+                onUrenInvullen={openUrenModal}
+              />
+            </>
           )}
 
           {activeTab === "uren" && (
@@ -329,6 +354,8 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
           {activeTab === "financieel" && <FinancieelOverzicht />}
 
           {activeTab === "documenten" && <DocumentenPage />}
+
+          {activeTab === "berichten" && <BerichtenTab />}
 
           {activeTab === "referral" && <ReferralPage />}
         </>

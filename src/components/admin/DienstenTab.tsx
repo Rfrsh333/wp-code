@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import ShiftAanbiedingenPanel from "./ShiftAanbiedingenPanel";
 
 interface Dienst {
   id: string;
@@ -104,6 +105,7 @@ export default function DienstenTab() {
   // Spoeddienst state
   const [showSpoedModal, setShowSpoedModal] = useState(false);
   const [spoedDienst, setSpoedDienst] = useState<Dienst | null>(null);
+  const [aanbiedenDienst, setAanbiedenDienst] = useState<Dienst | null>(null);
   const [spoedResponses, setSpoedResponses] = useState<SpoedResponse[]>([]);
   const [spoedCopied, setSpoedCopied] = useState(false);
 
@@ -470,6 +472,14 @@ export default function DienstenTab() {
                 >
                   Aanmeldingen bekijken
                 </button>
+                {dienst.status === "open" && (
+                  <button
+                    onClick={() => setAanbiedenDienst(dienst)}
+                    className="w-full px-4 py-2 bg-[#F27501] text-white font-medium rounded-xl hover:bg-[#d96800] transition-colors text-sm"
+                  >
+                    Bied aan aan medewerkers
+                  </button>
+                )}
                 {dienst.is_spoeddienst && dienst.spoeddienst_token && (
                   <button
                     onClick={() => openSpoedModal(dienst)}
@@ -976,6 +986,13 @@ export default function DienstenTab() {
             </div>
           </div>
         </div>
+      )}
+      {/* Shift Aanbiedingen Panel */}
+      {aanbiedenDienst && (
+        <ShiftAanbiedingenPanel
+          dienst={aanbiedenDienst}
+          onClose={() => setAanbiedenDienst(null)}
+        />
       )}
     </div>
   );

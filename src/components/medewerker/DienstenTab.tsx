@@ -77,13 +77,13 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                 {dienst.status === "open" && (
                   <button
                     onClick={() => onAanmelden(dienst.id)}
-                    className="w-full px-4 py-2 bg-[#F27501] hover:bg-[#d96800] text-white font-semibold rounded-xl transition-colors"
+                    className="w-full px-4 py-3 bg-[#F27501] hover:bg-[#d96800] active:scale-[0.98] text-white font-semibold rounded-xl transition-all min-h-[44px]"
                   >
                     Aanmelden
                   </button>
                 )}
                 {dienst.status === "vol" && (
-                  <span className="block w-full text-center px-4 py-2 bg-neutral-100 text-neutral-500 font-medium rounded-xl">
+                  <span className="block w-full text-center px-4 py-3 bg-neutral-100 text-neutral-500 font-medium rounded-xl min-h-[44px]">
                     Vol
                   </span>
                 )}
@@ -121,7 +121,7 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                       {dienst.aanmelding_status === "aangemeld" && (
                         <button
                           onClick={() => onAfmelden(dienst.id)}
-                          className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="px-4 py-3 text-sm text-red-600 hover:bg-red-50 active:bg-red-100 rounded-xl transition-colors min-h-[44px]"
                         >
                           Afmelden
                         </button>
@@ -129,7 +129,7 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                       {dienst.aanmelding_status === "geaccepteerd" && !dienst.uren_status && new Date(dienst.datum) <= new Date() && (
                         <button
                           onClick={() => onUrenInvullen(dienst)}
-                          className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors"
+                          className="px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 active:scale-[0.98] transition-all min-h-[44px]"
                         >
                           Uren invullen
                         </button>

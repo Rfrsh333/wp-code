@@ -10,6 +10,9 @@ interface Document {
   file_url: string;
   file_size: number;
   uploaded_at: string;
+  review_status?: string | null;
+  review_opmerking?: string | null;
+  reviewed_at?: string | null;
 }
 
 const DOCUMENT_TYPES = [
@@ -154,10 +157,24 @@ export default function DocumentenPage() {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-neutral-900 truncate">{doc.file_name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-neutral-900 truncate">{doc.file_name}</p>
+                  {doc.review_status === "goedgekeurd" && (
+                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 flex-shrink-0">Goedgekeurd</span>
+                  )}
+                  {doc.review_status === "afgekeurd" && (
+                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700 flex-shrink-0">Afgekeurd</span>
+                  )}
+                  {(!doc.review_status || doc.review_status === "pending") && (
+                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 flex-shrink-0">In review</span>
+                  )}
+                </div>
                 <p className="text-xs text-neutral-500">
                   {getTypeLabel(doc.document_type)} · {formatFileSize(doc.file_size)} · {formatDate(doc.uploaded_at)}
                 </p>
+                {doc.review_status === "afgekeurd" && doc.review_opmerking && (
+                  <p className="text-xs text-red-600 mt-1">Opmerking: {doc.review_opmerking}</p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <a
