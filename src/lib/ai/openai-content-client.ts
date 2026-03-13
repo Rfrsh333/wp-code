@@ -20,7 +20,7 @@ function getOpenAIKey() {
     );
   }
 
-  return apiKey;
+  return apiKey.trim();
 }
 
 function extractContent(response: OpenAIResponse): string {
