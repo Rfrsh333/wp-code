@@ -2,6 +2,25 @@ import type { Slot, Booking, EventType, Setting } from "./calendarReducer";
 import { dagNamen } from "./calendarReducer";
 
 // ============================================
+// Slot hashmap
+// ============================================
+
+export type SlotMap = Record<string, Slot[]>;
+
+export const groupSlotsByDate = (slots: Slot[]): SlotMap => {
+  const map: SlotMap = {};
+  for (const slot of slots) {
+    if (!map[slot.date]) map[slot.date] = [];
+    map[slot.date].push(slot);
+  }
+  // Sort each day's slots by start_time
+  for (const key in map) {
+    map[key].sort((a, b) => a.start_time.localeCompare(b.start_time));
+  }
+  return map;
+};
+
+// ============================================
 // Data lookups
 // ============================================
 
@@ -11,6 +30,11 @@ export const getSetting = (settings: Setting[], key: string, fallback = ""): str
 
 export const getSlotsForDate = (slots: Slot[], dateStr: string): Slot[] => {
   return slots.filter((s) => s.date === dateStr).sort((a, b) => a.start_time.localeCompare(b.start_time));
+};
+
+/** O(1) lookup from pre-built SlotMap */
+export const getSlotsFromMap = (slotMap: SlotMap, dateStr: string): Slot[] => {
+  return slotMap[dateStr] || [];
 };
 
 export const getBookingsForDate = (bookings: Booking[], slots: Slot[], dateStr: string): Booking[] => {

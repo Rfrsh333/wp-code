@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import type { Booking, CalendarView, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen, dagNamenKort } from "./calendarReducer";
-import { getSlotsForDate, getBookingForSlot, getEventTypeColor, slotKleur } from "./agendaUtils";
+import { getSlotsForDate, getSlotsFromMap, groupSlotsByDate, getBookingForSlot, getEventTypeColor, slotKleur } from "./agendaUtils";
 import { Calendar } from "@/components/ui/calendar";
 import { useAgendaStore } from "@/stores/useAgendaStore";
 import DayDetail from "./DayDetail";
@@ -37,6 +37,9 @@ export default function CalendarGrid({
 }: CalendarGridProps) {
   const store = useAgendaStore();
   const todayStr = new Date().toISOString().split("T")[0];
+
+  // Pre-build slot hashmap for O(1) date lookups
+  const slotMap = useMemo(() => groupSlotsByDate(slots), [slots]);
 
   // Compute the month to display based on monthOffset
   const displayMonth = useMemo(() => {
@@ -217,7 +220,7 @@ export default function CalendarGrid({
           <div className="grid grid-cols-7 gap-2">
             {weekDays.map((date) => {
               const dateStr = toDateStr(date);
-              const daySlots = getSlotsForDate(slots, dateStr);
+              const daySlots = getSlotsFromMap(slotMap, dateStr);
               const isToday = dateStr === todayStr;
 
               return (
@@ -260,7 +263,7 @@ export default function CalendarGrid({
           </h3>
           {(() => {
             const dateStr = selectedDate || todayStr;
-            const daySlots = getSlotsForDate(slots, dateStr);
+            const daySlots = getSlotsFromMap(slotMap, dateStr);
 
             if (daySlots.length === 0) return <p className="text-neutral-400 py-4">Geen slots op deze dag</p>;
 
