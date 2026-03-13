@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import type { Booking, CalendarView, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen, dagNamenKort } from "./calendarReducer";
-import { getSlotsFromMap, groupSlotsByDate, getBookingForSlot, getEventTypeColor, slotKleur } from "./agendaUtils";
+import { getSlotsFromMap, groupSlotsByDate, getBookingForSlot, getEventTypeColor, slotKleur, isKandidaatBooking } from "./agendaUtils";
 import { Calendar } from "@/components/ui/calendar";
 import { useAgendaStore } from "@/stores/useAgendaStore";
 import DayDetail from "./DayDetail";
@@ -52,10 +52,10 @@ export default function CalendarGrid({
 
   // Build a set of dates that have bookings/slots for dot indicators
   const dayData = useMemo(() => {
-    const map = new Map<string, { bookedCount: number; availableCount: number; isBlocked: boolean; bookingColors: string[] }>();
+    const map = new Map<string, { bookedCount: number; availableCount: number; isBlocked: boolean; bookingColors: string[]; hasKandidaat: boolean }>();
     for (const slot of slots) {
       const dateStr = slot.date;
-      if (!map.has(dateStr)) map.set(dateStr, { bookedCount: 0, availableCount: 0, isBlocked: false, bookingColors: [] });
+      if (!map.has(dateStr)) map.set(dateStr, { bookedCount: 0, availableCount: 0, isBlocked: false, bookingColors: [], hasKandidaat: false });
       const entry = map.get(dateStr)!;
       if (slot.is_available && !slot.is_booked) entry.availableCount++;
     }
@@ -66,12 +66,17 @@ export default function CalendarGrid({
       const entry = map.get(slot.date);
       if (entry) {
         entry.bookedCount++;
-        entry.bookingColors.push(getEventTypeColor(eventTypes, booking.event_type_id));
+        if (isKandidaatBooking(booking)) {
+          entry.hasKandidaat = true;
+          entry.bookingColors.push("#8B5CF6");
+        } else {
+          entry.bookingColors.push(getEventTypeColor(eventTypes, booking.event_type_id));
+        }
       }
     }
     for (const o of overrides) {
       if (o.is_blocked && !o.start_time) {
-        if (!map.has(o.date)) map.set(o.date, { bookedCount: 0, availableCount: 0, isBlocked: false, bookingColors: [] });
+        if (!map.has(o.date)) map.set(o.date, { bookedCount: 0, availableCount: 0, isBlocked: false, bookingColors: [], hasKandidaat: false });
         map.get(o.date)!.isBlocked = true;
       }
     }
@@ -92,6 +97,9 @@ export default function CalendarGrid({
         </Badge>
         <Badge variant="outline" className="gap-1.5 font-normal">
           <span className="w-2.5 h-2.5 bg-purple-400 rounded-full" /> Google Cal
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 font-normal">
+          <span className="w-2.5 h-2.5 bg-[#8B5CF6] rounded-full" /> Kandidaat
         </Badge>
         <Badge variant="outline" className="gap-1.5 font-normal">
           <span className="w-2.5 h-2.5 bg-neutral-300 rounded-full" /> Geblokkeerd

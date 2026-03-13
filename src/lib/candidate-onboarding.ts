@@ -160,6 +160,18 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
       </a>
     </center>
 
+    <div class="card" style="border-color: #8B5CF6; background: #F5F3FF;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #333;">Plan direct je kennismakingsgesprek</p>
+      <p style="margin: 0 0 16px 0; font-size: 14px; color: #666;">
+        Een kort videogesprek van 15 minuten om kennis te maken. Zo kunnen we je sneller aan de slag helpen!
+      </p>
+      <center>
+        <a href="${getBaseUrl()}/kennismaking-plannen?ref=${kandidaat.id}&naam=${encodeURIComponent(kandidaat.voornaam + " " + kandidaat.achternaam)}&email=${encodeURIComponent(kandidaat.email)}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: white !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+          Plan je kennismakingsgesprek &rarr;
+        </a>
+      </center>
+    </div>
+
     <p style="margin-top: 30px; color: #666; font-size: 14px;">
       ${copy.outro}
     </p>

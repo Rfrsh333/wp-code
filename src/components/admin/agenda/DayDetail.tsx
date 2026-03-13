@@ -3,7 +3,7 @@
 import { X, Plus } from "lucide-react";
 import type { Booking, EventType, Override, Slot } from "./calendarReducer";
 import { dagNamen } from "./calendarReducer";
-import { getSlotsForDate, getBookingForSlot, getEventTypeName, getEventTypeColor, slotKleur } from "./agendaUtils";
+import { getSlotsForDate, getBookingForSlot, getEventTypeName, getEventTypeColor, slotKleur, isKandidaatBooking } from "./agendaUtils";
 import { useAgendaStore } from "@/stores/useAgendaStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -72,6 +72,9 @@ export default function DayDetail({
                   {booking && (
                     <>
                       <span className="text-sm">{booking.client_name}</span>
+                      {isKandidaatBooking(booking) && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">Kandidaat</span>
+                      )}
                       {booking.event_type_id && (
                         <span className="text-xs px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: getEventTypeColor(eventTypes, booking.event_type_id) }}>
                           {getEventTypeName(eventTypes, booking.event_type_id)}

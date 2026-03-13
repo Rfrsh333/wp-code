@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useAgendaStore } from "@/stores/useAgendaStore";
 import { useAgendaQueries } from "@/hooks/useAgendaQueries";
 import type { Booking, EventType } from "./calendarReducer";
-import { getSetting, getStats, statusLabel, getEventTypeName, getEventTypeColor } from "./agendaUtils";
+import { getSetting, getStats, statusLabel, getEventTypeName, getEventTypeColor, isKandidaatBooking } from "./agendaUtils";
 import CalendarHeader from "./CalendarHeader";
 import CalendarGrid from "./CalendarGrid";
 import BookingModal from "./BookingModal";
@@ -134,93 +134,136 @@ export default function AgendaTab() {
       )}
 
       {/* ============ BOEKINGEN VIEW ============ */}
-      {view === "boekingen" && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex gap-2 flex-wrap">
-              {["all", "confirmed", "completed", "cancelled", "no_show"].map((f) => (
+      {view === "boekingen" && (() => {
+        const typeFilter = bookingFilter.startsWith("type:") ? bookingFilter.replace("type:", "") : null;
+        const statusFilter = !bookingFilter.startsWith("type:") ? bookingFilter : "all";
+
+        const filteredBookings = bookings
+          .filter((b) => {
+            if (typeFilter === "kandidaat") return isKandidaatBooking(b);
+            if (typeFilter === "klant") return !isKandidaatBooking(b);
+            return true;
+          })
+          .filter((b) => statusFilter === "all" || b.status === statusFilter);
+
+        const kandidaatCount = bookings.filter((b) => isKandidaatBooking(b)).length;
+        const klantCount = bookings.filter((b) => !isKandidaatBooking(b)).length;
+
+        return (
+          <div>
+            {/* Type filter tabs */}
+            <div className="flex gap-2 mb-3 flex-wrap">
+              {[
+                { key: "all", label: `Alle (${bookings.length})` },
+                { key: "type:klant", label: `Klant (${klantCount})` },
+                { key: "type:kandidaat", label: `Kandidaat (${kandidaatCount})` },
+              ].map((tab) => (
                 <Button
-                  key={f}
-                  variant={bookingFilter === f ? "brand" : "ghost"}
+                  key={tab.key}
+                  variant={bookingFilter === tab.key ? (tab.key === "type:kandidaat" ? "default" : "brand") : "ghost"}
                   size="sm"
-                  onClick={() => store.setBookingFilter(f)}
+                  onClick={() => store.setBookingFilter(tab.key)}
+                  className={bookingFilter === tab.key && tab.key === "type:kandidaat" ? "bg-purple-600 text-white hover:bg-purple-700" : ""}
                 >
-                  {f === "all" ? `Alles (${bookings.length})` : `${statusLabel(f)} (${bookings.filter((b) => b.status === f).length})`}
+                  {tab.label}
                 </Button>
               ))}
             </div>
-            <Button variant="brand" onClick={() => openNewBookingModal()}>
-              <Plus className="w-4 h-4" />
-              Nieuwe boeking
-            </Button>
-          </div>
 
-          <Card className="overflow-hidden p-0">
-            <table className="w-full">
-              <thead className="bg-neutral-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Klant</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Datum</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Tijd</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Bron</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Acties</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100">
-                {bookings
-                  .filter((b) => bookingFilter === "all" || b.status === bookingFilter)
-                  .sort((a, b) => b.created_at.localeCompare(a.created_at))
-                  .map((b) => {
-                    const slot = slots.find((s) => s.id === b.slot_id);
-                    return (
-                      <tr key={b.id} className="hover:bg-neutral-50 cursor-pointer" onClick={() => selectBooking(b)}>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-neutral-900">{b.client_name}</p>
-                          <p className="text-sm text-neutral-500">{b.client_email}</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          {b.event_type_id ? (
-                            <span className="text-xs px-2 py-1 rounded-full text-white" style={{ backgroundColor: getEventTypeColor(eventTypes, b.event_type_id) }}>
-                              {getEventTypeName(eventTypes, b.event_type_id)}
-                            </span>
-                          ) : <span className="text-neutral-400">&mdash;</span>}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-neutral-700">
-                          {slot ? new Date(slot.date).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }) : "\u2014"}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium text-neutral-900">
-                          {slot ? `${slot.start_time.slice(0, 5)} - ${slot.end_time.slice(0, 5)}` : "\u2014"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-neutral-500">{b.source || "website"}</td>
-                        <td className="px-4 py-3">
-                          <Badge variant={b.status as "confirmed" | "completed" | "cancelled" | "no_show"}>{statusLabel(b.status)}</Badge>
-                        </td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex gap-1">
-                            {b.status === "confirmed" && (
-                              <>
-                                <Button variant="outline" size="xs" onClick={() => updateBookingStatus(b.id, "completed")} disabled={actionPending} className="text-blue-700 border-blue-200 hover:bg-blue-50">Voltooid</Button>
-                                <Button variant="outline" size="xs" onClick={() => updateBookingStatus(b.id, "no_show")} disabled={actionPending} className="text-yellow-700 border-yellow-200 hover:bg-yellow-50">No-show</Button>
-                                <Button variant="outline" size="xs" onClick={() => updateBookingStatus(b.id, "cancelled")} disabled={actionPending} className="text-red-600 border-red-200 hover:bg-red-50">Annuleer</Button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                {bookings.filter((b) => bookingFilter === "all" || b.status === bookingFilter).length === 0 && (
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex gap-2 flex-wrap">
+                {["all", "confirmed", "completed", "cancelled", "no_show"].map((f) => (
+                  <Button
+                    key={f}
+                    variant={statusFilter === f && !typeFilter ? "brand" : "ghost"}
+                    size="sm"
+                    onClick={() => store.setBookingFilter(typeFilter ? `type:${typeFilter}` : f)}
+                    className={statusFilter === f ? "font-semibold" : ""}
+                  >
+                    {f === "all" ? "Alle statussen" : statusLabel(f)}
+                  </Button>
+                ))}
+              </div>
+              <Button variant="brand" onClick={() => openNewBookingModal()}>
+                <Plus className="w-4 h-4" />
+                Nieuwe boeking
+              </Button>
+            </div>
+
+            <Card className="overflow-hidden p-0">
+              <table className="w-full">
+                <thead className="bg-neutral-50">
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-neutral-500">Geen boekingen gevonden</td>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Klant</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Datum</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Tijd</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Bron</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Acties</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </Card>
-        </div>
-      )}
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  {filteredBookings
+                    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                    .map((b) => {
+                      const slot = slots.find((s) => s.id === b.slot_id);
+                      const isKand = isKandidaatBooking(b);
+                      return (
+                        <tr key={b.id} className={`hover:bg-neutral-50 cursor-pointer ${isKand ? "border-l-4 border-l-purple-500" : ""}`} onClick={() => selectBooking(b)}>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <p className="font-medium text-neutral-900">{b.client_name}</p>
+                                <p className="text-sm text-neutral-500">{b.client_email}</p>
+                              </div>
+                              {isKand && <Badge variant="kandidaat">Kandidaat</Badge>}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {b.event_type_id ? (
+                              <span className="text-xs px-2 py-1 rounded-full text-white" style={{ backgroundColor: getEventTypeColor(eventTypes, b.event_type_id) }}>
+                                {getEventTypeName(eventTypes, b.event_type_id)}
+                              </span>
+                            ) : isKand ? (
+                              <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">Kennismaking</span>
+                            ) : <span className="text-neutral-400">&mdash;</span>}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-neutral-700">
+                            {slot ? new Date(slot.date).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }) : "\u2014"}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium text-neutral-900">
+                            {slot ? `${slot.start_time.slice(0, 5)} - ${slot.end_time.slice(0, 5)}` : "\u2014"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-neutral-500">{b.source || "website"}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant={b.status as "confirmed" | "completed" | "cancelled" | "no_show"}>{statusLabel(b.status)}</Badge>
+                          </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex gap-1">
+                              {b.status === "confirmed" && (
+                                <>
+                                  <Button variant="outline" size="xs" onClick={() => updateBookingStatus(b.id, "completed")} disabled={actionPending} className="text-blue-700 border-blue-200 hover:bg-blue-50">Voltooid</Button>
+                                  <Button variant="outline" size="xs" onClick={() => updateBookingStatus(b.id, "no_show")} disabled={actionPending} className="text-yellow-700 border-yellow-200 hover:bg-yellow-50">No-show</Button>
+                                  <Button variant="outline" size="xs" onClick={() => updateBookingStatus(b.id, "cancelled")} disabled={actionPending} className="text-red-600 border-red-200 hover:bg-red-50">Annuleer</Button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  {filteredBookings.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-8 text-center text-neutral-500">Geen boekingen gevonden</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+        );
+      })()}
 
       {/* ============ EVENT TYPES VIEW ============ */}
       {view === "event_types" && (
@@ -394,6 +437,8 @@ export default function AgendaTab() {
                 { label: "Bevestigd", value: stats.confirmed, color: "text-green-600" },
                 { label: "Voltooid", value: stats.completed, color: "text-blue-600" },
                 { label: "No-show rate", value: `${stats.noShowRate}%`, color: stats.noShowRate > 10 ? "text-red-600" : "text-green-600" },
+                { label: "Kandidaat gesprekken", value: stats.kandidaatTotal, color: "text-purple-600" },
+                { label: "Kandidaat voltooid", value: stats.kandidaatCompleted, color: "text-purple-600" },
               ].map((kpi, i) => (
                 <Card key={i} className="p-5">
                   <p className="text-sm text-neutral-500 mb-1">{kpi.label}</p>

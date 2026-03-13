@@ -22,6 +22,7 @@ const badgeVariants = cva(
         completed: "bg-blue-100 text-blue-700",
         cancelled: "bg-red-100 text-red-600",
         no_show: "bg-yellow-100 text-yellow-700",
+        kandidaat: "bg-purple-100 text-purple-700 border-purple-200",
       },
     },
     defaultVariants: {

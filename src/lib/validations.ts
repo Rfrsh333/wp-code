@@ -44,6 +44,14 @@ export const beschikbaarheidSchema = z.object({
   max_uren_per_week: z.number().min(1).max(60),
 });
 
+export const kandidaatBookingSchema = z.object({
+  naam: z.string().min(2, "Naam moet minimaal 2 tekens zijn").max(100),
+  email: z.string().email("Ongeldig e-mailadres").max(255),
+  telefoon: z.string().max(20).optional().or(z.literal("")),
+  notities: z.string().max(500).optional().or(z.literal("")),
+  recaptchaToken: z.string().optional(),
+});
+
 export function formatZodErrors(error: z.ZodError): string {
   return error.issues.map((e: { message: string }) => e.message).join(", ");
 }

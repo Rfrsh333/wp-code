@@ -4,6 +4,8 @@
 
 const BRAND_COLOR = "#F27501";
 const BRAND_GRADIENT = "linear-gradient(135deg, #F27501 0%, #d96800 100%)";
+const KANDIDAAT_COLOR = "#8B5CF6";
+const KANDIDAAT_GRADIENT = "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)";
 
 function emailWrapper(content: string): string {
   return `
@@ -318,4 +320,154 @@ export function buildNoShowEmailHtml(params: {
     <p style="font-size: 13px; color: #999;">De afspraak is automatisch gemarkeerd als no-show.</p>`;
 
   return emailWrapper(content);
+}
+
+// ============================================
+// Kandidaat email helpers
+// ============================================
+
+function kandidaatEmailWrapper(content: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background: #f5f5f5; font-family: Arial, Helvetica, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <!-- Header -->
+    <div style="background: ${KANDIDAAT_GRADIENT}; padding: 28px 32px; text-align: center; border-radius: 12px 12px 0 0;">
+      <h1 style="color: white; margin: 0; font-size: 24px; font-weight: bold;">TopTalent Jobs</h1>
+      <p style="color: rgba(255,255,255,0.85); margin: 4px 0 0; font-size: 14px;">Kennismakingsgesprek</p>
+    </div>
+    <!-- Body -->
+    <div style="background: #ffffff; padding: 32px; border-left: 1px solid #e5e5e5; border-right: 1px solid #e5e5e5;">
+      ${content}
+    </div>
+    <!-- Footer -->
+    <div style="background: #fafafa; padding: 24px 32px; text-align: center; border: 1px solid #e5e5e5; border-top: none; border-radius: 0 0 12px 12px;">
+      <p style="color: #999; font-size: 12px; margin: 0; line-height: 1.6;">
+        TopTalent Jobs &mdash; Specialist in horeca personeel<br>
+        <a href="https://www.toptalentjobs.nl" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">www.toptalentjobs.nl</a>
+        &nbsp;|&nbsp; +31 6 49 71 37 66
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function kandidaatButton(url: string, text: string): string {
+  return `
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${url}" style="display: inline-block; background: ${KANDIDAAT_COLOR}; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px;">
+        ${text}
+      </a>
+    </div>`;
+}
+
+function kandidaatInfoBlock(items: { label: string; value: string }[]): string {
+  return `
+    <div style="background: #F3F0FF; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      ${items.map((item) => `<p style="margin: 0 0 6px 0; font-size: 14px;"><strong>${item.label}:</strong> ${item.value}</p>`).join("")}
+    </div>`;
+}
+
+// ============================================
+// 9. Kandidaat booking bevestiging
+// ============================================
+
+export function buildKandidaatBookingBevestiging(params: {
+  naam: string;
+  datum: string;
+  tijd: string;
+  meetLink?: string;
+  annuleringsLink?: string;
+}): string {
+  const content = `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.naam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Bedankt voor je inschrijving! Je kennismakingsgesprek is bevestigd.
+    </p>
+    ${kandidaatInfoBlock([
+      { label: "Datum", value: params.datum },
+      { label: "Tijd", value: params.tijd },
+      { label: "Type", value: "Video call (Google Meet)" },
+    ])}
+    ${params.meetLink ? kandidaatButton(params.meetLink, "Deelnemen via Google Meet") : ""}
+    <div style="background: #F9FAFB; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid ${KANDIDAAT_COLOR};">
+      <h3 style="margin: 0 0 12px 0; font-size: 15px; color: #333;">Wat kun je verwachten?</h3>
+      <ul style="margin: 0; padding: 0 0 0 20px; font-size: 14px; line-height: 1.8; color: #555;">
+        <li>Een kort kennismakingsgesprek van 15 minuten</li>
+        <li>We bespreken je ervaring en beschikbaarheid</li>
+        <li>Je kunt vragen stellen over werken via TopTalent</li>
+        <li>Na het gesprek hoor je snel van ons</li>
+      </ul>
+    </div>
+    ${params.annuleringsLink ? `
+    <p style="font-size: 13px; color: #999; text-align: center;">
+      Kun je niet? <a href="${params.annuleringsLink}" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">Annuleer of wijzig je afspraak</a>
+    </p>` : ""}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      We kijken ernaar uit je te spreken!<br>
+      Team TopTalent Jobs
+    </p>`;
+
+  return kandidaatEmailWrapper(content);
+}
+
+// ============================================
+// 10. Kandidaat booking admin notificatie
+// ============================================
+
+export function buildKandidaatBookingNotificatie(params: {
+  kandidaatNaam: string;
+  email: string;
+  telefoon?: string;
+  cvUrl?: string;
+  inschrijvingId?: string;
+  meetLink?: string;
+  datum: string;
+  tijd: string;
+}): string {
+  const items = [
+    { label: "Kandidaat", value: params.kandidaatNaam },
+    { label: "Email", value: params.email },
+    ...(params.telefoon ? [{ label: "Telefoon", value: params.telefoon }] : []),
+    { label: "Datum", value: params.datum },
+    { label: "Tijd", value: params.tijd },
+  ];
+
+  const content = `
+    <h2 style="color: #333; margin: 0 0 16px 0; font-size: 18px;">Nieuw kennismakingsgesprek ingepland</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Er is een nieuw kennismakingsgesprek ingepland met een kandidaat.</p>
+    ${kandidaatInfoBlock(items)}
+    ${params.cvUrl ? `<p style="font-size: 14px; margin: 12px 0;"><strong>CV:</strong> <a href="${params.cvUrl}" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">Download CV</a></p>` : ""}
+    ${params.meetLink ? `<p style="font-size: 14px; margin: 12px 0;"><strong>Google Meet:</strong> <a href="${params.meetLink}" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">${params.meetLink}</a></p>` : ""}
+    ${params.inschrijvingId ? `<p style="font-size: 13px; color: #999;">Inschrijving ID: ${params.inschrijvingId}</p>` : ""}`;
+
+  return kandidaatEmailWrapper(content);
+}
+
+// ============================================
+// 11. Kandidaat booking annulering
+// ============================================
+
+export function buildKandidaatBookingAnnulering(params: {
+  naam: string;
+  herboekenLink?: string;
+}): string {
+  const content = `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.naam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Je kennismakingsgesprek is geannuleerd.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Wil je toch een gesprek inplannen? Dat kan altijd via onderstaande link.
+    </p>
+    ${params.herboekenLink ? kandidaatButton(params.herboekenLink, "Opnieuw inplannen") : kandidaatButton("https://www.toptalentjobs.nl/kennismaking-plannen", "Opnieuw inplannen")}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Met vriendelijke groet,<br>
+      Team TopTalent Jobs
+    </p>`;
+
+  return kandidaatEmailWrapper(content);
 }

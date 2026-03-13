@@ -119,9 +119,41 @@ export default function BedanktKandidaatPage() {
           </div>
         </div>
 
+        {/* Kennismakingsgesprek CTA */}
+        <div
+          className={`bg-gradient-to-br from-purple-50 to-white rounded-2xl p-8 mb-10 border-2 border-purple-100 transition-all duration-700 delay-250 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
+          style={{ boxShadow: "0 10px 30px rgba(139, 92, 246, 0.08)" }}
+        >
+          <div className="text-center">
+            <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-[#1F1F1F] mb-2">Plan direct je kennismakingsgesprek</h2>
+            <p className="text-neutral-500 mb-6 max-w-md mx-auto">
+              Een kort videogesprek van 15 minuten om kennis te maken. Zo kunnen we je sneller aan de slag helpen!
+            </p>
+            <Link
+              href="/kennismaking-plannen"
+              className="inline-flex items-center justify-center gap-2 bg-purple-600 text-white px-8 py-4 rounded-xl font-semibold
+              shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30
+              hover:bg-purple-700 hover:-translate-y-0.5 active:scale-[0.98]
+              transition-all duration-300"
+            >
+              Plan je kennismakingsgesprek
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+
         {/* Motivational message */}
         <p
-          className={`text-center text-neutral-500 mb-10 transition-all duration-700 delay-250 ${
+          className={`text-center text-neutral-500 mb-10 transition-all duration-700 delay-300 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
@@ -130,7 +162,7 @@ export default function BedanktKandidaatPage() {
 
         {/* CTAs */}
         <div
-          className={`flex flex-col sm:flex-row gap-4 justify-center mb-8 transition-all duration-700 delay-300 ${
+          className={`flex flex-col sm:flex-row gap-4 justify-center mb-8 transition-all duration-700 delay-350 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >

@@ -8,6 +8,8 @@ import { Resend } from "resend";
 import {
   buildBookingConfirmationHtml,
   buildBookingNotificationHtml,
+  buildKandidaatBookingBevestiging,
+  buildKandidaatBookingNotificatie,
 } from "@/lib/email-templates";
 import { randomBytes } from "crypto";
 
@@ -23,6 +25,7 @@ interface EventType {
   is_active: boolean;
   max_bookings_per_day: number | null;
   confirmation_message: string | null;
+  booking_type?: "client" | "kandidaat";
 }
 
 interface ScheduleRow {
@@ -67,6 +70,7 @@ function generateToken(): string {
 export async function GET(request: NextRequest) {
   const eventTypeSlug = request.nextUrl.searchParams.get("type");
   const inquiryId = request.nextUrl.searchParams.get("ref");
+  const bookingType = request.nextUrl.searchParams.get("booking_type");
 
   try {
     // Haal event types op
@@ -75,6 +79,24 @@ export async function GET(request: NextRequest) {
       .select("*")
       .eq("is_active", true)
       .order("sort_order");
+
+    // Kandidaat booking type: zoek het kandidaat event type
+    if (bookingType === "kandidaat") {
+      const kandidaatEventType = (eventTypes as EventType[] || []).find(
+        (et) => et.booking_type === "kandidaat",
+      );
+
+      if (!kandidaatEventType) {
+        return NextResponse.json({ error: "Kandidaat afspraaktype niet gevonden" }, { status: 404 });
+      }
+
+      // Redirect to slots fetch with the kandidaat event type slug
+      const redirect = new URL(request.url);
+      redirect.searchParams.set("type", kandidaatEventType.slug);
+      redirect.searchParams.delete("booking_type");
+      // Instead of redirect, just set eventTypeSlug and continue
+      return GET(new NextRequest(redirect));
+    }
 
     // Als geen specifiek type, geef event types lijst
     if (!eventTypeSlug) {
@@ -298,7 +320,16 @@ export async function POST(request: NextRequest) {
       notes,
       inquiry_id,
       source = "website",
+      booking_type = "client",
+      kandidaat_naam,
+      kandidaat_email,
+      kandidaat_telefoon,
+      kandidaat_notities,
+      kandidaat_cv_url,
+      inschrijving_id,
     } = body;
+
+    const isKandidaat = booking_type === "kandidaat";
 
     if (!client_name || !client_email) {
       return NextResponse.json(
@@ -403,22 +434,34 @@ export async function POST(request: NextRequest) {
     const rescheduleToken = generateToken();
 
     // Maak booking aan
+    const bookingInsert: Record<string, unknown> = {
+      slot_id: actualSlotId,
+      event_type_id: event_type_id || null,
+      inquiry_id: inquiry_id || null,
+      client_name: isKandidaat ? (kandidaat_naam || client_name) : client_name,
+      client_email: isKandidaat ? (kandidaat_email || client_email) : client_email,
+      client_phone: isKandidaat ? (kandidaat_telefoon || client_phone || null) : (client_phone || null),
+      company_name: company_name || null,
+      notes: isKandidaat ? (kandidaat_notities || notes || null) : (notes || null),
+      status: "confirmed",
+      cancellation_token: cancellationToken,
+      reschedule_token: rescheduleToken,
+      source,
+      booking_type: isKandidaat ? "kandidaat" : "client",
+    };
+
+    if (isKandidaat) {
+      bookingInsert.kandidaat_naam = kandidaat_naam || client_name || null;
+      bookingInsert.kandidaat_email = kandidaat_email || client_email || null;
+      bookingInsert.kandidaat_telefoon = kandidaat_telefoon || client_phone || null;
+      bookingInsert.kandidaat_cv_url = kandidaat_cv_url || null;
+      bookingInsert.kandidaat_notities = kandidaat_notities || notes || null;
+      bookingInsert.inschrijving_id = inschrijving_id || null;
+    }
+
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .insert({
-        slot_id: actualSlotId,
-        event_type_id: event_type_id || null,
-        inquiry_id: inquiry_id || null,
-        client_name,
-        client_email,
-        client_phone: client_phone || null,
-        company_name: company_name || null,
-        notes: notes || null,
-        status: "confirmed",
-        cancellation_token: cancellationToken,
-        reschedule_token: rescheduleToken,
-        source,
-      })
+      .insert(bookingInsert)
       .select()
       .single();
 
@@ -443,30 +486,48 @@ export async function POST(request: NextRequest) {
     }
 
     // Google Calendar event aanmaken
+    let meetLink: string | undefined;
     if (isGoogleCalendarConfigured()) {
       const startDateTime = `${slotDate}T${slotStartTime}`;
       const endDateTime = `${slotDate}T${slotEndTime}`;
 
-      const googleEventId = await createGoogleCalendarEvent({
-        summary: `Gesprek: ${client_name}${company_name ? ` (${company_name})` : ""}`,
-        description: [
-          `Klant: ${client_name}`,
-          company_name ? `Bedrijf: ${company_name}` : "",
-          `Email: ${client_email}`,
-          client_phone ? `Telefoon: ${client_phone}` : "",
-          notes ? `\nNotities: ${notes}` : "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
+      const bookingName = isKandidaat ? (kandidaat_naam || client_name) : client_name;
+      const bookingEmail = isKandidaat ? (kandidaat_email || client_email) : client_email;
+
+      const calResult = await createGoogleCalendarEvent({
+        summary: isKandidaat
+          ? `Kennismaking: ${bookingName}`
+          : `Gesprek: ${bookingName}${company_name ? ` (${company_name})` : ""}`,
+        description: isKandidaat
+          ? [
+              `Kandidaat: ${bookingName}`,
+              `Email: ${bookingEmail}`,
+              kandidaat_telefoon ? `Telefoon: ${kandidaat_telefoon}` : "",
+              kandidaat_notities ? `\nNotities: ${kandidaat_notities}` : "",
+              kandidaat_cv_url ? `\nCV: ${kandidaat_cv_url}` : "",
+            ].filter(Boolean).join("\n")
+          : [
+              `Klant: ${client_name}`,
+              company_name ? `Bedrijf: ${company_name}` : "",
+              `Email: ${client_email}`,
+              client_phone ? `Telefoon: ${client_phone}` : "",
+              notes ? `\nNotities: ${notes}` : "",
+            ].filter(Boolean).join("\n"),
         startDateTime,
         endDateTime,
-        attendeeEmail: client_email,
+        attendeeEmail: bookingEmail,
+        addMeetLink: isKandidaat,
       });
 
-      if (googleEventId) {
+      if (calResult.eventId) {
+        const updateData: Record<string, unknown> = { google_calendar_event_id: calResult.eventId };
+        if (calResult.meetLink) {
+          updateData.google_meet_link = calResult.meetLink;
+          meetLink = calResult.meetLink;
+        }
         await supabaseAdmin
           .from("bookings")
-          .update({ google_calendar_event_id: googleEventId })
+          .update(updateData)
           .eq("id", booking.id);
       }
     }
@@ -498,49 +559,98 @@ export async function POST(request: NextRequest) {
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
-      try {
-        await resend.emails.send({
-          from: `${senderName} <${senderEmail}>`,
-          to: [client_email],
-          subject: `Je afspraak met ${senderName} is bevestigd`,
-          html: buildBookingConfirmationHtml({
-            clientName: client_name,
-            datumFormatted,
-            startTime: startFormatted,
-            endTime: endFormatted,
-            senderName,
-            notes,
-            manageUrl,
-          }),
-        });
+      if (isKandidaat) {
+        // Kandidaat bevestigingsmail
+        const kNaam = kandidaat_naam || client_name;
+        const kEmail = kandidaat_email || client_email;
+        try {
+          await resend.emails.send({
+            from: `${senderName} <${senderEmail}>`,
+            to: [kEmail],
+            subject: `Je kennismakingsgesprek is bevestigd`,
+            html: buildKandidaatBookingBevestiging({
+              naam: kNaam,
+              datum: datumFormatted,
+              tijd: `${startFormatted} - ${endFormatted}`,
+              meetLink,
+              annuleringsLink: manageUrl,
+            }),
+          });
 
-        await supabaseAdmin
-          .from("bookings")
-          .update({ confirmation_email_sent: true })
-          .eq("id", booking.id);
-      } catch (emailErr) {
-        console.error("Booking confirmation email error:", emailErr);
-      }
+          await supabaseAdmin
+            .from("bookings")
+            .update({ confirmation_email_sent: true })
+            .eq("id", booking.id);
+        } catch (emailErr) {
+          console.error("Kandidaat booking confirmation email error:", emailErr);
+        }
 
-      try {
-        await resend.emails.send({
-          from: `${senderName} <${senderEmail}>`,
-          to: [senderEmail],
-          subject: `Nieuwe afspraak: ${client_name} op ${datumFormatted}`,
-          html: buildBookingNotificationHtml({
-            clientName: client_name,
-            clientEmail: client_email,
-            clientPhone: client_phone,
-            companyName: company_name,
-            datumFormatted,
-            startTime: startFormatted,
-            endTime: endFormatted,
-            notes,
-            inquiryId: inquiry_id,
-          }),
-        });
-      } catch (emailErr) {
-        console.error("Booking notification email error:", emailErr);
+        // Admin notificatie
+        try {
+          await resend.emails.send({
+            from: `${senderName} <${senderEmail}>`,
+            to: [senderEmail],
+            subject: `Nieuw kennismakingsgesprek: ${kNaam} op ${datumFormatted}`,
+            html: buildKandidaatBookingNotificatie({
+              kandidaatNaam: kNaam,
+              email: kEmail,
+              telefoon: kandidaat_telefoon || client_phone,
+              cvUrl: kandidaat_cv_url,
+              inschrijvingId: inschrijving_id,
+              meetLink,
+              datum: datumFormatted,
+              tijd: `${startFormatted} - ${endFormatted}`,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Kandidaat booking notification email error:", emailErr);
+        }
+      } else {
+        // Klant bevestigingsmail
+        try {
+          await resend.emails.send({
+            from: `${senderName} <${senderEmail}>`,
+            to: [client_email],
+            subject: `Je afspraak met ${senderName} is bevestigd`,
+            html: buildBookingConfirmationHtml({
+              clientName: client_name,
+              datumFormatted,
+              startTime: startFormatted,
+              endTime: endFormatted,
+              senderName,
+              notes,
+              manageUrl,
+            }),
+          });
+
+          await supabaseAdmin
+            .from("bookings")
+            .update({ confirmation_email_sent: true })
+            .eq("id", booking.id);
+        } catch (emailErr) {
+          console.error("Booking confirmation email error:", emailErr);
+        }
+
+        try {
+          await resend.emails.send({
+            from: `${senderName} <${senderEmail}>`,
+            to: [senderEmail],
+            subject: `Nieuwe afspraak: ${client_name} op ${datumFormatted}`,
+            html: buildBookingNotificationHtml({
+              clientName: client_name,
+              clientEmail: client_email,
+              clientPhone: client_phone,
+              companyName: company_name,
+              datumFormatted,
+              startTime: startFormatted,
+              endTime: endFormatted,
+              notes,
+              inquiryId: inquiry_id,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Booking notification email error:", emailErr);
+        }
       }
     }
 
@@ -552,9 +662,11 @@ export async function POST(request: NextRequest) {
         datum_formatted: datumFormatted,
         start_time: startFormatted,
         end_time: endFormatted,
-        client_name,
+        client_name: isKandidaat ? (kandidaat_naam || client_name) : client_name,
         cancellation_token: cancellationToken,
         manage_url: manageUrl,
+        booking_type: isKandidaat ? "kandidaat" : "client",
+        ...(meetLink ? { meet_link: meetLink } : {}),
       },
     });
   } catch (error) {

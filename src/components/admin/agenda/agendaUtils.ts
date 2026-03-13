@@ -58,6 +58,10 @@ export const getEventTypeColor = (eventTypes: EventType[], id: string | null): s
   return eventTypes.find((et) => et.id === id)?.color || "#F27501";
 };
 
+export const isKandidaatBooking = (b: Booking): boolean => {
+  return b.booking_type === "kandidaat";
+};
+
 // ============================================
 // Status helpers
 // ============================================
@@ -180,10 +184,15 @@ export const getStats = (bookings: Booking[], slots: Slot[]) => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
+  const kandidaatTotal = bookings.filter((b) => b.booking_type === "kandidaat").length;
+  const kandidaatCompleted = bookings.filter((b) => b.booking_type === "kandidaat" && b.status === "completed").length;
+
   return {
     total, confirmed, completed, cancelled, noShow, noShowRate,
     thisMonth: thisMonthBookings.length,
     lastMonth: lastMonthBookings.length,
     popularTimes, popularDays,
+    kandidaatTotal,
+    kandidaatCompleted,
   };
 };

@@ -83,6 +83,12 @@ interface CreateEventParams {
   startDateTime: string; // ISO string
   endDateTime: string; // ISO string
   attendeeEmail?: string;
+  addMeetLink?: boolean;
+}
+
+interface CreateEventResult {
+  eventId: string | null;
+  meetLink?: string;
 }
 
 /**
@@ -90,9 +96,9 @@ interface CreateEventParams {
  */
 export async function createGoogleCalendarEvent(
   params: CreateEventParams,
-): Promise<string | null> {
+): Promise<CreateEventResult> {
   const calendar = getCalendar();
-  if (!calendar) return null;
+  if (!calendar) return { eventId: null };
 
   const calendarId = process.env.GOOGLE_CALENDAR_ID || "primary";
 
@@ -121,15 +127,29 @@ export async function createGoogleCalendarEvent(
       event.attendees = [{ email: params.attendeeEmail }];
     }
 
+    if (params.addMeetLink) {
+      event.conferenceData = {
+        createRequest: {
+          requestId: `toptalent-${Date.now()}`,
+          conferenceSolutionKey: { type: "hangoutsMeet" },
+        },
+      };
+    }
+
     const res = await calendar.events.insert({
       calendarId,
       requestBody: event,
+      conferenceDataVersion: params.addMeetLink ? 1 : undefined,
     });
 
-    return res.data.id || null;
+    const meetLink = res.data.hangoutLink
+      || res.data.conferenceData?.entryPoints?.[0]?.uri
+      || undefined;
+
+    return { eventId: res.data.id || null, meetLink };
   } catch (error) {
     console.error("Google Calendar create event error:", error);
-    return null;
+    return { eventId: null };
   }
 }
 

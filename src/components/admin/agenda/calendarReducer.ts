@@ -33,6 +33,14 @@ export interface Booking {
   cancelled_at: string | null;
   completed_at: string | null;
   cancel_reason: string | null;
+  booking_type?: "client" | "kandidaat";
+  kandidaat_naam?: string | null;
+  kandidaat_email?: string | null;
+  kandidaat_telefoon?: string | null;
+  kandidaat_cv_url?: string | null;
+  kandidaat_notities?: string | null;
+  inschrijving_id?: string | null;
+  google_meet_link?: string | null;
 }
 
 export interface EventType {
@@ -48,6 +56,7 @@ export interface EventType {
   max_bookings_per_day: number | null;
   requires_approval: boolean;
   sort_order: number;
+  booking_type?: "client" | "kandidaat";
 }
 
 export interface Schedule {
