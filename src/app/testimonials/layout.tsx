@@ -1,52 +1,10 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Klantervaringen - Wat Horeca-ondernemers Zeggen | TopTalent Jobs",
-  description: "Lees ervaringen van tevreden horecaklanten van TopTalent Jobs. Restaurants, hotels en evenementenbureaus vertellen hoe wij hun personeelsproblemen oplosten.",
-  alternates: {
-    canonical: "https://www.toptalentjobs.nl/testimonials",
-  },
-  openGraph: {
-    title: "Klantervaringen | TopTalent Jobs",
-    description: "Horeca-ondernemers vertellen hoe TopTalent Jobs hun personeelstekort oploste. Van restaurants tot festivals.",
-    url: "https://www.toptalentjobs.nl/testimonials",
-    siteName: "TopTalent Jobs",
-    locale: "nl_NL",
-    type: "website",
-  },
+  title: "Ervaringen & Reviews",
+  description: "Lees klantervaringen en reviews van horecabedrijven die samenwerken met TopTalent Jobs. Ontdek hoe restaurants, hotels en eventbedrijven hun personeel regelen.",
 };
 
-export default function TestimonialsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://www.toptalentjobs.nl"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Klantervaringen",
-        "item": "https://www.toptalentjobs.nl/testimonials"
-      }
-    ]
-  };
-
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      {children}
-    </>
-  );
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return children;
 }

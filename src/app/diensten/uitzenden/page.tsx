@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Section from "@/components/Section";
 import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
@@ -5,6 +6,11 @@ import PremiumImage from "@/components/PremiumImage";
 import FAQ from "@/components/FAQ";
 
 import type { FAQItem } from "@/data/location-service-faqs";
+
+export const metadata: Metadata = {
+  title: "Uitzenden",
+  description: "Snel uitzendkrachten nodig voor de horeca? TopTalent Jobs levert binnen 24 uur ervaren horecapersoneel voor piekdrukte, evenementen en seizoenswerk.",
+};
 
 const faqItems: FAQItem[] = [
   {

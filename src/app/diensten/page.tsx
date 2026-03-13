@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Section from "@/components/Section";
 import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 
 export const revalidate = 86400;
+
+export const metadata: Metadata = {
+  title: "Onze Diensten",
+  description: "Ontdek de horeca diensten van TopTalent Jobs: uitzenden, detachering en recruitment. Flexibel personeel voor restaurants, hotels en evenementen in Utrecht.",
+};
 
 export default function DienstenPage() {
   return (

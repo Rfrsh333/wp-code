@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import StaggerContainer, { StaggerItem } from "@/components/animations/StaggerContainer";
 import PremiumImage from "@/components/PremiumImage";
+
+export const metadata: Metadata = {
+  title: "Over Ons",
+  description: "Leer het team achter TopTalent Jobs kennen. Wij zijn gespecialiseerd in horeca uitzendwerk en helpen restaurants, hotels en evenementen met betrouwbaar personeel.",
+};
 
 export default function OverOnsPage() {
   return (

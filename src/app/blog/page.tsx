@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Section, Container } from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
+
+export const metadata: Metadata = {
+  title: "Blog",
+  description: "Lees de nieuwste artikelen over horeca personeel, uitzendwerk en recruitment. Tips, trends en inzichten voor horecaondernemers en werkzoekenden.",
+};
 
 interface BlogPost {
   id: number;
