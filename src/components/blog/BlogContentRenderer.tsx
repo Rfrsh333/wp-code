@@ -192,15 +192,37 @@ function renderBlock(block: ContentBlock, key: number): ReactNode {
   }
 }
 
+// Sanitize HTML — only allow safe inline tags and attributes
+function sanitizeHtml(html: string): string {
+  // Strip all tags except <strong>, <em>, <a>, <br>
+  return html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
+    const lowerTag = tag.toLowerCase();
+    if (["strong", "em", "b", "i", "br"].includes(lowerTag)) return match.replace(/\s+on\w+="[^"]*"/gi, "");
+    if (lowerTag === "a") {
+      // Only allow href and class attributes, strip event handlers
+      const hrefMatch = match.match(/href="([^"]+)"/);
+      const href = hrefMatch?.[1] || "#";
+      // Block javascript: URLs
+      if (/^\s*javascript:/i.test(href)) return "";
+      const classMatch = match.match(/class="([^"]+)"/);
+      const cls = classMatch ? ` class="${classMatch[1]}"` : "";
+      if (match.startsWith("</")) return "</a>";
+      return `<a href="${href}"${cls} rel="noopener noreferrer">`;
+    }
+    return "";
+  });
+}
+
 // Format inline content (bold, links, etc.)
 function formatInlineContent(content: string): string {
-  return content
+  const formatted = content
     // Bold
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     // Italic
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     // Links - already in HTML format
     .replace(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g, '<a href="$1" class="text-[#F97316] hover:underline">$2</a>');
+  return sanitizeHtml(formatted);
 }
 
 // ============================================================
