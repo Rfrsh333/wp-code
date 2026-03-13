@@ -1,12 +1,10 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useAgendaStore } from "@/stores/useAgendaStore";
-import { dagNamen } from "./calendarReducer";
-import type { Booking, EventType, Schedule } from "./calendarReducer";
-import { getSetting, getSlotsForDate, getStats, statusKleur, statusLabel, getEventTypeName, getEventTypeColor } from "./agendaUtils";
+import { useAgendaQueries } from "@/hooks/useAgendaQueries";
+import type { Booking, EventType } from "./calendarReducer";
+import { getSetting, getStats, statusKleur, statusLabel, getEventTypeName, getEventTypeColor } from "./agendaUtils";
 import CalendarHeader from "./CalendarHeader";
 import CalendarGrid from "./CalendarGrid";
 import BookingModal from "./BookingModal";
@@ -21,175 +19,26 @@ export default function AgendaTab() {
   const {
     slots, bookings, settings, eventTypes, schedules, overrides,
     view, calendarView, monthOffset, selectedDate, bookingFilter,
-    loading, refreshing, actionPending, actionError, syncing, savingMsg,
+    loading, actionPending, actionError, syncing, savingMsg,
     modal,
   } = store;
 
-  // ============================================
-  // Auth & Fetch
-  // ============================================
-
-  const getAuthHeaders = useCallback(async (): Promise<HeadersInit> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token
-      ? { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json" }
-      : { "Content-Type": "application/json" };
-  }, []);
-
-  const fetchData = useCallback(async (isInitial = false) => {
-    if (isInitial) store.setLoading(true);
-    else store.setRefreshing(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: HeadersInit = session?.access_token
-        ? { "Authorization": `Bearer ${session.access_token}` }
-        : {};
-
-      const [slotsRes, bookingsRes, settingsRes, etRes, schedRes, overRes] = await Promise.all([
-        fetch("/api/admin/data?table=availability_slots", { headers }).then((r) => r.json()),
-        fetch("/api/admin/data?table=bookings", { headers }).then((r) => r.json()),
-        fetch("/api/admin/data?table=admin_settings", { headers }).then((r) => r.json()),
-        fetch("/api/admin/data?table=event_types", { headers }).then((r) => r.json()),
-        fetch("/api/admin/data?table=availability_schedules", { headers }).then((r) => r.json()),
-        fetch("/api/admin/data?table=availability_overrides", { headers }).then((r) => r.json()),
-      ]);
-
-      store.setData({
-        slots: slotsRes.data || [],
-        bookings: bookingsRes.data || [],
-        settings: settingsRes.data || [],
-        eventTypes: etRes.data || [],
-        schedules: schedRes.data || [],
-        overrides: overRes.data || [],
-      });
-    } catch {
-      store.setActionError("Kon data niet ophalen");
-    }
-  }, [store]);
-
-  useEffect(() => {
-    void fetchData(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ============================================
-  // Admin API helper
-  // ============================================
-
-  const adminFetch = async (body: Record<string, unknown>) => {
-    try {
-      const res = await fetch("/api/admin/data", {
-        method: "POST",
-        headers: await getAuthHeaders(),
-        body: JSON.stringify(body),
-      });
-      const result = await res.json();
-      if (!res.ok || result.error) {
-        console.error("Admin data error:", result.error);
-        store.setActionError(result.error || "Er ging iets mis bij het opslaan");
-        setTimeout(() => store.setActionError(null), 5000);
-      }
-      return result;
-    } catch (err) {
-      console.error("Admin fetch network error:", err);
-      store.setActionError("Netwerkfout — controleer je verbinding");
-      setTimeout(() => store.setActionError(null), 5000);
-      return { error: "network_error" };
-    }
-  };
-
-  // ============================================
-  // Action handlers
-  // ============================================
-
-  const handleSync = async () => {
-    if (syncing) return;
-    store.setSyncing(true);
-    try {
-      const headers = await getAuthHeaders();
-      const res = await fetch("/api/calendar/sync", { headers });
-      if (!res.ok) {
-        store.setActionError("Synchronisatie mislukt");
-        setTimeout(() => store.setActionError(null), 5000);
-      }
-      await fetchData();
-    } catch {
-      store.setActionError("Netwerkfout bij synchronisatie");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setSyncing(false);
-    }
-  };
-
-  const updateBookingStatus = async (id: string, status: string) => {
-    if (actionPending) return;
-    store.setActionPending(true);
-    try {
-      await adminFetch({ action: "update", table: "bookings", id, data: { status, ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}), ...(status === "no_show" ? { no_show: true } : {}) } });
-      store.updateBooking(id, { status: status as Booking["status"], ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}), ...(status === "no_show" ? { no_show: true } : {}) });
-    } catch {
-      store.setActionError("Kon status niet bijwerken");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
-  const toggleSlotAvailability = async (slotId: string, isAvailable: boolean) => {
-    if (actionPending) return;
-    store.setActionPending(true);
-    store.updateSlot(slotId, { is_available: !isAvailable });
-    try {
-      await adminFetch({ action: "update", table: "availability_slots", id: slotId, data: { is_available: !isAvailable } });
-    } catch {
-      store.updateSlot(slotId, { is_available: isAvailable });
-      store.setActionError("Kon slot niet bijwerken");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
-  const toggleDayAvailability = async (dateStr: string, block: boolean) => {
-    if (actionPending) return;
-    const daySlots = getSlotsForDate(slots, dateStr);
-    const toggleableSlots = daySlots.filter((s) => !s.is_booked && s.google_calendar_event_id !== "google_blocked");
-    if (toggleableSlots.length === 0) return;
-    store.setActionPending(true);
-    const ids = toggleableSlots.map((s) => s.id);
-    store.updateSlotsBulk(ids, { is_available: !block });
-    try {
-      await adminFetch({ action: "bulk_update", table: "availability_slots", ids, data: { is_available: !block } });
-    } catch {
-      store.updateSlotsBulk(ids, { is_available: block });
-      store.setActionError("Kon dag niet bijwerken");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
-  const handleUpdateSetting = async (key: string, value: string) => {
-    store.updateSetting(key, value);
-    try {
-      const existing = settings.find((s) => s.key === key);
-      if (existing) {
-        await adminFetch({ action: "update", table: "admin_settings", id: existing.id, data: { value } });
-      } else {
-        await adminFetch({ action: "insert", table: "admin_settings", data: { key, value } });
-      }
-      store.setSavingMsg("Opgeslagen");
-      setTimeout(() => store.setSavingMsg(""), 2000);
-    } catch {
-      store.setActionError("Kon instelling niet opslaan");
-      setTimeout(() => store.setActionError(null), 5000);
-    }
-    fetchData();
-  };
+  const {
+    handleSync,
+    updateBookingStatus,
+    toggleSlotAvailability,
+    toggleDayAvailability,
+    handleUpdateSetting,
+    submitNewBooking,
+    submitOverride,
+    deleteOverride,
+    saveEventType,
+    deleteEventType,
+    handleUpdateSchedule,
+    insertSchedule,
+    saveInternalNotes,
+    isRefreshing,
+  } = useAgendaQueries();
 
   // ============================================
   // Modal action handlers
@@ -214,58 +63,6 @@ export default function AgendaTab() {
     });
   };
 
-  const submitNewBooking = async () => {
-    if (modal.type !== "new_booking") return;
-    const { slotId, date, customStart, customEnd, name, email, phone, company, notes, eventTypeId } = modal;
-
-    const hasSlot = !!slotId;
-    const hasCustomTime = !!date && !!customStart && !!customEnd;
-
-    if (!hasSlot && !hasCustomTime) {
-      store.updateModal({ error: "Kies een tijdslot of vul een aangepaste tijd in" });
-      return;
-    }
-    if (!name.trim() || !email.trim()) {
-      store.updateModal({ error: "Naam en e-mailadres zijn verplicht" });
-      return;
-    }
-
-    store.updateModal({ saving: true, error: "" });
-    try {
-      const body: Record<string, unknown> = {
-        event_type_id: eventTypeId || null,
-        client_name: name.trim(),
-        client_email: email.trim(),
-        client_phone: phone.trim() || null,
-        company_name: company.trim() || null,
-        notes: notes.trim() || null,
-        source: "admin",
-      };
-      if (hasSlot) {
-        body.slot_id = slotId;
-      } else {
-        body.date = date;
-        body.start_time = customStart;
-        body.end_time = customEnd;
-      }
-
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (data.success) {
-        store.closeModal();
-        await fetchData();
-      } else {
-        store.updateModal({ error: data.error || "Kon boeking niet aanmaken", saving: false });
-      }
-    } catch {
-      store.updateModal({ error: "Netwerkfout — probeer opnieuw", saving: false });
-    }
-  };
-
   const selectBooking = (booking: Booking) => {
     store.openModal({ type: "booking_detail", booking });
   };
@@ -276,128 +73,14 @@ export default function AgendaTab() {
     });
   };
 
-  const submitOverride = async () => {
-    if (modal.type !== "override" || !modal.date || actionPending) return;
-    store.setActionPending(true);
-    try {
-      await adminFetch({
-        action: "insert",
-        table: "availability_overrides",
-        data: {
-          date: modal.date,
-          start_time: modal.startTime || null,
-          end_time: modal.endTime || null,
-          is_blocked: modal.blocked,
-          reason: modal.reason || null,
-        },
-      });
-      if (modal.blocked && !modal.startTime) {
-        const daySlots = getSlotsForDate(slots, modal.date);
-        const ids = daySlots.filter((s) => !s.is_booked).map((s) => s.id);
-        if (ids.length > 0) {
-          await adminFetch({ action: "bulk_update", table: "availability_slots", ids, data: { is_available: false } });
-        }
-      }
-      store.closeModal();
-    } catch {
-      store.setActionError("Kon override niet toevoegen");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
-  const deleteOverride = async (id: string) => {
-    if (actionPending) return;
-    store.setActionPending(true);
-    store.removeOverride(id);
-    try {
-      await adminFetch({ action: "delete", table: "availability_overrides", id });
-    } catch {
-      store.setActionError("Kon override niet verwijderen");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
-  const saveEventType = async (et: Partial<EventType> & { id?: string }) => {
-    if (actionPending) return;
-    store.setActionPending(true);
-    try {
-      if (et.id) {
-        const { id, ...data } = et;
-        await adminFetch({ action: "update", table: "event_types", id, data });
-      } else {
-        await adminFetch({ action: "insert", table: "event_types", data: et });
-      }
-      store.closeModal();
-    } catch {
-      store.setActionError("Kon event type niet opslaan");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
-  const deleteEventType = async (id: string) => {
-    if (actionPending) return;
-    store.setActionPending(true);
-    store.removeEventType(id);
-    try {
-      await adminFetch({ action: "delete", table: "event_types", id });
-    } catch {
-      store.setActionError("Kon event type niet verwijderen");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
-  const handleUpdateSchedule = async (id: string, data: Partial<Schedule>) => {
-    if (actionPending) return;
-    store.setActionPending(true);
-    store.updateSchedule(id, data);
-    try {
-      await adminFetch({ action: "update", table: "availability_schedules", id, data });
-    } catch {
-      store.setActionError("Kon schema niet bijwerken");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
-  };
-
   const openEditNotes = (bookingId: string, notes: string) => {
     store.openModal({ type: "internal_notes", bookingId, notes });
-  };
-
-  const saveInternalNotes = async () => {
-    if (modal.type !== "internal_notes" || actionPending) return;
-    store.setActionPending(true);
-    try {
-      await adminFetch({ action: "update", table: "bookings", id: modal.bookingId, data: { internal_notes: modal.notes } });
-      store.updateBooking(modal.bookingId, { internal_notes: modal.notes });
-      store.closeModal();
-    } catch {
-      store.setActionError("Kon notities niet opslaan");
-      setTimeout(() => store.setActionError(null), 5000);
-    } finally {
-      store.setActionPending(false);
-    }
-    fetchData();
   };
 
   // ============================================
   // Render
   // ============================================
 
-  const todayStr = new Date().toISOString().split("T")[0];
   const monthData = getMonthData(monthOffset);
 
   if (loading) {
@@ -416,7 +99,7 @@ export default function AgendaTab() {
         calendarView={calendarView}
         monthName={monthData.monthName}
         monthOffset={monthOffset}
-        refreshing={refreshing}
+        refreshing={isRefreshing}
         syncing={syncing}
         savingMsg={savingMsg}
         actionError={actionError}
@@ -604,8 +287,7 @@ export default function AgendaTab() {
                         if (schedule) {
                           handleUpdateSchedule(schedule.id, { is_active: !schedule.is_active });
                         } else {
-                          store.setActionPending(true);
-                          adminFetch({ action: "insert", table: "availability_schedules", data: { day_of_week: day, start_time: "09:00", end_time: "17:00", is_active: true } }).then(() => fetchData()).finally(() => store.setActionPending(false));
+                          insertSchedule({ day_of_week: day, start_time: "09:00", end_time: "17:00", is_active: true });
                         }
                       }}
                       disabled={actionPending}

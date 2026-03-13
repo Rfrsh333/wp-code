@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import QueryProvider from "@/components/QueryProvider";
 
 const AdminDashboard = dynamic(() => import("@/components/admin/AdminDashboard"), {
   loading: () => (
@@ -80,5 +81,5 @@ export default function AdminPage() {
     return null;
   }
 
-  return <AdminDashboard />;
+  return <QueryProvider><AdminDashboard /></QueryProvider>;
 }
