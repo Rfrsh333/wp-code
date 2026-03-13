@@ -3,14 +3,41 @@ import { supabaseAdmin } from "@/lib/supabase";
 import {
   createGoogleCalendarEvent,
   isGoogleCalendarConfigured,
-  generateSlots,
-  syncGoogleCalendarToSlots,
 } from "@/lib/google-calendar";
 import { Resend } from "resend";
 import {
   buildBookingConfirmationHtml,
   buildBookingNotificationHtml,
 } from "@/lib/email-templates";
+import { randomBytes } from "crypto";
+
+interface EventType {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
+  color: string;
+  is_active: boolean;
+  max_bookings_per_day: number | null;
+  confirmation_message: string | null;
+}
+
+interface ScheduleRow {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+}
+
+interface OverrideRow {
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  is_blocked: boolean;
+}
 
 interface SlotRow {
   id: string;
@@ -21,86 +48,216 @@ interface SlotRow {
   is_booked: boolean;
 }
 
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function minutesToTime(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+}
+
+function generateToken(): string {
+  return randomBytes(32).toString("hex");
+}
+
 // GET: Beschikbare slots ophalen voor de booking pagina
 export async function GET(request: NextRequest) {
+  const eventTypeSlug = request.nextUrl.searchParams.get("type");
   const inquiryId = request.nextUrl.searchParams.get("ref");
 
   try {
+    // Haal event types op
+    const { data: eventTypes } = await supabaseAdmin
+      .from("event_types")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order");
+
+    // Als geen specifiek type, geef event types lijst
+    if (!eventTypeSlug) {
+      // Haal instellingen op voor intro text
+      const { data: settings } = await supabaseAdmin
+        .from("admin_settings")
+        .select("key, value")
+        .in("key", ["booking_page_intro_text", "sender_name"]);
+
+      const settingsMap = Object.fromEntries(
+        (settings || []).map((s) => [s.key, s.value]),
+      );
+
+      let inquiry = null;
+      if (inquiryId) {
+        const { data } = await supabaseAdmin
+          .from("personeel_aanvragen")
+          .select("id, contactpersoon, email, telefoon, bedrijfsnaam")
+          .eq("id", inquiryId)
+          .single();
+        inquiry = data;
+      }
+
+      return NextResponse.json({
+        event_types: eventTypes || [],
+        inquiry,
+        intro_text: settingsMap.booking_page_intro_text || "",
+        sender_name: settingsMap.sender_name || "TopTalent Jobs",
+      });
+    }
+
+    // Zoek het event type
+    const eventType = (eventTypes as EventType[] || []).find(
+      (et) => et.slug === eventTypeSlug,
+    );
+    if (!eventType) {
+      return NextResponse.json({ error: "Afspraaktype niet gevonden" }, { status: 404 });
+    }
+
     // Haal instellingen op
     const { data: settings } = await supabaseAdmin
       .from("admin_settings")
       .select("key, value")
-      .in("key", [
-        "booking_horizon_days",
-        "booking_page_intro_text",
-        "slot_duration_minutes",
-        "sender_name",
-      ]);
+      .in("key", ["booking_horizon_days", "booking_page_intro_text", "sender_name"]);
 
     const settingsMap = Object.fromEntries(
       (settings || []).map((s) => [s.key, s.value]),
     );
 
-    const horizonDays = parseInt(settingsMap.booking_horizon_days || "14");
+    const horizonDays = parseInt(settingsMap.booking_horizon_days || "30");
 
+    // Haal wekelijks schema op
+    const { data: schedules } = await supabaseAdmin
+      .from("availability_schedules")
+      .select("*")
+      .eq("is_active", true);
+
+    // Haal overrides op
     const today = new Date();
     const endDate = new Date(today);
     endDate.setDate(endDate.getDate() + horizonDays);
+    const todayStr = today.toISOString().split("T")[0];
+    const endStr = endDate.toISOString().split("T")[0];
 
-    // Zorg dat slots bestaan voor deze periode
-    const fromStr = today.toISOString().split("T")[0];
-    const toStr = endDate.toISOString().split("T")[0];
-    await generateSlots(fromStr, toStr);
+    const { data: overrides } = await supabaseAdmin
+      .from("availability_overrides")
+      .select("*")
+      .gte("date", todayStr)
+      .lte("date", endStr);
 
-    // Sync met Google Calendar als geconfigureerd
-    if (isGoogleCalendarConfigured()) {
-      await syncGoogleCalendarToSlots();
-    }
+    // Haal bestaande boekingen op (voor conflict check)
+    const { data: existingBookings } = await supabaseAdmin
+      .from("bookings")
+      .select("id, slot_id, status, availability_slots(date, start_time, end_time)")
+      .in("status", ["confirmed"])
+      .not("slot_id", "is", null);
 
-    // Haal beschikbare slots op (morgen+, niet vandaag)
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-    const { data: slots } = await supabaseAdmin
+    // Haal bestaande slots op
+    const { data: existingSlots } = await supabaseAdmin
       .from("availability_slots")
       .select("id, date, start_time, end_time, is_available, is_booked")
-      .gte("date", tomorrowStr)
-      .lte("date", toStr)
-      .eq("is_available", true)
-      .eq("is_booked", false)
-      .order("date")
-      .order("start_time");
+      .gte("date", todayStr)
+      .lte("date", endStr);
 
-    // Groepeer per dag
+    // Genereer beschikbare slots op basis van schema + overrides
+    const slotDuration = eventType.duration_minutes;
+    const bufferBefore = eventType.buffer_before_minutes;
+    const bufferAfter = eventType.buffer_after_minutes;
+
     const dagNamen: Record<number, string> = {
       0: "Zondag", 1: "Maandag", 2: "Dinsdag", 3: "Woensdag",
       4: "Donderdag", 5: "Vrijdag", 6: "Zaterdag",
     };
 
-    const grouped: Record<string, { dag: string; slots: { id: string; start: string; eind: string }[] }> = {};
+    const days: { datum: string; dag: string; slots: { id: string; start: string; eind: string }[] }[] = [];
 
-    for (const slot of (slots as SlotRow[] || [])) {
-      if (!grouped[slot.date]) {
-        const d = new Date(slot.date);
-        grouped[slot.date] = {
-          dag: dagNamen[d.getDay()],
-          slots: [],
-        };
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const current = new Date(tomorrow);
+    while (current <= endDate) {
+      const dateStr = current.toISOString().split("T")[0];
+      const dayOfWeek = current.getDay();
+
+      // Check overrides voor deze dag
+      const dayOverrides = (overrides as OverrideRow[] || []).filter(
+        (o) => o.date === dateStr,
+      );
+      const isFullDayBlocked = dayOverrides.some(
+        (o) => o.is_blocked && !o.start_time,
+      );
+
+      if (!isFullDayBlocked) {
+        // Vind het schema voor deze dag
+        const daySchedule = (schedules as ScheduleRow[] || []).find(
+          (s) => s.day_of_week === dayOfWeek,
+        );
+
+        if (daySchedule) {
+          const startMin = timeToMinutes(daySchedule.start_time);
+          const endMin = timeToMinutes(daySchedule.end_time);
+
+          const daySlots: { id: string; start: string; eind: string }[] = [];
+
+          let time = startMin + bufferBefore;
+          while (time + slotDuration <= endMin) {
+            const slotStart = minutesToTime(time);
+            const slotEnd = minutesToTime(time + slotDuration);
+
+            // Check of dit slot geblokkeerd is door een override
+            const isOverrideBlocked = dayOverrides.some((o) => {
+              if (!o.is_blocked || !o.start_time || !o.end_time) return false;
+              const oStart = timeToMinutes(o.start_time);
+              const oEnd = timeToMinutes(o.end_time);
+              return time < oEnd && time + slotDuration > oStart;
+            });
+
+            // Check of dit slot al geboekt is (via bestaande slots)
+            const existingSlot = (existingSlots as SlotRow[] || []).find(
+              (s) => s.date === dateStr && s.start_time === slotStart + ":00",
+            );
+
+            const isBooked = existingSlot?.is_booked || false;
+            const isBlocked = existingSlot && !existingSlot.is_available;
+
+            if (!isOverrideBlocked && !isBooked && !isBlocked) {
+              daySlots.push({
+                id: existingSlot?.id || `gen_${dateStr}_${slotStart}`,
+                start: slotStart,
+                eind: slotEnd,
+              });
+            }
+
+            time += slotDuration + bufferAfter;
+          }
+
+          if (daySlots.length > 0) {
+            // Check max bookings per day
+            if (eventType.max_bookings_per_day) {
+              const dayBookingsCount = (existingBookings || []).filter((b) => {
+                const slot = b.availability_slots as unknown as { date: string } | null;
+                return slot?.date === dateStr;
+              }).length;
+
+              if (dayBookingsCount >= eventType.max_bookings_per_day) {
+                current.setDate(current.getDate() + 1);
+                continue;
+              }
+            }
+
+            days.push({
+              datum: dateStr,
+              dag: dagNamen[dayOfWeek],
+              slots: daySlots,
+            });
+          }
+        }
       }
-      grouped[slot.date].slots.push({
-        id: slot.id,
-        start: slot.start_time.slice(0, 5),
-        eind: slot.end_time.slice(0, 5),
-      });
+
+      current.setDate(current.getDate() + 1);
     }
 
-    const days = Object.entries(grouped).map(([datum, data]) => ({
-      datum,
-      ...data,
-    }));
-
-    // Als er een inquiry_id is, haal klantgegevens op
+    // Inquiry data
     let inquiry = null;
     if (inquiryId) {
       const { data } = await supabaseAdmin
@@ -112,10 +269,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
+      event_type: eventType,
       days,
       inquiry,
       intro_text: settingsMap.booking_page_intro_text || "",
-      slot_duration: settingsMap.slot_duration_minutes || "30",
       sender_name: settingsMap.sender_name || "TopTalent Jobs",
     });
   } catch (error) {
@@ -128,44 +285,129 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { slot_id, client_name, client_email, client_phone, company_name, notes, inquiry_id } = body;
+    const {
+      slot_id,
+      event_type_id,
+      date,
+      start_time,
+      end_time,
+      client_name,
+      client_email,
+      client_phone,
+      company_name,
+      notes,
+      inquiry_id,
+      source = "website",
+    } = body;
 
-    if (!slot_id || !client_name || !client_email) {
+    if (!client_name || !client_email) {
       return NextResponse.json(
-        { error: "Naam, e-mailadres en tijdslot zijn vereist" },
+        { error: "Naam en e-mailadres zijn vereist" },
         { status: 400 },
       );
     }
 
-    // Check of het slot nog beschikbaar is
-    const { data: slot, error: slotError } = await supabaseAdmin
-      .from("availability_slots")
-      .select("*")
-      .eq("id", slot_id)
-      .single();
-
-    if (slotError || !slot) {
-      return NextResponse.json({ error: "Tijdslot niet gevonden" }, { status: 404 });
-    }
-
-    if (!slot.is_available || slot.is_booked) {
+    if (!slot_id && (!date || !start_time || !end_time)) {
       return NextResponse.json(
-        { error: "Dit tijdslot is helaas niet meer beschikbaar. Kies een ander tijdstip." },
-        { status: 409 },
+        { error: "Tijdslot of datum/tijd zijn vereist" },
+        { status: 400 },
       );
     }
 
-    // Markeer slot als geboekt
-    await supabaseAdmin
-      .from("availability_slots")
-      .update({ is_booked: true, is_available: false })
-      .eq("id", slot_id);
+    let actualSlotId = slot_id;
+    let slotDate = date;
+    let slotStartTime = start_time;
+    let slotEndTime = end_time;
+
+    // Als er een bestaand slot_id is, gebruik dat
+    if (slot_id && !slot_id.startsWith("gen_")) {
+      const { data: slot, error: slotError } = await supabaseAdmin
+        .from("availability_slots")
+        .select("*")
+        .eq("id", slot_id)
+        .single();
+
+      if (slotError || !slot) {
+        return NextResponse.json({ error: "Tijdslot niet gevonden" }, { status: 404 });
+      }
+
+      if (!slot.is_available || slot.is_booked) {
+        return NextResponse.json(
+          { error: "Dit tijdslot is helaas niet meer beschikbaar. Kies een ander tijdstip." },
+          { status: 409 },
+        );
+      }
+
+      slotDate = slot.date;
+      slotStartTime = slot.start_time;
+      slotEndTime = slot.end_time;
+
+      // Markeer slot als geboekt
+      await supabaseAdmin
+        .from("availability_slots")
+        .update({ is_booked: true, is_available: false })
+        .eq("id", slot_id);
+    } else {
+      // Genereer een slot on-the-fly (schema-gebaseerd)
+      const targetDate = slot_id?.startsWith("gen_")
+        ? slot_id.split("_")[1]
+        : date;
+      const targetStart = slot_id?.startsWith("gen_")
+        ? slot_id.split("_")[2]
+        : start_time;
+      const targetEnd = end_time;
+
+      slotDate = targetDate;
+      slotStartTime = targetStart;
+      slotEndTime = targetEnd;
+
+      // Conflict check
+      const { data: conflict } = await supabaseAdmin
+        .from("availability_slots")
+        .select("id")
+        .eq("date", targetDate)
+        .eq("start_time", targetStart + ":00")
+        .eq("is_booked", true)
+        .maybeSingle();
+
+      if (conflict) {
+        return NextResponse.json(
+          { error: "Dit tijdslot is helaas niet meer beschikbaar." },
+          { status: 409 },
+        );
+      }
+
+      // Maak het slot aan
+      const { data: newSlot } = await supabaseAdmin
+        .from("availability_slots")
+        .upsert(
+          {
+            date: targetDate,
+            start_time: targetStart.length === 5 ? targetStart + ":00" : targetStart,
+            end_time: (targetEnd || minutesToTime(timeToMinutes(targetStart) + 60)).length === 5
+              ? (targetEnd || minutesToTime(timeToMinutes(targetStart) + 60)) + ":00"
+              : targetEnd || minutesToTime(timeToMinutes(targetStart) + 60) + ":00",
+            is_available: false,
+            is_booked: true,
+          },
+          { onConflict: "date,start_time" },
+        )
+        .select()
+        .single();
+
+      actualSlotId = newSlot?.id || null;
+    }
+
+    // Generate tokens
+    const cancellationToken = generateToken();
+    const rescheduleToken = generateToken();
 
     // Maak booking aan
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .insert({
-        slot_id,
+        slot_id: actualSlotId,
+        event_type_id: event_type_id || null,
         inquiry_id: inquiry_id || null,
         client_name,
         client_email,
@@ -173,21 +415,26 @@ export async function POST(request: NextRequest) {
         company_name: company_name || null,
         notes: notes || null,
         status: "confirmed",
+        cancellation_token: cancellationToken,
+        reschedule_token: rescheduleToken,
+        source,
       })
       .select()
       .single();
 
     if (bookingError || !booking) {
       // Rollback slot
-      await supabaseAdmin
-        .from("availability_slots")
-        .update({ is_booked: false, is_available: true })
-        .eq("id", slot_id);
+      if (actualSlotId) {
+        await supabaseAdmin
+          .from("availability_slots")
+          .update({ is_booked: false, is_available: true })
+          .eq("id", actualSlotId);
+      }
       console.error("Booking create error:", bookingError);
       return NextResponse.json({ error: "Kon boeking niet aanmaken" }, { status: 500 });
     }
 
-    // Koppel booking aan aanvraag als inquiry_id meegegeven
+    // Koppel booking aan aanvraag
     if (inquiry_id) {
       await supabaseAdmin
         .from("personeel_aanvragen")
@@ -196,12 +443,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Google Calendar event aanmaken
-    let googleEventId: string | null = null;
     if (isGoogleCalendarConfigured()) {
-      const startDateTime = `${slot.date}T${slot.start_time}`;
-      const endDateTime = `${slot.date}T${slot.end_time}`;
+      const startDateTime = `${slotDate}T${slotStartTime}`;
+      const endDateTime = `${slotDate}T${slotEndTime}`;
 
-      googleEventId = await createGoogleCalendarEvent({
+      const googleEventId = await createGoogleCalendarEvent({
         summary: `Gesprek: ${client_name}${company_name ? ` (${company_name})` : ""}`,
         description: [
           `Klant: ${client_name}`,
@@ -209,7 +455,6 @@ export async function POST(request: NextRequest) {
           `Email: ${client_email}`,
           client_phone ? `Telefoon: ${client_phone}` : "",
           notes ? `\nNotities: ${notes}` : "",
-          inquiry_id ? `\nAanvraag ID: ${inquiry_id}` : "",
         ]
           .filter(Boolean)
           .join("\n"),
@@ -223,23 +468,18 @@ export async function POST(request: NextRequest) {
           .from("bookings")
           .update({ google_calendar_event_id: googleEventId })
           .eq("id", booking.id);
-
-        await supabaseAdmin
-          .from("availability_slots")
-          .update({ google_calendar_event_id: googleEventId })
-          .eq("id", slot_id);
       }
     }
 
     // Datum/tijd formatteren
-    const datumFormatted = new Date(slot.date).toLocaleDateString("nl-NL", {
+    const datumFormatted = new Date(slotDate).toLocaleDateString("nl-NL", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-    const startFormatted = slot.start_time.slice(0, 5);
-    const endFormatted = slot.end_time.slice(0, 5);
+    const startFormatted = typeof slotStartTime === "string" ? slotStartTime.slice(0, 5) : "";
+    const endFormatted = typeof slotEndTime === "string" ? slotEndTime.slice(0, 5) : "";
 
     // Haal afzender instellingen op
     const { data: senderSettings } = await supabaseAdmin
@@ -251,11 +491,13 @@ export async function POST(request: NextRequest) {
     const senderEmail = sMap.sender_email || "info@toptalentjobs.nl";
     const senderName = sMap.sender_name || "TopTalent Jobs";
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
+    const manageUrl = `${baseUrl}/afspraak/${cancellationToken}`;
+
     // Verstuur bevestigingsmails
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
-      // 1. Bevestiging naar klant
       try {
         await resend.emails.send({
           from: `${senderName} <${senderEmail}>`,
@@ -268,6 +510,7 @@ export async function POST(request: NextRequest) {
             endTime: endFormatted,
             senderName,
             notes,
+            manageUrl,
           }),
         });
 
@@ -279,7 +522,6 @@ export async function POST(request: NextRequest) {
         console.error("Booking confirmation email error:", emailErr);
       }
 
-      // 2. Notificatie naar admin
       try {
         await resend.emails.send({
           from: `${senderName} <${senderEmail}>`,
@@ -306,11 +548,13 @@ export async function POST(request: NextRequest) {
       success: true,
       booking: {
         id: booking.id,
-        datum: slot.date,
+        datum: slotDate,
         datum_formatted: datumFormatted,
         start_time: startFormatted,
         end_time: endFormatted,
         client_name,
+        cancellation_token: cancellationToken,
+        manage_url: manageUrl,
       },
     });
   } catch (error) {

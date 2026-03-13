@@ -55,13 +55,11 @@ function infoBlock(items: { label: string; value: string }[]): string {
 // ============================================
 
 export function buildAutoReplyEmailHtml(bodyText: string, bookingUrl: string): string {
-  // Converteer plain text naar HTML, maar maak de booking URL een echte button
   let htmlBody = bodyText
     .split("\n")
     .map((line) => {
       const trimmed = line.trim();
       if (!trimmed) return "<br>";
-      // Als de regel de booking URL bevat, maak er een button van
       if (trimmed.startsWith("http") && trimmed.includes("afspraak-plannen")) {
         return bookingButton(trimmed);
       }
@@ -69,7 +67,6 @@ export function buildAutoReplyEmailHtml(bodyText: string, bookingUrl: string): s
     })
     .join("");
 
-  // Als de URL niet in de body stond, voeg button toe
   if (!htmlBody.includes("afspraak-plannen")) {
     htmlBody += bookingButton(bookingUrl);
   }
@@ -88,6 +85,7 @@ export function buildBookingConfirmationHtml(params: {
   endTime: string;
   senderName: string;
   notes?: string;
+  manageUrl?: string;
 }): string {
   const content = `
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
@@ -97,10 +95,17 @@ export function buildBookingConfirmationHtml(params: {
       { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
       ...(params.notes ? [{ label: "Notities", value: params.notes }] : []),
     ])}
+    ${params.manageUrl ? `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Wil je je afspraak wijzigen of annuleren? Dat kan eenvoudig via onderstaande link:
+    </p>
+    ${bookingButton(params.manageUrl, "Afspraak beheren")}
+    ` : `
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       We kijken ernaar uit je te spreken! Als je de afspraak wilt wijzigen, neem dan contact met ons op via
       <a href="mailto:info@toptalentjobs.nl" style="color: ${BRAND_COLOR}; text-decoration: none;">info@toptalentjobs.nl</a>.
     </p>
+    `}
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Met vriendelijke groet,<br>
       ${params.senderName}
@@ -152,6 +157,7 @@ export function buildReminderEmailHtml(params: {
   datumFormatted: string;
   startTime: string;
   endTime: string;
+  manageUrl?: string;
 }): string {
   const content = `
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
@@ -160,11 +166,156 @@ export function buildReminderEmailHtml(params: {
       { label: "Datum", value: params.datumFormatted },
       { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
     ])}
+    ${params.manageUrl ? `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Kun je onverhoopt niet komen? Wijzig of annuleer je afspraak:
+    </p>
+    ${bookingButton(params.manageUrl, "Afspraak wijzigen")}
+    ` : `
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Kun je onverhoopt niet komen? Laat het ons dan zo snel mogelijk weten via
       <a href="mailto:info@toptalentjobs.nl" style="color: ${BRAND_COLOR}; text-decoration: none;">info@toptalentjobs.nl</a>.
     </p>
+    `}
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Tot morgen!<br>TopTalent Jobs</p>`;
+
+  return emailWrapper(content);
+}
+
+// ============================================
+// 5. Annuleringsbevestiging
+// ============================================
+
+export function buildCancellationEmailHtml(params: {
+  clientName: string;
+  datumFormatted: string;
+  startTime: string;
+  endTime: string;
+  senderName: string;
+  isAdmin?: boolean;
+  reason?: string;
+}): string {
+  const content = params.isAdmin
+    ? `
+    <h2 style="color: #333; margin: 0 0 16px 0; font-size: 18px;">Afspraak geannuleerd</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      ${params.clientName} heeft de afspraak geannuleerd.
+    </p>
+    ${infoBlock([
+      { label: "Klant", value: params.clientName },
+      { label: "Datum", value: params.datumFormatted },
+      { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
+      ...(params.reason ? [{ label: "Reden", value: params.reason }] : []),
+    ])}
+    <p style="font-size: 13px; color: #999;">Het tijdslot is weer beschikbaar gemaakt.</p>`
+    : `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Je afspraak met ${params.senderName} is geannuleerd.
+    </p>
+    ${infoBlock([
+      { label: "Datum", value: params.datumFormatted },
+      { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
+    ])}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Wil je toch een afspraak inplannen? Dat kan altijd via onze website.
+    </p>
+    ${bookingButton("https://www.toptalentjobs.nl/afspraak-plannen", "Nieuwe afspraak plannen")}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Met vriendelijke groet,<br>
+      ${params.senderName}
+    </p>`;
+
+  return emailWrapper(content);
+}
+
+// ============================================
+// 6. Verplaatsingsbevestiging
+// ============================================
+
+export function buildRescheduleEmailHtml(params: {
+  clientName: string;
+  oldDatum: string;
+  oldTijd: string;
+  newDatum: string;
+  newTijd: string;
+  senderName: string;
+  manageUrl?: string;
+}): string {
+  const content = `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Je afspraak met ${params.senderName} is verplaatst.
+    </p>
+    <div style="background: #fee2e2; border-radius: 8px; padding: 16px; margin: 16px 0;">
+      <p style="margin: 0; font-size: 14px; color: #991b1b; text-decoration: line-through;">
+        <strong>Was:</strong> ${params.oldDatum} om ${params.oldTijd}
+      </p>
+    </div>
+    <div style="background: #dcfce7; border-radius: 8px; padding: 16px; margin: 16px 0;">
+      <p style="margin: 0; font-size: 14px; color: #166534;">
+        <strong>Nieuw:</strong> ${params.newDatum} om ${params.newTijd}
+      </p>
+    </div>
+    ${params.manageUrl ? bookingButton(params.manageUrl, "Afspraak beheren") : ""}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Met vriendelijke groet,<br>
+      ${params.senderName}
+    </p>`;
+
+  return emailWrapper(content);
+}
+
+// ============================================
+// 7. Follow-up email (na afspraak)
+// ============================================
+
+export function buildFollowUpEmailHtml(params: {
+  clientName: string;
+  senderName: string;
+}): string {
+  const content = `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Bedankt voor het prettige gesprek! We hopen dat het nuttig voor je was.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Heb je nog vragen of wil je verdere stappen bespreken? Aarzel niet om contact op te nemen.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      We kijken ernaar uit om samen te werken!
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Met vriendelijke groet,<br>
+      ${params.senderName}
+    </p>`;
+
+  return emailWrapper(content);
+}
+
+// ============================================
+// 8. No-show notificatie (naar admin)
+// ============================================
+
+export function buildNoShowEmailHtml(params: {
+  clientName: string;
+  clientEmail: string;
+  datumFormatted: string;
+  startTime: string;
+  endTime: string;
+}): string {
+  const content = `
+    <h2 style="color: #b91c1c; margin: 0 0 16px 0; font-size: 18px;">No-show gedetecteerd</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      De volgende klant is niet op de afspraak verschenen:
+    </p>
+    ${infoBlock([
+      { label: "Klant", value: params.clientName },
+      { label: "Email", value: params.clientEmail },
+      { label: "Datum", value: params.datumFormatted },
+      { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
+    ])}
+    <p style="font-size: 13px; color: #999;">De afspraak is automatisch gemarkeerd als no-show.</p>`;
 
   return emailWrapper(content);
 }

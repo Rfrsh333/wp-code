@@ -4,6 +4,8 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { generateAutoReply, generateAutoReplySubject } from "@/lib/inquiry-auto-reply";
+import { buildAutoReplyEmailHtml } from "@/lib/email-templates";
 
 interface FormData {
   bedrijfsnaam: string;
@@ -315,6 +317,80 @@ export async function POST(request: NextRequest) {
       `📍 ${data.locatie}\n` +
       `📅 Start: ${data.startDatum}`
     ).catch(console.error);
+
+    // Auto-reply: check of het is ingeschakeld en stuur automatisch een reactie
+    try {
+      const { data: autoReplySetting } = await supabase
+        .from("admin_settings")
+        .select("value")
+        .eq("key", "auto_reply_enabled")
+        .single();
+
+      if (autoReplySetting?.value === "true" && process.env.RESEND_API_KEY) {
+        // Haal sender instellingen op
+        const { data: senderSettings } = await supabase
+          .from("admin_settings")
+          .select("key, value")
+          .in("key", ["sender_name", "sender_email"]);
+
+        const sMap = Object.fromEntries((senderSettings || []).map((s) => [s.key, s.value]));
+        const arSenderEmail = sMap.sender_email || "info@toptalentjobs.nl";
+        const arSenderName = sMap.sender_name || "TopTalent Jobs";
+
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl";
+        // Gebruik het opgeslagen record ID als inquiry ref
+        const savedId = (await supabase
+          .from("personeel_aanvragen")
+          .select("id")
+          .eq("email", data.email)
+          .eq("bedrijfsnaam", data.bedrijfsnaam)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single())?.data?.id;
+
+        const bookingUrl = `${baseUrl}/afspraak-plannen${savedId ? `?ref=${savedId}` : ""}`;
+
+        const emailBody = generateAutoReply(
+          {
+            id: savedId || "",
+            contactpersoon: data.contactpersoon,
+            bedrijfsnaam: data.bedrijfsnaam,
+            email: data.email,
+            type_personeel: data.typePersoneel,
+            aantal_personen: data.aantalPersonen,
+            start_datum: data.startDatum,
+            eind_datum: data.eindDatum || null,
+            opmerkingen: data.opmerkingen || null,
+            locatie: data.locatie,
+          },
+          { senderName: arSenderName, bookingUrl },
+        );
+
+        const htmlContent = buildAutoReplyEmailHtml(emailBody, bookingUrl);
+
+        const arResend = new Resend(process.env.RESEND_API_KEY);
+        const { data: arEmailData } = await arResend.emails.send({
+          from: `${arSenderName} <${arSenderEmail}>`,
+          to: [data.email],
+          subject: generateAutoReplySubject(),
+          html: htmlContent,
+        });
+
+        // Markeer als beantwoord
+        if (savedId && arEmailData?.id) {
+          await supabase
+            .from("personeel_aanvragen")
+            .update({
+              replied_at: new Date().toISOString(),
+              reply_email_id: arEmailData.id,
+            })
+            .eq("id", savedId);
+        }
+      }
+    } catch (autoReplyErr) {
+      // Auto-reply fout mag de hoofdflow niet breken
+      console.error("Auto-reply error:", autoReplyErr);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

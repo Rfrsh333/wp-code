@@ -27,11 +27,11 @@ interface Booking {
   confirmation_email_sent: boolean;
   reminder_email_sent: boolean;
   created_at: string;
-  // Joined slot data
   availability_slots?: Slot;
 }
 
 interface Setting {
+  id: string;
   key: string;
   value: string;
 }
@@ -39,7 +39,8 @@ interface Setting {
 type TabView = "kalender" | "boekingen" | "beschikbaarheid" | "instellingen";
 
 const dagNamen = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
-const dagNamenKort = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
+const dagNamenKort = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+const MONTH_LIMIT = 12;
 
 export default function AgendaTab() {
   const [view, setView] = useState<TabView>("kalender");
@@ -48,9 +49,22 @@ export default function AgendaTab() {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [bookingFilter, setBookingFilter] = useState<string>("all");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  // Nieuwe boeking modal state
+  const [newBookingModal, setNewBookingModal] = useState(false);
+  const [newBookingDate, setNewBookingDate] = useState("");
+  const [newBookingSlotId, setNewBookingSlotId] = useState("");
+  const [newBookingName, setNewBookingName] = useState("");
+  const [newBookingEmail, setNewBookingEmail] = useState("");
+  const [newBookingPhone, setNewBookingPhone] = useState("");
+  const [newBookingCompany, setNewBookingCompany] = useState("");
+  const [newBookingNotes, setNewBookingNotes] = useState("");
+  const [newBookingSaving, setNewBookingSaving] = useState(false);
+  const [newBookingError, setNewBookingError] = useState("");
 
   const getAuthHeaders = useCallback(async (): Promise<HeadersInit> => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -97,27 +111,47 @@ export default function AgendaTab() {
     }
   };
 
-  const updateBookingStatus = async (id: string, status: string) => {
-    await fetch("/api/admin/data", {
+  const adminFetch = async (body: Record<string, unknown>) => {
+    const res = await fetch("/api/admin/data", {
       method: "POST",
       headers: await getAuthHeaders(),
-      body: JSON.stringify({ action: "update", table: "bookings", id, data: { status } }),
+      body: JSON.stringify(body),
     });
-    fetchData();
+    const result = await res.json();
+    if (!res.ok || result.error) {
+      console.error("Admin data error:", result.error);
+    }
+    return result;
+  };
+
+  const updateBookingStatus = async (id: string, status: string) => {
+    await adminFetch({ action: "update", table: "bookings", id, data: { status } });
+    await fetchData();
   };
 
   const toggleSlotAvailability = async (slotId: string, isAvailable: boolean) => {
-    await fetch("/api/admin/data", {
-      method: "POST",
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({
-        action: "update",
-        table: "availability_slots",
-        id: slotId,
-        data: { is_available: !isAvailable },
-      }),
+    await adminFetch({
+      action: "update",
+      table: "availability_slots",
+      id: slotId,
+      data: { is_available: !isAvailable },
     });
-    fetchData();
+    await fetchData();
+  };
+
+  const toggleDayAvailability = async (dateStr: string, block: boolean) => {
+    const daySlots = getSlotsForDate(dateStr);
+    const toggleableSlots = daySlots.filter((s) => !s.is_booked && s.google_calendar_event_id !== "google_blocked");
+    if (toggleableSlots.length === 0) return;
+
+    const ids = toggleableSlots.map((s) => s.id);
+    await adminFetch({
+      action: "bulk_update",
+      table: "availability_slots",
+      ids,
+      data: { is_available: !block },
+    });
+    await fetchData();
   };
 
   const updateSetting = async (key: string, value: string) => {
@@ -126,36 +160,68 @@ export default function AgendaTab() {
       await fetch("/api/admin/data", {
         method: "POST",
         headers: await getAuthHeaders(),
-        body: JSON.stringify({ action: "update", table: "admin_settings", id: existing.key, data: { value } }),
+        body: JSON.stringify({ action: "update", table: "admin_settings", id: existing.id, data: { value } }),
       });
     }
-    // Update locally
     setSettings((prev) =>
       prev.map((s) => (s.key === key ? { ...s, value } : s)),
     );
   };
 
-  // Week berekening
-  const getWeekDays = () => {
+  // Maand berekening
+  const getMonthData = () => {
     const today = new Date();
-    const startOfWeek = new Date(today);
-    const currentDay = today.getDay();
-    const diff = currentDay === 0 ? -6 : 1 - currentDay;
-    startOfWeek.setDate(today.getDate() + diff + weekOffset * 7);
+    const targetMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+    const year = targetMonth.getFullYear();
+    const month = targetMonth.getMonth();
 
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
-      return date;
-    });
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    // Maandag = 0, Zondag = 6 (ISO week)
+    let startDayOfWeek = firstDay.getDay() - 1;
+    if (startDayOfWeek < 0) startDayOfWeek = 6;
+
+    const days: { date: Date; isCurrentMonth: boolean }[] = [];
+
+    // Dagen van vorige maand
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      const d = new Date(year, month, -i);
+      days.push({ date: d, isCurrentMonth: false });
+    }
+
+    // Dagen van huidige maand
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      days.push({ date: new Date(year, month, i), isCurrentMonth: true });
+    }
+
+    // Aanvullen tot 42 (6 rijen)
+    while (days.length < 42) {
+      const nextDate = new Date(year, month + 1, days.length - lastDay.getDate() - startDayOfWeek + 1);
+      days.push({ date: nextDate, isCurrentMonth: false });
+    }
+
+    return {
+      year,
+      month,
+      monthName: targetMonth.toLocaleDateString("nl-NL", { month: "long", year: "numeric" }),
+      days,
+    };
   };
 
-  const weekDays = getWeekDays();
+  const monthData = getMonthData();
 
   const getSlotsForDate = (dateStr: string) => {
     return slots
       .filter((s) => s.date === dateStr)
       .sort((a, b) => a.start_time.localeCompare(b.start_time));
+  };
+
+  const getBookingsForDate = (dateStr: string) => {
+    return bookings.filter((b) => {
+      const slot = slots.find((s) => s.id === b.slot_id);
+      return slot?.date === dateStr && b.status !== "cancelled";
+    });
   };
 
   const getBookingForSlot = (slotId: string): Booking | undefined => {
@@ -188,6 +254,59 @@ export default function AgendaTab() {
     if (!slot.is_available) return "bg-neutral-200 text-neutral-500";
     return "bg-green-50 text-green-700 border border-green-200";
   };
+
+  const openNewBookingModal = (dateStr?: string) => {
+    setNewBookingDate(dateStr || "");
+    setNewBookingSlotId("");
+    setNewBookingName("");
+    setNewBookingEmail("");
+    setNewBookingPhone("");
+    setNewBookingCompany("");
+    setNewBookingNotes("");
+    setNewBookingError("");
+    setNewBookingModal(true);
+  };
+
+  const submitNewBooking = async () => {
+    if (!newBookingSlotId || !newBookingName.trim() || !newBookingEmail.trim()) {
+      setNewBookingError("Naam, e-mail en tijdslot zijn verplicht");
+      return;
+    }
+    setNewBookingSaving(true);
+    setNewBookingError("");
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slot_id: newBookingSlotId,
+          client_name: newBookingName.trim(),
+          client_email: newBookingEmail.trim(),
+          client_phone: newBookingPhone.trim() || null,
+          company_name: newBookingCompany.trim() || null,
+          notes: newBookingNotes.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewBookingModal(false);
+        fetchData();
+      } else {
+        setNewBookingError(data.error || "Kon boeking niet aanmaken");
+      }
+    } catch {
+      setNewBookingError("Netwerkfout — probeer opnieuw");
+    } finally {
+      setNewBookingSaving(false);
+    }
+  };
+
+  // Beschikbare slots voor de geselecteerde datum in de booking modal
+  const availableSlotsForBooking = newBookingDate
+    ? getSlotsForDate(newBookingDate).filter((s) => s.is_available && !s.is_booked)
+    : [];
+
+  const todayStr = new Date().toISOString().split("T")[0];
 
   if (loading) {
     return (
@@ -230,33 +349,32 @@ export default function AgendaTab() {
         </div>
       </div>
 
-      {/* ============ KALENDER VIEW ============ */}
+      {/* ============ KALENDER VIEW (MAAND) ============ */}
       {view === "kalender" && (
         <div>
+          {/* Maand navigatie */}
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => setWeekOffset((p) => p - 1)}
-              className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors"
+              onClick={() => setMonthOffset((p) => Math.max(p - 1, -MONTH_LIMIT))}
+              disabled={monthOffset <= -MONTH_LIMIT}
+              className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors disabled:opacity-30"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div className="text-center">
-              <p className="font-semibold text-neutral-900">
-                {weekDays[0].toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
-                {" — "}
-                {weekDays[6].toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
-              </p>
-              {weekOffset !== 0 && (
-                <button onClick={() => setWeekOffset(0)} className="text-sm text-[#F27501] hover:underline">
+              <p className="font-semibold text-neutral-900 capitalize">{monthData.monthName}</p>
+              {monthOffset !== 0 && (
+                <button onClick={() => setMonthOffset(0)} className="text-sm text-[#F27501] hover:underline">
                   Vandaag
                 </button>
               )}
             </div>
             <button
-              onClick={() => setWeekOffset((p) => p + 1)}
-              className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors"
+              onClick={() => setMonthOffset((p) => Math.min(p + 1, MONTH_LIMIT))}
+              disabled={monthOffset >= MONTH_LIMIT}
+              className="px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors disabled:opacity-30"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -266,78 +384,222 @@ export default function AgendaTab() {
 
           {/* Legenda */}
           <div className="flex gap-4 mb-4 text-xs">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-50 border border-green-200 rounded" /> Beschikbaar</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[#F27501] rounded" /> Geboekt</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-purple-100 rounded" /> Google Cal</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-neutral-200 rounded" /> Geblokkeerd</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-400 rounded-full" /> Beschikbaar</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[#F27501] rounded-full" /> Geboekt</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-purple-400 rounded-full" /> Google Cal</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-neutral-300 rounded-full" /> Geblokkeerd</span>
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
-            {weekDays.map((day) => {
-              const dateStr = day.toISOString().split("T")[0];
+          {/* Weekdag headers */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {dagNamenKort.map((d) => (
+              <div key={d} className="text-center text-xs font-medium text-neutral-500 py-2">{d}</div>
+            ))}
+          </div>
+
+          {/* Kalender grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {monthData.days.map(({ date, isCurrentMonth }, idx) => {
+              const dateStr = date.toISOString().split("T")[0];
               const daySlots = getSlotsForDate(dateStr);
-              const isToday = dateStr === new Date().toISOString().split("T")[0];
+              const dayBookings = getBookingsForDate(dateStr);
+              const isToday = dateStr === todayStr;
+              const isSelected = dateStr === selectedDate;
+              const availableCount = daySlots.filter((s) => s.is_available && !s.is_booked).length;
+              const bookedCount = dayBookings.length;
+              const blockedCount = daySlots.filter((s) => !s.is_available && !s.is_booked).length;
 
               return (
-                <div
-                  key={dateStr}
-                  className={`rounded-xl border p-3 min-h-[160px] ${
-                    isToday ? "border-[#F27501] bg-[#FEF3E7]/30" : "border-neutral-200 bg-white"
+                <button
+                  key={idx}
+                  onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                  className={`relative rounded-xl p-2 min-h-[72px] text-left transition-all ${
+                    !isCurrentMonth
+                      ? "bg-neutral-50 text-neutral-300"
+                      : isSelected
+                      ? "bg-[#FEF3E7] border-2 border-[#F27501]"
+                      : isToday
+                      ? "bg-[#FEF3E7]/50 border border-[#F27501]/40"
+                      : "bg-white border border-neutral-100 hover:border-neutral-300"
                   }`}
                 >
-                  <div className="text-center mb-2">
-                    <p className="text-xs text-neutral-500">{dagNamenKort[day.getDay()]}</p>
-                    <p className={`text-lg font-bold ${isToday ? "text-[#F27501]" : "text-neutral-900"}`}>
-                      {day.getDate()}
+                  <span className={`text-sm font-semibold ${
+                    !isCurrentMonth ? "text-neutral-300" :
+                    isToday ? "text-[#F27501]" : "text-neutral-900"
+                  }`}>
+                    {date.getDate()}
+                  </span>
+                  {isCurrentMonth && daySlots.length > 0 && (
+                    <div className="flex gap-0.5 mt-1 flex-wrap">
+                      {bookedCount > 0 && (
+                        <span className="w-2 h-2 rounded-full bg-[#F27501]" title={`${bookedCount} geboekt`} />
+                      )}
+                      {availableCount > 0 && (
+                        <span className="w-2 h-2 rounded-full bg-green-400" title={`${availableCount} beschikbaar`} />
+                      )}
+                      {blockedCount > 0 && (
+                        <span className="w-2 h-2 rounded-full bg-neutral-300" title={`${blockedCount} geblokkeerd`} />
+                      )}
+                    </div>
+                  )}
+                  {isCurrentMonth && bookedCount > 0 && (
+                    <p className="text-[10px] text-[#F27501] font-medium mt-0.5 truncate">
+                      {bookedCount} afspraak{bookedCount > 1 ? "en" : ""}
                     </p>
-                  </div>
-                  <div className="space-y-1">
-                    {daySlots.map((slot) => {
-                      const booking = getBookingForSlot(slot.id);
-                      return (
-                        <button
-                          key={slot.id}
-                          onClick={() => {
-                            if (booking) {
-                              setSelectedBooking(booking);
-                            } else if (!slot.google_calendar_event_id || slot.google_calendar_event_id !== "google_blocked") {
-                              toggleSlotAvailability(slot.id, slot.is_available);
-                            }
-                          }}
-                          className={`w-full text-xs p-1.5 rounded-lg ${slotKleur(slot)} text-left transition-opacity hover:opacity-80`}
-                          title={booking ? `${booking.client_name}` : slot.is_available ? "Klik om te blokkeren" : "Klik om vrij te geven"}
-                        >
-                          <p className="font-medium">{slot.start_time.slice(0, 5)}</p>
-                          {booking && <p className="truncate">{booking.client_name}</p>}
-                        </button>
-                      );
-                    })}
-                    {daySlots.length === 0 && (
-                      <p className="text-xs text-neutral-400 text-center py-2">—</p>
-                    )}
-                  </div>
-                </div>
+                  )}
+                </button>
               );
             })}
           </div>
+
+          {/* Detail panel voor geselecteerde dag */}
+          {selectedDate && (
+            <div className="mt-4 bg-white rounded-xl border border-neutral-200 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-neutral-900">
+                  {dagNamen[new Date(selectedDate + "T12:00:00").getDay()]}{" "}
+                  {new Date(selectedDate + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                </h3>
+                <div className="flex gap-2">
+                  {(() => {
+                    const daySlots = getSlotsForDate(selectedDate);
+                    const toggleable = daySlots.filter((s) => !s.is_booked && s.google_calendar_event_id !== "google_blocked");
+                    const allBlocked = toggleable.length > 0 && toggleable.every((s) => !s.is_available);
+                    if (toggleable.length === 0) return null;
+                    return (
+                      <button
+                        onClick={() => toggleDayAvailability(selectedDate, !allBlocked)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          allBlocked
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-red-100 text-red-600 hover:bg-red-200"
+                        }`}
+                      >
+                        {allBlocked ? "Maak dag vrij" : "Blokkeer hele dag"}
+                      </button>
+                    );
+                  })()}
+                  <button
+                    onClick={() => setSelectedDate(null)}
+                    className="p-1.5 hover:bg-neutral-100 rounded-lg"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {getSlotsForDate(selectedDate).length > 0 ? (
+                <div className="space-y-1.5">
+                  {getSlotsForDate(selectedDate).map((slot) => {
+                    const booking = getBookingForSlot(slot.id);
+                    const isGoogle = slot.google_calendar_event_id === "google_blocked";
+                    return (
+                      <div
+                        key={slot.id}
+                        className={`flex items-center justify-between p-2.5 rounded-lg ${slotKleur(slot)}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium text-sm">
+                            {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                          </span>
+                          {booking && <span className="text-sm">{booking.client_name}</span>}
+                          {isGoogle && <span className="text-xs">(Google Calendar)</span>}
+                        </div>
+                        <div className="flex gap-1">
+                          {booking ? (
+                            <button
+                              onClick={() => setSelectedBooking(booking)}
+                              className="px-2 py-1 text-xs bg-white/80 text-neutral-900 rounded-lg hover:bg-white transition-colors"
+                            >
+                              Details
+                            </button>
+                          ) : slot.is_available && !isGoogle ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setNewBookingDate(selectedDate);
+                                  setNewBookingSlotId(slot.id);
+                                  setNewBookingName("");
+                                  setNewBookingEmail("");
+                                  setNewBookingPhone("");
+                                  setNewBookingCompany("");
+                                  setNewBookingNotes("");
+                                  setNewBookingError("");
+                                  setNewBookingModal(true);
+                                }}
+                                className="px-2 py-1 text-xs bg-[#F27501] text-white rounded-lg hover:bg-[#d96800] transition-colors font-medium"
+                              >
+                                Boek
+                              </button>
+                              <button
+                                onClick={() => toggleSlotAvailability(slot.id, slot.is_available)}
+                                className="px-2 py-1 text-xs bg-white/80 text-neutral-700 rounded-lg hover:bg-white transition-colors"
+                              >
+                                Blokkeer
+                              </button>
+                            </>
+                          ) : !isGoogle ? (
+                            <button
+                              onClick={() => toggleSlotAvailability(slot.id, slot.is_available)}
+                              className="px-2 py-1 text-xs bg-white/80 text-neutral-700 rounded-lg hover:bg-white transition-colors"
+                            >
+                              Vrijgeven
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-400 py-4 text-center">Geen slots op deze dag</p>
+              )}
+
+              {/* Nieuwe boeking knop onderaan dag detail */}
+              {getSlotsForDate(selectedDate).some((s) => s.is_available && !s.is_booked) && (
+                <button
+                  onClick={() => openNewBookingModal(selectedDate)}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors text-sm font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Nieuwe boeking op deze dag
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {/* ============ BOEKINGEN VIEW ============ */}
       {view === "boekingen" && (
         <div>
-          <div className="flex gap-2 mb-4">
-            {["all", "confirmed", "completed", "cancelled", "no_show"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setBookingFilter(f)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  bookingFilter === f ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                }`}
-              >
-                {f === "all" ? "Alles" : statusLabel(f)}
-              </button>
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-2">
+              {["all", "confirmed", "completed", "cancelled", "no_show"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setBookingFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    bookingFilter === f ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  }`}
+                >
+                  {f === "all" ? "Alles" : statusLabel(f)}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => openNewBookingModal()}
+              className="flex items-center gap-2 px-4 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors text-sm font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Nieuwe boeking
+            </button>
           </div>
 
           <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
@@ -365,15 +627,15 @@ export default function AgendaTab() {
                           <p className="text-sm text-neutral-500">{b.client_email}</p>
                         </td>
                         <td className="px-4 py-3 text-sm text-neutral-700">
-                          {b.company_name || "—"}
+                          {b.company_name || "\u2014"}
                         </td>
                         <td className="px-4 py-3 text-sm text-neutral-700">
                           {slot ? new Date(slot.date).toLocaleDateString("nl-NL", {
                             weekday: "short", day: "numeric", month: "short",
-                          }) : "—"}
+                          }) : "\u2014"}
                         </td>
                         <td className="px-4 py-3 text-sm font-medium text-neutral-900">
-                          {slot ? `${slot.start_time.slice(0, 5)} - ${slot.end_time.slice(0, 5)}` : "—"}
+                          {slot ? `${slot.start_time.slice(0, 5)} - ${slot.end_time.slice(0, 5)}` : "\u2014"}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusKleur(b.status)}`}>
@@ -438,7 +700,6 @@ export default function AgendaTab() {
             </button>
           </div>
 
-          {/* Toon slots per dag voor de komende 2 weken */}
           <div className="space-y-4">
             {Array.from({ length: 14 }, (_, i) => {
               const date = new Date();
@@ -447,11 +708,28 @@ export default function AgendaTab() {
               const daySlots = getSlotsForDate(dateStr);
               if (daySlots.length === 0) return null;
 
+              const toggleable = daySlots.filter((s) => !s.is_booked && s.google_calendar_event_id !== "google_blocked");
+              const allBlocked = toggleable.length > 0 && toggleable.every((s) => !s.is_available);
+
               return (
                 <div key={dateStr} className="bg-white rounded-xl border border-neutral-200 p-4">
-                  <h3 className="font-semibold text-neutral-900 mb-3">
-                    {dagNamen[date.getDay()]} {date.toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
-                  </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-neutral-900">
+                      {dagNamen[date.getDay()]} {date.toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
+                    </h3>
+                    {toggleable.length > 0 && (
+                      <button
+                        onClick={() => toggleDayAvailability(dateStr, !allBlocked)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          allBlocked
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-red-100 text-red-600 hover:bg-red-200"
+                        }`}
+                      >
+                        {allBlocked ? "Maak dag vrij" : "Blokkeer hele dag"}
+                      </button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {daySlots.map((slot) => {
                       const booking = getBookingForSlot(slot.id);
@@ -489,7 +767,6 @@ export default function AgendaTab() {
       {/* ============ INSTELLINGEN VIEW ============ */}
       {view === "instellingen" && (
         <div className="max-w-2xl space-y-6">
-          {/* E-mail instellingen */}
           <div className="bg-white rounded-xl border border-neutral-200 p-6">
             <h3 className="font-semibold text-neutral-900 mb-4">E-mail instellingen</h3>
             <div className="space-y-4">
@@ -532,7 +809,6 @@ export default function AgendaTab() {
             </div>
           </div>
 
-          {/* Booking instellingen */}
           <div className="bg-white rounded-xl border border-neutral-200 p-6">
             <h3 className="font-semibold text-neutral-900 mb-4">Booking instellingen</h3>
             <div className="space-y-4">
@@ -629,7 +905,6 @@ export default function AgendaTab() {
             </div>
           </div>
 
-          {/* Google Calendar */}
           <div className="bg-white rounded-xl border border-neutral-200 p-6">
             <h3 className="font-semibold text-neutral-900 mb-4">Google Calendar</h3>
             <div className="flex items-center justify-between">
@@ -637,7 +912,7 @@ export default function AgendaTab() {
                 <p className={`font-medium ${getSetting("google_calendar_last_sync") ? "text-green-600" : "text-neutral-500"}`}>
                   {getSetting("google_calendar_last_sync")
                     ? `Laatst gesynchroniseerd: ${new Date(getSetting("google_calendar_last_sync")).toLocaleString("nl-NL")}`
-                    : "Niet geconfigureerd — stel GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET en GOOGLE_REFRESH_TOKEN in als environment variables"
+                    : "Niet geconfigureerd \u2014 stel GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET en GOOGLE_REFRESH_TOKEN in als environment variables"
                   }
                 </p>
               </div>
@@ -687,6 +962,142 @@ export default function AgendaTab() {
                 </>
               )}
               <button onClick={() => setSelectedBooking(null)} className="px-4 py-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 text-sm font-medium">Sluiten</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nieuwe boeking modal */}
+      {newBookingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setNewBookingModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-neutral-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-neutral-900">Nieuwe boeking</h3>
+              <button onClick={() => setNewBookingModal(false)} className="p-2 hover:bg-neutral-100 rounded-lg">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {newBookingError && (
+                <div className="p-3 bg-red-50 text-red-700 rounded-xl text-sm">{newBookingError}</div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Datum *</label>
+                <input
+                  type="date"
+                  value={newBookingDate}
+                  onChange={(e) => { setNewBookingDate(e.target.value); setNewBookingSlotId(""); }}
+                  min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+                  className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none"
+                />
+              </div>
+
+              {newBookingDate && (
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Tijdslot *</label>
+                  {availableSlotsForBooking.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {availableSlotsForBooking.map((slot) => (
+                        <button
+                          key={slot.id}
+                          onClick={() => setNewBookingSlotId(slot.id)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            newBookingSlotId === slot.id
+                              ? "bg-[#F27501] text-white"
+                              : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                          }`}
+                        >
+                          {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-neutral-500">Geen beschikbare slots op deze dag. Genereer eerst slots via Sync.</p>
+                  )}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Naam *</label>
+                  <input
+                    type="text"
+                    value={newBookingName}
+                    onChange={(e) => setNewBookingName(e.target.value)}
+                    placeholder="Jan de Vries"
+                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">E-mail *</label>
+                  <input
+                    type="email"
+                    value={newBookingEmail}
+                    onChange={(e) => setNewBookingEmail(e.target.value)}
+                    placeholder="jan@bedrijf.nl"
+                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Telefoon</label>
+                  <input
+                    type="tel"
+                    value={newBookingPhone}
+                    onChange={(e) => setNewBookingPhone(e.target.value)}
+                    placeholder="06-12345678"
+                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Bedrijf</label>
+                  <input
+                    type="text"
+                    value={newBookingCompany}
+                    onChange={(e) => setNewBookingCompany(e.target.value)}
+                    placeholder="Bedrijfsnaam BV"
+                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Notities</label>
+                <textarea
+                  value={newBookingNotes}
+                  onChange={(e) => setNewBookingNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Opmerkingen over de afspraak..."
+                  className="w-full px-4 py-2.5 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] outline-none resize-none"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-neutral-100 flex gap-3 justify-end">
+              <button
+                onClick={() => setNewBookingModal(false)}
+                className="px-4 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={submitNewBooking}
+                disabled={newBookingSaving || !newBookingSlotId || !newBookingName.trim() || !newBookingEmail.trim()}
+                className="px-6 py-2 bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+              >
+                {newBookingSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Aanmaken...
+                  </>
+                ) : (
+                  "Boeking aanmaken"
+                )}
+              </button>
             </div>
           </div>
         </div>

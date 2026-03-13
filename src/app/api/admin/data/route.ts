@@ -37,6 +37,12 @@ const ALLOWED_TABLES = [
   "pricing_rules",
   "google_reviews",
   "content_posts",
+  "availability_slots",
+  "bookings",
+  "admin_settings",
+  "event_types",
+  "availability_schedules",
+  "availability_overrides",
 ] as const;
 
 type AllowedTable = typeof ALLOWED_TABLES[number];
@@ -66,7 +72,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Table not allowed" }, { status: 403 });
   }
 
-  const { data } = await supabaseAdmin.from(table).select("*").order("created_at", { ascending: false }).limit(500);
+  // admin_settings heeft geen created_at kolom
+  const TABLES_WITHOUT_CREATED_AT = ["admin_settings", "availability_schedules"];
+  let query = supabaseAdmin.from(table).select("*");
+  if (!TABLES_WITHOUT_CREATED_AT.includes(table)) {
+    query = query.order("created_at", { ascending: false });
+  }
+  const { data, error } = await query.limit(500);
+
+  if (error) {
+    console.error(`[DATA] Error fetching ${table}:`, error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
   return NextResponse.json({ data }, {
     headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
   });
@@ -98,7 +116,11 @@ export async function POST(request: NextRequest) {
   let generatedMedewerkerLinks = 0;
 
   if (action === "update") {
-    await supabaseAdmin.from(table).update(data).eq("id", id);
+    const { error: updateError } = await supabaseAdmin.from(table).update(data).eq("id", id);
+    if (updateError) {
+      console.error(`[DATA] Update error on ${table}:`, updateError.message, { id, data });
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
 
     if (
       table === "inschrijvingen" &&
@@ -157,7 +179,11 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from(table).delete().in("id", data.ids);
   }
   if (action === "bulk_update") {
-    await supabaseAdmin.from(table).update(data).in("id", ids);
+    const { error: bulkError } = await supabaseAdmin.from(table).update(data).in("id", ids);
+    if (bulkError) {
+      console.error(`[DATA] Bulk update error on ${table}:`, bulkError.message, { ids, data });
+      return NextResponse.json({ error: bulkError.message }, { status: 500 });
+    }
 
     if (
       table === "inschrijvingen" &&

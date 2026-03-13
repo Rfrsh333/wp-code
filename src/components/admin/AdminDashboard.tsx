@@ -978,6 +978,15 @@ export default function AdminDashboard() {
       ),
     },
     {
+      id: "agenda",
+      label: "Agenda",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
       id: "stats",
       label: "Statistieken",
       icon: (
@@ -1145,15 +1154,6 @@ export default function AdminDashboard() {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-      ),
-    },
-    {
-      id: "agenda",
-      label: "Agenda",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       ),
     },
@@ -3106,16 +3106,22 @@ export default function AdminDashboard() {
                         subject: replySubject,
                       }),
                     });
+                    if (!res.ok) {
+                      const errorData = await res.json().catch(() => null);
+                      const detail = errorData?.error || errorData?.message || `Server fout (${res.status})`;
+                      toast.error(`Versturen mislukt: ${detail}`);
+                      return;
+                    }
                     const data = await res.json();
                     if (data.success) {
                       toast.success(data.message || "Email verstuurd!");
                       setReplyModal(false);
                       fetchData();
                     } else {
-                      toast.error(data.error || "Versturen mislukt");
+                      toast.error(`Versturen mislukt: ${data.error || "Onbekende fout"}`);
                     }
-                  } catch {
-                    toast.error("Er ging iets mis bij het versturen");
+                  } catch (err) {
+                    toast.error(`Versturen mislukt: ${err instanceof Error ? err.message : "Netwerkfout — controleer je verbinding"}`);
                   } finally {
                     setReplySending(false);
                   }
