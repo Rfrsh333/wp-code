@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const securityHeaders = [
   {
@@ -42,7 +43,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
       "frame-src https://www.google.com https://vercel.live",
-      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co https://vercel.live https://*.clarity.ms https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co https://vercel.live https://*.clarity.ms https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.ingest.sentry.io",
     ].join('; '),
   },
 ];
@@ -188,4 +189,11 @@ const analyzeBundles = withBundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
-export default analyzeBundles(nextConfig);
+export default withSentryConfig(analyzeBundles(nextConfig), {
+  silent: true,
+  widenClientFileUpload: true,
+  disableLogger: true,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+});
