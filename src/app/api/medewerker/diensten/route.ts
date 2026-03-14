@@ -42,16 +42,18 @@ export async function GET() {
   const functies = Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie];
   const { data: alleDiensten } = await supabaseAdmin
     .from("diensten")
-    .select("*")
+    .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, beschrijving, aantal_nodig, tarief")
     .in("functie", functies)
     .in("status", ["open", "vol"])
     .gte("datum", new Date().toISOString().split("T")[0])
-    .order("datum", { ascending: true });
+    .order("datum", { ascending: true })
+    .limit(100);
 
   const { data: aanmeldingen } = await supabaseAdmin
     .from("dienst_aanmeldingen")
     .select("id, dienst_id, status, uren_registraties(status)")
-    .eq("medewerker_id", medewerker.id);
+    .eq("medewerker_id", medewerker.id)
+    .limit(100);
 
   const aanmeldMap = new Map(
     aanmeldingen?.map((a) => [

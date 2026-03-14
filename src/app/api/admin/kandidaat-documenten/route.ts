@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
     .from("kandidaat_documenten")
     .select("*")
     .eq("inschrijving_id", inschrijvingId)
-    .order("uploaded_at", { ascending: false });
+    .order("uploaded_at", { ascending: false })
+    .limit(100);
 
   if (error) {
     console.error("Kandidaat documenten ophalen mislukt:", error);

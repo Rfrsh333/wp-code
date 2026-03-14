@@ -104,7 +104,7 @@ async function getRules(): Promise<PricingRule[]> {
 
   const { data } = await supabaseAdmin
     .from("pricing_rules")
-    .select("*")
+    .select("id, naam, type, conditie, waarde, actief, prioriteit")
     .eq("actief", true)
     .order("prioriteit", { ascending: true });
 

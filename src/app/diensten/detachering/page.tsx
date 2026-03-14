@@ -5,6 +5,8 @@ import Section from "@/components/Section";
 import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
 import PremiumImage from "@/components/PremiumImage";
 
+export const revalidate = 3600;
+
 export default function DetacheringPage() {
   return (
     <>

@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     if (action === "convert" && id) {
       const { data: lead } = await supabaseAdmin
         .from("acquisitie_leads")
-        .select("*")
+        .select("bedrijfsnaam, contactpersoon, email, telefoon, adres")
         .eq("id", id)
         .single();
 

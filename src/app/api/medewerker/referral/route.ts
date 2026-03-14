@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   // Haal alle referrals op voor stats
   const { data: referrals } = await supabaseAdmin
     .from("referrals")
-    .select("*")
+    .select("id, referral_code, status, reward_amount, referred_naam, created_at, qualified_at")
     .eq("referrer_type", "medewerker")
     .eq("referrer_id", medewerker.id)
     .order("created_at", { ascending: false });

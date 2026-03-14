@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { formatEditorialLabel } from "@/lib/content/presentation";
 
@@ -40,12 +41,82 @@ async function getAuthHeaders() {
   };
 }
 
+function EditableField({
+  value,
+  onSave,
+  multiline = false,
+  label,
+}: {
+  value: string;
+  onSave: (val: string) => void;
+  multiline?: boolean;
+  label: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+
+  if (!editing) {
+    return (
+      <div
+        className="group cursor-pointer rounded-lg p-1 -m-1 transition hover:bg-orange-50"
+        onClick={() => { setEditValue(value); setEditing(true); }}
+        title={`Klik om ${label} te bewerken`}
+      >
+        {multiline ? (
+          <div className="whitespace-pre-wrap">{value}</div>
+        ) : (
+          <span>{value}</span>
+        )}
+        <span className="ml-2 text-xs text-neutral-400 opacity-0 group-hover:opacity-100">bewerken</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {multiline ? (
+        <textarea
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          className="w-full rounded-lg border border-orange-200 p-3 text-sm focus:border-[#F27501] focus:outline-none focus:ring-1 focus:ring-[#F27501]"
+          rows={12}
+          autoFocus
+        />
+      ) : (
+        <input
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          className="w-full rounded-lg border border-orange-200 px-3 py-2 text-sm focus:border-[#F27501] focus:outline-none focus:ring-1 focus:ring-[#F27501]"
+          autoFocus
+        />
+      )}
+      <div className="flex gap-2">
+        <button
+          onClick={() => { onSave(editValue); setEditing(false); }}
+          className="rounded-lg bg-[#F27501] px-3 py-1.5 text-xs font-semibold text-white"
+        >
+          Opslaan
+        </button>
+        <button
+          onClick={() => setEditing(false)}
+          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600"
+        >
+          Annuleren
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DraftDetailReview() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [draft, setDraft] = useState<DraftDetail | null>(null);
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const loadDraft = useCallback(async () => {
     try {
@@ -73,8 +144,28 @@ export default function DraftDetailReview() {
     loadDraft();
   }, [loadDraft]);
 
+  const saveField = async (field: string, value: string | string[]) => {
+    try {
+      setSaveMessage(null);
+      const response = await fetch(`/api/admin/news/drafts/${params.id}`, {
+        method: "PATCH",
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      if (!response.ok) throw new Error("Opslaan mislukt");
+
+      const payload = await response.json();
+      if (payload.draft) setDraft(payload.draft);
+      setSaveMessage("Opgeslagen!");
+      setTimeout(() => setSaveMessage(null), 2000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Opslaan mislukt");
+    }
+  };
+
   const runAction = async (
-    action: "approve" | "reject" | "queue_publish" | "publish_now" | "generate_image",
+    action: "approve" | "reject" | "queue_publish" | "publish_now" | "generate_image" | "regenerate_blocks" | "delete",
   ) => {
     setBusyAction(action);
     try {
@@ -89,6 +180,11 @@ export default function DraftDetailReview() {
 
       if (!response.ok) {
         throw new Error("Actie kon niet worden uitgevoerd.");
+      }
+
+      if (action === "delete") {
+        router.push("/admin/news/drafts");
+        return;
       }
 
       await loadDraft();
@@ -110,23 +206,32 @@ export default function DraftDetailReview() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <Link href="/admin/news/drafts" className="text-sm font-medium text-[#F27501]">← Terug naar drafts</Link>
-          <h1 className="mt-2 text-3xl font-bold text-neutral-900">{draft.title}</h1>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        <div className="min-w-0 flex-1">
+          <Link href="/admin/news/drafts" className="text-sm font-medium text-[#F27501]">&larr; Terug naar drafts</Link>
+          <h1 className="mt-2 text-3xl font-bold text-neutral-900">
+            <EditableField value={draft.title} onSave={(v) => saveField("title", v)} label="titel" />
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-neutral-100 px-3 py-1 font-semibold uppercase tracking-wide text-neutral-700">
               {draft.reviewStatus}
             </span>
             <span className="rounded-full bg-orange-100 px-3 py-1 font-semibold uppercase tracking-wide text-[#F27501]">
               {formatEditorialLabel(draft.primaryAudience)}
             </span>
+            {saveMessage ? (
+              <span className="rounded-full bg-emerald-100 px-3 py-1 font-semibold text-emerald-700 animate-pulse">
+                {saveMessage}
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => runAction("approve")} disabled={busyAction !== null} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 disabled:opacity-60">Goedkeuren</button>
           <button onClick={() => runAction("generate_image")} disabled={busyAction !== null} className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-[#F27501] disabled:opacity-60">Hero image</button>
+          <button onClick={() => runAction("regenerate_blocks")} disabled={busyAction !== null} className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 disabled:opacity-60">{busyAction === "regenerate_blocks" ? "Blocks genereren..." : "Regenereer blocks"}</button>
           <button onClick={() => runAction("queue_publish")} disabled={busyAction !== null} className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 disabled:opacity-60">In queue</button>
           <button onClick={() => runAction("publish_now")} disabled={busyAction !== null} className="rounded-xl bg-[#F27501] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Publiceer nu</button>
+          <button onClick={() => { if (confirm("Weet je zeker dat je deze draft wilt verwijderen?")) runAction("delete"); }} disabled={busyAction !== null} className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-400 hover:border-red-300 hover:text-red-600 disabled:opacity-60">Verwijderen</button>
         </div>
       </div>
 
@@ -136,15 +241,16 @@ export default function DraftDetailReview() {
         <div className="space-y-6">
           {heroImageUrl ? (
             <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-black/5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroImageUrl} alt={draft.title} className="h-auto w-full object-cover" />
+              <Image src={heroImageUrl} alt={draft.title} width={1200} height={630} className="h-auto w-full object-cover" unoptimized />
             </div>
           ) : null}
 
           <section className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-black/5">
-            <p className="text-lg leading-8 text-neutral-600">{draft.excerpt}</p>
-            <div className="mt-8 whitespace-pre-wrap text-base leading-8 text-neutral-800">
-              {draft.bodyMarkdown}
+            <div className="text-lg leading-8 text-neutral-600">
+              <EditableField value={draft.excerpt} onSave={(v) => saveField("excerpt", v)} multiline label="samenvatting" />
+            </div>
+            <div className="mt-8 text-base leading-8 text-neutral-800">
+              <EditableField value={draft.bodyMarkdown} onSave={(v) => saveField("bodyMarkdown", v)} multiline label="body" />
             </div>
           </section>
         </div>
@@ -153,22 +259,57 @@ export default function DraftDetailReview() {
           <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
             <h2 className="text-lg font-semibold text-neutral-900">Belangrijkste punten</h2>
             <ul className="mt-4 space-y-3 text-sm text-neutral-700">
-              {draft.keyTakeaways.map((item) => <li key={item}>{item}</li>)}
+              {draft.keyTakeaways.map((item, i) => (
+                <li key={i}>
+                  <EditableField
+                    value={item}
+                    onSave={(v) => {
+                      const updated = [...draft.keyTakeaways];
+                      updated[i] = v;
+                      saveField("keyTakeaways", updated);
+                    }}
+                    label={`punt ${i + 1}`}
+                  />
+                </li>
+              ))}
             </ul>
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
             <h2 className="text-lg font-semibold text-neutral-900">Actiestappen</h2>
             <ul className="mt-4 space-y-3 text-sm text-neutral-700">
-              {draft.actionSteps.map((item) => <li key={item}>{item}</li>)}
+              {draft.actionSteps.map((item, i) => (
+                <li key={i}>
+                  <EditableField
+                    value={item}
+                    onSave={(v) => {
+                      const updated = [...draft.actionSteps];
+                      updated[i] = v;
+                      saveField("actionSteps", updated);
+                    }}
+                    label={`stap ${i + 1}`}
+                  />
+                </li>
+              ))}
             </ul>
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
             <h2 className="text-lg font-semibold text-neutral-900">SEO & review</h2>
-            <p className="mt-4 text-sm text-neutral-700"><strong>SEO titel:</strong> {draft.seoTitle ?? "-"}</p>
-            <p className="mt-3 text-sm text-neutral-700"><strong>Meta:</strong> {draft.metaDescription ?? "-"}</p>
-            <p className="mt-3 text-sm text-neutral-700"><strong>Review notes:</strong> {draft.reviewNotes ?? "-"}</p>
+            <div className="mt-4 space-y-3 text-sm text-neutral-700">
+              <div>
+                <strong className="text-neutral-500">SEO titel:</strong>
+                <EditableField value={draft.seoTitle ?? ""} onSave={(v) => saveField("seoTitle", v)} label="SEO titel" />
+              </div>
+              <div>
+                <strong className="text-neutral-500">Meta:</strong>
+                <EditableField value={draft.metaDescription ?? ""} onSave={(v) => saveField("metaDescription", v)} label="meta description" />
+              </div>
+              <div>
+                <strong className="text-neutral-500">Review notes:</strong>
+                <EditableField value={draft.reviewNotes ?? ""} onSave={(v) => saveField("reviewNotes", v)} multiline label="review notes" />
+              </div>
+            </div>
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">

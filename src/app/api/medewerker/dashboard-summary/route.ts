@@ -20,7 +20,8 @@ export async function GET() {
       .select("dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie)")
       .eq("medewerker_id", medewerker.id)
       .eq("status", "geaccepteerd")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .limit(100);
 
     const volgendeShift = (volgendeDiensten || [])
       .map(a => Array.isArray(a.dienst) ? a.dienst[0] : a.dienst)
@@ -57,13 +58,15 @@ export async function GET() {
       .from("dienst_aanmeldingen")
       .select("id")
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "geaccepteerd");
+      .eq("status", "geaccepteerd")
+      .limit(500);
 
     const { data: urenData } = await supabaseAdmin
       .from("uren_registraties")
       .select("gewerkte_uren, aanmelding:dienst_aanmeldingen!inner(medewerker_id)")
       .eq("status", "goedgekeurd")
-      .eq("aanmelding.medewerker_id", medewerker.id);
+      .eq("aanmelding.medewerker_id", medewerker.id)
+      .limit(500);
 
     const totaalUren = (urenData || []).reduce((sum, u) => sum + (u.gewerkte_uren || 0), 0);
 

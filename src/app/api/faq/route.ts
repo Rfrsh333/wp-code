@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
     .select("*")
     .eq("status", "published")
     .order("category")
-    .order("priority", { ascending: true });
+    .order("priority", { ascending: true })
+    .limit(100);
 
   if (category) {
     query = query.eq("category", category);

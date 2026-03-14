@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
   const week = request.nextUrl.searchParams.get("week");
-  let query = supabaseAdmin.from("diensten").select("*").order("datum", { ascending: true });
+  let query = supabaseAdmin.from("diensten").select("*").order("datum", { ascending: true }).limit(500);
   if (week) {
     const start = new Date(week + "T00:00:00");
     const end = new Date(start);
@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
       .from("dienst_aanmeldingen")
       .select("*, medewerker:medewerkers(naam, email, telefoon)")
       .eq("dienst_id", dienst_id)
-      .order("aangemeld_at", { ascending: true });
+      .order("aangemeld_at", { ascending: true })
+      .limit(100);
     return NextResponse.json({ data: aanmeldingen });
   }
   if (action === "update_aanmelding") {
@@ -126,7 +127,8 @@ export async function POST(request: NextRequest) {
       .from("spoeddienst_responses")
       .select("*")
       .eq("dienst_id", dienst_id)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .limit(100);
     return NextResponse.json({ data: responses });
   }
 
@@ -171,7 +173,7 @@ export async function POST(request: NextRequest) {
   if (action === "regenerate_whatsapp") {
     const { data: dienst } = await supabaseAdmin
       .from("diensten")
-      .select("*")
+      .select("klant_naam, locatie, datum, start_tijd, eind_tijd, functie, aantal_nodig, uurtarief, spoeddienst_token")
       .eq("id", id)
       .single();
 

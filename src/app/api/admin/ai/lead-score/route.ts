@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (lead_id) {
       const { data: lead, error } = await supabaseAdmin
         .from("acquisitie_leads")
-        .select("*")
+        .select("bedrijfsnaam, branche, stad, website, telefoon, email, adres")
         .eq("id", lead_id)
         .single();
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (lead_ids && Array.isArray(lead_ids)) {
       const { data: leads } = await supabaseAdmin
         .from("acquisitie_leads")
-        .select("*")
+        .select("id, bedrijfsnaam, branche, stad, website, telefoon, email, adres")
         .in("id", lead_ids);
 
       if (!leads?.length) {

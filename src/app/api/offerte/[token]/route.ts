@@ -15,7 +15,7 @@ export async function GET(
 
     const { data: offerte, error } = await supabaseAdmin
       .from("offertes")
-      .select("*")
+      .select("offerte_nummer, bedrijfsnaam, contactpersoon, locatie, geldig_tot, status, ai_introductie, tarieven, korting_percentage, totaal_bedrag, accepted_at, accepted_naam, created_at")
       .eq("token", token)
       .single();
 

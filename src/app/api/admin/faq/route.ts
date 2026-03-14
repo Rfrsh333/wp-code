@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   if (category) query = query.eq("category", category);
   if (source) query = query.eq("source", source);
 
-  const { data, error } = await query;
+  const { data, error } = await query.limit(500);
 
   if (error) {
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });

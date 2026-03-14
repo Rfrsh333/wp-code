@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getGeneratedImageById, listPublishedDrafts } from "@/lib/content/repository";
 import { buildEditorialDraftPath } from "@/lib/content/publishing";
@@ -45,8 +46,7 @@ export default async function EditorialBlogIndexPage() {
           {draftCards.map((draft) => (
             <article key={draft.id} className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
               {draft.heroImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={draft.heroImageUrl} alt={draft.title} className="aspect-[16/10] w-full object-cover" />
+                <Image src={draft.heroImageUrl} alt={draft.title} width={800} height={500} className="aspect-[16/10] w-full object-cover" unoptimized />
               ) : (
                 <div className="aspect-[16/10] w-full bg-gradient-to-br from-orange-100 via-amber-50 to-white" />
               )}

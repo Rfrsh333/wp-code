@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "goedgekeurd");
+      .eq("status", "goedgekeurd")
+      .limit(500);
 
     if (error) {
       console.error("Financieel query error:", error);

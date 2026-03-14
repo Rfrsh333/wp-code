@@ -5,6 +5,8 @@ import { Section, Container } from "@/components/Section";
 import { BlogContentRenderer } from "@/components/blog";
 import { blogArticles, getAllBlogSlugs, getBlogArticle } from "@/data/blogArticles";
 
+export const revalidate = 3600;
+
 // Generate static params for all blog articles
 export function generateStaticParams() {
   return getAllBlogSlugs().map((slug) => ({

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Fetch all kandidaten (we'll validate the token against them)
     const { data: kandidaten, error: fetchError } = await supabaseAdmin
       .from("inschrijvingen")
-      .select("*");
+      .select("id, email, voornaam, achternaam, onboarding_status, documenten_compleet, inzetbaar_op, goedgekeurd_op, created_at, onboarding_checklist");
 
     if (fetchError || !kandidaten) {
       return NextResponse.json({ error: "Fout bij ophalen data" }, { status: 500 });
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     // Fetch kandidaat documenten
     const { data: documenten } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .select("*")
+      .select("id, document_type, review_status, uploaded_at")
       .eq("inschrijving_id", kandidaat.id)
       .order("uploaded_at", { ascending: false });
 

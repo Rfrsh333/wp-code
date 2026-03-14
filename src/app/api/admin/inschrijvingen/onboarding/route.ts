@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     if (!force_resend) {
       const { data: recentEmail } = await supabaseAdmin
         .from("email_log")
-        .select("*")
+        .select("id")
         .eq("kandidaat_id", kandidaat_id)
         .eq("email_type", action)
         .gte("sent_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())

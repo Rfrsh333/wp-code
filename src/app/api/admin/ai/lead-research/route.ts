@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
       const { data: lead } = await supabaseAdmin
         .from("acquisitie_leads")
-        .select("*")
+        .select("bedrijfsnaam, website, branche, stad, adres, telefoon, email, tags")
         .eq("id", lead_id)
         .single();
 

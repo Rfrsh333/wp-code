@@ -19,7 +19,8 @@ export async function GET() {
   const { data: diensten } = await supabaseAdmin
     .from("diensten")
     .select("id")
-    .eq("klant_id", klant.id);
+    .eq("klant_id", klant.id)
+    .limit(500);
 
   if (!diensten?.length) return NextResponse.json({ uren: [] });
 
@@ -33,7 +34,8 @@ export async function GET() {
       )
     `)
     .in("aanmelding.dienst_id", diensten.map(d => d.id))
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   type UrenWithRelations = typeof data extends (infer U)[] ? U : never;
   type Aanmelding = UrenWithRelations extends { aanmelding: infer A } ? A : never;

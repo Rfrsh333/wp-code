@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   if (view === "reps" || !view) {
     const { data: reps, error } = await supabaseAdmin
       .from("acquisitie_sales_reps")
-      .select("*")
+      .select("id, naam, email, telefoon, regios, branches, max_leads, kleur, actief, actieve_leads_count, gewonnen_leads_count, conversie_rate")
       .order("naam");
 
     if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
     if (action === "auto_assign") {
       const { data: reps } = await supabaseAdmin
         .from("acquisitie_sales_reps")
-        .select("*")
+        .select("id, regios, branches, conversie_rate, max_leads")
         .eq("actief", true)
         .order("conversie_rate", { ascending: false });
 

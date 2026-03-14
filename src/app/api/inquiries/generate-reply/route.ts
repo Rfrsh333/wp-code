@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Haal aanvraag op
     const { data: inquiry, error: dbError } = await supabaseAdmin
       .from("personeel_aanvragen")
-      .select("*")
+      .select("id, contactpersoon, bedrijfsnaam, email, type_personeel, aantal_personen, start_datum, eind_datum, opmerkingen, locatie")
       .eq("id", inquiry_id)
       .single();
 

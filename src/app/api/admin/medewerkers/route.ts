@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from("medewerkers")
     .select("*")
-    .order("naam");
+    .order("naam")
+    .limit(500);
 
   if (error) {
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });

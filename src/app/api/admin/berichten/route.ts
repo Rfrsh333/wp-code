@@ -15,14 +15,16 @@ export async function GET(request: NextRequest) {
     const { data: templates } = await supabaseAdmin
       .from("bericht_templates")
       .select("*")
-      .order("naam", { ascending: true });
+      .order("naam", { ascending: true })
+      .limit(100);
     return NextResponse.json({ templates: templates || [] });
   }
 
   const { data } = await supabaseAdmin
     .from("berichten")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   return NextResponse.json({ berichten: data || [] });
 }

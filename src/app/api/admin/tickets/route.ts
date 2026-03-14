@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   if (priority && priority !== "all") query = query.eq("ai_priority", priority);
   if (category && category !== "all") query = query.eq("ai_category", category);
 
-  const { data, error } = await query;
+  const { data, error } = await query.limit(500);
 
   if (error) {
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });

@@ -19,7 +19,8 @@ export async function GET() {
     .from("dienst_aanbiedingen")
     .select("*, dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie, uurtarief)")
     .eq("medewerker_id", medewerker.id)
-    .order("aangeboden_at", { ascending: false });
+    .order("aangeboden_at", { ascending: false })
+    .limit(100);
 
   return NextResponse.json({ aanbiedingen: data || [] });
 }

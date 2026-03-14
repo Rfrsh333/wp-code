@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from("acquisitie_campagnes")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   if (error) {
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
@@ -89,7 +90,8 @@ export async function POST(request: NextRequest) {
       const { data, error } = await supabaseAdmin
         .from("acquisitie_campagne_leads")
         .select("*, acquisitie_leads(*)")
-        .eq("campagne_id", id);
+        .eq("campagne_id", id)
+        .limit(500);
 
       if (error) {
         return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
@@ -139,7 +141,8 @@ async function sendCampagne(campagneId: string) {
     .from("acquisitie_campagne_leads")
     .select("*, acquisitie_leads(*)")
     .eq("campagne_id", campagneId)
-    .eq("status", "queued");
+    .eq("status", "queued")
+    .limit(500);
 
   if (!queuedLeads?.length) {
     return NextResponse.json({ error: "Geen leads in de wachtrij" }, { status: 400 });

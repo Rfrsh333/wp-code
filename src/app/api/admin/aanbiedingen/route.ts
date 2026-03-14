@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
   let query = supabaseAdmin
     .from("dienst_aanbiedingen")
     .select("*")
-    .order("aangeboden_at", { ascending: false });
+    .order("aangeboden_at", { ascending: false })
+    .limit(500);
 
   if (dienst_id) {
     query = query.eq("dienst_id", dienst_id);

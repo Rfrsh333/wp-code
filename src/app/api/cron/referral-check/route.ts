@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   // Haal pending referrals op die een referred persoon hebben
   const { data: pendingReferrals } = await supabaseAdmin
     .from("referrals")
-    .select("*")
+    .select("id, referrer_type, referred_id, referred_email, referred_naam")
     .eq("status", "pending")
     .not("referred_id", "is", null);
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         // Check of ze minstens 1 goedgekeurde uren registratie hebben
         const { count } = await supabaseAdmin
           .from("uren_registraties")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("medewerker_id", medewerker.id)
           .eq("status", "goedgekeurd");
 
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       if (klant) {
         const { count } = await supabaseAdmin
           .from("diensten")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("klant_id", klant.id);
 
         if (count && count > 0) isQualified = true;

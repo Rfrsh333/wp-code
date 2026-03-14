@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     // Look up lead by token
     const { data: lead, error: dbError } = await supabase
       .from("calculator_leads")
-      .select("*")
+      .select("pdf_token_expires_at, functie, aantal_medewerkers, ervaring, uren_per_dienst, dagen_per_week, inzet_type, vergelijkingen, resultaten, naam, bedrijfsnaam, email, created_at")
       .eq("pdf_token", token)
       .single();
 

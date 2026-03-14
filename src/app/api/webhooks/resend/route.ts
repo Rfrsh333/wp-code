@@ -102,7 +102,7 @@ async function handleEmailLog(event: ResendWebhookEvent) {
 
   const { data: emailLog } = await supabaseAdmin
     .from("email_log")
-    .select("*")
+    .select("id, opened_at, clicked_at")
     .eq("resend_email_id", emailId)
     .single<EmailLogRow>();
 

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   // Haal alle referrals op met referred data
   const { data: referrals } = await supabaseAdmin
     .from("referrals")
-    .select("*")
+    .select("id, referrer_type, referrer_id, referred_naam, referred_email, status, reward_amount, reward_type, created_at, qualified_at")
     .order("created_at", { ascending: false })
     .limit(500);
 

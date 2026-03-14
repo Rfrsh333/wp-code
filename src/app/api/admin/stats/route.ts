@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
   const { data: facturen } = await supabaseAdmin
     .from("facturen")
     .select("totaal, created_at")
-    .in("status", ["verzonden", "betaald"]);
+    .in("status", ["verzonden", "betaald"])
+    .limit(1000);
 
   const omzetPerMaand: Record<string, number> = {};
   const nu = new Date();
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     supabaseAdmin.from("medewerkers").select("*", { count: "exact", head: true }).eq("status", "actief"),
     supabaseAdmin.from("klanten").select("*", { count: "exact", head: true }).eq("status", "actief"),
     supabaseAdmin.from("diensten").select("*", { count: "exact", head: true }),
-    supabaseAdmin.from("uren_registraties").select("gewerkte_uren").eq("status", "goedgekeurd"),
+    supabaseAdmin.from("uren_registraties").select("gewerkte_uren").eq("status", "goedgekeurd").limit(1000),
   ]);
 
   const totaalMedewerkers = medewerkersResult.status === "fulfilled" ? medewerkersResult.value.count : 0;
@@ -56,11 +57,13 @@ export async function GET(request: NextRequest) {
   const { data: alleDiensten } = await supabaseAdmin
     .from("diensten")
     .select("id, aantal_nodig, status")
-    .in("status", ["vol", "open", "bezig"]);
+    .in("status", ["vol", "open", "bezig"])
+    .limit(1000);
   const { data: aanmeldCounts } = await supabaseAdmin
     .from("dienst_aanmeldingen")
     .select("dienst_id")
-    .eq("status", "geaccepteerd");
+    .eq("status", "geaccepteerd")
+    .limit(1000);
   const aanmeldMap = new Map<string, number>();
   (aanmeldCounts || []).forEach(a => {
     aanmeldMap.set(a.dienst_id, (aanmeldMap.get(a.dienst_id) || 0) + 1);
@@ -77,7 +80,8 @@ export async function GET(request: NextRequest) {
   const { data: klantFacturen } = await supabaseAdmin
     .from("facturen")
     .select("totaal, klant:klanten(bedrijfsnaam)")
-    .in("status", ["verzonden", "betaald"]);
+    .in("status", ["verzonden", "betaald"])
+    .limit(1000);
   const klantOmzetMap = new Map<string, { omzet: number; diensten: number }>();
   (klantFacturen || []).forEach(f => {
     const klant = Array.isArray(f.klant) ? f.klant[0] : f.klant;

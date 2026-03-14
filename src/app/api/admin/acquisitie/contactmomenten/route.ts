@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
     .from("acquisitie_contactmomenten")
     .select("*")
     .eq("lead_id", leadId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (error) {
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });

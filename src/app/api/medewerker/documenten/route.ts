@@ -14,9 +14,10 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from("medewerker_documenten")
-      .select("*")
+      .select("id, medewerker_id, document_type, file_name, file_path, file_url, file_size, uploaded_at")
       .eq("medewerker_id", medewerker.id)
-      .order("uploaded_at", { ascending: false });
+      .order("uploaded_at", { ascending: false })
+      .limit(100);
 
     if (error) return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
 

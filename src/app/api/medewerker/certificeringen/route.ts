@@ -15,9 +15,10 @@ export async function GET() {
 
   const { data } = await supabaseAdmin
     .from("certificeringen")
-    .select("*")
+    .select("id, medewerker_id, naam, uitgever, behaald_op, verloopt_op, created_at")
     .eq("medewerker_id", medewerker.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   return NextResponse.json({ certificeringen: data || [] });
 }

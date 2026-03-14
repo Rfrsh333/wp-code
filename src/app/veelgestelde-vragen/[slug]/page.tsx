@@ -71,7 +71,7 @@ export default async function FAQDetailPage({
 
   const { data: faq } = await supabaseAdmin
     .from("faq_items")
-    .select("*")
+    .select("id, question, answer, category, slug, view_count")
     .eq("slug", slug)
     .eq("status", "published")
     .single();

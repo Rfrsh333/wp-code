@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Fetch aanvraag
     const { data: aanvraag, error: dbError } = await supabaseAdmin
       .from("personeel_aanvragen")
-      .select("*")
+      .select("bedrijfsnaam, contactpersoon, type_personeel, aantal_personen, werkdagen, werktijden, locatie, start_datum, eind_datum, contract_type, gewenst_uurtarief, email, telefoon")
       .eq("id", aanvraag_id)
       .single();
 

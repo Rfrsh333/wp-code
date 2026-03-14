@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Fetch the personeel aanvraag from database
     const { data: aanvraag, error: dbError } = await supabase
       .from("personeel_aanvragen")
-      .select("*")
+      .select("bedrijfsnaam, contactpersoon, email, telefoon, locatie, type_personeel, aantal_personen, contract_type, gewenst_uurtarief, start_datum, eind_datum, werkdagen, werktijden")
       .eq("id", aanvraagId)
       .single();
 
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
     // Fetch the personeel aanvraag from database
     const { data: aanvraag, error: dbError } = await supabase
       .from("personeel_aanvragen")
-      .select("*")
+      .select("bedrijfsnaam, contactpersoon, email, telefoon, locatie, type_personeel, aantal_personen, contract_type, gewenst_uurtarief, start_datum, eind_datum, werkdagen, werktijden")
       .eq("id", aanvraagId)
       .single();
 

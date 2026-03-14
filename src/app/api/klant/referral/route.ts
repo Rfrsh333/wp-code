@@ -44,7 +44,7 @@ export async function GET() {
   // Haal alle referrals op
   const { data: referrals } = await supabaseAdmin
     .from("referrals")
-    .select("*")
+    .select("id, referral_code, status, reward_amount, referred_naam, created_at")
     .eq("referrer_type", "klant")
     .eq("referrer_id", klant.id)
     .order("created_at", { ascending: false });

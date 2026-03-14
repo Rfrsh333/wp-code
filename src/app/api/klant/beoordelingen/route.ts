@@ -30,13 +30,15 @@ export async function GET() {
     `)
     .eq("dienst.klant_id", klant.id)
     .eq("status", "geaccepteerd")
-    .lt("dienst.datum", new Date().toISOString().split("T")[0]);
+    .lt("dienst.datum", new Date().toISOString().split("T")[0])
+    .limit(100);
 
   // Filter al beoordeelde
   const { data: beoordeeld } = await supabaseAdmin
     .from("beoordelingen")
     .select("dienst_id, medewerker_id")
-    .eq("klant_id", klant.id);
+    .eq("klant_id", klant.id)
+    .limit(500);
 
   const beoordeeldSet = new Set((beoordeeld || []).map(b => `${b.dienst_id}-${b.medewerker_id}`));
 
@@ -88,7 +90,8 @@ export async function POST(request: NextRequest) {
   const { data } = await supabaseAdmin
     .from("beoordelingen")
     .select("score")
-    .eq("medewerker_id", medewerker_id);
+    .eq("medewerker_id", medewerker_id)
+    .limit(500);
 
   const scores = data?.map(b => b.score) || [];
   const gem = scores.reduce((a, b) => a + b, 0) / scores.length;

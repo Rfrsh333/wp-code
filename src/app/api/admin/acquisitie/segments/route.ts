@@ -99,7 +99,8 @@ export async function GET(request: NextRequest) {
     const { data: segmenten, error } = await supabaseAdmin
       .from("acquisitie_segmenten")
       .select("*")
-      .order("naam");
+      .order("naam")
+      .limit(500);
 
     if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
 
@@ -173,7 +174,8 @@ export async function GET(request: NextRequest) {
       .from("acquisitie_tag_definities")
       .select("*")
       .order("categorie", { ascending: true })
-      .order("naam");
+      .order("naam")
+      .limit(500);
 
     return NextResponse.json({ data: data || [] });
   }
@@ -183,7 +185,8 @@ export async function GET(request: NextRequest) {
     const { data: leads } = await supabaseAdmin
       .from("acquisitie_leads")
       .select("tags")
-      .not("tags", "is", null);
+      .not("tags", "is", null)
+      .limit(1000);
 
     const tagCounts: Record<string, number> = {};
     for (const l of leads || []) {

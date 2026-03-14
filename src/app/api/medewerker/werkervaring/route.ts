@@ -12,9 +12,10 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from("medewerker_werkervaring")
-      .select("*")
+      .select("id, medewerker_id, werkgever, functie, categorie, locatie, start_datum, eind_datum")
       .eq("medewerker_id", medewerker.id)
-      .order("start_datum", { ascending: false });
+      .order("start_datum", { ascending: false })
+      .limit(50);
 
     if (error) return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
 

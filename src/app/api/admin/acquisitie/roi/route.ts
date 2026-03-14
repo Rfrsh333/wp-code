@@ -40,14 +40,16 @@ export async function GET(request: NextRequest) {
       .from("acquisitie_kosten")
       .select("*")
       .gte("periode_start", periodeStart)
-      .lte("periode_start", periodeEind);
+      .lte("periode_start", periodeEind)
+      .limit(500);
 
     // Deals in periode
     const { data: deals } = await supabaseAdmin
       .from("acquisitie_deals")
       .select("*")
       .gte("gesloten_op", periodeStart)
-      .lte("gesloten_op", periodeEind);
+      .lte("gesloten_op", periodeEind)
+      .limit(500);
 
     // Totalen
     const totaleKosten = (kosten || []).reduce((sum, k) => sum + Number(k.bedrag), 0);
@@ -139,7 +141,8 @@ export async function GET(request: NextRequest) {
       .from("acquisitie_leads")
       .select("predicted_deal_value, predicted_conversion_pct")
       .not("pipeline_stage", "in", '("klant","afgewezen")')
-      .not("predicted_deal_value", "is", null);
+      .not("predicted_deal_value", "is", null)
+      .limit(1000);
 
     const pipelineWaarde = (pipelineLeads || []).reduce((sum, l) =>
       sum + (Number(l.predicted_deal_value) * ((l.predicted_conversion_pct || 10) / 100)), 0);

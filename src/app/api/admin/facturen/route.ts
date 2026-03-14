@@ -18,15 +18,16 @@ export async function GET(request: NextRequest) {
       .from("factuur_regels")
       .select("*")
       .eq("factuur_id", regelsId)
-      .order("datum", { ascending: true });
+      .order("datum", { ascending: true })
+      .limit(500);
     return NextResponse.json({ regels });
   }
 
   await syncDienstenKlantIds();
 
   const [{ data: facturen }, { data: klanten }] = await Promise.all([
-    supabaseAdmin.from("facturen").select("*, klant:klanten(bedrijfsnaam, email)").order("created_at", { ascending: false }),
-    supabaseAdmin.from("klanten").select("id, bedrijfsnaam").eq("status", "actief"),
+    supabaseAdmin.from("facturen").select("*, klant:klanten(bedrijfsnaam, email)").order("created_at", { ascending: false }).limit(500),
+    supabaseAdmin.from("klanten").select("id, bedrijfsnaam").eq("status", "actief").limit(500),
   ]);
 
   return NextResponse.json({ facturen, klanten });

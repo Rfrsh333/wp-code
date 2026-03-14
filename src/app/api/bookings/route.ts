@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     // Haal event types op
     const { data: eventTypes } = await supabaseAdmin
       .from("event_types")
-      .select("*")
+      .select("id, name, slug, description, duration_minutes, buffer_before_minutes, buffer_after_minutes, color, is_active, max_bookings_per_day, confirmation_message, booking_type, sort_order")
       .eq("is_active", true)
       .order("sort_order");
 
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
     // Haal wekelijks schema op
     const { data: schedules } = await supabaseAdmin
       .from("availability_schedules")
-      .select("*")
+      .select("day_of_week, start_time, end_time, is_active")
       .eq("is_active", true);
 
     // Haal overrides op
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
 
     const { data: overrides } = await supabaseAdmin
       .from("availability_overrides")
-      .select("*")
+      .select("date, start_time, end_time, is_blocked")
       .gte("date", todayStr)
       .lte("date", endStr);
 
@@ -172,14 +172,16 @@ export async function GET(request: NextRequest) {
       .from("bookings")
       .select("id, slot_id, status, availability_slots(date, start_time, end_time)")
       .in("status", ["confirmed"])
-      .not("slot_id", "is", null);
+      .not("slot_id", "is", null)
+      .limit(500);
 
     // Haal bestaande slots op
     const { data: existingSlots } = await supabaseAdmin
       .from("availability_slots")
       .select("id, date, start_time, end_time, is_available, is_booked")
       .gte("date", todayStr)
-      .lte("date", endStr);
+      .lte("date", endStr)
+      .limit(500);
 
     // Genereer beschikbare slots op basis van schema + overrides
     const slotDuration = eventType.duration_minutes;
@@ -354,7 +356,7 @@ export async function POST(request: NextRequest) {
     if (slot_id && !slot_id.startsWith("gen_")) {
       const { data: slot, error: slotError } = await supabaseAdmin
         .from("availability_slots")
-        .select("*")
+        .select("id, date, start_time, end_time, is_available, is_booked")
         .eq("id", slot_id)
         .single();
 

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     // Get document info
     const { data: document, error: docError } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .select("*")
+      .select("id, file_path, file_name, file_size, mime_type")
       .eq("id", documentId)
       .single();
 

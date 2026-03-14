@@ -64,7 +64,8 @@ export async function GET(request: NextRequest) {
     // === 1. FUNNEL DATA ===
     const { data: allLeads } = await supabaseAdmin
       .from("acquisitie_leads")
-      .select("id, pipeline_stage, branche, stad, ai_score, created_at, geconverteerd_op, updated_at");
+      .select("id, pipeline_stage, branche, stad, ai_score, created_at, geconverteerd_op, updated_at")
+      .limit(2000);
 
     const stages = ["nieuw", "benaderd", "interesse", "offerte", "klant", "afgewezen"];
     const funnelData = stages.map((stage) => ({
@@ -120,7 +121,8 @@ export async function GET(request: NextRequest) {
       .select("id, type, richting, resultaat, created_at")
       .gte("created_at", startISO)
       .lte("created_at", endISO)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .limit(2000);
 
     // Groepeer per week
     const activiteitenPerWeek: Record<string, { week: string; emails: number; telefoon: number; whatsapp: number; bezoek: number }> = {};
@@ -154,7 +156,8 @@ export async function GET(request: NextRequest) {
     // Response rate per branche
     const { data: leadsMetBranche } = await supabaseAdmin
       .from("acquisitie_leads")
-      .select("id, branche, pipeline_stage, emails_verzonden_count");
+      .select("id, branche, pipeline_stage, emails_verzonden_count")
+      .limit(2000);
 
     const brancheStats: Record<string, { benaderd: number; reactie: number; klant: number }> = {};
     leadsMetBranche?.forEach((lead) => {
@@ -230,7 +233,8 @@ export async function GET(request: NextRequest) {
     const { data: allContactmomenten } = await supabaseAdmin
       .from("acquisitie_contactmomenten")
       .select("lead_id, created_at")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .limit(5000);
 
     // Per lead: eerste en laatste contactmoment als proxy voor stage duur
     const leadTimelines: Record<string, Date[]> = {};

@@ -26,7 +26,8 @@ export async function GET() {
       .from("diensten")
       .select("id, datum, start_tijd, eind_tijd, locatie, functie, aantal_nodig, status")
       .eq("klant_id", klant.id)
-      .order("datum", { ascending: true }),
+      .order("datum", { ascending: true })
+      .limit(100),
     supabaseAdmin
       .from("facturen")
       .select("id, factuur_nummer, periode_start, periode_eind, totaal, status, created_at, klant_id")
@@ -44,7 +45,8 @@ export async function GET() {
     const { data: uren } = await supabaseAdmin
       .from("uren_registraties")
       .select("status, gewerkte_uren, created_at, aanmelding:dienst_aanmeldingen!inner(dienst_id)")
-      .in("aanmelding.dienst_id", dienstIds);
+      .in("aanmelding.dienst_id", dienstIds)
+      .limit(500);
 
     (uren || []).forEach((item) => {
       const status = item.status || "";

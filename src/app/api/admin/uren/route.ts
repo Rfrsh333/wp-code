@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   else if (filter === "klant_goedgekeurd") query = query.eq("status", "klant_goedgekeurd");
   else if (filter === "ingediend") query = query.eq("status", "ingediend");
 
-  const { data } = await query;
+  const { data } = await query.limit(500);
   return NextResponse.json({ data });
 }
 

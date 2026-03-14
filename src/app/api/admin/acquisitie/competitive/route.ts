@@ -90,7 +90,8 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from("acquisitie_concurrenten")
       .select("*")
-      .order("naam");
+      .order("naam")
+      .limit(500);
 
     if (error) return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
     return NextResponse.json({ data });
@@ -128,7 +129,8 @@ export async function GET(request: NextRequest) {
     const { data: concurrenten } = await supabaseAdmin
       .from("acquisitie_concurrenten")
       .select("*")
-      .eq("actief", true);
+      .eq("actief", true)
+      .limit(100);
 
     const analysis = await analyzeCompetitiveLandscape(
       {

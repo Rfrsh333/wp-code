@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
 async function calculateAndSaveNextAction(leadId: string, returnResponse = true) {
   // Haal lead + contactmomenten op
   const [leadRes, contactRes] = await Promise.all([
-    supabaseAdmin.from("acquisitie_leads").select("*").eq("id", leadId).single(),
+    supabaseAdmin.from("acquisitie_leads").select("bedrijfsnaam, contactpersoon, branche, stad, email, telefoon, pipeline_stage, ai_score, engagement_score, emails_verzonden_count, laatste_contact_datum, laatste_contact_type, created_at, auto_sequence_paused_until, auto_sequence_history").eq("id", leadId).single(),
     supabaseAdmin
       .from("acquisitie_contactmomenten")
       .select("type, richting, resultaat, created_at")

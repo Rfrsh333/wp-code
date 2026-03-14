@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const { data: lead, error: dbError } = await supabaseAdmin
       .from("acquisitie_leads")
-      .select("*")
+      .select("id, bedrijfsnaam, contactpersoon, branche, stad, pain_points, personalisatie_notities, emails_verzonden_count, laatste_contact_type, email, pipeline_stage")
       .eq("id", lead_id)
       .single();
 
