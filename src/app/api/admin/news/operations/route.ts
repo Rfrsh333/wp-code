@@ -16,6 +16,7 @@ import { runPublishQueue } from "@/lib/content/services/publish-service";
 import { runDeduplicationPass } from "@/lib/content/services/deduplication-service";
 import { generateSocialSnippets } from "@/lib/content/services/social-snippets-service";
 import { OpenAIContentClient } from "@/lib/ai/openai-content-client";
+import { getErrorMessage } from "@/lib/content/errors";
 
 const operationsSchema = z.object({
   action: z.enum([
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
       steps.push({ name: "seed_sources", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] seed_sources error:", e);
-      steps.push({ name: "seed_sources", result: null, error: e instanceof Error ? e.message : "Onbekende fout" });
+      steps.push({ name: "seed_sources", result: null, error: getErrorMessage(e) });
     }
 
     // 2. Feed ingestion
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
       steps.push({ name: "run_ingestion", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_ingestion error:", e);
-      steps.push({ name: "run_ingestion", result: null, error: e instanceof Error ? e.message : "Onbekende fout" });
+      steps.push({ name: "run_ingestion", result: null, error: getErrorMessage(e) });
     }
 
     // 3. Extraction
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
       steps.push({ name: "run_extraction", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_extraction error:", e);
-      steps.push({ name: "run_extraction", result: null, error: e instanceof Error ? e.message : "Onbekende fout" });
+      steps.push({ name: "run_extraction", result: null, error: getErrorMessage(e) });
     }
 
     // 4. Deduplication
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest) {
       steps.push({ name: "run_deduplication", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_deduplication error:", e);
-      steps.push({ name: "run_deduplication", result: null, error: e instanceof Error ? e.message : "Onbekende fout" });
+      steps.push({ name: "run_deduplication", result: null, error: getErrorMessage(e) });
     }
 
     // 5. Analysis
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
       steps.push({ name: "run_analysis", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_analysis error:", e);
-      steps.push({ name: "run_analysis", result: null, error: e instanceof Error ? e.message : "Onbekende fout" });
+      steps.push({ name: "run_analysis", result: null, error: getErrorMessage(e) });
     }
 
     // 6. Clustering
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
       steps.push({ name: "run_clustering", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_clustering error:", e);
-      steps.push({ name: "run_clustering", result: null, error: e instanceof Error ? e.message : "Onbekende fout" });
+      steps.push({ name: "run_clustering", result: null, error: getErrorMessage(e) });
     }
 
     // 7. Generate drafts
@@ -187,7 +188,7 @@ export async function POST(request: NextRequest) {
       steps.push({ name: "generate_drafts", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] generate_drafts error:", e);
-      steps.push({ name: "generate_drafts", result: null, error: e instanceof Error ? e.message : "Onbekende fout" });
+      steps.push({ name: "generate_drafts", result: null, error: getErrorMessage(e) });
     }
 
     const succeeded = steps.filter((s) => s.error === null).length;
