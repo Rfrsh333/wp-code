@@ -1,5 +1,5 @@
 {
-  "regions": ["ams1"],
+  "regions": ["arn1"],
   "crons": [
     {
       "path": "/api/cron/onboarding-cleanup",
