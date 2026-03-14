@@ -160,6 +160,7 @@ export function buildReminderEmailHtml(params: {
   startTime: string;
   endTime: string;
   manageUrl?: string;
+  meetLink?: string;
 }): string {
   const content = `
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
@@ -168,6 +169,11 @@ export function buildReminderEmailHtml(params: {
       { label: "Datum", value: params.datumFormatted },
       { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
     ])}
+    ${params.meetLink ? `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Je ontvangt 1 uur van tevoren nog een herinnering met de link naar het videogesprek.
+    </p>
+    ` : ""}
     ${params.manageUrl ? `
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Kun je onverhoopt niet komen? Wijzig of annuleer je afspraak:
@@ -180,6 +186,44 @@ export function buildReminderEmailHtml(params: {
     </p>
     `}
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Tot morgen!<br>TopTalent Jobs</p>`;
+
+  return emailWrapper(content);
+}
+
+// ============================================
+// 4b. Meet Reminder (30 min voor afspraak)
+// ============================================
+
+export function buildMeetReminderEmailHtml(params: {
+  clientName: string;
+  datumFormatted: string;
+  startTime: string;
+  endTime: string;
+  meetLink: string;
+  manageUrl?: string;
+}): string {
+  const content = `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Je afspraak met TopTalent Jobs begint over <strong>1 uur</strong>.
+    </p>
+    ${infoBlock([
+      { label: "Datum", value: params.datumFormatted },
+      { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
+    ])}
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${params.meetLink}" style="display: inline-block; background: #1a73e8; color: white; text-decoration: none; padding: 16px 36px; border-radius: 8px; font-weight: bold; font-size: 16px;">
+        Deelnemen aan videogesprek
+      </a>
+    </div>
+    <p style="font-size: 13px; color: #999; text-align: center;">
+      Of kopieer deze link: <a href="${params.meetLink}" style="color: ${BRAND_COLOR}; text-decoration: none;">${params.meetLink}</a>
+    </p>
+    ${params.manageUrl ? `
+    <p style="font-size: 13px; color: #999; text-align: center; margin-top: 20px;">
+      Kun je niet? <a href="${params.manageUrl}" style="color: ${BRAND_COLOR}; text-decoration: none;">Annuleer of wijzig je afspraak</a>
+    </p>` : ""}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Tot zo!<br>TopTalent Jobs</p>`;
 
   return emailWrapper(content);
 }

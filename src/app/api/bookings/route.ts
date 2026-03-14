@@ -518,7 +518,7 @@ export async function POST(request: NextRequest) {
         startDateTime,
         endDateTime,
         attendeeEmail: bookingEmail,
-        addMeetLink: isKandidaat,
+        addMeetLink: true,
       });
 
       if (calResult.eventId) {
