@@ -12,7 +12,17 @@ interface DraftItem {
   primaryAudience: string | null;
   factCheckFlags?: string[];
   heroImageId?: string | null;
+  createdAt: string;
   updatedAt: string;
+  publishedAt: string | null;
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat("nl-NL", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
 
 async function getAuthHeaders() {
@@ -101,7 +111,15 @@ export default function DraftReviewPanel() {
                   </span>
                 </div>
                 <p className="mt-2 text-sm text-neutral-600">{draft.excerpt}</p>
-                <p className="mt-2 text-xs text-neutral-500">Primair publiek: {draft.primaryAudience ?? "onbekend"}</p>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                  <span>Aangemaakt: {formatDate(draft.createdAt)}</span>
+                  {draft.publishedAt ? (
+                    <span className="text-emerald-600 font-medium">Gepubliceerd: {formatDate(draft.publishedAt)}</span>
+                  ) : (
+                    <span>Laatst bijgewerkt: {formatDate(draft.updatedAt)}</span>
+                  )}
+                  <span>Publiek: {draft.primaryAudience ?? "onbekend"}</span>
+                </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className="rounded-full bg-neutral-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-600">
                     {draft.heroImageId ? "hero image klaar" : "geen hero image"}

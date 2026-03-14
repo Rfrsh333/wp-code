@@ -325,12 +325,52 @@ export async function getGeneratedImageById(imageId: string): Promise<GeneratedI
   }
 }
 
+export interface LastPipelineRun {
+  id: string;
+  status: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  draftsGenerated: number;
+  errorMessage: string | null;
+}
+
+export async function getLastPipelineRun(): Promise<LastPipelineRun | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("job_runs")
+      .select("id, status, started_at, finished_at, result, error_message")
+      .eq("job_name", "editorial_pipeline")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    const result = data.result as Record<string, unknown> | null;
+    const draftsGenerated = (result?.generated as number) ?? 0;
+
+    return {
+      id: String(data.id),
+      status: String(data.status),
+      startedAt: (data.started_at as string | null) ?? null,
+      finishedAt: (data.finished_at as string | null) ?? null,
+      draftsGenerated,
+      errorMessage: (data.error_message as string | null) ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getContentOverview() {
-  const [sources, clusters, drafts, publishedDrafts] = await Promise.all([
+  const [sources, clusters, drafts, publishedDrafts, lastPipelineRun] = await Promise.all([
     listActiveSources(),
     listRecentClusters(6),
     listDraftsByStatus(undefined, 8),
     listPublishedDrafts(8),
+    getLastPipelineRun(),
   ]);
 
   return {
@@ -344,5 +384,6 @@ export async function getContentOverview() {
     clusters,
     drafts,
     publishedDrafts,
+    lastPipelineRun,
   };
 }

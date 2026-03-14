@@ -7,6 +7,15 @@ import ArticleIntelligencePanel from "@/components/admin/ArticleIntelligencePane
 import PipelineHealthPanel from "@/components/admin/PipelineHealthPanel";
 import AdminShell from "@/components/navigation/AdminShell";
 
+interface LastPipelineRun {
+  id: string;
+  status: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  draftsGenerated: number;
+  errorMessage: string | null;
+}
+
 interface DashboardMetrics {
   activeSources: number;
   liveClusters: number;
@@ -22,6 +31,7 @@ interface DashboardItem {
   themeTitle?: string;
   updatedAt?: string;
   createdAt?: string;
+  publishedAt?: string | null;
 }
 
 interface DashboardPayload {
@@ -30,6 +40,7 @@ interface DashboardPayload {
   clusters: DashboardItem[];
   drafts: DashboardItem[];
   publishedDrafts: DashboardItem[];
+  lastPipelineRun: LastPipelineRun | null;
 }
 
 const emptyPayload: DashboardPayload = {
@@ -43,6 +54,7 @@ const emptyPayload: DashboardPayload = {
   clusters: [],
   drafts: [],
   publishedDrafts: [],
+  lastPipelineRun: null,
 };
 
 function formatDate(value?: string) {
@@ -197,6 +209,37 @@ export default function NewsDashboard() {
               <p className="mt-2 max-w-3xl text-sm text-neutral-300">
                 Draait automatisch ma-vr om 10:00. Nieuwe concepten verschijnen bij Drafts voor review. Je kunt ook handmatig een draft genereren vanuit Clusters.
               </p>
+              {data.lastPipelineRun ? (
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5">
+                    <span className={`inline-block h-2.5 w-2.5 rounded-full ${data.lastPipelineRun.status === "completed" ? "bg-emerald-400" : data.lastPipelineRun.status === "running" ? "bg-amber-400 animate-pulse" : "bg-red-400"}`} />
+                    <span className="text-sm text-neutral-200">
+                      Laatste run: <span className="font-medium text-white">{formatDate(data.lastPipelineRun.finishedAt ?? data.lastPipelineRun.startedAt ?? undefined)}</span>
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-white/10 px-4 py-2.5">
+                    <span className="text-sm text-neutral-200">
+                      Status: <span className={`font-medium ${data.lastPipelineRun.status === "completed" ? "text-emerald-300" : data.lastPipelineRun.status === "running" ? "text-amber-300" : "text-red-300"}`}>
+                        {data.lastPipelineRun.status === "completed" ? "Succesvol" : data.lastPipelineRun.status === "running" ? "Draait..." : "Mislukt"}
+                      </span>
+                    </span>
+                  </div>
+                  {data.lastPipelineRun.draftsGenerated > 0 ? (
+                    <div className="rounded-xl bg-white/10 px-4 py-2.5">
+                      <span className="text-sm text-neutral-200">
+                        Concepten: <span className="font-medium text-orange-300">{data.lastPipelineRun.draftsGenerated}</span>
+                      </span>
+                    </div>
+                  ) : null}
+                  {data.lastPipelineRun.errorMessage ? (
+                    <div className="w-full mt-1 rounded-xl bg-red-500/20 px-4 py-2">
+                      <p className="text-xs text-red-200">{data.lastPipelineRun.errorMessage}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-neutral-400">Nog geen pipeline run geregistreerd.</p>
+              )}
               <button
                 onClick={runPipeline}
                 disabled={pipelineRunning}
@@ -268,7 +311,12 @@ export default function NewsDashboard() {
                       {draft.reviewStatus ?? "draft"}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-neutral-500">Bijgewerkt: {formatDate(draft.updatedAt)}</p>
+                  <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                    <span>Aangemaakt: {formatDate(draft.createdAt)}</span>
+                    {draft.publishedAt ? (
+                      <span className="text-emerald-600 font-medium">Gepubliceerd: {formatDate(draft.publishedAt)}</span>
+                    ) : null}
+                  </div>
                 </div>
               ))}
               {!data.drafts.length && !isLoading ? (
