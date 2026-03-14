@@ -33,9 +33,10 @@ interface SidebarProps {
   activeTab?: AdminTab;
   badges?: SidebarBadgeMap;
   onTabSelect?: (tab: AdminTab) => void;
+  forceVisible?: boolean;
 }
 
-export default function Sidebar({ activeTab, badges = {}, onTabSelect }: SidebarProps) {
+export default function Sidebar({ activeTab, badges = {}, onTabSelect, forceVisible }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -257,7 +258,8 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect }: Sidebar
   return (
     <aside
       className={cn(
-        "sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200/80 bg-[#fbfbfc] transition-[width] duration-200",
+        "sticky top-0 h-screen shrink-0 flex-col border-r border-neutral-200/80 bg-[#fbfbfc] transition-[width] duration-200",
+        forceVisible ? "flex" : "hidden lg:flex",
         collapsed ? "w-[92px]" : "w-[320px]"
       )}
     >

@@ -70,10 +70,8 @@ export default function AdminShell({
 
   return (
     <div className="min-h-screen bg-[#f3f5f7] text-neutral-950 lg:flex">
-      {/* Desktop sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar activeTab={activeTab} badges={badges} onTabSelect={onTabSelect} />
-      </div>
+      {/* Sidebar — altijd zichtbaar op desktop, verborgen op mobiel */}
+      <Sidebar activeTab={activeTab} badges={badges} onTabSelect={onTabSelect} />
 
       {/* Mobile sidebar overlay */}
       {mobileSidebarOpen && (
@@ -87,6 +85,7 @@ export default function AdminShell({
               activeTab={activeTab}
               badges={badges}
               onTabSelect={handleTabSelect}
+              forceVisible
             />
           </div>
           <button
