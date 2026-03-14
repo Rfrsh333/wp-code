@@ -1,9 +1,30 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 export default function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-4 border-neutral-200 border-t-[#F27501] rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-neutral-500 text-sm">Pagina laden...</p>
+    <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="text-center mb-12">
+        <Skeleton className="h-10 w-56 mx-auto mb-3" />
+        <Skeleton className="h-4 w-full max-w-xl mx-auto" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-neutral-200 p-8">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-neutral-200 p-6">
+            <Skeleton className="h-10 w-10 rounded-lg mb-3" />
+            <Skeleton className="h-5 w-32 mb-2" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        ))}
       </div>
     </div>
   );
