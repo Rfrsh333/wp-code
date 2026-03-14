@@ -190,9 +190,13 @@ const analyzeBundles = withBundleAnalyzer({
 });
 
 export default withSentryConfig(analyzeBundles(nextConfig), {
-  silent: true,
+  org: "toptalent",
+  project: "javascript-nextjs",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
   widenClientFileUpload: true,
   disableLogger: true,
+  tunnelRoute: "/monitoring",
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
