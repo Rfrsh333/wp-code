@@ -348,6 +348,14 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
       toast.error("Stel een vraag van minimaal 10 tekens");
       return;
     }
+    if (!name.trim()) {
+      toast.error("Vul je naam in");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Vul je e-mailadres in");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -356,8 +364,8 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: question.trim(),
-          visitor_email: email.trim() || undefined,
-          visitor_name: name.trim() || undefined,
+          visitor_email: email.trim(),
+          visitor_name: name.trim(),
         }),
       });
 
@@ -483,13 +491,14 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
                         htmlFor="faq-name"
                         className="block text-sm font-medium text-neutral-700 mb-1"
                       >
-                        Naam <span className="text-neutral-400">(optioneel)</span>
+                        Naam *
                       </label>
                       <input
                         id="faq-name"
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        required
                         placeholder="Je naam"
                         className="w-full px-4 py-3 bg-neutral-50 rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316] focus:bg-white transition-colors"
                       />
@@ -499,13 +508,14 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
                         htmlFor="faq-email"
                         className="block text-sm font-medium text-neutral-700 mb-1"
                       >
-                        E-mail <span className="text-neutral-400">(optioneel)</span>
+                        E-mail *
                       </label>
                       <input
                         id="faq-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                         placeholder="je@email.nl"
                         className="w-full px-4 py-3 bg-neutral-50 rounded-xl border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316] focus:bg-white transition-colors"
                       />
