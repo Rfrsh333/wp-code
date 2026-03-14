@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { formatEditorialLabel } from "@/lib/content/presentation";
+import { BlogContentRenderer } from "@/components/blog/BlogContentRenderer";
+import type { ContentBlock } from "@/components/blog/BlogContentRenderer";
 
 interface DraftDetail {
   id: string;
@@ -15,6 +17,7 @@ interface DraftDetail {
   primaryAudience: string | null;
   secondaryAudience: string[];
   bodyMarkdown: string;
+  bodyBlocks: ContentBlock[] | null;
   keyTakeaways: string[];
   impactSummary: string | null;
   actionSteps: string[];
@@ -117,6 +120,7 @@ export default function DraftDetailReview() {
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [showMarkdown, setShowMarkdown] = useState(false);
 
   const loadDraft = useCallback(async () => {
     try {
@@ -249,8 +253,41 @@ export default function DraftDetailReview() {
             <div className="text-lg leading-8 text-neutral-600">
               <EditableField value={draft.excerpt} onSave={(v) => saveField("excerpt", v)} multiline label="samenvatting" />
             </div>
-            <div className="mt-8 text-base leading-8 text-neutral-800">
-              <EditableField value={draft.bodyMarkdown} onSave={(v) => saveField("bodyMarkdown", v)} multiline label="body" />
+
+            {/* Body content: visual blocks or markdown */}
+            <div className="mt-6 border-t border-neutral-100 pt-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+                  Artikel content
+                  {draft.bodyBlocks ? (
+                    <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium normal-case text-emerald-700">
+                      {draft.bodyBlocks.length} blocks
+                    </span>
+                  ) : (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium normal-case text-amber-700">
+                      alleen markdown
+                    </span>
+                  )}
+                </h2>
+                {draft.bodyBlocks && draft.bodyBlocks.length > 0 ? (
+                  <button
+                    onClick={() => setShowMarkdown(!showMarkdown)}
+                    className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:bg-neutral-50"
+                  >
+                    {showMarkdown ? "Visuele preview" : "Bewerk markdown"}
+                  </button>
+                ) : null}
+              </div>
+
+              {draft.bodyBlocks && draft.bodyBlocks.length > 0 && !showMarkdown ? (
+                <article className="mx-auto max-w-3xl">
+                  <BlogContentRenderer blocks={draft.bodyBlocks} />
+                </article>
+              ) : (
+                <div className="text-base leading-8 text-neutral-800">
+                  <EditableField value={draft.bodyMarkdown} onSave={(v) => saveField("bodyMarkdown", v)} multiline label="body" />
+                </div>
+              )}
             </div>
           </section>
         </div>
