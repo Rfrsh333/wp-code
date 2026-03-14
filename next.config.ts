@@ -37,12 +37,12 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://vercel.live https://www.clarity.ms https://c.clarity.ms https://scripts.clarity.ms",
+      "script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://vercel.live https://www.clarity.ms https://c.clarity.ms https://scripts.clarity.ms https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
       "frame-src https://www.google.com https://vercel.live",
-      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co https://vercel.live https://*.clarity.ms",
+      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co https://vercel.live https://*.clarity.ms https://vitals.vercel-insights.com https://va.vercel-scripts.com",
     ].join('; '),
   },
 ];
@@ -66,10 +66,12 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 dagen cache
   },
+  reactStrictMode: true,
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['recharts', 'zod', '@supabase/supabase-js'],
+    optimizePackageImports: ['recharts', 'zod', '@supabase/supabase-js', 'lucide-react', 'date-fns', 'react-hook-form', '@tanstack/react-query', 'react-day-picker'],
   },
   async headers() {
     return [
@@ -97,6 +99,14 @@ const nextConfig: NextConfig = {
         source: '/fonts/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        // API responses: niet cachen
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
       },
     ];

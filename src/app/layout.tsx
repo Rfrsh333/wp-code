@@ -8,6 +8,7 @@ import CookieConsent from "@/components/CookieConsent";
 import { ToastProvider } from "@/components/Toast";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -52,6 +53,11 @@ export const metadata: Metadata = {
     "max-image-preview": "large" as const,
     "max-video-preview": -1,
   },
+  alternates: {
+    types: {
+      "application/rss+xml": "https://www.toptalentjobs.nl/feed.xml",
+    },
+  },
   other: {
     "geo.region": "NL",
     "geo.placename": "Utrecht",
@@ -66,6 +72,10 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <head>
+        <link rel="preconnect" href="https://nntxpyoyrpquzghsnwxj.supabase.co" />
+        <link rel="dns-prefetch" href="https://nntxpyoyrpquzghsnwxj.supabase.co" />
+        <link rel="preconnect" href="https://vitals.vercel-insights.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <StructuredData />
       </head>
       <body
@@ -80,6 +90,7 @@ export default function RootLayout({
           </ConfirmProvider>
         </ToastProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
