@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
@@ -41,7 +41,13 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect }: Sidebar
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const focusableRefs = useRef<Record<string, HTMLButtonElement | HTMLAnchorElement | null>>({});
   const [storageReady, setStorageReady] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   useEffect(() => setStorageReady(true), []);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+  }, []);
   const [query, setQuery] = useState("");
   const [collapsedState, setCollapsedState] = useState<boolean | null>(null);
   const [favoriteIdsState, setFavoriteIdsState] = useState<string[] | null>(null);
@@ -357,40 +363,57 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect }: Sidebar
       <div className="border-t border-neutral-200/80 px-4 py-4">
         <div className="space-y-1">
           {!collapsed ? (
-            <SidebarItem
-              item={sidebarItems.settings}
-              href={getSidebarHref(sidebarItems.settings)}
-              active={activeItemIds.has(sidebarItems.settings.id)}
-              collapsed={false}
-              pinned={favoriteIds.includes(sidebarItems.settings.id)}
-              onTogglePin={togglePin}
-              focusRef={registerFocusable("footer:settings")}
-              onKeyDown={(event) => onArrowKey(event, "footer:settings")}
-            />
-          ) : null}
-          <button
-            type="button"
-            ref={registerFocusable(collapsed ? "collapsed:logout" : "footer:logout") as React.Ref<HTMLButtonElement>}
-            onClick={handleLogout}
-            onKeyDown={(event) => onArrowKey(event, collapsed ? "collapsed:logout" : "footer:logout")}
-            aria-label="Uitloggen"
-            title={collapsed ? "Uitloggen" : undefined}
-            className={cn(
-              "group relative flex w-full items-center rounded-2xl px-3 py-3 text-neutral-500 transition hover:bg-white hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#F27501]/10",
-              collapsed && "justify-center px-0"
-            )}
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl text-inherit">
-              <LogOut className="h-4.5 w-4.5" />
-            </span>
-            {!collapsed ? (
-              <span className="ml-1 text-sm font-medium">Uitloggen</span>
-            ) : (
+            <>
+              <SidebarItem
+                item={sidebarItems.settings}
+                href={getSidebarHref(sidebarItems.settings)}
+                active={activeItemIds.has(sidebarItems.settings.id)}
+                collapsed={false}
+                pinned={favoriteIds.includes(sidebarItems.settings.id)}
+                onTogglePin={togglePin}
+                focusRef={registerFocusable("footer:settings")}
+                onKeyDown={(event) => onArrowKey(event, "footer:settings")}
+              />
+              {/* User info + logout */}
+              <div className="mt-2 flex items-center gap-2 rounded-2xl bg-neutral-50 px-3 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F27501]/10 text-[#F27501]">
+                  <User className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-neutral-900">
+                    {userEmail ? userEmail.split("@")[0] : "Admin"}
+                  </p>
+                  <p className="text-[10px] text-neutral-500">Admin</p>
+                </div>
+                <button
+                  ref={registerFocusable("footer:logout") as React.Ref<HTMLButtonElement>}
+                  onClick={handleLogout}
+                  onKeyDown={(event) => onArrowKey(event, "footer:logout")}
+                  aria-label="Uitloggen"
+                  className="rounded-lg p-1.5 text-neutral-400 transition hover:bg-white hover:text-neutral-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              ref={registerFocusable("collapsed:logout") as React.Ref<HTMLButtonElement>}
+              onClick={handleLogout}
+              onKeyDown={(event) => onArrowKey(event, "collapsed:logout")}
+              aria-label="Uitloggen"
+              title="Uitloggen"
+              className="group relative flex w-full items-center justify-center rounded-2xl px-0 py-3 text-neutral-500 transition hover:bg-white hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#F27501]/10"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl text-inherit">
+                <LogOut className="h-4.5 w-4.5" />
+              </span>
               <span className="pointer-events-none absolute left-full top-1/2 z-30 ml-3 hidden -translate-y-1/2 whitespace-nowrap rounded-xl bg-neutral-950 px-3 py-2 text-xs font-medium text-white shadow-lg group-hover:block group-focus-visible:block">
                 Uitloggen
               </span>
-            )}
-          </button>
+            </button>
+          )}
         </div>
       </div>
     </aside>

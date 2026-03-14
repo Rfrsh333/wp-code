@@ -55,28 +55,21 @@ function AddLeadForm() {
         if (!payload[k]) delete payload[k]
       })
 
-      // Probeer eerst met admin sessie auth (Bearer token)
+      // Auth via Supabase sessie
       const { data: { session } } = await supabase.auth.getSession()
-      let res: Response
 
-      if (session?.access_token) {
-        res = await fetch('/api/leads', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify(payload),
-        })
-      } else {
-        // Fallback: gebruik bookmarklet token uit URL
-        const tokenParam = searchParams.get('token')
-        res = await fetch('/api/leads', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, bookmarklet_token: tokenParam || '' }),
-        })
+      if (!session?.access_token) {
+        throw new Error('Je moet ingelogd zijn om leads op te slaan. Ga naar /admin om in te loggen.')
       }
+
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      })
 
       if (!res.ok) {
         const data = await res.json()

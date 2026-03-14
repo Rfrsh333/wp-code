@@ -8,13 +8,35 @@ import dynamic from "next/dynamic";
 import Pagination from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 import AdminShell from "@/components/navigation/AdminShell";
+import EmptyState from "@/components/ui/EmptyState";
+import StatCard from "@/components/admin/dashboard/StatCard";
+import { BriefcaseBusiness, Calculator, Inbox, Users, Plus, ClipboardList, Target, CalendarRange } from "lucide-react";
 import { isAdminTab } from "@/lib/navigation/sidebar-config";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
 
 const TabSkeleton = () => (
   <div className="space-y-4 animate-pulse">
-    <div className="h-8 w-48 bg-neutral-200 rounded" />
-    <div className="h-64 bg-neutral-100 rounded-xl" />
+    <div className="h-8 w-48 bg-neutral-200 rounded-lg" />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="h-28 bg-white rounded-2xl shadow-sm p-5">
+          <div className="h-10 w-10 bg-neutral-100 rounded-xl mb-3" />
+          <div className="h-6 w-16 bg-neutral-100 rounded" />
+          <div className="h-4 w-24 bg-neutral-50 rounded mt-1" />
+        </div>
+      ))}
+    </div>
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="h-12 bg-neutral-50 border-b border-neutral-100" />
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-neutral-50">
+          <div className="h-5 w-32 bg-neutral-100 rounded" />
+          <div className="h-5 w-24 bg-neutral-50 rounded" />
+          <div className="flex-1" />
+          <div className="h-5 w-16 bg-neutral-100 rounded-full" />
+        </div>
+      ))}
+    </div>
   </div>
 );
 
@@ -1027,76 +1049,80 @@ export default function AdminDashboard() {
             {/* Overzicht Tab */}
             {activeTab === "overzicht" && (
               <div>
-                <h2 className="text-2xl font-bold text-neutral-900 mb-6">Dashboard Overzicht</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-neutral-900">Dashboard Overzicht</h2>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                      </div>
-                      {stats.aanvragen.nieuw > 0 && (
-                        <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-1 rounded-full">
-                          {stats.aanvragen.nieuw} nieuw
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-3xl font-bold text-neutral-900">{stats.aanvragen.total}</h3>
-                    <p className="text-neutral-500">Personeel aanvragen</p>
-                  </div>
+                {/* Snelle Acties */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <button
+                    onClick={() => setActiveTab("inschrijvingen")}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
+                  >
+                    <Plus className="h-4 w-4 text-[#F27501]" />
+                    Nieuwe Medewerker
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("aanvragen")}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
+                  >
+                    <ClipboardList className="h-4 w-4 text-blue-500" />
+                    Aanvraag verwerken
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("leads")}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
+                  >
+                    <Target className="h-4 w-4 text-green-500" />
+                    Lead toevoegen
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("planning")}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
+                  >
+                    <CalendarRange className="h-4 w-4 text-purple-500" />
+                    Planning
+                  </button>
+                </div>
 
-                  <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </div>
-                      {stats.inschrijvingen.nieuw > 0 && (
-                        <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-1 rounded-full">
-                          {stats.inschrijvingen.nieuw} nieuw
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-3xl font-bold text-neutral-900">{stats.inschrijvingen.total}</h3>
-                    <p className="text-neutral-500">Inschrijvingen</p>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      {stats.contact.nieuw > 0 && (
-                        <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-1 rounded-full">
-                          {stats.contact.nieuw} nieuw
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-3xl font-bold text-neutral-900">{stats.contact.total}</h3>
-                    <p className="text-neutral-500">Contact berichten</p>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                        <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      {stats.calculator.downloaded > 0 && (
-                        <span className="bg-green-100 text-green-600 text-xs font-semibold px-2 py-1 rounded-full">
-                          {stats.calculator.downloaded} PDF
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-3xl font-bold text-neutral-900">{stats.calculator.total}</h3>
-                    <p className="text-neutral-500">Calculator leads</p>
-                  </div>
+                {/* Stat Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  <StatCard
+                    title="Personeel aanvragen"
+                    value={stats.aanvragen.total}
+                    icon={BriefcaseBusiness}
+                    iconBg="bg-blue-100"
+                    iconColor="text-blue-600"
+                    badge={stats.aanvragen.nieuw > 0 ? { count: stats.aanvragen.nieuw, label: "nieuw", color: "bg-red-100 text-red-600" } : undefined}
+                    onClick={() => setActiveTab("aanvragen")}
+                  />
+                  <StatCard
+                    title="Inschrijvingen"
+                    value={stats.inschrijvingen.total}
+                    icon={Users}
+                    iconBg="bg-green-100"
+                    iconColor="text-green-600"
+                    badge={stats.inschrijvingen.nieuw > 0 ? { count: stats.inschrijvingen.nieuw, label: "nieuw", color: "bg-red-100 text-red-600" } : undefined}
+                    onClick={() => setActiveTab("inschrijvingen")}
+                  />
+                  <StatCard
+                    title="Contact berichten"
+                    value={stats.contact.total}
+                    icon={Inbox}
+                    iconBg="bg-purple-100"
+                    iconColor="text-purple-600"
+                    badge={stats.contact.nieuw > 0 ? { count: stats.contact.nieuw, label: "nieuw", color: "bg-red-100 text-red-600" } : undefined}
+                    onClick={() => setActiveTab("contact")}
+                  />
+                  <StatCard
+                    title="Calculator leads"
+                    value={stats.calculator.total}
+                    icon={Calculator}
+                    iconBg="bg-orange-100"
+                    iconColor="text-orange-600"
+                    badge={stats.calculator.downloaded > 0 ? { count: stats.calculator.downloaded, label: "PDF", color: "bg-green-100 text-green-600" } : undefined}
+                    onClick={() => setActiveTab("calculator")}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6 mb-8">
@@ -1145,27 +1171,40 @@ export default function AdminDashboard() {
 
                   <div className="bg-white rounded-2xl p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-neutral-900">Wat vraagt aandacht</h3>
+                      <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+                        <span className="text-amber-500">&#9889;</span>
+                        Actie Vereist
+                      </h3>
                       <span className="text-xs text-neutral-500">Vandaag</span>
                     </div>
-                    <div className="space-y-3">
-                      {workflowAlerts.length === 0 ? (
+                    <div className="space-y-2">
+                      {stats.aanvragen.nieuw > 0 && (
+                        <button
+                          onClick={() => setActiveTab("aanvragen")}
+                          className="flex w-full items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left transition hover:bg-red-100"
+                        >
+                          <span className="text-sm font-medium text-red-800">{stats.aanvragen.nieuw} nieuwe aanvragen</span>
+                          <span className="text-neutral-400">&rarr;</span>
+                        </button>
+                      )}
+                      {workflowAlerts.length === 0 && stats.aanvragen.nieuw === 0 ? (
                         <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
-                          Geen acute onboarding issues gevonden.
+                          Alles is bijgewerkt — geen openstaande acties.
                         </div>
                       ) : (
                         workflowAlerts.map((alert) => (
-                          <div key={alert.label} className={`rounded-xl border px-4 py-3 ${alert.tone}`}>
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-sm font-medium">{alert.label}</span>
-                              <span className="text-lg font-bold">{alert.value}</span>
-                            </div>
-                          </div>
+                          <button
+                            key={alert.label}
+                            onClick={() => setActiveTab("inschrijvingen")}
+                            className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition hover:opacity-80 ${alert.tone}`}
+                          >
+                            <span className="text-sm font-medium">{alert.label}: <strong>{alert.value}</strong></span>
+                            <span className="text-neutral-400">&rarr;</span>
+                          </button>
                         ))
                       )}
                       <div className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3 text-sm text-neutral-700">
-                        Open taken: <strong>{opsSnapshot?.counters.openTasks ?? 0}</strong><br />
-                        Testkandidaten: <strong>{opsSnapshot?.counters.testCandidates ?? 0}</strong>
+                        Open taken: <strong>{opsSnapshot?.counters.openTasks ?? 0}</strong> &middot; Testkandidaten: <strong>{opsSnapshot?.counters.testCandidates ?? 0}</strong>
                       </div>
                     </div>
                   </div>
@@ -1174,47 +1213,52 @@ export default function AdminDashboard() {
                 {/* Recent Activity */}
                 <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
                   <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-neutral-900 mb-4">Recente activiteit</h3>
-                  <div className="space-y-4">
-                    {[...aanvragen.slice(0, 3).map((a) => ({ ...a, type: "aanvraag" as const })),
-                      ...inschrijvingen.slice(0, 3).map((i) => ({ ...i, type: "inschrijving" as const })),
-                      ...contactBerichten.slice(0, 3).map((c) => ({ ...c, type: "contact" as const }))]
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-neutral-900">Recente activiteit</h3>
+                  </div>
+                  <div className="divide-y divide-neutral-100">
+                    {[...aanvragen.slice(0, 4).map((a) => ({ ...a, type: "aanvraag" as const })),
+                      ...inschrijvingen.slice(0, 4).map((i) => ({ ...i, type: "inschrijving" as const })),
+                      ...contactBerichten.slice(0, 4).map((c) => ({ ...c, type: "contact" as const }))]
                       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                      .slice(0, 5)
-                      .map((item) => (
-                        <div key={item.id} className="flex items-center gap-4 p-3 bg-neutral-50 rounded-xl">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                            item.type === "aanvraag" ? "bg-blue-100 text-blue-600" :
-                            item.type === "inschrijving" ? "bg-green-100 text-green-600" :
-                            "bg-purple-100 text-purple-600"
-                          }`}>
-                            {item.type === "aanvraag" && (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
-                              </svg>
-                            )}
-                            {item.type === "inschrijving" && (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                              </svg>
-                            )}
-                            {item.type === "contact" && (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8" />
-                              </svg>
-                            )}
+                      .slice(0, 8)
+                      .map((item) => {
+                        const typeConfig = {
+                          aanvraag: { icon: BriefcaseBusiness, bg: "bg-blue-100", color: "text-blue-600", badgeColor: "bg-blue-100 text-blue-700", badgeLabel: "Aanvraag" },
+                          inschrijving: { icon: Users, bg: "bg-green-100", color: "text-green-600", badgeColor: "bg-green-100 text-green-700", badgeLabel: "Kandidaat" },
+                          contact: { icon: Inbox, bg: "bg-purple-100", color: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", badgeLabel: "Bericht" },
+                        }[item.type];
+                        const Icon = typeConfig.icon;
+                        const timeAgo = (() => {
+                          const diff = Date.now() - new Date(item.created_at).getTime();
+                          const mins = Math.floor(diff / 60000);
+                          if (mins < 1) return "Nu";
+                          if (mins < 60) return `${mins} min`;
+                          const hours = Math.floor(mins / 60);
+                          if (hours < 24) return `${hours} uur`;
+                          const days = Math.floor(hours / 24);
+                          if (days === 1) return "Gisteren";
+                          return `${days} dagen`;
+                        })();
+                        return (
+                          <div key={item.id} className="flex items-center gap-3 py-2.5">
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${typeConfig.bg}`}>
+                              <Icon className={`h-4 w-4 ${typeConfig.color}`} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-neutral-900">
+                                {item.type === "aanvraag" && (item as PersoneelAanvraag).bedrijfsnaam}
+                                {item.type === "inschrijving" && `${(item as Inschrijving).voornaam} ${(item as Inschrijving).achternaam}`}
+                                {item.type === "contact" && (item as ContactBericht).naam}
+                              </p>
+                            </div>
+                            <span className={`hidden sm:inline-block shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${typeConfig.badgeColor}`}>
+                              {typeConfig.badgeLabel}
+                            </span>
+                            <span className="shrink-0 text-xs text-neutral-400 tabular-nums">{timeAgo}</span>
                           </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-neutral-900">
-                              {item.type === "aanvraag" && `Nieuwe aanvraag van ${(item as PersoneelAanvraag).bedrijfsnaam}`}
-                              {item.type === "inschrijving" && `Nieuwe inschrijving van ${(item as Inschrijving).voornaam} ${(item as Inschrijving).achternaam}`}
-                              {item.type === "contact" && `Nieuw bericht van ${(item as ContactBericht).naam}`}
-                            </p>
-                            <p className="text-sm text-neutral-500">{formatDate(item.created_at)}</p>
-                          </div>
-                          <StatusBadge status={item.status} />
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                   </div>
 
@@ -1294,9 +1338,9 @@ export default function AdminDashboard() {
             {/* Personeel Aanvragen Tab */}
             {activeTab === "aanvragen" && (
               <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Personeel Aanvragen</h2>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                     {/* Lead Source Filter */}
                     <select
                       value={leadSourceFilter}
@@ -1448,9 +1492,11 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                   {filteredAanvragen.length === 0 && (
-                    <div className="text-center py-12 text-neutral-500">
-                      {globalSearch ? `Geen resultaten voor "${globalSearch}"` : "Geen aanvragen gevonden"}
-                    </div>
+                    <EmptyState
+                      icon={<BriefcaseBusiness className="w-8 h-8" />}
+                      title={globalSearch ? `Geen resultaten voor "${globalSearch}"` : "Geen aanvragen gevonden"}
+                      description="Zodra bedrijven personeel aanvragen via de website verschijnen ze hier."
+                    />
                   )}
                 </div>
                 <Pagination
@@ -1465,8 +1511,8 @@ export default function AdminDashboard() {
             {/* Inschrijvingen Tab */}
             {activeTab === "inschrijvingen" && (
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                  <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-2xl font-bold text-neutral-900">Inschrijvingen</h2>
                     <div className="flex bg-neutral-100 rounded-xl p-1">
                       <button
@@ -1724,9 +1770,11 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                   {filteredInschrijvingen.length === 0 && (
-                    <div className="text-center py-12 text-neutral-500">
-                      {globalSearch ? `Geen resultaten voor "${globalSearch}"` : "Geen inschrijvingen gevonden"}
-                    </div>
+                    <EmptyState
+                      icon={<Users className="w-8 h-8" />}
+                      title={globalSearch ? `Geen resultaten voor "${globalSearch}"` : "Geen inschrijvingen gevonden"}
+                      description="Nieuwe inschrijvingen van kandidaten verschijnen hier automatisch."
+                    />
                   )}
                 </div>
                 <Pagination
@@ -1742,9 +1790,9 @@ export default function AdminDashboard() {
             {/* Contact Tab */}
             {activeTab === "contact" && (
               <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Contact Berichten</h2>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {selectedIds.size > 0 && (
                       <button onClick={() => deleteSelected("contact_berichten")} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -1802,9 +1850,11 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                   {contactBerichten.length === 0 && (
-                    <div className="text-center py-12 text-neutral-500">
-                      Geen berichten gevonden
-                    </div>
+                    <EmptyState
+                      icon={<Inbox className="w-8 h-8" />}
+                      title="Geen berichten gevonden"
+                      description="Contact berichten van de website verschijnen hier."
+                    />
                   )}
                 </div>
               </div>

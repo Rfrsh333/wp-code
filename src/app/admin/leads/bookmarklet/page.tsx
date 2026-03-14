@@ -10,7 +10,9 @@ import {
   ArrowRight,
   Check,
   Copy,
+  LogIn,
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 export default function BookmarkletPage() {
   const [bookmarkletData, setBookmarkletData] = useState<{
@@ -19,13 +21,21 @@ export default function BookmarkletPage() {
     builtAt: string
   } | null>(null)
   const [copied, setCopied] = useState(false)
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const linkRef = useRef<HTMLAnchorElement>(null)
 
   useEffect(() => {
-    fetch('/bookmarklet-built.json')
-      .then((res) => res.json())
-      .then(setBookmarkletData)
-      .catch(console.error)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setAuthenticated(true)
+        fetch('/bookmarklet-built.json')
+          .then((res) => res.json())
+          .then(setBookmarkletData)
+          .catch(console.error)
+      } else {
+        setAuthenticated(false)
+      }
+    })
   }, [])
 
   // React blokkeert javascript: URLs — we zetten de href via de DOM
@@ -42,6 +52,26 @@ export default function BookmarkletPage() {
       setTimeout(() => setCopied(false), 3000)
     })
   }, [bookmarkletData])
+
+  if (authenticated === false) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+          <LogIn className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">Inloggen vereist</h2>
+          <p className="text-neutral-600 mb-6">
+            Je moet ingelogd zijn als admin om de bookmarklet te kunnen installeren.
+          </p>
+          <a
+            href="/admin"
+            className="inline-block px-6 py-2.5 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600"
+          >
+            Ga naar login
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   if (!bookmarkletData) {
     return (

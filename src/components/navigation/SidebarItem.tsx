@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { Pin, PinOff } from "lucide-react";
-import type { SidebarItemDefinition } from "@/lib/navigation/sidebar-types";
+import type { SidebarBadgeKey, SidebarItemDefinition } from "@/lib/navigation/sidebar-types";
 import { cn } from "@/lib/utils";
+
+const badgeColors: Record<SidebarBadgeKey, { bg: string; text: string; activeBg: string; activeText: string }> = {
+  aanvragenNieuw: { bg: "bg-red-100", text: "text-red-600", activeBg: "bg-red-100", activeText: "text-red-700" },
+  inschrijvingenNieuw: { bg: "bg-red-100", text: "text-red-600", activeBg: "bg-red-100", activeText: "text-red-700" },
+  contactNieuw: { bg: "bg-blue-100", text: "text-blue-600", activeBg: "bg-blue-100", activeText: "text-blue-700" },
+  calculatorTotaal: { bg: "bg-green-100", text: "text-green-600", activeBg: "bg-green-100", activeText: "text-green-700" },
+};
 
 interface SidebarItemProps {
   item: SidebarItemDefinition;
@@ -47,16 +54,21 @@ export default function SidebarItem({
         <>
           <span className="min-w-0 flex-1 truncate text-sm font-medium">{item.title}</span>
           {typeof badge === "number" && badge > 0 ? (
-            <span
-              className={cn(
-                "ml-3 inline-flex min-w-6 items-center justify-center rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums",
-                active
-                  ? "bg-[#F27501]/14 text-[#C95F00]"
-                  : "bg-neutral-100 text-neutral-600"
-              )}
-            >
-              {badge}
-            </span>
+            (() => {
+              const colors = item.badgeKey && badgeColors[item.badgeKey];
+              return (
+                <span
+                  className={cn(
+                    "ml-3 inline-flex min-w-6 items-center justify-center rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums",
+                    active
+                      ? colors ? `${colors.activeBg} ${colors.activeText}` : "bg-[#F27501]/14 text-[#C95F00]"
+                      : colors ? `${colors.bg} ${colors.text}` : "bg-neutral-100 text-neutral-600"
+                  )}
+                >
+                  {badge}
+                </span>
+              );
+            })()
           ) : null}
           {onTogglePin ? (
             <span
