@@ -96,12 +96,20 @@ export function proxy(request: NextRequest) {
   // --- SEO: noindex for non-indexable paths ---
   const isIndexablePath =
     pathname === "/" ||
-    pathname === "/diensten" ||
-    pathname === "/diensten/uitzenden" ||
-    pathname === "/diensten/detachering" ||
-    pathname === "/diensten/recruitment" ||
-    pathname === "/locaties" ||
-    pathname.startsWith("/locaties/");
+    pathname.startsWith("/diensten") ||
+    pathname.startsWith("/locaties") ||
+    pathname.startsWith("/blog") ||
+    pathname.startsWith("/veelgestelde-vragen") ||
+    pathname === "/over-ons" ||
+    pathname === "/contact" ||
+    pathname === "/testimonials" ||
+    pathname === "/kosten-calculator" ||
+    pathname === "/personeel-aanvragen" ||
+    pathname === "/inschrijven" ||
+    pathname === "/afspraak-plannen" ||
+    pathname === "/kennismaking-plannen" ||
+    pathname === "/privacy" ||
+    pathname === "/voorwaarden";
 
   if (!isIndexablePath) {
     const response = NextResponse.next();

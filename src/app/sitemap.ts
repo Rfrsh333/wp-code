@@ -147,6 +147,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // Editorial articles (AI-gegenereerd)
+  let editorialPages: MetadataRoute.Sitemap = []
+  try {
+    const { data: editorialSlugs } = await supabaseAdmin
+      .from('editorial_drafts')
+      .select('slug, published_at')
+      .eq('review_status', 'published')
+
+    if (editorialSlugs) {
+      editorialPages = editorialSlugs.map((item) => ({
+        url: `${baseUrl}/blog/editorial/${item.slug}`,
+        lastModified: item.published_at ? new Date(item.published_at) : contentDate,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    }
+  } catch {
+    // Silently fail if Supabase is unreachable during build
+  }
+
   // FAQ hub + individual FAQ pages
   const faqHubPage: MetadataRoute.Sitemap = [{
     url: `${baseUrl}/veelgestelde-vragen`,
@@ -174,5 +194,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Silently fail if Supabase is unreachable during build
   }
 
-  return [...staticPages, ...locationPages, ...servicePages, ...blogPages, ...faqHubPage, ...faqPages]
+  return [...staticPages, ...locationPages, ...servicePages, ...blogPages, ...editorialPages, ...faqHubPage, ...faqPages]
 }
