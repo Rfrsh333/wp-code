@@ -14,6 +14,7 @@ import {
   Mail,
   Eye,
   Trash2,
+  Download,
 } from 'lucide-react'
 import { Lead, Platform, LeadStatus } from '@/types/leads'
 import { format } from 'date-fns'
@@ -149,6 +150,65 @@ export default function LeadsTable() {
     setDetailOpen(true)
   }
 
+  async function exportCSV() {
+    try {
+      // Haal alle leads op (niet alleen huidige pagina)
+      const headers = await getAuthHeaders()
+      const params = new URLSearchParams({ limit: '10000' })
+      if (platformFilter !== 'all') params.append('platform', platformFilter)
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+
+      const res = await fetch(`/api/leads?${params}`, { headers })
+      const data = await res.json()
+      const allLeads: Lead[] = data.leads || []
+
+      if (allLeads.length === 0) return
+
+      // Instantly.ai format: First Name, Last Name, Email, Company, Phone, etc.
+      const csvRows = allLeads.map((l) => {
+        const nameParts = l.naam.split(' ')
+        const firstName = nameParts[0] || ''
+        const lastName = nameParts.slice(1).join(' ') || ''
+        return {
+          first_name: firstName,
+          last_name: lastName,
+          email: l.email || '',
+          phone: l.telefoon || '',
+          company_name: l.bedrijf || '',
+          title: l.functie || '',
+          city: l.stad || '',
+          source: l.bron_naam || '',
+          source_url: l.bron_url || '',
+          platform: l.platform,
+          status: l.status,
+          notes: l.notities || '',
+          created_at: l.created_at,
+        }
+      })
+
+      const csvHeaders = Object.keys(csvRows[0])
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map((row) =>
+          csvHeaders.map((h) => {
+            const val = (row as Record<string, string>)[h] || ''
+            return val.includes(',') || val.includes('\n') || val.includes('"')
+              ? `"${val.replace(/"/g, '""')}"`
+              : val
+          }).join(',')
+        ),
+      ].join('\n')
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `toptalent_leads_${new Date().toISOString().split('T')[0]}.csv`
+      link.click()
+    } catch (error) {
+      console.error('Export error:', error)
+    }
+  }
+
   const filteredLeads = leads.filter((lead) => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
@@ -203,6 +263,15 @@ export default function LeadsTable() {
                 </option>
               ))}
             </select>
+
+            {/* Export CSV */}
+            <button
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
           </div>
 
           {/* Stats */}
