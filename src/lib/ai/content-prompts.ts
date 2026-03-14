@@ -279,8 +279,11 @@ BELANGRIJK:
 - Interne links en CTAs worden automatisch toegevoegd
 - Wees concreet en praktisch, noem specifieke wetten (Wet DBA, WAB), organisaties (KHN, ABU, UWV) en cijfers waar relevant
 - Minimaal 1200 woorden totale content verspreid over de secties
+- Elke paragraph moet 3-5 zinnen lang zijn — NIET slechts 1 zin per alinea
+- Elke sectie moet 2-4 uitgebreide alinea's bevatten met concrete details, voorbeelden en context
 - Gebruik minimaal 2 highlights, 1 checklist en 1 quote verspreid over de secties
 - Gebruik "wij" als je verwijst naar TopTalent's ervaring
+- Als er weinig bronmateriaal is, vul aan met je eigen kennis over de Nederlandse arbeidsmarkt en horeca
 
 Bronnen:
 ${input.articleSummaries
