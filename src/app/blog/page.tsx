@@ -7,7 +7,7 @@ import { listPublishedDrafts } from "@/lib/content/repository";
 import { getGeneratedImageById } from "@/lib/content/repository";
 import { createEditorialImageSignedUrl } from "@/lib/images/storage";
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Nieuws",
