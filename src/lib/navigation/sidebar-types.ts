@@ -23,6 +23,7 @@ export const adminTabs = [
   "content",
   "agenda",
   "berichten",
+  "planning",
 ] as const;
 
 export type AdminTab = (typeof adminTabs)[number];

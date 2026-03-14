@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,11 +40,8 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect }: Sidebar
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const focusableRefs = useRef<Record<string, HTMLButtonElement | HTMLAnchorElement | null>>({});
-  const storageReady = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false
-  );
+  const [storageReady, setStorageReady] = useState(false);
+  useEffect(() => setStorageReady(true), []);
   const [query, setQuery] = useState("");
   const [collapsedState, setCollapsedState] = useState<boolean | null>(null);
   const [favoriteIdsState, setFavoriteIdsState] = useState<string[] | null>(null);
@@ -246,6 +243,8 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect }: Sidebar
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    // Verwijder de auth cookie zodat de proxy ook weet dat de sessie verlopen is
+    document.cookie = "sb-access-token=; path=/; max-age=0";
     router.push("/admin/login");
   };
 

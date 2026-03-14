@@ -59,22 +59,30 @@ export default function SidebarItem({
             </span>
           ) : null}
           {onTogglePin ? (
-            <button
-              type="button"
+            <span
+              role="button"
+              tabIndex={0}
               aria-label={pinned ? `${item.title} losmaken` : `${item.title} vastmaken`}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 onTogglePin(item.id);
               }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onTogglePin(item.id);
+                }
+              }}
               className={cn(
-                "ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 opacity-0 transition",
+                "ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 opacity-0 transition cursor-pointer",
                 "hover:bg-white hover:text-neutral-700 group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F27501]/20",
                 pinned && "opacity-100 text-[#C95F00]"
               )}
             >
               {pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-            </button>
+            </span>
           ) : null}
         </>
       ) : (

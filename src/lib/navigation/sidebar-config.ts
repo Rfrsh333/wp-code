@@ -2,6 +2,7 @@ import {
   BarChart3,
   BriefcaseBusiness,
   Calculator,
+  CalendarRange,
   Clock3,
   FileSpreadsheet,
   Files,
@@ -155,6 +156,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["drafts", "ai"],
   },
+  planning: {
+    id: "planning",
+    title: "Planningsbord",
+    icon: CalendarRange,
+    kind: "tab",
+    tab: "planning",
+    pinnable: true,
+    keywords: ["planning", "weekrooster", "shifts", "toewijzen"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -180,7 +190,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "recruitment",
     label: "Recruitment",
-    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten"],
+    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "planning"],
     collapsible: true,
     defaultOpen: true,
     dividerBefore: true,

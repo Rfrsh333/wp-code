@@ -137,11 +137,23 @@ export async function POST(request: NextRequest) {
     // Log succesvolle login
     console.log(`[ADMIN LOGIN] Successful admin login for email: ${email} from IP: ${clientIP}`);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       session: data.session,
       requires2FA: false,
     });
+
+    // Zet een cookie zodat de proxy/middleware de admin sessie kan detecteren
+    // Niet httpOnly zodat client-side logout de cookie kan verwijderen
+    response.cookies.set("sb-access-token", "authenticated", {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 dagen
+    });
+
+    return response;
   } catch (error) {
     console.error("[ADMIN LOGIN] Error:", error);
     return NextResponse.json(

@@ -56,7 +56,7 @@ export default function DraftReviewPanel() {
 
   const updateStatus = async (
     draftId: string,
-    action: "approve" | "reject" | "queue_publish" | "publish_now" | "generate_image",
+    action: "approve" | "reject" | "queue_publish" | "publish_now" | "generate_image" | "delete",
   ) => {
     setBusyDraftId(draftId);
     try {
@@ -138,6 +138,9 @@ export default function DraftReviewPanel() {
                 </button>
                 <button disabled={busyDraftId === draft.id} onClick={() => updateStatus(draft.id, "publish_now")} className="rounded-xl bg-[#F27501] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#d96800] disabled:opacity-60">
                   Publiceer nu
+                </button>
+                <button disabled={busyDraftId === draft.id} onClick={() => { if (confirm("Weet je zeker dat je deze draft wilt verwijderen?")) updateStatus(draft.id, "delete"); }} className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-400 transition hover:border-red-300 hover:text-red-600 disabled:opacity-60">
+                  Verwijderen
                 </button>
               </div>
             </div>

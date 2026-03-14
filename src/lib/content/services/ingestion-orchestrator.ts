@@ -5,26 +5,65 @@ import { listActiveSources } from "@/lib/content/repository";
 import { ingestSourceFeed } from "@/lib/content/services/source-ingestion-service";
 import { extractRawArticle } from "@/lib/content/services/article-extraction-service";
 import { getErrorMessage } from "@/lib/content/errors";
+import type { FetchFrequency, SourceRecord } from "@/lib/content/types";
+
+const FETCH_INTERVAL_MS: Record<FetchFrequency, number> = {
+  hourly: 60 * 60 * 1000,
+  every_6_hours: 6 * 60 * 60 * 1000,
+  daily: 24 * 60 * 60 * 1000,
+  weekly: 7 * 24 * 60 * 60 * 1000,
+};
+
+const INTER_SOURCE_DELAY_MS = 1_500;
+
+function isDueForFetch(source: SourceRecord): boolean {
+  if (!source.lastFetchedAt) return true;
+  const interval = FETCH_INTERVAL_MS[source.fetchFrequency] ?? FETCH_INTERVAL_MS.daily;
+  const elapsed = Date.now() - new Date(source.lastFetchedAt).getTime();
+  return elapsed >= interval;
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export async function runFeedIngestionPass() {
   const sources = await listActiveSources();
   const rssSources = sources.filter((source) => source.rssUrl);
 
+  // Filter out dead sources and sources not yet due
+  const eligible = rssSources.filter((source) => {
+    if (source.healthStatus === "dead") {
+      console.log(`[ingestion] Skipping dead source: ${source.name}`);
+      return false;
+    }
+    if (!isDueForFetch(source)) {
+      return false;
+    }
+    return true;
+  });
+
+  console.log(`[ingestion] ${sources.length} active sources, ${rssSources.length} with RSS, ${eligible.length} due for fetch`);
+
   const results: Array<{
     sourceId: string;
     sourceName: string;
     discoveredItems: number;
-    status: "success" | "failed";
+    fetchTimeMs?: number;
+    status: "success" | "failed" | "skipped";
     error?: string;
   }> = [];
 
-  for (const source of rssSources) {
+  for (let i = 0; i < eligible.length; i++) {
+    const source = eligible[i];
+
     try {
       const result = await ingestSourceFeed(source);
       results.push({
         sourceId: source.id,
         sourceName: source.name,
         discoveredItems: result.discoveredItems,
+        fetchTimeMs: result.fetchTimeMs,
         status: "success",
       });
     } catch (error) {
@@ -36,12 +75,22 @@ export async function runFeedIngestionPass() {
         error: getErrorMessage(error),
       });
     }
+
+    // Rate limit: wait between sources to avoid hammering servers
+    if (i < eligible.length - 1) {
+      await sleep(INTER_SOURCE_DELAY_MS);
+    }
   }
 
+  const skippedDead = rssSources.filter((s) => s.healthStatus === "dead").length;
+  const skippedNotDue = rssSources.length - eligible.length - skippedDead;
+
   return {
-    processedSources: rssSources.length,
-    successes: results.filter((result) => result.status === "success").length,
-    failures: results.filter((result) => result.status === "failed").length,
+    processedSources: eligible.length,
+    successes: results.filter((r) => r.status === "success").length,
+    failures: results.filter((r) => r.status === "failed").length,
+    skippedDead,
+    skippedNotDue,
     results,
   };
 }

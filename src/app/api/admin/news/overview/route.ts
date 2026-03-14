@@ -8,6 +8,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const overview = await getContentOverview();
-  return NextResponse.json(overview);
+  try {
+    const overview = await getContentOverview();
+    console.log("[overview] metrics:", JSON.stringify(overview.metrics));
+    console.log("[overview] sources:", overview.sources.length, "clusters:", overview.clusters.length, "drafts:", overview.drafts.length);
+    return NextResponse.json(overview);
+  } catch (error) {
+    console.error("[overview] Error loading overview:", error);
+    return NextResponse.json({ error: "Failed to load overview" }, { status: 500 });
+  }
 }

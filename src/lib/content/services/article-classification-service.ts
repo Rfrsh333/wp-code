@@ -6,7 +6,7 @@ import { defaultCategoryAudienceMap } from "@/lib/content/constants";
 import type { ClassificationResult, NormalizedArticleRecord } from "@/lib/content/types";
 
 export interface AiTextClient {
-  generateText(prompt: string): Promise<string>;
+  generateText(prompt: string, options?: { maxTokens?: number; temperature?: number }): Promise<string>;
 }
 
 export async function classifyNormalizedArticle(

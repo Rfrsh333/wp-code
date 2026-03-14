@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import ArticleIntelligencePanel from "@/components/admin/ArticleIntelligencePanel";
+import PipelineHealthPanel from "@/components/admin/PipelineHealthPanel";
 import AdminShell from "@/components/navigation/AdminShell";
 
 interface DashboardMetrics {
@@ -74,16 +75,8 @@ export default function NewsDashboard() {
   const [data, setData] = useState<DashboardPayload>(emptyPayload);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [operationState, setOperationState] = useState<{
-    isRunning: boolean;
-    action: string | null;
-    message: string | null;
-  }>({
-    isRunning: false,
-    action: null,
-    message: null,
-  });
-
+  const [pipelineRunning, setPipelineRunning] = useState(false);
+  const [pipelineResult, setPipelineResult] = useState<string | null>(null);
   const load = async () => {
     try {
       setError(null);
@@ -95,6 +88,7 @@ export default function NewsDashboard() {
       }
 
       const payload = (await response.json()) as DashboardPayload;
+      console.log("[dashboard] payload received:", JSON.stringify(payload.metrics), "sources:", payload.sources?.length, "clusters:", payload.clusters?.length, "drafts:", payload.drafts?.length);
       setData(payload);
     } catch (loadError) {
       console.error(loadError);
@@ -104,58 +98,55 @@ export default function NewsDashboard() {
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  const runOperation = async (
-    action:
-      | "seed_sources"
-      | "run_ingestion"
-      | "run_extraction"
-      | "run_analysis"
-      | "run_clustering"
-      | "generate_drafts"
-      | "generate_images"
-      | "run_publish_queue",
-  ) => {
+  const runPipeline = async () => {
     try {
-      setOperationState({
-        isRunning: true,
-        action,
-        message: null,
-      });
-
+      setPipelineRunning(true);
+      setPipelineResult(null);
       const headers = await getAuthHeaders();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 min timeout
       const response = await fetch("/api/admin/news/operations", {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          action,
-          limit: action === "run_extraction" ? 12 : undefined,
-        }),
+        body: JSON.stringify({ action: "run_full_pipeline" }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       if (!response.ok) {
-        throw new Error("Content operatie kon niet worden uitgevoerd.");
+        throw new Error("Pipeline kon niet gestart worden.");
       }
 
-      const payload = (await response.json()) as { result: Record<string, unknown> };
-      const resultText = JSON.stringify(payload.result);
-      setOperationState({
-        isRunning: false,
-        action,
-        message: resultText,
-      });
-      await load();
-    } catch (operationError) {
-      setOperationState({
-        isRunning: false,
-        action,
-        message: operationError instanceof Error ? operationError.message : "Onbekende fout",
-      });
+      const result = await response.json();
+      const summary = result?.result?.summary;
+      const steps = result?.result?.steps as Array<{ name: string; result: Record<string, unknown> | null; error: string | null }> | undefined;
+      const stepDetails = steps
+        ?.map((s) => {
+          if (s.error) return `${s.name}: ❌ ${s.error}`;
+          const r = s.result ?? {};
+          const nums = Object.entries(r).filter(([, v]) => typeof v === "number").map(([k, v]) => `${k}=${v}`).join(", ");
+          return `${s.name}: ✅${nums ? ` (${nums})` : ""}`;
+        })
+        .join("\n") ?? "";
+      console.log("[pipeline] Steps detail:\n" + stepDetails);
+      setPipelineResult(
+        summary
+          ? `Klaar! ${summary.succeeded}/${summary.total} stappen succesvol.\n${stepDetails}`
+          : "Pipeline is afgerond."
+      );
+      load();
+    } catch (pipelineError) {
+      setPipelineResult(
+        pipelineError instanceof Error ? pipelineError.message : "Fout bij pipeline."
+      );
+    } finally {
+      setPipelineRunning(false);
     }
   };
+
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <AdminShell>
@@ -170,75 +161,11 @@ export default function NewsDashboard() {
               Monitor bronnen, prioriteer nieuws, review AI-drafts en publiceer editorial content zonder de bestaande siteflow te verstoren.
             </p>
           </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => runOperation("seed_sources")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Seed bronnen
-            </button>
-            <button
-              type="button"
-              onClick={() => runOperation("run_ingestion")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Run ingest
-            </button>
-            <button
-              type="button"
-              onClick={() => runOperation("run_extraction")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Extract artikelen
-            </button>
-            <button
-              type="button"
-              onClick={() => runOperation("run_analysis")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Analyseer content
-            </button>
-            <button
-              type="button"
-              onClick={() => runOperation("run_clustering")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Cluster nieuws
-            </button>
-            <button
-              type="button"
-              onClick={() => runOperation("generate_drafts")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Genereer drafts
-            </button>
-            <button
-              type="button"
-              onClick={() => runOperation("generate_images")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Genereer images
-            </button>
-            <button
-              type="button"
-              onClick={() => runOperation("run_publish_queue")}
-              disabled={operationState.isRunning}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Publiceer queue
-            </button>
-            <Link href="/admin/news/sources" className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501]">
-              Bronnen beheren
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin/news/drafts" className="rounded-xl bg-[#F27501] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#d96800]">
+              Drafts bekijken
             </Link>
-            <Link href="/admin/news/clusters" className="rounded-xl bg-[#F27501] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#d96800]">
+            <Link href="/admin/news/clusters" className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501]">
               Clusters bekijken
             </Link>
           </div>
@@ -246,12 +173,6 @@ export default function NewsDashboard() {
 
         {error ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">{error}</div>
-        ) : null}
-        {operationState.message ? (
-          <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 text-sm text-orange-900">
-            <strong className="mr-2 uppercase">{operationState.action}</strong>
-            <span className="break-all">{operationState.message}</span>
-          </div>
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -271,17 +192,27 @@ export default function NewsDashboard() {
         <div className="mt-8 rounded-3xl bg-neutral-900 p-6 text-white shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">Workflow</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">Automatisch</p>
               <h2 className="mt-2 text-2xl font-semibold">Editorial pipeline</h2>
               <p className="mt-2 max-w-3xl text-sm text-neutral-300">
-                Draai de stappen in volgorde voor de beste outputkwaliteit. Regelgeving en compliance-content blijft altijd menselijk reviewbaar voordat publicatie plaatsvindt.
+                Draait automatisch ma-vr om 10:00. Nieuwe concepten verschijnen bij Drafts voor review. Je kunt ook handmatig een draft genereren vanuit Clusters.
               </p>
+              <button
+                onClick={runPipeline}
+                disabled={pipelineRunning}
+                className="mt-4 rounded-xl bg-[#F27501] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#d96800] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {pipelineRunning ? "Pipeline draait..." : "Pipeline nu draaien"}
+              </button>
+              {pipelineResult ? (
+                <p className="mt-2 whitespace-pre-wrap text-sm text-orange-200">{pipelineResult}</p>
+              ) : null}
             </div>
             <div className="grid gap-2 text-sm text-neutral-200 md:grid-cols-4">
               <div className="rounded-2xl bg-white/5 px-4 py-3">1. Ingest</div>
               <div className="rounded-2xl bg-white/5 px-4 py-3">2. Analyse</div>
               <div className="rounded-2xl bg-white/5 px-4 py-3">3. Cluster & draft</div>
-              <div className="rounded-2xl bg-white/5 px-4 py-3">4. Image & publish</div>
+              <div className="rounded-2xl bg-white/5 px-4 py-3">4. Review & publiceer</div>
             </div>
           </div>
         </div>
@@ -345,6 +276,10 @@ export default function NewsDashboard() {
               ) : null}
             </div>
           </section>
+        </div>
+
+        <div className="mt-8">
+          <PipelineHealthPanel />
         </div>
 
         <div className="mt-8">

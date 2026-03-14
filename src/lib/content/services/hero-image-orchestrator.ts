@@ -2,29 +2,119 @@ import "server-only";
 
 import path from "path";
 import { supabaseAdmin } from "@/lib/supabase";
-import { OpenAIContentClient } from "@/lib/ai/openai-content-client";
-import { generateImagePrompt, brandGeneratedHeroImage } from "@/lib/content/services/image-service";
+import { brandGeneratedHeroImage } from "@/lib/content/services/image-service";
 import { createJobRun, failJobRun, finishJobRun } from "@/lib/content/job-runs";
 import { uploadEditorialImage } from "@/lib/images/storage";
-import { ContentPipelineError } from "@/lib/content/errors";
+import { ContentPipelineError, getErrorMessage } from "@/lib/content/errors";
+import { generateAiImage } from "@/lib/ai/openai-image-client";
 
-interface OpenAIImageResponse {
-  data?: Array<{
-    b64_json?: string;
-  }>;
+interface UnsplashPhoto {
+  urls: { regular?: string; full?: string };
+  alt_description: string | null;
+  user: { name: string; links: { html: string } };
 }
 
-function getImageModel() {
-  return process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+interface UnsplashSearchResponse {
+  results: UnsplashPhoto[];
+  total: number;
 }
 
-function getOpenAIKey() {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new ContentPipelineError("OPENAI_API_KEY is not configured.", "openai_key_missing");
+/**
+ * Search Unsplash for a topic-relevant stock photo.
+ * Returns the image buffer and attribution info.
+ */
+async function searchUnsplashImage(
+  query: string,
+): Promise<{ buffer: Buffer; altText: string; attribution: string } | null> {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+  if (!accessKey) {
+    console.log("[hero-image] UNSPLASH_ACCESS_KEY not configured, skipping Unsplash");
+    return null;
   }
 
-  return apiKey;
+  try {
+    const searchUrl = new URL("https://api.unsplash.com/search/photos");
+    searchUrl.searchParams.set("query", query);
+    searchUrl.searchParams.set("per_page", "5");
+    searchUrl.searchParams.set("orientation", "landscape");
+    searchUrl.searchParams.set("content_filter", "high");
+
+    const response = await fetch(searchUrl.toString(), {
+      headers: {
+        Authorization: `Client-ID ${accessKey}`,
+        "Accept-Version": "v1",
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      console.warn(`[hero-image] Unsplash search failed: ${response.status}`);
+      return null;
+    }
+
+    const data = (await response.json()) as UnsplashSearchResponse;
+    if (!data.results?.length) {
+      return null;
+    }
+
+    // Pick a random photo from top 5 results for variety
+    const photo = data.results[Math.floor(Math.random() * Math.min(data.results.length, 5))];
+    const imageUrl = photo.urls.regular ?? photo.urls.full;
+    if (!imageUrl) return null;
+
+    const imageBuffer = await downloadImage(imageUrl);
+    const attribution = `Foto: ${photo.user.name} via Unsplash`;
+
+    // Trigger download event per Unsplash API guidelines
+    try {
+      await fetch(`https://api.unsplash.com/photos/${query}/download`, {
+        headers: { Authorization: `Client-ID ${accessKey}` },
+      }).catch(() => {});
+    } catch {
+      // Non-critical
+    }
+
+    return {
+      buffer: imageBuffer,
+      altText: photo.alt_description ?? query,
+      attribution,
+    };
+  } catch (error) {
+    console.warn(`[hero-image] Unsplash error: ${getErrorMessage(error)}`);
+    return null;
+  }
+}
+
+/**
+ * Build a search query for Unsplash based on draft title/excerpt.
+ */
+function buildUnsplashQuery(title: string, excerpt: string): string {
+  // Map common Dutch topics to English search terms for better Unsplash results
+  const topicMap: Record<string, string> = {
+    horeca: "restaurant hospitality",
+    hotel: "hotel hospitality",
+    restaurant: "restaurant kitchen",
+    personeel: "team employees",
+    uitzend: "staffing agency",
+    arbeidsmarkt: "job market employment",
+    cao: "business negotiation",
+    medewerker: "employee workplace",
+    ondernemer: "entrepreneur business",
+    keuken: "professional kitchen chef",
+    zzp: "freelancer working",
+    wet: "law regulation",
+    compliance: "business compliance",
+  };
+
+  const text = `${title} ${excerpt}`.toLowerCase();
+
+  for (const [keyword, query] of Object.entries(topicMap)) {
+    if (text.includes(keyword)) {
+      return query;
+    }
+  }
+
+  return "business professional workplace";
 }
 
 function buildStorageBase(slug: string) {
@@ -32,36 +122,130 @@ function buildStorageBase(slug: string) {
   return `editorial/${slug}/${timestamp}`;
 }
 
-async function requestGeneratedImage(prompt: string): Promise<Buffer> {
-  const response = await fetch("https://api.openai.com/v1/images/generations", {
-    method: "POST",
+/**
+ * Extract og:image URL from article HTML.
+ */
+async function extractOgImage(articleUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(articleUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; TopTalentBot/1.0)",
+        Accept: "text/html",
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const html = await response.text();
+
+    // Try og:image first, then twitter:image
+    const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+      ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+
+    if (ogMatch?.[1]) {
+      return ogMatch[1];
+    }
+
+    const twitterMatch = html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)
+      ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
+
+    return twitterMatch?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Download an image from a URL and return it as a Buffer.
+ */
+async function downloadImage(imageUrl: string): Promise<Buffer> {
+  const response = await fetch(imageUrl, {
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getOpenAIKey()}`,
+      "User-Agent": "Mozilla/5.0 (compatible; TopTalentBot/1.0)",
+      Accept: "image/*",
     },
-    body: JSON.stringify({
-      model: getImageModel(),
-      prompt,
-      size: "1536x1024",
-    }),
+    redirect: "follow",
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new ContentPipelineError("OpenAI image generation failed.", "openai_image_generation_failed", {
-      status: response.status,
-      body: errorBody,
-    });
+    throw new ContentPipelineError(
+      `Failed to download image: ${response.status}`,
+      "image_download_failed",
+      { url: imageUrl, status: response.status },
+    );
   }
 
-  const payload = (await response.json()) as OpenAIImageResponse;
-  const encoded = payload.data?.[0]?.b64_json;
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
 
-  if (!encoded) {
-    throw new ContentPipelineError("OpenAI returned no image payload.", "openai_image_empty");
+/**
+ * Get source article URLs linked to a draft.
+ */
+async function getDraftSourceUrls(draftId: string): Promise<string[]> {
+  const { data: sources } = await supabaseAdmin
+    .from("editorial_draft_sources")
+    .select(`
+      normalized_article_id,
+      normalized_articles (
+        canonical_url
+      )
+    `)
+    .eq("draft_id", draftId)
+    .order("source_order", { ascending: true })
+    .limit(10);
+
+  if (!sources?.length) {
+    return [];
   }
 
-  return Buffer.from(encoded, "base64");
+  return sources
+    .map((row) => {
+      const article = Array.isArray(row.normalized_articles)
+        ? row.normalized_articles[0]
+        : row.normalized_articles;
+      return article?.canonical_url;
+    })
+    .filter((url): url is string => Boolean(url));
+}
+
+/**
+ * Try to find a usable og:image from source articles.
+ * Returns the first successful image buffer found.
+ */
+async function findSourceArticleImage(sourceUrls: string[]): Promise<{ buffer: Buffer; sourceUrl: string } | null> {
+  for (const url of sourceUrls) {
+    try {
+      const ogImageUrl = await extractOgImage(url);
+      if (!ogImageUrl) {
+        continue;
+      }
+
+      // Resolve relative URLs
+      const absoluteUrl = ogImageUrl.startsWith("http")
+        ? ogImageUrl
+        : new URL(ogImageUrl, url).href;
+
+      const buffer = await downloadImage(absoluteUrl);
+
+      // Minimum size check (at least 10KB — skip tiny placeholder images)
+      if (buffer.length < 10_000) {
+        continue;
+      }
+
+      return { buffer, sourceUrl: absoluteUrl };
+    } catch {
+      // Try next source
+      continue;
+    }
+  }
+
+  return null;
 }
 
 export async function generateHeroImageForDraft(draftId: string) {
@@ -70,7 +254,7 @@ export async function generateHeroImageForDraft(draftId: string) {
   try {
     const { data: draft, error } = await supabaseAdmin
       .from("editorial_drafts")
-      .select("id, slug, title, excerpt, visual_direction, image_prompt_suggestion")
+      .select("id, slug, title, excerpt")
       .eq("id", draftId)
       .single();
 
@@ -78,43 +262,76 @@ export async function generateHeroImageForDraft(draftId: string) {
       throw error ?? new Error("Draft not found.");
     }
 
-    const aiClient = new OpenAIContentClient();
-    const promptResult = await generateImagePrompt(aiClient, {
-      title: String(draft.title),
-      excerpt: String(draft.excerpt),
-      visualDirection: (draft.visual_direction as string | null) ?? null,
-    });
+    // 1. Try og:image from source articles
+    const sourceUrls = await getDraftSourceUrls(draftId);
+    const sourceImage = await findSourceArticleImage(sourceUrls);
 
+    // 2. Fallback to Unsplash if no og:image found
+    let imageBuffer: Buffer;
+    let imageSource: string;
+    let altText = String(draft.title);
+    let generationModel: string;
+
+    if (sourceImage) {
+      imageBuffer = sourceImage.buffer;
+      imageSource = sourceImage.sourceUrl;
+      generationModel = "source_og_image";
+    } else {
+      const unsplashQuery = buildUnsplashQuery(String(draft.title), String(draft.excerpt));
+      const unsplashResult = await searchUnsplashImage(unsplashQuery);
+
+      if (unsplashResult) {
+        imageBuffer = unsplashResult.buffer;
+        imageSource = `unsplash:${unsplashQuery}`;
+        altText = unsplashResult.altText;
+        generationModel = `unsplash (${unsplashResult.attribution})`;
+        console.log(`[hero-image] Using Unsplash fallback for draft ${draftId}: "${unsplashQuery}"`);
+      } else {
+        // 3. AI image generation fallback (gpt-image-1)
+        console.log(`[hero-image] No og:image or Unsplash result, generating AI image for draft ${draftId}`);
+
+        const { data: draftDetails } = await supabaseAdmin
+          .from("editorial_drafts")
+          .select("image_prompt_suggestion, visual_direction")
+          .eq("id", draftId)
+          .single();
+
+        const aiPrompt = draftDetails?.image_prompt_suggestion
+          ? String(draftDetails.image_prompt_suggestion)
+          : `Photojournalistic editorial photo for an article titled "${String(draft.title)}". Professional DSLR quality, natural lighting, real Dutch hospitality setting, no text or overlays.`;
+
+        imageBuffer = await generateAiImage(aiPrompt);
+        imageSource = "gpt-image-1";
+        generationModel = "gpt-image-1";
+        console.log(`[hero-image] AI image generated for draft ${draftId}`);
+      }
+    }
+
+    // 3. Create image record
     const { data: imageRow, error: imageInsertError } = await supabaseAdmin
       .from("generated_images")
       .insert({
         draft_id: draftId,
-        status: "prompt_ready",
-        prompt: promptResult.prompt,
-        alt_text: promptResult.altText,
-        generation_model: getImageModel(),
+        status: "generating",
+        prompt: `Image from: ${imageSource}`,
+        alt_text: altText,
+        generation_model: generationModel,
       })
       .select("id")
       .single();
 
     if (imageInsertError || !imageRow) {
-      throw imageInsertError ?? new Error("Failed to create generated image row.");
+      throw imageInsertError ?? new Error("Failed to create image row.");
     }
 
     const generatedImageId = String(imageRow.id);
-
-    await supabaseAdmin
-      .from("generated_images")
-      .update({ status: "generating" })
-      .eq("id", generatedImageId);
-
-    const originalBuffer = await requestGeneratedImage(promptResult.prompt);
     const storageBase = buildStorageBase(String(draft.slug));
-    const originalPath = `${storageBase}/original.png`;
 
+    // 4. Upload original
+    const originalPath = `${storageBase}/original.png`;
     await uploadEditorialImage({
       path: originalPath,
-      buffer: originalBuffer,
+      buffer: imageBuffer,
       contentType: "image/png",
     });
 
@@ -126,9 +343,10 @@ export async function generateHeroImageForDraft(draftId: string) {
       })
       .eq("id", generatedImageId);
 
+    // 5. Apply branding (logo bottom-right + orange gradient)
     const logoPath = path.join(process.cwd(), "public", "logo.png");
     const brandedBuffer = await brandGeneratedHeroImage({
-      buffer: originalBuffer,
+      buffer: imageBuffer,
       logoPath,
     });
     const brandedPath = `${storageBase}/branded.webp`;
@@ -139,6 +357,7 @@ export async function generateHeroImageForDraft(draftId: string) {
       contentType: "image/webp",
     });
 
+    // 6. Finalize
     await supabaseAdmin
       .from("generated_images")
       .update({
@@ -153,8 +372,6 @@ export async function generateHeroImageForDraft(draftId: string) {
       .from("editorial_drafts")
       .update({
         hero_image_id: generatedImageId,
-        image_prompt_suggestion: promptResult.prompt,
-        visual_direction: promptResult.visualDirection,
       })
       .eq("id", draftId);
 
@@ -162,6 +379,7 @@ export async function generateHeroImageForDraft(draftId: string) {
       draftId,
       generatedImageId,
       brandedPath,
+      imageSource,
     });
 
     return {

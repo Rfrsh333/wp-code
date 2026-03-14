@@ -49,7 +49,10 @@ export class OpenAIContentClient implements AiTextClient {
     private readonly baseUrl = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
   ) {}
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, options?: { maxTokens?: number; temperature?: number }): Promise<string> {
+    const maxTokens = options?.maxTokens ?? 16384;
+    const temperature = options?.temperature ?? 0.3;
+
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -58,7 +61,8 @@ export class OpenAIContentClient implements AiTextClient {
       },
       body: JSON.stringify({
         model: this.model,
-        temperature: 0.2,
+        temperature,
+        max_tokens: maxTokens,
         response_format: { type: "json_object" },
         messages: [
           {

@@ -37,6 +37,10 @@ export const analysisCategories = [
   "operations",
   "hr",
   "hotel_nieuws",
+  "zzp",
+  "ondernemen",
+  "arbeidsmigratie",
+  "economie",
 ] as const;
 export type AnalysisCategory = (typeof analysisCategories)[number];
 
@@ -58,6 +62,9 @@ export const reviewStatuses = [
   "published",
 ] as const;
 export type ReviewStatus = (typeof reviewStatuses)[number];
+
+export const sourceHealthStatuses = ["healthy", "degraded", "failing", "dead"] as const;
+export type SourceHealthStatus = (typeof sourceHealthStatuses)[number];
 
 export const imageStatuses = [
   "queued",
@@ -84,6 +91,10 @@ export interface SourceRecord {
   lastFetchedAt: string | null;
   lastErrorAt: string | null;
   lastErrorMessage: string | null;
+  healthStatus: SourceHealthStatus;
+  consecutiveErrorCount: number;
+  avgFetchTimeMs: number | null;
+  articlesFoundLastRun: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -224,6 +235,7 @@ export interface EditorialDraftRecord {
   slug: string;
   excerpt: string;
   bodyMarkdown: string;
+  bodyBlocks: ContentBlock[] | null;
   keyTakeaways: string[];
   impactSummary: string | null;
   actionSteps: string[];
@@ -315,11 +327,17 @@ export interface ClassificationResult {
   summary: string;
 }
 
+export interface ContentBlock {
+  type: string;
+  [key: string]: unknown;
+}
+
 export interface DraftGenerationResult {
   title: string;
   slug: string;
   excerpt: string;
   bodyMarkdown: string;
+  bodyBlocks: ContentBlock[];
   keyTakeaways: string[];
   impactSummary: string;
   actionSteps: string[];

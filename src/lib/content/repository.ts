@@ -6,6 +6,7 @@ import type {
   EditorialDraftRecord,
   GeneratedImageRecord,
   ReviewStatus,
+  SourceHealthStatus,
   SourceRecord,
 } from "@/lib/content/types";
 
@@ -38,6 +39,10 @@ function mapSourceRow(row: GenericRow): SourceRecord {
     lastFetchedAt: (row.last_fetched_at as string | null) ?? null,
     lastErrorAt: (row.last_error_at as string | null) ?? null,
     lastErrorMessage: (row.last_error_message as string | null) ?? null,
+    healthStatus: (row.health_status as SourceHealthStatus) ?? "healthy",
+    consecutiveErrorCount: Number(row.consecutive_error_count ?? 0),
+    avgFetchTimeMs: (row.avg_fetch_time_ms as number | null) ?? null,
+    articlesFoundLastRun: (row.articles_found_last_run as number | null) ?? null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -77,6 +82,11 @@ function mapDraftRow(row: GenericRow): EditorialDraftRecord {
     slug: String(row.slug),
     excerpt: String(row.excerpt),
     bodyMarkdown: String(row.body_markdown),
+    bodyBlocks: Array.isArray(row.body_blocks)
+      ? (row.body_blocks as EditorialDraftRecord["bodyBlocks"])
+      : row.body_blocks && typeof row.body_blocks === "string"
+        ? (() => { try { return JSON.parse(row.body_blocks as string); } catch { return null; } })()
+        : null,
     keyTakeaways: Array.isArray(row.key_takeaways) ? (row.key_takeaways as string[]) : [],
     impactSummary: (row.impact_summary as string | null) ?? null,
     actionSteps: Array.isArray(row.action_steps) ? (row.action_steps as string[]) : [],
@@ -124,6 +134,7 @@ export async function listActiveSources(): Promise<SourceRecord[]> {
       .order("name", { ascending: true });
 
     if (error) {
+      console.error("[repo] listActiveSources error:", error.code, error.message);
       if (isMissingRelationError(error)) {
         return [];
       }
@@ -131,6 +142,7 @@ export async function listActiveSources(): Promise<SourceRecord[]> {
       throw error;
     }
 
+    console.log(`[repo] listActiveSources: ${(data ?? []).length} rows`);
     return (data ?? []).map((row) => mapSourceRow(row as GenericRow));
   } catch (error) {
     handleQueryError("sources", error);
@@ -147,6 +159,7 @@ export async function listRecentClusters(limit = 20): Promise<ContentClusterReco
       .limit(limit);
 
     if (error) {
+      console.error("[repo] listRecentClusters error:", error.code, error.message);
       if (isMissingRelationError(error)) {
         return [];
       }
@@ -154,6 +167,7 @@ export async function listRecentClusters(limit = 20): Promise<ContentClusterReco
       throw error;
     }
 
+    console.log(`[repo] listRecentClusters: ${(data ?? []).length} rows`);
     return (data ?? []).map((row) => mapClusterRow(row as GenericRow));
   } catch (error) {
     handleQueryError("content_clusters", error);
@@ -176,6 +190,7 @@ export async function listDraftsByStatus(status?: ReviewStatus, limit = 20): Pro
     const { data, error } = await query;
 
     if (error) {
+      console.error("[repo] listDraftsByStatus error:", error.code, error.message);
       if (isMissingRelationError(error)) {
         return [];
       }
@@ -183,6 +198,7 @@ export async function listDraftsByStatus(status?: ReviewStatus, limit = 20): Pro
       throw error;
     }
 
+    console.log(`[repo] listDraftsByStatus(${status ?? "all"}): ${(data ?? []).length} rows`);
     return (data ?? []).map((row) => mapDraftRow(row as GenericRow));
   } catch (error) {
     handleQueryError("editorial_drafts", error);

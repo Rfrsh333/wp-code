@@ -30,6 +30,7 @@ export default function AdminNewsPage() {
 
       if (!response.ok) {
         await supabase.auth.signOut();
+        document.cookie = "sb-access-token=; path=/; max-age=0";
         router.push("/admin/login");
         setIsLoading(false);
         return;
