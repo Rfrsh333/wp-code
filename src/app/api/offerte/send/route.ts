@@ -11,10 +11,10 @@ import crypto from "crypto";
 // ============================================================================
 //
 // POST /api/offerte/send
-// Body: { aanvraagId: string }
+// Body: { aanvraagId: string, offerteId?: string }
 //
 // Generates a PDF offerte and sends it to the customer via email.
-// This endpoint is called by n8n after a new personeel aanvraag.
+// If offerteId is provided, uses the existing offerte record (concept review flow).
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
     }
 
-    const { aanvraagId } = await request.json();
+    const { aanvraagId, offerteId } = await request.json();
 
     if (!aanvraagId) {
       return NextResponse.json(
@@ -49,15 +49,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate offerte nummer
-    const year = new Date().getFullYear();
-    const randomPart = crypto.randomBytes(3).toString("hex").toUpperCase();
-    const offerteNummer = `OFF-${year}-${randomPart}`;
+    // If offerteId provided, fetch existing offerte (concept review flow)
+    let existingOfferte: { offerte_nummer: string; ai_introductie: string | null; geldig_tot: string } | null = null;
+    if (offerteId) {
+      const { data } = await supabase
+        .from("offertes")
+        .select("offerte_nummer, ai_introductie, geldig_tot")
+        .eq("id", offerteId)
+        .single();
+      existingOfferte = data;
+    }
 
-    // Set validity period (14 days)
+    // Use existing offerte nummer or generate new one
+    const offerteNummer = existingOfferte?.offerte_nummer || `OFF-${new Date().getFullYear()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
+    // Set validity period (14 days) or use existing
     const offerteDatum = new Date();
-    const geldigTot = new Date();
-    geldigTot.setDate(geldigTot.getDate() + 14);
+    const geldigTot = existingOfferte?.geldig_tot ? new Date(existingOfferte.geldig_tot) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+    // AI introductie for email
+    const aiIntroductie = existingOfferte?.ai_introductie || null;
 
     // Prepare data for PDF
     const offerteData = {
@@ -110,9 +121,17 @@ export async function POST(request: NextRequest) {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
 
+    // Build email intro: use AI introductie if available, otherwise default
+    const introText = aiIntroductie
+      ? aiIntroductie.replace(/\n/g, "<br>")
+      : `Bedankt voor uw interesse in onze horecapersoneel diensten. Hierbij ontvangt u de offerte voor uw aanvraag.`;
+
+    const phoneNumber = process.env.CONTACT_PHONE_NUMBER || '+31 6 49 71 37 66';
+
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #F27501 0%, #d96800 100%); padding: 30px; text-align: center;">
+          <img src="https://www.toptalentjobs.nl/logo-white.png" alt="TopTalent Jobs" style="height: 40px; margin-bottom: 12px;" />
           <h1 style="color: white; margin: 0; font-size: 24px;">Uw Personeelsofferte</h1>
         </div>
 
@@ -123,8 +142,7 @@ export async function POST(request: NextRequest) {
             </p>
 
             <p style="color: #666; line-height: 1.6;">
-              Bedankt voor uw interesse in onze horecapersoneel diensten. Hierbij ontvangt u de offerte
-              voor uw aanvraag.
+              ${introText}
             </p>
 
             <div style="background: #FFF7ED; border-left: 4px solid #F27501; padding: 15px; margin: 20px 0;">
@@ -140,10 +158,10 @@ export async function POST(request: NextRequest) {
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="tel:${process.env.CONTACT_PHONE_NUMBER || '+31 6 49 71 37 66'}"
+              <a href="tel:${phoneNumber}"
                  style="display: inline-block; background: #F27501; color: white; padding: 12px 30px;
                         text-decoration: none; border-radius: 6px; font-weight: bold;">
-                Bel ons: ${process.env.CONTACT_PHONE_NUMBER || '+31 6 49 71 37 66'}
+                Bel ons: ${phoneNumber}
               </a>
             </div>
 
@@ -156,9 +174,12 @@ export async function POST(request: NextRequest) {
           </div>
         </div>
 
-        <div style="background: #333; padding: 20px; text-align: center;">
-          <p style="color: #999; margin: 0; font-size: 12px;">
+        <div style="background: #1B2E4A; padding: 20px; text-align: center;">
+          <p style="color: #94a3b8; margin: 0 0 8px; font-size: 12px;">
             TopTalent Jobs | Utrecht | KvK: 73401161
+          </p>
+          <p style="margin: 0;">
+            <a href="https://www.toptalentjobs.nl" style="color: #F27501; font-size: 12px; text-decoration: none;">toptalentjobs.nl</a>
           </p>
         </div>
       </div>
@@ -194,6 +215,14 @@ export async function POST(request: NextRequest) {
         offerte_verzonden_at: new Date().toISOString(),
       })
       .eq("id", aanvraagId);
+
+    // If existing offerte (concept review), update status to verzonden
+    if (offerteId) {
+      await supabase
+        .from("offertes")
+        .update({ status: "verzonden" })
+        .eq("id", offerteId);
+    }
 
     return NextResponse.json({
       success: true,

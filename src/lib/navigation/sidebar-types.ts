@@ -33,7 +33,8 @@ export type SidebarBadgeKey =
   | "aanvragenNieuw"
   | "inschrijvingenNieuw"
   | "contactNieuw"
-  | "calculatorTotaal";
+  | "calculatorTotaal"
+  | "offertesConcepten";
 
 export type SidebarItemKind = "tab" | "route";
 export type SidebarRouteMatch = "exact" | "prefix";

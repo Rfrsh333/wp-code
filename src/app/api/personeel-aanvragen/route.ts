@@ -6,6 +6,7 @@ import { verifyRecaptcha } from "@/lib/recaptcha";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { generateAutoReply, generateAutoReplySubject } from "@/lib/inquiry-auto-reply";
 import { buildAutoReplyEmailHtml } from "@/lib/email-templates";
+import { getOfferteAutoMode } from "@/lib/agents/offerte-generator";
 
 interface FormData {
   bedrijfsnaam: string;
@@ -238,7 +239,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Opslaan in Supabase
-    const { error: dbError } = await supabase.from("personeel_aanvragen").insert({
+    const { data: savedAanvraag, error: dbError } = await supabase.from("personeel_aanvragen").insert({
       bedrijfsnaam: data.bedrijfsnaam,
       contactpersoon: data.contactpersoon,
       email: data.email,
@@ -396,6 +397,40 @@ export async function POST(request: NextRequest) {
     } catch (autoReplyErr) {
       // Auto-reply fout mag de hoofdflow niet breken
       console.error("Auto-reply error:", autoReplyErr);
+    }
+
+    // Auto offerte generatie (fire-and-forget)
+    const autoMode = getOfferteAutoMode();
+    if (autoMode !== "off" && savedAanvraag?.id) {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        const cronSecret = process.env.CRON_SECRET;
+        if (cronSecret) {
+          const offerteRes = await fetch(`${baseUrl}/api/admin/ai/offerte-generator`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${cronSecret}`,
+            },
+            body: JSON.stringify({ aanvraag_id: savedAanvraag.id }),
+          });
+
+          if (offerteRes.ok && autoMode === "send") {
+            // Direct versturen zonder review
+            await fetch(`${baseUrl}/api/offerte/send`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${cronSecret}`,
+              },
+              body: JSON.stringify({ aanvraagId: savedAanvraag.id }),
+            });
+          }
+        }
+      } catch (offerteErr) {
+        // Offerte fout mag de hoofdflow niet blokkeren
+        console.error("Auto offerte generatie error:", offerteErr);
+      }
     }
 
     return NextResponse.json({ success: true });

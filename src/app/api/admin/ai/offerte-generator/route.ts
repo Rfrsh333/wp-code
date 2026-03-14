@@ -7,8 +7,10 @@ import crypto from "crypto";
 // POST /api/admin/ai/offerte-generator
 // Generates AI offerte from personeel aanvraag
 export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
   const { isAdmin } = await verifyAdmin(request);
-  if (!isAdmin) {
+  if (!isAdmin && !cronAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

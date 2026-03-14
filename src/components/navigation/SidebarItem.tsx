@@ -10,6 +10,7 @@ const badgeColors: Record<SidebarBadgeKey, { bg: string; text: string; activeBg:
   inschrijvingenNieuw: { bg: "bg-red-100", text: "text-red-600", activeBg: "bg-red-100", activeText: "text-red-700" },
   contactNieuw: { bg: "bg-blue-100", text: "text-blue-600", activeBg: "bg-blue-100", activeText: "text-blue-700" },
   calculatorTotaal: { bg: "bg-green-100", text: "text-green-600", activeBg: "bg-green-100", activeText: "text-green-700" },
+  offertesConcepten: { bg: "bg-yellow-100", text: "text-yellow-600", activeBg: "bg-yellow-100", activeText: "text-yellow-700" },
 };
 
 interface SidebarItemProps {

@@ -210,6 +210,7 @@ interface Stats {
   inschrijvingen: { total: number; nieuw: number };
   contact: { total: number; nieuw: number };
   calculator: { total: number; downloaded: number };
+  offertesConcepten: number;
 }
 
 interface OpsSnapshot {
@@ -330,6 +331,7 @@ export default function AdminDashboard() {
     inschrijvingen: { total: 0, nieuw: 0 },
     contact: { total: 0, nieuw: 0 },
     calculator: { total: 0, downloaded: 0 },
+    offertesConcepten: 0,
   });
   const [aanvragen, setAanvragen] = useState<PersoneelAanvraag[]>([]);
   const [inschrijvingen, setInschrijvingen] = useState<Inschrijving[]>([]);
@@ -419,12 +421,13 @@ export default function AdminDashboard() {
       : {};
 
     // Fetch all data via admin API (bypasses RLS)
-    const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes, opsRes] = await Promise.all([
+    const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes, opsRes, offertesRes] = await Promise.all([
       fetch("/api/admin/data?table=personeel_aanvragen", { headers }).then(r => r.json()),
       fetch("/api/admin/data?table=inschrijvingen", { headers }).then(r => r.json()),
       fetch("/api/admin/data?table=contact_berichten", { headers }).then(r => r.json()),
       fetch("/api/admin/data?table=calculator_leads", { headers }).then(r => r.json()),
       fetch("/api/admin/ops", { headers }).then(r => r.json()),
+      fetch("/api/admin/data?table=offertes&orderBy=created_at&order=desc", { headers }).then(r => r.json()),
     ]);
 
     if (aanvragenRes.data) setAanvragen(aanvragenRes.data);
@@ -454,6 +457,7 @@ export default function AdminDashboard() {
         total: calculatorRes.data?.length || 0,
         downloaded: calculatorRes.data?.filter((c: CalculatorLead) => c.pdf_downloaded).length || 0,
       },
+      offertesConcepten: offertesRes.data?.filter((o: { status: string; ai_generated: boolean }) => o.status === "concept" && o.ai_generated).length || 0,
     });
 
     setIsLoading(false);
@@ -1012,6 +1016,7 @@ export default function AdminDashboard() {
         inschrijvingenNieuw: stats.inschrijvingen.nieuw,
         contactNieuw: stats.contact.nieuw,
         calculatorTotaal: stats.calculator.total,
+        offertesConcepten: stats.offertesConcepten,
       }}
     >
         {/* Global Search Bar */}

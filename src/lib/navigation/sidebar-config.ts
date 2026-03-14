@@ -5,6 +5,7 @@ import {
   CalendarRange,
   Clock3,
   FileSpreadsheet,
+  FileText,
   Files,
   FolderKanban,
   Gauge,
@@ -175,6 +176,16 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["leads", "acquisitie", "facebook", "linkedin", "bookmarklet"],
   },
+  offertes: {
+    id: "offertes",
+    title: "Offertes",
+    icon: FileText,
+    kind: "tab",
+    tab: "offertes",
+    badgeKey: "offertesConcepten",
+    pinnable: true,
+    keywords: ["offerte", "quote", "voorstel", "tarief"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -208,7 +219,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "finance",
     label: "Finance",
-    itemIds: ["uren", "facturen"],
+    itemIds: ["uren", "facturen", "offertes"],
     collapsible: true,
     dividerBefore: true,
   },

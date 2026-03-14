@@ -1,5 +1,13 @@
 import { chatCompletion, isOpenAIConfigured, type ChatMessage } from "@/lib/openai";
 
+export type OfferteAutoMode = "send" | "concept" | "off";
+
+export function getOfferteAutoMode(): OfferteAutoMode {
+  const mode = process.env.OFFERTE_AUTO_MODE?.toLowerCase();
+  if (mode === "send" || mode === "off") return mode;
+  return "concept";
+}
+
 const TARIEFKAART: Record<string, { basis: number; weekend: number; feestdag: number }> = {
   bediening: { basis: 14.50, weekend: 16.00, feestdag: 18.50 },
   bar: { basis: 15.00, weekend: 17.00, feestdag: 19.50 },
