@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  const showAll = request.nextUrl.searchParams.get("all") === "true";
+
   const { data, error } = await supabaseAdmin
     .from("normalized_articles")
     .select(`
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
       )
     `)
     .order("published_at", { ascending: false })
-    .limit(25);
+    .limit(showAll ? 50 : 25);
 
   if (error) {
     if (error.code === "42P01") {
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Articles konden niet geladen worden" }, { status: 500 });
   }
 
-  const articles = (data ?? []).map((row) => {
+  const allArticles = (data ?? []).map((row) => {
     const analysis = Array.isArray(row.article_analysis) ? row.article_analysis[0] : row.article_analysis;
 
     return {
@@ -61,5 +63,9 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ articles });
+  const articles = showAll
+    ? allArticles
+    : allArticles.filter((a) => a.analysis?.isRelevant !== false);
+
+  return NextResponse.json({ articles, totalUnfiltered: allArticles.length });
 }

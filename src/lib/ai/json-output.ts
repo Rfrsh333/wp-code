@@ -8,7 +8,7 @@ import {
 } from "@/lib/content/types";
 
 export const classificationResultSchema = z.object({
-  isRelevant: z.boolean().catch(true),
+  isRelevant: z.boolean().catch(false),
   isNoise: z.boolean().catch(false),
   primaryAudience: z.enum(audienceTypes).nullable().catch(null),
   secondaryAudience: z.array(z.enum(audienceTypes).catch("ondernemers")).default([]),

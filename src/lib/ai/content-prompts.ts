@@ -7,21 +7,24 @@ export function buildClassificationPrompt(input: {
   cleanedText: string;
 }) {
   return `
-You classify Dutch or English content for the editorial intelligence system of TopTalent Jobs, a staffing and recruitment agency focused on hospitality, but also covering broader labour market, employment, and business news.
+You classify Dutch or English content for TopTalent Jobs, a hospitality staffing agency in the Netherlands. We ONLY publish content that is directly useful for our audience: horeca-ondernemers, uitzendkrachten, and HR-professionals in hospitality.
 
-An article is RELEVANT (isRelevant: true) if it relates to ANY of these topics:
-- Horeca & hospitality (restaurants, hotels, catering, events, etc.)
-- Staffing, recruitment, uitzendwerk, detachering, payroll
-- Labour market (arbeidsmarkt), employment trends, vacatures, personeelstekort
-- Employment law, CAO, minimumloon, salaris, arbeidsovereenkomsten
-- ZZP, freelance, schijnzelfstandigheid, Wet DBA
-- Vergunningen, compliance, regelgeving, arbeidsinspectie, NVWA
-- Arbeidsmigratie, expats, werkvergunningen
-- Ondernemen, MKB, bedrijfsvoering, omzet, kosten
-- HR, onboarding, employee management
-- Economic news that impacts employers or workers
+An article is RELEVANT (isRelevant: true) ONLY if it has a DIRECT, CONCRETE connection to at least one of these topics:
+- Horeca & hospitality operations (restaurants, hotels, catering, events)
+- Staffing, recruitment, uitzendwerk, detachering in hospitality or related sectors
+- Labour market specifically affecting hospitality or staffing (personeelstekort horeca, vacatures)
+- Employment law directly impacting employers or workers (CAO horeca, minimumloon, arbeidsovereenkomsten)
+- ZZP in hospitality context (schijnzelfstandigheid, Wet DBA, handhaving)
+- Vergunningen for horeca (exploitatievergunning, terrasvergunning, NVWA)
+- Arbeidsmigratie related to staffing (werkvergunningen, expats in hospitality)
+- HR & onboarding for hospitality businesses
 
-An article is NOT relevant only if it has zero connection to employment, business, or hospitality (e.g. sports results, entertainment gossip, weather).
+An article is NOT relevant (isRelevant: false) if:
+- It is about general economics, politics, or international trade without direct hospitality/staffing impact
+- It is about technology, crypto, real estate, or other sectors unrelated to hospitality
+- It is about general business news that does not specifically affect horeca-ondernemers or uitzendkrachten
+- It mentions hospitality only in passing but the core topic is something else
+- It is about sports, entertainment, weather, or lifestyle
 
 Target audiences:
 - horecaondernemers
@@ -55,7 +58,8 @@ Return strict JSON with EXACTLY these fields and allowed values:
 IMPORTANT: Use ONLY the exact enum values listed above. Do not invent new values.
 
 Rules:
-- Be GENEROUS with isRelevant — mark true for any article that could interest employers, workers, or staffing agencies
+- Be STRICT with isRelevant — only mark true if the article has direct, actionable value for horeca-ondernemers, uitzendkrachten, or hospitality HR
+- General economic news (GDP, inflation, trade wars) is NOT relevant unless it specifically discusses impact on hospitality or staffing
 - prioritize real operational, staffing, labour, compliance, hospitality and regulation value
 - mark legal or regulatory uncertainty in factCheckFlags
 - do not overstate certainty
