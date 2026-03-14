@@ -3,6 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { Section, Container } from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
+import { listPublishedDrafts } from "@/lib/content/repository";
+import { getGeneratedImageById } from "@/lib/content/repository";
+import { createEditorialImageSignedUrl } from "@/lib/images/storage";
 
 export const revalidate = 3600;
 
@@ -11,127 +14,127 @@ export const metadata: Metadata = {
   description: "Lees de nieuwste artikelen over horeca personeel, uitzendwerk en recruitment. Tips, trends en inzichten voor horecaondernemers en werkzoekenden.",
 };
 
-interface BlogPost {
-  id: number;
+interface UnifiedPost {
   title: string;
   excerpt: string;
   category: string;
   author: string;
   date: string;
-  image: string;
-  slug: string;
+  dateISO: string;
+  image: string | null;
+  href: string;
 }
 
-const blogPosts: BlogPost[] = [
+const staticBlogPosts: UnifiedPost[] = [
   {
-    id: 1,
     title: "Horecapersoneel inhuren: De complete gids voor 2025",
     excerpt: "Alles wat u moet weten over het inhuren van horecapersoneel. Van uitzendkrachten tot vaste medewerkers, wij leggen alle opties uit inclusief kosten, voordelen en valkuilen.",
     category: "Recruitment",
     author: "TopTalent Team",
     date: "14 december 2024",
+    dateISO: "2024-12-14",
     image: "/images/blog-horecapersoneel-inhuren.jpg",
-    slug: "horecapersoneel-inhuren-gids-2025",
+    href: "/blog/horecapersoneel-inhuren-gids-2025",
   },
   {
-    id: 2,
     title: "Personeelstekort horeca oplossen: 7 bewezen strategieën",
     excerpt: "Het personeelstekort in de horeca is een grote uitdaging. Ontdek 7 effectieve strategieën om toch voldoende personeel te vinden en te behouden voor uw restaurant of hotel.",
     category: "HR",
     author: "TopTalent Team",
     date: "12 december 2024",
+    dateISO: "2024-12-12",
     image: "/images/blog-personeelstekort.jpg",
-    slug: "personeelstekort-horeca-oplossen",
+    href: "/blog/personeelstekort-horeca-oplossen",
   },
   {
-    id: 4,
     title: "Werken als uitzendkracht in de horeca: salaris en voordelen",
     excerpt: "Overweeg je om als uitzendkracht in de horeca te werken? Lees alles over het salaris, de voordelen, flexibiliteit en doorgroeimogelijkheden in deze complete gids.",
     category: "Carrière",
     author: "TopTalent Team",
     date: "8 december 2024",
+    dateISO: "2024-12-08",
     image: "/images/blog-werken-als-uitzendkracht.jpg",
-    slug: "werken-uitzendkracht-horeca-salaris",
+    href: "/blog/werken-uitzendkracht-horeca-salaris",
   },
   {
-    id: 5,
     title: "Evenementenpersoneel inhuren: checklist voor organisatoren",
     excerpt: "Organiseert u een evenement, festival of bedrijfsfeest? Deze checklist helpt u bij het inhuren van het juiste horecapersoneel voor een geslaagd event.",
     category: "Evenementen",
     author: "TopTalent Team",
     date: "5 december 2024",
+    dateISO: "2024-12-05",
     image: "/images/blog-evenementenpersoneel.jpg",
-    slug: "evenementenpersoneel-inhuren-checklist",
+    href: "/blog/evenementenpersoneel-inhuren-checklist",
   },
   {
-    id: 6,
     title: "Detachering vs uitzenden: welke vorm past bij uw bedrijf?",
     excerpt: "Wat is het verschil tussen detachering en uitzenden? Wij vergelijken beide vormen op kosten, flexibiliteit, binding en geschiktheid voor verschillende situaties.",
     category: "Detachering",
     author: "TopTalent Team",
     date: "3 december 2024",
+    dateISO: "2024-12-03",
     image: "/images/blog-detachering-vs-uitzenden.jpg",
-    slug: "detachering-vs-uitzenden-verschil",
+    href: "/blog/detachering-vs-uitzenden-verschil",
   },
   {
-    id: 7,
     title: "Horecamedewerker worden zonder ervaring: zo begin je",
     excerpt: "Wil je in de horeca werken maar heb je geen ervaring? Geen probleem! Lees hoe je kunt starten, welke functies geschikt zijn voor beginners en hoe je snel leert.",
     category: "Carrière",
     author: "TopTalent Team",
     date: "1 december 2024",
+    dateISO: "2024-12-01",
     image: "/images/blog-horecamedewerker-zonder-ervaring.jpg",
-    slug: "horecamedewerker-worden-zonder-ervaring",
+    href: "/blog/horecamedewerker-worden-zonder-ervaring",
   },
   {
-    id: 8,
     title: "De 10 meest gevraagde horecafuncties in Nederland",
     excerpt: "Van barista tot sous-chef: dit zijn de meest gevraagde functies in de Nederlandse horeca. Inclusief salarissen, vereisten en doorgroeimogelijkheden per functie.",
     category: "Carrière",
     author: "TopTalent Team",
     date: "28 november 2024",
+    dateISO: "2024-11-28",
     image: "/images/blog-meest-gevraagde-functies.jpg",
-    slug: "meest-gevraagde-horecafuncties-nederland",
+    href: "/blog/meest-gevraagde-horecafuncties-nederland",
   },
   {
-    id: 9,
     title: "Restaurant openen? Zo stel je het perfecte team samen",
     excerpt: "Een nieuw restaurant openen begint met het juiste team. Ontdek welke functies u nodig heeft, hoeveel personeel en hoe u de beste mensen vindt en behoudt.",
     category: "Management",
     author: "TopTalent Team",
     date: "25 november 2024",
+    dateISO: "2024-11-25",
     image: "/images/blog-restaurant-openen.jpg",
-    slug: "restaurant-openen-team-samenstellen",
+    href: "/blog/restaurant-openen-team-samenstellen",
   },
   {
-    id: 10,
     title: "Seizoenspersoneel horeca: voorbereid op de zomer",
     excerpt: "De zomer betekent terrassen en drukte. Leer hoe u tijdig seizoenspersoneel werft, inwerkt en behoudt voor een succesvolle zomerperiode in uw horecazaak.",
     category: "Uitzenden",
     author: "TopTalent Team",
     date: "22 november 2024",
+    dateISO: "2024-11-22",
     image: "/images/blog-seizoenspersoneel.jpg",
-    slug: "seizoenspersoneel-horeca-zomer",
+    href: "/blog/seizoenspersoneel-horeca-zomer",
   },
   {
-    id: 11,
     title: "CAO Horeca 2025: dit verandert er voor werkgevers",
     excerpt: "De nieuwe CAO Horeca brengt veranderingen in salaris, toeslagen en arbeidsvoorwaarden. Een overzicht van de belangrijkste wijzigingen voor horecaondernemers.",
     category: "HR",
     author: "TopTalent Team",
     date: "20 november 2024",
+    dateISO: "2024-11-20",
     image: "/images/blog-cao-horeca.jpg",
-    slug: "cao-horeca-2025-wijzigingen",
+    href: "/blog/cao-horeca-2025-wijzigingen",
   },
   {
-    id: 12,
     title: "Horeca personeelsplanning: tips voor een efficiënt rooster",
     excerpt: "Een goede personeelsplanning bespaart kosten en voorkomt stress. Praktische tips voor het maken van een efficiënt werkrooster in uw restaurant of café.",
     category: "Management",
     author: "TopTalent Team",
     date: "18 november 2024",
+    dateISO: "2024-11-18",
     image: "/images/blog-personeelsplanning.jpg",
-    slug: "horeca-personeelsplanning-rooster-tips",
+    href: "/blog/horeca-personeelsplanning-rooster-tips",
   },
 ];
 
@@ -145,11 +148,61 @@ const categories = [
   { name: "Evenementen", count: 1 },
 ];
 
-const recentPosts = blogPosts.slice(0, 3);
-
 const tags = ["Horecapersoneel", "Uitzendkracht", "Personeelstekort", "Salaris", "Evenementen", "Restaurant", "CAO Horeca", "Flexwerk"];
 
-export default function BlogPage() {
+const dateFormatter = new Intl.DateTimeFormat("nl-NL", { dateStyle: "long" });
+
+export default async function BlogPage() {
+  // Haal gepubliceerde editorial artikelen op uit Supabase
+  let editorialPosts: UnifiedPost[] = [];
+  try {
+    const drafts = await listPublishedDrafts(50);
+
+    // Haal hero images op voor alle drafts (parallel)
+    const postsWithImages = await Promise.all(
+      drafts.map(async (draft) => {
+        let imageUrl: string | null = null;
+        if (draft.heroImageId) {
+          try {
+            const heroImage = await getGeneratedImageById(draft.heroImageId);
+            if (heroImage?.storagePathBranded) {
+              imageUrl = await createEditorialImageSignedUrl(heroImage.storagePathBranded);
+            }
+          } catch {
+            // Geen image beschikbaar
+          }
+        }
+
+        const publishedDate = draft.publishedAt
+          ? new Date(draft.publishedAt)
+          : new Date(draft.createdAt);
+
+        return {
+          title: draft.title,
+          excerpt: draft.excerpt,
+          category: draft.primaryAudience ?? "Editorial",
+          author: "TopTalent Jobs Redactie",
+          date: dateFormatter.format(publishedDate),
+          dateISO: publishedDate.toISOString(),
+          image: imageUrl,
+          href: `/blog/editorial/${draft.slug}`,
+        };
+      })
+    );
+
+    editorialPosts = postsWithImages;
+  } catch {
+    // Als Supabase niet bereikbaar is, toon alleen statische posts
+  }
+
+  // Combineer en sorteer op datum (nieuwste eerst)
+  const allPosts = [...editorialPosts, ...staticBlogPosts].sort(
+    (a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
+  );
+
+  // Recente berichten voor sidebar (top 3)
+  const recentPosts = allPosts.slice(0, 3);
+
   return (
     <>
       {/* Page Title */}
@@ -228,18 +281,27 @@ export default function BlogPage() {
                       {recentPosts.map((post, index) => (
                         <Link
                           key={index}
-                          href={`/blog/${post.slug}`}
+                          href={post.href}
                           className="flex gap-4 group"
                         >
                           <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100">
-                            <Image
-                              src={post.image}
-                              alt={post.title}
-                              width={80}
-                              height={80}
-                              sizes="80px"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                            {post.image ? (
+                              <Image
+                                src={post.image}
+                                alt={post.title}
+                                width={80}
+                                height={80}
+                                sizes="80px"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                unoptimized={post.image.startsWith("http")}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                                </svg>
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-neutral-900 text-sm line-clamp-2 group-hover:text-[#F97316] transition-colors">
@@ -300,22 +362,31 @@ export default function BlogPage() {
               </div>
             </div>
 
-            {/* Blog Grid */}
+            {/* News Grid */}
             <div className="order-1 lg:order-2 lg:col-span-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {blogPosts.map((post, index) => (
-                  <FadeIn key={post.id} delay={0.05 * index}>
+                {allPosts.map((post, index) => (
+                  <FadeIn key={post.href} delay={0.05 * Math.min(index, 10)}>
                     <article className="bg-white rounded-2xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                       {/* Image */}
-                      <div className="relative aspect-[16/10] overflow-hidden">
-                        <Image
-                          src={post.image}
-                          alt={post.title}
-                          width={400}
-                          height={250}
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                        />
+                      <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100">
+                        {post.image ? (
+                          <Image
+                            src={post.image}
+                            alt={post.title}
+                            width={400}
+                            height={250}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            unoptimized={post.image.startsWith("http")}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                            </svg>
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <span className="absolute top-4 left-4 bg-[#F97316] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
                           {post.category}
@@ -324,7 +395,7 @@ export default function BlogPage() {
 
                       {/* Content */}
                       <div className="p-6">
-                        <Link href={`/blog/${post.slug}`}>
+                        <Link href={post.href}>
                           <h3 className="font-bold text-lg text-neutral-900 mb-3 line-clamp-2 group-hover:text-[#F97316] transition-colors">
                             {post.title}
                           </h3>
@@ -351,34 +422,6 @@ export default function BlogPage() {
                   </FadeIn>
                 ))}
               </div>
-
-              {/* Pagination */}
-              <FadeIn delay={0.5}>
-                <div className="flex justify-center items-center gap-2 mt-12">
-                  <button className="w-12 h-12 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-400 hover:border-[#F97316] hover:text-[#F97316] transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  {[1, 2, 3].map((page) => (
-                    <button
-                      key={page}
-                      className={`w-12 h-12 rounded-full font-medium transition-colors ${
-                        page === 1
-                          ? "bg-[#F97316] text-white"
-                          : "border border-neutral-200 text-neutral-600 hover:border-[#F97316] hover:text-[#F97316]"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  <button className="w-12 h-12 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-[#F97316] hover:text-[#F97316] transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </FadeIn>
             </div>
           </div>
         </Container>
