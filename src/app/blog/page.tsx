@@ -7,7 +7,7 @@ import FadeIn from "@/components/animations/FadeIn";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Nieuws",
   description: "Lees de nieuwste artikelen over horeca personeel, uitzendwerk en recruitment. Tips, trends en inzichten voor horecaondernemers en werkzoekenden.",
 };
 
@@ -160,12 +160,12 @@ export default function BlogPage() {
               Nieuws & Inzichten
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
-              Blog
+              Nieuws
             </h1>
             <nav className="flex justify-center items-center gap-3 text-sm text-neutral-500">
               <Link href="/" className="hover:text-[#F97316] transition-colors">Home</Link>
               <span>-</span>
-              <span className="text-[#F97316]">Blog</span>
+              <span className="text-[#F97316]">Nieuws</span>
             </nav>
           </FadeIn>
         </div>
