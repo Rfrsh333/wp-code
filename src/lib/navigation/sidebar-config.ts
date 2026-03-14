@@ -13,6 +13,7 @@ import {
   Receipt,
   Settings,
   Sparkles,
+  Target,
   Users,
 } from "lucide-react";
 import type {
@@ -165,6 +166,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["planning", "weekrooster", "shifts", "toewijzen"],
   },
+  leads: {
+    id: "leads",
+    title: "Social Leads",
+    icon: Target,
+    kind: "tab",
+    tab: "leads",
+    pinnable: true,
+    keywords: ["leads", "acquisitie", "facebook", "linkedin", "bookmarklet"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -212,7 +222,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "marketing",
     label: "Growth",
-    itemIds: ["calculator"],
+    itemIds: ["calculator", "leads"],
     collapsible: true,
     dividerBefore: true,
   },
