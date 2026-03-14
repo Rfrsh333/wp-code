@@ -1,6 +1,7 @@
 import "server-only";
 
 import path from "path";
+import sharp from "sharp";
 import { supabaseAdmin } from "@/lib/supabase";
 import { brandGeneratedHeroImage } from "@/lib/content/services/image-service";
 import { createJobRun, failJobRun, finishJobRun } from "@/lib/content/job-runs";
@@ -214,9 +215,63 @@ async function getDraftSourceUrls(draftId: string): Promise<string[]> {
     .filter((url): url is string => Boolean(url));
 }
 
+/** URL patterns that indicate a logo, icon or generic placeholder — not a real article photo. */
+const BLOCKED_IMAGE_PATTERNS = [
+  /google\.com.*\/logo/i,
+  /googlenews/i,
+  /google-news/i,
+  /gstatic\.com/i,
+  /\/favicon/i,
+  /\/icon[s]?\//i,
+  /\/logo[s]?\//i,
+  /\/brand[ing]?\//i,
+  /\/apple-touch-icon/i,
+  /\/default[-_]?(og|image|thumb|share)/i,
+  /\/placeholder/i,
+  /\/site[-_]?logo/i,
+  /\/og[-_]?default/i,
+];
+
+/**
+ * Check if an og:image URL looks like a generic logo/icon rather than a real article photo.
+ */
+function isBlockedImageUrl(imageUrl: string): boolean {
+  return BLOCKED_IMAGE_PATTERNS.some((pattern) => pattern.test(imageUrl));
+}
+
+/**
+ * Check image dimensions — real article photos should be landscape and at least 600px wide.
+ * Logos/icons are typically small or square.
+ */
+async function isUsablePhotoDimensions(buffer: Buffer): Promise<boolean> {
+  try {
+    const meta = await sharp(buffer).metadata();
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+
+    // Too small — likely an icon or logo
+    if (w < 600 || h < 300) {
+      console.log(`[hero-image] Rejected: too small (${w}x${h})`);
+      return false;
+    }
+
+    // Nearly square or taller than wide — likely a logo, not an article photo
+    const ratio = w / h;
+    if (ratio < 1.1) {
+      console.log(`[hero-image] Rejected: not landscape (${w}x${h}, ratio ${ratio.toFixed(2)})`);
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Try to find a usable og:image from source articles.
  * Returns the first successful image buffer found.
+ * Filters out logos, icons and generic placeholder images.
  */
 async function findSourceArticleImage(sourceUrls: string[]): Promise<{ buffer: Buffer; sourceUrl: string } | null> {
   for (const url of sourceUrls) {
@@ -231,10 +286,22 @@ async function findSourceArticleImage(sourceUrls: string[]): Promise<{ buffer: B
         ? ogImageUrl
         : new URL(ogImageUrl, url).href;
 
+      // Block known logo/icon URLs
+      if (isBlockedImageUrl(absoluteUrl)) {
+        console.log(`[hero-image] Blocked generic image URL: ${absoluteUrl}`);
+        continue;
+      }
+
       const buffer = await downloadImage(absoluteUrl);
 
-      // Minimum size check (at least 10KB — skip tiny placeholder images)
+      // Minimum file size check (at least 10KB — skip tiny placeholders)
       if (buffer.length < 10_000) {
+        continue;
+      }
+
+      // Dimension check — must be a real landscape photo, not a logo/icon
+      if (!(await isUsablePhotoDimensions(buffer))) {
+        console.log(`[hero-image] Skipped non-photo image from: ${absoluteUrl}`);
         continue;
       }
 
