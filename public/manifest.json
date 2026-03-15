@@ -4,8 +4,8 @@
   "description": "TopTalent Jobs medewerker portaal",
   "start_url": "/medewerker/dashboard/",
   "display": "standalone",
-  "background_color": "#F5F5F7",
-  "theme_color": "#F27501",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "orientation": "portrait",
   "icons": [
     {
