@@ -9,6 +9,10 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import DashboardWidgets from "@/components/klant/DashboardWidgets";
+import QuickActions from "@/components/klant/QuickActions";
+import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
+import TabSearchBar from "@/components/klant/TabSearchBar";
 
 interface Klant {
   id: string;
@@ -196,6 +200,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     score_punctualiteit: number;
     score_functie: number;
   }>({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
+  const [urenZoek, setUrenZoek] = useState("");
 
   const fetchFacturen = async () => {
     try {
@@ -463,8 +468,13 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     bevestigd: "bg-green-100 text-green-800",
   };
 
-  const pending = uren.filter(u => u.status === "ingediend");
-  const approved = uren.filter(u => ["klant_goedgekeurd", "goedgekeurd"].includes(u.status));
+  // Filter uren op basis van zoekterm
+  const gefilterdeUren = uren.filter(u =>
+    u.medewerker_naam.toLowerCase().includes(urenZoek.toLowerCase())
+  );
+
+  const pending = gefilterdeUren.filter(u => u.status === "ingediend");
+  const approved = gefilterdeUren.filter(u => ["klant_goedgekeurd", "goedgekeurd"].includes(u.status));
 
   const tabs: KlantTab[] = [
     {
@@ -562,15 +572,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       badge: ongelesCount > 0 ? ongelesCount : undefined,
     },
     {
-      id: "referral",
-      label: "Verwijs & Bespaar",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      ),
-    },
-    {
       id: "qr-scanner",
       label: "QR Check-in",
       icon: (
@@ -585,12 +586,15 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     window.location.href = "/api/klant/logout";
   };
 
+  // Totaal notificatie count: ongelezen berichten + goedkeuringen + te beoordelen
+  const totalNotifCount = ongelesCount + (dashboardStats?.pendingHoursCount ?? 0) + teBeoordeelen.length;
+
   return (
     <>
       <KlantMobileHeader
         bedrijfsnaam={klant.bedrijfsnaam}
         contactpersoon={klant.contactpersoon}
-        ongelezen={ongelesCount}
+        ongelezen={totalNotifCount}
       />
       <KlantPortalLayout
         tabs={tabs}
@@ -619,6 +623,26 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
                 {/* PWA Install Banner (iOS) */}
                 <KlantInstallBanner />
+
+                {/* NIEUW: Dashboard Widgets */}
+                <DashboardWidgets
+                  stats={dashboardStats}
+                  volgendeDienst={upcomingDiensten[0] ?? null}
+                  openFacturen={recentFacturen}
+                  maandBedrag={0}
+                  budgetGebruikt={0}
+                  budgetTotaal={3000}
+                  onTabChange={setActiveTab}
+                />
+
+                {/* NIEUW: Quick Actions */}
+                <QuickActions onTabChange={setActiveTab} />
+
+                {/* NIEUW: Live Status */}
+                <LiveStatusTracker
+                  diensten={upcomingDiensten}
+                  onTabChange={setActiveTab}
+                />
 
                 {/* Horizontaal scrollbare stats */}
                 <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -744,6 +768,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   <h2 className="text-2xl font-bold text-neutral-900">Uren beoordelen</h2>
                   <p className="mt-1 text-sm text-neutral-500">Controleer en keur ingediende uren goed of pas ze aan.</p>
                 </div>
+
+                {/* NIEUW: Zoekbalk */}
+                <TabSearchBar
+                  placeholder="Zoek op medewerker naam..."
+                  onSearch={setUrenZoek}
+                />
 
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => {}} className="rounded-xl bg-[#F27501] px-4 py-2 font-medium text-white">
@@ -1106,9 +1136,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
             {/* Tab: Berichten */}
             {activeTab === "berichten" && <BerichtenTab klant={klant} onUnreadChange={setOngelesCount} />}
-
-            {/* Tab: Referral */}
-            {activeTab === "referral" && <KlantReferralSection />}
 
             {/* Tab: QR Check-in */}
             {activeTab === "qr-scanner" && <QRScannerTab />}
@@ -1481,27 +1508,57 @@ function FavorietenTab() {
       ) : (
         <div className="space-y-3">
           {favorieten.map((f) => (
-            <div key={f.id} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-4">
-                {renderAvatar(f.naam, f.profile_photo_url)}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-neutral-900">{f.naam}</p>
-                  <p className="text-sm text-neutral-500">{renderFuncties(f.functie)}</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-neutral-500">
-                    {f.gemiddelde_score != null && (
-                      <span className="flex items-center gap-1">
-                        <span className="text-yellow-400">★</span> {f.gemiddelde_score.toFixed(1)}
-                      </span>
-                    )}
-                    <span>{f.diensten_count} diensten bij u</span>
+            <div key={f.id} className="rounded-2xl border border-[var(--kp-border)] bg-white overflow-hidden">
+              <div className="flex items-center gap-3 p-4">
+                {/* Avatar met favoriet ster */}
+                <div className="relative flex-shrink-0">
+                  {f.profile_photo_url ? (
+                    <img src={f.profile_photo_url} alt={f.naam} className="w-12 h-12 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-[#1e3a5f] flex items-center justify-center text-white font-bold text-lg">
+                      {f.naam.charAt(0)}
+                    </div>
+                  )}
+                  {/* Favoriet ster badge */}
+                  <div className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 fill-white" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
                   </div>
-                  {f.notitie && <p className="mt-1 text-xs text-neutral-400 italic">{f.notitie}</p>}
                 </div>
-                <button onClick={() => toggleFavoriet(f.medewerker_id, true)}
-                  className="p-2 text-red-400 hover:text-red-600 transition" title="Verwijder favoriet">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-[var(--kp-text-primary)]">{f.naam}</p>
+                  <p className="text-[var(--kp-text-tertiary)] text-sm">
+                    {renderFuncties(f.functie)}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1">
+                    {/* Sterren */}
+                    {f.gemiddelde_score != null && (
+                      <div className="flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 fill-amber-400 text-amber-400" viewBox="0 0 24 24">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span className="text-[var(--kp-text-secondary)] text-xs font-semibold">
+                          {f.gemiddelde_score.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
+                    {/* Aantal diensten */}
+                    <span className="text-[var(--kp-text-tertiary)] text-xs">
+                      {f.diensten_count}× gewerkt
+                    </span>
+                  </div>
+                  {f.notitie && <p className="mt-1 text-xs text-[var(--kp-text-tertiary)] italic">{f.notitie}</p>}
+                </div>
+
+                {/* Boek opnieuw knop */}
+                <button
+                  onClick={() => window.location.href = "/klant/uren?tab=aanvragen"}
+                  className="flex-shrink-0 bg-[#F27501] text-white text-xs font-bold px-3 py-2 rounded-xl active:scale-95 transition-transform"
+                >
+                  Boek
                 </button>
               </div>
             </div>
@@ -2041,6 +2098,36 @@ function KostenTab() {
         </div>
       </div>
 
+      {/* NIEUW: Budget Alert */}
+      {(() => {
+        const MAANDBUDGET = 3000;
+        const budgetGebruikt = data?.totaal ?? 0;
+        const budgetPct = Math.min(100, Math.round((budgetGebruikt / MAANDBUDGET) * 100));
+
+        return budgetPct >= 80 ? (
+          <div className={`flex items-start gap-3 rounded-2xl p-4 ${
+            budgetPct >= 95
+              ? "bg-red-50 border border-red-200"
+              : "bg-amber-50 border border-amber-200"
+          }`}>
+            <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${budgetPct >= 95 ? "text-red-600" : "text-amber-600"}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className={`font-semibold text-sm ${budgetPct >= 95 ? "text-red-900" : "text-amber-900"}`}>
+                {budgetPct >= 95 ? "Budget bijna uitgeput!" : "Budget waarschuwing"}
+              </p>
+              <p className={`text-xs mt-0.5 ${budgetPct >= 95 ? "text-red-700" : "text-amber-700"}`}>
+                €{budgetGebruikt.toLocaleString("nl-NL")} van €{MAANDBUDGET.toLocaleString("nl-NL")} gebruikt ({budgetPct}%).
+                Nog €{(MAANDBUDGET - budgetGebruikt).toLocaleString("nl-NL")} beschikbaar.
+              </p>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
       {/* Totaal */}
       <div className="bg-gradient-to-r from-neutral-900 to-neutral-800 rounded-2xl p-6 text-white">
         <p className="text-sm text-neutral-300">Totale kosten {jaar}</p>
@@ -2221,89 +2308,6 @@ function BerichtenTab({ klant, onUnreadChange }: { klant: Klant; onUnreadChange:
   );
 }
 
-/* ============================================================
-   Existing: Klant Referral Section
-   ============================================================ */
-function KlantReferralSection() {
-  const [data, setData] = useState<{ referral_code: string; referral_link: string; stats: { totaal_verwezen: number; qualified: number; totaal_korting: number }; referrals: { naam: string; status: string; created_at: string }[] } | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/klant/referral").then(r => r.json()).then(d => setData(d)).catch(() => {});
-  }, []);
-
-  if (!data) return <div className="flex justify-center py-12"><div className="animate-spin w-6 h-6 border-2 border-[#F27501] border-t-transparent rounded-full" /></div>;
-
-  return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <h2 className="text-2xl font-bold text-neutral-900">Verwijs & Bespaar</h2>
-        <p className="mt-1 text-sm text-neutral-500">Verwijs een collega-ondernemer en ontvang €100 korting!</p>
-      </div>
-
-      <div className="bg-gradient-to-r from-[#F27501] to-[#d96800] rounded-2xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-3xl">🎁</span>
-          <h3 className="text-xl font-bold">€100 korting per verwijzing!</h3>
-        </div>
-        <p className="text-white/80 text-sm">Wanneer uw verwezen collega de eerste dienst boekt, ontvangt u €100 korting op uw volgende factuur.</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-neutral-900">{data.stats.totaal_verwezen}</p>
-          <p className="text-xs text-neutral-500">Verwezen</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-green-600">{data.stats.qualified}</p>
-          <p className="text-xs text-neutral-500">Gekwalificeerd</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-[#F27501]">€{data.stats.totaal_korting}</p>
-          <p className="text-xs text-neutral-500">Korting verdiend</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <h3 className="font-bold text-neutral-900 mb-3">Uw verwijzingslink</h3>
-        <div className="flex gap-2">
-          <div className="flex-1 bg-neutral-50 rounded-xl px-4 py-3 text-sm text-neutral-600 font-mono truncate border border-neutral-200">
-            {data.referral_link}
-          </div>
-          <button
-            onClick={() => { navigator.clipboard.writeText(data.referral_link); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-            className={`px-4 py-3 rounded-xl font-medium text-sm transition-colors ${copied ? "bg-green-500 text-white" : "bg-[#F27501] text-white hover:bg-[#d96800]"}`}
-          >
-            {copied ? "✓ Gekopieerd" : "Kopieer"}
-          </button>
-        </div>
-      </div>
-
-      {data.referrals.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 className="font-bold text-neutral-900 mb-3">Uw verwijzingen</h3>
-          <div className="space-y-2">
-            {data.referrals.map((r, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-neutral-50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">{r.naam}</p>
-                  <p className="text-xs text-neutral-500">{new Date(r.created_at).toLocaleDateString("nl-NL")}</p>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  r.status === "rewarded" ? "bg-[#F27501]/10 text-[#F27501]" :
-                  r.status === "qualified" ? "bg-green-100 text-green-700" :
-                  "bg-orange-100 text-orange-700"
-                }`}>
-                  {r.status === "rewarded" ? "Uitbetaald" : r.status === "qualified" ? "Gekwalificeerd" : "In afwachting"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ============================================================
    Existing: Sub-component for Uren tab

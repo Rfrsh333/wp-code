@@ -50,7 +50,7 @@ export default function KlantLogin() {
         </div>
         <div className="relative z-10 text-center max-w-md">
           <div className="w-20 h-20 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-8">
-            <Image src="/favicon-icon.png" alt="TopTalent" width={36} height={36} />
+            <img src="/favicon-icon.png" alt="TopTalent" width={36} height={36} className="w-9 h-9" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">Klant Portal</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
@@ -91,7 +91,7 @@ export default function KlantLogin() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Image src="/favicon-icon.png" alt="TopTalent" width={28} height={28} />
+              <img src="/favicon-icon.png" alt="TopTalent" width={28} height={28} className="w-7 h-7" />
             </div>
           </div>
 
