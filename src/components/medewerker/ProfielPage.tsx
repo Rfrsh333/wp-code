@@ -9,7 +9,6 @@ import WerkervaringSection from "./WerkervaringSection";
 import CertificeringenSection from "./CertificeringenSection";
 import ProfielEditModal from "./ProfielEditModal";
 import DigitalIDCard from "./DigitalIDCard";
-import RatingsCard from "./RatingsCard";
 
 interface Medewerker {
   id: string;
@@ -192,9 +191,6 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
           profilePhoto={profilePhoto}
         />
       </div>
-
-      {/* Beoordelingen */}
-      <RatingsCard />
 
       {/* Header / Profiel Card */}
       <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-4">
