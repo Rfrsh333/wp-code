@@ -700,14 +700,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   </div>
                 )}
 
-                {/* CTA */}
-                <button
-                  onClick={() => setActiveTab("aanvragen")}
-                  className="w-full py-3.5 rounded-2xl bg-[#1e3a5f] text-white font-semibold text-sm transition hover:bg-[#162d4a]"
-                >
-                  + Personeel aanvragen
-                </button>
-
                 {/* Desktop: Quick links grid */}
                 <div className="hidden md:grid grid-cols-3 gap-4">
                   <div className="rounded-2xl border border-[var(--kp-border)] bg-white p-5 shadow-sm">

@@ -1011,6 +1011,7 @@ export default function AdminDashboard() {
   };
 
   return (
+    <>
     <AdminShell
       activeTab={activeTab}
       onTabSelect={handleTabChange}
@@ -2974,5 +2975,7 @@ export default function AdminDashboard() {
         </div>
       )}
     </AdminShell>
+    <LiveChatNotification onOpenChat={() => handleTabChange("livechat")} />
+    </>
   );
 }
