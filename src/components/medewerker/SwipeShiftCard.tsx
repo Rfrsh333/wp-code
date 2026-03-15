@@ -79,7 +79,7 @@ export default function SwipeShiftCard({ shift, onAccept, onDecline, style, isTo
             </span>
             {shift.uurtarief && (
               <span className="text-lg font-bold text-[var(--mp-text-primary)]">
-                €{shift.uurtarief.toFixed(2)}<span className="text-sm font-normal text-[var(--mp-text-secondary)]">/uur</span>
+                €{(shift.uurtarief - 4).toFixed(2)}<span className="text-sm font-normal text-[var(--mp-text-secondary)]">/uur</span>
               </span>
             )}
           </div>

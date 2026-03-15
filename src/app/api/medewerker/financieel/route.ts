@@ -42,12 +42,13 @@ export async function GET(request: NextRequest) {
 
       const datum = new Date(dienst.datum);
       const maandKey = `${datum.getFullYear()}-${String(datum.getMonth() + 1).padStart(2, "0")}`;
-      const uurtarief = dienst.uurtarief || 0;
+      const klantUurtarief = dienst.uurtarief || 0;
+      const medewerkerUurtarief = klantUurtarief - 4; // €4 margin voor TopTalent
       const gewerkte_uren = u.gewerkte_uren || 0;
 
       const existing = maandMap.get(maandKey) || { totaal_uren: 0, totaal_verdiensten: 0, aantal_diensten: 0 };
       existing.totaal_uren += gewerkte_uren;
-      existing.totaal_verdiensten += gewerkte_uren * uurtarief;
+      existing.totaal_verdiensten += gewerkte_uren * medewerkerUurtarief;
       existing.aantal_diensten += 1;
       maandMap.set(maandKey, existing);
     }
