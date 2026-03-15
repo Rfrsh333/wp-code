@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -22,12 +22,37 @@ export default function AIChatWidget({ userType }: AIChatWidgetProps) {
   const store = useChatbotStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
-  // Set user type on mount
+  // Set user type on mount + restore active conversation
   useEffect(() => {
     if (!hasInitialized.current) {
-      store.setUserType(userType);
       hasInitialized.current = true;
+      store.setUserType(userType);
+
+      // Restore active conversation if none in memory
+      if (!store.conversationId) {
+        setIsRestoring(true);
+        fetch(`/api/ai-chat/active?user_type=${userType}`)
+          .then((res) => res.ok ? res.json() : null)
+          .then((data) => {
+            if (data?.conversation && data.messages?.length > 0) {
+              const messages: ChatMessageDisplay[] = data.messages.map(
+                (msg: { id: string; sender_type: string; content: string; created_at: string }) => ({
+                  id: msg.id,
+                  content: msg.content,
+                  sender_type: msg.sender_type as ChatMessageDisplay["sender_type"],
+                  created_at: msg.created_at,
+                })
+              );
+              store.restoreConversation(data.conversation.id, messages, data.conversation.status);
+            }
+          })
+          .catch(() => {
+            // Silently fail - user can still start a new conversation
+          })
+          .finally(() => setIsRestoring(false));
+      }
     }
   }, [userType, store]);
 

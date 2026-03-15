@@ -23,6 +23,7 @@ interface ChatbotState {
   setIsTyping: (typing: boolean) => void;
   incrementUnread: () => void;
   clearUnread: () => void;
+  restoreConversation: (conversationId: string, messages: ChatMessageDisplay[], status: ConversationStatus) => void;
   resetChat: () => void;
 }
 
@@ -65,6 +66,9 @@ export const useChatbotStore = create<ChatbotState>((set) => ({
   setIsTyping: (isTyping) => set({ isTyping }),
   incrementUnread: () => set((s) => ({ unreadCount: s.unreadCount + 1 })),
   clearUnread: () => set({ unreadCount: 0 }),
+
+  restoreConversation: (conversationId, messages, status) =>
+    set({ conversationId, messages, status }),
 
   resetChat: () =>
     set({
