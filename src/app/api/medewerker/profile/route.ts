@@ -51,15 +51,15 @@ export async function GET(request: NextRequest) {
       ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 10) / 10
       : 0;
 
-    // Generate fresh signed URL if photo exists
+    // Get public URL if photo exists (bucket is public)
     let profilePhotoUrl: string | null = null;
     if (profiel?.profile_photo_path) {
-      const { data: signedUrlData } = await supabaseAdmin.storage
+      const { data: publicUrlData } = supabaseAdmin.storage
         .from("medewerker-photos")
-        .createSignedUrl(profiel.profile_photo_path as string, 365 * 24 * 60 * 60);
+        .getPublicUrl(profiel.profile_photo_path as string);
 
-      if (signedUrlData?.signedUrl) {
-        profilePhotoUrl = signedUrlData.signedUrl;
+      if (publicUrlData?.publicUrl) {
+        profilePhotoUrl = publicUrlData.publicUrl;
       }
     }
 
@@ -174,20 +174,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Upload mislukt: " + uploadError.message }, { status: 500 });
     }
 
-    // Generate signed URL (expires in 1 year)
-    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
+    // Get public URL (bucket is public)
+    const { data: publicUrlData } = supabaseAdmin.storage
       .from("medewerker-photos")
-      .createSignedUrl(filePath, 365 * 24 * 60 * 60); // 1 year in seconds
-
-    if (signedUrlError || !signedUrlData) {
-      return NextResponse.json({ error: "Kon geen URL genereren" }, { status: 500 });
-    }
+      .getPublicUrl(filePath);
 
     // Update medewerker record
     const { error: updateError } = await supabaseAdmin
       .from("medewerkers")
       .update({
-        profile_photo_url: signedUrlData.signedUrl,
+        profile_photo_url: publicUrlData.publicUrl,
         profile_photo_path: filePath,
       })
       .eq("id", medewerker.id);
@@ -198,7 +194,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      profile_photo_url: signedUrlData.signedUrl,
+      profile_photo_url: publicUrlData.publicUrl,
     });
   } catch (error) {
     console.error("Profile photo upload error:", error);
