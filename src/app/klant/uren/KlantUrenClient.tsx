@@ -208,16 +208,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     try {
       const res = await fetch("/api/klant/diensten");
       const data = await res.json();
-      console.log('[KLANT DASHBOARD] Fetched diensten:', data.diensten);
-      data.diensten?.forEach((d: UpcomingDienst) => {
-        if (d.aanmeldingen_count && d.aanmeldingen_count > 0) {
-          console.log(`[KLANT DASHBOARD] Dienst ${d.datum} ${d.functie}:`, {
-            total: d.aanmeldingen_count,
-            aangemeld: d.aanmeldingen_aangemeld,
-            geaccepteerd: d.aanmeldingen_geaccepteerd
-          });
-        }
-      });
       setDienstenVolledig(data.diensten || []);
     } catch { /* ignore */ }
   }, []);
@@ -328,26 +318,14 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const fetchAanmeldingen = async (dienstId: string) => {
     setAanmeldingenLoading(true);
     try {
-      console.log('[KLANT] Fetching aanmeldingen for dienst:', dienstId);
       const res = await fetch("/api/klant/diensten", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "get_aanmeldingen", dienst_id: dienstId }),
       });
       const data = await res.json();
-      console.log('[KLANT] Received aanmeldingen:', data.data);
-      console.log('[KLANT] Aanmeldingen count:', data.data?.length || 0);
-      data.data?.forEach((a: DienstAanmelding, i: number) => {
-        console.log(`[KLANT] Aanmelding ${i + 1}:`, {
-          id: a.id,
-          status: a.status,
-          medewerker_naam: a.medewerker?.naam || 'MISSING',
-          medewerker_data: a.medewerker
-        });
-      });
       setAanmeldingen(data.data || []);
-    } catch (err) {
-      console.error('[KLANT] Error fetching aanmeldingen:', err);
+    } catch {
       toast.error("Aanmeldingen ophalen mislukt");
     }
     setAanmeldingenLoading(false);
@@ -731,19 +709,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   />
                 ) : (
                   <div className="space-y-3">
-                    {(() => {
-                      console.log('[KLANT UI] Rendering diensten in UI. Total:', dienstenVolledig.length);
-                      dienstenVolledig.forEach((d, i) => {
-                        console.log(`[KLANT UI] Dienst ${i + 1}:`, {
-                          datum: d.datum,
-                          functie: d.functie,
-                          aanmeldingen_count: d.aanmeldingen_count,
-                          aanmeldingen_aangemeld: d.aanmeldingen_aangemeld,
-                          aanmeldingen_geaccepteerd: d.aanmeldingen_geaccepteerd
-                        });
-                      });
-                      return null;
-                    })()}
                     {dienstenVolledig.map((dienst) => (
                       <div key={dienst.id} className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
                         <div className="p-5">
