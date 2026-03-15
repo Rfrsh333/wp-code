@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     const { data: aanmeldingen } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("*, medewerker:medewerkers(naam, functie, profile_photo_url, gemiddelde_score, aantal_beoordelingen, admin_score_aanwezigheid, admin_score_vaardigheden)")
+      .select("*, medewerker_id, check_in_at, medewerker:medewerkers(naam, functie, profile_photo_url, gemiddelde_score, aantal_beoordelingen, admin_score_aanwezigheid, admin_score_vaardigheden)")
       .eq("dienst_id", dienst_id)
       .order("aangemeld_at", { ascending: true })
       .limit(100);

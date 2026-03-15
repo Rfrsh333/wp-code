@@ -185,6 +185,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const [aanmeldingen, setAanmeldingen] = useState<DienstAanmelding[]>([]);
   const [aanmeldingenLoading, setAanmeldingenLoading] = useState(false);
   const [aanmeldingenActie, setAanmeldingenActie] = useState<string | null>(null);
+  const [scanReminderPopup, setScanReminderPopup] = useState<{
+    open: boolean;
+    medewerkers: Array<{ naam: string; dienst_datum: string; dienst_tijd: string }>;
+  }>({ open: false, medewerkers: [] });
 
   const fetchUren = async () => {
     setIsLoading(true);
@@ -228,6 +232,31 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       await fetchDiensten();
     })();
   }, [fetchOngelezen, fetchDiensten]);
+
+  // Check for non-scanned medewerkers when aanmeldingen are loaded
+  useEffect(() => {
+    if (!aanmeldingenOpen || aanmeldingen.length === 0) return;
+
+    const nonScannedMedewerkers = aanmeldingen.filter(
+      (a) => a.status === "geaccepteerd" && !a.check_in_at
+    );
+
+    if (nonScannedMedewerkers.length > 0) {
+      // Get dienst info for display
+      const dienst = dienstenVolledig.find((d) => d.id === aanmeldingenOpen);
+
+      const medewerkersList = nonScannedMedewerkers.map((a) => {
+        const mw = Array.isArray(a.medewerker) ? a.medewerker[0] : a.medewerker;
+        return {
+          naam: mw?.naam || "Onbekend",
+          dienst_datum: dienst?.datum ? formatDateLong(dienst.datum) : "",
+          dienst_tijd: dienst ? `${formatTime(dienst.start_tijd)} - ${formatTime(dienst.eind_tijd)}` : "",
+        };
+      });
+
+      setScanReminderPopup({ open: true, medewerkers: medewerkersList });
+    }
+  }, [aanmeldingen, aanmeldingenOpen, dienstenVolledig]);
 
   const submitBeoordeling = async () => {
     if (!beoordeelModal.item) return;
@@ -825,9 +854,28 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                             </div>
                                           )}
                                         </div>
-                                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
-                                          {a.status}
-                                        </span>
+                                        <div className="flex flex-col gap-2 items-end">
+                                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
+                                            {a.status}
+                                          </span>
+                                          {a.status === "geaccepteerd" && (
+                                            a.check_in_at ? (
+                                              <span className="flex items-center gap-1 text-xs text-green-600">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Ingecheckt
+                                              </span>
+                                            ) : (
+                                              <span className="flex items-center gap-1 text-xs text-orange-600 font-medium">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Niet gescand
+                                              </span>
+                                            )
+                                          )}
+                                        </div>
                                         {a.status === "aangemeld" && (
                                           <div className="flex gap-2">
                                             <button
@@ -1125,6 +1173,65 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           </div>
         </div>
       )}
+
+      {/* Scan Reminder Popup */}
+      {scanReminderPopup.open && scanReminderPopup.medewerkers.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-neutral-900">Medewerker(s) niet gescand</h3>
+                <p className="text-sm text-neutral-600 mt-1">
+                  De volgende medewerker(s) zijn geaccepteerd maar nog niet ingecheckt via QR-scan:
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-orange-50 rounded-xl p-4 mb-4 space-y-2">
+              {scanReminderPopup.medewerkers.map((mw, idx) => (
+                <div key={idx} className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-neutral-900">{mw.naam}</p>
+                    <p className="text-xs text-neutral-600">
+                      {mw.dienst_datum} · {mw.dienst_tijd}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-sm text-neutral-600 mb-4">
+              Scan de QR-pas van deze medewerker(s) voordat de dienst begint, zodat zij later hun uren kunnen indienen.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setScanReminderPopup({ open: false, medewerkers: [] })}
+                className="flex-1 px-4 py-2 border border-neutral-200 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition"
+              >
+                Later
+              </button>
+              <button
+                onClick={() => {
+                  setScanReminderPopup({ open: false, medewerkers: [] });
+                  setActiveTab("qr-scanner");
+                }}
+                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition"
+              >
+                Scan nu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -1274,6 +1381,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     start_tijd: "",
     eind_tijd: "",
     aantal: "1",
+    uurtarief: "",
     locatie: "",
     opmerkingen: "",
     favoriet_medewerker_ids: [] as string[],
@@ -1294,7 +1402,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
 
   const canNext = () => {
     if (step === 1) return !!form.functie;
-    if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd;
+    if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd && !!form.uurtarief && parseFloat(form.uurtarief) > 0;
     if (step === 3) return true;
     return true;
   };
@@ -1388,6 +1496,19 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
               <label className="block text-sm font-medium text-neutral-700 mb-1">Aantal medewerkers</label>
               <input type="number" min="1" max="20" value={form.aantal} onChange={(e) => setForm({ ...form, aantal: e.target.value })}
                 className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Uurtarief (€) <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.uurtarief}
+                onChange={(e) => setForm({ ...form, uurtarief: e.target.value })}
+                placeholder="Bijv. 14.50"
+                className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+              />
+              <p className="mt-1 text-xs text-neutral-500">Het uurtarief dat wordt uitbetaald aan de medewerker</p>
             </div>
           </div>
         )}
