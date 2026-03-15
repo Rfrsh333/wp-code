@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const { data: profiel } = await supabaseAdmin
       .from("medewerkers")
-      .select("stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count")
+      .select("stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
       .eq("id", medewerker.id)
       .single();
 
@@ -51,6 +51,18 @@ export async function GET(request: NextRequest) {
       ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 10) / 10
       : 0;
 
+    // Generate fresh signed URL if photo exists
+    let profilePhotoUrl: string | null = null;
+    if (profiel?.profile_photo_path) {
+      const { data: signedUrlData } = await supabaseAdmin.storage
+        .from("medewerker-photos")
+        .createSignedUrl(profiel.profile_photo_path as string, 365 * 24 * 60 * 60);
+
+      if (signedUrlData?.signedUrl) {
+        profilePhotoUrl = signedUrlData.signedUrl;
+      }
+    }
+
     return NextResponse.json({
       profiel: profiel || {},
       stats: {
@@ -58,6 +70,7 @@ export async function GET(request: NextRequest) {
         op_tijd_percentage: opkomst > 0 ? Math.min(opkomst + 2, 100) : 0,
         rating: avgRating,
       },
+      profile_photo_url: profilePhotoUrl,
     }, {
       headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
@@ -161,16 +174,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Upload mislukt: " + uploadError.message }, { status: 500 });
     }
 
-    // Get public URL
-    const { data: urlData } = supabaseAdmin.storage
+    // Generate signed URL (expires in 1 year)
+    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
       .from("medewerker-photos")
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 365 * 24 * 60 * 60); // 1 year in seconds
+
+    if (signedUrlError || !signedUrlData) {
+      return NextResponse.json({ error: "Kon geen URL genereren" }, { status: 500 });
+    }
 
     // Update medewerker record
     const { error: updateError } = await supabaseAdmin
       .from("medewerkers")
       .update({
-        profile_photo_url: urlData.publicUrl,
+        profile_photo_url: signedUrlData.signedUrl,
         profile_photo_path: filePath,
       })
       .eq("id", medewerker.id);
@@ -181,7 +198,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      profile_photo_url: urlData.publicUrl,
+      profile_photo_url: signedUrlData.signedUrl,
     });
   } catch (error) {
     console.error("Profile photo upload error:", error);
