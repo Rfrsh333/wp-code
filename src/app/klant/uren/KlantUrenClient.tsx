@@ -719,6 +719,19 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   />
                 ) : (
                   <div className="space-y-3">
+                    {(() => {
+                      console.log('[KLANT UI] Rendering diensten in UI. Total:', dienstenVolledig.length);
+                      dienstenVolledig.forEach((d, i) => {
+                        console.log(`[KLANT UI] Dienst ${i + 1}:`, {
+                          datum: d.datum,
+                          functie: d.functie,
+                          aanmeldingen_count: d.aanmeldingen_count,
+                          aanmeldingen_aangemeld: d.aanmeldingen_aangemeld,
+                          aanmeldingen_geaccepteerd: d.aanmeldingen_geaccepteerd
+                        });
+                      });
+                      return null;
+                    })()}
                     {dienstenVolledig.map((dienst) => (
                       <div key={dienst.id} className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
                         <div className="p-5">
