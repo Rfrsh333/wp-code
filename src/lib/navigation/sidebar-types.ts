@@ -9,6 +9,7 @@ export const adminTabs = [
   "calculator",
   "medewerkers",
   "diensten",
+  "filters",
   "uren",
   "facturen",
   "matching",

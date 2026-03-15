@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   FileText,
   Files,
+  Filter,
   FolderKanban,
   Gauge,
   Inbox,
@@ -81,6 +82,15 @@ export const sidebarItems = {
     tab: "diensten",
     pinnable: true,
     keywords: ["shifts", "agenda"],
+  },
+  filters: {
+    id: "filters",
+    title: "Categorieën & Filters",
+    icon: Filter,
+    kind: "tab",
+    tab: "filters",
+    pinnable: true,
+    keywords: ["filters", "categorieën", "functies", "tags"],
   },
   uren: {
     id: "uren",
@@ -231,7 +241,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "recruitment",
     label: "Recruitment",
-    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "planning"],
+    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "filters", "planning"],
     collapsible: true,
     defaultOpen: true,
     dividerBefore: true,

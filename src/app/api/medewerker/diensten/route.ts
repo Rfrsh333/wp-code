@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     ]) || []
   );
 
-  const diensten = (alleDienstenCompat || []).map((d) => ({
+  const baseDiensten = (alleDienstenCompat || []).map((d) => ({
     ...d,
     categorie_naam: (d.categorie as any)?.naam || null,
     functie_naam: (d.functie_ref as any)?.naam || null,
@@ -140,6 +140,87 @@ export async function GET(request: NextRequest) {
     aanmelding_status: aanmeldMap.get(d.id)?.status,
     check_in_at: aanmeldMap.get(d.id)?.check_in_at,
     uren_status: aanmeldMap.get(d.id)?.uren_status,
+  }));
+
+  // FASE 6: Compute automatic tags
+  const dienstIds = baseDiensten.map(d => d.id);
+  let computedTagsMap = new Map<string, string[]>();
+
+  if (dienstIds.length > 0) {
+    // Batch 1: Get all aanmeldingen counts per dienst
+    const { data: aanmeldingenCounts } = await supabaseAdmin
+      .from('dienst_aanmeldingen')
+      .select('dienst_id')
+      .in('dienst_id', dienstIds)
+      .neq('status', 'afgewezen');
+
+    const aanmeldingenPerDienst = new Map<string, number>();
+    (aanmeldingenCounts || []).forEach(a => {
+      aanmeldingenPerDienst.set(a.dienst_id, (aanmeldingenPerDienst.get(a.dienst_id) || 0) + 1);
+    });
+
+    // Batch 2: Get vervangingen per dienst
+    const { data: vervangingen } = await supabaseAdmin
+      .from('dienst_aanmeldingen')
+      .select('dienst_id')
+      .in('dienst_id', dienstIds)
+      .eq('status', 'vervanging_gezocht');
+
+    const vervangingDiensten = new Set((vervangingen || []).map(v => v.dienst_id));
+
+    // Batch 3: Get medewerker's previous klanten (diensten they worked before)
+    const { data: previousDiensten } = await supabaseAdmin
+      .from('dienst_aanmeldingen')
+      .select('dienst:diensten!inner(klant_id, klant_naam)')
+      .eq('medewerker_id', medewerker.id)
+      .eq('status', 'geaccepteerd')
+      .not('dienst_id', 'in', `(${dienstIds.join(',')})`);
+
+    const previousKlanten = new Set(
+      (previousDiensten || [])
+        .map(d => (d.dienst as any)?.klant_naam)
+        .filter(Boolean)
+    );
+
+    // Calculate tags for each dienst
+    baseDiensten.forEach(dienst => {
+      const tags: string[] = [];
+      const count = aanmeldingenPerDienst.get(dienst.id) || 0;
+      const aantalNodig = dienst.aantal_nodig || 1;
+
+      // Tag: Geen aanmeldingen
+      if (count === 0) {
+        tags.push('geen-aanmeldingen');
+      }
+
+      // Tag: Weinig aanmeldingen
+      if (count > 0 && count < aantalNodig / 2) {
+        tags.push('weinig-aanmeldingen');
+      }
+
+      // Tag: Populaire shift
+      if (count >= aantalNodig) {
+        tags.push('populaire-shift');
+      }
+
+      // Tag: Vorige opdrachtgever
+      if (dienst.klant_naam && previousKlanten.has(dienst.klant_naam)) {
+        tags.push('vorige-opdrachtgever');
+      }
+
+      // Tag: Vervangingen
+      if (vervangingDiensten.has(dienst.id)) {
+        tags.push('vervangingen');
+      }
+
+      computedTagsMap.set(dienst.id, tags);
+    });
+  }
+
+  // Add computed tags to diensten
+  const diensten = baseDiensten.map(d => ({
+    ...d,
+    computed_tags: computedTagsMap.get(d.id) || [],
   }));
 
   // Klant aanpassingen
