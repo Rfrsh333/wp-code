@@ -79,6 +79,7 @@ interface DienstAanmelding {
   medewerker_id: string;
   status: string;
   aangemeld_at: string;
+  check_in_at: string | null;
   medewerker: {
     naam: string;
     functie: string | string[];
