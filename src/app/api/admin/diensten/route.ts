@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
     end.setDate(end.getDate() + 6);
     query = query.gte("datum", start.toISOString().split("T")[0]).lte("datum", end.toISOString().split("T")[0]);
   }
-  const { data } = await query;
+  const { data, error } = await query;
+  console.log(`[ADMIN DIENSTEN] Fetched ${data?.length || 0} diensten, error:`, error || "none");
   return NextResponse.json({ data });
 }
 

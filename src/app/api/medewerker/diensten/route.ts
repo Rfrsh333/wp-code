@@ -97,6 +97,7 @@ export async function GET() {
     };
   });
 
+  console.log(`[MEDEWERKER DIENSTEN] Functies: ${functies}, Found ${diensten.length} diensten for ${medewerker.naam}`);
   return NextResponse.json({ diensten, aanpassingen: mapped });
 }
 
