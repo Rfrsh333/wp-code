@@ -14,10 +14,16 @@ export async function POST(request: NextRequest) {
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { functie, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids } = body;
+    const { functie, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
 
-    if (!functie || !datum || !start_tijd || !eind_tijd || !aantal) {
-      return NextResponse.json({ error: "Alle verplichte velden moeten ingevuld zijn" }, { status: 400 });
+    if (!functie || !datum || !start_tijd || !eind_tijd || !aantal || !uurtarief) {
+      return NextResponse.json({ error: "Alle verplichte velden moeten ingevuld zijn (inclusief uurtarief)" }, { status: 400 });
+    }
+
+    // Validate uurtarief
+    const tarief = parseFloat(uurtarief);
+    if (isNaN(tarief) || tarief <= 0) {
+      return NextResponse.json({ error: "Uurtarief moet een geldig bedrag zijn" }, { status: 400 });
     }
 
     // Validate datum is in the future
@@ -38,6 +44,7 @@ export async function POST(request: NextRequest) {
       eind_tijd,
       aantal_nodig: parseInt(aantal) || 1,
       locatie: locatie || null,
+      uurtarief: tarief,
       status: "open",
     };
 
