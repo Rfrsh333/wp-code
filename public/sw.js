@@ -1,6 +1,6 @@
-const CACHE_NAME = "toptalent-hub-v3";
-const STATIC_CACHE = "toptalent-static-v3";
-const DYNAMIC_CACHE = "toptalent-dynamic-v3";
+const CACHE_NAME = "toptalent-hub-v4";
+const STATIC_CACHE = "toptalent-static-v4";
+const DYNAMIC_CACHE = "toptalent-dynamic-v4";
 
 const STATIC_ASSETS = [
   "/medewerker/dashboard/",
@@ -52,17 +52,28 @@ self.addEventListener("activate", (event) => {
 // Fetch event - network first with cache fallback
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
   // Skip non-GET requests
   if (request.method !== "GET") return;
 
-  // Skip cross-origin requests
-  if (url.origin !== self.location.origin) return;
+  const url = new URL(request.url);
+
+  // Skip external resources (Google Fonts, CDNs, etc.)
+  if (url.origin !== self.location.origin) {
+    console.log("[SW] Skipping external resource:", url.origin);
+    return;
+  }
 
   // Skip API requests (always fetch fresh)
   if (url.pathname.startsWith("/api/")) {
-    return event.respondWith(fetch(request));
+    return;
+  }
+
+  // Skip Next.js internal requests
+  if (url.pathname.startsWith("/_next/webpack-hmr") ||
+      url.pathname.startsWith("/monitoring") ||
+      url.pathname.startsWith("/__nextjs")) {
+    return;
   }
 
   // Network first, fallback to cache
@@ -78,11 +89,15 @@ self.addEventListener("fetch", (event) => {
         const responseToCache = response.clone();
         caches.open(DYNAMIC_CACHE).then((cache) => {
           cache.put(request, responseToCache);
+        }).catch((error) => {
+          console.error("[SW] Cache put failed:", error);
         });
 
         return response;
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log("[SW] Fetch failed, trying cache:", request.url);
+
         // Network failed, try cache
         return caches.match(request).then((cachedResponse) => {
           if (cachedResponse) {
@@ -92,14 +107,28 @@ self.addEventListener("fetch", (event) => {
 
           // If it's a navigation request, return cached dashboard
           if (request.mode === "navigate") {
-            return caches.match("/medewerker/dashboard/");
+            return caches.match("/medewerker/dashboard/").then((dashboardCache) => {
+              if (dashboardCache) {
+                return dashboardCache;
+              }
+
+              // Fallback offline page
+              return new Response("<!DOCTYPE html><html><body><h1>Offline</h1><p>Je bent offline en deze pagina is niet gecached.</p></body></html>", {
+                status: 503,
+                statusText: "Service Unavailable",
+                headers: new Headers({
+                  "Content-Type": "text/html",
+                }),
+              });
+            });
           }
 
-          return new Response("Offline - content niet beschikbaar", {
+          // Return 503 for other failed requests
+          return new Response(JSON.stringify({ error: "Offline" }), {
             status: 503,
             statusText: "Service Unavailable",
             headers: new Headers({
-              "Content-Type": "text/plain",
+              "Content-Type": "application/json",
             }),
           });
         });
