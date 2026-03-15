@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from("dienst_aanmeldingen").insert({
       dienst_id,
       medewerker_id: medewerker.id,
+      status: "aangemeld",
     });
   }
 
