@@ -37,7 +37,7 @@ export default function KlantPortalLayout({
             </div>
             <div className="overflow-hidden">
               <p className="text-white font-semibold text-sm leading-tight truncate">{bedrijfsnaam}</p>
-              <p className="text-blue-300 text-xs">Klant Portaal</p>
+              <p className="text-blue-300 text-xs">TopTalent Business</p>
             </div>
           </div>
         </div>

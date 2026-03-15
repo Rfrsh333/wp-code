@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Medewerker Verificatie | TopTalent",
+  title: "Verificatie | TopTalent Hub",
   robots: "noindex, nofollow",
 };
 

@@ -63,7 +63,7 @@ export default function MedewerkerPortalLayout({
             />
             <div>
               <p className="text-sm font-bold text-[var(--mp-text-primary)]">TopTalent</p>
-              <p className="text-[10px] text-[var(--mp-text-tertiary)]">Medewerker Portaal</p>
+              <p className="text-[10px] text-[var(--mp-text-tertiary)]">TopTalent Hub</p>
             </div>
           </div>
         </div>

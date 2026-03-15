@@ -33,14 +33,6 @@ interface DashboardWidgetsProps {
   onTabChange: (tab: string) => void;
 }
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.07, duration: 0.3, ease: "easeOut" },
-  }),
-};
-
 export default function DashboardWidgets({
   stats,
   volgendeDienst,
@@ -79,7 +71,9 @@ export default function DashboardWidgets({
       <div className="grid grid-cols-2 gap-3">
         {/* Widget 1 — Volgende dienst */}
         <motion.button
-          custom={0} variants={fadeUp} initial="hidden" animate="show"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0, duration: 0.3 }}
           onClick={() => onTabChange("rooster")}
           className="bg-[#1e3a5f] text-white rounded-2xl p-4 flex flex-col gap-2 text-left active:scale-95 transition-transform"
         >
@@ -102,7 +96,9 @@ export default function DashboardWidgets({
 
         {/* Widget 2 — Openstaande facturen */}
         <motion.button
-          custom={1} variants={fadeUp} initial="hidden" animate="show"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.07, duration: 0.3 }}
           onClick={() => onTabChange("facturen")}
           className="bg-white border border-[var(--kp-border)] rounded-2xl p-4 flex flex-col gap-2 text-left active:scale-95 transition-transform"
         >
@@ -125,7 +121,9 @@ export default function DashboardWidgets({
 
         {/* Widget 3 — Uren goed te keuren */}
         <motion.button
-          custom={2} variants={fadeUp} initial="hidden" animate="show"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.14, duration: 0.3 }}
           onClick={() => onTabChange("uren")}
           className="bg-white border border-[var(--kp-border)] rounded-2xl p-4 flex flex-col gap-2 text-left active:scale-95 transition-transform"
         >
@@ -148,7 +146,9 @@ export default function DashboardWidgets({
 
         {/* Widget 4 — Deze maand */}
         <motion.button
-          custom={3} variants={fadeUp} initial="hidden" animate="show"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.21, duration: 0.3 }}
           onClick={() => onTabChange("kosten")}
           className="bg-white border border-[var(--kp-border)] rounded-2xl p-4 flex flex-col gap-2 text-left active:scale-95 transition-transform"
         >

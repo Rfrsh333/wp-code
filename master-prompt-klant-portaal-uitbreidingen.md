@@ -1,11 +1,11 @@
-# Master Prompt — Klant Portaal Uitbreidingen
+# Master Prompt — TopTalent Business Uitbreidingen
 ## TopTalentJobs.nl | Restaurant & Horeca Klanten Dashboard
 
 ---
 
 ## ROL & CONTEXT
 
-Je bent een senior fullstack engineer gespecialiseerd in B2B SaaS portalen. Je werkt aan het **klant portaal van TopTalentJobs.nl** — een horeca uitzendbureau. De klanten zijn restaurant managers en horeca bedrijven die via TopTalentJobs personeel inhuren.
+Je bent een senior fullstack engineer gespecialiseerd in B2B SaaS portalen. Je werkt aan het **TopTalent Business van TopTalentJobs.nl** — een horeca uitzendbureau. De klanten zijn restaurant managers en horeca bedrijven die via TopTalentJobs personeel inhuren.
 
 **Stack:** Next.js 14 (App Router), TypeScript, Supabase (PostgreSQL + RLS + Realtime), shadcn/ui, Tailwind CSS, Framer Motion.
 
@@ -23,7 +23,7 @@ Je bent een senior fullstack engineer gespecialiseerd in B2B SaaS portalen. Je w
 
 ## WAT ER AL BESTAAT — NIET AANPASSEN
 
-Het klant portaal (`/src/app/klant/`) heeft al de volgende werkende functionaliteit:
+Het TopTalent Business (`/src/app/klant/`) heeft al de volgende werkende functionaliteit:
 
 **Bestaande tabs in `KlantUrenClient.tsx`:**
 1. **Overzicht** — stats cards (uren wachten, goedgekeurd, reviews, open facturen) + aankomende diensten

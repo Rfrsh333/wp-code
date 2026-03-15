@@ -52,7 +52,7 @@ export default function MedewerkerLogin() {
           <div className="w-20 h-20 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-8">
             <Image src="/favicon-icon.png" alt="TopTalent" width={36} height={36} />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">Medewerker Portal</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">TopTalent Hub</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
             Bekijk beschikbare diensten, registreer je uren en beheer je beschikbaarheid. Alles op een plek.
           </p>
@@ -106,7 +106,7 @@ export default function MedewerkerLogin() {
 
           <div className="bg-white rounded-2xl shadow-xl shadow-neutral-900/5 p-8 border border-neutral-100">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-neutral-900">Medewerker Login</h2>
+              <h2 className="text-2xl font-bold text-neutral-900">Hub Login</h2>
               <p className="text-neutral-500 mt-2">Bekijk diensten en registreer uren</p>
             </div>
 

@@ -64,7 +64,7 @@ export async function sendMedewerkerActivationEmail(medewerker: MedewerkerActiva
     html: renderEmailLayout(`
       <p style="font-size:32px;margin:0 0 16px;">🔐</p>
       <h1 style="margin:0 0 16px;color:#F27501;font-size:28px;">Hey ${firstName}, zet je account live</h1>
-      <p>Je medewerkeraccount is aangemaakt. Kies hieronder zelf je wachtwoord, dan kun je meteen inloggen in het medewerkerportaal.</p>
+      <p>Je medewerkeraccount is aangemaakt. Kies hieronder zelf je wachtwoord, dan kun je meteen inloggen in TopTalent Hub.</p>
       <div style="background:#fff7f1;border:1px solid #f8d4b4;border-radius:12px;padding:20px;margin:24px 0;">
         <p style="margin:0 0 8px;"><strong>Zo werkt het:</strong></p>
         <ul style="margin:0;padding-left:20px;">

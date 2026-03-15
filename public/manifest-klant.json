@@ -1,8 +1,8 @@
 {
-  "name": "TopTalentJobs Beheer",
-  "short_name": "TT Beheer",
-  "description": "Beheer uw horeca personeel via TopTalentJobs",
-  "start_url": "/klant/dashboard",
+  "name": "TopTalent Business",
+  "short_name": "TT Business",
+  "description": "Beheer uw horecapersoneel via TopTalentJobs.nl",
+  "start_url": "/klant/",
   "scope": "/klant/",
   "display": "standalone",
   "background_color": "#f0f4f8",

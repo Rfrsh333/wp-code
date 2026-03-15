@@ -52,7 +52,7 @@ export default function KlantLogin() {
           <div className="w-20 h-20 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-8">
             <img src="/favicon-icon.png" alt="TopTalent" width={36} height={36} className="w-9 h-9" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">Klant Portal</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">TopTalent Business</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
             Beheer uw diensten, beoordeel gewerkte uren en bekijk facturen. Altijd inzicht in uw personeel.
           </p>
@@ -97,7 +97,7 @@ export default function KlantLogin() {
 
           <div className="bg-white rounded-2xl shadow-xl shadow-neutral-900/5 p-8 border border-neutral-100">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-neutral-900">Klant Portal</h2>
+              <h2 className="text-2xl font-bold text-neutral-900">Business Login</h2>
               <p className="text-neutral-500 mt-2">Beheer uw personeel en diensten</p>
             </div>
 

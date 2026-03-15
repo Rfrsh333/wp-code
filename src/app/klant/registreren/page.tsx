@@ -78,7 +78,7 @@ export default function KlantRegistreren() {
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">Word klant</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
-            Registreer uw bedrijf en krijg direct toegang tot ons klantportaal. Personeel aanvragen, uren beheren en facturen inzien.
+            Registreer uw bedrijf en krijg direct toegang tot TopTalent Business. Personeel aanvragen, uren beheren en facturen inzien.
           </p>
           <div className="mt-10 space-y-4 text-left">
             {[

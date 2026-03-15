@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const { data: profiel } = await supabaseAdmin
       .from("medewerkers")
-      .select("stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
+      .select("naam, email, functie, stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
       .eq("id", medewerker.id)
       .single();
 
@@ -71,6 +71,14 @@ export async function GET(request: NextRequest) {
         rating: avgRating,
       },
       profile_photo_url: profilePhotoUrl,
+      profile: {
+        naam: profiel?.naam || medewerker.naam,
+        email: profiel?.email || medewerker.email,
+        functie: profiel?.functie,
+        profile_photo_url: profilePhotoUrl,
+        rating: avgRating,
+        totaal_diensten: completedDiensten || 0,
+      },
     }, {
       headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
@@ -93,7 +101,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const allowedFields = ["stad", "geboortedatum", "factuur_adres", "factuur_postcode", "factuur_stad", "btw_nummer", "iban"];
+    const allowedFields = ["stad", "geboortedatum", "telefoon", "factuur_adres", "factuur_postcode", "factuur_stad", "btw_nummer", "iban"];
     const updateData: Record<string, string | null> = {};
 
     for (const field of allowedFields) {

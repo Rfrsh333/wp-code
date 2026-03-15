@@ -2,7 +2,7 @@
 -- Inschrijvingen Onboarding Migration
 -- ============================================================================
 -- Voeg onboarding-velden toe aan inschrijvingen zodat kandidaten intern door
--- een duidelijke pipeline kunnen worden beheerd voordat het medewerkerportaal
+-- een duidelijke pipeline kunnen worden beheerd voordat TopTalent Hub
 -- geactiveerd wordt.
 -- ============================================================================
 

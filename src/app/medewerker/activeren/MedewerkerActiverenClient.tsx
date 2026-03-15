@@ -78,7 +78,7 @@ export default function MedewerkerActiverenClient() {
       <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-neutral-900">Activeer je account</h1>
-          <p className="text-neutral-500 mt-2">TopTalent Jobs medewerkerportaal</p>
+          <p className="text-neutral-500 mt-2">TopTalent Hub</p>
         </div>
 
         {isLoading ? (

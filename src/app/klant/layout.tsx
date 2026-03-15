@@ -1,4 +1,5 @@
 import { Metadata, Viewport } from "next";
+import RegisterSW from "./components/RegisterSW";
 
 export const metadata: Metadata = {
   robots: {
@@ -12,8 +13,8 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "TT Beheer",
+    statusBarStyle: "black-translucent",
+    title: "TopTalent Business",
   },
 };
 
@@ -34,9 +35,11 @@ export default function KlantLayout({
     <>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="TT Beheer" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="TopTalent Business" />
+        <link rel="apple-touch-icon" href="/icons/icon-klant-192.png" />
       </head>
+      <RegisterSW />
       {children}
     </>
   );

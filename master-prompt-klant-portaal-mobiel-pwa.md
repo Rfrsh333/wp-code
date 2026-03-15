@@ -1,13 +1,13 @@
-# Master Prompt — Klant Portaal Mobiel + PWA
+# Master Prompt — TopTalent Business Mobiel + PWA
 ## TopTalentJobs.nl | Business Dashboard · Manager-First · Eigen identiteit
 
 ---
 
 ## ROL & CONTEXT
 
-Je bent een senior product designer + frontend engineer. Je redesignt het **klant portaal van TopTalentJobs.nl** voor restaurant managers en horecabedrijven. Dit portaal moet:
+Je bent een senior product designer + frontend engineer. Je redesignt het **TopTalent Business van TopTalentJobs.nl** voor restaurant managers en horecabedrijven. Dit portaal moet:
 
-- **Compleet anders voelen** dan het medewerker portaal
+- **Compleet anders voelen** dan het TopTalent Hub
 - **Professioneel en zakelijk** — managers willen data snel zien, niet speels
 - **Mobiel-first** — restaurant managers staan achter de bar, niet achter een bureau
 - **Installeerbaar als PWA** — eigen app op de telefoon, apart van de medewerker app
@@ -20,7 +20,7 @@ Je bent een senior product designer + frontend engineer. Je redesignt het **klan
 
 ## MEDEWERKER vs KLANT — VISUELE IDENTITEIT
 
-| | Medewerker Portaal | Klant Portaal |
+| | TopTalent Hub | TopTalent Business |
 |---|---|---|
 | **Gevoel** | Consumer app, iOS-style | B2B dashboard, zakelijk |
 | **Primaire kleur** | Oranje `#F27501` | Donker blauw `#1e3a5f` |
@@ -90,13 +90,13 @@ export const klantColors = {
 }
 ```
 
-Voeg `klant-portal` class toe aan de root wrapper van het klant portaal.
+Voeg `klant-portal` class toe aan de root wrapper van het TopTalent Business.
 
 ---
 
 ## STAP 1: NIEUWE KLANT PORTAL LAYOUT
 
-Maak een **volledig aparte layout** voor het klant portaal. Gebruik NIET de bestaande `PortalLayout` — die is gedeeld met medewerkers. Maak een eigen `KlantPortalLayout`.
+Maak een **volledig aparte layout** voor het TopTalent Business. Gebruik NIET de bestaande `PortalLayout` — die is gedeeld met medewerkers. Maak een eigen `KlantPortalLayout`.
 
 ### Maak `/components/klant/KlantPortalLayout.tsx`
 
@@ -148,7 +148,7 @@ export default function KlantPortalLayout({ ... }: KlantPortalLayoutProps) {
             </div>
             <div>
               <p className="text-white font-semibold text-sm leading-tight">{bedrijfsnaam}</p>
-              <p className="text-blue-300 text-xs">Klant Portaal</p>
+              <p className="text-blue-300 text-xs">TopTalent Business</p>
             </div>
           </div>
         </div>
@@ -246,7 +246,7 @@ const PRIMAIRE_TABS = ['overzicht', 'aanvragen', 'rooster', 'uren']
 
 ## STAP 2: KLANT PORTAAL HEADER (MOBIEL)
 
-Op mobiel heeft het klant portaal een **compacte header bovenaan** (geen sidebar zichtbaar):
+Op mobiel heeft het TopTalent Business een **compacte header bovenaan** (geen sidebar zichtbaar):
 
 ```tsx
 // /components/klant/KlantMobileHeader.tsx
@@ -462,7 +462,7 @@ De bestaande multi-step aanvraag werkt al. Zorg dat:
 
 ## STAP 5: PWA VOOR KLANT PORTAAL
 
-**Belangrijk:** De klant portaal PWA is **compleet apart** van de medewerker PWA:
+**Belangrijk:** De TopTalent Business PWA is **compleet apart** van de medewerker PWA:
 - Andere app naam
 - Andere kleur
 - Andere start URL
@@ -546,7 +546,7 @@ import Head from 'next/head'
 </head>
 ```
 
-### PWA Service Worker (next-pwa — al geïnstalleerd via medewerker portaal)
+### PWA Service Worker (next-pwa — al geïnstalleerd via TopTalent Hub)
 
 De `@ducanh2912/next-pwa` package is al geconfigureerd. Controleer `next.config.ts`:
 
@@ -745,7 +745,7 @@ Zodra deployed op Vercel:
 
 ## DEFINITION OF DONE
 
-✅ Klant portaal heeft eigen `KlantPortalLayout` — volledig los van medewerker portaal
+✅ Klant portaal heeft eigen `KlantPortalLayout` — volledig los van TopTalent Hub
 ✅ Navy blauwe sidebar op desktop — professioneel en zakelijk
 ✅ Mobiele bottom nav met max 5 tabs + "Meer" sheet
 ✅ Compacte mobiele header met notificatie bell

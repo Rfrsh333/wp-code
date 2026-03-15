@@ -74,7 +74,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="nl">
+    <html lang="nl" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://nntxpyoyrpquzghsnwxj.supabase.co" />
         <link rel="dns-prefetch" href="https://nntxpyoyrpquzghsnwxj.supabase.co" />
