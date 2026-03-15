@@ -58,11 +58,11 @@ export default function MedewerkerResponsiveLayout({
       {/* Main content area */}
       <div className="min-h-screen bg-[var(--mp-bg)]">
         {/* Desktop: padding-left voor sidebar */}
-        {/* Mobile: geen padding */}
+        {/* Mobile: safe area insets */}
         <div className="md:pl-72">
           {/* Account gepauzeerd warning */}
           {accountGepauzeerd && (
-            <div className="bg-red-500 text-white px-4 py-3 flex items-center gap-3">
+            <div className="bg-red-500 text-white px-4 py-3 flex items-center gap-3 safe-top">
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <div className="flex-1 text-sm">
                 <strong className="font-semibold">Account gepauzeerd</strong>
@@ -74,7 +74,7 @@ export default function MedewerkerResponsiveLayout({
           )}
 
           {/* Content met padding voor bottom nav op mobiel */}
-          <div className="pb-[calc(var(--mp-nav-height)+var(--mp-safe-bottom)+1rem)] md:pb-0">
+          <div className="pb-[calc(var(--mp-nav-height)+env(safe-area-inset-bottom,0px)+1rem)] md:pb-8 px-4 md:px-6 pt-4 md:pt-6">
             {children}
           </div>
         </div>

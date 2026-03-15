@@ -27,8 +27,10 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5, // Allow zoom for accessibility
+  userScalable: true,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function MedewerkerLayout({

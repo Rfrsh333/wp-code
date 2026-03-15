@@ -5,9 +5,13 @@
   "start_url": "/medewerker/dashboard/?source=pwa",
   "scope": "/medewerker/",
   "display": "standalone",
-  "background_color": "#FFFFFF",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#f2f2f7",
   "theme_color": "#F27501",
   "orientation": "portrait-primary",
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
   "categories": ["productivity", "business"],
   "lang": "nl-NL",
   "dir": "ltr",

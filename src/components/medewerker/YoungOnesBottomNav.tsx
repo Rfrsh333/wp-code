@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Calendar, Clock, User } from "lucide-react";
+import { usePWA } from "@/hooks/usePWA";
 
 interface Tab {
   id: string;
@@ -21,6 +22,7 @@ const tabs: Tab[] = [
 export default function YoungOnesBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isPWA, isIOS } = usePWA();
 
   const isActive = (href: string) => {
     if (href === "/medewerker/shifts") {
@@ -31,10 +33,12 @@ export default function YoungOnesBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--mp-card)] border-t border-[var(--mp-separator)] safe-bottom"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--mp-card)] border-t border-[var(--mp-separator)]"
       style={{
-        height: "calc(var(--mp-nav-height) + var(--mp-safe-bottom))",
-        paddingBottom: "var(--mp-safe-bottom)",
+        height: `calc(var(--mp-nav-height) + env(safe-area-inset-bottom, 0px))`,
+        paddingBottom: `env(safe-area-inset-bottom, 0px)`,
+        // Extra padding voor iOS PWA
+        paddingBottom: isPWA && isIOS ? `max(env(safe-area-inset-bottom, 0px), 20px)` : `env(safe-area-inset-bottom, 0px)`,
       }}
     >
       <div className="flex items-stretch h-[var(--mp-nav-height)]">
