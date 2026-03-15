@@ -2356,10 +2356,11 @@ function QRScannerTab() {
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrCodeRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<{ type: "success" | "warning" | "error"; data?: CheckinResult; message?: string } | null>(null);
+  const [result, setResult] = useState<{ type: "success" | "warning" | "error" | "multiple"; data?: CheckinResult; message?: string } | null>(null);
   const [checkins, setCheckins] = useState<CheckinListItem[]>([]);
   const [loadingCheckins, setLoadingCheckins] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [multipleData, setMultipleData] = useState<{ medewerker_id: string; medewerker?: { naam: string; functie?: string; profile_photo_url?: string | null }; diensten: Array<{ dienst_id: string; aanmelding_id: string; datum: string; start_tijd: string; eind_tijd: string; locatie: string; functie: string; check_in_at: string | null }> } | null>(null);
 
   const fetchCheckins = useCallback(async () => {
     try {
@@ -2463,11 +2464,48 @@ function QRScannerTab() {
       const data = await res.json();
 
       if (res.status === 200) {
+        // Check if multiple diensten
+        if (data.status === "multiple_diensten") {
+          setMultipleData({ ...data, medewerker_id: qrData.id });
+          setResult({ type: "multiple", data });
+        } else {
+          setResult({ type: "success", data });
+          toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
+          fetchCheckins();
+        }
+      } else if (res.status === 409) {
+        setResult({ type: "warning", data });
+      } else {
+        setResult({ type: "error", message: data.error || "Check-in mislukt" });
+      }
+    } catch {
+      setResult({ type: "error", message: "Netwerkfout — probeer opnieuw" });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDienstSelect = async (dienst_id: string) => {
+    if (!multipleData) return;
+
+    setProcessing(true);
+    try {
+      const res = await fetch("/api/klant/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ medewerker_id: multipleData.medewerker_id, dienst_id }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 200) {
         setResult({ type: "success", data });
+        setMultipleData(null);
         toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
         fetchCheckins();
       } else if (res.status === 409) {
         setResult({ type: "warning", data });
+        setMultipleData(null);
       } else {
         setResult({ type: "error", message: data.error || "Check-in mislukt" });
       }
@@ -2543,8 +2581,66 @@ function QRScannerTab() {
         </div>
       )}
 
+      {/* Multiple Diensten Selection */}
+      {result && result.type === "multiple" && multipleData && !processing && (
+        <div className="rounded-2xl border-2 border-blue-300 bg-blue-50 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500">
+              <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span className="text-lg font-bold text-blue-800">Meerdere diensten gevonden</span>
+          </div>
+          {multipleData.medewerker && (
+            <p className="text-sm text-blue-700 mb-4">
+              Selecteer de dienst waarvoor je <strong>{multipleData.medewerker.naam}</strong> wilt inchecken:
+            </p>
+          )}
+          <div className="space-y-2">
+            {multipleData.diensten.map((dienst) => {
+              const datum = new Date(dienst.datum).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+              const isIngecheckt = !!dienst.check_in_at;
+              return (
+                <button
+                  key={dienst.dienst_id}
+                  onClick={() => handleDienstSelect(dienst.dienst_id)}
+                  disabled={isIngecheckt}
+                  className={`w-full rounded-xl border-2 p-4 text-left transition ${
+                    isIngecheckt
+                      ? "border-neutral-300 bg-neutral-100 cursor-not-allowed opacity-60"
+                      : "border-blue-200 bg-white hover:border-blue-400 hover:bg-blue-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-neutral-900">{dienst.functie} - {dienst.locatie}</p>
+                      <p className="text-sm text-neutral-600">{datum} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}</p>
+                    </div>
+                    {isIngecheckt && (
+                      <span className="text-xs font-medium text-green-600 px-2 py-1 rounded-full bg-green-100">
+                        Al ingecheckt
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => {
+              setResult(null);
+              setMultipleData(null);
+            }}
+            className="mt-4 w-full rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50"
+          >
+            Annuleren
+          </button>
+        </div>
+      )}
+
       {/* Result Card */}
-      {result && !processing && (
+      {result && result.type !== "multiple" && !processing && (
         <div className={`rounded-2xl border-2 p-6 ${
           result.type === "success" ? "border-green-300 bg-green-50" :
           result.type === "warning" ? "border-amber-300 bg-amber-50" :

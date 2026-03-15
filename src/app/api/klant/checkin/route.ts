@@ -16,22 +16,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { medewerker_id?: string };
+  let body: { medewerker_id?: string; dienst_id?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Ongeldige request body" }, { status: 400 });
   }
 
-  const { medewerker_id } = body;
+  const { medewerker_id, dienst_id } = body;
   if (!medewerker_id || typeof medewerker_id !== "string") {
     return NextResponse.json({ error: "Ongeldige QR-code: medewerker_id ontbreekt" }, { status: 400 });
   }
 
   const today = new Date().toISOString().split("T")[0];
 
-  // Zoek vandaag's geaccepteerde dienst voor deze medewerker bij deze klant
-  const { data: aanmeldingen, error: fetchError } = await supabaseAdmin
+  // Als dienst_id is opgegeven, gebruik die specifieke dienst
+  // Anders zoek alle upcoming geaccepteerde diensten
+  let query = supabaseAdmin
     .from("dienst_aanmeldingen")
     .select(`
       id,
@@ -43,7 +44,13 @@ export async function POST(request: NextRequest) {
     .eq("medewerker_id", medewerker_id)
     .eq("status", "geaccepteerd")
     .eq("diensten.klant_id", klant.id)
-    .eq("diensten.datum", today);
+    .gte("diensten.datum", today);
+
+  if (dienst_id) {
+    query = query.eq("diensten.id", dienst_id);
+  }
+
+  const { data: aanmeldingen, error: fetchError } = await query;
 
   if (fetchError) {
     console.error("[CHECKIN] Supabase error:", fetchError);
@@ -51,10 +58,44 @@ export async function POST(request: NextRequest) {
   }
 
   if (!aanmeldingen || aanmeldingen.length === 0) {
-    return NextResponse.json({ error: "Geen dienst gevonden voor deze medewerker vandaag" }, { status: 404 });
+    return NextResponse.json({ error: "Geen geaccepteerde dienst gevonden voor deze medewerker" }, { status: 404 });
   }
 
-  // Pak de eerste aanmelding
+  // Als er meerdere diensten zijn en geen specifieke dienst_id is opgegeven, return de lijst
+  if (aanmeldingen.length > 1 && !dienst_id) {
+    // Haal medewerker info op
+    const { data: medewerker } = await supabaseAdmin
+      .from("medewerkers")
+      .select("naam, functie, profile_photo_url")
+      .eq("id", medewerker_id)
+      .single();
+
+    const diensten = aanmeldingen.map(a => {
+      const d = Array.isArray(a.dienst) ? a.dienst[0] : a.dienst;
+      return {
+        dienst_id: d.id,
+        aanmelding_id: a.id,
+        datum: d.datum,
+        start_tijd: d.start_tijd,
+        eind_tijd: d.eind_tijd,
+        locatie: d.locatie,
+        functie: d.functie,
+        check_in_at: a.check_in_at,
+      };
+    });
+
+    return NextResponse.json({
+      status: "multiple_diensten",
+      medewerker: medewerker ? {
+        naam: medewerker.naam,
+        functie: medewerker.functie,
+        profile_photo_url: medewerker.profile_photo_url,
+      } : null,
+      diensten,
+    });
+  }
+
+  // Pak de eerste (of enige) aanmelding
   const aanmelding = aanmeldingen[0];
   const dienst = Array.isArray(aanmelding.dienst) ? aanmelding.dienst[0] : aanmelding.dienst;
 
