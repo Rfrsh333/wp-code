@@ -362,49 +362,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* PWA & Mobile Optimizations */
-@supports (padding: max(0px)) {
-  body {
-    /* Safe area insets for all edges */
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-}
 
 /* PWA standalone mode detection */
 @media (display-mode: standalone) {
-  body {
-    /* Extra top padding for notch in standalone mode */
-    padding-top: env(safe-area-inset-top);
-  }
-
   /* Hide browser UI elements in PWA mode */
   .hide-in-pwa {
     display: none !important;
   }
 }
 
-@media (display-mode: fullscreen) {
-  body {
-    padding-top: env(safe-area-inset-top);
-  }
-}
-
-/* iOS PWA specific fixes */
+/* iOS PWA specific fixes - alleen voor scroll bounce */
 @supports (-webkit-touch-callout: none) {
-  /* iOS specific safe area handling */
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  /* Fix for iOS scroll bounce in PWA */
   html {
-    height: 100%;
-    overflow: hidden;
-  }
-
-  body {
-    height: 100%;
-    overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
 }
@@ -450,8 +419,18 @@ html {
 }
 
 /* Safe area utilities */
-.safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
+/* Only apply top safe area in standalone PWA mode on mobile */
+@media (display-mode: standalone) and (max-width: 768px) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* In browser mode, no top padding */
+@media not all and (display-mode: standalone) {
+  .safe-top {
+    padding-top: 0;
+  }
 }
 
 .safe-bottom {
