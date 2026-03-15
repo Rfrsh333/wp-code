@@ -18,11 +18,14 @@ interface MedewerkerDetail {
     geboortedatum: string | null;
     stad: string | null;
     bsn_geverifieerd: boolean;
+    adres: string | null;
+    postcode: string | null;
     factuur_adres: string | null;
     factuur_postcode: string | null;
     factuur_stad: string | null;
     btw_nummer: string | null;
     iban: string | null;
+    kor_actief: boolean | null;
     admin_score_aanwezigheid: number | null;
     admin_score_vaardigheden: number | null;
     experience_years?: number | null;
@@ -264,6 +267,9 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
                   )}
                   <p>{profiel.email}</p>
                   {profiel.telefoon && <p>{profiel.telefoon}</p>}
+                  {profiel.adres && (
+                    <p>{profiel.adres}{profiel.postcode && `, ${profiel.postcode}`}{profiel.stad && ` ${profiel.stad}`}</p>
+                  )}
                   <p>Sinds {formatDate(profiel.created_at)}</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-3">
@@ -418,13 +424,13 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
           )}
 
           {/* Facturatie */}
-          {(profiel.factuur_adres || profiel.btw_nummer || profiel.iban) && (
+          {(profiel.factuur_adres || profiel.btw_nummer || profiel.iban || profiel.kor_actief !== null) && (
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h4 className="text-lg font-semibold text-neutral-900 mb-4">Facturatie & Betaling</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 {profiel.factuur_adres && (
                   <div>
-                    <p className="text-neutral-500">Adres</p>
+                    <p className="text-neutral-500">Factuuradres</p>
                     <p className="text-neutral-900 font-medium">
                       {profiel.factuur_adres}
                       {profiel.factuur_postcode && `, ${profiel.factuur_postcode}`}
@@ -444,6 +450,17 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
                     <p className="text-neutral-900 font-medium font-mono">{profiel.iban}</p>
                   </div>
                 )}
+                <div>
+                  <p className="text-neutral-500">KOR (Kleineondernemersregeling)</p>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    profiel.kor_actief
+                      ? "bg-green-100 text-green-700"
+                      : "bg-neutral-100 text-neutral-500"
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${profiel.kor_actief ? "bg-green-500" : "bg-neutral-400"}`} />
+                    {profiel.kor_actief ? "Actief" : "Niet actief"}
+                  </span>
+                </div>
               </div>
             </div>
           )}

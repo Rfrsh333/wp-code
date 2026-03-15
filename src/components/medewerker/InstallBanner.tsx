@@ -17,6 +17,11 @@ export default function InstallBanner() {
   const [showInstructions, setShowInstructions] = useState(false);
 
   useEffect(() => {
+    // Only show on mobile/tablet — hide on desktop
+    const isMobileOrTablet = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+    if (!isMobileOrTablet) return;
+
     if (localStorage.getItem("pwa-install-dismissed")) return;
 
     const standalone = window.matchMedia("(display-mode: standalone)").matches

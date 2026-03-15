@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const { data: profiel } = await supabaseAdmin
       .from("medewerkers")
-      .select("naam, email, functie, stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
+      .select("naam, email, functie, stad, adres, postcode, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, kor_actief, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
       .eq("id", medewerker.id)
       .single();
 
@@ -101,8 +101,8 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const allowedFields = ["stad", "geboortedatum", "telefoon", "factuur_adres", "factuur_postcode", "factuur_stad", "btw_nummer", "iban"];
-    const updateData: Record<string, string | null> = {};
+    const allowedFields = ["stad", "adres", "postcode", "geboortedatum", "telefoon", "factuur_adres", "factuur_postcode", "factuur_stad", "btw_nummer", "iban", "kor_actief"];
+    const updateData: Record<string, string | boolean | null> = {};
 
     for (const field of allowedFields) {
       if (field in body) {

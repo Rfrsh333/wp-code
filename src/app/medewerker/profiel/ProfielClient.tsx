@@ -43,7 +43,24 @@ export default function ProfielClient() {
       const res = await fetch("/api/medewerker/profile");
       if (res.ok) {
         const data = await res.json();
-        setProfiel(data.profiel);
+        const p = data.profiel;
+        setProfiel({
+          naam: p.naam,
+          email: p.email,
+          telefoon: p.telefoon,
+          stad: p.stad,
+          adres: p.adres,
+          postcode: p.postcode,
+          geboortedatum: p.geboortedatum,
+          functie: p.functie,
+          factuurAdres: p.factuur_adres,
+          factuurPostcode: p.factuur_postcode,
+          factuurStad: p.factuur_stad,
+          btwNummer: p.btw_nummer,
+          korActief: p.kor_actief,
+          opkomstPercentage: data.stats?.opkomst_percentage,
+          optijdPercentage: data.stats?.op_tijd_percentage,
+        });
       } else {
         toast.error("Kon profiel niet laden");
       }
@@ -93,11 +110,11 @@ export default function ProfielClient() {
           postcode: profiel.postcode,
           geboortedatum: profiel.geboortedatum,
           telefoon: profiel.telefoon,
-          factuurAdres: profiel.factuurAdres,
-          factuurPostcode: profiel.factuurPostcode,
-          factuurStad: profiel.factuurStad,
-          btwNummer: profiel.btwNummer,
-          korActief: profiel.korActief,
+          factuur_adres: profiel.factuurAdres,
+          factuur_postcode: profiel.factuurPostcode,
+          factuur_stad: profiel.factuurStad,
+          btw_nummer: profiel.btwNummer,
+          kor_actief: profiel.korActief,
         }),
       });
 

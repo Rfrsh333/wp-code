@@ -2851,6 +2851,14 @@ function KlantInstallBanner() {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    // Only show on mobile/tablet — hide on desktop
+    const isMobileOrTablet = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+    if (!isMobileOrTablet) {
+      setBannerGesloten(true);
+      return;
+    }
+
     setBannerGesloten(localStorage.getItem("klant-pwa-banner-gesloten") === "true");
     setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent));
     setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);

@@ -25,7 +25,7 @@ export async function GET(
     // Profiel
     supabaseAdmin
       .from("medewerkers")
-      .select("id, naam, email, telefoon, functie, uurtarief, status, notities, created_at, profile_photo_url, geboortedatum, stad, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, admin_score_aanwezigheid, admin_score_vaardigheden")
+      .select("id, naam, email, telefoon, functie, uurtarief, status, notities, created_at, profile_photo_url, geboortedatum, stad, adres, postcode, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, kor_actief, admin_score_aanwezigheid, admin_score_vaardigheden")
       .eq("id", id)
       .single(),
     // Werkervaring

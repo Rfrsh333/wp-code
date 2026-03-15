@@ -8,6 +8,11 @@ export default function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
+    // Only show on mobile/tablet — hide on desktop
+    const isMobileOrTablet = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+    if (!isMobileOrTablet) return;
+
     // Check if already installed
     if (window.matchMedia("(display-mode: standalone)").matches) {
       return;
