@@ -1,6 +1,7 @@
 import { Metadata, Viewport } from "next";
 import RegisterSW from "./components/RegisterSW";
 import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidget";
+import QueryProvider from "@/components/QueryProvider";
 
 export const metadata: Metadata = {
   robots: {
@@ -40,9 +41,11 @@ export default function KlantLayout({
         <meta name="apple-mobile-web-app-title" content="TopTalent Business" />
         <link rel="apple-touch-icon" href="/icons/icon-klant-192.png" />
       </head>
-      <RegisterSW />
-      {children}
-      <AIChatWidget userType="klant" />
+      <QueryProvider>
+        <RegisterSW />
+        {children}
+        <AIChatWidget userType="klant" />
+      </QueryProvider>
     </>
   );
 }

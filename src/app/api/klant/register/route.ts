@@ -1,22 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
-import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { checkRedisRateLimit, getClientIP, klantRegisterRateLimit } from "@/lib/rate-limit-redis";
 import bcrypt from "bcryptjs";
 import { signKlantSession } from "@/lib/session";
 import { sendTelegramAlert } from "@/lib/telegram";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
-  const rateLimitResult = checkRateLimit(`klant-register:${clientIP}`, {
-    windowMs: 15 * 60 * 1000,
-    maxRequests: 3,
-  });
+  const rateLimitResult = await checkRedisRateLimit(`klant-register:${clientIP}`, klantRegisterRateLimit);
 
   if (!rateLimitResult.success) {
+    const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
     return NextResponse.json(
-      { error: `Te veel pogingen. Probeer het over ${rateLimitResult.resetIn} seconden opnieuw.` },
-      { status: 429, headers: { "Retry-After": rateLimitResult.resetIn.toString() } }
+      { error: `Te veel pogingen. Probeer het later opnieuw.` },
+      { status: 429, headers: { "Retry-After": Math.max(1, retryAfter).toString() } }
     );
   }
 

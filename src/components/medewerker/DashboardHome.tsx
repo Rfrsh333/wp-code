@@ -1,26 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useToast } from "@/components/ui/Toast";
 import { staggerChildren, staggerChild } from "@/lib/design-system/animations";
 import InstallBanner from "./InstallBanner";
-
-interface DashboardSummary {
-  volgendeShift: {
-    klant_naam: string;
-    locatie: string;
-    datum: string;
-    start_tijd: string;
-    eind_tijd: string;
-    functie: string;
-  } | null;
-  openAanbiedingen: number;
-  verlopenDocumenten: number;
-  ongelezen: number;
-  totaalDiensten: number;
-  totaalUren: number;
-}
+import { useMedewerkerDashboard } from "@/hooks/queries/useMedewerkerQueries";
 
 interface DashboardHomeProps {
   naam: string;
@@ -28,24 +11,7 @@ interface DashboardHomeProps {
 }
 
 export default function DashboardHome({ naam, onNavigate }: DashboardHomeProps) {
-  const toast = useToast();
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const res = await fetch("/api/medewerker/dashboard-summary");
-        const data = await res.json();
-        if (res.ok) setSummary(data);
-      } catch {
-        toast.error("Kon dashboard niet laden");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchSummary();
-  }, [toast]);
+  const { data: summary, isLoading } = useMedewerkerDashboard();
 
   const firstName = naam.split(" ")[0];
   const greeting = (() => {

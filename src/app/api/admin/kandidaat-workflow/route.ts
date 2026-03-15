@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { logAuditEvent } from "@/lib/audit-log";
+import { kandidaatWorkflowPostSchema, kandidaatWorkflowPatchSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -19,12 +20,12 @@ export async function GET(request: NextRequest) {
   const [contactsResult, tasksResult, emailsResult] = await Promise.all([
     supabaseAdmin
       .from("kandidaat_contactmomenten")
-      .select("*")
+      .select("id, inschrijving_id, contact_type, summary, created_by, created_at")
       .eq("inschrijving_id", inschrijvingId)
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("kandidaat_taken")
-      .select("*")
+      .select("id, inschrijving_id, title, note, due_at, completed_at, created_by, created_at")
       .eq("inschrijving_id", inschrijvingId)
       .order("completed_at", { ascending: true, nullsFirst: true })
       .order("due_at", { ascending: true, nullsFirst: true }),
@@ -51,11 +52,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { type, inschrijvingId } = body;
-
-  if (!type || !inschrijvingId) {
-    return NextResponse.json({ error: "type en inschrijvingId zijn verplicht" }, { status: 400 });
+  const validation = validateAdminBody(kandidaatWorkflowPostSchema, body);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const { type, inschrijvingId } = body;
 
   if (type === "contact") {
     const { contactType, summary } = body;
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
         summary,
         created_by: email || null,
       })
-      .select("*")
+      .select("id, inschrijving_id, contact_type, summary, created_by, created_at")
       .single();
 
     if (error) {
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
         due_at: dueAt || null,
         created_by: email || null,
       })
-      .select("*")
+      .select("id, inschrijving_id, title, note, due_at, completed_at, created_by, created_at")
       .single();
 
     if (error) {
@@ -141,11 +142,11 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { taskId, completed, title, note, dueAt } = body;
-
-  if (!taskId) {
-    return NextResponse.json({ error: "taskId is verplicht" }, { status: 400 });
+  const validation = validateAdminBody(kandidaatWorkflowPatchSchema, body);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const { taskId, completed, title, note, dueAt } = body;
 
   const updates: Record<string, string | null> = {};
   if (typeof completed === "boolean") {
@@ -165,7 +166,7 @@ export async function PATCH(request: NextRequest) {
     .from("kandidaat_taken")
     .update(updates)
     .eq("id", taskId)
-    .select("*")
+    .select("id, inschrijving_id, title, note, due_at, completed_at, created_by, created_at")
     .single();
 
   if (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { findMatchesForDienst, inviteMedewerkersForDienst } from "@/lib/matching";
+import { matchingPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -34,14 +35,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { dienst_id, medewerker_ids } = await request.json();
-
-    if (!dienst_id || !Array.isArray(medewerker_ids) || medewerker_ids.length === 0) {
-      return NextResponse.json(
-        { error: "dienst_id en medewerker_ids[] zijn vereist" },
-        { status: 400 }
-      );
+    const rawBody = await request.json();
+    const validation = validateAdminBody(matchingPostSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+    const { dienst_id, medewerker_ids } = validation.data;
 
     const result = await inviteMedewerkersForDienst(dienst_id, medewerker_ids);
     return NextResponse.json(result);

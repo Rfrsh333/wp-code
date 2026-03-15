@@ -1,30 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
-import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { checkRedisRateLimit, getClientIP, klantLoginRateLimit } from "@/lib/rate-limit-redis";
 import bcrypt from "bcryptjs";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
-  // Rate limiting: 5 login attempts per 15 minutes per IP
+  // Rate limiting: 5 login attempts per 15 minutes per IP (Redis)
   const clientIP = getClientIP(request);
-  const rateLimitResult = checkRateLimit(`klant-login:${clientIP}`, {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5,
-  });
+  const rateLimitResult = await checkRedisRateLimit(`klant-login:${clientIP}`, klantLoginRateLimit);
 
   if (!rateLimitResult.success) {
     console.warn(`[SECURITY] Rate limit exceeded for klant login from IP: ${clientIP}`);
+    const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
     return NextResponse.json(
-      {
-        error: `Te veel loginpogingen. Probeer het over ${rateLimitResult.resetIn} seconden opnieuw.`,
-      },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": rateLimitResult.resetIn.toString(),
-        },
-      }
+      { error: `Te veel loginpogingen. Probeer het later opnieuw.` },
+      { status: 429, headers: { "Retry-After": Math.max(1, retryAfter).toString() } }
     );
   }
 

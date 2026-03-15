@@ -13,6 +13,18 @@ export async function POST(request: NextRequest) {
     const klant = await verifyKlantSession(session.value);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Verify klant exists in database
+    const { data: klantData, error: klantError } = await supabaseAdmin
+      .from("klanten")
+      .select("id, bedrijfsnaam")
+      .eq("id", klant.id)
+      .single();
+
+    if (klantError || !klantData) {
+      console.error("Klant not found in database:", klant.id, klantError);
+      return NextResponse.json({ error: "Klant account niet gevonden. Neem contact op met support." }, { status: 404 });
+    }
+
     const body = await request.json();
     const { functie, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
 
@@ -36,8 +48,8 @@ export async function POST(request: NextRequest) {
 
     // Only insert columns that exist in the diensten table
     const insertData: Record<string, unknown> = {
-      klant_id: klant.id,
-      klant_naam: klant.bedrijfsnaam || null,
+      klant_id: klantData.id,
+      klant_naam: klantData.bedrijfsnaam || null,
       functie,
       datum,
       start_tijd,
@@ -58,13 +70,17 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Dienst aanmaken mislukt:", error);
-      return NextResponse.json({ error: "Aanvraag opslaan mislukt. Probeer het later opnieuw." }, { status: 500 });
+      console.error("Insert data was:", JSON.stringify(insertData, null, 2));
+      return NextResponse.json({
+        error: "Aanvraag opslaan mislukt. Probeer het later opnieuw.",
+        details: process.env.NODE_ENV === "development" ? error.message : undefined
+      }, { status: 500 });
     }
 
     // Telegram notification (don't let it block the response)
     sendTelegramAlert(
       `<b>Nieuwe personeelsaanvraag</b>\n` +
-      `Klant: ${klant.bedrijfsnaam}\n` +
+      `Klant: ${klantData.bedrijfsnaam}\n` +
       `Functie: ${functie}\n` +
       `Datum: ${datum}\n` +
       `Tijd: ${start_tijd} - ${eind_tijd}\n` +

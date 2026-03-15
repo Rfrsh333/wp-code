@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { sendNieuwBerichtEmail } from "@/lib/notifications";
+import { berichtenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   if (request.nextUrl.searchParams.get("templates") === "true") {
     const { data: templates } = await supabaseAdmin
       .from("bericht_templates")
-      .select("*")
+      .select("id, naam, onderwerp, inhoud, categorie, created_at")
       .order("naam", { ascending: true })
       .limit(100);
     return NextResponse.json({ templates: templates || [] });
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   const { data } = await supabaseAdmin
     .from("berichten")
-    .select("*")
+    .select("id, van_type, van_id, aan_type, aan_id, onderwerp, inhoud, created_at")
     .order("created_at", { ascending: false })
     .limit(500);
 
@@ -36,6 +37,10 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
+  const validation = validateAdminBody(berichtenPostSchema, body);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
 
   // Save template
   if (body.action === "save_template") {

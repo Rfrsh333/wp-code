@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateContent } from "@/lib/agents/content-generator";
+import { contentPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 // GET /api/admin/content - Alle content posts ophalen
 export async function GET(request: NextRequest) {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from("content_posts")
-      .select("*")
+      .select("id, type, status, titel, inhoud, meta_description, keywords, slug, gepubliceerd_op, created_at")
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -52,6 +53,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const validation = validateAdminBody(contentPostSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
     const { action } = body;
 
     if (action === "generate") {

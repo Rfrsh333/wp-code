@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { kandidaatDocumentenPatchSchema, validateAdminBody } from "@/lib/validations-admin";
 
 const DOCUMENT_BUCKET = process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten";
 
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("kandidaat_documenten")
-    .select("*")
+    .select("id, inschrijving_id, type, bestandsnaam, bestand_pad, file_path, mime_type, bestand_grootte, status, notitie, reviewed_at, uploaded_at")
     .eq("inschrijving_id", inschrijvingId)
     .order("uploaded_at", { ascending: false })
     .limit(100);
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       status: "ontvangen",
       notitie: notitie || null,
     })
-    .select("*")
+    .select("id, inschrijving_id, type, bestandsnaam, bestand_pad, mime_type, bestand_grootte, status, notitie, uploaded_at")
     .single();
 
   if (error) {
@@ -125,11 +126,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
-  const { id, status, notitie } = await request.json();
-
-  if (!id) {
-    return NextResponse.json({ error: "Document id is verplicht" }, { status: 400 });
+  const rawBody = await request.json();
+  const validation = validateAdminBody(kandidaatDocumentenPatchSchema, rawBody);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const { id, status, notitie } = validation.data;
 
   const updateData: Record<string, string | null> = {
     notitie: typeof notitie === "string" ? notitie : null,

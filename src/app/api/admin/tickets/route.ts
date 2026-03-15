@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { ticketsPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 // GET: Alle tickets ophalen (admin)
 export async function GET(request: NextRequest) {
@@ -40,6 +41,10 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
+  const validation = validateAdminBody(ticketsPostSchema, body);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
   const { action, id, data } = body;
 
   switch (action) {

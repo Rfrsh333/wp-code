@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { sendShiftAanbiedingEmail } from "@/lib/notifications";
+import { aanbiedingenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabaseAdmin
     .from("dienst_aanbiedingen")
-    .select("*")
+    .select("id, dienst_id, medewerker_id, status, notitie, verlopen_at, aangeboden_at")
     .order("aangeboden_at", { ascending: false })
     .limit(500);
 
@@ -35,11 +36,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const { dienst_id, medewerker_ids, notitie } = await request.json();
-
-  if (!dienst_id || !medewerker_ids?.length) {
-    return NextResponse.json({ error: "Dienst en medewerkers zijn verplicht" }, { status: 400 });
+  const rawBody = await request.json();
+  const validation = validateAdminBody(aanbiedingenPostSchema, rawBody);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const { dienst_id, medewerker_ids, notitie } = validation.data;
 
   const verlopen_at = new Date();
   verlopen_at.setHours(verlopen_at.getHours() + 48); // 48 uur om te reageren

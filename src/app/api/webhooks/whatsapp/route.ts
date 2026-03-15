@@ -1,8 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { createHmac, timingSafeEqual } from "crypto";
 
 const WA_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+const WA_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
+
+function verifyWhatsAppSignature(rawBody: string, signatureHeader: string | null): boolean {
+  if (!WA_APP_SECRET) {
+    console.warn("[WhatsApp] WHATSAPP_APP_SECRET niet geconfigureerd — signature verificatie overgeslagen");
+    return true; // Fail-open in dev, maar log warning
+  }
+  if (!signatureHeader) {
+    console.warn("[WhatsApp] Geen X-Hub-Signature-256 header ontvangen");
+    return false;
+  }
+  const expectedSignature = "sha256=" + createHmac("sha256", WA_APP_SECRET).update(rawBody).digest("hex");
+  // Timing-safe comparison
+  if (expectedSignature.length !== signatureHeader.length) return false;
+  const a = Buffer.from(expectedSignature);
+  const b = Buffer.from(signatureHeader);
+  return timingSafeEqual(a, b);
+}
 
 // WhatsApp webhook verificatie (GET)
 export async function GET(request: NextRequest) {
@@ -22,7 +41,15 @@ export async function GET(request: NextRequest) {
 // Inkomende WhatsApp berichten (POST)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+    const signatureHeader = request.headers.get("x-hub-signature-256");
+
+    if (!verifyWhatsAppSignature(rawBody, signatureHeader)) {
+      console.warn("[WhatsApp] Ongeldige webhook signature — verworpen");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
 
     // WhatsApp Cloud API webhook format
     const entry = body.entry?.[0];

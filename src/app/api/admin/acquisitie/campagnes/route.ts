@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { applyTemplate } from "@/lib/agents/outreach-email";
 import { Resend } from "resend";
+import { campagnesPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("acquisitie_campagnes")
-    .select("*")
+    .select("id, naam, status, type, onderwerp_template, inhoud_template, is_drip_campaign, drip_sequence, emails_sent, created_at")
     .order("created_at", { ascending: false })
     .limit(500);
 
@@ -33,6 +34,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const validation = validateAdminBody(campagnesPostSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
     const { action, id, ...campagneData } = body;
 
     // Update campagne

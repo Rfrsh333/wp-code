@@ -37,6 +37,33 @@ export const apiRateLimit = redis
     })
   : null;
 
+export const klantLoginRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "15 m"), // 5 requests per 15 minutes
+      analytics: true,
+      prefix: "ratelimit:klant-login",
+    })
+  : null;
+
+export const klantRegisterRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(3, "15 m"), // 3 requests per 15 minutes
+      analytics: true,
+      prefix: "ratelimit:klant-register",
+    })
+  : null;
+
+export const calculatorLeadRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "1 h"), // 10 requests per hour
+      analytics: true,
+      prefix: "ratelimit:calculator-lead",
+    })
+  : null;
+
 // Helper to get client IP from request
 export function getClientIP(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");

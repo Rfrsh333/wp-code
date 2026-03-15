@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MedewerkerLayout from "@/components/medewerker/MedewerkerLayout";
 import BeschikbaarheidForm from "@/components/medewerker/BeschikbaarheidForm";
@@ -13,6 +13,8 @@ import ReferralPage from "@/components/medewerker/ReferralPage";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import DashboardHome from "@/components/medewerker/DashboardHome";
 import { useToast } from "@/components/ui/Toast";
+import { useMedewerkerDiensten, useDienstAction, usePhotoUpload, usePhotoDelete, useBoeteBetaal, useBeschikbaarheidSave } from "@/hooks/queries/useMedewerkerQueries";
+import { useMedewerkerRealtime } from "@/hooks/queries/useMedewerkerRealtime";
 
 interface Medewerker {
   id: string;
@@ -80,112 +82,85 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<TabId>("home");
 
-  // Data state
-  const [diensten, setDiensten] = useState<Dienst[]>([]);
-  const [aanpassingen, setAanpassingen] = useState<KlantAanpassing[]>([]);
-  const [vervangingVerzoeken, setVervangingVerzoeken] = useState<{ aanmelding_id: string; dienst_id: string; originele_aanmelding_id: string; naam: string; functie: string | string[]; profile_photo_url: string | null }[]>([]);
-  const [accountGepauzeerd, setAccountGepauzeerd] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // React Query data fetching
+  const { data: dienstenData, isLoading } = useMedewerkerDiensten();
+  const diensten: Dienst[] = dienstenData?.diensten ?? [];
+  const aanpassingen: KlantAanpassing[] = dienstenData?.aanpassingen ?? [];
+  const vervangingVerzoeken = dienstenData?.vervangingVerzoeken ?? [];
+  const accountGepauzeerd = dienstenData?.accountGepauzeerd ?? false;
+
+  // Realtime subscriptions
+  useMedewerkerRealtime(medewerker.id);
+
+  // Mutations
+  const dienstAction = useDienstAction();
+  const photoUpload = usePhotoUpload();
+  const photoDelete = usePhotoDelete();
+  const boeteBetaal = useBoeteBetaal();
+  const beschikbaarheidSave = useBeschikbaarheidSave();
+
+  // Profile photo state (local for immediate UI feedback)
   const [profilePhoto, setProfilePhoto] = useState<string | null>(medewerker.profile_photo_url || null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
   // Uren modal state
   const [urenModal, setUrenModal] = useState<Dienst | null>(null);
   const [urenForm, setUrenForm] = useState({ start: "", eind: "", pauze: "0" });
 
-  const fetchAllData = async () => {
-    setIsLoading(true);
-    try {
-      const dienstenRes = await fetch("/api/medewerker/diensten");
-      const dienstenData = await dienstenRes.json();
-      setDiensten(dienstenData.diensten || []);
-      setAanpassingen(dienstenData.aanpassingen || []);
-      setVervangingVerzoeken(dienstenData.vervangingVerzoeken || []);
-      setAccountGepauzeerd(dienstenData.accountGepauzeerd || false);
-
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Kon data niet laden");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllData();
-  }, []);
-
   // Diensten actions
   const aanmelden = async (dienstId: string) => {
-    await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "aanmelden", dienst_id: dienstId }),
-    });
-    toast.success("Aangemeld voor dienst");
-    fetchAllData();
+    dienstAction.mutate(
+      { action: "aanmelden", dienst_id: dienstId },
+      { onSuccess: () => toast.success("Aangemeld voor dienst") }
+    );
   };
 
   const afmelden = async (dienstId: string) => {
-    await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "afmelden", dienst_id: dienstId }),
-    });
-    toast.info("Afgemeld voor dienst");
-    fetchAllData();
+    dienstAction.mutate(
+      { action: "afmelden", dienst_id: dienstId },
+      { onSuccess: () => toast.info("Afgemeld voor dienst") }
+    );
   };
 
   const annuleerGeaccepteerd = async (aanmeldingId: string, dienstId: string) => {
-    const res = await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "annuleer_geaccepteerd", aanmelding_id: aanmeldingId, dienst_id: dienstId }),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      toast.error(result.error || "Kon niet annuleren");
-      return;
-    }
-    if (result.vervanging) {
-      toast.info("Vervanging wordt gezocht. De dienst is open voor andere medewerkers.");
-    } else {
-      toast.success("Dienst geannuleerd");
-    }
-    fetchAllData();
+    dienstAction.mutate(
+      { action: "annuleer_geaccepteerd", aanmelding_id: aanmeldingId, dienst_id: dienstId },
+      {
+        onSuccess: (result) => {
+          if (result.vervanging) {
+            toast.info("Vervanging wordt gezocht. De dienst is open voor andere medewerkers.");
+          } else {
+            toast.success("Dienst geannuleerd");
+          }
+        },
+        onError: (error) => {
+          toast.error(error.message || "Kon niet annuleren");
+        },
+      }
+    );
   };
 
   const acceptVervanging = async (origineleAanmeldingId: string, vervangingAanmeldingId: string) => {
-    const res = await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "accept_vervanging", aanmelding_id: origineleAanmeldingId, data: { vervanging_aanmelding_id: vervangingAanmeldingId } }),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      toast.error(result.error || "Kon vervanging niet accepteren");
-      return;
-    }
-    toast.success("Vervanging geaccepteerd");
-    fetchAllData();
+    dienstAction.mutate(
+      { action: "accept_vervanging", aanmelding_id: origineleAanmeldingId, data: { vervanging_aanmelding_id: vervangingAanmeldingId } },
+      {
+        onSuccess: () => toast.success("Vervanging geaccepteerd"),
+        onError: (error) => toast.error(error.message || "Kon vervanging niet accepteren"),
+      }
+    );
   };
 
   const afwijsVervanging = async (vervangingAanmeldingId: string) => {
-    const res = await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "afwijs_vervanging", data: { vervanging_aanmelding_id: vervangingAanmeldingId } }),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      toast.error(result.error || "Kon vervanging niet afwijzen");
-      return;
-    }
-    toast.info("Vervanging afgewezen");
-    fetchAllData();
+    dienstAction.mutate(
+      { action: "afwijs_vervanging", data: { vervanging_aanmelding_id: vervangingAanmeldingId } },
+      {
+        onSuccess: () => toast.info("Vervanging afgewezen"),
+        onError: (error) => toast.error(error.message || "Kon vervanging niet afwijzen"),
+      }
+    );
   };
 
   const openUrenModal = (dienst: Dienst) => {
-    // Check if medewerker is ingecheckt via QR
     if (!dienst.check_in_at) {
       toast.error("Je moet eerst worden ingecheckt door de klant via QR-scan voordat je uren kunt indienen");
       return;
@@ -199,38 +174,33 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
     const start = urenForm.start.split(":").map(Number);
     const eind = urenForm.eind.split(":").map(Number);
     const uren = (eind[0] * 60 + eind[1] - start[0] * 60 - start[1] - parseInt(urenForm.pauze)) / 60;
-    await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    dienstAction.mutate(
+      {
         action: "uren_indienen",
         aanmelding_id: urenModal.aanmelding_id,
         data: { start: urenForm.start, eind: urenForm.eind, pauze: parseInt(urenForm.pauze), uren: Math.round(uren * 100) / 100 },
-      }),
-    });
-    toast.success("Uren ingediend");
-    setUrenModal(null);
-    fetchAllData();
+      },
+      {
+        onSuccess: () => {
+          toast.success("Uren ingediend");
+          setUrenModal(null);
+        },
+      }
+    );
   };
 
   const accepteerAanpassing = async (id: string) => {
-    await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "accepteer_aanpassing", uren_id: id }),
-    });
-    toast.success("Aanpassing geaccepteerd");
-    fetchAllData();
+    dienstAction.mutate(
+      { action: "accepteer_aanpassing", uren_id: id },
+      { onSuccess: () => toast.success("Aanpassing geaccepteerd") }
+    );
   };
 
   const weigerAanpassing = async (id: string) => {
-    await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "weiger_aanpassing", uren_id: id }),
-    });
-    toast.info("Aanpassing geweigerd");
-    fetchAllData();
+    dienstAction.mutate(
+      { action: "weiger_aanpassing", uren_id: id },
+      { onSuccess: () => toast.info("Aanpassing geweigerd") }
+    );
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -247,34 +217,35 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
     }
 
     setIsUploadingPhoto(true);
-    try {
-      const formData = new FormData();
-      formData.append("photo", file);
-      const res = await fetch("/api/medewerker/profile", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload mislukt");
-      setProfilePhoto(data.profile_photo_url);
-      toast.success("Profielfoto geüpload!");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Upload mislukt");
-    } finally {
-      setIsUploadingPhoto(false);
-      e.target.value = "";
-    }
+    photoUpload.mutate(file, {
+      onSuccess: (data) => {
+        setProfilePhoto(data.profile_photo_url);
+        toast.success("Profielfoto geüpload!");
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : "Upload mislukt");
+      },
+      onSettled: () => {
+        setIsUploadingPhoto(false);
+        e.target.value = "";
+      },
+    });
   };
 
   const handlePhotoDelete = async () => {
     setIsUploadingPhoto(true);
-    try {
-      const res = await fetch("/api/medewerker/profile", { method: "DELETE" });
-      if (!res.ok) throw new Error("Verwijderen mislukt");
-      setProfilePhoto(null);
-      toast.success("Profielfoto verwijderd");
-    } catch {
-      toast.error("Kon foto niet verwijderen");
-    } finally {
-      setIsUploadingPhoto(false);
-    }
+    photoDelete.mutate(undefined, {
+      onSuccess: () => {
+        setProfilePhoto(null);
+        toast.success("Profielfoto verwijderd");
+      },
+      onError: () => {
+        toast.error("Kon foto niet verwijderen");
+      },
+      onSettled: () => {
+        setIsUploadingPhoto(false);
+      },
+    });
   };
 
   const handleLogout = async () => {
@@ -361,18 +332,19 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
               Betaal de boete om je account te heractiveren.
             </p>
             <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/medewerker/betaal-boete", { method: "POST" });
-                  const data = await res.json();
-                  if (data.checkoutUrl) {
-                    window.location.href = data.checkoutUrl;
-                  } else {
-                    toast.error(data.error || "Kon betaallink niet aanmaken");
-                  }
-                } catch {
-                  toast.error("Netwerkfout bij aanmaken betaling");
-                }
+              onClick={() => {
+                boeteBetaal.mutate(undefined, {
+                  onSuccess: (data) => {
+                    if (data.checkoutUrl) {
+                      window.location.href = data.checkoutUrl;
+                    } else {
+                      toast.error("Kon betaallink niet aanmaken");
+                    }
+                  },
+                  onError: () => {
+                    toast.error("Netwerkfout bij aanmaken betaling");
+                  },
+                });
               }}
               className="w-full mt-6 py-3.5 rounded-2xl bg-[#F27501] text-white font-semibold shadow-lg hover:bg-[#d96800] active:scale-[0.98] transition-all"
             >
@@ -426,12 +398,10 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
               <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
                 <BeschikbaarheidForm
                   onSave={async (data) => {
-                    await fetch("/api/medewerker/beschikbaarheid", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ email: medewerker.email, ...data }),
-                    });
-                    toast.success("Beschikbaarheid opgeslagen");
+                    beschikbaarheidSave.mutate(
+                      { email: medewerker.email, ...data },
+                      { onSuccess: () => toast.success("Beschikbaarheid opgeslagen") }
+                    );
                   }}
                 />
               </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAdminEmail } from "@/lib/admin-auth";
+import { verifyPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 /**
  * Verifieert of de huidige gebruiker een admin is
@@ -8,7 +9,12 @@ import { isAdminEmail } from "@/lib/admin-auth";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { session } = await request.json();
+    const rawBody = await request.json();
+    const validation = validateAdminBody(verifyPostSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json({ error: "Geen authenticatie" }, { status: 401 });
+    }
+    const { session } = validation.data;
 
     if (!session?.access_token) {
       return NextResponse.json(

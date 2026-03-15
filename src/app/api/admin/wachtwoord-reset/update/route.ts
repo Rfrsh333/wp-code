@@ -31,37 +31,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Decode the JWT to get the user ID (without verifying signature -
-    // Supabase admin.updateUserById will reject if the user doesn't exist)
-    let payload: { sub?: string; email?: string; exp?: number };
-    try {
-      const parts = access_token.split(".");
-      if (parts.length !== 3) throw new Error("Invalid JWT format");
-      payload = JSON.parse(Buffer.from(parts[1], "base64url").toString());
-    } catch {
-      return NextResponse.json(
-        { error: "Ongeldig token formaat" },
-        { status: 400 }
-      );
-    }
+    // SECURITY: Verifieer het JWT token via Supabase auth.getUser()
+    // Dit valideert de signature in plaats van handmatig decoderen
+    const { data: { user: verifiedUser }, error: authError } = await supabaseAdmin.auth.getUser(access_token);
 
-    // Check expiration
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
+    if (authError || !verifiedUser) {
+      console.warn("[WACHTWOORD RESET] Token verificatie mislukt:", authError?.message);
       return NextResponse.json(
-        { error: "Deze resetlink is verlopen. Vraag een nieuwe aan." },
+        { error: "Ongeldige of verlopen resetlink. Vraag een nieuwe aan." },
         { status: 401 }
       );
     }
 
-    const userId = payload.sub;
-    const userEmail = payload.email;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Geen gebruiker gevonden in token" },
-        { status: 400 }
-      );
-    }
+    const userId = verifiedUser.id;
+    const userEmail = verifiedUser.email;
 
     // Verify it's an admin email
     if (userEmail && !isAdminEmail(userEmail)) {
@@ -71,16 +54,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user exists via admin API
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
-
-    if (userError || !userData.user) {
-      console.error("[WACHTWOORD RESET] User not found:", userError?.message);
-      return NextResponse.json(
-        { error: "Gebruiker niet gevonden" },
-        { status: 404 }
-      );
-    }
+    // User is already verified via getUser(), use the verified data
+    const userData = { user: verifiedUser };
 
     // Update password using admin client
     const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(

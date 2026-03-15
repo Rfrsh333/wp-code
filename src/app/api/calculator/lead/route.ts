@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import crypto from "crypto";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
-import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+import { checkRedisRateLimit, getClientIP, calculatorLeadRateLimit } from "@/lib/rate-limit-redis";
 import { sendTelegramAlert } from "@/lib/telegram";
 import type { CalculatorInputs, Resultaten, LeadFormData } from "@/lib/calculator/types";
 import { berekenKosten, validateInputs } from "@/lib/calculator/calculate";
@@ -268,16 +268,13 @@ function generateInternalEmail(lead: LeadFormData, inputs: CalculatorInputs, res
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting: 10 requests per hour per IP
+    // Rate limiting: 10 requests per hour per IP (Redis)
     const clientIP = getClientIP(request);
-    const rateLimit = checkRateLimit(`calculator-lead:${clientIP}`, {
-      windowMs: 60 * 60 * 1000,
-      maxRequests: 10,
-    });
+    const rateLimit = await checkRedisRateLimit(`calculator-lead:${clientIP}`, calculatorLeadRateLimit);
 
     if (!rateLimit.success) {
       return NextResponse.json(
-        { error: `Te veel verzoeken. Probeer opnieuw over ${Math.ceil(rateLimit.resetIn / 60)} minuten.` },
+        { error: `Te veel verzoeken. Probeer het later opnieuw.` },
         { status: 429 }
       );
     }

@@ -3,6 +3,7 @@ import ThemeProvider from "@/components/medewerker/ThemeProvider";
 import ServiceWorkerRegister from "@/components/medewerker/ServiceWorkerRegister";
 import PWAInstallPrompt from "@/components/medewerker/PWAInstallPrompt";
 import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidget";
+import QueryProvider from "@/components/QueryProvider";
 
 export const metadata: Metadata = {
   robots: {
@@ -46,12 +47,14 @@ export default function MedewerkerLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <ThemeProvider>
-        <ServiceWorkerRegister />
-        <PWAInstallPrompt />
-        {children}
-        <AIChatWidget userType="medewerker" />
-      </ThemeProvider>
+      <QueryProvider>
+        <ThemeProvider>
+          <ServiceWorkerRegister />
+          <PWAInstallPrompt />
+          {children}
+          <AIChatWidget userType="medewerker" />
+        </ThemeProvider>
+      </QueryProvider>
     </>
   );
 }

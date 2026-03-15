@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import bcrypt from "bcryptjs";
+import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("medewerkers")
-    .select("*")
+    .select("id, naam, voornaam, achternaam, email, telefoon, telefoonnummer, status, functie, geboortedatum, woonplaats, wachtwoord, profiel_foto, admin_score_aanwezigheid, admin_score_vaardigheden, no_show_count, notificatie_voorkeuren, created_at")
     .order("naam")
     .limit(500);
 
@@ -55,7 +56,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
-  const { action, id, data } = await request.json();
+  const rawBody = await request.json();
+  const validation = validateAdminBody(medewerkersPostSchema, rawBody);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+  const { action, id, data } = rawBody;
 
   if (action === "reset_password") {
     if (!id) {

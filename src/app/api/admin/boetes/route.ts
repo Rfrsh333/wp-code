@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
+import { boetesPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
   const { isAdmin } = await verifyAdmin(request);
@@ -34,7 +35,12 @@ export async function POST(request: NextRequest) {
   const { isAdmin, email, role } = await verifyAdmin(request);
   if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { action, medewerker_id, dienst_id, boete_id } = await request.json();
+  const rawBody = await request.json();
+  const validation = validateAdminBody(boetesPostSchema, rawBody);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+  const { action, medewerker_id, dienst_id, boete_id } = rawBody;
 
   if (action === "register_no_show") {
     if (!medewerker_id) {

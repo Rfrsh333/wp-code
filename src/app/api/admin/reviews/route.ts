@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateReviewResponse } from "@/lib/agents/review-response";
+import { reviewsPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 // GET /api/admin/reviews - Alle reviews + stats
 export async function GET(request: NextRequest) {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data: reviews, error: reviewsError } = await supabaseAdmin
       .from("google_reviews")
-      .select("*")
+      .select("id, reviewer_naam, score, tekst, review_datum, antwoord, antwoord_datum, ai_antwoord, created_at")
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -78,6 +79,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const validation = validateAdminBody(reviewsPostSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
     const { action } = body;
 
     if (action === "add") {

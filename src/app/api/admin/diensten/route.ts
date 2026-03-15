@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { ensureKlantForDienst } from "@/lib/klanten-sync";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
+import { dienstenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
   const week = request.nextUrl.searchParams.get("week");
-  let query = supabaseAdmin.from("diensten").select("*").order("datum", { ascending: true }).limit(500);
+  let query = supabaseAdmin.from("diensten").select("id, klant_id, klant_naam, functie, datum, start_tijd, eind_tijd, aantal_nodig, plekken_totaal, plekken_beschikbaar, locatie, uurtarief, status, notities, is_spoeddienst, spoeddienst_token, spoeddienst_whatsapp_tekst, created_at").order("datum", { ascending: true }).limit(500);
   if (week) {
     const start = new Date(week + "T00:00:00");
     const end = new Date(start);
@@ -33,7 +34,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-  const { action, id, dienst_id, data } = await request.json();
+  const rawBody = await request.json();
+  const validation = validateAdminBody(dienstenPostSchema, rawBody);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+  const { action, id, dienst_id, data } = rawBody;
 
   if (action === "create") {
     const payload = { ...data, status: data.status || "open" };
@@ -146,7 +152,7 @@ export async function POST(request: NextRequest) {
   if (action === "get_spoeddienst_responses") {
     const { data: responses } = await supabaseAdmin
       .from("spoeddienst_responses")
-      .select("*")
+      .select("id, dienst_id, medewerker_id, naam, telefoon, status, created_at")
       .eq("dienst_id", dienst_id)
       .order("created_at", { ascending: true })
       .limit(100);

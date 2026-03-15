@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { faqPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 // GET: Alle FAQ items ophalen (admin)
 export async function GET(request: NextRequest) {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabaseAdmin
     .from("faq_items")
-    .select("*")
+    .select("id, question, answer, category, subcategory, source, status, slug, priority, created_at")
     .order("created_at", { ascending: false });
 
   if (status) query = query.eq("status", status);
@@ -40,6 +41,10 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
+  const validation = validateAdminBody(faqPostSchema, body);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
   const { action, id, data } = body;
 
   if (action === "create") {

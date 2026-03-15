@@ -4,6 +4,7 @@ import { hasRequiredAdminRole, verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import { ensureMedewerkerFromCandidate } from "@/lib/candidate-to-medewerker";
 import { sendMedewerkerActivationEmail } from "@/lib/medewerker-activation";
+import { dataPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 // KRITIEK: Whitelist van toegestane tables om SQL injection te voorkomen
 const ALLOWED_TABLES = [
@@ -98,7 +99,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
 
-  const { action, table, id, ids, data } = await request.json();
+  const rawBody = await request.json();
+  const validation = validateAdminBody(dataPostSchema, rawBody);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+  const { action, table, id, ids, data } = rawBody;
 
   // KRITIEK: Check table whitelist
   if (!table || !isAllowedTable(table)) {

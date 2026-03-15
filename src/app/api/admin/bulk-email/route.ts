@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { bulkEmailPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -29,20 +30,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const body: BulkEmailRequest = await request.json();
-    const { kandidaat_ids, template, customSubject, customMessage } = body;
-
-    // Validation
-    if (!kandidaat_ids || kandidaat_ids.length === 0) {
-      return NextResponse.json({ error: "Geen kandidaten geselecteerd" }, { status: 400 });
+    const rawBody = await request.json();
+    const validation = validateAdminBody(bulkEmailPostSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
-
-    if (kandidaat_ids.length > MAX_EMAILS_PER_REQUEST) {
-      return NextResponse.json(
-        { error: `Maximaal ${MAX_EMAILS_PER_REQUEST} emails per keer toegestaan` },
-        { status: 400 }
-      );
-    }
+    const { kandidaat_ids, template, customSubject, customMessage } = validation.data;
 
     // Fetch kandidaten
     const { data: kandidaten, error: fetchError } = await supabaseAdmin
