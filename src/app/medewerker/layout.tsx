@@ -36,9 +36,14 @@ export default function MedewerkerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
-      <ServiceWorkerRegister />
-      {children}
-    </ThemeProvider>
+    <>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
+      <ThemeProvider>
+        <ServiceWorkerRegister />
+        {children}
+      </ThemeProvider>
+    </>
   );
 }
