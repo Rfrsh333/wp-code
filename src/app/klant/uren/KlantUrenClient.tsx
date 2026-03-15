@@ -67,6 +67,18 @@ interface UpcomingDienst {
   functie: string;
   aantal_nodig: number;
   status: string;
+  aanmeldingen_count?: number;
+  aanmeldingen_aangemeld?: number;
+  aanmeldingen_geaccepteerd?: number;
+}
+
+interface DienstAanmelding {
+  id: string;
+  dienst_id: string;
+  medewerker_id: string;
+  status: string;
+  aangemeld_at: string;
+  medewerker: { naam: string; functie: string | string[]; profile_photo_url: string | null } | null;
 }
 
 interface Factuur {
@@ -158,6 +170,11 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     reiskostenKm: "0",
     opmerking: "",
   });
+  const [dienstenVolledig, setDienstenVolledig] = useState<UpcomingDienst[]>([]);
+  const [aanmeldingenOpen, setAanmeldingenOpen] = useState<string | null>(null);
+  const [aanmeldingen, setAanmeldingen] = useState<DienstAanmelding[]>([]);
+  const [aanmeldingenLoading, setAanmeldingenLoading] = useState(false);
+  const [aanmeldingenActie, setAanmeldingenActie] = useState<string | null>(null);
 
   const fetchUren = async () => {
     setIsLoading(true);
@@ -177,6 +194,14 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     setIsLoading(false);
   };
 
+  const fetchDiensten = useCallback(async () => {
+    try {
+      const res = await fetch("/api/klant/diensten");
+      const data = await res.json();
+      setDienstenVolledig(data.diensten || []);
+    } catch { /* ignore */ }
+  }, []);
+
   // Fetch unread berichten count for badge
   const fetchOngelezen = useCallback(async () => {
     try {
@@ -190,8 +215,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     void (async () => {
       await fetchUren();
       await fetchOngelezen();
+      await fetchDiensten();
     })();
-  }, [fetchOngelezen]);
+  }, [fetchOngelezen, fetchDiensten]);
 
   const submitBeoordeling = async () => {
     if (!beoordeelModal.item) return;
@@ -277,6 +303,51 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     } catch {
       toast.error("Aanpassing versturen mislukt");
     }
+  };
+
+  const fetchAanmeldingen = async (dienstId: string) => {
+    setAanmeldingenLoading(true);
+    try {
+      const res = await fetch("/api/klant/diensten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "get_aanmeldingen", dienst_id: dienstId }),
+      });
+      const data = await res.json();
+      setAanmeldingen(data.data || []);
+    } catch {
+      toast.error("Aanmeldingen ophalen mislukt");
+    }
+    setAanmeldingenLoading(false);
+  };
+
+  const toggleAanmeldingen = (dienstId: string) => {
+    if (aanmeldingenOpen === dienstId) {
+      setAanmeldingenOpen(null);
+      setAanmeldingen([]);
+    } else {
+      setAanmeldingenOpen(dienstId);
+      fetchAanmeldingen(dienstId);
+    }
+  };
+
+  const updateAanmelding = async (aanmeldingId: string, status: "geaccepteerd" | "afgewezen") => {
+    setAanmeldingenActie(aanmeldingId);
+    try {
+      await fetch("/api/klant/diensten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update_aanmelding", id: aanmeldingId, data: { status } }),
+      });
+      toast.success(status === "geaccepteerd" ? "Medewerker geaccepteerd" : "Medewerker afgewezen");
+      if (aanmeldingenOpen) {
+        await fetchAanmeldingen(aanmeldingenOpen);
+      }
+      fetchDiensten();
+    } catch {
+      toast.error("Actie mislukt");
+    }
+    setAanmeldingenActie(null);
   };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
@@ -573,7 +644,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   </button>
                 </div>
 
-                {upcomingDiensten.length === 0 ? (
+                {dienstenVolledig.length === 0 ? (
                   <EmptyState
                     icon={
                       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -587,23 +658,112 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   />
                 ) : (
                   <div className="space-y-3">
-                    {upcomingDiensten.map((dienst) => (
-                      <div key={dienst.id} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-neutral-900">{dienst.locatie}</p>
-                            <p className="mt-1 text-sm text-neutral-500">
-                              {formatDateLong(dienst.datum)} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}
-                            </p>
+                    {dienstenVolledig.map((dienst) => (
+                      <div key={dienst.id} className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                        <div className="p-5">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-neutral-900">{dienst.locatie}</p>
+                              <p className="mt-1 text-sm text-neutral-500">
+                                {formatDateLong(dienst.datum)} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}
+                              </p>
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone[dienst.status] || "bg-neutral-200 text-neutral-700"}`}>
+                              {dienst.status}
+                            </span>
                           </div>
-                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone[dienst.status] || "bg-neutral-200 text-neutral-700"}`}>
-                            {dienst.status}
-                          </span>
+                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-600">
+                            <span className="rounded-full bg-neutral-100 px-3 py-1">{dienst.functie}</span>
+                            <span className="rounded-full bg-neutral-100 px-3 py-1">{dienst.aantal_nodig} medewerkers</span>
+                            {(dienst.aanmeldingen_count || 0) > 0 && (
+                              <button
+                                onClick={() => toggleAanmeldingen(dienst.id)}
+                                className={`rounded-full px-3 py-1 font-semibold transition ${
+                                  aanmeldingenOpen === dienst.id
+                                    ? "bg-[#F27501] text-white"
+                                    : (dienst.aanmeldingen_aangemeld || 0) > 0
+                                      ? "bg-orange-100 text-orange-800 hover:bg-orange-200"
+                                      : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                                }`}
+                              >
+                                Aanmeldingen ({dienst.aanmeldingen_count})
+                                {(dienst.aanmeldingen_aangemeld || 0) > 0 && (
+                                  <span className="ml-1">· {dienst.aanmeldingen_aangemeld} nieuw</span>
+                                )}
+                              </button>
+                            )}
+                            {(dienst.aanmeldingen_geaccepteerd || 0) > 0 && (
+                              <span className="rounded-full bg-green-100 px-3 py-1 text-green-800">
+                                {dienst.aanmeldingen_geaccepteerd} / {dienst.aantal_nodig} geaccepteerd
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-neutral-600">
-                          <span className="rounded-full bg-neutral-100 px-3 py-1">{dienst.functie}</span>
-                          <span className="rounded-full bg-neutral-100 px-3 py-1">{dienst.aantal_nodig} medewerkers</span>
-                        </div>
+
+                        {/* Aanmeldingen panel */}
+                        {aanmeldingenOpen === dienst.id && (
+                          <div className="border-t border-neutral-200 bg-neutral-50 px-5 py-4">
+                            {aanmeldingenLoading ? (
+                              <div className="flex justify-center py-4">
+                                <div className="animate-spin w-5 h-5 border-2 border-[#F27501] border-t-transparent rounded-full"></div>
+                              </div>
+                            ) : aanmeldingen.length === 0 ? (
+                              <p className="text-sm text-neutral-500 text-center py-2">Geen aanmeldingen gevonden.</p>
+                            ) : (
+                              <div className="space-y-3">
+                                {aanmeldingen.map((a) => {
+                                  const mw = Array.isArray(a.medewerker) ? a.medewerker[0] : a.medewerker;
+                                  const naam = mw?.naam || "Onbekend";
+                                  const initialen = naam.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+                                  const functie = Array.isArray(mw?.functie) ? mw.functie.join(", ") : mw?.functie || "";
+                                  const statusKleur: Record<string, string> = {
+                                    aangemeld: "bg-amber-100 text-amber-800",
+                                    geaccepteerd: "bg-green-100 text-green-800",
+                                    afgewezen: "bg-red-100 text-red-800",
+                                    geannuleerd: "bg-neutral-200 text-neutral-600",
+                                  };
+
+                                  return (
+                                    <div key={a.id} className="flex items-center gap-3 rounded-xl bg-white p-3 border border-neutral-200">
+                                      {mw?.profile_photo_url ? (
+                                        <img src={mw.profile_photo_url} alt={naam} className="w-10 h-10 rounded-full object-cover" />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded-full bg-[#0B2447] text-white flex items-center justify-center text-sm font-bold">
+                                          {initialen}
+                                        </div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-sm text-neutral-900 truncate">{naam}</p>
+                                        {functie && <p className="text-xs text-neutral-500">{functie}</p>}
+                                      </div>
+                                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
+                                        {a.status}
+                                      </span>
+                                      {a.status === "aangemeld" && (
+                                        <div className="flex gap-2">
+                                          <button
+                                            onClick={() => updateAanmelding(a.id, "geaccepteerd")}
+                                            disabled={aanmeldingenActie === a.id}
+                                            className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
+                                          >
+                                            {aanmeldingenActie === a.id ? "..." : "Accepteren"}
+                                          </button>
+                                          <button
+                                            onClick={() => updateAanmelding(a.id, "afgewezen")}
+                                            disabled={aanmeldingenActie === a.id}
+                                            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+                                          >
+                                            {aanmeldingenActie === a.id ? "..." : "Afwijzen"}
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
