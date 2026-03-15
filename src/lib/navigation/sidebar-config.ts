@@ -231,7 +231,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "recruitment",
     label: "Recruitment",
-    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "planning", "boetes"],
+    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "planning"],
     collapsible: true,
     defaultOpen: true,
     dividerBefore: true,
@@ -239,7 +239,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "finance",
     label: "Finance",
-    itemIds: ["uren", "facturen", "offertes"],
+    itemIds: ["uren", "facturen", "offertes", "boetes"],
     collapsible: true,
     dividerBefore: true,
   },

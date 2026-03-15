@@ -13,6 +13,8 @@ import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import QuickActions from "@/components/klant/QuickActions";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
+import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction } from "@/hooks/queries/useKlantQueries";
+import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
 
 interface Klant {
   id: string;
@@ -164,12 +166,32 @@ interface KostenData {
 export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState("overzicht");
-  const [uren, setUren] = useState<UrenRegistratie[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [teBeoordeelen, setTeBeoordeelen] = useState<TeBeoordelen[]>([]);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-  const [upcomingDiensten, setUpcomingDiensten] = useState<UpcomingDienst[]>([]);
-  const [recentFacturen, setRecentFacturen] = useState<Factuur[]>([]);
+
+  // React Query data fetching
+  const { data: urenData, isLoading: urenLoading } = useKlantUren();
+  const { data: beoorData } = useKlantBeoordelingen();
+  const { data: dashboardData } = useKlantDashboard();
+  const { data: dienstenData } = useKlantDiensten();
+  const { data: facturenData } = useKlantFacturen();
+
+  // Realtime subscriptions
+  useKlantRealtime(klant.id);
+
+  // Mutations
+  const urenAction = useUrenAction();
+  const factuurAction = useFactuurAction();
+  const beoordelingAction = useBeoordelingAction();
+  const dienstenMutation = useDienstenAction();
+
+  // Derived state from React Query
+  const uren: UrenRegistratie[] = urenData?.uren ?? [];
+  const teBeoordeelen: TeBeoordelen[] = beoorData?.teBeoordeelen ?? [];
+  const dashboardStats: DashboardStats | null = dashboardData?.stats ?? null;
+  const upcomingDiensten: UpcomingDienst[] = dashboardData?.upcomingDiensten ?? [];
+  const recentFacturen: Factuur[] = facturenData?.facturen ?? [];
+  const dienstenVolledig: UpcomingDienst[] = dienstenData?.diensten ?? [];
+  const isLoading = urenLoading;
+
   const [beoordeelModal, setBeoordeelModal] = useState<{
     open: boolean;
     item: TeBeoordelen | null;
@@ -190,7 +212,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     reiskostenKm: "0",
     opmerking: "",
   });
-  const [dienstenVolledig, setDienstenVolledig] = useState<UpcomingDienst[]>([]);
   const [aanmeldingenOpen, setAanmeldingenOpen] = useState<string | null>(null);
   const [aanmeldingen, setAanmeldingen] = useState<DienstAanmelding[]>([]);
   const [aanmeldingenLoading, setAanmeldingenLoading] = useState(false);
@@ -207,71 +228,16 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   }>({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
   const [urenZoek, setUrenZoek] = useState("");
 
-  const fetchFacturen = async () => {
-    try {
-      const res = await fetch("/api/klant/facturen");
-      const data = await res.json();
-      setRecentFacturen(data.facturen || []);
-    } catch (err) {
-      console.error("Facturen ophalen mislukt:", err);
-    }
-  };
-
   const createFactuur = async (urenIds: string[]) => {
     try {
-      const res = await fetch("/api/klant/facturen", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uren_ids: urenIds }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Factuur aanmaken mislukt");
-        return false;
-      }
+      const data = await factuurAction.mutateAsync({ uren_ids: urenIds });
       toast.success(`Factuur ${data.factuur_nummer} aangemaakt!`);
-      await fetchFacturen();
-      await fetchUren();
       return true;
     } catch (err) {
-      toast.error("Factuur aanmaken mislukt");
+      toast.error(err instanceof Error ? err.message : "Factuur aanmaken mislukt");
       return false;
     }
   };
-
-  const fetchUren = async () => {
-    setIsLoading(true);
-    const [urenRes, beoorRes, dashboardRes] = await Promise.all([
-      fetch("/api/klant/uren"),
-      fetch("/api/klant/beoordelingen"),
-      fetch("/api/klant/dashboard"),
-    ]);
-    const urenData = await urenRes.json();
-    const beoorData = await beoorRes.json();
-    const dashboardData = await dashboardRes.json();
-    setUren(urenData.uren || []);
-    setTeBeoordeelen(beoorData.teBeoordeelen || []);
-    setDashboardStats(dashboardData.stats || null);
-    setUpcomingDiensten(dashboardData.upcomingDiensten || []);
-    await fetchFacturen(); // Fetch facturen separately
-    setIsLoading(false);
-  };
-
-  const fetchDiensten = useCallback(async () => {
-    try {
-      const res = await fetch("/api/klant/diensten");
-      const data = await res.json();
-      setDienstenVolledig(data.diensten || []);
-    } catch { /* ignore */ }
-  }, []);
-
-
-  useEffect(() => {
-    void (async () => {
-      await fetchUren();
-      await fetchDiensten();
-    })();
-  }, [fetchDiensten]);
 
   // Check for non-scanned medewerkers when aanmeldingen are loaded
   useEffect(() => {
@@ -300,28 +266,26 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
   const submitBeoordeling = async () => {
     if (!beoordeelModal.item) return;
-    try {
-      await fetch("/api/klant/beoordelingen", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dienst_id: beoordeelModal.item.dienst_id,
-          medewerker_id: beoordeelModal.item.medewerker_id,
-          score: beoordeelModal.score,
-          opmerking: beoordeelModal.opmerking,
-          score_punctualiteit: beoordeelModal.score_punctualiteit,
-          score_professionaliteit: beoordeelModal.score_professionaliteit,
-          score_vaardigheden: beoordeelModal.score_vaardigheden,
-          score_communicatie: beoordeelModal.score_communicatie,
-          zou_opnieuw_boeken: beoordeelModal.zou_opnieuw_boeken,
-        }),
-      });
-      toast.success("Beoordeling verstuurd");
-      setBeoordeelModal({ open: false, item: null, score: 5, opmerking: "", score_punctualiteit: 5, score_professionaliteit: 5, score_vaardigheden: 5, score_communicatie: 5, zou_opnieuw_boeken: true });
-      fetchUren();
-    } catch {
-      toast.error("Beoordeling versturen mislukt");
-    }
+    beoordelingAction.mutate(
+      {
+        dienst_id: beoordeelModal.item.dienst_id,
+        medewerker_id: beoordeelModal.item.medewerker_id,
+        score: beoordeelModal.score,
+        opmerking: beoordeelModal.opmerking,
+        score_punctualiteit: beoordeelModal.score_punctualiteit,
+        score_professionaliteit: beoordeelModal.score_professionaliteit,
+        score_vaardigheden: beoordeelModal.score_vaardigheden,
+        score_communicatie: beoordeelModal.score_communicatie,
+        zou_opnieuw_boeken: beoordeelModal.zou_opnieuw_boeken,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Beoordeling verstuurd");
+          setBeoordeelModal({ open: false, item: null, score: 5, opmerking: "", score_punctualiteit: 5, score_professionaliteit: 5, score_vaardigheden: 5, score_communicatie: 5, zou_opnieuw_boeken: true });
+        },
+        onError: () => toast.error("Beoordeling versturen mislukt"),
+      }
+    );
   };
 
   const approveUren = (urenItem: UrenRegistratie) => {
@@ -335,23 +299,21 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
   const submitApproval = async () => {
     if (!approveModal.uren) return;
-    try {
-      await fetch("/api/klant/uren", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "approve",
-          id: approveModal.uren.id,
-          score_punctualiteit: approveModal.score_punctualiteit,
-          score_functie: approveModal.score_functie,
-        }),
-      });
-      toast.success("Uren goedgekeurd");
-      setApproveModal({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
-      fetchUren();
-    } catch {
-      toast.error("Goedkeuren mislukt");
-    }
+    urenAction.mutate(
+      {
+        action: "approve",
+        id: approveModal.uren.id,
+        score_punctualiteit: approveModal.score_punctualiteit,
+        score_functie: approveModal.score_functie,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Uren goedgekeurd");
+          setApproveModal({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
+        },
+        onError: () => toast.error("Goedkeuren mislukt"),
+      }
+    );
   };
 
   const openAanpassingModal = (u: UrenRegistratie) => {
@@ -375,45 +337,44 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     const gewerkteUren = Math.max(0, ((eindH * 60 + eindM) - (startH * 60 + startM) - pauze) / 60);
     const reiskostenKm = Math.max(0, Number(modal.reiskostenKm) || 0);
 
-    try {
-      await fetch("/api/klant/uren", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "adjust",
-          id: modal.uren.id,
-          data: {
-            startTijd: modal.startTijd,
-            eindTijd: modal.eindTijd,
-            pauzeMinuten: pauze,
-            gewerkteUren: Math.round(gewerkteUren * 100) / 100,
-            reiskostenKm,
-            opmerking: modal.opmerking,
-          },
-        }),
-      });
-      toast.success("Aanpassing verstuurd");
-      setModal({ open: false, uren: null, startTijd: "", eindTijd: "", pauzeMinuten: "0", reiskostenKm: "0", opmerking: "" });
-      fetchUren();
-    } catch {
-      toast.error("Aanpassing versturen mislukt");
-    }
+    urenAction.mutate(
+      {
+        action: "adjust",
+        id: modal.uren.id,
+        data: {
+          startTijd: modal.startTijd,
+          eindTijd: modal.eindTijd,
+          pauzeMinuten: pauze,
+          gewerkteUren: Math.round(gewerkteUren * 100) / 100,
+          reiskostenKm,
+          opmerking: modal.opmerking,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Aanpassing verstuurd");
+          setModal({ open: false, uren: null, startTijd: "", eindTijd: "", pauzeMinuten: "0", reiskostenKm: "0", opmerking: "" });
+        },
+        onError: () => toast.error("Aanpassing versturen mislukt"),
+      }
+    );
   };
 
   const fetchAanmeldingen = async (dienstId: string) => {
     setAanmeldingenLoading(true);
-    try {
-      const res = await fetch("/api/klant/diensten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "get_aanmeldingen", dienst_id: dienstId }),
-      });
-      const data = await res.json();
-      setAanmeldingen(data.data || []);
-    } catch {
-      toast.error("Aanmeldingen ophalen mislukt");
-    }
-    setAanmeldingenLoading(false);
+    dienstenMutation.mutate(
+      { action: "get_aanmeldingen", dienst_id: dienstId },
+      {
+        onSuccess: (data) => {
+          setAanmeldingen(data.data || []);
+          setAanmeldingenLoading(false);
+        },
+        onError: () => {
+          toast.error("Aanmeldingen ophalen mislukt");
+          setAanmeldingenLoading(false);
+        },
+      }
+    );
   };
 
   const toggleAanmeldingen = (dienstId: string) => {
@@ -428,21 +389,22 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
   const updateAanmelding = async (aanmeldingId: string, status: "geaccepteerd" | "afgewezen") => {
     setAanmeldingenActie(aanmeldingId);
-    try {
-      await fetch("/api/klant/diensten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update_aanmelding", id: aanmeldingId, data: { status } }),
-      });
-      toast.success(status === "geaccepteerd" ? "Medewerker geaccepteerd" : "Medewerker afgewezen");
-      if (aanmeldingenOpen) {
-        await fetchAanmeldingen(aanmeldingenOpen);
+    dienstenMutation.mutate(
+      { action: "update_aanmelding", id: aanmeldingId, data: { status } },
+      {
+        onSuccess: () => {
+          toast.success(status === "geaccepteerd" ? "Medewerker geaccepteerd" : "Medewerker afgewezen");
+          if (aanmeldingenOpen) {
+            fetchAanmeldingen(aanmeldingenOpen);
+          }
+          setAanmeldingenActie(null);
+        },
+        onError: () => {
+          toast.error("Actie mislukt");
+          setAanmeldingenActie(null);
+        },
       }
-      fetchDiensten();
-    } catch {
-      toast.error("Actie mislukt");
-    }
-    setAanmeldingenActie(null);
+    );
   };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
@@ -1403,37 +1365,19 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
    ============================================================ */
 function FavorietenTab() {
   const toast = useToast();
-  const [favorieten, setFavorieten] = useState<Favoriet[]>([]);
-  const [recentMedewerkers, setRecentMedewerkers] = useState<RecentMedewerker[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchFavorieten = async () => {
-    try {
-      const res = await fetch("/api/klant/favorieten");
-      const data = await res.json();
-      setFavorieten(data.favorieten || []);
-      setRecentMedewerkers(data.recentMedewerkers || []);
-    } catch {
-      toast.error("Favorieten laden mislukt");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchFavorieten(); }, []);
+  const { data: favData, isLoading } = useKlantFavorieten();
+  const favorietAction = useFavorietAction();
+  const favorieten: Favoriet[] = favData?.favorieten ?? [];
+  const recentMedewerkers: RecentMedewerker[] = favData?.recentMedewerkers ?? [];
 
   const toggleFavoriet = async (medewerker_id: string, isFav: boolean) => {
-    try {
-      await fetch("/api/klant/favorieten", {
-        method: isFav ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ medewerker_id }),
-      });
-      toast.success(isFav ? "Favoriet verwijderd" : "Favoriet toegevoegd");
-      fetchFavorieten();
-    } catch {
-      toast.error("Actie mislukt");
-    }
+    favorietAction.mutate(
+      { medewerker_id, method: isFav ? "DELETE" : "POST" },
+      {
+        onSuccess: () => toast.success(isFav ? "Favoriet verwijderd" : "Favoriet toegevoegd"),
+        onError: () => toast.error("Actie mislukt"),
+      }
+    );
   };
 
   if (isLoading) {
@@ -1565,7 +1509,6 @@ function FavorietenTab() {
 function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void }) {
   const toast = useToast();
   const [step, setStep] = useState(1);
-  const [locaties, setLocaties] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [form, setForm] = useState({
     functie: "",
@@ -1578,16 +1521,18 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     opmerkingen: "",
     favoriet_medewerker_ids: [] as string[],
   });
-  const [favorieten, setFavorieten] = useState<Favoriet[]>([]);
-  const [templates, setTemplates] = useState<DienstTemplate[]>([]);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateNaam, setTemplateNaam] = useState("");
 
-  useEffect(() => {
-    fetch("/api/klant/aanvraag").then(r => r.json()).then(d => setLocaties(d.locaties || [])).catch(() => {});
-    fetch("/api/klant/favorieten").then(r => r.json()).then(d => setFavorieten(d.favorieten || [])).catch(() => {});
-    fetch("/api/klant/templates").then(r => r.json()).then(d => setTemplates(d.templates || [])).catch(() => {});
-  }, []);
+  const { data: aanvraagData } = useKlantAanvraagLocaties();
+  const { data: favData } = useKlantFavorieten();
+  const { data: templData } = useKlantTemplates();
+  const templateAction = useTemplateAction();
+  const aanvraagAction = useAanvraagAction();
+
+  const locaties: string[] = aanvraagData?.locaties ?? [];
+  const favorieten: Favoriet[] = favData?.favorieten ?? [];
+  const templates: DienstTemplate[] = templData?.templates ?? [];
 
   const functies = [
     { value: "bediening", label: "Bediening" },
@@ -1605,26 +1550,20 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
 
   const submit = async () => {
     setIsSending(true);
-    try {
-      const res = await fetch("/api/klant/aanvraag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Aanvraag mislukt");
-      }
-      toast.success("Aanvraag succesvol verstuurd!");
-      setShowSaveTemplate(true); // Toon optie om als template op te slaan
-      setTimeout(() => {
-        if (!showSaveTemplate) onSuccess(); // Als ze niet opslaan, sluit dan
-      }, 3000);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Aanvraag versturen mislukt");
-    } finally {
-      setIsSending(false);
-    }
+    aanvraagAction.mutate(form, {
+      onSuccess: () => {
+        toast.success("Aanvraag succesvol verstuurd!");
+        setShowSaveTemplate(true);
+        setTimeout(() => {
+          if (!showSaveTemplate) onSuccess();
+        }, 3000);
+        setIsSending(false);
+      },
+      onError: (e) => {
+        toast.error(e instanceof Error ? e.message : "Aanvraag versturen mislukt");
+        setIsSending(false);
+      },
+    });
   };
 
   const stepLabels = ["Functie", "Datum & Tijd", "Details", "Favorieten"];
@@ -1644,11 +1583,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     setStep(2); // Skip naar datum selectie
 
     // Update template usage
-    fetch("/api/klant/templates", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ template_id: template.id, increment_gebruik: true }),
-    }).catch(() => {});
+    templateAction.mutate({ method: "PATCH", data: { template_id: template.id, increment_gebruik: true } });
   };
 
   const saveAsTemplate = async () => {
@@ -1657,11 +1592,10 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       return;
     }
 
-    try {
-      await fetch("/api/klant/templates", {
+    templateAction.mutate(
+      {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        data: {
           naam: templateNaam,
           functie: form.functie,
           aantal_nodig: parseInt(form.aantal),
@@ -1669,16 +1603,17 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
           uurtarief: parseFloat(form.uurtarief),
           favoriet_medewerker_ids: form.favoriet_medewerker_ids,
           beschrijving: form.opmerkingen,
-        }),
-      });
-      toast.success("Template opgeslagen!");
-      setShowSaveTemplate(false);
-      setTemplateNaam("");
-      // Refresh templates
-      fetch("/api/klant/templates").then(r => r.json()).then(d => setTemplates(d.templates || [])).catch(() => {});
-    } catch {
-      toast.error("Template opslaan mislukt");
-    }
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Template opgeslagen!");
+          setShowSaveTemplate(false);
+          setTemplateNaam("");
+        },
+        onError: () => toast.error("Template opslaan mislukt"),
+      }
+    );
   };
 
   return (
@@ -1945,8 +1880,6 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
 function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => string; statusTone: Record<string, string> }) {
   const [view, setView] = useState<"week" | "maand">("week");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [rooster, setRooster] = useState<RoosterItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   const getWeekRange = (date: Date) => {
     const d = new Date(date);
@@ -1964,20 +1897,12 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     return { start, end };
   };
 
-  const fetchRooster = useCallback(async () => {
-    setIsLoading(true);
-    const range = view === "week" ? getWeekRange(currentDate) : getMonthRange(currentDate);
-    const startStr = range.start.toISOString().split("T")[0];
-    const endStr = range.end.toISOString().split("T")[0];
-    try {
-      const res = await fetch(`/api/klant/rooster?start=${startStr}&end=${endStr}`);
-      const data = await res.json();
-      setRooster(data.rooster || []);
-    } catch { /* ignore */ }
-    setIsLoading(false);
-  }, [currentDate, view]);
+  const range = view === "week" ? getWeekRange(currentDate) : getMonthRange(currentDate);
+  const startStr = range.start.toISOString().split("T")[0];
+  const endStr = range.end.toISOString().split("T")[0];
 
-  useEffect(() => { fetchRooster(); }, [fetchRooster]);
+  const { data: roosterData, isLoading } = useKlantRooster(startStr, endStr);
+  const rooster: RoosterItem[] = roosterData?.rooster ?? [];
 
   const navigate = (dir: number) => {
     const d = new Date(currentDate);
@@ -2141,21 +2066,9 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
 const PIE_COLORS = ["#F27501", "#d96800", "#fb923c", "#fdba74", "#fed7aa", "#fef3c7"];
 
 function KostenTab() {
-  const [data, setData] = useState<KostenData | null>(null);
   const [jaar, setJaar] = useState(new Date().getFullYear());
-  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchKosten = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/klant/kosten?jaar=${jaar}`);
-      const d = await res.json();
-      setData(d);
-    } catch { /* ignore */ }
-    setIsLoading(false);
-  }, [jaar]);
-
-  useEffect(() => { fetchKosten(); }, [fetchKosten]);
+  const { data, isLoading } = useKlantKosten(jaar);
 
   const exportCSV = () => {
     if (!data) return;
