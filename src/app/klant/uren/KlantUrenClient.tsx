@@ -559,7 +559,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 <KlantInstallBanner />
 
                 {/* Horizontaal scrollbare stats */}
-                <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+                <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                   {[
                     { label: "Uren wachten", value: String(dashboardStats?.pendingHoursCount ?? pending.length), targetTab: "uren", urgent: pending.length > 0 },
                     { label: "Goedgekeurd", value: `${dashboardStats?.approvedHoursThisMonth ?? 0}u`, targetTab: "uren", urgent: false },

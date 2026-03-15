@@ -26,7 +26,7 @@ export default function KlantPortalLayout({
   onLogout,
 }: KlantPortalLayoutProps) {
   return (
-    <div className="klant-portal min-h-screen bg-[var(--kp-bg-page)] flex">
+    <div className="klant-portal min-h-screen bg-[var(--kp-bg-page)] flex overflow-x-hidden w-full max-w-full">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-[260px] min-h-screen bg-[#1e3a5f] fixed left-0 top-0 bottom-0 z-30">
         {/* Logo + bedrijfsnaam */}
@@ -82,7 +82,7 @@ export default function KlantPortalLayout({
       </aside>
 
       {/* Hoofdcontent */}
-      <main className="flex-1 md:ml-[260px] pb-20 md:pb-0">
+      <main className="flex-1 md:ml-[260px] pb-20 md:pb-0 overflow-x-hidden min-w-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
