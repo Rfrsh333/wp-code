@@ -1,6 +1,7 @@
 import { Metadata, Viewport } from "next";
 import ThemeProvider from "@/components/medewerker/ThemeProvider";
 import ServiceWorkerRegister from "@/components/medewerker/ServiceWorkerRegister";
+import PWAInstallPrompt from "@/components/medewerker/PWAInstallPrompt";
 
 export const metadata: Metadata = {
   robots: {
@@ -42,6 +43,7 @@ export default function MedewerkerLayout({
       </head>
       <ThemeProvider>
         <ServiceWorkerRegister />
+        <PWAInstallPrompt />
         {children}
       </ThemeProvider>
     </>

@@ -1,12 +1,17 @@
 {
   "name": "TopTalent Hub",
   "short_name": "TopTalent",
-  "description": "TopTalent Hub - Medewerker portaal",
-  "start_url": "/medewerker/dashboard/",
+  "description": "TopTalent Hub - Medewerker portaal voor diensten, uren en financieel overzicht",
+  "start_url": "/medewerker/dashboard/?source=pwa",
+  "scope": "/medewerker/",
   "display": "standalone",
   "background_color": "#FFFFFF",
-  "theme_color": "#FFFFFF",
-  "orientation": "portrait",
+  "theme_color": "#F27501",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "business"],
+  "lang": "nl-NL",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -25,6 +30,45 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Home",
+      "description": "Open het dashboard",
+      "url": "/medewerker/dashboard/",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Mijn Diensten",
+      "short_name": "Diensten",
+      "description": "Bekijk je diensten",
+      "url": "/medewerker/diensten/",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Financieel",
+      "short_name": "Financieel",
+      "description": "Bekijk je verdiensten",
+      "url": "/medewerker/financieel/",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
