@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { functie, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
+    const { functie, categorie_id, functie_id, vereiste_taal, tag_ids, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
 
     if (!functie || !datum || !start_tijd || !eind_tijd || !aantal || !uurtarief) {
       return NextResponse.json({ error: "Alle verplichte velden moeten ingevuld zijn (inclusief uurtarief)" }, { status: 400 });
@@ -55,12 +55,16 @@ export async function POST(request: NextRequest) {
       start_tijd,
       eind_tijd,
       aantal_nodig: parseInt(aantal) || 1,
-      plekken_totaal: parseInt(aantal) || 1,
-      plekken_beschikbaar: parseInt(aantal) || 1,
       locatie: locatie || null,
       uurtarief: tarief,
       status: "open",
     };
+
+    // Optional filter columns (only if migration has been run)
+    if (categorie_id) insertData.categorie_id = categorie_id;
+    if (functie_id) insertData.functie_id = functie_id;
+    if (vereiste_taal) insertData.vereiste_taal = vereiste_taal;
+    if (opmerkingen) insertData.notities = opmerkingen;
 
     const { data: dienst, error } = await supabaseAdmin
       .from("diensten")
@@ -77,17 +81,49 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // Insert tags (many-to-many relationship)
+    if (tag_ids && Array.isArray(tag_ids) && tag_ids.length > 0) {
+      const tagInserts = tag_ids.map(tag_id => ({
+        dienst_id: dienst.id,
+        tag_id,
+      }));
+
+      const { error: tagError } = await supabaseAdmin
+        .from("diensten_tags")
+        .insert(tagInserts);
+
+      if (tagError) {
+        console.error("Tags toevoegen mislukt:", tagError);
+        // Don't fail the whole request, just log it
+      }
+    }
+
+    // Get functie naam for telegram notification
+    let functieNaam = functie || 'Onbekend';
+    if (functie_id) {
+      const { data: functieData } = await supabaseAdmin
+        .from('dienst_functies')
+        .select('naam, categorie:dienst_categorieen(naam)')
+        .eq('id', functie_id)
+        .single();
+      if (functieData) {
+        functieNaam = `${functieData.naam}${(functieData.categorie as any)?.naam ? ` (${(functieData.categorie as any).naam})` : ''}`;
+      }
+    }
+
     // Telegram notification (don't let it block the response)
     sendTelegramAlert(
-      `<b>Nieuwe personeelsaanvraag</b>\n` +
-      `Klant: ${klantData.bedrijfsnaam}\n` +
-      `Functie: ${functie}\n` +
-      `Datum: ${datum}\n` +
-      `Tijd: ${start_tijd} - ${eind_tijd}\n` +
-      `Aantal: ${aantal}\n` +
-      `${locatie ? `Locatie: ${locatie}\n` : ""}` +
-      `${opmerkingen ? `Opmerkingen: ${opmerkingen}\n` : ""}` +
-      `${favoriet_medewerker_ids?.length ? `Voorkeur medewerkers: ${favoriet_medewerker_ids.length}` : ""}`
+      `<b>🆕 Nieuwe personeelsaanvraag</b>\n` +
+      `👤 Klant: ${klantData.bedrijfsnaam}\n` +
+      `💼 Functie: ${functieNaam}\n` +
+      `📅 Datum: ${datum}\n` +
+      `🕐 Tijd: ${start_tijd} - ${eind_tijd}\n` +
+      `👥 Aantal: ${aantal}\n` +
+      `${vereiste_taal ? `🗣️ Taal: ${vereiste_taal === 'nl' ? 'Nederlands' : vereiste_taal === 'en' ? 'Engels' : 'NL/EN'}\n` : ""}` +
+      `${locatie ? `📍 Locatie: ${locatie}\n` : ""}` +
+      `${opmerkingen ? `💬 Opmerkingen: ${opmerkingen}\n` : ""}` +
+      `${tag_ids?.length ? `🏷️ Tags: ${tag_ids.length}\n` : ""}` +
+      `${favoriet_medewerker_ids?.length ? `⭐ Voorkeur medewerkers: ${favoriet_medewerker_ids.length}` : ""}`
     ).catch((err) => console.error("Telegram alert mislukt:", err));
 
     return NextResponse.json({ success: true, dienst_id: dienst.id });

@@ -15,6 +15,7 @@ import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
 import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useKlantFavorieten, useKlantTemplates, useKlantAanvraagLocaties, useKlantRooster, useKlantKosten, useKlantCheckins, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction, useFavorietAction, useAanvraagAction, useTemplateAction, useCheckinAction } from "@/hooks/queries/useKlantQueries";
 import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
+import { useQuery } from "@tanstack/react-query";
 
 interface Klant {
   id: string;
@@ -1511,7 +1512,11 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const [step, setStep] = useState(1);
   const [isSending, setIsSending] = useState(false);
   const [form, setForm] = useState({
-    functie: "",
+    functie: "", // backwards compatibility
+    categorie_id: "",
+    functie_id: "",
+    vereiste_taal: null as 'nl' | 'en' | 'nl_en' | null,
+    tag_ids: [] as string[],
     datum: "",
     start_tijd: "",
     eind_tijd: "",
@@ -1530,19 +1535,27 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const templateAction = useTemplateAction();
   const aanvraagAction = useAanvraagAction();
 
+  // Fetch filter options (categorieën, functies, tags)
+  const { data: filterOptions } = useQuery({
+    queryKey: ['dienst-filters'],
+    queryFn: async () => {
+      const res = await fetch('/api/dienst-filters');
+      if (!res.ok) throw new Error('Failed to load filters');
+      return res.json();
+    },
+  });
+
   const locaties: string[] = aanvraagData?.locaties ?? [];
   const favorieten: Favoriet[] = favData?.favorieten ?? [];
   const templates: DienstTemplate[] = templData?.templates ?? [];
 
-  const functies = [
-    { value: "bediening", label: "Bediening" },
-    { value: "bar", label: "Bar" },
-    { value: "keuken", label: "Keuken" },
-    { value: "afwas", label: "Afwas" },
-  ];
+  // Get functions for selected category
+  const selectedCategorie = filterOptions?.categorieen?.find((c: any) => c.id === form.categorie_id);
+  const availableFuncties = selectedCategorie?.functies || [];
+  const availableTags = filterOptions?.tags || [];
 
   const canNext = () => {
-    if (step === 1) return !!form.functie;
+    if (step === 1) return !!form.categorie_id && !!form.functie_id;
     if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd && !!form.uurtarief && parseFloat(form.uurtarief) > 0;
     if (step === 3) return true;
     return true;
@@ -1571,6 +1584,10 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const useTemplate = (template: DienstTemplate) => {
     setForm({
       functie: template.functie,
+      categorie_id: "",
+      functie_id: "",
+      vereiste_taal: null,
+      tag_ids: [],
       datum: "",
       start_tijd: "",
       eind_tijd: "",
@@ -1670,20 +1687,43 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
-        {/* Step 1: Functie */}
+        {/* Step 1: Categorie & Functie */}
         {step === 1 && (
-          <div>
-            <h3 className="text-lg font-bold text-neutral-900 mb-4">Welke functie zoekt u?</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {functies.map((f) => (
-                <button key={f.value} onClick={() => setForm({ ...form, functie: f.value })}
-                  className={`p-4 rounded-xl border-2 text-sm font-medium transition-all ${
-                    form.functie === f.value ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501]" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
-                  }`}>
-                  {f.label}
-                </button>
-              ))}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-neutral-900 mb-4">Welke categorie zoekt u?</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {filterOptions?.categorieen?.map((cat: any) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setForm({ ...form, categorie_id: cat.id, functie_id: "" })}
+                    className={`p-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                      form.categorie_id === cat.id ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501]" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                    }`}>
+                    {cat.icon && <span className="mr-2">{cat.icon}</span>}
+                    {cat.naam}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {form.categorie_id && availableFuncties.length > 0 && (
+              <div>
+                <h3 className="text-lg font-bold text-neutral-900 mb-4">Welke functie?</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {availableFuncties.map((func: any) => (
+                    <button
+                      key={func.id}
+                      onClick={() => setForm({ ...form, functie_id: func.id, functie: func.slug })}
+                      className={`p-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                        form.functie_id === func.id ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501]" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                      }`}>
+                      {func.naam}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1734,6 +1774,70 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
         {step === 3 && (
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">Aanvullende details</h3>
+
+            {/* Vereiste taal */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Vereiste taalvaardigheid (optioneel)</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, vereiste_taal: null })}
+                  className={`px-3 py-2 text-sm rounded-lg border-2 transition-all ${
+                    form.vereiste_taal === null ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501] font-medium" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                  }`}>
+                  Geen voorkeur
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, vereiste_taal: 'nl' })}
+                  className={`px-3 py-2 text-sm rounded-lg border-2 transition-all ${
+                    form.vereiste_taal === 'nl' ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501] font-medium" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                  }`}>
+                  Nederlands
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, vereiste_taal: 'en' })}
+                  className={`px-3 py-2 text-sm rounded-lg border-2 transition-all ${
+                    form.vereiste_taal === 'en' ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501] font-medium" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                  }`}>
+                  Engels
+                </button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            {availableTags.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Tags (optioneel)</label>
+                <p className="text-xs text-neutral-500 mb-2">Selecteer relevante tags voor deze dienst</p>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.map((tag: any) => {
+                    const selected = form.tag_ids.includes(tag.id);
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => setForm({
+                          ...form,
+                          tag_ids: selected
+                            ? form.tag_ids.filter(id => id !== tag.id)
+                            : [...form.tag_ids, tag.id]
+                        })}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all"
+                        style={{
+                          borderColor: selected ? tag.kleur : '#E5E7EB',
+                          backgroundColor: selected ? tag.kleur + '20' : 'white',
+                          color: selected ? tag.kleur : '#6B7280',
+                        }}>
+                        {tag.naam}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Locatie</label>
               {locaties.length > 0 ? (
