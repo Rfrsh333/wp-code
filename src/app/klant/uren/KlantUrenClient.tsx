@@ -208,6 +208,16 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     try {
       const res = await fetch("/api/klant/diensten");
       const data = await res.json();
+      console.log('[KLANT DASHBOARD] Fetched diensten:', data.diensten);
+      data.diensten?.forEach((d: UpcomingDienst) => {
+        if (d.aanmeldingen_count && d.aanmeldingen_count > 0) {
+          console.log(`[KLANT DASHBOARD] Dienst ${d.datum} ${d.functie}:`, {
+            total: d.aanmeldingen_count,
+            aangemeld: d.aanmeldingen_aangemeld,
+            geaccepteerd: d.aanmeldingen_geaccepteerd
+          });
+        }
+      });
       setDienstenVolledig(data.diensten || []);
     } catch { /* ignore */ }
   }, []);
