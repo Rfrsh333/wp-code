@@ -1,5 +1,6 @@
 import { Metadata, Viewport } from "next";
 import ThemeProvider from "@/components/medewerker/ThemeProvider";
+import ServiceWorkerRegister from "@/components/medewerker/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   robots: {
@@ -7,6 +8,10 @@ export const metadata: Metadata = {
     follow: false,
   },
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon-icon.png",
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -30,5 +35,10 @@ export default function MedewerkerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <ServiceWorkerRegister />
+      {children}
+    </ThemeProvider>
+  );
 }
