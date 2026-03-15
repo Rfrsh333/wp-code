@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
+import withPWAInit from "@ducanh2912/next-pwa";
 
 const securityHeaders = [
   {
@@ -185,11 +186,17 @@ const nextConfig: NextConfig = {
   },
 };
 
+const withPWA = withPWAInit({
+  dest: "public",
+  register: true,
+  disable: process.env.NODE_ENV === "development",
+});
+
 const analyzeBundles = withBundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
-export default withSentryConfig(analyzeBundles(nextConfig), {
+export default withSentryConfig(analyzeBundles(withPWA(nextConfig)), {
   org: "toptalent",
   project: "javascript-nextjs",
   authToken: process.env.SENTRY_AUTH_TOKEN,
