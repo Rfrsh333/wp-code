@@ -22,14 +22,14 @@ export default async function MedewerkerDashboardPage() {
   // Fetch profile data from database
   const { data: profileData } = await supabaseAdmin
     .from("medewerkers")
-    .select("profile_photo_url, telefoon, geboortedatum, stad, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban")
+    .select("telefoon, geboortedatum, stad, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban")
     .eq("id", medewerker.id)
     .single();
 
   const medewerkerData = {
     ...medewerker,
     functie: Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie || ""],
-    profile_photo_url: profileData?.profile_photo_url || null,
+    profile_photo_url: null, // Fresh signed URL will be fetched via API
     telefoon: profileData?.telefoon || null,
     geboortedatum: profileData?.geboortedatum || null,
     stad: profileData?.stad || null,

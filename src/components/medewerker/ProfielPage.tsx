@@ -9,6 +9,7 @@ import WerkervaringSection from "./WerkervaringSection";
 import CertificeringenSection from "./CertificeringenSection";
 import ProfielEditModal from "./ProfielEditModal";
 import DigitalIDCard from "./DigitalIDCard";
+import RatingsCard from "./RatingsCard";
 
 interface Medewerker {
   id: string;
@@ -114,9 +115,10 @@ interface ProfielPageProps {
   onPhotoDelete: () => void;
   isUploadingPhoto: boolean;
   profilePhoto: string | null;
+  onProfilePhotoUpdate: (url: string | null) => void;
 }
 
-export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, isUploadingPhoto, profilePhoto }: ProfielPageProps) {
+export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, isUploadingPhoto, profilePhoto, onProfilePhotoUpdate }: ProfielPageProps) {
   const toast = useToast();
   const [showEditModal, setShowEditModal] = useState(false);
   const [profielData, setProfielData] = useState<Medewerker>(medewerker);
@@ -131,11 +133,15 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
       if (res.ok) {
         setProfielData((prev) => ({ ...prev, ...data.profiel }));
         setStats(data.stats || { opkomst_percentage: 0, op_tijd_percentage: 0, rating: 0 });
+        // Update profile photo with fresh signed URL from API
+        if (data.profile_photo_url) {
+          onProfilePhotoUpdate(data.profile_photo_url);
+        }
       }
     } catch {
       // Silently fail - initial data from props is fine
     }
-  }, []);
+  }, [onProfilePhotoUpdate]);
 
   const fetchWerkervaring = useCallback(async () => {
     try {
@@ -186,6 +192,9 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
           profilePhoto={profilePhoto}
         />
       </div>
+
+      {/* Beoordelingen */}
+      <RatingsCard />
 
       {/* Header / Profiel Card */}
       <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-4">

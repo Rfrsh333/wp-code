@@ -83,6 +83,8 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   // Data state
   const [diensten, setDiensten] = useState<Dienst[]>([]);
   const [aanpassingen, setAanpassingen] = useState<KlantAanpassing[]>([]);
+  const [vervangingVerzoeken, setVervangingVerzoeken] = useState<{ aanmelding_id: string; dienst_id: string; originele_aanmelding_id: string; naam: string; functie: string | string[]; profile_photo_url: string | null }[]>([]);
+  const [accountGepauzeerd, setAccountGepauzeerd] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(medewerker.profile_photo_url || null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -99,6 +101,8 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       const dienstenData = await dienstenRes.json();
       setDiensten(dienstenData.diensten || []);
       setAanpassingen(dienstenData.aanpassingen || []);
+      setVervangingVerzoeken(dienstenData.vervangingVerzoeken || []);
+      setAccountGepauzeerd(dienstenData.accountGepauzeerd || false);
 
       // Fetch ongelezen berichten count
       try {
@@ -141,6 +145,55 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       body: JSON.stringify({ action: "afmelden", dienst_id: dienstId }),
     });
     toast.info("Afgemeld voor dienst");
+    fetchAllData();
+  };
+
+  const annuleerGeaccepteerd = async (aanmeldingId: string, dienstId: string) => {
+    const res = await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "annuleer_geaccepteerd", aanmelding_id: aanmeldingId, dienst_id: dienstId }),
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      toast.error(result.error || "Kon niet annuleren");
+      return;
+    }
+    if (result.vervanging) {
+      toast.info("Vervanging wordt gezocht. De dienst is open voor andere medewerkers.");
+    } else {
+      toast.success("Dienst geannuleerd");
+    }
+    fetchAllData();
+  };
+
+  const acceptVervanging = async (origineleAanmeldingId: string, vervangingAanmeldingId: string) => {
+    const res = await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "accept_vervanging", aanmelding_id: origineleAanmeldingId, data: { vervanging_aanmelding_id: vervangingAanmeldingId } }),
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      toast.error(result.error || "Kon vervanging niet accepteren");
+      return;
+    }
+    toast.success("Vervanging geaccepteerd");
+    fetchAllData();
+  };
+
+  const afwijsVervanging = async (vervangingAanmeldingId: string) => {
+    const res = await fetch("/api/medewerker/diensten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "afwijs_vervanging", data: { vervanging_aanmelding_id: vervangingAanmeldingId } }),
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      toast.error(result.error || "Kon vervanging niet afwijzen");
+      return;
+    }
+    toast.info("Vervanging afgewezen");
     fetchAllData();
   };
 
@@ -329,6 +382,11 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
                 onAanmelden={aanmelden}
                 onAfmelden={afmelden}
                 onUrenInvullen={openUrenModal}
+                onAnnuleerGeaccepteerd={annuleerGeaccepteerd}
+                onAcceptVervanging={acceptVervanging}
+                onAfwijsVervanging={afwijsVervanging}
+                vervangingVerzoeken={vervangingVerzoeken}
+                accountGepauzeerd={accountGepauzeerd}
               />
             </>
           )}
@@ -366,6 +424,7 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
               onPhotoDelete={handlePhotoDelete}
               isUploadingPhoto={isUploadingPhoto}
               profilePhoto={profilePhoto}
+              onProfilePhotoUpdate={setProfilePhoto}
             />
           )}
 
