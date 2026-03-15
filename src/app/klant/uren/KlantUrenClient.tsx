@@ -78,7 +78,16 @@ interface DienstAanmelding {
   medewerker_id: string;
   status: string;
   aangemeld_at: string;
-  medewerker: { naam: string; functie: string | string[]; profile_photo_url: string | null } | null;
+  medewerker: {
+    naam: string;
+    functie: string | string[];
+    profile_photo_url: string | null;
+    gemiddelde_score: number | null;
+    aantal_beoordelingen: number | null;
+    badge: string | null;
+    admin_score_aanwezigheid: number | null;
+    admin_score_vaardigheden: number | null;
+  } | null;
 }
 
 interface Factuur {
@@ -476,6 +485,15 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         </svg>
       ),
     },
+    {
+      id: "qr-scanner",
+      label: "QR Check-in",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9V5a2 2 0 012-2h4M15 3h4a2 2 0 012 2v4M21 15v4a2 2 0 01-2 2h-4M9 21H5a2 2 0 01-2-2v-4M12 8v4l2 2" />
+        </svg>
+      ),
+    },
   ];
 
   const handleLogout = () => {
@@ -722,41 +740,80 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                     afgewezen: "bg-red-100 text-red-800",
                                     geannuleerd: "bg-neutral-200 text-neutral-600",
                                   };
+                                  const badgeKleur: Record<string, string> = {
+                                    starter: "bg-neutral-100 text-neutral-700",
+                                    rising: "bg-blue-100 text-blue-700",
+                                    star: "bg-purple-100 text-purple-700",
+                                    toptalent: "bg-amber-100 text-amber-700",
+                                  };
 
                                   return (
-                                    <div key={a.id} className="flex items-center gap-3 rounded-xl bg-white p-3 border border-neutral-200">
-                                      {mw?.profile_photo_url ? (
-                                        <img src={mw.profile_photo_url} alt={naam} className="w-10 h-10 rounded-full object-cover" />
-                                      ) : (
-                                        <div className="w-10 h-10 rounded-full bg-[#0B2447] text-white flex items-center justify-center text-sm font-bold">
-                                          {initialen}
+                                    <div key={a.id} className="rounded-xl bg-white p-3 border border-neutral-200">
+                                      <div className="flex items-center gap-3">
+                                        {mw?.profile_photo_url ? (
+                                          <img src={mw.profile_photo_url} alt={naam} className="w-10 h-10 rounded-full object-cover" />
+                                        ) : (
+                                          <div className="w-10 h-10 rounded-full bg-[#0B2447] text-white flex items-center justify-center text-sm font-bold">
+                                            {initialen}
+                                          </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <p className="font-semibold text-sm text-neutral-900 truncate">{naam}</p>
+                                            {mw?.badge && (
+                                              <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase ${badgeKleur[mw.badge] || "bg-neutral-100 text-neutral-600"}`}>
+                                                {mw.badge}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-2 mt-0.5">
+                                            {functie && <p className="text-xs text-neutral-500">{functie}</p>}
+                                            {mw?.gemiddelde_score != null && (
+                                              <div className="flex items-center gap-1">
+                                                <div className="flex">
+                                                  {[1, 2, 3, 4, 5].map((s) => (
+                                                    <svg key={s} className={`w-3 h-3 ${s <= Math.round(mw.gemiddelde_score!) ? "text-amber-400" : "text-neutral-200"}`} fill="currentColor" viewBox="0 0 20 20">
+                                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    </svg>
+                                                  ))}
+                                                </div>
+                                                <span className="text-[10px] text-neutral-400">({mw.aantal_beoordelingen || 0})</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                          {(mw?.admin_score_aanwezigheid != null || mw?.admin_score_vaardigheden != null) && (
+                                            <div className="flex gap-3 mt-1">
+                                              {mw?.admin_score_aanwezigheid != null && (
+                                                <span className="text-[10px] text-neutral-400">Aanwezigheid: <span className="font-semibold text-neutral-600">{mw.admin_score_aanwezigheid}/5</span></span>
+                                              )}
+                                              {mw?.admin_score_vaardigheden != null && (
+                                                <span className="text-[10px] text-neutral-400">Vaardigheden: <span className="font-semibold text-neutral-600">{mw.admin_score_vaardigheden}/5</span></span>
+                                              )}
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-sm text-neutral-900 truncate">{naam}</p>
-                                        {functie && <p className="text-xs text-neutral-500">{functie}</p>}
+                                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
+                                          {a.status}
+                                        </span>
+                                        {a.status === "aangemeld" && (
+                                          <div className="flex gap-2">
+                                            <button
+                                              onClick={() => updateAanmelding(a.id, "geaccepteerd")}
+                                              disabled={aanmeldingenActie === a.id}
+                                              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
+                                            >
+                                              {aanmeldingenActie === a.id ? "..." : "Accepteren"}
+                                            </button>
+                                            <button
+                                              onClick={() => updateAanmelding(a.id, "afgewezen")}
+                                              disabled={aanmeldingenActie === a.id}
+                                              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+                                            >
+                                              {aanmeldingenActie === a.id ? "..." : "Afwijzen"}
+                                            </button>
+                                          </div>
+                                        )}
                                       </div>
-                                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
-                                        {a.status}
-                                      </span>
-                                      {a.status === "aangemeld" && (
-                                        <div className="flex gap-2">
-                                          <button
-                                            onClick={() => updateAanmelding(a.id, "geaccepteerd")}
-                                            disabled={aanmeldingenActie === a.id}
-                                            className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
-                                          >
-                                            {aanmeldingenActie === a.id ? "..." : "Accepteren"}
-                                          </button>
-                                          <button
-                                            onClick={() => updateAanmelding(a.id, "afgewezen")}
-                                            disabled={aanmeldingenActie === a.id}
-                                            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
-                                          >
-                                            {aanmeldingenActie === a.id ? "..." : "Afwijzen"}
-                                          </button>
-                                        </div>
-                                      )}
                                     </div>
                                   );
                                 })}
@@ -880,6 +937,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
             {/* Tab: Referral */}
             {activeTab === "referral" && <KlantReferralSection />}
+
+            {/* Tab: QR Check-in */}
+            {activeTab === "qr-scanner" && <QRScannerTab />}
           </>
         )}
       </PortalLayout>
@@ -2010,6 +2070,349 @@ function UrenSubTabs({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// === QR Scanner Tab ===
+
+interface CheckinResult {
+  status: "ingecheckt" | "al_ingecheckt";
+  check_in_at: string;
+  medewerker: { naam: string; functie: string | string[]; profile_photo_url: string | null } | null;
+  dienst: { datum: string; start_tijd: string; eind_tijd: string; locatie: string; functie: string } | null;
+}
+
+interface CheckinListItem {
+  id: string;
+  check_in_at: string;
+  medewerker_naam: string;
+  medewerker_functie: string | string[];
+  medewerker_foto: string | null;
+  dienst_start: string;
+  dienst_eind: string;
+  dienst_locatie: string;
+  dienst_functie: string;
+}
+
+function QRScannerTab() {
+  const toast = useToast();
+  const scannerRef = useRef<HTMLDivElement>(null);
+  const html5QrCodeRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [result, setResult] = useState<{ type: "success" | "warning" | "error"; data?: CheckinResult; message?: string } | null>(null);
+  const [checkins, setCheckins] = useState<CheckinListItem[]>([]);
+  const [loadingCheckins, setLoadingCheckins] = useState(true);
+  const [processing, setProcessing] = useState(false);
+
+  const fetchCheckins = useCallback(async () => {
+    try {
+      const res = await fetch("/api/klant/checkin");
+      const data = await res.json();
+      setCheckins(data.checkins || []);
+    } catch {
+      // Silently fail
+    } finally {
+      setLoadingCheckins(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCheckins();
+  }, [fetchCheckins]);
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      if (html5QrCodeRef.current) {
+        html5QrCodeRef.current.stop().catch(() => {});
+      }
+    };
+  }, []);
+
+  const startScanner = async () => {
+    setResult(null);
+    setScanning(true);
+
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+
+      // Wait for DOM element
+      await new Promise((r) => setTimeout(r, 100));
+
+      if (!scannerRef.current) return;
+
+      const scannerId = "qr-scanner-element";
+      scannerRef.current.id = scannerId;
+
+      const html5QrCode = new Html5Qrcode(scannerId);
+      html5QrCodeRef.current = html5QrCode;
+
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        async (decodedText) => {
+          // Stop scanner immediately
+          await html5QrCode.stop().catch(() => {});
+          html5QrCodeRef.current = null;
+          setScanning(false);
+          await handleScan(decodedText);
+        },
+        () => {
+          // QR code not found in frame — do nothing
+        }
+      );
+    } catch (err) {
+      setScanning(false);
+      const message = err instanceof Error ? err.message : "Camera kon niet worden geopend";
+      setResult({ type: "error", message });
+      toast.error("Camera kon niet worden geopend. Controleer de cameratoegang.");
+    }
+  };
+
+  const stopScanner = async () => {
+    if (html5QrCodeRef.current) {
+      await html5QrCodeRef.current.stop().catch(() => {});
+      html5QrCodeRef.current = null;
+    }
+    setScanning(false);
+  };
+
+  const handleScan = async (decodedText: string) => {
+    setProcessing(true);
+    try {
+      // Parse QR data
+      let qrData: { type?: string; id?: string; naam?: string };
+      try {
+        qrData = JSON.parse(decodedText);
+      } catch {
+        setResult({ type: "error", message: "Ongeldige QR-code: geen geldig TopTalent ID" });
+        setProcessing(false);
+        return;
+      }
+
+      if (qrData.type !== "toptalent_medewerker" || !qrData.id) {
+        setResult({ type: "error", message: "Ongeldige QR-code: dit is geen TopTalent medewerker ID" });
+        setProcessing(false);
+        return;
+      }
+
+      // Send check-in request
+      const res = await fetch("/api/klant/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ medewerker_id: qrData.id }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 200) {
+        setResult({ type: "success", data });
+        toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
+        fetchCheckins();
+      } else if (res.status === 409) {
+        setResult({ type: "warning", data });
+      } else {
+        setResult({ type: "error", message: data.error || "Check-in mislukt" });
+      }
+    } catch {
+      setResult({ type: "error", message: "Netwerkfout — probeer opnieuw" });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const formatTime = (t: string) => {
+    if (!t) return "";
+    return t.slice(0, 5);
+  };
+
+  const formatCheckinTime = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const renderFunctie = (f: string | string[]) => {
+    return Array.isArray(f) ? f.join(", ") : f || "";
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">QR Check-in</h2>
+        <p className="mt-1 text-sm text-neutral-500">Scan de QR-code van een medewerker om aanwezigheid te registreren.</p>
+      </div>
+
+      {/* Scanner Controls */}
+      {!scanning && !result && (
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-8">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F27501]/10">
+            <svg className="h-8 w-8 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9V5a2 2 0 012-2h4M15 3h4a2 2 0 012 2v4M21 15v4a2 2 0 01-2 2h-4M9 21H5a2 2 0 01-2-2v-4" />
+            </svg>
+          </div>
+          <p className="text-center text-sm text-neutral-600">Richt de camera op de QR-code op het ID-kaartje van de medewerker.</p>
+          <button
+            onClick={startScanner}
+            className="rounded-xl bg-[#F27501] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#d96800]"
+          >
+            Camera openen & scannen
+          </button>
+        </div>
+      )}
+
+      {/* Active Scanner */}
+      {scanning && (
+        <div className="space-y-4">
+          <div
+            ref={scannerRef}
+            className="mx-auto w-full max-w-md overflow-hidden rounded-2xl border-2 border-[#F27501]/30"
+          />
+          <div className="flex justify-center">
+            <button
+              onClick={stopScanner}
+              className="rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+            >
+              Scanner sluiten
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Processing */}
+      {processing && (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-8">
+          <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" />
+          <p className="text-sm text-neutral-600">Check-in verwerken...</p>
+        </div>
+      )}
+
+      {/* Result Card */}
+      {result && !processing && (
+        <div className={`rounded-2xl border-2 p-6 ${
+          result.type === "success" ? "border-green-300 bg-green-50" :
+          result.type === "warning" ? "border-amber-300 bg-amber-50" :
+          "border-red-300 bg-red-50"
+        }`}>
+          {/* Icon */}
+          <div className="flex items-center gap-3 mb-4">
+            {result.type === "success" && (
+              <>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500">
+                  <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span className="text-lg font-bold text-green-800">Ingecheckt!</span>
+              </>
+            )}
+            {result.type === "warning" && (
+              <>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500">
+                  <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 3l9 16H3L12 3z" />
+                  </svg>
+                </div>
+                <span className="text-lg font-bold text-amber-800">Al ingecheckt</span>
+              </>
+            )}
+            {result.type === "error" && (
+              <>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
+                  <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <span className="text-lg font-bold text-red-800">Mislukt</span>
+              </>
+            )}
+          </div>
+
+          {/* Details */}
+          {result.data?.medewerker && (
+            <div className="flex items-center gap-3 mb-3">
+              {result.data.medewerker.profile_photo_url ? (
+                <img src={result.data.medewerker.profile_photo_url} alt={result.data.medewerker.naam} className="h-12 w-12 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-bold text-[#F27501]">
+                  {result.data.medewerker.naam.charAt(0)}
+                </div>
+              )}
+              <div>
+                <p className="font-semibold text-neutral-900">{result.data.medewerker.naam}</p>
+                <p className="text-sm text-neutral-600">{renderFunctie(result.data.medewerker.functie)}</p>
+              </div>
+            </div>
+          )}
+
+          {result.data?.dienst && (
+            <div className="rounded-xl bg-white/60 p-3 text-sm text-neutral-700 space-y-1">
+              <p><span className="font-medium">Dienst:</span> {formatTime(result.data.dienst.start_tijd)} – {formatTime(result.data.dienst.eind_tijd)}</p>
+              <p><span className="font-medium">Locatie:</span> {result.data.dienst.locatie}</p>
+              <p><span className="font-medium">Functie:</span> {result.data.dienst.functie}</p>
+            </div>
+          )}
+
+          {result.data?.check_in_at && (
+            <p className="mt-2 text-sm text-neutral-500">
+              {result.type === "warning" ? "Ingecheckt om" : "Tijdstip"}: {formatCheckinTime(result.data.check_in_at)}
+            </p>
+          )}
+
+          {result.type === "error" && result.message && (
+            <p className="text-sm text-red-700">{result.message}</p>
+          )}
+
+          {/* Next scan button */}
+          <button
+            onClick={() => { setResult(null); startScanner(); }}
+            className="mt-4 w-full rounded-xl bg-[#F27501] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#d96800]"
+          >
+            Volgende scan
+          </button>
+        </div>
+      )}
+
+      {/* Today's Check-ins */}
+      <div>
+        <h3 className="text-lg font-semibold text-neutral-900 mb-3">Check-ins vandaag</h3>
+        {loadingCheckins ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin w-6 h-6 border-3 border-[#F27501] border-t-transparent rounded-full" />
+          </div>
+        ) : checkins.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-6 text-center text-sm text-neutral-500">
+            Nog geen check-ins vandaag
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {checkins.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3">
+                {c.medewerker_foto ? (
+                  <img src={c.medewerker_foto} alt={c.medewerker_naam} className="h-10 w-10 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F27501]/10 text-sm font-bold text-[#F27501]">
+                    {c.medewerker_naam.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-neutral-900 truncate">{c.medewerker_naam}</p>
+                  <p className="text-xs text-neutral-500">{renderFunctie(c.medewerker_functie)} · {c.dienst_locatie}</p>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-1 text-green-600">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-xs font-medium">{formatCheckinTime(c.check_in_at)}</span>
+                  </div>
+                  <p className="text-xs text-neutral-400">{formatTime(c.dienst_start)} – {formatTime(c.dienst_eind)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

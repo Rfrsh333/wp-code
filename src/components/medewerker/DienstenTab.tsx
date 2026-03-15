@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface Dienst {
@@ -20,21 +21,44 @@ interface Dienst {
   uren_status?: string;
 }
 
+interface VervangingVerzoek {
+  aanmelding_id: string;
+  dienst_id: string;
+  originele_aanmelding_id: string;
+  naam: string;
+  functie: string | string[];
+  profile_photo_url: string | null;
+}
+
 interface DienstenTabProps {
   diensten: Dienst[];
   onAanmelden: (dienstId: string) => void;
   onAfmelden: (dienstId: string) => void;
   onUrenInvullen: (dienst: Dienst) => void;
+  onAnnuleerGeaccepteerd?: (aanmeldingId: string, dienstId: string) => void;
+  onAcceptVervanging?: (origineleAanmeldingId: string, vervangingAanmeldingId: string) => void;
+  onAfwijsVervanging?: (vervangingAanmeldingId: string) => void;
+  vervangingVerzoeken?: VervangingVerzoek[];
+  accountGepauzeerd?: boolean;
 }
 
-export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenInvullen }: DienstenTabProps) {
+export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenInvullen, onAnnuleerGeaccepteerd, onAcceptVervanging, onAfwijsVervanging, vervangingVerzoeken = [], accountGepauzeerd }: DienstenTabProps) {
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+
+  const [vervangingModal, setVervangingModal] = useState<{ aanmeldingId: string; dienstId: string } | null>(null);
 
   const beschikbareDiensten = diensten.filter((d) => !d.aangemeld);
   const mijnAanmeldingen = diensten.filter((d) => d.aangemeld);
 
+  const getUrenTotStart = (dienst: Dienst) => {
+    const start = new Date(`${dienst.datum}T${dienst.start_tijd}`);
+    return (start.getTime() - Date.now()) / (1000 * 60 * 60);
+  };
+
   const getStatusBadge = (dienst: Dienst) => {
+    if (dienst.aanmelding_status === "vervanging_gezocht") return { label: "Vervanging gezocht", classes: "bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400" };
+    if (dienst.aanmelding_status === "vervangen") return { label: "Vervangen", classes: "bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400" };
     if (dienst.aanmelding_status === "geaccepteerd") return { label: "Geaccepteerd", classes: "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400" };
     if (dienst.aanmelding_status === "afgewezen") return { label: "Afgewezen", classes: "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400" };
     if (dienst.aanmelding_status === "aangemeld") return { label: "In behandeling", classes: "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400" };
@@ -45,6 +69,17 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
 
   return (
     <div>
+      {accountGepauzeerd && (
+        <div className="mb-6 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4">
+          <div className="flex items-center gap-3">
+            <svg className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+            <div>
+              <p className="font-bold text-red-800 dark:text-red-300">Account gepauzeerd - openstaande boete</p>
+              <p className="text-sm text-red-600 dark:text-red-400">Je kunt je niet aanmelden voor diensten. Neem contact op met TopTalent om je boete af te handelen.</p>
+            </div>
+          </div>
+        </div>
+      )}
       <h2 className="text-2xl font-bold text-[var(--mp-text-primary)] mb-6">Beschikbare Diensten</h2>
 
       {beschikbareDiensten.length === 0 ? (
@@ -87,9 +122,10 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                 {dienst.status === "open" && (
                   <button
                     onClick={() => onAanmelden(dienst.id)}
-                    className="w-full px-4 py-3 bg-[#F27501] hover:bg-[#d96800] active:scale-[0.98] text-white font-semibold rounded-xl transition-all min-h-[44px]"
+                    disabled={accountGepauzeerd}
+                    className="w-full px-4 py-3 bg-[#F27501] hover:bg-[#d96800] active:scale-[0.98] text-white font-semibold rounded-xl transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Aanmelden
+                    {accountGepauzeerd ? "Account gepauzeerd" : "Aanmelden"}
                   </button>
                 )}
                 {dienst.status === "vol" && (
@@ -126,6 +162,12 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                         {formatDate(dienst.datum)} · {dienst.start_tijd.slice(0, 5)} - {dienst.eind_tijd.slice(0, 5)}
                         {dienst.uurtarief && <> · €{dienst.uurtarief.toFixed(2)}/uur</>}
                       </p>
+                      {dienst.aanmelding_status === "geaccepteerd" && getUrenTotStart(dienst) <= 48 && getUrenTotStart(dienst) > 0 && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                          Annuleren niet mogelijk — dienst begint over {Math.floor(getUrenTotStart(dienst))}u
+                        </p>
+                      )}
                     </div>
                     <div className="ml-4 flex items-center gap-2">
                       {dienst.aanmelding_status === "aangemeld" && (
@@ -135,6 +177,23 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                         >
                           Afmelden
                         </button>
+                      )}
+                      {dienst.aanmelding_status === "geaccepteerd" && !dienst.uren_status && new Date(dienst.datum) > new Date() && onAnnuleerGeaccepteerd && (
+                        getUrenTotStart(dienst) > 48 ? (
+                          <button
+                            onClick={() => onAnnuleerGeaccepteerd(dienst.aanmelding_id!, dienst.id)}
+                            className="px-4 py-3 text-sm text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors min-h-[44px] font-semibold"
+                          >
+                            Annuleren
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setVervangingModal({ aanmeldingId: dienst.aanmelding_id!, dienstId: dienst.id })}
+                            className="px-4 py-3 text-sm text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition-colors min-h-[44px] font-semibold"
+                          >
+                            Zoek vervanging
+                          </button>
+                        )
                       )}
                       {dienst.aanmelding_status === "geaccepteerd" && !dienst.uren_status && new Date(dienst.datum) <= new Date() && (
                         <button
@@ -156,6 +215,93 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Vervangingsverzoeken */}
+      {vervangingVerzoeken.length > 0 && onAcceptVervanging && onAfwijsVervanging && (
+        <div className="mt-10">
+          <h3 className="text-xl font-bold text-[var(--mp-text-primary)] mb-4">Vervangingsverzoeken ({vervangingVerzoeken.length})</h3>
+          <p className="text-sm text-[var(--mp-text-secondary)] mb-4">Medewerkers die zich aangemeld hebben als vervanging voor jouw diensten.</p>
+          <div className="space-y-3">
+            {vervangingVerzoeken.map((v) => {
+              const functie = Array.isArray(v.functie) ? v.functie.join(", ") : v.functie || "";
+              const initialen = v.naam.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+              // Find the dienst for context
+              const dienst = mijnAanmeldingen.find(d => d.id === v.dienst_id);
+
+              return (
+                <div key={v.aanmelding_id} className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-5 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
+                  {dienst && (
+                    <p className="text-xs text-[var(--mp-text-tertiary)] mb-2">
+                      {dienst.functie} · {formatDate(dienst.datum)} · {dienst.start_tijd.slice(0, 5)} - {dienst.eind_tijd.slice(0, 5)}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3">
+                    {v.profile_photo_url ? (
+                      <img src={v.profile_photo_url} alt={v.naam} className="w-10 h-10 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[#0B2447] text-white flex items-center justify-center text-sm font-bold">
+                        {initialen}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-[var(--mp-text-primary)] truncate">{v.naam}</p>
+                      {functie && <p className="text-xs text-[var(--mp-text-secondary)]">{functie}</p>}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onAcceptVervanging(v.originele_aanmelding_id || mijnAanmeldingen.find(d => d.id === v.dienst_id)?.aanmelding_id || "", v.aanmelding_id)}
+                        className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors"
+                      >
+                        Accepteren
+                      </button>
+                      <button
+                        onClick={() => onAfwijsVervanging(v.aanmelding_id)}
+                        className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-colors"
+                      >
+                        Afwijzen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Vervanging confirmatie modal */}
+      {vervangingModal && onAnnuleerGeaccepteerd && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[100]">
+          <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card-elevated)] rounded-t-3xl sm:rounded-3xl max-w-sm w-full p-6 shadow-xl animate-in slide-in-from-bottom sm:slide-in-from-bottom-0">
+            <h2 className="text-lg font-bold text-[var(--mp-text-primary)] mt-1">Vervanging zoeken</h2>
+
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 mt-4 border border-amber-200 dark:border-amber-800">
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                Let op — jij blijft verantwoordelijk
+              </p>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                De dienst komt online voor andere medewerkers. Jij moet de vervanger goedkeuren. Vind je niemand? Dan moet jij de dienst zelf werken. Werk je niet? Dan volgt een boete van €50 en wordt je account gepauzeerd.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                onAnnuleerGeaccepteerd(vervangingModal.aanmeldingId, vervangingModal.dienstId);
+                setVervangingModal(null);
+              }}
+              className="w-full mt-6 py-3.5 rounded-2xl bg-[#F27501] text-white font-semibold hover:bg-[#d96800] active:scale-[0.98] transition-all"
+            >
+              Bevestig — zet dienst online voor vervanging
+            </button>
+            <button
+              onClick={() => setVervangingModal(null)}
+              className="w-full mt-3 py-3 rounded-2xl bg-[var(--mp-bg)] dark:bg-[var(--mp-card)] text-[var(--mp-text-secondary)] font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+            >
+              Toch zelf werken
+            </button>
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
+import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 
 type UrenRegistratie = { status: string };
 
@@ -97,8 +98,41 @@ export async function GET() {
     };
   });
 
+  // Check of account gepauzeerd is
+  const { data: mwStatusCheck } = await supabaseAdmin
+    .from("medewerkers")
+    .select("status")
+    .eq("id", medewerker.id)
+    .single();
+  const accountGepauzeerd = mwStatusCheck?.status === "gepauzeerd";
+
+  // Vervangingsverzoeken: diensten waar deze medewerker vervanging zoekt + aanmeldingen van anderen
+  const myVervangingAanmeldingen = aanmeldingen?.filter(a => a.status === "vervanging_gezocht") || [];
+  const vervangingDienstIds = myVervangingAanmeldingen.map(a => a.dienst_id);
+  let vervangingVerzoeken: { aanmelding_id: string; dienst_id: string; originele_aanmelding_id: string; naam: string; functie: string | string[]; profile_photo_url: string | null }[] = [];
+  if (vervangingDienstIds.length > 0) {
+    const { data: vervangers } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, dienst_id, vervanging_voor, medewerker:medewerkers(naam, functie, profile_photo_url)")
+      .in("dienst_id", vervangingDienstIds)
+      .eq("status", "aangemeld")
+      .not("medewerker_id", "eq", medewerker.id);
+
+    vervangingVerzoeken = (vervangers || []).map(v => {
+      const mw = Array.isArray(v.medewerker) ? v.medewerker[0] : v.medewerker;
+      return {
+        aanmelding_id: v.id,
+        dienst_id: v.dienst_id,
+        originele_aanmelding_id: v.vervanging_voor || "",
+        naam: mw?.naam || "Onbekend",
+        functie: mw?.functie || "",
+        profile_photo_url: mw?.profile_photo_url || null,
+      };
+    });
+  }
+
   console.log(`[MEDEWERKER DIENSTEN] Functies: ${functies}, Found ${diensten.length} diensten for ${medewerker.naam}`);
-  return NextResponse.json({ diensten, aanpassingen: mapped });
+  return NextResponse.json({ diensten, aanpassingen: mapped, vervangingVerzoeken, accountGepauzeerd });
 }
 
 export async function POST(request: NextRequest) {
@@ -116,6 +150,20 @@ export async function POST(request: NextRequest) {
   const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
 
   if (action === "aanmelden") {
+    // Check of account gepauzeerd is
+    const { data: mwStatus } = await supabaseAdmin
+      .from("medewerkers")
+      .select("status")
+      .eq("id", medewerker.id)
+      .single();
+
+    if (mwStatus?.status === "gepauzeerd") {
+      return NextResponse.json(
+        { error: "Je account is gepauzeerd vanwege een openstaande boete. Neem contact op met TopTalent." },
+        { status: 403 }
+      );
+    }
+
     await supabaseAdmin.from("dienst_aanmeldingen").insert({
       dienst_id,
       medewerker_id: medewerker.id,
@@ -126,6 +174,179 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from("dienst_aanmeldingen").delete()
       .eq("dienst_id", dienst_id)
       .eq("medewerker_id", medewerker.id);
+  }
+
+  if (action === "annuleer_geaccepteerd") {
+    // Haal aanmelding + dienst info op
+    const { data: aanmelding } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, dienst_id, status, dienst:diensten(datum, start_tijd, status)")
+      .eq("id", aanmelding_id)
+      .eq("medewerker_id", medewerker.id)
+      .single();
+
+    const dienst = Array.isArray(aanmelding?.dienst) ? aanmelding?.dienst[0] : aanmelding?.dienst;
+    if (!aanmelding || aanmelding.status !== "geaccepteerd" || !dienst) {
+      return NextResponse.json({ error: "Aanmelding niet gevonden of niet geaccepteerd" }, { status: 400 });
+    }
+
+    const dienstStart = new Date(`${dienst.datum}T${dienst.start_tijd}`);
+    const now = new Date();
+    const urenTotStart = (dienstStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (urenTotStart > 48) {
+      // > 48 uur: direct annuleren
+      await supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .update({ status: "geannuleerd" })
+        .eq("id", aanmelding_id);
+
+      // Dienst terug naar open als die vol was
+      if (dienst.status === "vol") {
+        await supabaseAdmin
+          .from("diensten")
+          .update({ status: "open" })
+          .eq("id", aanmelding.dienst_id);
+      }
+    } else {
+      // <= 48 uur: vervanging zoeken
+      await supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .update({ status: "vervanging_gezocht" })
+        .eq("id", aanmelding_id);
+
+      // Dienst terug naar open zodat vervangers zich kunnen aanmelden
+      if (dienst.status === "vol") {
+        await supabaseAdmin
+          .from("diensten")
+          .update({ status: "open" })
+          .eq("id", aanmelding.dienst_id);
+      }
+    }
+
+    return NextResponse.json({ success: true, vervanging: urenTotStart <= 48 });
+  }
+
+  if (action === "accept_vervanging") {
+    // Verifieer dat medewerker eigenaar is van originele aanmelding
+    const { data: origAanmelding } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, dienst_id, status")
+      .eq("id", aanmelding_id)
+      .eq("medewerker_id", medewerker.id)
+      .eq("status", "vervanging_gezocht")
+      .single();
+
+    if (!origAanmelding) {
+      return NextResponse.json({ error: "Originele aanmelding niet gevonden of geen vervanging actief" }, { status: 400 });
+    }
+
+    const vervangingAanmeldingId = data?.vervanging_aanmelding_id;
+    if (!vervangingAanmeldingId) {
+      return NextResponse.json({ error: "Vervanging aanmelding ID ontbreekt" }, { status: 400 });
+    }
+
+    // Vervanger aanmelding: set vervanging_voor, status → geaccepteerd
+    await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .update({ vervanging_voor: aanmelding_id, status: "geaccepteerd" })
+      .eq("id", vervangingAanmeldingId);
+
+    // Originele aanmelding: status → vervangen
+    await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .update({ status: "vervangen" })
+      .eq("id", aanmelding_id);
+
+    // Check of dienst weer vol moet
+    const { data: dienstInfo } = await supabaseAdmin
+      .from("diensten")
+      .select("id, aantal_nodig")
+      .eq("id", origAanmelding.dienst_id)
+      .single();
+
+    if (dienstInfo) {
+      const { count } = await supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .select("id", { count: "exact", head: true })
+        .eq("dienst_id", origAanmelding.dienst_id)
+        .eq("status", "geaccepteerd");
+
+      if (count !== null && count >= (dienstInfo.aantal_nodig || 1)) {
+        await supabaseAdmin
+          .from("diensten")
+          .update({ status: "vol" })
+          .eq("id", origAanmelding.dienst_id);
+      }
+    }
+
+    // Stuur bevestigingsmail naar vervanger
+    const { data: fullVervanger } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select(`
+        id,
+        medewerker:medewerkers(naam, email),
+        dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie, notities)
+      `)
+      .eq("id", vervangingAanmeldingId)
+      .single();
+
+    const vervangerMw = Array.isArray(fullVervanger?.medewerker) ? fullVervanger?.medewerker[0] : fullVervanger?.medewerker;
+    const vervangerDienst = Array.isArray(fullVervanger?.dienst) ? fullVervanger?.dienst[0] : fullVervanger?.dienst;
+
+    if (vervangerMw?.email && vervangerDienst) {
+      await sendMedewerkerShiftConfirmationEmail({
+        medewerkerNaam: vervangerMw.naam,
+        medewerkerEmail: vervangerMw.email,
+        functie: vervangerDienst.functie,
+        datum: vervangerDienst.datum,
+        startTijd: vervangerDienst.start_tijd,
+        eindTijd: vervangerDienst.eind_tijd,
+        locatie: vervangerDienst.locatie,
+        klantNaam: vervangerDienst.klant_naam,
+        kledingvoorschrift: vervangerDienst.notities,
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === "afwijs_vervanging") {
+    const vervangingAanmeldingId = data?.vervanging_aanmelding_id;
+    if (!vervangingAanmeldingId) {
+      return NextResponse.json({ error: "Vervanging aanmelding ID ontbreekt" }, { status: 400 });
+    }
+
+    // Verifieer dat de oorspronkelijke medewerker dit mag doen
+    const { data: vervangingAanmelding } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, dienst_id")
+      .eq("id", vervangingAanmeldingId)
+      .single();
+
+    if (!vervangingAanmelding) {
+      return NextResponse.json({ error: "Vervanging aanmelding niet gevonden" }, { status: 404 });
+    }
+
+    // Check dat medewerker een vervanging_gezocht aanmelding heeft voor deze dienst
+    const { data: origCheck } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id")
+      .eq("dienst_id", vervangingAanmelding.dienst_id)
+      .eq("medewerker_id", medewerker.id)
+      .eq("status", "vervanging_gezocht")
+      .maybeSingle();
+
+    if (!origCheck) {
+      return NextResponse.json({ error: "Niet geautoriseerd" }, { status: 403 });
+    }
+
+    await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .update({ status: "afgewezen" })
+      .eq("id", vervangingAanmeldingId);
+
+    return NextResponse.json({ success: true });
   }
 
   if (action === "uren_indienen") {

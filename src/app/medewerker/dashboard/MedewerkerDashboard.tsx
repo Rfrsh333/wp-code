@@ -364,6 +364,43 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       onLogout={handleLogout}
       ongelezen={ongelezen}
     >
+      {/* Account geblokkeerd overlay */}
+      {accountGepauzeerd && (
+        <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6">
+          <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card-elevated)] rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            </div>
+            <h2 className="text-xl font-bold text-[var(--mp-text-primary)]">Account gepauzeerd</h2>
+            <p className="text-[var(--mp-text-secondary)] text-sm mt-2">
+              Je account is gepauzeerd vanwege een openstaande boete van €50.
+              Betaal de boete om je account te heractiveren.
+            </p>
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/medewerker/betaal-boete", { method: "POST" });
+                  const data = await res.json();
+                  if (data.checkoutUrl) {
+                    window.location.href = data.checkoutUrl;
+                  } else {
+                    toast.error(data.error || "Kon betaallink niet aanmaken");
+                  }
+                } catch {
+                  toast.error("Netwerkfout bij aanmaken betaling");
+                }
+              }}
+              className="w-full mt-6 py-3.5 rounded-2xl bg-[#F27501] text-white font-semibold shadow-lg hover:bg-[#d96800] active:scale-[0.98] transition-all"
+            >
+              Betaal €50 boete via iDEAL
+            </button>
+            <p className="text-xs text-[var(--mp-text-tertiary)] mt-3">
+              Vragen? Neem contact op met TopTalent
+            </p>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" />

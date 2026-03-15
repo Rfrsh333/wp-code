@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   BarChart3,
   BriefcaseBusiness,
   Calculator,
@@ -186,6 +187,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["offerte", "quote", "voorstel", "tarief"],
   },
+  boetes: {
+    id: "boetes",
+    title: "Boetes",
+    icon: AlertTriangle,
+    kind: "tab",
+    tab: "boetes",
+    pinnable: true,
+    keywords: ["boete", "no-show", "straf", "pauzeren"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -211,7 +221,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "recruitment",
     label: "Recruitment",
-    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "planning"],
+    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "planning", "boetes"],
     collapsible: true,
     defaultOpen: true,
     dividerBefore: true,
