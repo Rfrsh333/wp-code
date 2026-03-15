@@ -12,6 +12,7 @@ import DocumentenPage from "@/components/medewerker/DocumentenPage";
 import ReferralPage from "@/components/medewerker/ReferralPage";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import DashboardHome from "@/components/medewerker/DashboardHome";
+import DienstenFilters from "@/components/medewerker/DienstenFilters";
 import { useToast } from "@/components/ui/Toast";
 import { useMedewerkerDiensten, useDienstAction, usePhotoUpload, usePhotoDelete, useBoeteBetaal, useBeschikbaarheidSave } from "@/hooks/queries/useMedewerkerQueries";
 import { useMedewerkerRealtime } from "@/hooks/queries/useMedewerkerRealtime";
@@ -81,9 +82,10 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   const router = useRouter();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<TabId>("home");
+  const [filterQuery, setFilterQuery] = useState<string>('');
 
   // React Query data fetching
-  const { data: dienstenData, isLoading } = useMedewerkerDiensten();
+  const { data: dienstenData, isLoading } = useMedewerkerDiensten(filterQuery);
   const diensten: Dienst[] = dienstenData?.diensten ?? [];
   const aanpassingen: KlantAanpassing[] = dienstenData?.aanpassingen ?? [];
   const vervangingVerzoeken = dienstenData?.vervangingVerzoeken ?? [];
@@ -370,6 +372,10 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
           {activeTab === "diensten" && (
             <>
               <SwipeShiftStack />
+              <DienstenFilters onQueryChange={setFilterQuery} />
+              <div className="mb-4 text-sm text-neutral-600">
+                {diensten.length} {diensten.length === 1 ? 'dienst' : 'diensten'} gevonden
+              </div>
               <DienstenTab
                 diensten={diensten}
                 onAanmelden={aanmelden}

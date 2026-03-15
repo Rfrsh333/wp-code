@@ -29,11 +29,14 @@ export function useMedewerkerDashboard() {
   });
 }
 
-export function useMedewerkerDiensten() {
+export function useMedewerkerDiensten(filterQuery?: string) {
   return useQuery({
-    queryKey: medewerkerKeys.diensten(),
+    queryKey: [...medewerkerKeys.diensten(), filterQuery || 'no-filter'],
     queryFn: async () => {
-      const res = await fetch('/api/medewerker/diensten');
+      const url = filterQuery
+        ? `/api/medewerker/diensten?${filterQuery}`
+        : '/api/medewerker/diensten';
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch diensten');
       return res.json();
     },
