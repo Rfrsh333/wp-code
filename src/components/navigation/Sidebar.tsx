@@ -251,8 +251,8 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect, forceVisi
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // Verwijder de auth cookie zodat de proxy ook weet dat de sessie verlopen is
-    document.cookie = "sb-access-token=; path=/; max-age=0";
+    // Verwijder de httpOnly auth cookie via server-side endpoint
+    await fetch("/api/admin/logout", { method: "POST" });
     router.push("/admin/login");
   };
 

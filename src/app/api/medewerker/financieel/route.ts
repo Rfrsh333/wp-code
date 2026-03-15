@@ -10,21 +10,22 @@ export async function GET(request: NextRequest) {
     const medewerker = await verifyMedewerkerSession(sessionCookie.value);
     if (!medewerker) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
 
-    // Get all approved uren_registraties with dienst info for uurtarief
-    const { data: uren, error } = await supabaseAdmin
-      .from("uren_registraties")
+    // Get all approved uren_registraties via dienst_aanmeldingen
+    const { data: aanmeldingen, error } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
       .select(`
-        gewerkte_uren,
-        created_at,
-        aanmelding:dienst_aanmeldingen!aanmelding_id (
-          dienst:diensten!dienst_id (
-            datum,
-            uurtarief
-          )
+        id,
+        dienst:diensten!dienst_id (
+          datum,
+          uurtarief
+        ),
+        uren:uren_registraties!aanmelding_id (
+          gewerkte_uren,
+          created_at,
+          status
         )
       `)
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "goedgekeurd")
       .limit(500);
 
     if (error) {
@@ -35,22 +36,30 @@ export async function GET(request: NextRequest) {
     // Group by month
     const maandMap = new Map<string, { totaal_uren: number; totaal_verdiensten: number; aantal_diensten: number }>();
 
-    for (const u of uren || []) {
-      const aanmelding = u.aanmelding as { dienst?: { datum: string; uurtarief?: number } } | null;
-      const dienst = aanmelding?.dienst;
-      if (!dienst) continue;
+    for (const aanmelding of aanmeldingen || []) {
+      const dienst = aanmelding.dienst as { datum: string; uurtarief?: number } | null;
+      const urenArray = aanmelding.uren as Array<{ gewerkte_uren?: number; status: string }> | null;
+
+      if (!dienst || !urenArray) continue;
+
+      // Alleen goedgekeurde uren
+      const goedgekeurdeUren = urenArray.filter((u) => u.status === "goedgekeurd");
+      if (goedgekeurdeUren.length === 0) continue;
 
       const datum = new Date(dienst.datum);
       const maandKey = `${datum.getFullYear()}-${String(datum.getMonth() + 1).padStart(2, "0")}`;
       const klantUurtarief = dienst.uurtarief || 0;
       const medewerkerUurtarief = klantUurtarief - 4; // €4 margin voor TopTalent
-      const gewerkte_uren = u.gewerkte_uren || 0;
 
-      const existing = maandMap.get(maandKey) || { totaal_uren: 0, totaal_verdiensten: 0, aantal_diensten: 0 };
-      existing.totaal_uren += gewerkte_uren;
-      existing.totaal_verdiensten += gewerkte_uren * medewerkerUurtarief;
-      existing.aantal_diensten += 1;
-      maandMap.set(maandKey, existing);
+      for (const urenItem of goedgekeurdeUren) {
+        const gewerkte_uren = urenItem.gewerkte_uren || 0;
+
+        const existing = maandMap.get(maandKey) || { totaal_uren: 0, totaal_verdiensten: 0, aantal_diensten: 0 };
+        existing.totaal_uren += gewerkte_uren;
+        existing.totaal_verdiensten += gewerkte_uren * medewerkerUurtarief;
+        existing.aantal_diensten += 1;
+        maandMap.set(maandKey, existing);
+      }
     }
 
     const overzicht = Array.from(maandMap.entries())

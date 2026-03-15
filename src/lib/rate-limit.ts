@@ -1,5 +1,11 @@
 // Simple in-memory rate limiter
 // For production with multiple instances, use Redis instead
+if (process.env.NODE_ENV === "production") {
+  console.warn(
+    "[SECURITY WARNING] In-memory rate limiter is active in production. " +
+    "This does NOT work with multiple server instances. Use Redis-based rate limiting instead."
+  );
+}
 
 interface RateLimitEntry {
   count: number;

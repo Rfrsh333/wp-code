@@ -6,7 +6,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 export async function POST(request: NextRequest) {
   // Verifieer Sentry webhook secret
   const sentrySecret = request.headers.get("sentry-hook-signature");
-  if (process.env.SENTRY_WEBHOOK_SECRET && sentrySecret !== process.env.SENTRY_WEBHOOK_SECRET) {
+  if (!process.env.SENTRY_WEBHOOK_SECRET || sentrySecret !== process.env.SENTRY_WEBHOOK_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

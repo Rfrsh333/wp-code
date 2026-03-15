@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin-auth";
+import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 
 export async function POST(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  const rateLimit = await checkRedisRateLimit(`admin-reset-update:${clientIP}`, loginRateLimit);
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het later opnieuw." },
+      { status: 429 }
+    );
+  }
+
   try {
     const { access_token, password } = await request.json();
 

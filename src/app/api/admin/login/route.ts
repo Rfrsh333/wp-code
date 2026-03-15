@@ -144,9 +144,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Zet een cookie zodat de proxy/middleware de admin sessie kan detecteren
-    // Niet httpOnly zodat client-side logout de cookie kan verwijderen
+    // httpOnly: true voorkomt dat client-side JS de cookie kan lezen (XSS bescherming)
+    // Logout gaat via /api/admin/logout endpoint dat de cookie server-side verwijdert
     response.cookies.set("sb-access-token", "authenticated", {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",

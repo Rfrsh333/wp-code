@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
+import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 
 async function findValidMedewerkerResetToken(token: string) {
   const { data: medewerker } = await supabaseAdmin
@@ -36,6 +37,16 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  const rateLimit = await checkRedisRateLimit(`medewerker-reset:${clientIP}`, loginRateLimit);
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het later opnieuw." },
+      { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))) } }
+    );
+  }
+
   try {
     const { token, wachtwoord } = await request.json();
 

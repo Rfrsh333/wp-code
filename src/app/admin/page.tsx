@@ -42,7 +42,7 @@ export default function AdminPage() {
           // Niet geautoriseerd als admin
           console.error("Admin verificatie mislukt");
           await supabase.auth.signOut();
-          document.cookie = "sb-access-token=; path=/; max-age=0";
+          await fetch("/api/admin/logout", { method: "POST" });
           router.push("/admin/login");
           setIsLoading(false);
           return;

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Dienst aanmaken mislukt:", error);
-      return NextResponse.json({ error: "Aanvraag opslaan mislukt: " + error.message }, { status: 500 });
+      return NextResponse.json({ error: "Aanvraag opslaan mislukt. Probeer het later opnieuw." }, { status: 500 });
     }
 
     // Telegram notification (don't let it block the response)
