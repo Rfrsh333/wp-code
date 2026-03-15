@@ -142,8 +142,14 @@ export default function KlantLogin() {
               </button>
             </form>
 
-            <div className="mt-6 text-center">
-              <Link href="/" className="text-sm text-neutral-500 hover:text-[#F27501] transition-colors">
+            <div className="mt-6 text-center space-y-3">
+              <p className="text-sm text-neutral-500">
+                Nog geen account?{" "}
+                <Link href="/klant/registreren" className="text-[#F27501] hover:text-[#d96800] font-medium transition-colors">
+                  Registreer hier
+                </Link>
+              </p>
+              <Link href="/" className="text-sm text-neutral-400 hover:text-[#F27501] transition-colors block">
                 &larr; Terug naar website
               </Link>
             </div>

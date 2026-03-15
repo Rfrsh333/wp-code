@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import PortalLayout, { PortalTab } from "@/components/portal/PortalLayout";
 import EmptyState from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from "recharts";
 
 interface Klant {
   id: string;
@@ -76,6 +80,54 @@ interface Factuur {
   viewUrl: string;
 }
 
+interface Favoriet {
+  id: string;
+  notitie: string | null;
+  medewerker_id: string;
+  naam: string;
+  functie: string | string[];
+  profile_photo_url: string | null;
+  gemiddelde_score: number | null;
+  diensten_count: number;
+}
+
+interface RecentMedewerker {
+  medewerker_id: string;
+  naam: string;
+  functie: string | string[];
+  profile_photo_url: string | null;
+  gemiddelde_score: number | null;
+  laatste_dienst: string;
+}
+
+interface RoosterItem {
+  id: string;
+  datum: string;
+  start_tijd: string;
+  eind_tijd: string;
+  locatie: string;
+  functie: string;
+  status: string;
+  aantal_nodig: number;
+  medewerkers: { id: string; naam: string; functie: string | string[]; profile_photo_url: string | null }[];
+}
+
+interface KostenData {
+  jaar: number;
+  totaal: number;
+  per_maand: { maand: string; kosten: number }[];
+  per_functie: { functie: string; kosten: number }[];
+  top_medewerkers: { naam: string; totaal: number; uren: number }[];
+}
+
+interface KlantBericht {
+  id: string;
+  created_at: string;
+  afzender: "klant" | "toptalent";
+  bericht: string;
+  gelezen: boolean;
+}
+
 export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState("overzicht");
@@ -85,6 +137,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [upcomingDiensten, setUpcomingDiensten] = useState<UpcomingDienst[]>([]);
   const [recentFacturen, setRecentFacturen] = useState<Factuur[]>([]);
+  const [ongelesCount, setOngelesCount] = useState(0);
   const [beoordeelModal, setBeoordeelModal] = useState<{
     open: boolean;
     item: TeBeoordelen | null;
@@ -124,11 +177,21 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     setIsLoading(false);
   };
 
+  // Fetch unread berichten count for badge
+  const fetchOngelezen = useCallback(async () => {
+    try {
+      const res = await fetch("/api/klant/berichten");
+      const data = await res.json();
+      setOngelesCount(data.ongelezen_count || 0);
+    } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => {
     void (async () => {
       await fetchUren();
+      await fetchOngelezen();
     })();
-  }, []);
+  }, [fetchOngelezen]);
 
   const submitBeoordeling = async () => {
     if (!beoordeelModal.item) return;
@@ -231,6 +294,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     open: "bg-blue-100 text-blue-800",
     bezig: "bg-amber-100 text-amber-800",
     vol: "bg-green-100 text-green-800",
+    aangevraagd: "bg-blue-100 text-blue-800",
+    bevestigd: "bg-green-100 text-green-800",
   };
 
   const pending = uren.filter(u => u.status === "ingediend");
@@ -266,6 +331,33 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       ),
     },
     {
+      id: "rooster",
+      label: "Rooster",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+      ),
+    },
+    {
+      id: "aanvragen",
+      label: "Aanvragen",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+        </svg>
+      ),
+    },
+    {
+      id: "favorieten",
+      label: "Favorieten",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      ),
+    },
+    {
       id: "facturen",
       label: "Facturen",
       icon: (
@@ -276,6 +368,15 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       badge: (dashboardStats?.openFacturenCount ?? 0) > 0 ? dashboardStats?.openFacturenCount : undefined,
     },
     {
+      id: "kosten",
+      label: "Kosten",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+    },
+    {
       id: "beoordelingen",
       label: "Beoordelingen",
       icon: (
@@ -284,6 +385,16 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         </svg>
       ),
       badge: teBeoordeelen.length > 0 ? teBeoordeelen.length : undefined,
+    },
+    {
+      id: "berichten",
+      label: "Berichten",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ),
+      badge: ongelesCount > 0 ? ongelesCount : undefined,
     },
     {
       id: "referral",
@@ -331,12 +442,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                         {klant.bedrijfsnaam} ziet hier direct wat vandaag aandacht vraagt, welke diensten eraan komen en welke uren nog op uw akkoord wachten.
                       </p>
                       <div className="mt-5 flex flex-wrap gap-3">
-                        <a href="/personeel-aanvragen" className="rounded-xl bg-[#F27501] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#d96800]">
+                        <button onClick={() => setActiveTab("aanvragen")} className="rounded-xl bg-[#F27501] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#d96800]">
                           Extra personeel aanvragen
-                        </a>
-                        <a href="/contact" className="rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/5">
+                        </button>
+                        <button onClick={() => setActiveTab("berichten")} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/5">
                           Contact met TopTalent
-                        </a>
+                        </button>
                       </div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
@@ -405,9 +516,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                     <p className="text-sm text-neutral-500">Handige acties</p>
                     <p className="mt-2 text-lg font-bold text-neutral-900">Vandaag geregeld</p>
                     <div className="mt-4 grid gap-3">
-                      <a href="/personeel-aanvragen" className="rounded-xl bg-[#F27501] px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#d96800]">
+                      <button onClick={() => setActiveTab("aanvragen")} className="rounded-xl bg-[#F27501] px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#d96800]">
                         Extra personeel aanvragen
-                      </a>
+                      </button>
                       <button onClick={() => setActiveTab("uren")} className="rounded-xl border border-neutral-200 px-4 py-3 text-left text-sm font-medium text-neutral-700 transition hover:bg-neutral-50">
                         Open uren controleren
                       </button>
@@ -457,9 +568,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                     <h2 className="text-2xl font-bold text-neutral-900">Diensten</h2>
                     <p className="mt-1 text-sm text-neutral-500">Overzicht van komende en lopende diensten.</p>
                   </div>
-                  <a href="/personeel-aanvragen" className="rounded-xl bg-[#F27501] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#d96800]">
+                  <button onClick={() => setActiveTab("aanvragen")} className="rounded-xl bg-[#F27501] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#d96800]">
                     Nieuwe aanvraag
-                  </a>
+                  </button>
                 </div>
 
                 {upcomingDiensten.length === 0 ? (
@@ -499,6 +610,15 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 )}
               </div>
             )}
+
+            {/* Tab: Rooster */}
+            {activeTab === "rooster" && <RoosterTab formatTime={formatTime} statusTone={statusTone} />}
+
+            {/* Tab: Aanvragen */}
+            {activeTab === "aanvragen" && <AanvraagTab klant={klant} onSuccess={() => { fetchUren(); setActiveTab("diensten"); }} />}
+
+            {/* Tab: Favorieten */}
+            {activeTab === "favorieten" && <FavorietenTab />}
 
             {/* Tab: Facturen */}
             {activeTab === "facturen" && (
@@ -551,9 +671,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
               </div>
             )}
 
-            {/* Tab: Beoordelingen */}
-            {activeTab === "referral" && <KlantReferralSection />}
+            {/* Tab: Kosten */}
+            {activeTab === "kosten" && <KostenTab />}
 
+            {/* Tab: Beoordelingen */}
             {activeTab === "beoordelingen" && (
               <div className="space-y-6">
                 <div>
@@ -593,6 +714,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 )}
               </div>
             )}
+
+            {/* Tab: Berichten */}
+            {activeTab === "berichten" && <BerichtenTab klant={klant} onUnreadChange={setOngelesCount} />}
+
+            {/* Tab: Referral */}
+            {activeTab === "referral" && <KlantReferralSection />}
           </>
         )}
       </PortalLayout>
@@ -749,7 +876,811 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   );
 }
 
-/* Klant Referral Section */
+/* ============================================================
+   Feature 2: Favorieten Tab
+   ============================================================ */
+function FavorietenTab() {
+  const toast = useToast();
+  const [favorieten, setFavorieten] = useState<Favoriet[]>([]);
+  const [recentMedewerkers, setRecentMedewerkers] = useState<RecentMedewerker[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchFavorieten = async () => {
+    try {
+      const res = await fetch("/api/klant/favorieten");
+      const data = await res.json();
+      setFavorieten(data.favorieten || []);
+      setRecentMedewerkers(data.recentMedewerkers || []);
+    } catch {
+      toast.error("Favorieten laden mislukt");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchFavorieten(); }, []);
+
+  const toggleFavoriet = async (medewerker_id: string, isFav: boolean) => {
+    try {
+      await fetch("/api/klant/favorieten", {
+        method: isFav ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ medewerker_id }),
+      });
+      toast.success(isFav ? "Favoriet verwijderd" : "Favoriet toegevoegd");
+      fetchFavorieten();
+    } catch {
+      toast.error("Actie mislukt");
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" /></div>;
+  }
+
+  const renderAvatar = (naam: string, photo: string | null) => {
+    const initials = naam.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    return photo ? (
+      <img src={photo} alt={naam} className="w-10 h-10 rounded-full object-cover" />
+    ) : (
+      <div className="w-10 h-10 rounded-full bg-[#F27501]/10 flex items-center justify-center text-sm font-bold text-[#F27501]">{initials}</div>
+    );
+  };
+
+  const renderFuncties = (functie: string | string[]) => {
+    const list = Array.isArray(functie) ? functie : [functie].filter(Boolean);
+    return list.join(", ");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">Favoriete Medewerkers</h2>
+        <p className="mt-1 text-sm text-neutral-500">Bewaar uw favoriete medewerkers voor snelle aanvragen.</p>
+      </div>
+
+      {favorieten.length === 0 ? (
+        <EmptyState
+          icon={
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          }
+          title="Nog geen favorieten"
+          description="Voeg medewerkers toe als favoriet vanuit de lijst hieronder, zodat u ze snel kunt aanvragen."
+        />
+      ) : (
+        <div className="space-y-3">
+          {favorieten.map((f) => (
+            <div key={f.id} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                {renderAvatar(f.naam, f.profile_photo_url)}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-neutral-900">{f.naam}</p>
+                  <p className="text-sm text-neutral-500">{renderFuncties(f.functie)}</p>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-neutral-500">
+                    {f.gemiddelde_score != null && (
+                      <span className="flex items-center gap-1">
+                        <span className="text-yellow-400">★</span> {f.gemiddelde_score.toFixed(1)}
+                      </span>
+                    )}
+                    <span>{f.diensten_count} diensten bij u</span>
+                  </div>
+                  {f.notitie && <p className="mt-1 text-xs text-neutral-400 italic">{f.notitie}</p>}
+                </div>
+                <button onClick={() => toggleFavoriet(f.medewerker_id, true)}
+                  className="p-2 text-red-400 hover:text-red-600 transition" title="Verwijder favoriet">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {recentMedewerkers.length > 0 && (
+        <div>
+          <h3 className="text-lg font-bold text-neutral-900 mb-3">Recent gewerkt</h3>
+          <div className="space-y-2">
+            {recentMedewerkers.map((m) => (
+              <div key={m.medewerker_id} className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm flex items-center gap-4">
+                {renderAvatar(m.naam, m.profile_photo_url)}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-neutral-900">{m.naam}</p>
+                  <p className="text-sm text-neutral-500">{renderFuncties(m.functie)}</p>
+                  {m.gemiddelde_score != null && (
+                    <span className="text-xs text-neutral-400 flex items-center gap-1"><span className="text-yellow-400">★</span> {m.gemiddelde_score.toFixed(1)}</span>
+                  )}
+                </div>
+                <button onClick={() => toggleFavoriet(m.medewerker_id, false)}
+                  className="px-3 py-1.5 bg-[#F27501] text-white rounded-lg text-sm font-medium hover:bg-[#d96800] transition">
+                  Favoriet
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   Feature 3: Aanvraag Tab (Multi-step form)
+   ============================================================ */
+function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void }) {
+  const toast = useToast();
+  const [step, setStep] = useState(1);
+  const [locaties, setLocaties] = useState<string[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const [form, setForm] = useState({
+    functie: "",
+    datum: "",
+    start_tijd: "",
+    eind_tijd: "",
+    aantal: "1",
+    locatie: "",
+    opmerkingen: "",
+    favoriet_medewerker_ids: [] as string[],
+  });
+  const [favorieten, setFavorieten] = useState<Favoriet[]>([]);
+
+  useEffect(() => {
+    fetch("/api/klant/aanvraag").then(r => r.json()).then(d => setLocaties(d.locaties || [])).catch(() => {});
+    fetch("/api/klant/favorieten").then(r => r.json()).then(d => setFavorieten(d.favorieten || [])).catch(() => {});
+  }, []);
+
+  const functies = [
+    { value: "bediening", label: "Bediening" },
+    { value: "bar", label: "Bar" },
+    { value: "keuken", label: "Keuken" },
+    { value: "afwas", label: "Afwas" },
+  ];
+
+  const canNext = () => {
+    if (step === 1) return !!form.functie;
+    if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd;
+    if (step === 3) return true;
+    return true;
+  };
+
+  const submit = async () => {
+    setIsSending(true);
+    try {
+      const res = await fetch("/api/klant/aanvraag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Aanvraag mislukt");
+      }
+      toast.success("Aanvraag succesvol verstuurd!");
+      onSuccess();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Aanvraag versturen mislukt");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const stepLabels = ["Functie", "Datum & Tijd", "Details", "Favorieten"];
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">Personeel Aanvragen</h2>
+        <p className="mt-1 text-sm text-neutral-500">Vul het formulier in om personeel aan te vragen.</p>
+      </div>
+
+      {/* Steps indicator */}
+      <div className="flex items-center gap-2">
+        {stepLabels.map((label, i) => (
+          <div key={label} className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+              step > i + 1 ? "bg-green-500 text-white" : step === i + 1 ? "bg-[#F27501] text-white" : "bg-neutral-200 text-neutral-500"
+            }`}>
+              {step > i + 1 ? "✓" : i + 1}
+            </div>
+            <span className={`text-sm hidden sm:inline ${step === i + 1 ? "font-medium text-neutral-900" : "text-neutral-400"}`}>{label}</span>
+            {i < stepLabels.length - 1 && <div className="w-8 h-0.5 bg-neutral-200" />}
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
+        {/* Step 1: Functie */}
+        {step === 1 && (
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900 mb-4">Welke functie zoekt u?</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {functies.map((f) => (
+                <button key={f.value} onClick={() => setForm({ ...form, functie: f.value })}
+                  className={`p-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                    form.functie === f.value ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501]" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                  }`}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Datum & Tijd */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-neutral-900 mb-4">Wanneer heeft u personeel nodig?</h3>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Datum</label>
+              <input type="date" value={form.datum} onChange={(e) => setForm({ ...form, datum: e.target.value })}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Starttijd</label>
+                <input type="time" value={form.start_tijd} onChange={(e) => setForm({ ...form, start_tijd: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Eindtijd</label>
+                <input type="time" value={form.eind_tijd} onChange={(e) => setForm({ ...form, eind_tijd: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Aantal medewerkers</label>
+              <input type="number" min="1" max="20" value={form.aantal} onChange={(e) => setForm({ ...form, aantal: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Details */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-neutral-900 mb-4">Aanvullende details</h3>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Locatie</label>
+              {locaties.length > 0 ? (
+                <select value={form.locatie} onChange={(e) => setForm({ ...form, locatie: e.target.value })}
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]">
+                  <option value="">Selecteer locatie...</option>
+                  {locaties.map((l) => <option key={l} value={l}>{l}</option>)}
+                  <option value="__nieuw">Andere locatie...</option>
+                </select>
+              ) : (
+                <input type="text" value={form.locatie} onChange={(e) => setForm({ ...form, locatie: e.target.value })}
+                  placeholder="Adres of naam van de locatie"
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+              )}
+              {form.locatie === "__nieuw" && (
+                <input type="text" onChange={(e) => setForm({ ...form, locatie: e.target.value })}
+                  placeholder="Vul locatie in..."
+                  className="w-full mt-2 px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Opmerkingen (optioneel)</label>
+              <textarea value={form.opmerkingen} onChange={(e) => setForm({ ...form, opmerkingen: e.target.value })}
+                rows={3} placeholder="Bijzonderheden, kledingvoorschriften, etc."
+                className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Favorieten */}
+        {step === 4 && (
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900 mb-2">Voorkeur medewerkers (optioneel)</h3>
+            <p className="text-sm text-neutral-500 mb-4">Selecteer favoriete medewerkers die u graag wilt inzetten.</p>
+            {favorieten.length === 0 ? (
+              <p className="text-sm text-neutral-400 py-4 text-center">Geen favoriete medewerkers beschikbaar.</p>
+            ) : (
+              <div className="space-y-2">
+                {favorieten.map((f) => {
+                  const selected = form.favoriet_medewerker_ids.includes(f.medewerker_id);
+                  return (
+                    <button key={f.medewerker_id}
+                      onClick={() => setForm({
+                        ...form,
+                        favoriet_medewerker_ids: selected
+                          ? form.favoriet_medewerker_ids.filter(id => id !== f.medewerker_id)
+                          : [...form.favoriet_medewerker_ids, f.medewerker_id],
+                      })}
+                      className={`w-full text-left p-4 rounded-xl border-2 flex items-center gap-3 transition-all ${
+                        selected ? "border-[#F27501] bg-[#F27501]/5" : "border-neutral-200 hover:border-neutral-300"
+                      }`}>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected ? "border-[#F27501] bg-[#F27501]" : "border-neutral-300"}`}>
+                        {selected && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                      </div>
+                      <span className="text-sm font-medium text-neutral-900">{f.naam}</span>
+                      <span className="text-xs text-neutral-500">{Array.isArray(f.functie) ? f.functie.join(", ") : f.functie}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex justify-between mt-6 pt-4 border-t border-neutral-100">
+          {step > 1 ? (
+            <button onClick={() => setStep(step - 1)} className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-800 transition">
+              Vorige
+            </button>
+          ) : <div />}
+          {step < 4 ? (
+            <button onClick={() => setStep(step + 1)} disabled={!canNext()}
+              className="px-6 py-2 bg-[#F27501] text-white rounded-xl text-sm font-medium hover:bg-[#d96800] transition disabled:opacity-40 disabled:cursor-not-allowed">
+              Volgende
+            </button>
+          ) : (
+            <button onClick={submit} disabled={isSending}
+              className="px-6 py-2 bg-[#F27501] text-white rounded-xl text-sm font-medium hover:bg-[#d96800] transition disabled:opacity-50">
+              {isSending ? "Versturen..." : "Aanvraag versturen"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Summary */}
+      {step >= 2 && (
+        <div className="bg-neutral-50 rounded-2xl p-4 text-sm">
+          <p className="font-medium text-neutral-700 mb-2">Samenvatting</p>
+          <div className="grid grid-cols-2 gap-2 text-neutral-600">
+            <span>Functie:</span><span className="font-medium">{form.functie}</span>
+            {form.datum && <><span>Datum:</span><span className="font-medium">{new Date(form.datum).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })}</span></>}
+            {form.start_tijd && <><span>Tijd:</span><span className="font-medium">{form.start_tijd} - {form.eind_tijd}</span></>}
+            <span>Aantal:</span><span className="font-medium">{form.aantal}</span>
+            {form.locatie && form.locatie !== "__nieuw" && <><span>Locatie:</span><span className="font-medium">{form.locatie}</span></>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   Feature 4: Rooster Tab
+   ============================================================ */
+function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => string; statusTone: Record<string, string> }) {
+  const [view, setView] = useState<"week" | "maand">("week");
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [rooster, setRooster] = useState<RoosterItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const getWeekRange = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const start = new Date(d.setDate(diff));
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { start, end };
+  };
+
+  const getMonthRange = (date: Date) => {
+    const start = new Date(date.getFullYear(), date.getMonth(), 1);
+    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    return { start, end };
+  };
+
+  const fetchRooster = useCallback(async () => {
+    setIsLoading(true);
+    const range = view === "week" ? getWeekRange(currentDate) : getMonthRange(currentDate);
+    const startStr = range.start.toISOString().split("T")[0];
+    const endStr = range.end.toISOString().split("T")[0];
+    try {
+      const res = await fetch(`/api/klant/rooster?start=${startStr}&end=${endStr}`);
+      const data = await res.json();
+      setRooster(data.rooster || []);
+    } catch { /* ignore */ }
+    setIsLoading(false);
+  }, [currentDate, view]);
+
+  useEffect(() => { fetchRooster(); }, [fetchRooster]);
+
+  const navigate = (dir: number) => {
+    const d = new Date(currentDate);
+    if (view === "week") d.setDate(d.getDate() + dir * 7);
+    else d.setMonth(d.getMonth() + dir);
+    setCurrentDate(d);
+  };
+
+  const statusColor: Record<string, string> = {
+    bevestigd: "bg-green-500",
+    open: "bg-amber-500",
+    vol: "bg-green-500",
+    bezig: "bg-amber-500",
+    afgerond: "bg-neutral-400",
+    geannuleerd: "bg-red-500",
+  };
+
+  const dagNamen = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+
+  const renderWeekView = () => {
+    const { start } = getWeekRange(currentDate);
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+
+    return (
+      <div className="space-y-4">
+        {days.map((day) => {
+          const dateStr = day.toISOString().split("T")[0];
+          const dayItems = rooster.filter((r) => r.datum === dateStr);
+          const isToday = dateStr === new Date().toISOString().split("T")[0];
+
+          return (
+            <div key={dateStr} className={`rounded-2xl border p-4 ${isToday ? "border-[#F27501]/30 bg-orange-50/30" : "border-neutral-200 bg-white"}`}>
+              <p className={`text-sm font-semibold mb-2 ${isToday ? "text-[#F27501]" : "text-neutral-700"}`}>
+                {day.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "short" })}
+                {isToday && <span className="ml-2 text-xs font-normal text-[#F27501]">Vandaag</span>}
+              </p>
+              {dayItems.length === 0 ? (
+                <p className="text-xs text-neutral-400">Geen diensten</p>
+              ) : (
+                <div className="space-y-2">
+                  {dayItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 bg-neutral-50 rounded-xl p-3">
+                      <div className={`w-2 h-2 rounded-full ${statusColor[item.status] || "bg-neutral-400"}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-neutral-900">{item.locatie || item.functie}</p>
+                        <p className="text-xs text-neutral-500">{formatTime(item.start_tijd)} - {formatTime(item.eind_tijd)} · {item.functie}</p>
+                        {item.medewerkers.length > 0 && (
+                          <p className="text-xs text-neutral-400 mt-1">{item.medewerkers.map(m => m.naam).join(", ")}</p>
+                        )}
+                      </div>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusTone[item.status] || "bg-neutral-200 text-neutral-700"}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderMonthView = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const totalDays = lastDay.getDate();
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    const cells = [];
+    for (let i = 0; i < startOffset; i++) cells.push(null);
+    for (let d = 1; d <= totalDays; d++) cells.push(d);
+
+    return (
+      <div>
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {dagNamen.map(d => <div key={d} className="text-center text-xs font-medium text-neutral-400 py-1">{d}</div>)}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {cells.map((day, i) => {
+            if (!day) return <div key={`empty-${i}`} />;
+            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const dayItems = rooster.filter(r => r.datum === dateStr);
+            const isToday = dateStr === todayStr;
+
+            return (
+              <div key={dateStr} className={`p-1.5 min-h-[60px] rounded-lg text-center ${isToday ? "bg-[#F27501]/5 ring-1 ring-[#F27501]/30" : "bg-white"}`}>
+                <span className={`text-xs ${isToday ? "font-bold text-[#F27501]" : "text-neutral-600"}`}>{day}</span>
+                <div className="flex flex-wrap justify-center gap-0.5 mt-1">
+                  {dayItems.map((item) => (
+                    <div key={item.id} className={`w-2 h-2 rounded-full ${statusColor[item.status] || "bg-neutral-400"}`} title={`${item.functie} ${formatTime(item.start_tijd)}-${formatTime(item.eind_tijd)}`} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-neutral-900">Rooster</h2>
+          <p className="mt-1 text-sm text-neutral-500">Overzicht van alle ingeplande diensten.</p>
+        </div>
+        <div className="flex gap-1 bg-neutral-100 rounded-xl p-1">
+          <button onClick={() => setView("week")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === "week" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}>
+            Week
+          </button>
+          <button onClick={() => setView("maand")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === "maand" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}>
+            Maand
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex items-center justify-between bg-white rounded-2xl border border-neutral-200 p-4 shadow-sm">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-neutral-100 rounded-lg transition">
+          <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <span className="text-sm font-semibold text-neutral-900">
+          {view === "week"
+            ? `Week van ${getWeekRange(currentDate).start.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}`
+            : currentDate.toLocaleDateString("nl-NL", { month: "long", year: "numeric" })}
+        </span>
+        <button onClick={() => navigate(1)} className="p-2 hover:bg-neutral-100 rounded-lg transition">
+          <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Bevestigd</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> In afwachting</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Aangevraagd</span>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" /></div>
+      ) : view === "week" ? renderWeekView() : renderMonthView()}
+    </div>
+  );
+}
+
+/* ============================================================
+   Feature 5: Kosten Tab
+   ============================================================ */
+const PIE_COLORS = ["#F27501", "#d96800", "#fb923c", "#fdba74", "#fed7aa", "#fef3c7"];
+
+function KostenTab() {
+  const [data, setData] = useState<KostenData | null>(null);
+  const [jaar, setJaar] = useState(new Date().getFullYear());
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchKosten = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/klant/kosten?jaar=${jaar}`);
+      const d = await res.json();
+      setData(d);
+    } catch { /* ignore */ }
+    setIsLoading(false);
+  }, [jaar]);
+
+  useEffect(() => { fetchKosten(); }, [fetchKosten]);
+
+  const exportCSV = () => {
+    if (!data) return;
+    const rows = [["Maand", "Kosten"], ...data.per_maand.map(m => [m.maand, m.kosten.toFixed(2)])];
+    const csv = rows.map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `kosten-${jaar}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-neutral-900">Kosten Dashboard</h2>
+          <p className="mt-1 text-sm text-neutral-500">Inzicht in uw personeelskosten.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select value={jaar} onChange={(e) => setJaar(Number(e.target.value))}
+            className="px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20">
+            {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <button onClick={exportCSV} className="px-4 py-2 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition">
+            CSV Export
+          </button>
+        </div>
+      </div>
+
+      {/* Totaal */}
+      <div className="bg-gradient-to-r from-neutral-900 to-neutral-800 rounded-2xl p-6 text-white">
+        <p className="text-sm text-neutral-300">Totale kosten {jaar}</p>
+        <p className="text-4xl font-bold mt-2">EUR {(data?.totaal ?? 0).toFixed(2)}</p>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Bar Chart */}
+        <div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-neutral-700 mb-4">Kosten per maand</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data?.per_maand || []}>
+                <XAxis dataKey="maand" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(value) => [`EUR ${Number(value).toFixed(2)}`, "Kosten"]} />
+                <Bar dataKey="kosten" fill="#F27501" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Pie Chart */}
+        <div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-neutral-700 mb-4">Verdeling per functie</h3>
+          <div className="h-64">
+            {data?.per_functie && data.per_functie.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={data.per_functie} dataKey="kosten" nameKey="functie" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
+                    {data.per_functie.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`EUR ${Number(value).toFixed(2)}`, "Kosten"]} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-neutral-400">Geen data beschikbaar</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Top medewerkers */}
+      {data?.top_medewerkers && data.top_medewerkers.length > 0 && (
+        <div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-neutral-700 mb-4">Top medewerkers</h3>
+          <div className="space-y-3">
+            {data.top_medewerkers.map((m, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-neutral-50 last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-[#F27501]/10 text-[#F27501] text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">{m.naam}</p>
+                    <p className="text-xs text-neutral-500">{m.uren} uur</p>
+                  </div>
+                </div>
+                <p className="text-sm font-bold text-neutral-900">EUR {m.totaal.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   Feature 6: Berichten Tab (Chat style)
+   ============================================================ */
+function BerichtenTab({ klant, onUnreadChange }: { klant: Klant; onUnreadChange: (n: number) => void }) {
+  const toast = useToast();
+  const [berichten, setBerichten] = useState<KlantBericht[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [nieuwBericht, setNieuwBericht] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const fetchBerichten = useCallback(async () => {
+    try {
+      const res = await fetch("/api/klant/berichten");
+      const data = await res.json();
+      setBerichten(data.berichten || []);
+      onUnreadChange(data.ongelezen_count || 0);
+    } catch { /* ignore */ }
+    setIsLoading(false);
+  }, [onUnreadChange]);
+
+  useEffect(() => {
+    fetchBerichten();
+    const interval = setInterval(fetchBerichten, 15000);
+    return () => clearInterval(interval);
+  }, [fetchBerichten]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [berichten]);
+
+  const verstuur = async () => {
+    if (!nieuwBericht.trim()) return;
+    setIsSending(true);
+    try {
+      const res = await fetch("/api/klant/berichten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bericht: nieuwBericht.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      setNieuwBericht("");
+      fetchBerichten();
+    } catch {
+      toast.error("Bericht versturen mislukt");
+    }
+    setIsSending(false);
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" /></div>;
+  }
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px]">
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold text-neutral-900">Berichten</h2>
+        <p className="mt-1 text-sm text-neutral-500">Chat met het TopTalent team.</p>
+      </div>
+
+      {/* Chat area */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-white rounded-2xl border border-neutral-200 p-4 space-y-3 shadow-sm">
+        {berichten.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <svg className="w-12 h-12 text-neutral-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <p className="text-sm text-neutral-400">Nog geen berichten. Stuur uw eerste bericht!</p>
+            </div>
+          </div>
+        ) : (
+          berichten.map((b) => (
+            <div key={b.id} className={`flex ${b.afzender === "klant" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                b.afzender === "klant"
+                  ? "bg-[#F27501] text-white rounded-br-md"
+                  : "bg-neutral-100 text-neutral-800 rounded-bl-md"
+              }`}>
+                <p className="text-sm whitespace-pre-wrap">{b.bericht}</p>
+                <p className={`text-xs mt-1 ${b.afzender === "klant" ? "text-white/60" : "text-neutral-400"}`}>
+                  {new Date(b.created_at).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}
+                  {b.afzender === "toptalent" && " · TopTalent"}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="mt-3 flex gap-2">
+        <input
+          type="text"
+          value={nieuwBericht}
+          onChange={(e) => setNieuwBericht(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); verstuur(); } }}
+          placeholder="Typ uw bericht..."
+          className="flex-1 px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] text-sm"
+        />
+        <button onClick={verstuur} disabled={isSending || !nieuwBericht.trim()}
+          className="px-5 py-3 bg-[#F27501] text-white rounded-xl font-medium text-sm hover:bg-[#d96800] transition disabled:opacity-40">
+          {isSending ? "..." : "Verstuur"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Existing: Klant Referral Section
+   ============================================================ */
 function KlantReferralSection() {
   const [data, setData] = useState<{ referral_code: string; referral_link: string; stats: { totaal_verwezen: number; qualified: number; totaal_korting: number }; referrals: { naam: string; status: string; created_at: string }[] } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -831,7 +1762,9 @@ function KlantReferralSection() {
   );
 }
 
-/* Sub-component for Uren tab with pending/approved toggle */
+/* ============================================================
+   Existing: Sub-component for Uren tab
+   ============================================================ */
 function UrenSubTabs({
   pending,
   approved,

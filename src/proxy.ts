@@ -44,7 +44,8 @@ export function proxy(request: NextRequest) {
   }
 
   // --- Klant pages auth ---
-  if (pathname.startsWith("/klant") && !pathname.startsWith("/api/") && pathname !== KLANT_LOGIN) {
+  const isKlantPublicPage = pathname === KLANT_LOGIN || pathname === "/klant/registreren";
+  if (pathname.startsWith("/klant") && !pathname.startsWith("/api/") && !isKlantPublicPage) {
     const klantSession = request.cookies.get("klant_session")?.value;
 
     if (!klantSession) {
