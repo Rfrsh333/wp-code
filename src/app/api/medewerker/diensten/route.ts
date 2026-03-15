@@ -27,7 +27,7 @@ type UrenAanpassing = {
   } | null;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   // KRITIEK: Verify signed JWT instead of trusting JSON
   const cookieStore = await cookies();
   const session = cookieStore.get("medewerker_session");
@@ -40,15 +40,83 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
   }
 
-  const functies = Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie];
-  const { data: alleDiensten } = await supabaseAdmin
+  // Parse filter params
+  const { searchParams } = new URL(request.url);
+  const categorieFilter = searchParams.get('categorie')?.split(',').filter(Boolean) || [];
+  const functieFilter = searchParams.get('functie_filter')?.split(',').filter(Boolean) || [];
+  const taalFilter = searchParams.get('taal') as 'nl' | 'en' | null;
+  const tagsFilter = searchParams.get('tags')?.split(',').filter(Boolean) || [];
+
+  // Build query with joins to get categorie and functie names
+  let query = supabaseAdmin
     .from("diensten")
-    .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief")
-    .in("functie", functies)
+    .select(`
+      id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief,
+      categorie_id, functie_id, vereiste_taal,
+      categorie:dienst_categorieen(naam, slug),
+      functie_ref:dienst_functies(naam, slug)
+    `)
     .in("status", ["open", "vol"])
     .gte("datum", new Date().toISOString().split("T")[0])
     .order("datum", { ascending: true })
     .limit(100);
+
+  // Apply filters
+  if (categorieFilter.length > 0) {
+    // Get categorie IDs from slugs
+    const { data: cats } = await supabaseAdmin
+      .from('dienst_categorieen')
+      .select('id')
+      .in('slug', categorieFilter);
+    if (cats && cats.length > 0) {
+      query = query.in('categorie_id', cats.map(c => c.id));
+    }
+  }
+
+  if (functieFilter.length > 0) {
+    // Get functie IDs from slugs
+    const { data: funcs } = await supabaseAdmin
+      .from('dienst_functies')
+      .select('id')
+      .in('slug', functieFilter);
+    if (funcs && funcs.length > 0) {
+      query = query.in('functie_id', funcs.map(f => f.id));
+    }
+  }
+
+  if (taalFilter) {
+    query = query.or(`vereiste_taal.eq.${taalFilter},vereiste_taal.eq.nl_en,vereiste_taal.is.null`);
+  }
+
+  // Execute query
+  const { data: alleDiensten } = await query;
+
+  // Filter by tags (many-to-many)
+  let filteredDiensten = alleDiensten || [];
+  if (tagsFilter.length > 0) {
+    const { data: tagIds } = await supabaseAdmin
+      .from('dienst_tags')
+      .select('id')
+      .in('slug', tagsFilter);
+
+    if (tagIds && tagIds.length > 0) {
+      const { data: dienstenWithTags } = await supabaseAdmin
+        .from('diensten_tags')
+        .select('dienst_id')
+        .in('tag_id', tagIds.map(t => t.id));
+
+      const taggedDienstIds = new Set(dienstenWithTags?.map(d => d.dienst_id) || []);
+      filteredDiensten = filteredDiensten.filter(d => taggedDienstIds.has(d.id));
+    }
+  }
+
+  // BACKWARDS COMPATIBILITY: If no filters, still filter by medewerker functie
+  if (categorieFilter.length === 0 && functieFilter.length === 0) {
+    const functies = Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie];
+    filteredDiensten = filteredDiensten.filter(d => functies.includes(d.functie));
+  }
+
+  const alleDienstenCompat = filteredDiensten;
 
   const { data: aanmeldingen } = await supabaseAdmin
     .from("dienst_aanmeldingen")
@@ -63,8 +131,10 @@ export async function GET() {
     ]) || []
   );
 
-  const diensten = (alleDiensten || []).map((d) => ({
+  const diensten = (alleDienstenCompat || []).map((d) => ({
     ...d,
+    categorie_naam: (d.categorie as any)?.naam || null,
+    functie_naam: (d.functie_ref as any)?.naam || null,
     aangemeld: aanmeldMap.has(d.id),
     aanmelding_id: aanmeldMap.get(d.id)?.id,
     aanmelding_status: aanmeldMap.get(d.id)?.status,
@@ -132,7 +202,7 @@ export async function GET() {
     });
   }
 
-  console.log(`[MEDEWERKER DIENSTEN] Functies: ${functies}, Found ${diensten.length} diensten for ${medewerker.naam}`);
+  console.log(`[MEDEWERKER DIENSTEN] Found ${diensten.length} diensten for ${medewerker.naam}`);
   return NextResponse.json({ diensten, aanpassingen: mapped, vervangingVerzoeken, accountGepauzeerd });
 }
 

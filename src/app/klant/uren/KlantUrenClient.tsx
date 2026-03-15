@@ -13,7 +13,7 @@ import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import QuickActions from "@/components/klant/QuickActions";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
-import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction } from "@/hooks/queries/useKlantQueries";
+import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useKlantFavorieten, useKlantTemplates, useKlantAanvraagLocaties, useKlantRooster, useKlantKosten, useKlantCheckins, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction, useFavorietAction, useAanvraagAction, useTemplateAction, useCheckinAction } from "@/hooks/queries/useKlantQueries";
 import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
 
 interface Klant {
@@ -965,7 +965,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
             {activeTab === "rooster" && <RoosterTab formatTime={formatTime} statusTone={statusTone} />}
 
             {/* Tab: Aanvragen */}
-            {activeTab === "aanvragen" && <AanvraagTab klant={klant} onSuccess={() => { fetchUren(); setActiveTab("diensten"); }} />}
+            {activeTab === "aanvragen" && <AanvraagTab klant={klant} onSuccess={() => { setActiveTab("diensten"); }} />}
 
             {/* Tab: Favorieten */}
             {activeTab === "favorieten" && <FavorietenTab />}
@@ -2068,11 +2068,12 @@ const PIE_COLORS = ["#F27501", "#d96800", "#fb923c", "#fdba74", "#fed7aa", "#fef
 function KostenTab() {
   const [jaar, setJaar] = useState(new Date().getFullYear());
 
-  const { data, isLoading } = useKlantKosten(jaar);
+  const { data: rawData, isLoading } = useKlantKosten(jaar);
+  const data = rawData as KostenData | null;
 
   const exportCSV = () => {
     if (!data) return;
-    const rows = [["Maand", "Kosten"], ...data.per_maand.map(m => [m.maand, m.kosten.toFixed(2)])];
+    const rows = [["Maand", "Kosten"], ...data.per_maand.map((m: { maand: string; kosten: number }) => [m.maand, m.kosten.toFixed(2)])];
     const csv = rows.map(r => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -2324,26 +2325,12 @@ function QRScannerTab() {
   const html5QrCodeRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "warning" | "error" | "multiple"; data?: CheckinResult; message?: string } | null>(null);
-  const [checkins, setCheckins] = useState<CheckinListItem[]>([]);
-  const [loadingCheckins, setLoadingCheckins] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [multipleData, setMultipleData] = useState<{ medewerker_id: string; medewerker?: { naam: string; functie?: string; profile_photo_url?: string | null }; diensten: Array<{ dienst_id: string; aanmelding_id: string; datum: string; start_tijd: string; eind_tijd: string; locatie: string; functie: string; check_in_at: string | null }> } | null>(null);
 
-  const fetchCheckins = useCallback(async () => {
-    try {
-      const res = await fetch("/api/klant/checkin");
-      const data = await res.json();
-      setCheckins(data.checkins || []);
-    } catch {
-      // Silently fail
-    } finally {
-      setLoadingCheckins(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCheckins();
-  }, [fetchCheckins]);
+  const { data: checkinsData, isLoading: loadingCheckins } = useKlantCheckins();
+  const checkinAction = useCheckinAction();
+  const checkins: CheckinListItem[] = checkinsData?.checkins ?? [];
 
   // Cleanup scanner on unmount
   useEffect(() => {
@@ -2422,29 +2409,32 @@ function QRScannerTab() {
       }
 
       // Send check-in request
-      const res = await fetch("/api/klant/checkin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ medewerker_id: qrData.id }),
-      });
-
-      const data = await res.json();
-
-      if (res.status === 200) {
-        // Check if multiple diensten
-        if (data.status === "multiple_diensten") {
-          setMultipleData({ ...data, medewerker_id: qrData.id });
-          setResult({ type: "multiple", data });
-        } else {
-          setResult({ type: "success", data });
-          toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
-          fetchCheckins();
+      checkinAction.mutate(
+        { medewerker_id: qrData.id },
+        {
+          onSuccess: (data) => {
+            if (data.status === 200 || !data.status || data.status === "multiple_diensten") {
+              if (data.status === "multiple_diensten") {
+                setMultipleData({ ...data, medewerker_id: qrData.id! });
+                setResult({ type: "multiple", data });
+              } else {
+                setResult({ type: "success", data });
+                toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
+              }
+            } else if (data.status === 409) {
+              setResult({ type: "warning", data });
+            } else {
+              setResult({ type: "error", message: data.error || "Check-in mislukt" });
+            }
+            setProcessing(false);
+          },
+          onError: () => {
+            setResult({ type: "error", message: "Netwerkfout — probeer opnieuw" });
+            setProcessing(false);
+          },
         }
-      } else if (res.status === 409) {
-        setResult({ type: "warning", data });
-      } else {
-        setResult({ type: "error", message: data.error || "Check-in mislukt" });
-      }
+      );
+      return; // Don't set processing false here - callbacks handle it
     } catch {
       setResult({ type: "error", message: "Netwerkfout — probeer opnieuw" });
     } finally {
@@ -2456,31 +2446,28 @@ function QRScannerTab() {
     if (!multipleData) return;
 
     setProcessing(true);
-    try {
-      const res = await fetch("/api/klant/checkin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ medewerker_id: multipleData.medewerker_id, dienst_id }),
-      });
-
-      const data = await res.json();
-
-      if (res.status === 200) {
-        setResult({ type: "success", data });
-        setMultipleData(null);
-        toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
-        fetchCheckins();
-      } else if (res.status === 409) {
-        setResult({ type: "warning", data });
-        setMultipleData(null);
-      } else {
-        setResult({ type: "error", message: data.error || "Check-in mislukt" });
+    checkinAction.mutate(
+      { medewerker_id: multipleData.medewerker_id, dienst_id },
+      {
+        onSuccess: (data) => {
+          if (data.status === 200 || !data.status) {
+            setResult({ type: "success", data });
+            setMultipleData(null);
+            toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
+          } else if (data.status === 409) {
+            setResult({ type: "warning", data });
+            setMultipleData(null);
+          } else {
+            setResult({ type: "error", message: data.error || "Check-in mislukt" });
+          }
+          setProcessing(false);
+        },
+        onError: () => {
+          setResult({ type: "error", message: "Netwerkfout — probeer opnieuw" });
+          setProcessing(false);
+        },
       }
-    } catch {
-      setResult({ type: "error", message: "Netwerkfout — probeer opnieuw" });
-    } finally {
-      setProcessing(false);
-    }
+    );
   };
 
   const formatTime = (t: string) => {

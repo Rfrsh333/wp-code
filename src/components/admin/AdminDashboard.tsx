@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAdminOverzicht, useAdminDataAction } from "@/hooks/queries/useAdminQueries";
+import { useAdminRealtime } from "@/hooks/queries/useAdminRealtime";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import Pagination from "@/components/ui/Pagination";
@@ -329,19 +331,36 @@ export default function AdminDashboard() {
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [inschrijvingStatusFilter, setInschrijvingStatusFilter] = useState<OnboardingStatus | "all">("all");
   const [inschrijvingView, setInschrijvingView] = useState<"tabel" | "pipeline">("tabel");
-  const [stats, setStats] = useState<Stats>({
-    aanvragen: { total: 0, nieuw: 0 },
-    inschrijvingen: { total: 0, nieuw: 0 },
-    contact: { total: 0, nieuw: 0 },
-    calculator: { total: 0, downloaded: 0 },
-    offertesConcepten: 0,
-  });
-  const [aanvragen, setAanvragen] = useState<PersoneelAanvraag[]>([]);
-  const [inschrijvingen, setInschrijvingen] = useState<Inschrijving[]>([]);
-  const [contactBerichten, setContactBerichten] = useState<ContactBericht[]>([]);
-  const [calculatorLeads, setCalculatorLeads] = useState<CalculatorLead[]>([]);
-  const [opsSnapshot, setOpsSnapshot] = useState<OpsSnapshot | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // React Query for centralized data + Realtime
+  const { data: overzichtData, isLoading } = useAdminOverzicht();
+  const adminDataAction = useAdminDataAction();
+  useAdminRealtime();
+
+  const aanvragen: PersoneelAanvraag[] = overzichtData?.aanvragen ?? [];
+  const inschrijvingen: Inschrijving[] = overzichtData?.inschrijvingen ?? [];
+  const contactBerichten: ContactBericht[] = overzichtData?.contactBerichten ?? [];
+  const calculatorLeads: CalculatorLead[] = overzichtData?.calculatorLeads ?? [];
+  const opsSnapshot: OpsSnapshot | null = overzichtData?.opsSnapshot ?? null;
+
+  const stats: Stats = useMemo(() => ({
+    aanvragen: {
+      total: aanvragen.length,
+      nieuw: aanvragen.filter((a) => a.status === "nieuw").length,
+    },
+    inschrijvingen: {
+      total: inschrijvingen.length,
+      nieuw: inschrijvingen.filter((i) => getInschrijvingOnboardingStatus(i) === "nieuw").length,
+    },
+    contact: {
+      total: contactBerichten.length,
+      nieuw: contactBerichten.filter((c) => c.status === "nieuw").length,
+    },
+    calculator: {
+      total: calculatorLeads.length,
+      downloaded: calculatorLeads.filter((c) => c.pdf_downloaded).length,
+    },
+    offertesConcepten: (overzichtData?.offertes ?? []).filter((o: { status: string; ai_generated: boolean }) => o.status === "concept" && o.ai_generated).length,
+  }), [aanvragen, inschrijvingen, contactBerichten, calculatorLeads, overzichtData]);
   const [selectedItem, setSelectedItem] = useState<PersoneelAanvraag | Inschrijving | ContactBericht | CalculatorLead | null>(null);
   const [detailType, setDetailType] = useState<AdminTab | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -397,13 +416,10 @@ export default function AdminDashboard() {
   const deleteSelected = async (table: string) => {
     if (selectedIds.size === 0) return;
     if (confirm(`Weet je zeker dat je ${selectedIds.size} items wilt verwijderen?`)) {
-      await fetch("/api/admin/data", {
-        method: "POST",
-        headers: await getAuthHeaders(),
-        body: JSON.stringify({ action: "delete_many", table, data: { ids: Array.from(selectedIds) } }),
-      });
-      setSelectedIds(new Set());
-      fetchData();
+      adminDataAction.mutate(
+        { action: "delete_many", table, data: { ids: Array.from(selectedIds) } },
+        { onSuccess: () => setSelectedIds(new Set()) }
+      );
     }
   };
 
@@ -414,61 +430,10 @@ export default function AdminDashboard() {
     exportToCSV(toExport, filename);
   };
 
+  // fetchData kept as a no-op for backward compatibility with mutation callbacks
   const fetchData = useCallback(async () => {
-    setIsLoading(true);
-
-    // Get session token for admin API auth
-    const { data: { session } } = await supabase.auth.getSession();
-    const headers: HeadersInit = session?.access_token
-      ? { "Authorization": `Bearer ${session.access_token}` }
-      : {};
-
-    // Fetch all data via admin API (bypasses RLS)
-    const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes, opsRes, offertesRes] = await Promise.all([
-      fetch("/api/admin/data?table=personeel_aanvragen", { headers }).then(r => r.json()),
-      fetch("/api/admin/data?table=inschrijvingen", { headers }).then(r => r.json()),
-      fetch("/api/admin/data?table=contact_berichten", { headers }).then(r => r.json()),
-      fetch("/api/admin/data?table=calculator_leads", { headers }).then(r => r.json()),
-      fetch("/api/admin/ops", { headers }).then(r => r.json()),
-      fetch("/api/admin/data?table=offertes&orderBy=created_at&order=desc", { headers }).then(r => r.json()),
-    ]);
-
-    if (aanvragenRes.data) setAanvragen(aanvragenRes.data);
-    if (inschrijvingenRes.data) setInschrijvingen(inschrijvingenRes.data);
-    if (contactRes.data) setContactBerichten(contactRes.data);
-    if (calculatorRes.data) setCalculatorLeads(calculatorRes.data);
-    if (!opsRes.error) setOpsSnapshot(opsRes);
-
-    // Calculate stats
-    setStats({
-      aanvragen: {
-        total: aanvragenRes.data?.length || 0,
-        nieuw: aanvragenRes.data?.filter((a: PersoneelAanvraag) => a.status === "nieuw").length || 0,
-      },
-      inschrijvingen: {
-        total: inschrijvingenRes.data?.length || 0,
-        nieuw:
-          inschrijvingenRes.data?.filter(
-            (i: Inschrijving) => getInschrijvingOnboardingStatus(i) === "nieuw"
-          ).length || 0,
-      },
-      contact: {
-        total: contactRes.data?.length || 0,
-        nieuw: contactRes.data?.filter((c: ContactBericht) => c.status === "nieuw").length || 0,
-      },
-      calculator: {
-        total: calculatorRes.data?.length || 0,
-        downloaded: calculatorRes.data?.filter((c: CalculatorLead) => c.pdf_downloaded).length || 0,
-      },
-      offertesConcepten: offertesRes.data?.filter((o: { status: string; ai_generated: boolean }) => o.status === "concept" && o.ai_generated).length || 0,
-    });
-
-    setIsLoading(false);
+    // React Query handles refetching automatically via invalidation
   }, []);
-
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
 
   const handleTabChange = useCallback((tab: AdminTab) => {
     setActiveTab(tab);
@@ -489,13 +454,10 @@ export default function AdminDashboard() {
   }, [router, searchParams]);
 
   const updateStatus = async (table: string, id: string, status: Status) => {
-    await fetch("/api/admin/data", {
-      method: "POST",
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ action: "update", table, id, data: { status } }),
-    });
-    fetchData();
-    setSelectedItem(null);
+    adminDataAction.mutate(
+      { action: "update", table, id, data: { status } },
+      { onSuccess: () => setSelectedItem(null) }
+    );
   };
 
   const updateInschrijvingOnboardingStatus = async (
