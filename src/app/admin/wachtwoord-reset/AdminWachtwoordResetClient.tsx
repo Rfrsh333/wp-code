@@ -12,30 +12,38 @@ export default function AdminWachtwoordResetClient() {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState("");
   const tokensRef = useRef<{ access_token: string; refresh_token: string } | null>(null);
+  const isMountedRef = useRef(false);
 
   useEffect(() => {
-    // Read hash fragment immediately
-    const hash = window.location.hash.replace(/^#/, "");
+    // Prevent double execution in development strict mode
+    if (isMountedRef.current) return;
+    isMountedRef.current = true;
 
-    if (!hash) {
-      setError("Geen recovery tokens gevonden in de URL.");
-      return;
-    }
+    // Use setTimeout to avoid setState in render cycle
+    setTimeout(() => {
+      // Read hash fragment immediately
+      const hash = window.location.hash.replace(/^#/, "");
 
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-    const tokenType = params.get("type");
+      if (!hash) {
+        setError("Geen recovery tokens gevonden in de URL.");
+        return;
+      }
 
-    if (!accessToken || !refreshToken || tokenType !== "recovery") {
-      setError("Deze resetlink is ongeldig.");
-      return;
-    }
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const tokenType = params.get("type");
 
-    // Store tokens for later use and clean URL
-    tokensRef.current = { access_token: accessToken, refresh_token: refreshToken };
-    window.history.replaceState({}, document.title, window.location.pathname);
-    setIsReady(true);
+      if (!accessToken || !refreshToken || tokenType !== "recovery") {
+        setError("Deze resetlink is ongeldig.");
+        return;
+      }
+
+      // Store tokens for later use and clean URL
+      tokensRef.current = { access_token: accessToken, refresh_token: refreshToken };
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setIsReady(true);
+    }, 0);
   }, []);
 
   const handleSubmit = async (event: FormEvent) => {
