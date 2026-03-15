@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
       console.error("Dienst aanmaken mislukt:", error);
       console.error("Insert data was:", JSON.stringify(insertData, null, 2));
       return NextResponse.json({
-        error: "Aanvraag opslaan mislukt. Probeer het later opnieuw.",
-        details: process.env.NODE_ENV === "development" ? error.message : undefined
+        error: `Aanvraag opslaan mislukt: ${error.message}`,
+        code: error.code,
       }, { status: 500 });
     }
 
