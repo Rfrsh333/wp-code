@@ -328,14 +328,26 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const fetchAanmeldingen = async (dienstId: string) => {
     setAanmeldingenLoading(true);
     try {
+      console.log('[KLANT] Fetching aanmeldingen for dienst:', dienstId);
       const res = await fetch("/api/klant/diensten", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "get_aanmeldingen", dienst_id: dienstId }),
       });
       const data = await res.json();
+      console.log('[KLANT] Received aanmeldingen:', data.data);
+      console.log('[KLANT] Aanmeldingen count:', data.data?.length || 0);
+      data.data?.forEach((a: DienstAanmelding, i: number) => {
+        console.log(`[KLANT] Aanmelding ${i + 1}:`, {
+          id: a.id,
+          status: a.status,
+          medewerker_naam: a.medewerker?.naam || 'MISSING',
+          medewerker_data: a.medewerker
+        });
+      });
       setAanmeldingen(data.data || []);
-    } catch {
+    } catch (err) {
+      console.error('[KLANT] Error fetching aanmeldingen:', err);
       toast.error("Aanmeldingen ophalen mislukt");
     }
     setAanmeldingenLoading(false);
