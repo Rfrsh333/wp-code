@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { LogOut, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -264,11 +265,20 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect, forceVisi
       )}
     >
       <div className="flex items-center justify-between gap-3 border-b border-neutral-200/80 px-5 py-5">
-        <Link href="/admin" className={cn("min-w-0", collapsed && "sr-only")}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F27501]">
-            TopTalent
-          </p>
-          <h1 className="mt-1 truncate text-lg font-semibold text-neutral-950">Admin navigation</h1>
+        <Link href="/admin" className={cn("flex items-center gap-3", collapsed && "sr-only")}>
+          <Image
+            src="/favicon-icon.png"
+            alt="TopTalent"
+            width={40}
+            height={40}
+            className="shrink-0"
+          />
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F27501]">
+              TopTalent
+            </p>
+            <h1 className="mt-1 truncate text-lg font-semibold text-neutral-950">Admin navigation</h1>
+          </div>
         </Link>
         <SidebarCollapsedToggle collapsed={collapsed} onToggle={toggleCollapsed} />
       </div>

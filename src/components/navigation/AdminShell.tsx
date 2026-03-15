@@ -2,6 +2,7 @@
 
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Bell, ChevronRight, Menu, Search, X } from "lucide-react";
+import Image from "next/image";
 import Sidebar from "@/components/navigation/Sidebar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import CommandPalette from "@/components/navigation/CommandPalette";
@@ -107,9 +108,13 @@ export default function AdminShell({
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span className="text-sm font-semibold text-[#F27501] uppercase tracking-wider">
-              TopTalent
-            </span>
+            <Image
+              src="/favicon-icon.png"
+              alt="TopTalent"
+              width={32}
+              height={32}
+              className="shrink-0"
+            />
           </div>
           <div className="flex items-center gap-1">
             {totalBadges > 0 && (

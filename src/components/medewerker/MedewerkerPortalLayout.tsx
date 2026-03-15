@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import MedewerkerBottomNav from "./MedewerkerBottomNav";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
@@ -53,9 +54,13 @@ export default function MedewerkerPortalLayout({
         {/* Logo */}
         <div className="p-5 border-b border-[var(--mp-separator)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-[#F27501] rounded-xl flex items-center justify-center">
-              <span className="text-white text-sm font-black">TT</span>
-            </div>
+            <Image
+              src="/favicon-icon.png"
+              alt="TopTalent"
+              width={32}
+              height={32}
+              className="shrink-0"
+            />
             <div>
               <p className="text-sm font-bold text-[var(--mp-text-primary)]">TopTalent</p>
               <p className="text-[10px] text-[var(--mp-text-tertiary)]">Medewerker Portaal</p>
@@ -124,9 +129,13 @@ export default function MedewerkerPortalLayout({
       <header className="md:hidden fixed top-0 left-0 right-0 z-[70] glass border-b border-[var(--mp-separator)]">
         <div className="flex items-center justify-between px-4 h-12">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-[#F27501] rounded-lg flex items-center justify-center">
-              <span className="text-white text-xs font-black">TT</span>
-            </div>
+            <Image
+              src="/favicon-icon.png"
+              alt="TopTalent"
+              width={28}
+              height={28}
+              className="shrink-0"
+            />
             <span className="text-sm font-bold text-[var(--mp-text-primary)]">TopTalent</span>
           </div>
           <div className="flex items-center gap-1">
