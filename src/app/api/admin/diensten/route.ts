@@ -37,6 +37,12 @@ export async function POST(request: NextRequest) {
 
   if (action === "create") {
     const payload = { ...data, status: data.status || "open" };
+    // Zet plekken_beschikbaar en plekken_totaal op basis van aantal_nodig
+    // zodat medewerkers de dienst kunnen zien in Ontdekken
+    if (payload.aantal_nodig && !payload.plekken_totaal) {
+      payload.plekken_totaal = payload.aantal_nodig;
+      payload.plekken_beschikbaar = payload.aantal_nodig;
+    }
     if (payload.klant_naam) {
       payload.klant_id = await ensureKlantForDienst(payload);
     }
@@ -53,6 +59,20 @@ export async function POST(request: NextRequest) {
   }
   if (action === "update") {
     const payload = { ...data };
+    // Sync plekken_totaal als aantal_nodig verandert
+    if (payload.aantal_nodig !== undefined) {
+      const { data: current } = await supabaseAdmin
+        .from("diensten")
+        .select("plekken_totaal, plekken_beschikbaar, aantal_nodig")
+        .eq("id", id)
+        .single();
+      const oldTotal = current?.plekken_totaal || current?.aantal_nodig || 0;
+      const oldBeschikbaar = current?.plekken_beschikbaar ?? oldTotal;
+      const newTotal = payload.aantal_nodig;
+      const diff = newTotal - oldTotal;
+      payload.plekken_totaal = newTotal;
+      payload.plekken_beschikbaar = Math.max(0, oldBeschikbaar + diff);
+    }
     if (payload.klant_naam) {
       payload.klant_id = await ensureKlantForDienst(payload);
     }

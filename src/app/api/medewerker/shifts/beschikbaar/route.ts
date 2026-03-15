@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
 
     const vandaag = new Date().toISOString().split("T")[0];
 
-    // Haal alle toekomstige diensten op met beschikbare plekken
+    // Haal alle toekomstige open diensten op
+    // Let op: plekken_beschikbaar kan NULL zijn bij oudere diensten,
+    // daarom filteren we in-memory i.p.v. met .gt() om ook diensten met
+    // alleen aantal_nodig te tonen
     const { data: diensten, error } = await supabaseAdmin
       .from("diensten")
       .select(`
@@ -27,8 +30,12 @@ export async function GET(request: NextRequest) {
         locatie,
         omschrijving,
         uurtarief,
+        aantal_nodig,
         plekken_beschikbaar,
         plekken_totaal,
+        functie,
+        klant_naam,
+        klant_id,
         klant:klanten!klant_id (
           id,
           bedrijfsnaam,
@@ -36,7 +43,6 @@ export async function GET(request: NextRequest) {
         )
       `)
       .gte("datum", vandaag)
-      .gt("plekken_beschikbaar", 0)
       .eq("status", "open")
       .order("datum", { ascending: true })
       .order("start_tijd", { ascending: true })
@@ -56,9 +62,18 @@ export async function GET(request: NextRequest) {
     const aangemeldeDienstIds = new Set(aanmeldingen?.map((a) => a.dienst_id) || []);
 
     const beschikbareShifts = (diensten || [])
-      .filter((d) => !aangemeldeDienstIds.has(d.id))
+      .filter((d) => {
+        // Filter: al aangemeld
+        if (aangemeldeDienstIds.has(d.id)) return false;
+        // Filter: geen plekken meer (fallback naar aantal_nodig als plekken_beschikbaar NULL is)
+        const beschikbaar = d.plekken_beschikbaar ?? d.aantal_nodig ?? 1;
+        if (beschikbaar <= 0) return false;
+        return true;
+      })
       .map((d) => {
         const klant = d.klant as any;
+        const plekkenBeschikbaar = d.plekken_beschikbaar ?? d.aantal_nodig ?? 1;
+        const plekkenTotaal = d.plekken_totaal ?? d.aantal_nodig ?? 1;
 
         // Genereer tags op basis van shift eigenschappen
         const tags: string[] = [];
@@ -77,7 +92,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Markeer als "speciaal" als uurtarief hoog is of veel plekken
-        const is_speciaal = medewerkerUurtarief >= 18 || d.plekken_beschikbaar >= 5;
+        const is_speciaal = medewerkerUurtarief >= 18 || plekkenBeschikbaar >= 5;
 
         return {
           id: d.id,
@@ -85,12 +100,12 @@ export async function GET(request: NextRequest) {
           start_tijd: d.start_tijd,
           eind_tijd: d.eind_tijd,
           locatie: d.locatie,
-          omschrijving: d.omschrijving,
+          omschrijving: d.omschrijving || d.functie,
           uurtarief: d.uurtarief,
-          plekken_beschikbaar: d.plekken_beschikbaar,
-          plekken_totaal: d.plekken_totaal,
+          plekken_beschikbaar: plekkenBeschikbaar,
+          plekken_totaal: plekkenTotaal,
           klant: {
-            bedrijfsnaam: klant?.bedrijfsnaam || "Onbekend",
+            bedrijfsnaam: klant?.bedrijfsnaam || (d as any).klant_naam || "Onbekend",
             bedrijf_foto_url: klant?.bedrijf_foto_url,
             rating: 4.5, // Placeholder - kan later dynamisch worden
           },
