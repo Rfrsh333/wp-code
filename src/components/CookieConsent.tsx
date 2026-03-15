@@ -32,14 +32,14 @@ export default function CookieConsent() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[60] px-4 pb-4">
-      <div className="max-w-4xl mx-auto bg-white border border-neutral-200 rounded-2xl shadow-2xl shadow-neutral-900/10 p-6">
+    <div className="fixed inset-x-0 bottom-0 z-[90] px-4 pb-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 72px)" }}>
+      <div className="max-w-4xl mx-auto bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-[#38383A] rounded-2xl shadow-2xl shadow-neutral-900/10 p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="max-w-2xl">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-2">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
               Cookies & privacy
             </h2>
-            <p className="text-sm text-neutral-600 leading-relaxed">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
               We gebruiken noodzakelijke cookies voor de werking van de site en optionele
               cookies voor analytics en marketing. Je kunt je voorkeur altijd wijzigen via
               onze cookie-instellingen.
@@ -52,7 +52,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={() => handleConsent("necessary")}
-              className="px-5 py-3 rounded-xl border border-neutral-200 text-neutral-700 font-medium hover:border-neutral-300 hover:bg-neutral-50 transition-colors"
+              className="px-5 py-3 rounded-xl border border-neutral-200 dark:border-[#38383A] text-neutral-700 dark:text-neutral-300 font-medium hover:border-neutral-300 hover:bg-neutral-50 dark:hover:bg-[#2C2C2E] transition-colors"
             >
               Alleen noodzakelijk
             </button>

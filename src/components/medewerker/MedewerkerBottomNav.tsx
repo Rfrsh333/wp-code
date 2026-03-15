@@ -107,8 +107,8 @@ export default function MedewerkerBottomNav({ activeTab, onTabChange, badges }: 
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-[80] md:hidden">
-        <div className="glass border-t border-[var(--mp-separator)] safe-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-[80] md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="glass border-t border-[var(--mp-separator)]">
           <div className="flex items-center justify-around px-2 h-[var(--mp-nav-height)]">
             {primaryTabs.map((tab) => {
               const isActive = tab.id === "more" ? isSecondaryActive || showMore : tab.id === activeTab;

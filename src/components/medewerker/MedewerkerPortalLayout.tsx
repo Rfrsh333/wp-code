@@ -126,7 +126,7 @@ export default function MedewerkerPortalLayout({
       </aside>
 
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-[70] glass border-b border-[var(--mp-separator)]">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-[70] glass border-b border-[var(--mp-separator)]" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="flex items-center justify-between px-4 h-12">
           <div className="flex items-center gap-2">
             <Image
@@ -146,7 +146,7 @@ export default function MedewerkerPortalLayout({
       </header>
 
       {/* Main Content */}
-      <main className="md:ml-60 pt-12 md:pt-0 pb-20 md:pb-0 min-h-screen">
+      <main className="md:ml-60 md:pt-0 md:pb-0 min-h-screen" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3rem)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}>
         <div className="p-4 md:p-8 max-w-5xl">
           <AnimatePresence mode="wait">
             <motion.div
