@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import MedewerkerBottomNav from "./MedewerkerBottomNav";
 import ThemeToggle from "./ThemeToggle";
-import NotificationBell from "./NotificationBell";
 
 interface PortalTab {
   id: string;
@@ -22,7 +21,6 @@ interface MedewerkerPortalLayoutProps {
   onTabChange: (tabId: string) => void;
   userName: string;
   onLogout: () => void;
-  ongelezen?: number;
 }
 
 export default function MedewerkerPortalLayout({
@@ -32,7 +30,6 @@ export default function MedewerkerPortalLayout({
   onTabChange,
   userName,
   onLogout,
-  ongelezen = 0,
 }: MedewerkerPortalLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -140,7 +137,6 @@ export default function MedewerkerPortalLayout({
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />
-            <NotificationBell count={ongelezen} onClick={() => onTabChange("berichten")} />
           </div>
         </div>
       </header>
@@ -169,7 +165,6 @@ export default function MedewerkerPortalLayout({
         badges={{
           diensten: dienstenBadge,
           uren: urenBadge,
-          berichten: ongelezen,
         }}
       />
     </div>

@@ -17,7 +17,6 @@ interface MedewerkerLayoutProps {
   onTabChange: (tabId: string) => void;
   userName: string;
   onLogout: () => void;
-  ongelezen?: number;
 }
 
 export default function MedewerkerLayout({
@@ -27,7 +26,6 @@ export default function MedewerkerLayout({
   onTabChange,
   userName,
   onLogout,
-  ongelezen = 0,
 }: MedewerkerLayoutProps) {
   return (
     <MedewerkerPortalLayout
@@ -36,7 +34,6 @@ export default function MedewerkerLayout({
       onTabChange={onTabChange}
       userName={userName}
       onLogout={onLogout}
-      ongelezen={ongelezen}
     >
       {children}
     </MedewerkerPortalLayout>

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   User,
   Settings,
-  MessageSquare,
   HelpCircle,
   FileText,
   LogOut,
@@ -80,7 +79,6 @@ export default function AccountClient() {
       items: [
         { icon: User, label: "Persoonlijke gegevens", onClick: () => router.push("/medewerker/profiel") },
         { icon: Settings, label: "Instellingen", onClick: () => router.push("/medewerker/instellingen") },
-        { icon: MessageSquare, label: "Berichten", onClick: () => router.push("/medewerker/berichten") },
       ],
     },
     {

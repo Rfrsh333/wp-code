@@ -6,7 +6,6 @@ import {
   Calendar,
   Clock,
   CalendarCheck,
-  MessageSquare,
   User,
   Euro,
   FileText,
@@ -40,7 +39,6 @@ const menuSections = [
     title: "Planning",
     items: [
       { id: "beschikbaarheid", label: "Beschikbaarheid", icon: CalendarCheck, href: "/medewerker/beschikbaarheid" },
-      { id: "berichten", label: "Berichten", icon: MessageSquare, href: "/medewerker/berichten", badge: 0 },
     ] as MenuItem[],
   },
   {
@@ -58,14 +56,12 @@ interface DesktopSidebarProps {
   medewerkerNaam?: string;
   medewerkerEmail?: string;
   profilePhotoUrl?: string | null;
-  ongelezen?: number;
 }
 
 export default function DesktopSidebar({
   medewerkerNaam = "Medewerker",
   medewerkerEmail,
   profilePhotoUrl,
-  ongelezen = 0,
 }: DesktopSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -88,14 +84,6 @@ export default function DesktopSidebar({
       console.error("Logout error:", err);
     }
   };
-
-  // Update badge for berichten
-  const updatedSections = menuSections.map((section) => ({
-    ...section,
-    items: section.items.map((item) =>
-      item.id === "berichten" ? { ...item, badge: ongelezen } : item
-    ),
-  }));
 
   return (
     <aside
@@ -162,7 +150,7 @@ export default function DesktopSidebar({
 
       {/* Menu secties */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-        {updatedSections.map((section, idx) => (
+        {menuSections.map((section, idx) => (
           <div key={idx}>
             {!isCollapsed && (
               <h3 className="text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase tracking-wider mb-2 px-3">

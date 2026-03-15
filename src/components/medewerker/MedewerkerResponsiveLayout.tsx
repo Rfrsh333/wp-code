@@ -10,7 +10,6 @@ interface MedewerkerResponsiveLayoutProps {
   medewerkerNaam?: string;
   medewerkerEmail?: string;
   profilePhotoUrl?: string | null;
-  ongelezen?: number;
 }
 
 export default function MedewerkerResponsiveLayout({
@@ -18,7 +17,6 @@ export default function MedewerkerResponsiveLayout({
   medewerkerNaam,
   medewerkerEmail,
   profilePhotoUrl,
-  ongelezen = 0,
 }: MedewerkerResponsiveLayoutProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [accountGepauzeerd, setAccountGepauzeerd] = useState(false);
@@ -52,7 +50,6 @@ export default function MedewerkerResponsiveLayout({
         medewerkerNaam={medewerkerNaam}
         medewerkerEmail={medewerkerEmail}
         profilePhotoUrl={profilePhotoUrl}
-        ongelezen={ongelezen}
       />
 
       {/* Main content area */}

@@ -161,14 +161,6 @@ interface KostenData {
   top_medewerkers: { naam: string; totaal: number; uren: number }[];
 }
 
-interface KlantBericht {
-  id: string;
-  created_at: string;
-  afzender: "klant" | "toptalent";
-  bericht: string;
-  gelezen: boolean;
-}
-
 export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState("overzicht");
@@ -178,7 +170,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [upcomingDiensten, setUpcomingDiensten] = useState<UpcomingDienst[]>([]);
   const [recentFacturen, setRecentFacturen] = useState<Factuur[]>([]);
-  const [ongelesCount, setOngelesCount] = useState(0);
   const [beoordeelModal, setBeoordeelModal] = useState<{
     open: boolean;
     item: TeBeoordelen | null;
@@ -274,22 +265,13 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     } catch { /* ignore */ }
   }, []);
 
-  // Fetch unread berichten count for badge
-  const fetchOngelezen = useCallback(async () => {
-    try {
-      const res = await fetch("/api/klant/berichten");
-      const data = await res.json();
-      setOngelesCount(data.ongelezen_count || 0);
-    } catch { /* ignore */ }
-  }, []);
 
   useEffect(() => {
     void (async () => {
       await fetchUren();
-      await fetchOngelezen();
       await fetchDiensten();
     })();
-  }, [fetchOngelezen, fetchDiensten]);
+  }, [fetchDiensten]);
 
   // Check for non-scanned medewerkers when aanmeldingen are loaded
   useEffect(() => {
@@ -576,16 +558,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       badge: teBeoordeelen.length > 0 ? teBeoordeelen.length : undefined,
     },
     {
-      id: "berichten",
-      label: "Berichten",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      ),
-      badge: ongelesCount > 0 ? ongelesCount : undefined,
-    },
-    {
       id: "qr-scanner",
       label: "QR Check-in",
       icon: (
@@ -600,8 +572,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     window.location.href = "/api/klant/logout";
   };
 
-  // Totaal notificatie count: ongelezen berichten + goedkeuringen + te beoordelen
-  const totalNotifCount = ongelesCount + (dashboardStats?.pendingHoursCount ?? 0) + teBeoordeelen.length;
+  // Totaal notificatie count: goedkeuringen + te beoordelen
+  const totalNotifCount = (dashboardStats?.pendingHoursCount ?? 0) + teBeoordeelen.length;
 
   return (
     <>
@@ -759,15 +731,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                       </button>
                       <button onClick={() => setActiveTab("beoordelingen")} className="rounded-xl border border-[var(--kp-border)] px-4 py-3 text-left text-sm font-medium text-[var(--kp-text-secondary)] transition hover:bg-[var(--kp-bg-page)]">
                         Medewerkers beoordelen
-                      </button>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-[var(--kp-border)] bg-white p-5 shadow-sm">
-                    <p className="text-sm text-[var(--kp-text-secondary)]">Berichten</p>
-                    <p className="mt-2 text-base font-bold text-[var(--kp-text-primary)]">Contact TopTalent</p>
-                    <div className="mt-4">
-                      <button onClick={() => setActiveTab("berichten")} className="w-full rounded-xl border border-[var(--kp-border)] px-4 py-3 text-sm font-medium text-[var(--kp-text-secondary)] transition hover:bg-[var(--kp-bg-page)]">
-                        Open berichten {ongelesCount > 0 && `(${ongelesCount} ongelezen)`}
                       </button>
                     </div>
                   </div>
@@ -1147,9 +1110,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 )}
               </div>
             )}
-
-            {/* Tab: Berichten */}
-            {activeTab === "berichten" && <BerichtenTab klant={klant} onUnreadChange={setOngelesCount} />}
 
             {/* Tab: QR Check-in */}
             {activeTab === "qr-scanner" && <QRScannerTab />}
@@ -2338,118 +2298,6 @@ function KostenTab() {
     </div>
   );
 }
-
-/* ============================================================
-   Feature 6: Berichten Tab (Chat style)
-   ============================================================ */
-function BerichtenTab({ klant, onUnreadChange }: { klant: Klant; onUnreadChange: (n: number) => void }) {
-  const toast = useToast();
-  const [berichten, setBerichten] = useState<KlantBericht[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [nieuwBericht, setNieuwBericht] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const fetchBerichten = useCallback(async () => {
-    try {
-      const res = await fetch("/api/klant/berichten");
-      const data = await res.json();
-      setBerichten(data.berichten || []);
-      onUnreadChange(data.ongelezen_count || 0);
-    } catch { /* ignore */ }
-    setIsLoading(false);
-  }, [onUnreadChange]);
-
-  useEffect(() => {
-    fetchBerichten();
-    const interval = setInterval(fetchBerichten, 15000);
-    return () => clearInterval(interval);
-  }, [fetchBerichten]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [berichten]);
-
-  const verstuur = async () => {
-    if (!nieuwBericht.trim()) return;
-    setIsSending(true);
-    try {
-      const res = await fetch("/api/klant/berichten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bericht: nieuwBericht.trim() }),
-      });
-      if (!res.ok) throw new Error();
-      setNieuwBericht("");
-      fetchBerichten();
-    } catch {
-      toast.error("Bericht versturen mislukt");
-    }
-    setIsSending(false);
-  };
-
-  if (isLoading) {
-    return <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" /></div>;
-  }
-
-  return (
-    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px]">
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold text-neutral-900">Berichten</h2>
-        <p className="mt-1 text-sm text-neutral-500">Chat met het TopTalent team.</p>
-      </div>
-
-      {/* Chat area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-white rounded-2xl border border-neutral-200 p-4 space-y-3 shadow-sm">
-        {berichten.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <svg className="w-12 h-12 text-neutral-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <p className="text-sm text-neutral-400">Nog geen berichten. Stuur uw eerste bericht!</p>
-            </div>
-          </div>
-        ) : (
-          berichten.map((b) => (
-            <div key={b.id} className={`flex ${b.afzender === "klant" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                b.afzender === "klant"
-                  ? "bg-[#F27501] text-white rounded-br-md"
-                  : "bg-neutral-100 text-neutral-800 rounded-bl-md"
-              }`}>
-                <p className="text-sm whitespace-pre-wrap">{b.bericht}</p>
-                <p className={`text-xs mt-1 ${b.afzender === "klant" ? "text-white/60" : "text-neutral-400"}`}>
-                  {new Date(b.created_at).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}
-                  {b.afzender === "toptalent" && " · TopTalent"}
-                </p>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="mt-3 flex gap-2">
-        <input
-          type="text"
-          value={nieuwBericht}
-          onChange={(e) => setNieuwBericht(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); verstuur(); } }}
-          placeholder="Typ uw bericht..."
-          className="flex-1 px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] text-sm"
-        />
-        <button onClick={verstuur} disabled={isSending || !nieuwBericht.trim()}
-          className="px-5 py-3 bg-[#F27501] text-white rounded-xl font-medium text-sm hover:bg-[#d96800] transition disabled:opacity-40">
-          {isSending ? "..." : "Verstuur"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 
 /* ============================================================
    Existing: Sub-component for Uren tab
