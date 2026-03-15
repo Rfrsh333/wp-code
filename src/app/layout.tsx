@@ -58,6 +58,10 @@ export const metadata: Metadata = {
       "application/rss+xml": "https://www.toptalentjobs.nl/feed.xml",
     },
   },
+  icons: {
+    icon: "/favicon-icon.png",
+    apple: "/apple-touch-icon.png",
+  },
   other: {
     "geo.region": "NL",
     "geo.placename": "Utrecht",
