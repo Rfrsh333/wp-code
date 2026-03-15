@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
     const maandMap = new Map<string, { totaal_uren: number; totaal_verdiensten: number; aantal_diensten: number }>();
 
     for (const aanmelding of aanmeldingen || []) {
-      const dienst = aanmelding.dienst as { datum: string; uurtarief?: number } | null;
+      const dienstRaw = aanmelding.dienst as unknown;
+      const dienst = (Array.isArray(dienstRaw) ? dienstRaw[0] : dienstRaw) as { datum: string; uurtarief?: number } | null;
       const urenArray = aanmelding.uren as Array<{ gewerkte_uren?: number; status: string }> | null;
 
       if (!dienst || !urenArray) continue;

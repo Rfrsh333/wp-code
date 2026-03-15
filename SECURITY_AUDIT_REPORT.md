@@ -206,7 +206,7 @@ De applicatie heeft een goede security basis: JWT-gebaseerde sessies met HS256, 
 | **Cron routes geaudit** | 19 |
 | **Webhook routes geaudit** | 4 |
 | **Totaal gevonden issues** | 23 |
-| **Gefixt** | 10 |
+| **Gefixt** | 11 |
 | **Gedocumenteerd (niet gefixt)** | 13 |
 
 ### Breakdown per categorie:
@@ -358,3 +358,4 @@ De applicatie heeft een goede security basis: JWT-gebaseerde sessies met HS256, 
 15. `src/lib/rate-limit.ts` — Productie warning
 16. `scripts/create-test-boete.ts` — TypeScript fix
 17. `scripts/test-mollie.ts` — TypeScript fix
+18. `src/app/api/medewerker/financieel/route.ts` — TypeScript type assertion fix

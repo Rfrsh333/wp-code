@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
       start_tijd,
       eind_tijd,
       aantal_nodig: parseInt(aantal) || 1,
+      plekken_totaal: parseInt(aantal) || 1,
+      plekken_beschikbaar: parseInt(aantal) || 1,
       locatie: locatie || null,
       uurtarief: tarief,
       status: "open",
