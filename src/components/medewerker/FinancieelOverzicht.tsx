@@ -267,53 +267,14 @@ export default function FinancieelOverzicht() {
             <h3 className="text-base font-medium text-[var(--mp-text-primary)] mb-2">Inkomsten laatste 30 dagen</h3>
             <p className="text-3xl font-bold text-[var(--mp-text-primary)]">€{last30.toFixed(2)}</p>
             <p className="text-sm text-[var(--mp-text-secondary)] mt-1">Het bedrag dat je verdiend hebt over de afgelopen 30 dagen.</p>
-          </div>
-
-          {/* Krijg direct betaald - Binnenkort beschikbaar */}
-          {last30 > 0 && (
-            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 rounded-2xl p-6 border-2 border-blue-500/30 mb-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-[var(--mp-text-primary)] mb-1">
-                    Krijg direct betaald
-                    <span className="ml-2 text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400">
-                      Binnenkort
-                    </span>
-                  </h3>
-                  <p className="text-sm text-[var(--mp-text-secondary)] mb-3">
-                    Ontvang je goedgekeurde verdiensten direct op je rekening, nog voordat de reguliere betaalperiode.
-                    Ideaal voor onverwachte uitgaven of om sneller over je geld te beschikken.
-                  </p>
-                  <div className="flex items-center gap-2 text-sm mb-4">
-                    <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-[var(--mp-text-secondary)]">Geld binnen 24 uur op je rekening</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm mb-4">
-                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-[var(--mp-text-secondary)]">Slechts 4,5% service fee</span>
-                  </div>
-                  <button
-                    disabled
-                    className="w-full px-6 py-3 rounded-xl bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 font-semibold text-sm cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Deze functie komt binnenkort beschikbaar
-                  </button>
-                </div>
+            {last30 > 50 && (
+              <div className="mt-4 pt-4 border-t border-[var(--mp-separator)]">
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                  ⚡ Krijg direct betaald functie komt binnenkort beschikbaar
+                </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Totalen */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
