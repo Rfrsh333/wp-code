@@ -32,12 +32,12 @@ interface VervangingVerzoek {
 
 interface DienstenTabProps {
   diensten: Dienst[];
-  onAanmelden: (dienstId: string) => void;
-  onAfmelden: (dienstId: string) => void;
+  onAanmelden: (dienstId: string) => Promise<void> | void;
+  onAfmelden: (dienstId: string) => Promise<void> | void;
   onUrenInvullen: (dienst: Dienst) => void;
-  onAnnuleerGeaccepteerd?: (aanmeldingId: string, dienstId: string) => void;
-  onAcceptVervanging?: (origineleAanmeldingId: string, vervangingAanmeldingId: string) => void;
-  onAfwijsVervanging?: (vervangingAanmeldingId: string) => void;
+  onAnnuleerGeaccepteerd?: (aanmeldingId: string, dienstId: string) => Promise<void> | void;
+  onAcceptVervanging?: (origineleAanmeldingId: string, vervangingAanmeldingId: string) => Promise<void> | void;
+  onAfwijsVervanging?: (vervangingAanmeldingId: string) => Promise<void> | void;
   vervangingVerzoeken?: VervangingVerzoek[];
   accountGepauzeerd?: boolean;
 }

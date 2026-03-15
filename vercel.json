@@ -1,5 +1,11 @@
 {
   "regions": ["arn1"],
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/onboarding-cleanup",
