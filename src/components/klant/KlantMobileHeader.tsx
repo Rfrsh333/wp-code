@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface KlantMobileHeaderProps {
   bedrijfsnaam: string;
   contactpersoon: string;
@@ -11,7 +13,7 @@ export default function KlantMobileHeader({ bedrijfsnaam, contactpersoon, ongele
     <header className="md:hidden sticky top-0 z-40 bg-white border-b border-[var(--kp-border)] px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 bg-[#1e3a5f] rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-[10px]">TT</span>
+          <Image src="/favicon-icon.png" alt="TopTalent" width={16} height={16} />
         </div>
         <span className="font-semibold text-[var(--kp-text-primary)] text-sm">{bedrijfsnaam}</span>
       </div>

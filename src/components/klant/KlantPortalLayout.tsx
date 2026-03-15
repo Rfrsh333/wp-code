@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import KlantBottomNav, { KlantTab } from "./KlantBottomNav";
 
@@ -32,7 +33,7 @@ export default function KlantPortalLayout({
         <div className="px-5 py-5 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-[#F27501] rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-xs">TT</span>
+              <Image src="/favicon-icon.png" alt="TopTalent" width={20} height={20} />
             </div>
             <div className="overflow-hidden">
               <p className="text-white font-semibold text-sm leading-tight truncate">{bedrijfsnaam}</p>

@@ -62,8 +62,7 @@ export default function PortalSidebar({
       {/* Logo & portal label */}
       <div className="p-5 border-b border-neutral-100 flex items-center gap-3">
         <div className="w-10 h-10 bg-[#F27501] rounded-xl flex items-center justify-center flex-shrink-0">
-          <Image src="/logo.svg" alt="TopTalent" width={24} height={24} className="invert" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          <span className="text-white font-bold text-sm">TT</span>
+          <Image src="/favicon-icon.png" alt="TopTalent" width={24} height={24} />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">

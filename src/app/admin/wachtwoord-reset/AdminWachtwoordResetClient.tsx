@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function AdminWachtwoordResetClient() {
@@ -89,7 +90,7 @@ export default function AdminWachtwoordResetClient() {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">TT</span>
+            <Image src="/favicon-icon.png" alt="TopTalent" width={28} height={28} />
           </div>
           <h1 className="text-2xl font-bold text-neutral-900">Nieuw admin wachtwoord</h1>
           <p className="text-neutral-500 mt-2">Stel direct een nieuw wachtwoord in voor uw adminaccount</p>

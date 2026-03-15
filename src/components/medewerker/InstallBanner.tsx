@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -72,7 +73,7 @@ export default function InstallBanner() {
       >
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 bg-[#F27501] rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-sm font-black">TT</span>
+            <Image src="/favicon-icon.png" alt="TopTalent" width={24} height={24} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-[var(--mp-text-primary)]">Installeer TopTalent App</p>

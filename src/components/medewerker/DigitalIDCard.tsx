@@ -63,7 +63,7 @@ export default function DigitalIDCard({ medewerker, profilePhoto }: DigitalIDCar
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 bg-[#F27501] rounded-lg flex items-center justify-center">
-                    <span className="text-white text-xs font-black">TT</span>
+                    <Image src="/favicon-icon.png" alt="TopTalent" width={16} height={16} />
                   </div>
                   <span className="text-white/60 text-xs font-medium tracking-wider uppercase">TopTalent Jobs</span>
                 </div>

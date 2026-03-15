@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 
@@ -80,7 +81,7 @@ export default function AdminLoginPage() {
         </div>
         <div className="relative z-10 text-center max-w-md">
           <div className="w-20 h-20 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-8">
-            <span className="text-white font-bold text-2xl">TT</span>
+            <Image src="/favicon-icon.png" alt="TopTalent" width={36} height={36} />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">Admin Dashboard</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
@@ -111,7 +112,7 @@ export default function AdminLoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-xl">TT</span>
+              <Image src="/favicon-icon.png" alt="TopTalent" width={28} height={28} />
             </div>
           </div>
 
