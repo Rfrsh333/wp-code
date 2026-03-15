@@ -118,6 +118,20 @@ interface Favoriet {
   diensten_count: number;
 }
 
+interface DienstTemplate {
+  id: string;
+  naam: string;
+  beschrijving: string | null;
+  functie: string;
+  aantal_nodig: number;
+  locatie: string;
+  duur_uren: number | null;
+  uurtarief: number | null;
+  favoriet_medewerker_ids: string[];
+  aantal_keer_gebruikt: number;
+  laatst_gebruikt_op: string | null;
+}
+
 interface RecentMedewerker {
   medewerker_id: string;
   naam: string;
@@ -1613,10 +1627,14 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     favoriet_medewerker_ids: [] as string[],
   });
   const [favorieten, setFavorieten] = useState<Favoriet[]>([]);
+  const [templates, setTemplates] = useState<DienstTemplate[]>([]);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateNaam, setTemplateNaam] = useState("");
 
   useEffect(() => {
     fetch("/api/klant/aanvraag").then(r => r.json()).then(d => setLocaties(d.locaties || [])).catch(() => {});
     fetch("/api/klant/favorieten").then(r => r.json()).then(d => setFavorieten(d.favorieten || [])).catch(() => {});
+    fetch("/api/klant/templates").then(r => r.json()).then(d => setTemplates(d.templates || [])).catch(() => {});
   }, []);
 
   const functies = [
@@ -1646,7 +1664,10 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
         throw new Error(data.error || "Aanvraag mislukt");
       }
       toast.success("Aanvraag succesvol verstuurd!");
-      onSuccess();
+      setShowSaveTemplate(true); // Toon optie om als template op te slaan
+      setTimeout(() => {
+        if (!showSaveTemplate) onSuccess(); // Als ze niet opslaan, sluit dan
+      }, 3000);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Aanvraag versturen mislukt");
     } finally {
@@ -1656,12 +1677,95 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
 
   const stepLabels = ["Functie", "Datum & Tijd", "Details", "Favorieten"];
 
+  const useTemplate = (template: DienstTemplate) => {
+    setForm({
+      functie: template.functie,
+      datum: "",
+      start_tijd: "",
+      eind_tijd: "",
+      aantal: template.aantal_nodig.toString(),
+      uurtarief: template.uurtarief?.toString() || "",
+      locatie: template.locatie,
+      opmerkingen: template.beschrijving || "",
+      favoriet_medewerker_ids: template.favoriet_medewerker_ids || [],
+    });
+    setStep(2); // Skip naar datum selectie
+
+    // Update template usage
+    fetch("/api/klant/templates", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ template_id: template.id, increment_gebruik: true }),
+    }).catch(() => {});
+  };
+
+  const saveAsTemplate = async () => {
+    if (!templateNaam.trim()) {
+      toast.error("Geef je template een naam");
+      return;
+    }
+
+    try {
+      await fetch("/api/klant/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          naam: templateNaam,
+          functie: form.functie,
+          aantal_nodig: parseInt(form.aantal),
+          locatie: form.locatie,
+          uurtarief: parseFloat(form.uurtarief),
+          favoriet_medewerker_ids: form.favoriet_medewerker_ids,
+          beschrijving: form.opmerkingen,
+        }),
+      });
+      toast.success("Template opgeslagen!");
+      setShowSaveTemplate(false);
+      setTemplateNaam("");
+      // Refresh templates
+      fetch("/api/klant/templates").then(r => r.json()).then(d => setTemplates(d.templates || [])).catch(() => {});
+    } catch {
+      toast.error("Template opslaan mislukt");
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-neutral-900">Personeel Aanvragen</h2>
         <p className="mt-1 text-sm text-neutral-500">Vul het formulier in om personeel aan te vragen.</p>
       </div>
+
+      {/* Snelle Aanvraag - Templates */}
+      {templates.length > 0 && step === 1 && (
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-5 border border-orange-200">
+          <h3 className="text-sm font-bold text-neutral-900 mb-3 flex items-center gap-2">
+            <svg className="w-4 h-4 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Snelle aanvraag
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {templates.slice(0, 4).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => useTemplate(t)}
+                className="text-left p-3 bg-white rounded-xl border border-orange-200 hover:border-[#F27501] hover:shadow-sm transition-all group"
+              >
+                <p className="font-medium text-sm text-neutral-900 group-hover:text-[#F27501] transition">
+                  {t.naam}
+                </p>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {t.functie} • {t.aantal_nodig}x • {t.locatie}
+                </p>
+                <p className="text-xs text-neutral-400 mt-1">
+                  {t.aantal_keer_gebruikt}x gebruikt
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Steps indicator */}
       <div className="flex items-center gap-2">
@@ -1829,7 +1933,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       </div>
 
       {/* Summary */}
-      {step >= 2 && (
+      {step >= 2 && !showSaveTemplate && (
         <div className="bg-neutral-50 rounded-2xl p-4 text-sm">
           <p className="font-medium text-neutral-700 mb-2">Samenvatting</p>
           <div className="grid grid-cols-2 gap-2 text-neutral-600">
@@ -1838,6 +1942,44 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
             {form.start_tijd && <><span>Tijd:</span><span className="font-medium">{form.start_tijd} - {form.eind_tijd}</span></>}
             <span>Aantal:</span><span className="font-medium">{form.aantal}</span>
             {form.locatie && form.locatie !== "__nieuw" && <><span>Locatie:</span><span className="font-medium">{form.locatie}</span></>}
+          </div>
+        </div>
+      )}
+
+      {/* Save as Template */}
+      {showSaveTemplate && (
+        <div className="bg-green-50 rounded-2xl p-6 border-2 border-green-200">
+          <div className="text-center mb-4">
+            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-neutral-900">Aanvraag verstuurd!</h3>
+            <p className="text-sm text-neutral-600 mt-1">Wil je deze aanvraag opslaan als template voor volgende keer?</p>
+          </div>
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={templateNaam}
+              onChange={(e) => setTemplateNaam(e.target.value)}
+              placeholder="Geef je template een naam (bijv. 'Vrijdag avond shift')"
+              className="w-full px-4 py-2 border border-green-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowSaveTemplate(false); onSuccess(); }}
+                className="flex-1 px-4 py-2 border border-neutral-300 text-neutral-700 rounded-xl text-sm font-medium hover:bg-neutral-50 transition"
+              >
+                Nee, bedankt
+              </button>
+              <button
+                onClick={() => { saveAsTemplate(); onSuccess(); }}
+                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl text-sm font-medium hover:bg-[#d96800] transition"
+              >
+                Opslaan als template
+              </button>
+            </div>
           </div>
         </div>
       )}

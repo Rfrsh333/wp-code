@@ -62,6 +62,8 @@ const BerichtenTab = dynamic(() => import("./BerichtenTab"), { loading: () => <T
 const PlanningTab = dynamic(() => import("./PlanningTab"), { loading: () => <TabSkeleton />, ssr: false });
 const LeadsTab = dynamic(() => import("./LeadsTab"), { loading: () => <TabSkeleton />, ssr: false });
 const BoetesTab = dynamic(() => import("./BoetesTab"), { loading: () => <TabSkeleton />, ssr: false });
+const LiveChatTab = dynamic(() => import("./LiveChatTab"), { loading: () => <TabSkeleton />, ssr: false });
+const LiveChatNotification = dynamic(() => import("./LiveChatNotification"), { ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -1923,6 +1925,9 @@ export default function AdminDashboard() {
 
             {/* Boetes Tab */}
             {activeTab === "boetes" && <BoetesTab />}
+
+            {/* Live Chat Tab */}
+            {activeTab === "livechat" && <LiveChatTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

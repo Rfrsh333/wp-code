@@ -1,5 +1,6 @@
 import { Metadata, Viewport } from "next";
 import RegisterSW from "./components/RegisterSW";
+import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidget";
 
 export const metadata: Metadata = {
   robots: {
@@ -41,6 +42,7 @@ export default function KlantLayout({
       </head>
       <RegisterSW />
       {children}
+      <AIChatWidget userType="klant" />
     </>
   );
 }

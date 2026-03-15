@@ -11,6 +11,7 @@ import {
   FolderKanban,
   Gauge,
   Inbox,
+  MessageCircle,
   Newspaper,
   Receipt,
   Settings,
@@ -196,6 +197,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["boete", "no-show", "straf", "pauzeren"],
   },
+  livechat: {
+    id: "livechat",
+    title: "Live Chat",
+    icon: MessageCircle,
+    kind: "tab",
+    tab: "livechat",
+    pinnable: true,
+    keywords: ["chat", "chatbot", "support", "ai"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -236,7 +246,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "support",
     label: "Support",
-    itemIds: ["contact"],
+    itemIds: ["contact", "livechat"],
     collapsible: true,
     dividerBefore: true,
   },

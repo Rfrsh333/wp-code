@@ -26,6 +26,7 @@ export const adminTabs = [
   "planning",
   "leads",
   "boetes",
+  "livechat",
 ] as const;
 
 export type AdminTab = (typeof adminTabs)[number];

@@ -2,6 +2,7 @@ import { Metadata, Viewport } from "next";
 import ThemeProvider from "@/components/medewerker/ThemeProvider";
 import ServiceWorkerRegister from "@/components/medewerker/ServiceWorkerRegister";
 import PWAInstallPrompt from "@/components/medewerker/PWAInstallPrompt";
+import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidget";
 
 export const metadata: Metadata = {
   robots: {
@@ -49,6 +50,7 @@ export default function MedewerkerLayout({
         <ServiceWorkerRegister />
         <PWAInstallPrompt />
         {children}
+        <AIChatWidget userType="medewerker" />
       </ThemeProvider>
     </>
   );
