@@ -1,4 +1,4 @@
-const CACHE_NAME = "toptalent-v1";
+const CACHE_NAME = "toptalent-v2";
 const STATIC_ASSETS = [
   "/medewerker/dashboard/",
   "/manifest.json",
