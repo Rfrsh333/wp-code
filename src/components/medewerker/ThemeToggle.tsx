@@ -12,7 +12,7 @@ export default function ThemeToggle() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <div className="w-14 h-7 rounded-full bg-neutral-200 dark:bg-neutral-700" />;
+    return <div className="w-[60px] h-8 rounded-full bg-neutral-200 dark:bg-neutral-700" />;
   }
 
   const isDark = theme === "dark";
@@ -20,16 +20,17 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={`relative w-14 h-7 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F27501] ${
+      className={`relative w-[60px] h-8 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F27501] touch-manipulation ${
         isDark ? "bg-[#1a1f3d]" : "bg-[#FFF5E6]"
       }`}
+      style={{ minWidth: '60px', minHeight: '32px' }}
       aria-label={isDark ? "Schakel naar light mode" : "Schakel naar dark mode"}
     >
       <motion.div
-        className={`absolute top-0.5 w-6 h-6 rounded-full flex items-center justify-center ${
+        className={`absolute top-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${
           isDark ? "bg-[#6B8AFF]" : "bg-[#F9A825]"
         }`}
-        animate={{ x: isDark ? 28 : 2 }}
+        animate={{ x: isDark ? 30 : 4 }}
         transition={springSnappy}
       >
         <AnimatePresence mode="wait">
