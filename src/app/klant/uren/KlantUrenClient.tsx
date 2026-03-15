@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import PortalLayout, { PortalTab } from "@/components/portal/PortalLayout";
+import KlantPortalLayout, { KlantTab } from "@/components/klant/KlantPortalLayout";
+import KlantMobileHeader from "@/components/klant/KlantMobileHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -381,7 +382,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const pending = uren.filter(u => u.status === "ingediend");
   const approved = uren.filter(u => ["klant_goedgekeurd", "goedgekeurd"].includes(u.status));
 
-  const tabs: PortalTab[] = [
+  const tabs: KlantTab[] = [
     {
       id: "overzicht",
       label: "Overzicht",
@@ -502,12 +503,17 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
   return (
     <>
-      <PortalLayout
+      <KlantMobileHeader
+        bedrijfsnaam={klant.bedrijfsnaam}
+        contactpersoon={klant.contactpersoon}
+        ongelezen={ongelesCount}
+      />
+      <KlantPortalLayout
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        portalType="klant"
-        userName={klant.contactpersoon}
+        bedrijfsnaam={klant.bedrijfsnaam}
+        contactpersoon={klant.contactpersoon}
         onLogout={handleLogout}
       >
         {isLoading ? (
@@ -518,105 +524,132 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           <>
             {/* Tab: Overzicht */}
             {activeTab === "overzicht" && (
-              <div className="space-y-6">
-                {/* Hero banner */}
-                <section className="overflow-hidden rounded-[28px] bg-neutral-900 text-white shadow-xl shadow-neutral-900/10">
-                  <div className="grid gap-6 px-6 py-7 md:grid-cols-[1.5fr_1fr] md:px-8">
-                    <div>
-                      <p className="mb-3 text-sm font-medium text-orange-200">Welkom terug, {klant.contactpersoon}</p>
-                      <h2 className="max-w-2xl text-3xl font-bold leading-tight">
-                        Alles voor uw personeelsaanvragen, uren en opvolging op één plek.
-                      </h2>
-                      <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-300">
-                        {klant.bedrijfsnaam} ziet hier direct wat vandaag aandacht vraagt, welke diensten eraan komen en welke uren nog op uw akkoord wachten.
-                      </p>
-                      <div className="mt-5 flex flex-wrap gap-3">
-                        <button onClick={() => setActiveTab("aanvragen")} className="rounded-xl bg-[#F27501] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#d96800]">
-                          Extra personeel aanvragen
-                        </button>
-                        <button onClick={() => setActiveTab("berichten")} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/5">
-                          Contact met TopTalent
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-neutral-300">Open uren ter controle</p>
-                        <p className="mt-2 text-3xl font-bold">{dashboardStats?.pendingHoursCount ?? pending.length}</p>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-neutral-300">Actieve diensten</p>
-                        <p className="mt-2 text-3xl font-bold">{dashboardStats?.activeDienstenCount ?? 0}</p>
-                      </div>
-                    </div>
-                  </div>
-                </section>
+              <div className="space-y-5">
+                {/* Greeting */}
+                <div>
+                  <h2 className="text-xl font-bold text-[var(--kp-text-primary)]">
+                    {new Date().getHours() < 12 ? "Goedemorgen" : new Date().getHours() < 18 ? "Goedemiddag" : "Goedenavond"}, {klant.contactpersoon}
+                  </h2>
+                  <p className="text-sm text-[var(--kp-text-secondary)]">{klant.bedrijfsnaam}</p>
+                </div>
 
-                {/* Stats cards */}
-                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {/* PWA Install Banner (iOS) */}
+                <KlantInstallBanner />
+
+                {/* Horizontaal scrollbare stats */}
+                <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
                   {[
-                    { label: "Uren wachten op akkoord", value: String(dashboardStats?.pendingHoursCount ?? pending.length), helper: `${dashboardStats?.pendingHoursTotal ?? 0} uur open`, tone: "bg-amber-50 border-amber-200 text-amber-900" },
-                    { label: "Goedgekeurde uren deze maand", value: `${dashboardStats?.approvedHoursThisMonth ?? 0} u`, helper: "Actueel maandbeeld", tone: "bg-green-50 border-green-200 text-green-900" },
-                    { label: "Reviews wachten op u", value: String(teBeoordeelen.length), helper: "Korte feedback helpt ons sneller te schakelen", tone: "bg-blue-50 border-blue-200 text-blue-900" },
-                    { label: "Open facturen", value: String(dashboardStats?.openFacturenCount ?? 0), helper: "Laatste 5 facturen in beeld", tone: "bg-white border-neutral-200 text-neutral-900" },
-                  ].map((card) => (
-                    <div key={card.label} className={`rounded-2xl border p-5 ${card.tone}`}>
-                      <p className="text-sm font-medium">{card.label}</p>
-                      <p className="mt-3 text-3xl font-bold">{card.value}</p>
-                      <p className="mt-2 text-sm opacity-80">{card.helper}</p>
-                    </div>
+                    { label: "Uren wachten", value: String(dashboardStats?.pendingHoursCount ?? pending.length), targetTab: "uren", urgent: pending.length > 0 },
+                    { label: "Goedgekeurd", value: `${dashboardStats?.approvedHoursThisMonth ?? 0}u`, targetTab: "uren", urgent: false },
+                    { label: "Reviews", value: String(teBeoordeelen.length), targetTab: "beoordelingen", urgent: teBeoordeelen.length > 0 },
+                    { label: "Open facturen", value: String(dashboardStats?.openFacturenCount ?? 0), targetTab: "facturen", urgent: false },
+                  ].map((stat) => (
+                    <button
+                      key={stat.label}
+                      onClick={() => setActiveTab(stat.targetTab)}
+                      className="flex-shrink-0 bg-white rounded-2xl px-4 py-3 shadow-sm border border-[var(--kp-border)] min-w-[100px] text-left"
+                    >
+                      <p className="text-2xl font-bold text-[var(--kp-text-primary)]">{stat.value}</p>
+                      <p className="text-xs text-[var(--kp-text-secondary)] mt-0.5 leading-tight">{stat.label}</p>
+                      {stat.urgent && <div className="w-2 h-2 bg-[var(--kp-accent)] rounded-full mt-1.5" />}
+                    </button>
                   ))}
-                </section>
+                </div>
 
-                {/* Quick actions */}
-                <section className="grid gap-4 xl:grid-cols-3">
-                  <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                    <p className="text-sm text-neutral-500">Aandacht nodig</p>
-                    <p className="mt-2 text-lg font-bold text-neutral-900">Snelle opvolging</p>
-                    <div className="mt-4 space-y-3 text-sm">
-                      <div className="rounded-xl bg-neutral-50 p-3">
-                        {pending.length > 0
-                          ? `${pending.length} urenregistraties wachten nog op uw akkoord.`
-                          : "Geen open urenregistraties. Dat scheelt weer."}
-                      </div>
-                      <div className="rounded-xl bg-neutral-50 p-3">
-                        {teBeoordeelen.length > 0
-                          ? `${teBeoordeelen.length} medewerkers wachten nog op feedback na hun dienst.`
-                          : "Er staan nu geen open beoordelingen klaar."}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                    <p className="text-sm text-neutral-500">Direct contact</p>
-                    <p className="mt-2 text-lg font-bold text-neutral-900">Hulp nodig?</p>
-                    <div className="mt-4 space-y-3 text-sm text-neutral-600">
-                      <a href="tel:+31649713766" className="block rounded-xl bg-neutral-50 p-3 transition hover:bg-neutral-100">
-                        Bel direct: +31 6 49 71 37 66
-                      </a>
-                      <a href="mailto:info@toptalentjobs.nl" className="block rounded-xl bg-neutral-50 p-3 transition hover:bg-neutral-100">
-                        Mail: info@toptalentjobs.nl
-                      </a>
-                      <a href="https://wa.me/31649713766" target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-neutral-50 p-3 transition hover:bg-neutral-100">
-                        WhatsApp support openen
-                      </a>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                    <p className="text-sm text-neutral-500">Handige acties</p>
-                    <p className="mt-2 text-lg font-bold text-neutral-900">Vandaag geregeld</p>
-                    <div className="mt-4 grid gap-3">
-                      <button onClick={() => setActiveTab("aanvragen")} className="rounded-xl bg-[#F27501] px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#d96800]">
-                        Extra personeel aanvragen
+                {/* Actie vereist */}
+                {(pending.length > 0 || teBeoordeelen.length > 0) && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
+                    <p className="text-sm font-semibold text-orange-800 mb-2">Actie vereist</p>
+                    {pending.length > 0 && (
+                      <button
+                        onClick={() => setActiveTab("uren")}
+                        className="flex items-center justify-between w-full py-2 border-b border-orange-100 last:border-0"
+                      >
+                        <span className="text-sm text-orange-700">{pending.length} uren wachten op akkoord</span>
+                        <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                       </button>
-                      <button onClick={() => setActiveTab("uren")} className="rounded-xl border border-neutral-200 px-4 py-3 text-left text-sm font-medium text-neutral-700 transition hover:bg-neutral-50">
+                    )}
+                    {teBeoordeelen.length > 0 && (
+                      <button
+                        onClick={() => setActiveTab("beoordelingen")}
+                        className="flex items-center justify-between w-full py-2 border-b border-orange-100 last:border-0"
+                      >
+                        <span className="text-sm text-orange-700">{teBeoordeelen.length} medewerkers te beoordelen</span>
+                        <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Vandaag & Morgen */}
+                {upcomingDiensten.length > 0 && (
+                  <div className="bg-white rounded-2xl border border-[var(--kp-border)] p-4 shadow-sm">
+                    <p className="text-xs font-bold text-[var(--kp-text-tertiary)] uppercase tracking-wider mb-3">Vandaag & Morgen</p>
+                    <div className="space-y-2">
+                      {upcomingDiensten.slice(0, 5).map((d) => (
+                        <div key={d.id} className="flex items-center gap-3 py-2 border-b border-[var(--kp-border)] last:border-0">
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                            (d.aanmeldingen_geaccepteerd || 0) >= d.aantal_nodig ? "bg-green-500" : "bg-amber-500"
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-[var(--kp-text-primary)] truncate">{d.locatie || d.functie}</p>
+                            <p className="text-xs text-[var(--kp-text-secondary)]">
+                              {formatDateLong(d.datum)} · {formatTime(d.start_tijd)}-{formatTime(d.eind_tijd)}
+                            </p>
+                          </div>
+                          <span className="text-xs text-[var(--kp-text-tertiary)]">
+                            {d.aanmeldingen_geaccepteerd || 0}/{d.aantal_nodig}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA */}
+                <button
+                  onClick={() => setActiveTab("aanvragen")}
+                  className="w-full py-3.5 rounded-2xl bg-[#1e3a5f] text-white font-semibold text-sm transition hover:bg-[#162d4a]"
+                >
+                  + Personeel aanvragen
+                </button>
+
+                {/* Desktop: Quick links grid */}
+                <div className="hidden md:grid grid-cols-3 gap-4">
+                  <div className="rounded-2xl border border-[var(--kp-border)] bg-white p-5 shadow-sm">
+                    <p className="text-sm text-[var(--kp-text-secondary)]">Direct contact</p>
+                    <p className="mt-2 text-base font-bold text-[var(--kp-text-primary)]">Hulp nodig?</p>
+                    <div className="mt-4 space-y-3 text-sm text-[var(--kp-text-secondary)]">
+                      <a href="tel:+31649713766" className="block rounded-xl bg-[var(--kp-bg-page)] p-3 transition hover:bg-[var(--kp-border)]">
+                        Bel: +31 6 49 71 37 66
+                      </a>
+                      <a href="https://wa.me/31649713766" target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-[var(--kp-bg-page)] p-3 transition hover:bg-[var(--kp-border)]">
+                        WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--kp-border)] bg-white p-5 shadow-sm">
+                    <p className="text-sm text-[var(--kp-text-secondary)]">Snelle acties</p>
+                    <p className="mt-2 text-base font-bold text-[var(--kp-text-primary)]">Vandaag regelen</p>
+                    <div className="mt-4 grid gap-3">
+                      <button onClick={() => setActiveTab("uren")} className="rounded-xl border border-[var(--kp-border)] px-4 py-3 text-left text-sm font-medium text-[var(--kp-text-secondary)] transition hover:bg-[var(--kp-bg-page)]">
                         Open uren controleren
                       </button>
-                      <button onClick={() => setActiveTab("beoordelingen")} className="rounded-xl border border-neutral-200 px-4 py-3 text-left text-sm font-medium text-neutral-700 transition hover:bg-neutral-50">
+                      <button onClick={() => setActiveTab("beoordelingen")} className="rounded-xl border border-[var(--kp-border)] px-4 py-3 text-left text-sm font-medium text-[var(--kp-text-secondary)] transition hover:bg-[var(--kp-bg-page)]">
                         Medewerkers beoordelen
                       </button>
                     </div>
                   </div>
-                </section>
+                  <div className="rounded-2xl border border-[var(--kp-border)] bg-white p-5 shadow-sm">
+                    <p className="text-sm text-[var(--kp-text-secondary)]">Berichten</p>
+                    <p className="mt-2 text-base font-bold text-[var(--kp-text-primary)]">Contact TopTalent</p>
+                    <div className="mt-4">
+                      <button onClick={() => setActiveTab("berichten")} className="w-full rounded-xl border border-[var(--kp-border)] px-4 py-3 text-sm font-medium text-[var(--kp-text-secondary)] transition hover:bg-[var(--kp-bg-page)]">
+                        Open berichten {ongelesCount > 0 && `(${ongelesCount} ongelezen)`}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -942,7 +975,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
             {activeTab === "qr-scanner" && <QRScannerTab />}
           </>
         )}
-      </PortalLayout>
+      </KlantPortalLayout>
 
       {/* Beoordeling Modal */}
       {beoordeelModal.open && beoordeelModal.item && (
@@ -2009,11 +2042,11 @@ function UrenSubTabs({
     <div className="space-y-4">
       <div className="flex gap-2">
         <button onClick={() => setSubTab("pending")}
-          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "pending" ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}>
+          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "pending" ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
           Te beoordelen ({pending.length})
         </button>
         <button onClick={() => setSubTab("approved")}
-          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "approved" ? "bg-[#F27501] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}>
+          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "approved" ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
           Goedgekeurd ({approved.length})
         </button>
       </div>
@@ -2031,41 +2064,42 @@ function UrenSubTabs({
       ) : (
         <div className="space-y-3">
           {items.map((u) => (
-            <div key={u.id} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+            <div key={u.id} className="rounded-2xl border border-[var(--kp-border)] bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-neutral-900">{u.medewerker_naam}</p>
-                  <p className="text-sm text-neutral-500">{u.dienst_locatie} · {formatDate(u.dienst_datum)}</p>
-                  <div className="flex gap-4 mt-2 text-sm text-neutral-600">
-                    <span>{u.start_tijd?.slice(0, 5)} - {u.eind_tijd?.slice(0, 5)}</span>
-                    <span>{u.pauze_minuten}m pauze</span>
-                    <span className="font-medium">{u.gewerkte_uren} uur</span>
-                  </div>
-                  {u.reiskosten_km > 0 && (
-                    <p className="mt-2 text-sm text-neutral-600">
-                      Reiskosten: {u.reiskosten_km} km · medewerkervergoeding {formatCurrency(u.reiskosten_bedrag)}
-                    </p>
-                  )}
-                  <p className="text-[#F27501] font-semibold mt-2">€{(u.gewerkte_uren * u.uurtarief).toFixed(2)}</p>
+                  <p className="font-semibold text-[var(--kp-text-primary)]">{u.medewerker_naam}</p>
+                  <p className="text-sm text-[var(--kp-text-secondary)]">{formatDate(u.dienst_datum)}</p>
+                  <p className="text-xs text-[var(--kp-text-tertiary)] mt-0.5">{u.dienst_locatie}</p>
                 </div>
-                {subTab === "pending" && (
-                  <div className="flex gap-2">
-                    <button onClick={() => onApprove(u.id)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition">
-                      Goedkeuren
-                    </button>
-                    <button onClick={() => onAdjust(u)}
-                      className="px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition">
-                      Aanpassen
-                    </button>
-                  </div>
-                )}
-                {subTab === "approved" && (
-                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                <div className="text-right">
+                  <p className="font-bold text-[var(--kp-text-primary)]">{u.gewerkte_uren}u</p>
+                  <p className="text-sm text-[var(--kp-text-secondary)]">&euro;{(u.gewerkte_uren * u.uurtarief).toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-1 text-xs text-[var(--kp-text-tertiary)]">
+                <span>{u.start_tijd?.slice(0, 5)} - {u.eind_tijd?.slice(0, 5)}</span>
+                <span>{u.pauze_minuten}m pauze</span>
+                {u.reiskosten_km > 0 && <span>{u.reiskosten_km}km reiskosten ({formatCurrency(u.reiskosten_bedrag)})</span>}
+              </div>
+              {subTab === "pending" && (
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => onApprove(u.id)}
+                    className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold transition hover:bg-green-600">
+                    Akkoord
+                  </button>
+                  <button onClick={() => onAdjust(u)}
+                    className="flex-1 py-2.5 rounded-xl border border-[var(--kp-border)] text-[var(--kp-text-secondary)] text-sm font-medium transition hover:bg-[var(--kp-bg-page)]">
+                    Aanpassen
+                  </button>
+                </div>
+              )}
+              {subTab === "approved" && (
+                <div className="mt-2">
+                  <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                     Goedgekeurd
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -2415,4 +2449,79 @@ function QRScannerTab() {
       </div>
     </div>
   );
+}
+
+/* ============================================================
+   PWA Install Banner for Klant Portal
+   ============================================================ */
+function KlantInstallBanner() {
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [bannerGesloten, setBannerGesloten] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    setBannerGesloten(localStorage.getItem("klant-pwa-banner-gesloten") === "true");
+    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent));
+    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
+
+    const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (installPrompt as unknown as { prompt: () => void }).prompt();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (installPrompt as unknown as { userChoice: Promise<{ outcome: string }> }).userChoice;
+    if (result.outcome === "accepted") setInstallPrompt(null);
+  };
+
+  const handleSluit = () => {
+    setBannerGesloten(true);
+    localStorage.setItem("klant-pwa-banner-gesloten", "true");
+  };
+
+  if (bannerGesloten || isStandalone) return null;
+
+  // Android: native install prompt
+  if (installPrompt) {
+    return (
+      <div className="bg-[#1e3a5f] rounded-2xl p-4 flex items-center gap-3">
+        <span className="text-2xl flex-shrink-0">📲</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-white font-semibold text-sm">Installeer TopTalent Beheer</p>
+          <p className="text-blue-200 text-xs">Beheer uw personeel direct vanaf uw beginscherm</p>
+        </div>
+        <button onClick={handleInstall} className="bg-white text-[#1e3a5f] text-xs font-bold px-3 py-1.5 rounded-xl flex-shrink-0">
+          Installeer
+        </button>
+        <button onClick={handleSluit} className="text-blue-300 flex-shrink-0">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    );
+  }
+
+  // iOS: instructie banner
+  if (isIOS) {
+    return (
+      <div className="bg-[#1e3a5f] rounded-2xl p-4 flex items-start gap-3">
+        <span className="text-2xl flex-shrink-0">📲</span>
+        <div className="flex-1">
+          <p className="text-white font-semibold text-sm">Installeer TopTalent Beheer</p>
+          <p className="text-blue-200 text-xs mt-1">
+            Tik op <strong className="text-white">⬆</strong> onderaan en kies <strong className="text-white">&quot;Zet op beginscherm&quot;</strong>
+          </p>
+        </div>
+        <button onClick={handleSluit} className="text-blue-300 flex-shrink-0 mt-0.5">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    );
+  }
+
+  return null;
 }
