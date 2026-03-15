@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
       .select(`
         gewerkte_uren,
         created_at,
-        dienst_aanmeldingen!inner (
-          diensten!inner (
+        aanmelding:dienst_aanmeldingen!aanmelding_id (
+          dienst:diensten!dienst_id (
             datum,
             uurtarief
           )
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     const maandMap = new Map<string, { totaal_uren: number; totaal_verdiensten: number; aantal_diensten: number }>();
 
     for (const u of uren || []) {
-      const aanmelding = u.dienst_aanmeldingen as { diensten?: { datum: string; uurtarief?: number } } | null;
-      const dienst = aanmelding?.diensten;
+      const aanmelding = u.aanmelding as { dienst?: { datum: string; uurtarief?: number } } | null;
+      const dienst = aanmelding?.dienst;
       if (!dienst) continue;
 
       const datum = new Date(dienst.datum);

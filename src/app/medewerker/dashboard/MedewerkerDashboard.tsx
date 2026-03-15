@@ -46,6 +46,7 @@ interface Dienst {
   aangemeld?: boolean;
   aanmelding_id?: string;
   aanmelding_status?: string;
+  check_in_at?: string | null;
   uren_status?: string;
 }
 
@@ -198,6 +199,11 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   };
 
   const openUrenModal = (dienst: Dienst) => {
+    // Check if medewerker is ingecheckt via QR
+    if (!dienst.check_in_at) {
+      toast.error("Je moet eerst worden ingecheckt door de klant via QR-scan voordat je uren kunt indienen");
+      return;
+    }
     setUrenForm({ start: dienst.start_tijd.slice(0, 5), eind: dienst.eind_tijd.slice(0, 5), pauze: "0" });
     setUrenModal(dienst);
   };

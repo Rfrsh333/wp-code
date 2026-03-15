@@ -52,14 +52,14 @@ export async function GET() {
 
   const { data: aanmeldingen } = await supabaseAdmin
     .from("dienst_aanmeldingen")
-    .select("id, dienst_id, status, uren_registraties(status)")
+    .select("id, dienst_id, status, check_in_at, uren_registraties(status)")
     .eq("medewerker_id", medewerker.id)
     .limit(100);
 
   const aanmeldMap = new Map(
     aanmeldingen?.map((a) => [
       a.dienst_id,
-      { id: a.id, status: a.status, uren_status: (a.uren_registraties as UrenRegistratie[])?.[0]?.status },
+      { id: a.id, status: a.status, check_in_at: a.check_in_at, uren_status: (a.uren_registraties as UrenRegistratie[])?.[0]?.status },
     ]) || []
   );
 
@@ -68,6 +68,7 @@ export async function GET() {
     aangemeld: aanmeldMap.has(d.id),
     aanmelding_id: aanmeldMap.get(d.id)?.id,
     aanmelding_status: aanmeldMap.get(d.id)?.status,
+    check_in_at: aanmeldMap.get(d.id)?.check_in_at,
     uren_status: aanmeldMap.get(d.id)?.uren_status,
   }));
 

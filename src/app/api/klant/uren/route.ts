@@ -71,11 +71,13 @@ export async function POST(request: NextRequest) {
     console.warn("[SECURITY] Invalid klant session token");
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
   }
-  const { action, id, data } = await request.json();
+  const { action, id, data, score_punctualiteit, score_functie } = await request.json();
 
   if (action === "approve") {
     await supabaseAdmin.from("uren_registraties").update({
-      status: "klant_goedgekeurd"
+      status: "klant_goedgekeurd",
+      score_punctualiteit: score_punctualiteit || 5,
+      score_functie: score_functie || 5,
     }).eq("id", id);
 
     await supabaseAdmin

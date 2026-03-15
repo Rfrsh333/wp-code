@@ -190,6 +190,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     open: boolean;
     medewerkers: Array<{ naam: string; dienst_datum: string; dienst_tijd: string }>;
   }>({ open: false, medewerkers: [] });
+  const [approveModal, setApproveModal] = useState<{
+    open: boolean;
+    uren: UrenRegistratie | null;
+    score_punctualiteit: number;
+    score_functie: number;
+  }>({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
 
   const fetchUren = async () => {
     setIsLoading(true);
@@ -285,14 +291,30 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     }
   };
 
-  const approveUren = async (id: string) => {
+  const approveUren = (urenItem: UrenRegistratie) => {
+    setApproveModal({
+      open: true,
+      uren: urenItem,
+      score_punctualiteit: 5,
+      score_functie: 5,
+    });
+  };
+
+  const submitApproval = async () => {
+    if (!approveModal.uren) return;
     try {
       await fetch("/api/klant/uren", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve", id }),
+        body: JSON.stringify({
+          action: "approve",
+          id: approveModal.uren.id,
+          score_punctualiteit: approveModal.score_punctualiteit,
+          score_functie: approveModal.score_functie,
+        }),
       });
       toast.success("Uren goedgekeurd");
+      setApproveModal({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
       fetchUren();
     } catch {
       toast.error("Goedkeuren mislukt");
@@ -1233,6 +1255,84 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           </div>
         </div>
       )}
+
+      {/* Approval Modal with Ratings */}
+      {approveModal.open && approveModal.uren && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-neutral-900 mb-2">Uren Goedkeuren</h3>
+            <p className="text-sm text-neutral-500 mb-4">
+              {approveModal.uren.medewerker_naam} · {approveModal.uren.dienst_locatie}
+            </p>
+
+            <div className="bg-neutral-50 rounded-xl p-4 mb-4">
+              <p className="text-sm font-medium">
+                {approveModal.uren.start_tijd?.slice(0, 5)} - {approveModal.uren.eind_tijd?.slice(0, 5)} ({approveModal.uren.pauze_minuten}m pauze)
+              </p>
+              <p className="text-lg font-bold text-neutral-900 mt-1">{approveModal.uren.gewerkte_uren} uur</p>
+            </div>
+
+            {/* Punctualiteit rating */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Was de medewerker op tijd?
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setApproveModal({ ...approveModal, score_punctualiteit: s })}
+                    className={`w-12 h-12 rounded-full text-xl transition ${
+                      approveModal.score_punctualiteit >= s
+                        ? "bg-yellow-400 text-white"
+                        : "bg-neutral-100 text-neutral-400"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Functie rating */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Hoe goed heeft de medewerker de functie uitgevoerd?
+              </label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setApproveModal({ ...approveModal, score_functie: s })}
+                    className={`w-12 h-12 rounded-full text-xl transition ${
+                      approveModal.score_functie >= s
+                        ? "bg-yellow-400 text-white"
+                        : "bg-neutral-100 text-neutral-400"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setApproveModal({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 })}
+                className="flex-1 px-4 py-2 border border-neutral-200 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={submitApproval}
+                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition"
+              >
+                Goedkeuren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -2151,7 +2251,7 @@ function UrenSubTabs({
 }: {
   pending: UrenRegistratie[];
   approved: UrenRegistratie[];
-  onApprove: (id: string) => void;
+  onApprove: (u: UrenRegistratie) => void;
   onAdjust: (u: UrenRegistratie) => void;
   formatDate: (d: string) => string;
   formatCurrency: (value: number) => string;
@@ -2205,7 +2305,7 @@ function UrenSubTabs({
               </div>
               {subTab === "pending" && (
                 <div className="flex gap-2 mt-3">
-                  <button onClick={() => onApprove(u.id)}
+                  <button onClick={() => onApprove(u)}
                     className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold transition hover:bg-green-600">
                     Akkoord
                   </button>
