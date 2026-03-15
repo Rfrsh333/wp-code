@@ -353,7 +353,7 @@ export async function POST(request: NextRequest) {
   if (action === "uren_indienen") {
     const { data: aanmelding } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("id, status, dienst:diensten(datum, eind_tijd)")
+      .select("id, status, check_in_at, dienst:diensten(datum, eind_tijd)")
       .eq("id", aanmelding_id)
       .eq("medewerker_id", medewerker.id)
       .single();
@@ -368,9 +368,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Je kunt alleen uren indienen voor geaccepteerde diensten" }, { status: 400 });
     }
 
-    const dienstEinde = new Date(`${dienst.datum}T${dienst.eind_tijd}`);
-    if (dienstEinde > new Date()) {
-      return NextResponse.json({ error: "Uren kunnen pas worden ingevuld nadat de eindtijd van de dienst is verstreken" }, { status: 400 });
+    // Check of medewerker is ingecheckt via QR scan
+    if (!aanmelding.check_in_at) {
+      return NextResponse.json({ error: "Je moet eerst worden ingecheckt door de klant voordat je uren kunt indienen" }, { status: 400 });
     }
 
     const { data: bestaandUrenItem } = await supabaseAdmin
