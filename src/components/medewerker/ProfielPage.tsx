@@ -8,6 +8,7 @@ import VaardighedenSection from "./VaardighedenSection";
 import WerkervaringSection from "./WerkervaringSection";
 import CertificeringenSection from "./CertificeringenSection";
 import ProfielEditModal from "./ProfielEditModal";
+import DigitalIDCard from "./DigitalIDCard";
 
 interface Medewerker {
   id: string;
@@ -55,7 +56,7 @@ interface BadgeInfo {
 }
 
 const BADGE_CONFIG: Record<string, BadgeInfo> = {
-  starter: { badge: "starter", label: "Starter", icon: "🌱", color: "text-neutral-600", bgColor: "bg-neutral-100" },
+  starter: { badge: "starter", label: "Starter", icon: "🌱", color: "text-[var(--mp-text-secondary)]", bgColor: "bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)]" },
   rising: { badge: "rising", label: "Rising Star", icon: "📈", color: "text-blue-600", bgColor: "bg-blue-50" },
   star: { badge: "star", label: "Star", icon: "⭐", color: "text-yellow-600", bgColor: "bg-yellow-50" },
   toptalent: { badge: "toptalent", label: "TopTalent", icon: "🏆", color: "text-[#F27501]", bgColor: "bg-[#F27501]/10" },
@@ -172,8 +173,22 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
 
   return (
     <div className="max-w-3xl">
+      {/* Digitale ID Kaart */}
+      <div className="mb-6">
+        <DigitalIDCard
+          medewerker={{
+            id: medewerker.id,
+            naam: medewerker.naam,
+            functie: medewerker.functie,
+            profile_photo_url: medewerker.profile_photo_url,
+            bsn_geverifieerd: medewerker.bsn_geverifieerd,
+          }}
+          profilePhoto={profilePhoto}
+        />
+      </div>
+
       {/* Header / Profiel Card */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
+      <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-4">
         <div className="flex items-start gap-5">
           {/* Photo */}
           <div className="relative flex-shrink-0">
@@ -208,8 +223,8 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
           <div className="flex-1">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-neutral-900">{medewerker.naam}</h2>
-                <p className="text-neutral-500 text-sm mt-0.5">
+                <h2 className="text-2xl font-bold text-[var(--mp-text-primary)]">{medewerker.naam}</h2>
+                <p className="text-[var(--mp-text-secondary)] text-sm mt-0.5">
                   {age ? `${age} jaar` : ""}
                   {age && profielData.stad ? ", " : ""}
                   {profielData.stad || ""}
@@ -232,7 +247,7 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
                 </p>
               )}
               {medewerker.email && (
-                <p className="text-sm text-neutral-500 flex items-center gap-1.5">
+                <p className="text-sm text-[var(--mp-text-secondary)] flex items-center gap-1.5">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
@@ -240,7 +255,7 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
                 </p>
               )}
               {medewerker.telefoon && (
-                <p className="text-sm text-neutral-500 flex items-center gap-1.5">
+                <p className="text-sm text-[var(--mp-text-secondary)] flex items-center gap-1.5">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
@@ -277,7 +292,7 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
               <span className="text-3xl">{currentBadge.icon}</span>
               <div>
                 <h3 className={`text-lg font-bold ${currentBadge.color}`}>{currentBadge.label}</h3>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-[var(--mp-text-secondary)]">
                   {totaalDiensten} diensten afgerond
                   {gemScore > 0 ? ` · ★ ${gemScore.toFixed(1)}` : ""}
                 </p>
@@ -287,8 +302,8 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
             {nextBadge && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium text-neutral-600">Volgende: {nextBadge.label}</span>
-                  <span className="text-xs text-neutral-500">{nextBadge.progress}%</span>
+                  <span className="text-xs font-medium text-[var(--mp-text-secondary)]">Volgende: {nextBadge.label}</span>
+                  <span className="text-xs text-[var(--mp-text-secondary)]">{nextBadge.progress}%</span>
                 </div>
                 <div className="w-full bg-white/60 rounded-full h-2.5">
                   <div
@@ -296,7 +311,7 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
                     style={{ width: `${nextBadge.progress}%` }}
                   />
                 </div>
-                <p className="text-xs text-neutral-500 mt-1.5">{nextBadge.hint}</p>
+                <p className="text-xs text-[var(--mp-text-secondary)] mt-1.5">{nextBadge.hint}</p>
               </div>
             )}
 
@@ -310,44 +325,44 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
       })()}
 
       {/* Extra informatie */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
-        <h3 className="text-lg font-bold text-neutral-900 mb-4">Extra informatie</h3>
+      <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-4">
+        <h3 className="text-lg font-bold text-[var(--mp-text-primary)] mb-4">Extra informatie</h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
           {profielData.bio && (
             <div className="col-span-2">
-              <span className="text-neutral-500">Bio</span>
+              <span className="text-[var(--mp-text-secondary)]">Bio</span>
               <p className="font-medium mt-0.5">{profielData.bio}</p>
             </div>
           )}
           {profielData.experience_years != null && (
             <div>
-              <span className="text-neutral-500">Ervaring</span>
+              <span className="text-[var(--mp-text-secondary)]">Ervaring</span>
               <p className="font-medium">{profielData.experience_years} jaar</p>
             </div>
           )}
           {profielData.languages && profielData.languages.length > 0 && (
             <div>
-              <span className="text-neutral-500">Talen</span>
+              <span className="text-[var(--mp-text-secondary)]">Talen</span>
               <p className="font-medium">{profielData.languages.join(", ")}</p>
             </div>
           )}
           <div>
-            <span className="text-neutral-500">Rijbewijs</span>
+            <span className="text-[var(--mp-text-secondary)]">Rijbewijs</span>
             <p className="font-medium">{profielData.has_drivers_license ? "Ja" : "Nee"}</p>
           </div>
           <div>
-            <span className="text-neutral-500">Eigen vervoer</span>
+            <span className="text-[var(--mp-text-secondary)]">Eigen vervoer</span>
             <p className="font-medium">{profielData.has_own_transport ? "Ja" : "Nee"}</p>
           </div>
           {profielData.shirt_size && (
             <div>
-              <span className="text-neutral-500">Shirtmaat</span>
+              <span className="text-[var(--mp-text-secondary)]">Shirtmaat</span>
               <p className="font-medium">{profielData.shirt_size}</p>
             </div>
           )}
           {profielData.emergency_contact_naam && (
             <div className="col-span-2">
-              <span className="text-neutral-500">Noodcontact</span>
+              <span className="text-[var(--mp-text-secondary)]">Noodcontact</span>
               <p className="font-medium">
                 {profielData.emergency_contact_naam}
                 {profielData.emergency_contact_relatie ? ` (${profielData.emergency_contact_relatie})` : ""}
@@ -374,9 +389,9 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
       </div>
 
       {/* Facturatie & Betaling */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-neutral-900">Facturatie & Betaling</h3>
+          <h3 className="text-lg font-bold text-[var(--mp-text-primary)]">Facturatie & Betaling</h3>
           <button
             onClick={() => setShowEditModal(true)}
             className="text-sm font-medium text-[#F27501] hover:text-[#d96800] transition-colors"
@@ -386,22 +401,22 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
         </div>
         <div className="space-y-3">
           <div className="flex items-start justify-between py-2">
-            <span className="text-sm text-neutral-500">Adres</span>
-            <span className="text-sm font-medium text-neutral-900 text-right">
+            <span className="text-sm text-[var(--mp-text-secondary)]">Adres</span>
+            <span className="text-sm font-medium text-[var(--mp-text-primary)] text-right">
               {profielData.factuur_adres
                 ? `${profielData.factuur_adres}, ${profielData.factuur_postcode || ""} ${profielData.factuur_stad || ""}`
                 : "Niet ingesteld"}
             </span>
           </div>
-          <div className="border-t border-neutral-50" />
+          <div className="border-t border-[var(--mp-separator)]" />
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-neutral-500">BTW</span>
-            <span className="text-sm font-medium text-neutral-900">{profielData.btw_nummer || "Niet ingesteld"}</span>
+            <span className="text-sm text-[var(--mp-text-secondary)]">BTW</span>
+            <span className="text-sm font-medium text-[var(--mp-text-primary)]">{profielData.btw_nummer || "Niet ingesteld"}</span>
           </div>
-          <div className="border-t border-neutral-50" />
+          <div className="border-t border-[var(--mp-separator)]" />
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-neutral-500">IBAN</span>
-            <span className="text-sm font-medium text-neutral-900">{profielData.iban || "Niet ingesteld"}</span>
+            <span className="text-sm text-[var(--mp-text-secondary)]">IBAN</span>
+            <span className="text-sm font-medium text-[var(--mp-text-primary)]">{profielData.iban || "Niet ingesteld"}</span>
           </div>
         </div>
       </div>

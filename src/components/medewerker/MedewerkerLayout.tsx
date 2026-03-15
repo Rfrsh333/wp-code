@@ -1,7 +1,14 @@
 "use client";
 
-import PortalLayout from "@/components/portal/PortalLayout";
-import type { PortalTab } from "@/components/portal/PortalLayout";
+import MedewerkerPortalLayout from "./MedewerkerPortalLayout";
+
+interface PortalTab {
+  id: string;
+  label: string;
+  group?: string;
+  icon?: React.ReactNode;
+  badge?: number;
+}
 
 interface MedewerkerLayoutProps {
   children: React.ReactNode;
@@ -10,6 +17,7 @@ interface MedewerkerLayoutProps {
   onTabChange: (tabId: string) => void;
   userName: string;
   onLogout: () => void;
+  ongelezen?: number;
 }
 
 export default function MedewerkerLayout({
@@ -19,30 +27,18 @@ export default function MedewerkerLayout({
   onTabChange,
   userName,
   onLogout,
+  ongelezen = 0,
 }: MedewerkerLayoutProps) {
   return (
-    <PortalLayout
+    <MedewerkerPortalLayout
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={onTabChange}
-      portalType="medewerker"
       userName={userName}
       onLogout={onLogout}
+      ongelezen={ongelezen}
     >
-      <div className="medewerker-mobile-optimized">
-        {children}
-      </div>
-      <style jsx global>{`
-        @media (max-width: 767px) {
-          .medewerker-mobile-optimized button,
-          .medewerker-mobile-optimized a {
-            min-height: 44px;
-          }
-          .medewerker-mobile-optimized .text-2xl {
-            font-size: 1.375rem;
-          }
-        }
-      `}</style>
-    </PortalLayout>
+      {children}
+    </MedewerkerPortalLayout>
   );
 }

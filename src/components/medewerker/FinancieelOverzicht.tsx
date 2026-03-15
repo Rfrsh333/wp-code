@@ -141,20 +141,20 @@ export default function FinancieelOverzicht() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900">Financieel overzicht</h2>
-        <span className="text-sm text-neutral-500">Laatste 12 maanden</span>
+        <h2 className="text-2xl font-bold text-[var(--mp-text-primary)]">Financieel overzicht</h2>
+        <span className="text-sm text-[var(--mp-text-secondary)]">Laatste 12 maanden</span>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-neutral-100 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 mb-6 bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl p-1 w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               activeTab === tab.id
-                ? "bg-white text-neutral-900 shadow-sm"
-                : "text-neutral-500 hover:text-neutral-700"
+                ? "bg-[var(--mp-card)] text-[var(--mp-text-primary)] shadow-sm dark:shadow-none"
+                : "text-[var(--mp-text-secondary)] hover:text-[var(--mp-text-primary)]"
             }`}
           >
             {tab.label}
@@ -169,8 +169,8 @@ export default function FinancieelOverzicht() {
       ) : activeTab === "overzicht" ? (
         <>
           {/* Staafdiagram */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-            <h3 className="text-base font-semibold text-neutral-900 mb-6">Inkomstenoverzicht (excl. btw)</h3>
+          <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-6">
+            <h3 className="text-base font-semibold text-[var(--mp-text-primary)] mb-6">Inkomstenoverzicht (excl. btw)</h3>
             <div className="flex items-end gap-2 h-48 mb-4">
               {chartData.map((m) => {
                 const height = maxVerdiensten > 0
@@ -200,7 +200,7 @@ export default function FinancieelOverzicht() {
                           ? "bg-[#F27501]"
                           : hasData
                             ? "bg-[#F27501]/60 hover:bg-[#F27501]/80"
-                            : "bg-neutral-100"
+                            : "bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)]"
                       }`}
                       style={{ height: `${height}%`, minHeight: hasData ? "8px" : "4px" }}
                       title={hasData ? `€${m.data.totaal_verdiensten.toFixed(2)}` : "Geen inkomsten"}
@@ -214,7 +214,7 @@ export default function FinancieelOverzicht() {
               {chartData.map((m) => (
                 <div key={m.key} className="flex-1 text-center">
                   <span className={`text-[10px] font-medium ${
-                    selectedMaand === m.key ? "text-[#F27501]" : "text-neutral-400"
+                    selectedMaand === m.key ? "text-[#F27501]" : "text-[var(--mp-text-tertiary)]"
                   }`}>
                     {m.shortLabel}
                   </span>
@@ -225,12 +225,12 @@ export default function FinancieelOverzicht() {
 
           {/* Geselecteerde maand detail */}
           {selectedMaand && selectedData && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm mb-6 border-2 border-[#F27501]/20">
+            <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-6 border-2 border-[#F27501]/20">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-neutral-900 capitalize">{selectedLabel}</h3>
+                <h3 className="text-lg font-bold text-[var(--mp-text-primary)] capitalize">{selectedLabel}</h3>
                 <button
                   onClick={() => setSelectedMaand(null)}
-                  className="text-neutral-400 hover:text-neutral-600 transition-colors"
+                  className="text-[var(--mp-text-tertiary)] hover:text-[var(--mp-text-secondary)] transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -239,22 +239,22 @@ export default function FinancieelOverzicht() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-[#F27501]/5 rounded-xl p-4">
-                  <p className="text-xs text-neutral-500 mb-1">Verdiensten</p>
+                  <p className="text-xs text-[var(--mp-text-secondary)] mb-1">Verdiensten</p>
                   <p className="text-xl font-bold text-[#F27501]">€{selectedData.totaal_verdiensten.toFixed(2)}</p>
                 </div>
-                <div className="bg-neutral-50 rounded-xl p-4">
-                  <p className="text-xs text-neutral-500 mb-1">Gewerkte uren</p>
-                  <p className="text-xl font-bold text-neutral-900">{selectedData.totaal_uren.toFixed(1)}</p>
+                <div className="bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl p-4">
+                  <p className="text-xs text-[var(--mp-text-secondary)] mb-1">Gewerkte uren</p>
+                  <p className="text-xl font-bold text-[var(--mp-text-primary)]">{selectedData.totaal_uren.toFixed(1)}</p>
                 </div>
-                <div className="bg-neutral-50 rounded-xl p-4">
-                  <p className="text-xs text-neutral-500 mb-1">Diensten</p>
-                  <p className="text-xl font-bold text-neutral-900">{selectedData.aantal_diensten}</p>
+                <div className="bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl p-4">
+                  <p className="text-xs text-[var(--mp-text-secondary)] mb-1">Diensten</p>
+                  <p className="text-xl font-bold text-[var(--mp-text-primary)]">{selectedData.aantal_diensten}</p>
                 </div>
               </div>
               {selectedData.totaal_uren > 0 && (
-                <div className="mt-4 pt-4 border-t border-neutral-100 flex items-center justify-between">
-                  <span className="text-sm text-neutral-500">Gemiddeld uurtarief</span>
-                  <span className="text-sm font-semibold text-neutral-900">
+                <div className="mt-4 pt-4 border-t border-[var(--mp-separator)] flex items-center justify-between">
+                  <span className="text-sm text-[var(--mp-text-secondary)]">Gemiddeld uurtarief</span>
+                  <span className="text-sm font-semibold text-[var(--mp-text-primary)]">
                     €{(selectedData.totaal_verdiensten / selectedData.totaal_uren).toFixed(2)}/uur
                   </span>
                 </div>
@@ -263,25 +263,25 @@ export default function FinancieelOverzicht() {
           )}
 
           {/* Inkomsten laatste 30 dagen */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-            <h3 className="text-base font-medium text-neutral-700 mb-2">Inkomsten laatste 30 dagen</h3>
-            <p className="text-3xl font-bold text-neutral-900">€{last30.toFixed(2)}</p>
-            <p className="text-sm text-neutral-500 mt-1">Het bedrag dat je verdiend hebt over de afgelopen 30 dagen.</p>
+          <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-6">
+            <h3 className="text-base font-medium text-[var(--mp-text-primary)] mb-2">Inkomsten laatste 30 dagen</h3>
+            <p className="text-3xl font-bold text-[var(--mp-text-primary)]">€{last30.toFixed(2)}</p>
+            <p className="text-sm text-[var(--mp-text-secondary)] mt-1">Het bedrag dat je verdiend hebt over de afgelopen 30 dagen.</p>
           </div>
 
           {/* Totalen */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <p className="text-sm text-neutral-500 mb-1">Totaal verdiend</p>
+            <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-5 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
+              <p className="text-sm text-[var(--mp-text-secondary)] mb-1">Totaal verdiend</p>
               <p className="text-2xl font-bold text-[#F27501]">€{totalVerdiensten.toFixed(2)}</p>
             </div>
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <p className="text-sm text-neutral-500 mb-1">Totaal uren</p>
-              <p className="text-2xl font-bold text-neutral-900">{totalUren.toFixed(1)}</p>
+            <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-5 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
+              <p className="text-sm text-[var(--mp-text-secondary)] mb-1">Totaal uren</p>
+              <p className="text-2xl font-bold text-[var(--mp-text-primary)]">{totalUren.toFixed(1)}</p>
             </div>
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <p className="text-sm text-neutral-500 mb-1">Gemiddeld/uur</p>
-              <p className="text-2xl font-bold text-neutral-900">
+            <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-5 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
+              <p className="text-sm text-[var(--mp-text-secondary)] mb-1">Gemiddeld/uur</p>
+              <p className="text-2xl font-bold text-[var(--mp-text-primary)]">
                 €{totalUren > 0 ? (totalVerdiensten / totalUren).toFixed(2) : "0.00"}
               </p>
             </div>
@@ -291,8 +291,8 @@ export default function FinancieelOverzicht() {
         /* Per maand tab - detail tabel */
         <>
           {overzicht.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-              <p className="text-neutral-500">Nog geen verdiensten geregistreerd.</p>
+            <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-8 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] text-center">
+              <p className="text-[var(--mp-text-secondary)]">Nog geen verdiensten geregistreerd.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -304,10 +304,10 @@ export default function FinancieelOverzicht() {
                 const isOpen = selectedMaand === m.maand;
 
                 return (
-                  <div key={m.maand} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div key={m.maand} className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] overflow-hidden">
                     <button
                       onClick={() => setSelectedMaand(isOpen ? null : m.maand)}
-                      className="w-full flex items-center justify-between px-6 py-4 hover:bg-neutral-50 transition-colors"
+                      className="w-full flex items-center justify-between px-6 py-4 hover:bg-[var(--mp-bg)] dark:hover:bg-[var(--mp-card-elevated)] transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-[#F27501]/10 rounded-xl flex items-center justify-center">
@@ -315,35 +315,35 @@ export default function FinancieelOverzicht() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
-                        <span className="text-sm font-semibold text-neutral-900 capitalize">{label}</span>
+                        <span className="text-sm font-semibold text-[var(--mp-text-primary)] capitalize">{label}</span>
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-bold text-[#F27501]">€{m.totaal_verdiensten.toFixed(2)}</span>
-                        <svg className={`w-5 h-5 text-neutral-400 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-5 h-5 text-[var(--mp-text-tertiary)] transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
                     </button>
 
                     {isOpen && (
-                      <div className="px-6 pb-5 pt-1 border-t border-neutral-100">
+                      <div className="px-6 pb-5 pt-1 border-t border-[var(--mp-separator)]">
                         <div className="grid grid-cols-3 gap-4 mt-3">
                           <div>
-                            <p className="text-xs text-neutral-500 mb-0.5">Verdiensten</p>
+                            <p className="text-xs text-[var(--mp-text-secondary)] mb-0.5">Verdiensten</p>
                             <p className="text-lg font-bold text-[#F27501]">€{m.totaal_verdiensten.toFixed(2)}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-neutral-500 mb-0.5">Uren</p>
-                            <p className="text-lg font-bold text-neutral-900">{m.totaal_uren.toFixed(1)}</p>
+                            <p className="text-xs text-[var(--mp-text-secondary)] mb-0.5">Uren</p>
+                            <p className="text-lg font-bold text-[var(--mp-text-primary)]">{m.totaal_uren.toFixed(1)}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-neutral-500 mb-0.5">Diensten</p>
-                            <p className="text-lg font-bold text-neutral-900">{m.aantal_diensten}</p>
+                            <p className="text-xs text-[var(--mp-text-secondary)] mb-0.5">Diensten</p>
+                            <p className="text-lg font-bold text-[var(--mp-text-primary)]">{m.aantal_diensten}</p>
                           </div>
                         </div>
                         {m.totaal_uren > 0 && (
-                          <div className="mt-3 pt-3 border-t border-neutral-50 flex justify-between text-sm">
-                            <span className="text-neutral-500">Gemiddeld uurtarief</span>
+                          <div className="mt-3 pt-3 border-t border-[var(--mp-separator)] flex justify-between text-sm">
+                            <span className="text-[var(--mp-text-secondary)]">Gemiddeld uurtarief</span>
                             <span className="font-semibold">€{(m.totaal_verdiensten / m.totaal_uren).toFixed(2)}/uur</span>
                           </div>
                         )}
@@ -360,8 +360,8 @@ export default function FinancieelOverzicht() {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Linkerkant - illustratie + info */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="text-xl font-bold text-neutral-900 mb-3">Belastingen</h3>
+            <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
+              <h3 className="text-xl font-bold text-[var(--mp-text-primary)] mb-3">Belastingen</h3>
               <div className="flex justify-center my-6">
                 <div className="w-32 h-32 bg-[#F27501]/5 rounded-full flex items-center justify-center">
                   <svg className="w-16 h-16 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,7 +369,7 @@ export default function FinancieelOverzicht() {
                   </svg>
                 </div>
               </div>
-              <p className="text-sm text-neutral-600 text-center leading-relaxed mb-4">
+              <p className="text-sm text-[var(--mp-text-secondary)] text-center leading-relaxed mb-4">
                 Werk je naast je TopTalent-klussen ergens anders als freelancer? Dan heeft dit invloed op je btw-aangifte.
               </p>
               <div className="bg-[#F27501]/5 border border-[#F27501]/20 rounded-xl p-4 mb-4">
@@ -380,8 +380,8 @@ export default function FinancieelOverzicht() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-neutral-900 mb-1">Let op</p>
-                    <p className="text-xs text-neutral-600 leading-relaxed">
+                    <p className="text-sm font-semibold text-[var(--mp-text-primary)] mb-1">Let op</p>
+                    <p className="text-xs text-[var(--mp-text-secondary)] leading-relaxed">
                       Dit overzicht is enkel een indicatie en is niet toegespitst op jouw persoonlijke situatie.
                       Neem voor een belastingadvies contact op met een belastingadviseur.
                     </p>
@@ -391,13 +391,13 @@ export default function FinancieelOverzicht() {
             </div>
 
             {/* Rechterkant - kwartaal overzicht */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-base font-semibold text-neutral-900">Totale omzetbelasting</h3>
+                <h3 className="text-base font-semibold text-[var(--mp-text-primary)]">Totale omzetbelasting</h3>
                 <select
                   value={selectedKwartaal}
                   onChange={(e) => setSelectedKwartaal(e.target.value)}
-                  className="px-3 py-2 border border-neutral-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
+                  className="px-3 py-2 border border-[var(--mp-separator)] rounded-lg text-sm font-medium focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
                 >
                   {kwartalen.map((k) => (
                     <option key={k.key} value={k.key}>{k.label}</option>
@@ -407,65 +407,65 @@ export default function FinancieelOverzicht() {
 
               {selectedKwartaal && (
                 <div>
-                  <p className="text-sm font-medium text-neutral-500 mb-4">
+                  <p className="text-sm font-medium text-[var(--mp-text-secondary)] mb-4">
                     Over {selectedKwartaal}
                   </p>
 
                   {/* Inkomsten sectie */}
-                  <div className="border-b border-neutral-100 pb-4 mb-4">
-                    <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">Inkomsten</p>
+                  <div className="border-b border-[var(--mp-separator)] pb-4 mb-4">
+                    <p className="text-xs font-bold text-[var(--mp-text-tertiary)] uppercase tracking-wider mb-3">Inkomsten</p>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Leveringen/Diensten belast met 21% btw</span>
-                        <span className="font-medium text-neutral-900">€{kwartaalData.inkomsten.toFixed(2)}</span>
+                        <span className="text-[var(--mp-text-secondary)]">Leveringen/Diensten belast met 21% btw</span>
+                        <span className="font-medium text-[var(--mp-text-primary)]">€{kwartaalData.inkomsten.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Btw</span>
-                        <span className="font-medium text-neutral-900">€{kwartaalData.btw.toFixed(2)}</span>
+                        <span className="text-[var(--mp-text-secondary)]">Btw</span>
+                        <span className="font-medium text-[var(--mp-text-primary)]">€{kwartaalData.btw.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Kosten sectie */}
-                  <div className="border-b border-neutral-100 pb-4 mb-4">
-                    <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">Kosten</p>
+                  <div className="border-b border-[var(--mp-separator)] pb-4 mb-4">
+                    <p className="text-xs font-bold text-[var(--mp-text-tertiary)] uppercase tracking-wider mb-3">Kosten</p>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Directe betalingen</span>
-                        <span className="font-medium text-neutral-900">€{kwartaalData.inkomsten.toFixed(2)}</span>
+                        <span className="text-[var(--mp-text-secondary)]">Directe betalingen</span>
+                        <span className="font-medium text-[var(--mp-text-primary)]">€{kwartaalData.inkomsten.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Vervangingskosten</span>
-                        <span className="font-medium text-neutral-900">€0,00</span>
+                        <span className="text-[var(--mp-text-secondary)]">Vervangingskosten</span>
+                        <span className="font-medium text-[var(--mp-text-primary)]">€0,00</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Subtotaal */}
-                  <div className="border-b border-neutral-100 pb-4 mb-4">
+                  <div className="border-b border-[var(--mp-separator)] pb-4 mb-4">
                     <div className="flex justify-between text-sm">
-                      <span className="font-bold text-neutral-900">SUBTOTAAL</span>
-                      <span className="font-bold text-neutral-900">€{kwartaalData.inkomsten.toFixed(2)}</span>
+                      <span className="font-bold text-[var(--mp-text-primary)]">SUBTOTAAL</span>
+                      <span className="font-bold text-[var(--mp-text-primary)]">€{kwartaalData.inkomsten.toFixed(2)}</span>
                     </div>
                   </div>
 
                   {/* BTW */}
                   <div className="mb-6">
                     <div className="flex justify-between text-sm">
-                      <span className="font-semibold text-neutral-700">Btw (21%)</span>
+                      <span className="font-semibold text-[var(--mp-text-primary)]">Btw (21%)</span>
                       <span className="font-bold text-[#F27501]">€{kwartaalData.btw.toFixed(2)}</span>
                     </div>
                   </div>
 
                   {/* Samenvatting kaarten */}
                   <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-neutral-50 rounded-xl p-3">
-                      <p className="text-xs text-neutral-500 mb-0.5">Gewerkte uren</p>
-                      <p className="text-lg font-bold text-neutral-900">{kwartaalData.uren.toFixed(1)}</p>
+                    <div className="bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl p-3">
+                      <p className="text-xs text-[var(--mp-text-secondary)] mb-0.5">Gewerkte uren</p>
+                      <p className="text-lg font-bold text-[var(--mp-text-primary)]">{kwartaalData.uren.toFixed(1)}</p>
                     </div>
-                    <div className="bg-neutral-50 rounded-xl p-3">
-                      <p className="text-xs text-neutral-500 mb-0.5">Diensten</p>
-                      <p className="text-lg font-bold text-neutral-900">{kwartaalData.diensten}</p>
+                    <div className="bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl p-3">
+                      <p className="text-xs text-[var(--mp-text-secondary)] mb-0.5">Diensten</p>
+                      <p className="text-lg font-bold text-[var(--mp-text-primary)]">{kwartaalData.diensten}</p>
                     </div>
                   </div>
 

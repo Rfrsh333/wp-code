@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import MedewerkerLayout from "@/components/medewerker/MedewerkerLayout";
-import type { PortalTab } from "@/components/portal/PortalLayout";
 import BeschikbaarheidForm from "@/components/medewerker/BeschikbaarheidForm";
 import DienstenTab from "@/components/medewerker/DienstenTab";
 import UrenTab from "@/components/medewerker/UrenTab";
@@ -12,7 +11,7 @@ import FinancieelOverzicht from "@/components/medewerker/FinancieelOverzicht";
 import DocumentenPage from "@/components/medewerker/DocumentenPage";
 import ReferralPage from "@/components/medewerker/ReferralPage";
 import BerichtenTab from "@/components/medewerker/BerichtenTab";
-import AanbiedingenSection from "@/components/medewerker/AanbiedingenSection";
+import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import DashboardHome from "@/components/medewerker/DashboardHome";
 import { useToast } from "@/components/ui/Toast";
 
@@ -64,6 +63,14 @@ interface KlantAanpassing {
   dienst_datum: string;
   klant_naam: string;
   locatie: string;
+}
+
+interface PortalTab {
+  id: string;
+  label: string;
+  group?: string;
+  icon?: React.ReactNode;
+  badge?: number;
 }
 
 type TabId = "home" | "diensten" | "uren" | "beschikbaarheid" | "berichten" | "profiel" | "financieel" | "documenten" | "referral";
@@ -302,6 +309,7 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
       onTabChange={(id) => setActiveTab(id as TabId)}
       userName={medewerker.naam}
       onLogout={handleLogout}
+      ongelezen={ongelezen}
     >
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
@@ -315,7 +323,7 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
 
           {activeTab === "diensten" && (
             <>
-              <AanbiedingenSection />
+              <SwipeShiftStack />
               <DienstenTab
                 diensten={diensten}
                 onAanmelden={aanmelden}
@@ -335,8 +343,8 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
 
           {activeTab === "beschikbaarheid" && (
             <div>
-              <h2 className="text-2xl font-bold text-neutral-900 mb-6">Mijn Beschikbaarheid</h2>
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-2xl font-bold text-[var(--mp-text-primary)] mb-6">Mijn Beschikbaarheid</h2>
+              <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
                 <BeschikbaarheidForm
                   onSave={async (data) => {
                     await fetch("/api/medewerker/beschikbaarheid", {
@@ -373,27 +381,27 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
 
       {/* Uren Modal */}
       {urenModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-sm w-full p-4 sm:p-6">
-            <h3 className="text-lg font-bold mb-4">Uren invullen</h3>
-            <p className="text-sm text-neutral-500 mb-4">{urenModal.klant_naam} - {formatDate(urenModal.datum)}</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
+          <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card-elevated)] rounded-2xl max-w-sm w-full p-4 sm:p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-[var(--mp-text-primary)] mb-4">Uren invullen</h3>
+            <p className="text-sm text-[var(--mp-text-secondary)] mb-4">{urenModal.klant_naam} - {formatDate(urenModal.datum)}</p>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Starttijd</label>
-                <input type="time" value={urenForm.start} onChange={(e) => setUrenForm({ ...urenForm, start: e.target.value })} className="w-full px-3 py-3 border rounded-lg text-base" />
+                <label className="block text-sm font-medium text-[var(--mp-text-primary)] mb-1">Starttijd</label>
+                <input type="time" value={urenForm.start} onChange={(e) => setUrenForm({ ...urenForm, start: e.target.value })} className="w-full px-3 py-3 border border-[var(--mp-separator)] rounded-xl text-base bg-[var(--mp-bg)] dark:bg-[var(--mp-card)] text-[var(--mp-text-primary)]" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Eindtijd</label>
-                <input type="time" value={urenForm.eind} onChange={(e) => setUrenForm({ ...urenForm, eind: e.target.value })} className="w-full px-3 py-3 border rounded-lg text-base" />
+                <label className="block text-sm font-medium text-[var(--mp-text-primary)] mb-1">Eindtijd</label>
+                <input type="time" value={urenForm.eind} onChange={(e) => setUrenForm({ ...urenForm, eind: e.target.value })} className="w-full px-3 py-3 border border-[var(--mp-separator)] rounded-xl text-base bg-[var(--mp-bg)] dark:bg-[var(--mp-card)] text-[var(--mp-text-primary)]" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Pauze (minuten)</label>
-                <input type="number" value={urenForm.pauze} onChange={(e) => setUrenForm({ ...urenForm, pauze: e.target.value })} className="w-full px-3 py-3 border rounded-lg text-base" min="0" step="5" />
+                <label className="block text-sm font-medium text-[var(--mp-text-primary)] mb-1">Pauze (minuten)</label>
+                <input type="number" value={urenForm.pauze} onChange={(e) => setUrenForm({ ...urenForm, pauze: e.target.value })} className="w-full px-3 py-3 border border-[var(--mp-separator)] rounded-xl text-base bg-[var(--mp-bg)] dark:bg-[var(--mp-card)] text-[var(--mp-text-primary)]" min="0" step="5" />
               </div>
             </div>
             <div className="flex gap-2 mt-6">
-              <button onClick={() => setUrenModal(null)} className="flex-1 py-3 border rounded-lg">Annuleren</button>
-              <button onClick={submitUren} className="flex-1 py-3 bg-[#F27501] text-white rounded-lg font-medium">Versturen</button>
+              <button onClick={() => setUrenModal(null)} className="flex-1 py-3 border border-[var(--mp-separator)] rounded-xl text-[var(--mp-text-primary)]">Annuleren</button>
+              <button onClick={submitUren} className="flex-1 py-3 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition-colors">Versturen</button>
             </div>
           </div>
         </div>

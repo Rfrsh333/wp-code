@@ -101,16 +101,16 @@ export default function DocumentenPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-neutral-900 mb-6">Documenten</h2>
+      <h2 className="text-2xl font-bold text-[var(--mp-text-primary)] mb-6">Documenten</h2>
 
       {/* Upload sectie */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-        <h3 className="text-lg font-semibold text-neutral-900 mb-4">Document Uploaden</h3>
+      <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-6">
+        <h3 className="text-lg font-semibold text-[var(--mp-text-primary)] mb-4">Document Uploaden</h3>
         <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
+            className="px-3 py-2 border border-[var(--mp-separator)] rounded-lg text-sm focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
           >
             {DOCUMENT_TYPES.map((t) => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -133,7 +133,7 @@ export default function DocumentenPage() {
             <input type="file" onChange={handleUpload} className="hidden" disabled={isUploading} accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
           </label>
         </div>
-        <p className="text-xs text-neutral-500 mt-2">Max 10MB. PDF, JPG, PNG, DOC toegestaan.</p>
+        <p className="text-xs text-[var(--mp-text-secondary)] mt-2">Max 10MB. PDF, JPG, PNG, DOC toegestaan.</p>
       </div>
 
       {/* Documenten lijst */}
@@ -142,16 +142,16 @@ export default function DocumentenPage() {
           <div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" />
         </div>
       ) : documenten.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <svg className="w-12 h-12 mx-auto text-neutral-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-8 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] text-center">
+          <svg className="w-12 h-12 mx-auto text-[var(--mp-text-tertiary)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
-          <p className="text-neutral-500">Nog geen documenten geüpload.</p>
+          <p className="text-[var(--mp-text-secondary)]">Nog geen documenten geüpload.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {documenten.map((doc) => (
-            <div key={doc.id} className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
+            <div key={doc.id} className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-4 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] flex items-center gap-4">
               <div className="w-10 h-10 bg-[#F27501]/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5 text-[#F27501]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -159,7 +159,7 @@ export default function DocumentenPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-neutral-900 truncate">{doc.file_name}</p>
+                  <p className="text-sm font-medium text-[var(--mp-text-primary)] truncate">{doc.file_name}</p>
                   {doc.review_status === "goedgekeurd" && (
                     <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 flex-shrink-0">Goedgekeurd</span>
                   )}
@@ -170,7 +170,7 @@ export default function DocumentenPage() {
                     <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 flex-shrink-0">In review</span>
                   )}
                 </div>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-[var(--mp-text-secondary)]">
                   {getTypeLabel(doc.document_type)} · {formatFileSize(doc.file_size)} · {formatDate(doc.uploaded_at)}
                 </p>
                 {doc.expiry_date && (() => {
@@ -180,7 +180,7 @@ export default function DocumentenPage() {
                   const isExpired = daysLeft < 0;
                   const isExpiringSoon = daysLeft >= 0 && daysLeft <= 30;
                   return (
-                    <p className={`text-xs mt-0.5 flex items-center gap-1 ${isExpired ? "text-red-600 font-semibold" : isExpiringSoon ? "text-orange-600" : "text-neutral-400"}`}>
+                    <p className={`text-xs mt-0.5 flex items-center gap-1 ${isExpired ? "text-red-600 font-semibold" : isExpiringSoon ? "text-orange-600" : "text-[var(--mp-text-tertiary)]"}`}>
                       {isExpired ? "⚠️ Verlopen" : isExpiringSoon ? `⚠️ Verloopt over ${daysLeft} dagen` : `Geldig tot ${formatDate(doc.expiry_date)}`}
                     </p>
                   );
@@ -194,7 +194,7 @@ export default function DocumentenPage() {
                   href={doc.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 text-neutral-400 hover:text-[#F27501] transition-colors"
+                  className="p-2 text-[var(--mp-text-tertiary)] hover:text-[#F27501] transition-colors"
                   title="Bekijken"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,7 +203,7 @@ export default function DocumentenPage() {
                 </a>
                 <button
                   onClick={() => handleDelete(doc.id)}
-                  className="p-2 text-neutral-400 hover:text-red-500 transition-colors"
+                  className="p-2 text-[var(--mp-text-tertiary)] hover:text-red-500 transition-colors"
                   title="Verwijderen"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -115,26 +115,26 @@ export default function BerichtenTab() {
       <div>
         <button
           onClick={() => setSelectedBericht(null)}
-          className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-700 mb-4"
+          className="flex items-center gap-2 text-sm text-[var(--mp-text-secondary)] hover:text-[var(--mp-text-primary)] mb-4"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Terug naar berichten
         </button>
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h3 className="text-lg font-bold text-neutral-900">
+              <h3 className="text-lg font-bold text-[var(--mp-text-primary)]">
                 {selectedBericht.onderwerp || "Geen onderwerp"}
               </h3>
-              <p className="text-sm text-neutral-500 mt-1">
+              <p className="text-sm text-[var(--mp-text-secondary)] mt-1">
                 {selectedBericht.van_type === "admin" ? "TopTalent Admin" : "Jij"} · {formatDate(selectedBericht.created_at)}
               </p>
             </div>
           </div>
           <div className="border-t pt-4">
-            <p className="text-neutral-700 whitespace-pre-wrap">{selectedBericht.inhoud}</p>
+            <p className="text-[var(--mp-text-primary)] whitespace-pre-wrap">{selectedBericht.inhoud}</p>
           </div>
         </div>
       </div>
@@ -147,33 +147,33 @@ export default function BerichtenTab() {
       <div>
         <button
           onClick={() => setShowNieuw(false)}
-          className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-700 mb-4"
+          className="flex items-center gap-2 text-sm text-[var(--mp-text-secondary)] hover:text-[var(--mp-text-primary)] mb-4"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Annuleren
         </button>
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-neutral-900 mb-4">Neem contact op met TopTalent</h3>
+        <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
+          <h3 className="text-lg font-bold text-[var(--mp-text-primary)] mb-4">Neem contact op met TopTalent</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Onderwerp (optioneel)</label>
+              <label className="block text-sm font-medium text-[var(--mp-text-primary)] mb-1">Onderwerp (optioneel)</label>
               <input
                 type="text"
                 value={nieuwForm.onderwerp}
                 onChange={(e) => setNieuwForm({ ...nieuwForm, onderwerp: e.target.value })}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-xl text-sm focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
+                className="w-full px-4 py-3 border border-[var(--mp-separator)] rounded-xl text-sm focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
                 placeholder="Waar gaat je bericht over?"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Bericht</label>
+              <label className="block text-sm font-medium text-[var(--mp-text-primary)] mb-1">Bericht</label>
               <textarea
                 value={nieuwForm.inhoud}
                 onChange={(e) => setNieuwForm({ ...nieuwForm, inhoud: e.target.value })}
                 rows={6}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-xl text-sm focus:ring-2 focus:ring-[#F27501] focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-[var(--mp-separator)] rounded-xl text-sm focus:ring-2 focus:ring-[#F27501] focus:border-transparent resize-none"
                 placeholder="Typ je bericht..."
               />
             </div>
@@ -193,7 +193,7 @@ export default function BerichtenTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900">Contact TopTalent</h2>
+        <h2 className="text-2xl font-bold text-[var(--mp-text-primary)]">Contact TopTalent</h2>
         <button
           onClick={() => setShowNieuw(true)}
           className="px-4 py-2 bg-[#F27501] hover:bg-[#d96800] text-white text-sm font-semibold rounded-xl transition-colors"
@@ -203,11 +203,11 @@ export default function BerichtenTab() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 bg-neutral-100 rounded-xl p-1">
+      <div className="flex gap-1 mb-4 bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl p-1">
         <button
           onClick={() => setView("inbox")}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-            view === "inbox" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+            view === "inbox" ? "bg-[var(--mp-card)] text-[var(--mp-text-primary)] shadow-sm dark:shadow-none" : "text-[var(--mp-text-secondary)] hover:text-[var(--mp-text-primary)]"
           }`}
         >
           Inbox {ongelezen > 0 && <span className="ml-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{ongelezen}</span>}
@@ -215,7 +215,7 @@ export default function BerichtenTab() {
         <button
           onClick={() => setView("verzonden")}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-            view === "verzonden" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+            view === "verzonden" ? "bg-[var(--mp-card)] text-[var(--mp-text-primary)] shadow-sm dark:shadow-none" : "text-[var(--mp-text-secondary)] hover:text-[var(--mp-text-primary)]"
           }`}
         >
           Verzonden
@@ -238,8 +238,8 @@ export default function BerichtenTab() {
             <button
               key={bericht.id}
               onClick={() => openBericht(bericht)}
-              className={`w-full text-left bg-white rounded-2xl p-4 shadow-sm border transition-shadow hover:shadow-md ${
-                !bericht.gelezen && view === "inbox" ? "border-[#F27501]/30 bg-orange-50/30" : "border-neutral-200"
+              className={`w-full text-left bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-4 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] border transition-shadow hover:shadow-md ${
+                !bericht.gelezen && view === "inbox" ? "border-[#F27501]/30 bg-orange-50/30" : "border-[var(--mp-separator)]"
               }`}
             >
               <div className="flex items-start gap-3">
@@ -248,13 +248,13 @@ export default function BerichtenTab() {
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <p className={`text-sm truncate ${!bericht.gelezen && view === "inbox" ? "font-bold text-neutral-900" : "font-medium text-neutral-700"}`}>
+                    <p className={`text-sm truncate ${!bericht.gelezen && view === "inbox" ? "font-bold text-[var(--mp-text-primary)]" : "font-medium text-[var(--mp-text-primary)]"}`}>
                       {bericht.onderwerp || "Geen onderwerp"}
                     </p>
-                    <span className="text-xs text-neutral-400 ml-2 flex-shrink-0">{formatDate(bericht.created_at)}</span>
+                    <span className="text-xs text-[var(--mp-text-tertiary)] ml-2 flex-shrink-0">{formatDate(bericht.created_at)}</span>
                   </div>
-                  <p className="text-sm text-neutral-500 truncate">{bericht.inhoud}</p>
-                  <p className="text-xs text-neutral-400 mt-1">
+                  <p className="text-sm text-[var(--mp-text-secondary)] truncate">{bericht.inhoud}</p>
+                  <p className="text-xs text-[var(--mp-text-tertiary)] mt-1">
                     {view === "inbox"
                       ? bericht.van_type === "admin" ? "Van: TopTalent Admin" : `Van: ${bericht.van_id}`
                       : "Aan: TopTalent Admin"}

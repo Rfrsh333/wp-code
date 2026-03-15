@@ -68,15 +68,15 @@ export default function ReferralPage() {
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-8 w-48 bg-neutral-200 rounded" />
-        <div className="h-48 bg-neutral-100 rounded-xl" />
+        <div className="h-8 w-48 bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded" />
+        <div className="h-48 bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl" />
       </div>
     );
   }
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-2xl font-bold text-neutral-900 mb-6">Verwijs een vriend</h2>
+      <h2 className="text-2xl font-bold text-[var(--mp-text-primary)] mb-6">Verwijs een vriend</h2>
 
       {/* Reward banner */}
       <div className="bg-gradient-to-r from-[#F27501] to-[#d96800] rounded-2xl p-6 text-white mb-6">
@@ -94,25 +94,25 @@ export default function ReferralPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-neutral-900">{stats.totaal_verwezen}</p>
-          <p className="text-xs text-neutral-500">Verwezen</p>
+        <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-xl p-4 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] text-center">
+          <p className="text-2xl font-bold text-[var(--mp-text-primary)]">{stats.totaal_verwezen}</p>
+          <p className="text-xs text-[var(--mp-text-secondary)]">Verwezen</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-xl p-4 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] text-center">
           <p className="text-2xl font-bold text-green-600">{stats.qualified}</p>
-          <p className="text-xs text-neutral-500">Gekwalificeerd</p>
+          <p className="text-xs text-[var(--mp-text-secondary)]">Gekwalificeerd</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+        <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-xl p-4 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] text-center">
           <p className="text-2xl font-bold text-[#F27501]">€{stats.totaal_verdiend}</p>
-          <p className="text-xs text-neutral-500">Verdiend</p>
+          <p className="text-xs text-[var(--mp-text-secondary)]">Verdiend</p>
         </div>
       </div>
 
       {/* Referral link */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-        <h3 className="font-bold text-neutral-900 mb-3">Jouw persoonlijke link</h3>
+      <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-6">
+        <h3 className="font-bold text-[var(--mp-text-primary)] mb-3">Jouw persoonlijke link</h3>
         <div className="flex gap-2">
-          <div className="flex-1 bg-neutral-50 rounded-xl px-4 py-3 text-sm text-neutral-600 font-mono truncate border border-neutral-200">
+          <div className="flex-1 bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-xl px-4 py-3 text-sm text-[var(--mp-text-secondary)] font-mono truncate border border-[var(--mp-separator)]">
             {referralLink}
           </div>
           <button
@@ -139,14 +139,14 @@ export default function ReferralPage() {
           </button>
         </div>
 
-        <p className="text-xs text-neutral-400 mt-3">
+        <p className="text-xs text-[var(--mp-text-tertiary)] mt-3">
           Jouw code: <span className="font-mono font-medium">{referralCode}</span>
         </p>
       </div>
 
       {/* Hoe het werkt */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-        <h3 className="font-bold text-neutral-900 mb-4">Hoe werkt het?</h3>
+      <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)] mb-6">
+        <h3 className="font-bold text-[var(--mp-text-primary)] mb-4">Hoe werkt het?</h3>
         <div className="space-y-4">
           {[
             { step: "1", title: "Deel je link", desc: "Stuur je persoonlijke link naar vrienden die in de horeca willen werken" },
@@ -158,8 +158,8 @@ export default function ReferralPage() {
                 <span className="text-sm font-bold text-[#F27501]">{item.step}</span>
               </div>
               <div>
-                <p className="font-medium text-neutral-900">{item.title}</p>
-                <p className="text-sm text-neutral-500">{item.desc}</p>
+                <p className="font-medium text-[var(--mp-text-primary)]">{item.title}</p>
+                <p className="text-sm text-[var(--mp-text-secondary)]">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -168,16 +168,16 @@ export default function ReferralPage() {
 
       {/* Verwijzingen lijst */}
       {referrals.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 className="font-bold text-neutral-900 mb-3">Mijn verwijzingen</h3>
+        <div className="bg-[var(--mp-card)] dark:bg-[var(--mp-card)] rounded-2xl p-6 shadow-sm dark:shadow-none dark:border dark:border-[var(--mp-separator)]">
+          <h3 className="font-bold text-[var(--mp-text-primary)] mb-3">Mijn verwijzingen</h3>
           <div className="space-y-3">
             {referrals.map((r, i) => {
               const status = STATUS_CONFIG[r.status] || STATUS_CONFIG.pending;
               return (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-neutral-50 last:border-0">
+                <div key={i} className="flex items-center justify-between py-2 border-b border-[var(--mp-separator)] last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{r.naam}</p>
-                    <p className="text-xs text-neutral-500">{new Date(r.created_at).toLocaleDateString("nl-NL")}</p>
+                    <p className="text-sm font-medium text-[var(--mp-text-primary)]">{r.naam}</p>
+                    <p className="text-xs text-[var(--mp-text-secondary)]">{new Date(r.created_at).toLocaleDateString("nl-NL")}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`${status.bg} ${status.color} px-2 py-0.5 rounded-full text-xs font-medium`}>

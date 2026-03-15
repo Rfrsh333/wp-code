@@ -72,7 +72,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['recharts', 'zod', '@supabase/supabase-js', 'lucide-react', 'date-fns', 'react-hook-form', '@tanstack/react-query', 'react-day-picker'],
+    optimizePackageImports: ['recharts', 'zod', '@supabase/supabase-js', 'lucide-react', 'date-fns', 'react-hook-form', '@tanstack/react-query', 'react-day-picker', 'framer-motion'],
   },
   async headers() {
     return [

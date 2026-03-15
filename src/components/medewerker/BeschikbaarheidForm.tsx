@@ -166,12 +166,12 @@ export default function BeschikbaarheidForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Modus toggle */}
-      <div className="flex bg-neutral-100 rounded-lg p-1">
+      <div className="flex bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-lg p-1">
         <button
           type="button"
           onClick={() => setModus("standaard")}
           className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-            modus === "standaard" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"
+            modus === "standaard" ? "bg-[var(--mp-card)] text-[var(--mp-text-primary)] shadow-sm" : "text-[var(--mp-text-secondary)]"
           }`}
         >
           Standaard patroon
@@ -180,7 +180,7 @@ export default function BeschikbaarheidForm({
           type="button"
           onClick={() => setModus("week")}
           className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-            modus === "week" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"
+            modus === "week" ? "bg-[var(--mp-card)] text-[var(--mp-text-primary)] shadow-sm" : "text-[var(--mp-text-secondary)]"
           }`}
         >
           Week-specifiek
@@ -217,11 +217,11 @@ export default function BeschikbaarheidForm({
       {modus === "week" && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={() => navigateWeek(-1)} className="p-2 rounded-lg border hover:bg-neutral-50">
+            <button type="button" onClick={() => navigateWeek(-1)} className="p-2 rounded-lg border hover:bg-[var(--mp-bg)]">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <span className="text-sm font-medium text-neutral-700">{formatWeekLabel(selectedWeek)}</span>
-            <button type="button" onClick={() => navigateWeek(1)} className="p-2 rounded-lg border hover:bg-neutral-50">
+            <span className="text-sm font-medium text-[var(--mp-text-primary)]">{formatWeekLabel(selectedWeek)}</span>
+            <button type="button" onClick={() => navigateWeek(1)} className="p-2 rounded-lg border hover:bg-[var(--mp-bg)]">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>
@@ -260,7 +260,7 @@ export default function BeschikbaarheidForm({
                   className={`px-3 py-1.5 text-xs rounded-lg min-h-[32px] transition-colors ${
                     currentBeschikbaarheid[dag]?.includes(slot)
                       ? 'bg-[#F27501] text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] text-[var(--mp-text-secondary)] hover:opacity-80'
                   }`}
                 >
                   {slot}
@@ -285,13 +285,13 @@ export default function BeschikbaarheidForm({
       {/* Bestaande overrides */}
       {modus === "week" && overrides.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-neutral-500 mb-2">Actieve overrides</h4>
+          <h4 className="text-sm font-semibold text-[var(--mp-text-secondary)] mb-2">Actieve overrides</h4>
           <div className="space-y-1">
             {overrides.map(o => (
-              <div key={o.week_start} className="flex items-center justify-between bg-neutral-50 rounded-lg px-3 py-2 text-sm">
+              <div key={o.week_start} className="flex items-center justify-between bg-[var(--mp-bg)] dark:bg-[var(--mp-card-elevated)] rounded-lg px-3 py-2 text-sm">
                 <span className="font-medium">{formatWeekLabel(o.week_start)}</span>
                 <div className="flex items-center gap-2">
-                  {o.notitie && <span className="text-xs text-neutral-400">{o.notitie}</span>}
+                  {o.notitie && <span className="text-xs text-[var(--mp-text-tertiary)]">{o.notitie}</span>}
                   <button type="button" onClick={() => setSelectedWeek(o.week_start)} className="text-[#F27501] text-xs hover:underline">Bewerk</button>
                 </div>
               </div>
