@@ -42,7 +42,7 @@ export async function GET() {
   const functies = Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie];
   const { data: alleDiensten } = await supabaseAdmin
     .from("diensten")
-    .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, beschrijving, aantal_nodig, tarief")
+    .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief")
     .in("functie", functies)
     .in("status", ["open", "vol"])
     .gte("datum", new Date().toISOString().split("T")[0])
