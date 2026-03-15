@@ -197,6 +197,38 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     score_functie: number;
   }>({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
 
+  const fetchFacturen = async () => {
+    try {
+      const res = await fetch("/api/klant/facturen");
+      const data = await res.json();
+      setRecentFacturen(data.facturen || []);
+    } catch (err) {
+      console.error("Facturen ophalen mislukt:", err);
+    }
+  };
+
+  const createFactuur = async (urenIds: string[]) => {
+    try {
+      const res = await fetch("/api/klant/facturen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uren_ids: urenIds }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Factuur aanmaken mislukt");
+        return false;
+      }
+      toast.success(`Factuur ${data.factuur_nummer} aangemaakt!`);
+      await fetchFacturen();
+      await fetchUren();
+      return true;
+    } catch (err) {
+      toast.error("Factuur aanmaken mislukt");
+      return false;
+    }
+  };
+
   const fetchUren = async () => {
     setIsLoading(true);
     const [urenRes, beoorRes, dashboardRes] = await Promise.all([
@@ -211,7 +243,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     setTeBeoordeelen(beoorData.teBeoordeelen || []);
     setDashboardStats(dashboardData.stats || null);
     setUpcomingDiensten(dashboardData.upcomingDiensten || []);
-    setRecentFacturen(dashboardData.recentFacturen || []);
+    await fetchFacturen(); // Fetch facturen separately
     setIsLoading(false);
   };
 
@@ -731,6 +763,42 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   formatCurrency={formatCurrency}
                   statusTone={statusTone}
                 />
+
+                {/* Verstuur factuur voor goedgekeurde uren */}
+                {approved.filter(u => u.status === "klant_goedgekeurd").length > 0 && (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-neutral-900 mb-1">
+                          Factuur aanmaken
+                        </h3>
+                        <p className="text-sm text-neutral-600 mb-4">
+                          U heeft {approved.filter(u => u.status === "klant_goedgekeurd").length} goedgekeurde uren die nog niet zijn gefactureerd.
+                          Maak een factuur aan om deze uren te factureren.
+                        </p>
+                        <button
+                          onClick={async () => {
+                            const urenToInvoice = approved.filter(u => u.status === "klant_goedgekeurd");
+                            if (urenToInvoice.length > 0) {
+                              await createFactuur(urenToInvoice.map(u => u.id));
+                            }
+                          }}
+                          className="px-6 py-3 rounded-xl bg-blue-500 text-white font-semibold text-sm transition hover:bg-blue-600 flex items-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Verstuur factuur ({approved.filter(u => u.status === "klant_goedgekeurd").length} uren)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
