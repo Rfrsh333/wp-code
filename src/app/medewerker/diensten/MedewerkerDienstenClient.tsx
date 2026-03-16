@@ -25,6 +25,14 @@ interface Dienst {
   afbeelding: string | null;
   status: string;
   notities: string | null;
+  aantal_nodig?: number;
+  categorie_id?: string;
+  functie_id?: string;
+  vereiste_taal?: string | null;
+  categorie_naam?: string | null;
+  functie_naam?: string | null;
+  computed_tags?: string[];
+  check_in_at?: string | null;
   aangemeld?: boolean;
   aanmelding_id?: string;
   aanmelding_status?: string;

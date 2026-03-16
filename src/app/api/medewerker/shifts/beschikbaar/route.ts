@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
 
     const vandaag = new Date().toISOString().split("T")[0];
 
-    // Haal alle toekomstige open diensten op
-    const { data: diensten, error } = await supabaseAdmin
+    // Haal alle toekomstige open diensten op (met optionele klant join)
+    let { data: diensten, error }: { data: any; error: any } = await supabaseAdmin
       .from("diensten")
       .select(`
         id,
@@ -25,28 +25,39 @@ export async function GET(request: NextRequest) {
         start_tijd,
         eind_tijd,
         locatie,
-        omschrijving,
         notities,
         uurtarief,
         aantal_nodig,
+        plekken_totaal,
+        plekken_beschikbaar,
         functie,
         klant_naam,
         klant_id,
-        klant:klanten!klant_id (
+        status,
+        klant:klanten!left (
           id,
           bedrijfsnaam,
           bedrijf_foto_url
         )
       `)
+      .in("status", ["open", "vol"])
       .gte("datum", vandaag)
-      .eq("status", "open")
       .order("datum", { ascending: true })
       .order("start_tijd", { ascending: true })
       .limit(50);
 
+    // Fallback: Als de join query faalt, gebruik simpele query
     if (error) {
-      console.error("Beschikbare shifts ophalen error:", error);
-      return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
+      console.warn("[SHIFTS BESCHIKBAAR] Join query failed, using fallback:", error);
+      const { data: fallbackDiensten } = await supabaseAdmin
+        .from("diensten")
+        .select("id, datum, start_tijd, eind_tijd, locatie, notities, uurtarief, aantal_nodig, plekken_totaal, plekken_beschikbaar, functie, klant_naam, klant_id, status")
+        .in("status", ["open", "vol"])
+        .gte("datum", vandaag)
+        .order("datum", { ascending: true })
+        .limit(50);
+      // Add null klant property to match type
+      diensten = (fallbackDiensten || []).map(d => ({ ...d, klant: null }));
     }
 
     // Filter uit: diensten waar medewerker al is aangemeld
@@ -58,7 +69,7 @@ export async function GET(request: NextRequest) {
     const aangemeldeDienstIds = new Set(aanmeldingen?.map((a) => a.dienst_id) || []);
 
     const beschikbareShifts = (diensten || [])
-      .filter((d) => {
+      .filter((d: any) => {
         // Filter: al aangemeld
         if (aangemeldeDienstIds.has(d.id)) return false;
         // Filter: geen plekken meer beschikbaar
@@ -66,10 +77,11 @@ export async function GET(request: NextRequest) {
         if (aantalNodig <= 0) return false;
         return true;
       })
-      .map((d) => {
+      .map((d: any) => {
         const klant = d.klant as any;
-        const plekkenBeschikbaar = d.aantal_nodig ?? 1;
-        const plekkenTotaal = d.aantal_nodig ?? 1;
+        // ✅ Use plekken_beschikbaar/plekken_totaal if available, fallback to aantal_nodig
+        const plekkenBeschikbaar = d.plekken_beschikbaar ?? d.aantal_nodig ?? 1;
+        const plekkenTotaal = d.plekken_totaal ?? d.aantal_nodig ?? 1;
 
         // Genereer tags op basis van shift eigenschappen
         const tags: string[] = [];

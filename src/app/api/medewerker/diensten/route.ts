@@ -47,53 +47,71 @@ export async function GET(request: NextRequest) {
   const taalFilter = searchParams.get('taal') as 'nl' | 'en' | null;
   const tagsFilter = searchParams.get('tags')?.split(',').filter(Boolean) || [];
 
-  // Build query with joins to get categorie and functie names
-  let query = supabaseAdmin
-    .from("diensten")
-    .select(`
-      id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief,
-      categorie_id, functie_id, vereiste_taal,
-      categorie:dienst_categorieen(naam, slug),
-      functie_ref:dienst_functies(naam, slug)
-    `)
-    .in("status", ["open", "vol"])
-    .gte("datum", new Date().toISOString().split("T")[0])
-    .order("datum", { ascending: true })
-    .limit(100);
+  // Try query with joins first, fall back to simple query if filter tables don't exist yet
+  let alleDiensten: Record<string, unknown>[] | null = null;
+  let queryError: unknown = null;
 
-  // Apply filters
-  if (categorieFilter.length > 0) {
-    // Get categorie IDs from slugs
-    const { data: cats } = await supabaseAdmin
-      .from('dienst_categorieen')
-      .select('id')
-      .in('slug', categorieFilter);
-    if (cats && cats.length > 0) {
-      query = query.in('categorie_id', cats.map(c => c.id));
+  // First attempt: full query with category/function joins
+  {
+    let query = supabaseAdmin
+      .from("diensten")
+      .select(`
+        id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief,
+        categorie_id, functie_id, vereiste_taal,
+        categorie:dienst_categorieen(naam, slug),
+        functie_ref:dienst_functies(naam, slug)
+      `)
+      .in("status", ["open", "vol"])
+      .gte("datum", new Date().toISOString().split("T")[0])
+      .order("datum", { ascending: true })
+      .limit(100);
+
+    // Apply filters only if filter tables exist
+    if (categorieFilter.length > 0) {
+      const { data: cats } = await supabaseAdmin
+        .from('dienst_categorieen')
+        .select('id')
+        .in('slug', categorieFilter);
+      if (cats && cats.length > 0) {
+        query = query.in('categorie_id', cats.map(c => c.id));
+      }
     }
-  }
 
-  if (functieFilter.length > 0) {
-    // Get functie IDs from slugs
-    const { data: funcs } = await supabaseAdmin
-      .from('dienst_functies')
-      .select('id')
-      .in('slug', functieFilter);
-    if (funcs && funcs.length > 0) {
-      query = query.in('functie_id', funcs.map(f => f.id));
+    if (functieFilter.length > 0) {
+      const { data: funcs } = await supabaseAdmin
+        .from('dienst_functies')
+        .select('id')
+        .in('slug', functieFilter);
+      if (funcs && funcs.length > 0) {
+        query = query.in('functie_id', funcs.map(f => f.id));
+      }
     }
+
+    if (taalFilter) {
+      query = query.or(`vereiste_taal.eq.${taalFilter},vereiste_taal.eq.nl_en,vereiste_taal.is.null`);
+    }
+
+    const { data, error } = await query;
+    alleDiensten = data;
+    queryError = error;
   }
 
-  if (taalFilter) {
-    query = query.or(`vereiste_taal.eq.${taalFilter},vereiste_taal.eq.nl_en,vereiste_taal.is.null`);
+  // Fallback: if the join query failed (e.g. filter tables don't exist yet), use a simple query
+  if (queryError || alleDiensten === null) {
+    console.warn("[MEDEWERKER DIENSTEN] Join query failed, using fallback:", queryError);
+    const { data: fallbackData } = await supabaseAdmin
+      .from("diensten")
+      .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief")
+      .in("status", ["open", "vol"])
+      .gte("datum", new Date().toISOString().split("T")[0])
+      .order("datum", { ascending: true })
+      .limit(100);
+    alleDiensten = fallbackData;
   }
 
-  // Execute query
-  const { data: alleDiensten } = await query;
-
-  // Filter by tags (many-to-many)
+  // Filter by tags (many-to-many) — only if tags tables exist
   let filteredDiensten = alleDiensten || [];
-  if (tagsFilter.length > 0) {
+  if (tagsFilter.length > 0 && !queryError) {
     const { data: tagIds } = await supabaseAdmin
       .from('dienst_tags')
       .select('id')
@@ -127,7 +145,7 @@ export async function GET(request: NextRequest) {
     ]) || []
   );
 
-  const baseDiensten = (alleDienstenCompat || []).map((d) => ({
+  const baseDiensten = (alleDienstenCompat || []).map((d: any) => ({
     ...d,
     categorie_naam: (d.categorie as any)?.naam || null,
     functie_naam: (d.functie_ref as any)?.naam || null,
@@ -317,12 +335,48 @@ export async function POST(request: NextRequest) {
       medewerker_id: medewerker.id,
       status: "aangemeld",
     });
+
+    // ✅ Verlaag plekken_beschikbaar na aanmelding
+    const { data: dienstInfo } = await supabaseAdmin
+      .from("diensten")
+      .select("plekken_beschikbaar, plekken_totaal")
+      .eq("id", dienst_id)
+      .single();
+
+    if (dienstInfo && dienstInfo.plekken_beschikbaar !== null && dienstInfo.plekken_beschikbaar > 0) {
+      const nieuwBeschikbaar = dienstInfo.plekken_beschikbaar - 1;
+      await supabaseAdmin
+        .from("diensten")
+        .update({
+          plekken_beschikbaar: nieuwBeschikbaar,
+          status: nieuwBeschikbaar === 0 ? "vol" : "open"
+        })
+        .eq("id", dienst_id);
+    }
   }
 
   if (action === "afmelden") {
     await supabaseAdmin.from("dienst_aanmeldingen").delete()
       .eq("dienst_id", dienst_id)
       .eq("medewerker_id", medewerker.id);
+
+    // ✅ Verhoog plekken_beschikbaar na afmelding
+    const { data: dienstInfo } = await supabaseAdmin
+      .from("diensten")
+      .select("plekken_beschikbaar, plekken_totaal")
+      .eq("id", dienst_id)
+      .single();
+
+    if (dienstInfo && dienstInfo.plekken_beschikbaar !== null && dienstInfo.plekken_totaal !== null) {
+      const nieuwBeschikbaar = Math.min(dienstInfo.plekken_beschikbaar + 1, dienstInfo.plekken_totaal);
+      await supabaseAdmin
+        .from("diensten")
+        .update({
+          plekken_beschikbaar: nieuwBeschikbaar,
+          status: nieuwBeschikbaar > 0 ? "open" : "vol"
+        })
+        .eq("id", dienst_id);
+    }
   }
 
   if (action === "annuleer_geaccepteerd") {
