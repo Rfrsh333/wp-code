@@ -31,9 +31,11 @@ export async function GET(request: NextRequest) {
           start_tijd,
           eind_tijd,
           locatie,
-          omschrijving,
+          notities,
+          functie,
           uurtarief,
           status,
+          klant_naam,
           klant:klanten!klant_id (
             id,
             bedrijfsnaam,
@@ -86,11 +88,11 @@ export async function GET(request: NextRequest) {
           start_tijd: dienst.start_tijd,
           eind_tijd: dienst.eind_tijd,
           locatie: dienst.locatie,
-          omschrijving: dienst.omschrijving,
+          omschrijving: dienst.notities || dienst.functie || "Geen omschrijving",
           uurtarief: dienst.uurtarief,
           status: a.status,
           klant: {
-            bedrijfsnaam: klant?.bedrijfsnaam || "Onbekend",
+            bedrijfsnaam: klant?.bedrijfsnaam || dienst.klant_naam || "Onbekend",
             bedrijf_foto_url: klant?.bedrijf_foto_url,
           },
         };

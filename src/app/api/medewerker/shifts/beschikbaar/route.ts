@@ -17,9 +17,6 @@ export async function GET(request: NextRequest) {
     const vandaag = new Date().toISOString().split("T")[0];
 
     // Haal alle toekomstige open diensten op
-    // Let op: plekken_beschikbaar kan NULL zijn bij oudere diensten,
-    // daarom filteren we in-memory i.p.v. met .gt() om ook diensten met
-    // alleen aantal_nodig te tonen
     const { data: diensten, error } = await supabaseAdmin
       .from("diensten")
       .select(`
@@ -29,10 +26,9 @@ export async function GET(request: NextRequest) {
         eind_tijd,
         locatie,
         omschrijving,
+        notities,
         uurtarief,
         aantal_nodig,
-        plekken_beschikbaar,
-        plekken_totaal,
         functie,
         klant_naam,
         klant_id,
@@ -65,15 +61,15 @@ export async function GET(request: NextRequest) {
       .filter((d) => {
         // Filter: al aangemeld
         if (aangemeldeDienstIds.has(d.id)) return false;
-        // Filter: geen plekken meer (fallback naar aantal_nodig als plekken_beschikbaar NULL is)
-        const beschikbaar = d.plekken_beschikbaar ?? d.aantal_nodig ?? 1;
-        if (beschikbaar <= 0) return false;
+        // Filter: geen plekken meer beschikbaar
+        const aantalNodig = d.aantal_nodig ?? 1;
+        if (aantalNodig <= 0) return false;
         return true;
       })
       .map((d) => {
         const klant = d.klant as any;
-        const plekkenBeschikbaar = d.plekken_beschikbaar ?? d.aantal_nodig ?? 1;
-        const plekkenTotaal = d.plekken_totaal ?? d.aantal_nodig ?? 1;
+        const plekkenBeschikbaar = d.aantal_nodig ?? 1;
+        const plekkenTotaal = d.aantal_nodig ?? 1;
 
         // Genereer tags op basis van shift eigenschappen
         const tags: string[] = [];
@@ -100,7 +96,7 @@ export async function GET(request: NextRequest) {
           start_tijd: d.start_tijd,
           eind_tijd: d.eind_tijd,
           locatie: d.locatie,
-          omschrijving: d.omschrijving || d.functie,
+          omschrijving: d.notities || d.functie || "Geen omschrijving",
           uurtarief: d.uurtarief,
           plekken_beschikbaar: plekkenBeschikbaar,
           plekken_totaal: plekkenTotaal,

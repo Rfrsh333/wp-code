@@ -1516,7 +1516,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     categorie_id: "",
     functie_id: "",
     vereiste_taal: null as 'nl' | 'en' | 'nl_en' | null,
-    tag_ids: [] as string[],
+    vereiste_vaardigheden: [] as string[], // Skills required
     datum: "",
     start_tijd: "",
     eind_tijd: "",
@@ -1587,7 +1587,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       categorie_id: "",
       functie_id: "",
       vereiste_taal: null,
-      tag_ids: [],
+      vereiste_vaardigheden: [],
       datum: "",
       start_tijd: "",
       eind_tijd: "",
@@ -1806,37 +1806,51 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
               </div>
             </div>
 
-            {/* Tags */}
-            {availableTags.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Tags (optioneel)</label>
-                <p className="text-xs text-neutral-500 mb-2">Selecteer relevante tags voor deze dienst</p>
-                <div className="flex flex-wrap gap-2">
-                  {availableTags.map((tag: any) => {
-                    const selected = form.tag_ids.includes(tag.id);
-                    return (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        onClick={() => setForm({
-                          ...form,
-                          tag_ids: selected
-                            ? form.tag_ids.filter(id => id !== tag.id)
-                            : [...form.tag_ids, tag.id]
-                        })}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all"
-                        style={{
-                          borderColor: selected ? tag.kleur : '#E5E7EB',
-                          backgroundColor: selected ? tag.kleur + '20' : 'white',
-                          color: selected ? tag.kleur : '#6B7280',
-                        }}>
-                        {tag.naam}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Vereiste Vaardigheden */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Vereiste vaardigheden (optioneel)</label>
+              <p className="text-xs text-neutral-500 mb-2">Selecteer vaardigheden waar de medewerker aan moet voldoen</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'Barista ervaring',
+                  'Cocktail making',
+                  'Food handling certificaat',
+                  'HACCP certificaat',
+                  'Kassa ervaring',
+                  'POS systeem kennis',
+                  'Engels spreken',
+                  'Zweeds spreken',
+                  'Leiding geven',
+                  'Event ervaring',
+                  'Rijbewijs B',
+                  'Heftruckcertificaat',
+                  'VCA certificaat',
+                  'BHV diploma',
+                  'Schoonmaak ervaring',
+                  'Klantenservice',
+                ].map((skill) => {
+                  const selected = form.vereiste_vaardigheden.includes(skill);
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => setForm({
+                        ...form,
+                        vereiste_vaardigheden: selected
+                          ? form.vereiste_vaardigheden.filter(s => s !== skill)
+                          : [...form.vereiste_vaardigheden, skill]
+                      })}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all ${
+                        selected
+                          ? 'border-[#F27501] bg-[#F27501]/10 text-[#F27501]'
+                          : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'
+                      }`}>
+                      {skill}
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Locatie</label>

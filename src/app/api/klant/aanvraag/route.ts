@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { functie, categorie_id, functie_id, vereiste_taal, tag_ids, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
+    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
 
     if (!functie || !datum || !start_tijd || !eind_tijd || !aantal || !uurtarief) {
       return NextResponse.json({ error: "Alle verplichte velden moeten ingevuld zijn (inclusief uurtarief)" }, { status: 400 });
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
     if (categorie_id) insertData.categorie_id = categorie_id;
     if (functie_id) insertData.functie_id = functie_id;
     if (vereiste_taal) insertData.vereiste_taal = vereiste_taal;
+    if (vereiste_vaardigheden && vereiste_vaardigheden.length > 0) insertData.vereiste_vaardigheden = vereiste_vaardigheden;
     if (opmerkingen) insertData.notities = opmerkingen;
 
     const { data: dienst, error } = await supabaseAdmin
@@ -81,22 +82,6 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Insert tags (many-to-many relationship)
-    if (tag_ids && Array.isArray(tag_ids) && tag_ids.length > 0) {
-      const tagInserts = tag_ids.map(tag_id => ({
-        dienst_id: dienst.id,
-        tag_id,
-      }));
-
-      const { error: tagError } = await supabaseAdmin
-        .from("diensten_tags")
-        .insert(tagInserts);
-
-      if (tagError) {
-        console.error("Tags toevoegen mislukt:", tagError);
-        // Don't fail the whole request, just log it
-      }
-    }
 
     // Get functie naam for telegram notification
     let functieNaam = functie || 'Onbekend';
@@ -120,9 +105,9 @@ export async function POST(request: NextRequest) {
       `🕐 Tijd: ${start_tijd} - ${eind_tijd}\n` +
       `👥 Aantal: ${aantal}\n` +
       `${vereiste_taal ? `🗣️ Taal: ${vereiste_taal === 'nl' ? 'Nederlands' : vereiste_taal === 'en' ? 'Engels' : 'NL/EN'}\n` : ""}` +
+      `${vereiste_vaardigheden?.length ? `🎯 Vaardigheden: ${vereiste_vaardigheden.join(', ')}\n` : ""}` +
       `${locatie ? `📍 Locatie: ${locatie}\n` : ""}` +
       `${opmerkingen ? `💬 Opmerkingen: ${opmerkingen}\n` : ""}` +
-      `${tag_ids?.length ? `🏷️ Tags: ${tag_ids.length}\n` : ""}` +
       `${favoriet_medewerker_ids?.length ? `⭐ Voorkeur medewerkers: ${favoriet_medewerker_ids.length}` : ""}`
     ).catch((err) => console.error("Telegram alert mislukt:", err));
 
