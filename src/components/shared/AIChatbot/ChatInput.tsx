@@ -48,7 +48,7 @@ export default function ChatInput({ onSend, disabled, placeholder }: ChatInputPr
         placeholder={placeholder || "Typ een bericht..."}
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm rounded-xl px-3.5 py-2.5 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F27501]/50 disabled:opacity-50 max-h-[120px]"
+        className="flex-1 resize-none bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 text-base md:text-sm rounded-xl px-3.5 py-2.5 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#F27501]/50 disabled:opacity-50 max-h-[120px]"
         aria-label="Chat bericht"
       />
       <button
