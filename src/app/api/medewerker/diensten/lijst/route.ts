@@ -50,11 +50,11 @@ export async function GET(request: NextRequest) {
       // Uitgenodigd maar nog niet geaccepteerd
       query = query.eq("status", "uitgenodigd");
     } else if (status === "gepland") {
-      // Bevestigd en in de toekomst
-      query = query.eq("status", "bevestigd");
+      // Bevestigd of geaccepteerd door klant, in de toekomst
+      query = query.in("status", ["bevestigd", "geaccepteerd"]);
     } else if (status === "voltooid") {
-      // Bevestigd maar in het verleden
-      query = query.eq("status", "bevestigd");
+      // Bevestigd of geaccepteerd, in het verleden
+      query = query.in("status", ["bevestigd", "geaccepteerd"]);
     }
 
     const { data: aanmeldingen, error } = await query;
