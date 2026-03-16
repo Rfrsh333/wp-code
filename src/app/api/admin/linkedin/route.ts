@@ -9,6 +9,7 @@ import {
   generateBatchPosts,
 } from "@/lib/linkedin/content-generator";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { generateLinkedInImage } from "@/lib/linkedin/image-generator";
 
 // GET /api/admin/linkedin — list posts + stats
 export async function GET(request: NextRequest) {
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
           let result;
           if (post.post_type === "link" && post.link_url) {
             result = await client.createLinkPost(post.content, post.link_url);
-          } else if (post.post_type === "image" && post.image_url) {
+          } else if (post.image_url) {
             result = await client.createImagePost(post.content, post.image_url);
           } else {
             result = await client.createTextPost(post.content);
@@ -259,6 +260,14 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+        // Auto-generate image in background (don't block response)
+        if (post) {
+          generateLinkedInImage(result.content, post.id).catch((err) =>
+            console.error("[LinkedIn] Auto image generation failed:", err)
+          );
+        }
+
         return NextResponse.json({ post });
       }
 
@@ -320,6 +329,26 @@ export async function POST(request: NextRequest) {
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
         return NextResponse.json({ success: true, count: data.ids.length });
+      }
+
+      case "generate_image": {
+        // Fetch post content to generate a matching image
+        const { data: imgPost, error: imgFetchErr } = await supabaseAdmin
+          .from("linkedin_posts")
+          .select("content")
+          .eq("id", data.id)
+          .single();
+
+        if (imgFetchErr || !imgPost) {
+          return NextResponse.json({ error: "Post niet gevonden" }, { status: 404 });
+        }
+
+        const imageUrl = await generateLinkedInImage(imgPost.content, data.id);
+        if (!imageUrl) {
+          return NextResponse.json({ error: "Afbeelding genereren mislukt" }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, image_url: imageUrl });
       }
 
       case "bulk_delete": {

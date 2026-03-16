@@ -114,6 +114,10 @@ export const linkedinPostActionSchema = z.discriminatedUnion("action", [
     action: z.literal("bulk_delete"),
     ids: z.array(z.string().uuid()).min(1).max(20),
   }),
+  z.object({
+    action: z.literal("generate_image"),
+    id: z.string().uuid(),
+  }),
 ]);
 
 export const linkedinTemplateActionSchema = z.discriminatedUnion("action", [

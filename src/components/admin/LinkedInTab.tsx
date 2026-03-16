@@ -26,6 +26,7 @@ import {
   Zap,
   Link2,
   Unlink,
+  ImageIcon,
 } from "lucide-react";
 
 // ============================================================
@@ -430,6 +431,17 @@ export default function LinkedInTab() {
     setActionLoading(null);
   };
 
+  const handleGenerateImage = async (id: string) => {
+    setActionLoading(id);
+    setError(null);
+    const result = await adminAction("/api/admin/linkedin", { action: "generate_image", id });
+    if (result) {
+      setSuccess("Afbeelding gegenereerd");
+      fetchPosts();
+    }
+    setActionLoading(null);
+  };
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopied(id);
@@ -675,6 +687,37 @@ export default function LinkedInTab() {
                             <ExternalLink className="w-3 h-3" />{post.link_url}
                           </a>
                         )}
+                        {post.image_url ? (
+                          <div className="mt-2 relative group">
+                            <img
+                              src={post.image_url}
+                              alt="LinkedIn post afbeelding"
+                              className="w-full max-w-md rounded-lg border border-gray-200"
+                              style={{ aspectRatio: "1200/627" }}
+                            />
+                            <button
+                              onClick={() => handleGenerateImage(post.id)}
+                              disabled={actionLoading === post.id}
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-white/90 text-gray-600 hover:text-orange-600 rounded-lg shadow-sm text-xs flex items-center gap-1"
+                              title="Nieuwe afbeelding genereren"
+                            >
+                              <RefreshCw className={`w-3 h-3 ${actionLoading === post.id ? "animate-spin" : ""}`} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleGenerateImage(post.id)}
+                            disabled={actionLoading === post.id}
+                            className="mt-2 px-3 py-1.5 border border-dashed border-gray-300 text-gray-500 text-xs rounded-lg hover:border-orange-400 hover:text-orange-600 flex items-center gap-1.5 transition-colors"
+                          >
+                            {actionLoading === post.id ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <ImageIcon className="w-3.5 h-3.5" />
+                            )}
+                            Afbeelding genereren
+                          </button>
+                        )}
                       </div>
                       {post.hashtags && post.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">
@@ -788,6 +831,9 @@ export default function LinkedInTab() {
                     {statusBadge(post.status)}
                   </div>
                   <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-4 mb-3">{post.content}</p>
+                  {post.image_url && (
+                    <img src={post.image_url} alt="Post afbeelding" className="w-full max-w-md rounded-lg border border-gray-200 mb-3" style={{ aspectRatio: "1200/627" }} />
+                  )}
                   <div className="flex gap-2">
                     {connectionStatus?.connected && (
                       <button
@@ -838,6 +884,9 @@ export default function LinkedInTab() {
                       <span className="text-sm text-gray-500">{formatDate(post.published_at)}</span>
                     </div>
                     <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-3 mb-3">{post.content}</p>
+                    {post.image_url && (
+                      <img src={post.image_url} alt="Post afbeelding" className="w-full max-w-md rounded-lg border border-gray-200 mb-3" style={{ aspectRatio: "1200/627" }} />
+                    )}
                     {/* Inline analytics */}
                     <div className="flex flex-wrap gap-4 text-xs text-gray-500">
                       <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{post.impressions.toLocaleString()} impressies</span>
