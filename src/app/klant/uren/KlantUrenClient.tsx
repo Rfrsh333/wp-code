@@ -1641,13 +1641,20 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       return;
     }
 
+    const functieSamenvatting = form.functies_met_aantal.length > 0
+      ? form.functies_met_aantal.map(f => f.functie).join(", ")
+      : form.functie;
+    const totaalNodig = form.functies_met_aantal.length > 0
+      ? form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)
+      : parseInt(form.aantal) || 1;
+
     templateAction.mutate(
       {
         method: "POST",
         data: {
           naam: templateNaam,
-          functie: form.functie,
-          aantal_nodig: parseInt(form.aantal),
+          functie: functieSamenvatting,
+          aantal_nodig: totaalNodig,
           locatie: form.locatie,
           uurtarief: parseFloat(form.uurtarief),
           favoriet_medewerker_ids: form.favoriet_medewerker_ids,
@@ -1839,11 +1846,24 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                   className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Aantal medewerkers</label>
-              <input type="number" min="1" max="20" value={form.aantal} onChange={(e) => setForm({ ...form, aantal: e.target.value })}
-                className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
-            </div>
+            {/* Overzicht geselecteerde functies */}
+            {form.functies_met_aantal.length > 0 && (
+              <div className="bg-neutral-50 rounded-xl p-3">
+                <p className="text-xs font-medium text-neutral-500 mb-2">Geselecteerde functies</p>
+                <div className="space-y-1">
+                  {form.functies_met_aantal.map((f) => (
+                    <div key={f.functie} className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-700">{f.functie}</span>
+                      <span className="font-medium text-[#F27501]">{f.aantal}x</span>
+                    </div>
+                  ))}
+                  <div className="border-t border-neutral-200 pt-1 mt-1 flex items-center justify-between text-sm font-bold">
+                    <span className="text-neutral-900">Totaal</span>
+                    <span className="text-[#F27501]">{form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)} medewerkers</span>
+                  </div>
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Uurtarief (€) <span className="text-red-500">*</span></label>
               <input
@@ -2032,10 +2052,20 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
         <div className="bg-neutral-50 rounded-2xl p-4 text-sm">
           <p className="font-medium text-neutral-700 mb-2">Samenvatting</p>
           <div className="grid grid-cols-2 gap-2 text-neutral-600">
-            <span>Functie:</span><span className="font-medium">{form.functie}</span>
+            {form.functies_met_aantal.length > 0 ? (
+              <>
+                <span>Functies:</span>
+                <span className="font-medium">
+                  {form.functies_met_aantal.map(f => `${f.functie} (${f.aantal}x)`).join(", ")}
+                </span>
+                <span>Totaal:</span>
+                <span className="font-medium">{form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)} medewerkers</span>
+              </>
+            ) : (
+              <><span>Functie:</span><span className="font-medium">{form.functie}</span></>
+            )}
             {form.datum && <><span>Datum:</span><span className="font-medium">{new Date(form.datum).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })}</span></>}
             {form.start_tijd && <><span>Tijd:</span><span className="font-medium">{form.start_tijd} - {form.eind_tijd}</span></>}
-            <span>Aantal:</span><span className="font-medium">{form.aantal}</span>
             {form.locatie && form.locatie !== "__nieuw" && <><span>Locatie:</span><span className="font-medium">{form.locatie}</span></>}
           </div>
         </div>
