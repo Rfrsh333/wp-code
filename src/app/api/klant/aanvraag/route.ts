@@ -28,9 +28,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
 
-    // Support both old (single functie) and new (multiple functies) format
-    if (!datum || !start_tijd || !eind_tijd || !uurtarief) {
-      return NextResponse.json({ error: "Datum, tijd en uurtarief zijn verplicht" }, { status: 400 });
+    // Support both old (single functie) and new (multiple functies with per-function rates) format
+    if (!datum || !start_tijd || !eind_tijd) {
+      return NextResponse.json({ error: "Datum en tijd zijn verplicht" }, { status: 400 });
+    }
+
+    // Uurtarief is required either globally or per-function
+    const hasPerFunctionRates = functies_met_aantal?.length > 0 && functies_met_aantal.every((f: any) => f.uurtarief && parseFloat(f.uurtarief) > 0);
+    if (!uurtarief && !hasPerFunctionRates) {
+      return NextResponse.json({ error: "Uurtarief is verplicht (globaal of per functie)" }, { status: 400 });
     }
 
     // Validate at least one functie is selected
@@ -38,9 +44,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Selecteer minimaal één functie" }, { status: 400 });
     }
 
-    // Validate uurtarief
-    const tarief = parseFloat(uurtarief);
-    if (isNaN(tarief) || tarief <= 0) {
+    // Validate uurtarief (global fallback, may be empty if per-function rates are used)
+    const tarief = uurtarief ? parseFloat(uurtarief) : 0;
+    if (!hasPerFunctionRates && (isNaN(tarief) || tarief <= 0)) {
       return NextResponse.json({ error: "Uurtarief moet een geldig bedrag zijn" }, { status: 400 });
     }
 
@@ -56,8 +62,10 @@ export async function POST(request: NextRequest) {
     const dienstenToCreate = [];
 
     if (functies_met_aantal && functies_met_aantal.length > 0) {
-      // New format: multiple functies with amounts
-      for (const { functie: functieName, aantal: functieAantal } of functies_met_aantal) {
+      // New format: multiple functies with amounts and per-function rates
+      for (const { functie: functieName, aantal: functieAantal, uurtarief: functieTarief } of functies_met_aantal) {
+        // Use per-function rate if available, otherwise fall back to global rate
+        const effectiefTarief = functieTarief ? parseFloat(functieTarief) : tarief;
         const insertData: Record<string, unknown> = {
           klant_id: klantData.id,
           klant_naam: klantData.bedrijfsnaam || null,
@@ -69,7 +77,7 @@ export async function POST(request: NextRequest) {
           plekken_totaal: functieAantal, // ✅ Set total spots
           plekken_beschikbaar: functieAantal, // ✅ Set available spots
           locatie: locatie || null,
-          uurtarief: tarief,
+          uurtarief: effectiefTarief,
           status: "open",
           notities: opmerkingen || null, // ✅ Only comments, not function name
         };

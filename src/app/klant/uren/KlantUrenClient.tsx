@@ -1543,7 +1543,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     functie_id: "",
     vereiste_taal: null as 'nl' | 'en' | 'nl_en' | null,
     vereiste_vaardigheden: [] as string[], // Skills required
-    functies_met_aantal: [] as Array<{functie: string; aantal: number}>, // Multiple functions with counts
+    functies_met_aantal: [] as Array<{functie: string; aantal: number; uurtarief: string}>, // Multiple functions with counts and rates
     datum: "",
     start_tijd: "",
     eind_tijd: "",
@@ -1582,8 +1582,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const availableTags = filterOptions?.tags || [];
 
   const canNext = () => {
-    if (step === 1) return form.functies_met_aantal.length > 0;
-    if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd && !!form.uurtarief && parseFloat(form.uurtarief) > 0;
+    if (step === 1) return form.functies_met_aantal.length > 0 && form.functies_met_aantal.every(f => f.uurtarief && parseFloat(f.uurtarief) > 0);
+    if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd;
     if (step === 3) return true;
     return true;
   };
@@ -1619,7 +1619,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       functie_id: "",
       vereiste_taal: null,
       vereiste_vaardigheden: [],
-      functies_met_aantal: [{functie: template.functie, aantal: template.aantal_nodig}],
+      functies_met_aantal: [{functie: template.functie, aantal: template.aantal_nodig, uurtarief: template.uurtarief?.toString() || ""}],
       datum: "",
       start_tijd: "",
       eind_tijd: "",
@@ -1763,49 +1763,74 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                 const selected = !!functieData;
 
                 return (
-                  <div key={functie} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                  <div key={functie} className={`p-3 rounded-xl border-2 transition-all ${
                     selected ? "border-[#F27501] bg-[#F27501]/5" : "border-neutral-200 hover:border-neutral-300"
                   }`}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (selected) {
-                          setForm({
-                            ...form,
-                            functies_met_aantal: form.functies_met_aantal.filter(f => f.functie !== functie)
-                          });
-                        } else {
-                          setForm({
-                            ...form,
-                            functies_met_aantal: [...form.functies_met_aantal, { functie, aantal: 1 }]
-                          });
-                        }
-                      }}
-                      className="flex-1 text-left">
-                      <span className={`text-sm font-medium ${selected ? "text-[#F27501]" : "text-neutral-700"}`}>
-                        {functie}
-                      </span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selected) {
+                            setForm({
+                              ...form,
+                              functies_met_aantal: form.functies_met_aantal.filter(f => f.functie !== functie)
+                            });
+                          } else {
+                            setForm({
+                              ...form,
+                              functies_met_aantal: [...form.functies_met_aantal, { functie, aantal: 1, uurtarief: "" }]
+                            });
+                          }
+                        }}
+                        className="flex-1 text-left">
+                        <span className={`text-sm font-medium ${selected ? "text-[#F27501]" : "text-neutral-700"}`}>
+                          {functie}
+                        </span>
+                      </button>
+
+                      {selected && (
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-neutral-600 whitespace-nowrap">Aantal:</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="50"
+                            value={functieData?.aantal || 1}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              const aantal = Math.max(1, parseInt(e.target.value) || 1);
+                              setForm({
+                                ...form,
+                                functies_met_aantal: form.functies_met_aantal.map(f =>
+                                  f.functie === functie ? { ...f, aantal } : f
+                                )
+                              });
+                            }}
+                            className="w-16 px-2 py-1 border border-neutral-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                          />
+                        </div>
+                      )}
+                    </div>
 
                     {selected && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-neutral-600 whitespace-nowrap">Aantal:</label>
+                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#F27501]/20">
+                        <label className="text-xs text-neutral-600 whitespace-nowrap">Uurtarief €:</label>
                         <input
                           type="number"
-                          min="1"
-                          max="50"
-                          value={functieData?.aantal || 1}
+                          min="0"
+                          step="0.50"
+                          value={functieData?.uurtarief || ""}
+                          placeholder="Bijv. 14.50"
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => {
-                            const aantal = Math.max(1, parseInt(e.target.value) || 1);
                             setForm({
                               ...form,
                               functies_met_aantal: form.functies_met_aantal.map(f =>
-                                f.functie === functie ? { ...f, aantal } : f
+                                f.functie === functie ? { ...f, uurtarief: e.target.value } : f
                               )
                             });
                           }}
-                          className="w-16 px-2 py-1 border border-neutral-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                          className="flex-1 px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
                         />
                       </div>
                     )}
@@ -1846,37 +1871,27 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                   className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
               </div>
             </div>
-            {/* Overzicht geselecteerde functies */}
+            {/* Overzicht geselecteerde functies met tarieven */}
             {form.functies_met_aantal.length > 0 && (
               <div className="bg-neutral-50 rounded-xl p-3">
                 <p className="text-xs font-medium text-neutral-500 mb-2">Geselecteerde functies</p>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {form.functies_met_aantal.map((f) => (
                     <div key={f.functie} className="flex items-center justify-between text-sm">
                       <span className="text-neutral-700">{f.functie}</span>
-                      <span className="font-medium text-[#F27501]">{f.aantal}x</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-neutral-500">{f.uurtarief ? `€${f.uurtarief}/u` : "—"}</span>
+                        <span className="font-medium text-[#F27501]">{f.aantal}x</span>
+                      </div>
                     </div>
                   ))}
-                  <div className="border-t border-neutral-200 pt-1 mt-1 flex items-center justify-between text-sm font-bold">
+                  <div className="border-t border-neutral-200 pt-1.5 mt-1.5 flex items-center justify-between text-sm font-bold">
                     <span className="text-neutral-900">Totaal</span>
                     <span className="text-[#F27501]">{form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)} medewerkers</span>
                   </div>
                 </div>
               </div>
             )}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Uurtarief (€) <span className="text-red-500">*</span></label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.uurtarief}
-                onChange={(e) => setForm({ ...form, uurtarief: e.target.value })}
-                placeholder="Bijv. 14.50"
-                className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
-              />
-              <p className="mt-1 text-xs text-neutral-500">Het uurtarief dat wordt uitbetaald aan de medewerker</p>
-            </div>
           </div>
         )}
 
@@ -2056,7 +2071,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
               <>
                 <span>Functies:</span>
                 <span className="font-medium">
-                  {form.functies_met_aantal.map(f => `${f.functie} (${f.aantal}x)`).join(", ")}
+                  {form.functies_met_aantal.map(f => `${f.functie} (${f.aantal}x, €${f.uurtarief || "—"}/u)`).join(", ")}
                 </span>
                 <span>Totaal:</span>
                 <span className="font-medium">{form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)} medewerkers</span>
