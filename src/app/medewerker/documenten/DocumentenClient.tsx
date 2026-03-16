@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Download, Upload, Eye, Trash2, IdCard } from "lucide-react";
+import { FileText, Download, Upload, Eye, Trash2, IdCard, X } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import QRCode from "react-qr-code";
 
 interface Document {
   id: string;
@@ -14,14 +15,39 @@ interface Document {
   size?: number;
 }
 
+interface MedewerkerInfo {
+  id: string;
+  naam: string;
+  email: string;
+}
+
 export default function DocumentenClient() {
   const [documenten, setDocumenten] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [medewerkerInfo, setMedewerkerInfo] = useState<MedewerkerInfo | null>(null);
 
   useEffect(() => {
     fetchDocumenten();
+    fetchMedewerkerInfo();
   }, []);
+
+  const fetchMedewerkerInfo = async () => {
+    try {
+      const res = await fetch("/api/medewerker/profile");
+      if (res.ok) {
+        const data = await res.json();
+        setMedewerkerInfo({
+          id: data.id,
+          naam: data.naam,
+          email: data.email,
+        });
+      }
+    } catch (err) {
+      console.error("Fetch medewerker info error:", err);
+    }
+  };
 
   const fetchDocumenten = async () => {
     try {
@@ -174,8 +200,9 @@ export default function DocumentenClient() {
                   Gebruik je QR-code om in te checken bij diensten
                 </p>
                 <button
-                  onClick={() => toast.info("QR-code functie komt binnenkort...")}
-                  className="px-4 py-2 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-sm transition-all active:scale-95"
+                  onClick={() => setShowQRModal(true)}
+                  disabled={!medewerkerInfo}
+                  className="px-4 py-2 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Toon QR-code
                 </button>
@@ -248,6 +275,98 @@ export default function DocumentenClient() {
           </div>
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      {showQRModal && medewerkerInfo && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[var(--mp-card)] rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            {/* Close button */}
+            <button
+              onClick={() => setShowQRModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-text-primary)] transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--mp-accent)]/20 to-[var(--mp-accent)]/10 flex items-center justify-center mx-auto mb-4">
+                <IdCard className="w-8 h-8 text-[var(--mp-accent)]" />
+              </div>
+              <h2 className="text-2xl font-bold text-[var(--mp-text-primary)] mb-1">
+                Digitale ID Kaart
+              </h2>
+              <p className="text-sm text-[var(--mp-text-secondary)]">
+                {medewerkerInfo.naam}
+              </p>
+            </div>
+
+            {/* QR Code */}
+            <div id="qr-modal" className="bg-white p-6 rounded-xl flex items-center justify-center mb-6">
+              <QRCode
+                value={JSON.stringify({
+                  type: "medewerker_id",
+                  id: medewerkerInfo.id,
+                  naam: medewerkerInfo.naam,
+                  timestamp: Date.now(),
+                })}
+                size={256}
+                level="H"
+              />
+            </div>
+
+            {/* Info */}
+            <div className="bg-[var(--mp-bg)] rounded-xl p-4 mb-4">
+              <p className="text-xs text-[var(--mp-text-tertiary)] text-center leading-relaxed">
+                Laat deze QR-code scannen door je werkgever om in te checken bij een dienst. De code is uniek gekoppeld aan jouw account.
+              </p>
+            </div>
+
+            {/* Download button */}
+            <button
+              onClick={() => {
+                // Create a canvas with the QR code and download it
+                const svg = document.querySelector('#qr-modal svg');
+                if (!svg) return;
+
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                const img = new Image();
+
+                canvas.width = 512;
+                canvas.height = 512;
+
+                img.onload = () => {
+                  if (ctx) {
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(0, 0, 512, 512);
+                    ctx.drawImage(img, 0, 0, 512, 512);
+
+                    canvas.toBlob((blob) => {
+                      if (blob) {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `TopTalent-ID-${medewerkerInfo.naam.replace(/\s+/g, '-')}.png`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success("QR-code gedownload!");
+                      }
+                    });
+                  }
+                };
+
+                img.src = "data:image/svg+xml;base64," + btoa(svgData);
+              }}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download QR-code
+            </button>
+          </div>
+        </div>
+      )}
     </MedewerkerResponsiveLayout>
   );
 }
