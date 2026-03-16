@@ -44,7 +44,9 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   const berekenUren = (start: string, eind: string) => {
     const [startH, startM] = start.split(":").map(Number);
     const [eindH, eindM] = eind.split(":").map(Number);
-    const uren = eindH - startH + (eindM - startM) / 60;
+    let uren = eindH - startH + (eindM - startM) / 60;
+    // Nachtdienst: als eind eerder is dan start, gaat het over middernacht
+    if (uren <= 0) uren += 24;
     return uren.toFixed(1);
   };
 
