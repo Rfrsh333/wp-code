@@ -13,9 +13,9 @@ import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import QuickActions from "@/components/klant/QuickActions";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
-import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useKlantFavorieten, useKlantTemplates, useKlantAanvraagLocaties, useKlantRooster, useKlantKosten, useKlantCheckins, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction, useFavorietAction, useAanvraagAction, useTemplateAction, useCheckinAction } from "@/hooks/queries/useKlantQueries";
+import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useKlantFavorieten, useKlantTemplates, useKlantAanvraagLocaties, useKlantRooster, useKlantKosten, useKlantCheckins, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction, useFavorietAction, useAanvraagAction, useTemplateAction, useCheckinAction, klantKeys } from "@/hooks/queries/useKlantQueries";
 import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Klant {
   id: string;
@@ -166,6 +166,7 @@ interface KostenData {
 
 export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overzicht");
 
   // React Query data fetching
@@ -281,6 +282,11 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       },
       {
         onSuccess: () => {
+          // Invalidate queries to refresh data (React Query v5)
+          queryClient.invalidateQueries({ queryKey: klantKeys.beoordelingen() });
+          queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
+          queryClient.invalidateQueries({ queryKey: klantKeys.uren() });
+
           toast.success("Beoordeling verstuurd");
           setBeoordeelModal({ open: false, item: null, score: 5, opmerking: "", score_punctualiteit: 5, score_professionaliteit: 5, score_vaardigheden: 5, score_communicatie: 5, zou_opnieuw_boeken: true });
         },
@@ -309,6 +315,11 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       },
       {
         onSuccess: () => {
+          // Invalidate queries to refresh data (React Query v5)
+          queryClient.invalidateQueries({ queryKey: klantKeys.uren() });
+          queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
+          queryClient.invalidateQueries({ queryKey: klantKeys.beoordelingen() });
+
           toast.success("Uren goedgekeurd");
           setApproveModal({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
         },
@@ -353,6 +364,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       },
       {
         onSuccess: () => {
+          // Invalidate queries to refresh data (React Query v5)
+          queryClient.invalidateQueries({ queryKey: klantKeys.uren() });
+          queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
+
           toast.success("Aanpassing verstuurd");
           setModal({ open: false, uren: null, startTijd: "", eindTijd: "", pauzeMinuten: "0", reiskostenKm: "0", opmerking: "" });
         },
@@ -394,6 +409,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       { action: "update_aanmelding", id: aanmeldingId, data: { status } },
       {
         onSuccess: () => {
+          // Invalidate queries to refresh data (React Query v5)
+          queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
+          queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
+
           toast.success(status === "geaccepteerd" ? "Medewerker geaccepteerd" : "Medewerker afgewezen");
           if (aanmeldingenOpen) {
             fetchAanmeldingen(aanmeldingenOpen);
@@ -1366,6 +1385,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
    ============================================================ */
 function FavorietenTab() {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { data: favData, isLoading } = useKlantFavorieten();
   const favorietAction = useFavorietAction();
   const favorieten: Favoriet[] = favData?.favorieten ?? [];
@@ -1375,7 +1395,12 @@ function FavorietenTab() {
     favorietAction.mutate(
       { medewerker_id, method: isFav ? "DELETE" : "POST" },
       {
-        onSuccess: () => toast.success(isFav ? "Favoriet verwijderd" : "Favoriet toegevoegd"),
+        onSuccess: () => {
+          // Invalidate queries to refresh data (React Query v5)
+          queryClient.invalidateQueries({ queryKey: klantKeys.favorieten() });
+
+          toast.success(isFav ? "Favoriet verwijderd" : "Favoriet toegevoegd");
+        },
         onError: () => toast.error("Actie mislukt"),
       }
     );
@@ -1509,6 +1534,7 @@ function FavorietenTab() {
    ============================================================ */
 function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void }) {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [isSending, setIsSending] = useState(false);
   const [form, setForm] = useState({
@@ -1566,6 +1592,10 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     setIsSending(true);
     aanvraagAction.mutate(form, {
       onSuccess: () => {
+        // Invalidate queries to refresh data (React Query v5)
+        queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
+        queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
+
         toast.success("Aanvraag succesvol verstuurd!");
         setShowSaveTemplate(true);
         setTimeout(() => {
@@ -1626,6 +1656,9 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       },
       {
         onSuccess: () => {
+          // Invalidate queries to refresh data (React Query v5)
+          queryClient.invalidateQueries({ queryKey: klantKeys.templates() });
+
           toast.success("Template opgeslagen!");
           setShowSaveTemplate(false);
           setTemplateNaam("");
