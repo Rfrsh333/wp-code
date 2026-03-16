@@ -1512,11 +1512,12 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const [step, setStep] = useState(1);
   const [isSending, setIsSending] = useState(false);
   const [form, setForm] = useState({
-    functie: "", // backwards compatibility
+    functie: "horeca", // backwards compatibility - set to horeca
     categorie_id: "",
     functie_id: "",
     vereiste_taal: null as 'nl' | 'en' | 'nl_en' | null,
     vereiste_vaardigheden: [] as string[], // Skills required
+    functies_met_aantal: [] as Array<{functie: string; aantal: number}>, // Multiple functions with counts
     datum: "",
     start_tijd: "",
     eind_tijd: "",
@@ -1555,7 +1556,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const availableTags = filterOptions?.tags || [];
 
   const canNext = () => {
-    if (step === 1) return !!form.categorie_id && !!form.functie_id;
+    if (step === 1) return form.functies_met_aantal.length > 0;
     if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd && !!form.uurtarief && parseFloat(form.uurtarief) > 0;
     if (step === 3) return true;
     return true;
@@ -1579,7 +1580,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     });
   };
 
-  const stepLabels = ["Functie", "Datum & Tijd", "Details", "Favorieten"];
+  const stepLabels = ["Functie(s)", "Datum & Tijd", "Details", "Favorieten"];
 
   const useTemplate = (template: DienstTemplate) => {
     setForm({
@@ -1588,6 +1589,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       functie_id: "",
       vereiste_taal: null,
       vereiste_vaardigheden: [],
+      functies_met_aantal: [{functie: template.functie, aantal: template.aantal_nodig}],
       datum: "",
       start_tijd: "",
       eind_tijd: "",
@@ -1687,41 +1689,96 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
-        {/* Step 1: Categorie & Functie */}
+        {/* Step 1: Functie(s) & Aantal */}
         {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-bold text-neutral-900 mb-4">Welke categorie zoekt u?</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {filterOptions?.categorieen?.map((cat: any) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setForm({ ...form, categorie_id: cat.id, functie_id: "" })}
-                    className={`p-4 rounded-xl border-2 text-sm font-medium transition-all ${
-                      form.categorie_id === cat.id ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501]" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
-                    }`}>
-                    {cat.icon && <span className="mr-2">{cat.icon}</span>}
-                    {cat.naam}
-                  </button>
-                ))}
-              </div>
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900 mb-2">Welke functie(s) zoekt u?</h3>
+            <p className="text-sm text-neutral-600 mb-4">Selecteer één of meerdere functies en vul het aantal medewerkers in per functie</p>
+
+            <div className="space-y-2">
+              {[
+                'Administratief medewerker',
+                'Barista',
+                'Bartending',
+                'Bediening',
+                'Bedrijfscatering',
+                'Bezorging',
+                'Catering',
+                'Festivalmedewerker',
+                'Garderobe',
+                'Gebruikersonderzoeken',
+                'Hosting',
+                'Housekeeping',
+                'Hulpkok',
+                'Productiemedewerker',
+                'Receptie medewerker',
+                'Roomservice',
+                'Schoonmaak',
+                'Sitecrew - Hospitality',
+                'Spoelkeuken medewerker',
+                'Training',
+                'Zelfstandig werkend kok'
+              ].map((functie) => {
+                const functieData = form.functies_met_aantal.find(f => f.functie === functie);
+                const selected = !!functieData;
+
+                return (
+                  <div key={functie} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                    selected ? "border-[#F27501] bg-[#F27501]/5" : "border-neutral-200 hover:border-neutral-300"
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selected) {
+                          setForm({
+                            ...form,
+                            functies_met_aantal: form.functies_met_aantal.filter(f => f.functie !== functie)
+                          });
+                        } else {
+                          setForm({
+                            ...form,
+                            functies_met_aantal: [...form.functies_met_aantal, { functie, aantal: 1 }]
+                          });
+                        }
+                      }}
+                      className="flex-1 text-left">
+                      <span className={`text-sm font-medium ${selected ? "text-[#F27501]" : "text-neutral-700"}`}>
+                        {functie}
+                      </span>
+                    </button>
+
+                    {selected && (
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-neutral-600 whitespace-nowrap">Aantal:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="50"
+                          value={functieData?.aantal || 1}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            const aantal = Math.max(1, parseInt(e.target.value) || 1);
+                            setForm({
+                              ...form,
+                              functies_met_aantal: form.functies_met_aantal.map(f =>
+                                f.functie === functie ? { ...f, aantal } : f
+                              )
+                            });
+                          }}
+                          className="w-16 px-2 py-1 border border-neutral-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {form.categorie_id && availableFuncties.length > 0 && (
-              <div>
-                <h3 className="text-lg font-bold text-neutral-900 mb-4">Welke functie?</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {availableFuncties.map((func: any) => (
-                    <button
-                      key={func.id}
-                      onClick={() => setForm({ ...form, functie_id: func.id, functie: func.slug })}
-                      className={`p-4 rounded-xl border-2 text-sm font-medium transition-all ${
-                        form.functie_id === func.id ? "border-[#F27501] bg-[#F27501]/5 text-[#F27501]" : "border-neutral-200 text-neutral-700 hover:border-neutral-300"
-                      }`}>
-                      {func.naam}
-                    </button>
-                  ))}
-                </div>
+            {form.functies_met_aantal.length > 0 && (
+              <div className="mt-4 p-3 bg-neutral-50 rounded-lg">
+                <p className="text-sm font-medium text-neutral-700">
+                  Totaal: {form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)} medewerkers
+                </p>
               </div>
             )}
           </div>

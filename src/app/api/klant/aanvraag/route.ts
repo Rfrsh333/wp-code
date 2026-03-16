@@ -26,10 +26,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
+    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
 
-    if (!functie || !datum || !start_tijd || !eind_tijd || !aantal || !uurtarief) {
-      return NextResponse.json({ error: "Alle verplichte velden moeten ingevuld zijn (inclusief uurtarief)" }, { status: 400 });
+    // Support both old (single functie) and new (multiple functies) format
+    if (!datum || !start_tijd || !eind_tijd || !uurtarief) {
+      return NextResponse.json({ error: "Datum, tijd en uurtarief zijn verplicht" }, { status: 400 });
+    }
+
+    // Validate at least one functie is selected
+    if (!functie && (!functies_met_aantal || functies_met_aantal.length === 0)) {
+      return NextResponse.json({ error: "Selecteer minimaal één functie" }, { status: 400 });
     }
 
     // Validate uurtarief
@@ -46,64 +52,98 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Datum moet in de toekomst liggen" }, { status: 400 });
     }
 
-    // Only insert columns that exist in the diensten table
-    const insertData: Record<string, unknown> = {
-      klant_id: klantData.id,
-      klant_naam: klantData.bedrijfsnaam || null,
-      functie,
-      datum,
-      start_tijd,
-      eind_tijd,
-      aantal_nodig: parseInt(aantal) || 1,
-      locatie: locatie || null,
-      uurtarief: tarief,
-      status: "open",
-    };
+    // Prepare diensten data (one or multiple based on functies_met_aantal)
+    const dienstenToCreate = [];
 
-    // Optional filter columns (only if migration has been run)
-    if (categorie_id) insertData.categorie_id = categorie_id;
-    if (functie_id) insertData.functie_id = functie_id;
-    if (vereiste_taal) insertData.vereiste_taal = vereiste_taal;
-    if (vereiste_vaardigheden && vereiste_vaardigheden.length > 0) insertData.vereiste_vaardigheden = vereiste_vaardigheden;
-    if (opmerkingen) insertData.notities = opmerkingen;
+    if (functies_met_aantal && functies_met_aantal.length > 0) {
+      // New format: multiple functies with amounts
+      for (const { functie: functieName, aantal: functieAantal } of functies_met_aantal) {
+        const insertData: Record<string, unknown> = {
+          klant_id: klantData.id,
+          klant_naam: klantData.bedrijfsnaam || null,
+          functie: "horeca", // Category
+          datum,
+          start_tijd,
+          eind_tijd,
+          aantal_nodig: functieAantal,
+          locatie: locatie || null,
+          uurtarief: tarief,
+          status: "open",
+          notities: `${functieName}${opmerkingen ? ` - ${opmerkingen}` : ''}`,
+        };
 
-    const { data: dienst, error } = await supabaseAdmin
+        if (vereiste_taal) insertData.vereiste_taal = vereiste_taal;
+        if (vereiste_vaardigheden && vereiste_vaardigheden.length > 0) {
+          insertData.vereiste_vaardigheden = vereiste_vaardigheden;
+        }
+
+        dienstenToCreate.push(insertData);
+      }
+    } else {
+      // Old format: single functie
+      const insertData: Record<string, unknown> = {
+        klant_id: klantData.id,
+        klant_naam: klantData.bedrijfsnaam || null,
+        functie,
+        datum,
+        start_tijd,
+        eind_tijd,
+        aantal_nodig: parseInt(aantal) || 1,
+        locatie: locatie || null,
+        uurtarief: tarief,
+        status: "open",
+      };
+
+      if (categorie_id) insertData.categorie_id = categorie_id;
+      if (functie_id) insertData.functie_id = functie_id;
+      if (vereiste_taal) insertData.vereiste_taal = vereiste_taal;
+      if (vereiste_vaardigheden && vereiste_vaardigheden.length > 0) {
+        insertData.vereiste_vaardigheden = vereiste_vaardigheden;
+      }
+      if (opmerkingen) insertData.notities = opmerkingen;
+
+      dienstenToCreate.push(insertData);
+    }
+
+    // Insert all diensten
+    const { data: diensten, error } = await supabaseAdmin
       .from("diensten")
-      .insert(insertData)
-      .select("id")
-      .single();
+      .insert(dienstenToCreate)
+      .select("id");
 
     if (error) {
       console.error("Dienst aanmaken mislukt:", error);
-      console.error("Insert data was:", JSON.stringify(insertData, null, 2));
+      console.error("Insert data was:", JSON.stringify(dienstenToCreate, null, 2));
       return NextResponse.json({
         error: `Aanvraag opslaan mislukt: ${error.message}`,
         code: error.code,
       }, { status: 500 });
     }
 
+    const dienst = diensten?.[0]; // Use first dienst for telegram notification
 
-    // Get functie naam for telegram notification
-    let functieNaam = functie || 'Onbekend';
-    if (functie_id) {
-      const { data: functieData } = await supabaseAdmin
-        .from('dienst_functies')
-        .select('naam, categorie:dienst_categorieen(naam)')
-        .eq('id', functie_id)
-        .single();
-      if (functieData) {
-        functieNaam = `${functieData.naam}${(functieData.categorie as any)?.naam ? ` (${(functieData.categorie as any).naam})` : ''}`;
-      }
+
+    // Build functie summary for telegram
+    let functieSummary = '';
+    if (functies_met_aantal && functies_met_aantal.length > 0) {
+      functieSummary = functies_met_aantal.map((f: any) => `${f.functie} (${f.aantal}x)`).join(', ');
+    } else {
+      functieSummary = functie || 'Onbekend';
     }
+
+    const totaalPersoneel = functies_met_aantal
+      ? functies_met_aantal.reduce((sum: number, f: any) => sum + f.aantal, 0)
+      : parseInt(aantal) || 1;
 
     // Telegram notification (don't let it block the response)
     sendTelegramAlert(
       `<b>🆕 Nieuwe personeelsaanvraag</b>\n` +
       `👤 Klant: ${klantData.bedrijfsnaam}\n` +
-      `💼 Functie: ${functieNaam}\n` +
+      `💼 Functies: ${functieSummary}\n` +
       `📅 Datum: ${datum}\n` +
       `🕐 Tijd: ${start_tijd} - ${eind_tijd}\n` +
-      `👥 Aantal: ${aantal}\n` +
+      `👥 Totaal personen: ${totaalPersoneel}\n` +
+      `📋 Aantal diensten: ${diensten?.length || 1}\n` +
       `${vereiste_taal ? `🗣️ Taal: ${vereiste_taal === 'nl' ? 'Nederlands' : vereiste_taal === 'en' ? 'Engels' : 'NL/EN'}\n` : ""}` +
       `${vereiste_vaardigheden?.length ? `🎯 Vaardigheden: ${vereiste_vaardigheden.join(', ')}\n` : ""}` +
       `${locatie ? `📍 Locatie: ${locatie}\n` : ""}` +
@@ -111,7 +151,11 @@ export async function POST(request: NextRequest) {
       `${favoriet_medewerker_ids?.length ? `⭐ Voorkeur medewerkers: ${favoriet_medewerker_ids.length}` : ""}`
     ).catch((err) => console.error("Telegram alert mislukt:", err));
 
-    return NextResponse.json({ success: true, dienst_id: dienst.id });
+    return NextResponse.json({
+      success: true,
+      dienst_ids: diensten?.map(d => d.id) || [],
+      count: diensten?.length || 0
+    });
   } catch (err) {
     console.error("Aanvraag POST error:", err);
     return NextResponse.json({ error: "Er ging iets mis bij het opslaan" }, { status: 500 });
