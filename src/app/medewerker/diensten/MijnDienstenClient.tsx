@@ -141,7 +141,7 @@ export default function MijnDienstenClient() {
                   className="relative pb-3 flex items-center gap-2 transition-colors"
                 >
                   <Icon
-                    className={`w-4 h-4 ${
+                    className={`w-5 h-5 md:w-4 md:h-4 ${
                       active ? "text-[var(--mp-accent)]" : "text-[var(--mp-text-secondary)]"
                     }`}
                   />
