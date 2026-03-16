@@ -68,6 +68,7 @@ const LiveChatTab = dynamic(() => import("./LiveChatTab"), { loading: () => <Tab
 const ContractenTab = dynamic(() => import("./ContractenTab"), { loading: () => <TabSkeleton />, ssr: false });
 const DienstFiltersTab = dynamic(() => import("./tabs/DienstFiltersTab"), { loading: () => <TabSkeleton />, ssr: false });
 const LiveChatNotification = dynamic(() => import("./LiveChatNotification"), { ssr: false });
+const LinkedInTab = dynamic(() => import("./LinkedInTab"), { loading: () => <TabSkeleton />, ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -1899,6 +1900,9 @@ export default function AdminDashboard() {
 
             {/* Dienst Filters Tab */}
             {activeTab === "filters" && <DienstFiltersTab />}
+
+            {/* LinkedIn Tab */}
+            {activeTab === "linkedin" && <LinkedInTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

@@ -693,3 +693,62 @@ export function buildContractGetekendEmailHtml(params: {
 
   return emailWrapper(content);
 }
+
+// ============================================================
+// LinkedIn gerelateerde email templates
+// ============================================================
+
+export function buildLinkedInConnectedEmail(params: {
+  profileName: string;
+  expiryDate: string;
+}): string {
+  const content = `
+    <h2 style="color: #F27501; font-size: 22px; margin-bottom: 15px;">LinkedIn Gekoppeld</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      LinkedIn is succesvol gekoppeld aan TopTalent Jobs.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      <strong>Profiel:</strong> ${params.profileName}<br>
+      <strong>Token geldig tot:</strong> ${params.expiryDate}
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Je kunt nu LinkedIn posts plannen en automatisch publiceren via het admin dashboard.
+    </p>`;
+
+  return emailWrapper(content);
+}
+
+export function buildLinkedInPostPublishedEmail(params: {
+  postPreview: string;
+  publishedAt: string;
+}): string {
+  const content = `
+    <h2 style="color: #F27501; font-size: 22px; margin-bottom: 15px;">LinkedIn Post Gepubliceerd</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Een LinkedIn post is automatisch gepubliceerd op ${params.publishedAt}.
+    </p>
+    <div style="background: #f9f9f9; border-left: 3px solid #0077B5; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+      <p style="font-size: 14px; line-height: 1.6; color: #555; white-space: pre-wrap;">${params.postPreview}</p>
+    </div>`;
+
+  return emailWrapper(content);
+}
+
+export function buildLinkedInTokenExpiringEmail(params: {
+  daysUntilExpiry: number;
+  profileName: string;
+}): string {
+  const content = `
+    <h2 style="color: #F27501; font-size: 22px; margin-bottom: 15px;">LinkedIn Token Verloopt</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Het LinkedIn access token voor <strong>${params.profileName}</strong> verloopt over <strong>${params.daysUntilExpiry} dagen</strong>.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Ga naar het admin dashboard en koppel LinkedIn opnieuw om posts te blijven publiceren.
+    </p>
+    <a href="https://toptalentjobs.nl/admin?tab=linkedin" style="display: inline-block; background: #0077B5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 10px;">
+      LinkedIn opnieuw verbinden
+    </a>`;
+
+  return emailWrapper(content);
+}

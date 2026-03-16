@@ -12,6 +12,7 @@ import {
   FolderKanban,
   Gauge,
   Inbox,
+  Linkedin,
   MessageCircle,
   Newspaper,
   PenLine,
@@ -226,6 +227,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["contract", "ondertekenen", "overeenkomst", "handtekening"],
   },
+  linkedin: {
+    id: "linkedin",
+    title: "LinkedIn",
+    icon: Linkedin,
+    kind: "tab",
+    tab: "linkedin",
+    pinnable: true,
+    keywords: ["social", "posts", "linkedin"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -280,7 +290,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "content",
     label: "Content",
-    itemIds: ["contentOverview", "contentSources", "contentClusters", "contentDrafts"],
+    itemIds: ["contentOverview", "contentSources", "contentClusters", "contentDrafts", "linkedin"],
     collapsible: true,
     dividerBefore: true,
   },
