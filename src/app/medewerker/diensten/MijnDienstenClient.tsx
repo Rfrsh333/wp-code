@@ -11,11 +11,14 @@ type SubTab = "aangeboden" | "gepland" | "voltooid";
 
 interface Dienst {
   id: string;
+  aanmelding_id?: string;
   datum: string;
   start_tijd: string;
   eind_tijd: string;
   locatie: string;
   omschrijving?: string;
+  functie?: string;
+  notities?: string;
   uurtarief: number;
   status: string;
   klant: {

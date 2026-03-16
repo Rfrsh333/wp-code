@@ -89,10 +89,13 @@ export async function GET(request: NextRequest) {
 
         return {
           id: dienst.id,
+          aanmelding_id: a.id,
           datum: dienst.datum,
           start_tijd: dienst.start_tijd,
           eind_tijd: dienst.eind_tijd,
           locatie: dienst.locatie,
+          functie: dienst.functie || null,
+          notities: dienst.notities || null,
           omschrijving: dienst.notities || dienst.functie || "Geen omschrijving",
           uurtarief: dienst.uurtarief,
           status: a.status,
