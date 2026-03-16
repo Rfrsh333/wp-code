@@ -160,16 +160,6 @@ export default function AdminShell({
                 </span>
               </span>
             )}
-            <button
-              onClick={() => setCommandOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-400 shadow-sm transition hover:border-neutral-300 hover:text-neutral-600"
-            >
-              <Search className="h-4 w-4" />
-              <span>Zoeken...</span>
-              <kbd className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] font-medium text-neutral-500">
-                ⌘K
-              </kbd>
-            </button>
           </div>
         </div>
 

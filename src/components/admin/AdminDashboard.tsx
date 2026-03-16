@@ -988,31 +988,6 @@ export default function AdminDashboard() {
         offertesConcepten: stats.offertesConcepten,
       }}
     >
-        {/* Global Search Bar */}
-        <div className="mb-8 rounded-[28px] border border-white/80 bg-white/80 p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] backdrop-blur">
-          <div className="relative max-w-xl">
-            <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              value={globalSearch}
-              onChange={(e) => { setGlobalSearch(e.target.value); setCurrentPage(1); }}
-              placeholder="Zoek op naam, email, bedrijf of telefoon..."
-              className="w-full rounded-2xl border border-neutral-200/80 bg-neutral-50/70 py-3 pl-12 pr-10 text-sm text-neutral-800 transition-colors focus:border-[#F27501]/40 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#F27501]/10"
-            />
-            {globalSearch && (
-              <button
-                onClick={() => setGlobalSearch("")}
-                className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-white hover:text-neutral-700"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
