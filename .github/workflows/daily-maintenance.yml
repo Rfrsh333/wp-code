@@ -1,0 +1,30 @@
+name: Daily Maintenance
+
+on:
+  schedule:
+    # Elke dag om 02:00 UTC (03:00 NL tijd)
+    - cron: "0 2 * * *"
+  workflow_dispatch: # Handmatig triggeren mogelijk
+
+jobs:
+  cleanup:
+    name: Daily Cleanup & Reminders
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verlopen diensten sluiten
+        run: |
+          curl -s -X POST "${{ secrets.APP_URL }}/api/cron/daily-cleanup" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
+
+      - name: Factuur herinneringen versturen
+        run: |
+          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/herinneringen" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
+
+      - name: Dienst herinneringen versturen
+        run: |
+          curl -s -X POST "${{ secrets.APP_URL }}/api/cron/dienst-herinneringen" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"

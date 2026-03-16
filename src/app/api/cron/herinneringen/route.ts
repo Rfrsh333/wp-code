@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 type ReminderResult = {
   factuur_nummer: string;
@@ -51,6 +48,8 @@ export async function GET(request: NextRequest) {
     if (!isReminderWindow) continue;
 
     try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
         from: "TopTalent Jobs <facturen@toptalentjobs.nl>",
         to: factuur.klant.email,
