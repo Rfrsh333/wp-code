@@ -305,6 +305,7 @@ export default function AIChatWidget({ userType }: AIChatWidgetProps) {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className="fixed bottom-0 right-0 md:bottom-6 md:right-6 z-[60] w-full h-full md:w-[400px] md:h-[600px] md:max-h-[80vh] flex flex-col bg-white dark:bg-neutral-900 md:rounded-2xl shadow-2xl md:border md:border-neutral-200 md:dark:border-neutral-700"
+            style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
           >
             {/* Header */}
             <ChatHeader
