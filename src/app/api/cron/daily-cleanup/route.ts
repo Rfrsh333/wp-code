@@ -49,9 +49,8 @@ export async function POST(request: NextRequest) {
 
     const { count: verlopenSessies } = await supabaseAdmin
       .from("medewerker_sessies")
-      .delete()
-      .lt("created_at", dertigDagenGeleden.toISOString())
-      .select("id", { count: "exact", head: true });
+      .delete({ count: "exact" })
+      .lt("created_at", dertigDagenGeleden.toISOString());
 
     results.verlopen_sessies_verwijderd = verlopenSessies || 0;
 
