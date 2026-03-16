@@ -104,7 +104,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   return (
     <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] overflow-hidden shadow-[var(--mp-shadow)]">
       {/* Bedrijfsfoto */}
-      <div className="relative w-full aspect-[3/1] bg-[var(--mp-bg)]">
+      <div className="relative w-full aspect-[2/1] bg-[var(--mp-bg)]">
         {dienst.klant.bedrijf_foto_url ? (
           <Image
             src={dienst.klant.bedrijf_foto_url}

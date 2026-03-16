@@ -229,7 +229,7 @@ export default function MijnDienstenClient() {
       )}
 
       {/* Content */}
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-4 pt-4">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-3 border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" />
@@ -251,15 +251,17 @@ export default function MijnDienstenClient() {
           /* Swipe cards voor aangeboden diensten */
           <SwipeShiftStack />
         ) : (
-          /* Regular cards voor gepland/voltooid */
-          diensten.map((dienst) => (
-            <DienstCard
-              key={dienst.id}
-              dienst={dienst}
-              type={activeTab}
-              onRefresh={fetchDiensten}
-            />
-          ))
+          /* Regular cards voor gepland/voltooid - grid layout zoals Ontdekken */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {diensten.map((dienst) => (
+              <DienstCard
+                key={dienst.id}
+                dienst={dienst}
+                type={activeTab}
+                onRefresh={fetchDiensten}
+              />
+            ))}
+          </div>
         )}
       </div>
 
