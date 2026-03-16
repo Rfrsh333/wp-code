@@ -61,16 +61,30 @@ export async function POST(request: NextRequest) {
         const insertData: Record<string, unknown> = {
           klant_id: klantData.id,
           klant_naam: klantData.bedrijfsnaam || null,
-          functie: "horeca", // Category
+          functie: functieName.toLowerCase(), // ✅ Use actual function name
           datum,
           start_tijd,
           eind_tijd,
           aantal_nodig: functieAantal,
+          plekken_totaal: functieAantal, // ✅ Set total spots
+          plekken_beschikbaar: functieAantal, // ✅ Set available spots
           locatie: locatie || null,
           uurtarief: tarief,
           status: "open",
-          notities: `${functieName}${opmerkingen ? ` - ${opmerkingen}` : ''}`,
+          notities: opmerkingen || null, // ✅ Only comments, not function name
         };
+
+        // Lookup functie_id and categorie_id from dienst_functies table
+        const { data: functieRef } = await supabaseAdmin
+          .from('dienst_functies')
+          .select('id, categorie_id')
+          .ilike('naam', functieName)
+          .maybeSingle();
+
+        if (functieRef) {
+          insertData.functie_id = functieRef.id;
+          insertData.categorie_id = functieRef.categorie_id;
+        }
 
         if (vereiste_taal) insertData.vereiste_taal = vereiste_taal;
         if (vereiste_vaardigheden && vereiste_vaardigheden.length > 0) {
@@ -81,6 +95,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Old format: single functie
+      const aantalNodig = parseInt(aantal) || 1;
       const insertData: Record<string, unknown> = {
         klant_id: klantData.id,
         klant_naam: klantData.bedrijfsnaam || null,
@@ -88,7 +103,9 @@ export async function POST(request: NextRequest) {
         datum,
         start_tijd,
         eind_tijd,
-        aantal_nodig: parseInt(aantal) || 1,
+        aantal_nodig: aantalNodig,
+        plekken_totaal: aantalNodig, // ✅ Set total spots
+        plekken_beschikbaar: aantalNodig, // ✅ Set available spots
         locatie: locatie || null,
         uurtarief: tarief,
         status: "open",

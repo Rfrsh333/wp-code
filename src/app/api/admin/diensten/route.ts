@@ -13,12 +13,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
   }
   const week = request.nextUrl.searchParams.get("week");
+  const status = request.nextUrl.searchParams.get("status");
+
   let query = supabaseAdmin.from("diensten").select("id, klant_id, klant_naam, functie, datum, start_tijd, eind_tijd, aantal_nodig, plekken_totaal, plekken_beschikbaar, locatie, uurtarief, status, notities, is_spoeddienst, spoeddienst_token, spoeddienst_whatsapp_tekst, created_at").order("datum", { ascending: true }).limit(500);
+
+  // ✅ Optional status filter
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  // ✅ Date filtering: week or default from yesterday
   if (week) {
     const start = new Date(week + "T00:00:00");
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
     query = query.gte("datum", start.toISOString().split("T")[0]).lte("datum", end.toISOString().split("T")[0]);
+  } else {
+    // Default: show diensten from yesterday onwards (includes recent and upcoming)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    query = query.gte("datum", yesterday.toISOString().split("T")[0]);
   }
   const { data, error } = await query;
   console.log(`[ADMIN DIENSTEN] Fetched ${data?.length || 0} diensten, error:`, error || "none");

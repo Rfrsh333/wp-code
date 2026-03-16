@@ -110,17 +110,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // BACKWARDS COMPATIBILITY: If no filters, filter by medewerker functie (only for old diensten with functie field)
-  if (categorieFilter.length === 0 && functieFilter.length === 0) {
-    const functies = Array.isArray(medewerker.functie) ? medewerker.functie : [medewerker.functie];
-    filteredDiensten = filteredDiensten.filter(d => {
-      // Show diensten without functie field (new system)
-      if (!d.functie) return true;
-      // Filter old diensten by functie
-      return functies.includes(d.functie);
-    });
-  }
-
+  // ✅ REMOVED restrictive backwards compatibility filter
+  // Now all open diensten are visible, giving medewerkers full control via UI filters
   const alleDienstenCompat = filteredDiensten;
 
   const { data: aanmeldingen } = await supabaseAdmin

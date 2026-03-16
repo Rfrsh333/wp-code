@@ -1538,7 +1538,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const [step, setStep] = useState(1);
   const [isSending, setIsSending] = useState(false);
   const [form, setForm] = useState({
-    functie: "horeca", // backwards compatibility - set to horeca
+    functie: "", // ✅ Will be set based on selected functions
     categorie_id: "",
     functie_id: "",
     vereiste_taal: null as 'nl' | 'en' | 'nl_en' | null,
