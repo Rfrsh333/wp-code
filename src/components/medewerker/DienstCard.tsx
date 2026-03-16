@@ -104,7 +104,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   return (
     <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] overflow-hidden shadow-[var(--mp-shadow)]">
       {/* Bedrijfsfoto */}
-      <div className="relative w-full aspect-[16/9] bg-[var(--mp-bg)]">
+      <div className="relative w-full aspect-[3/1] bg-[var(--mp-bg)]">
         {dienst.klant.bedrijf_foto_url ? (
           <Image
             src={dienst.klant.bedrijf_foto_url}
@@ -114,7 +114,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--mp-accent)]/10 to-[var(--mp-accent)]/5">
-            <span className="text-4xl font-bold text-[var(--mp-accent)]/30">
+            <span className="text-3xl font-bold text-[var(--mp-accent)]/30">
               {dienst.klant.bedrijfsnaam.charAt(0)}
             </span>
           </div>
@@ -122,7 +122,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
 
         {/* Status badge */}
         {type === "voltooid" && (
-          <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-[var(--mp-success)] text-white text-xs font-semibold shadow-lg flex items-center gap-1">
+          <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-[var(--mp-success)] text-white text-[11px] font-semibold shadow-lg flex items-center gap-1">
             <Check className="w-3 h-3" />
             Voltooid
           </div>
@@ -130,46 +130,46 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="px-3 py-2.5">
         {/* Bedrijfsnaam */}
-        <h3 className="text-lg font-bold text-[var(--mp-text-primary)] mb-2">
+        <h3 className="text-sm font-bold text-[var(--mp-text-primary)] mb-1.5">
           {dienst.klant.bedrijfsnaam}
         </h3>
 
         {/* Datum */}
-        <div className="flex items-center gap-2 text-[var(--mp-text-secondary)] text-sm mb-1">
-          <Calendar className="w-4 h-4" />
+        <div className="flex items-center gap-1.5 text-[var(--mp-text-secondary)] text-xs mb-0.5">
+          <Calendar className="w-3.5 h-3.5" />
           <span className="font-semibold">{formatDatum(dienst.datum)}</span>
         </div>
 
         {/* Tijd */}
-        <div className="flex items-center gap-2 text-[var(--mp-text-secondary)] text-sm mb-1">
-          <Clock className="w-4 h-4" />
+        <div className="flex items-center gap-1.5 text-[var(--mp-text-secondary)] text-xs mb-0.5">
+          <Clock className="w-3.5 h-3.5" />
           <span>{formatTijd(dienst.start_tijd, dienst.eind_tijd)}</span>
         </div>
 
         {/* Locatie */}
-        <div className="flex items-center gap-2 text-[var(--mp-text-secondary)] text-sm mb-4">
-          <MapPin className="w-4 h-4" />
+        <div className="flex items-center gap-1.5 text-[var(--mp-text-secondary)] text-xs mb-2.5">
+          <MapPin className="w-3.5 h-3.5" />
           <span>{dienst.locatie}</span>
         </div>
 
         {/* Omschrijving */}
         {dienst.omschrijving && (
-          <p className="text-sm text-[var(--mp-text-secondary)] mb-4 line-clamp-2">
+          <p className="text-xs text-[var(--mp-text-secondary)] mb-2.5 line-clamp-2">
             {dienst.omschrijving}
           </p>
         )}
 
         {/* Verdiensten */}
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--mp-accent)]/10 mb-4">
-          <Euro className="w-5 h-5 text-[var(--mp-accent)]" />
+        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[var(--mp-accent)]/10 mb-2.5">
+          <Euro className="w-4 h-4 text-[var(--mp-accent)]" />
           <div>
-            <div className="text-xs text-[var(--mp-text-tertiary)]">Verdiensten</div>
-            <div className="text-lg font-bold text-[var(--mp-accent)]">
+            <div className="text-[10px] text-[var(--mp-text-tertiary)]">Verdiensten</div>
+            <div className="text-sm font-bold text-[var(--mp-accent)]">
               €{verdiensten.toFixed(2)}
             </div>
-            <div className="text-xs text-[var(--mp-text-secondary)]">
+            <div className="text-[10px] text-[var(--mp-text-secondary)]">
               {uren}u × €{medewerkerUurtarief}
             </div>
           </div>
@@ -177,17 +177,17 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
 
         {/* CTA Buttons op basis van type */}
         {type === "aangeboden" && (
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button
               onClick={handleDecline}
               disabled={declining}
-              className="flex-1 py-3 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {declining ? (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                   Afwijzen
                 </>
               )}
@@ -195,13 +195,13 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
             <button
               onClick={handleAccept}
               disabled={accepting}
-              className="flex-1 py-3 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-sm transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)] disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-xs transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)] disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {accepting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <Check className="w-4 h-4" />
+                  <Check className="w-3.5 h-3.5" />
                   Accepteren
                 </>
               )}
@@ -212,7 +212,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
         {type === "gepland" && (
           <button
             onClick={() => toast.info("Navigeren naar dienst details...")}
-            className="w-full py-3 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-sm transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)]"
+            className="w-full py-2.5 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-xs transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)]"
           >
             Bekijk details
           </button>
@@ -221,7 +221,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
         {type === "voltooid" && (
           <button
             onClick={() => toast.info("Navigeren naar uren registratie...")}
-            className="w-full py-3 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-sm transition-all active:scale-[0.98]"
+            className="w-full py-2.5 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-xs transition-all active:scale-[0.98]"
           >
             Bekijk uren
           </button>
