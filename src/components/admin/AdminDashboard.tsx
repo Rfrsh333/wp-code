@@ -65,6 +65,7 @@ const PlanningTab = dynamic(() => import("./PlanningTab"), { loading: () => <Tab
 const LeadsTab = dynamic(() => import("./LeadsTab"), { loading: () => <TabSkeleton />, ssr: false });
 const BoetesTab = dynamic(() => import("./BoetesTab"), { loading: () => <TabSkeleton />, ssr: false });
 const LiveChatTab = dynamic(() => import("./LiveChatTab"), { loading: () => <TabSkeleton />, ssr: false });
+const ContractenTab = dynamic(() => import("./ContractenTab"), { loading: () => <TabSkeleton />, ssr: false });
 const DienstFiltersTab = dynamic(() => import("./tabs/DienstFiltersTab"), { loading: () => <TabSkeleton />, ssr: false });
 const LiveChatNotification = dynamic(() => import("./LiveChatNotification"), { ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
@@ -1892,6 +1893,9 @@ export default function AdminDashboard() {
 
             {/* Live Chat Tab */}
             {activeTab === "livechat" && <LiveChatTab />}
+
+            {/* Contracten Tab */}
+            {activeTab === "contracten" && <ContractenTab />}
 
             {/* Dienst Filters Tab */}
             {activeTab === "filters" && <DienstFiltersTab />}

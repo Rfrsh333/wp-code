@@ -14,6 +14,7 @@ import {
   Inbox,
   MessageCircle,
   Newspaper,
+  PenLine,
   Receipt,
   Settings,
   Sparkles,
@@ -216,6 +217,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["chat", "chatbot", "support", "ai"],
   },
+  contracten: {
+    id: "contracten",
+    title: "Contracten",
+    icon: PenLine,
+    kind: "tab",
+    tab: "contracten",
+    pinnable: true,
+    keywords: ["contract", "ondertekenen", "overeenkomst", "handtekening"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -241,7 +251,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "recruitment",
     label: "Recruitment",
-    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "filters", "planning"],
+    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "filters", "planning", "contracten"],
     collapsible: true,
     defaultOpen: true,
     dividerBefore: true,

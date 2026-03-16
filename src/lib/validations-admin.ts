@@ -390,3 +390,28 @@ export const verifyPostSchema = z.object({
     access_token: z.string().min(1).max(10000),
   }),
 });
+
+// ============================================================
+// 17. admin/contracten
+// ============================================================
+
+const contractData = z.object({
+  template_id: uuid.optional(),
+  medewerker_id: uuid.optional(),
+  klant_id: uuid.optional(),
+  type: z.enum(["arbeidsovereenkomst", "uitzendovereenkomst", "oproepovereenkomst", "freelance", "stage", "custom"]).optional(),
+  titel: z.string().max(255).optional(),
+  contract_data: z.record(z.string(), z.unknown()).optional(),
+  startdatum: z.string().max(20).optional(),
+  einddatum: z.string().max(20).optional(),
+  notities: z.string().max(5000).optional(),
+  status: z.enum(["concept", "verzonden", "bekeken", "ondertekend_medewerker", "ondertekend_admin", "actief", "verlopen", "opgezegd", "geannuleerd"]).optional(),
+}).passthrough();
+
+export const contractenPostSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("create"), data: contractData }),
+  z.object({ action: z.literal("update"), id: uuid, data: contractData }),
+  z.object({ action: z.literal("delete"), id: uuid }),
+  z.object({ action: z.literal("verzend"), id: uuid }),
+  z.object({ action: z.literal("teken_admin"), id: uuid, handtekening_data: requiredString, ondertekenaar_naam: requiredString }),
+]);

@@ -64,6 +64,15 @@ export const calculatorLeadRateLimit = redis
     })
   : null;
 
+export const contractSignRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "15 m"), // 5 requests per 15 minutes
+      analytics: true,
+      prefix: "ratelimit:contract-sign",
+    })
+  : null;
+
 // Helper to get client IP from request
 export function getClientIP(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");

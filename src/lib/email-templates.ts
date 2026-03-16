@@ -632,3 +632,64 @@ export function buildKandidaatBookingAnnulering(params: {
 
   return kandidaatEmailWrapper(content);
 }
+
+// ============================================
+// CONTRACT EMAILS
+// ============================================
+
+export function buildContractOndertekeningEmailHtml(params: {
+  medewerkerNaam: string;
+  contractTitel: string;
+  contractNummer: string;
+  ondertekeningUrl: string;
+}): string {
+  const content = `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.medewerkerNaam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Er staat een nieuw contract voor je klaar ter ondertekening.
+    </p>
+    ${infoBlock([
+      { label: "Contract", value: params.contractTitel },
+      { label: "Contractnummer", value: params.contractNummer },
+    ])}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Klik op onderstaande knop om het contract te bekijken en digitaal te ondertekenen.
+      De link is 7 dagen geldig.
+    </p>
+    ${bookingButton(params.ondertekeningUrl, "Contract bekijken & ondertekenen")}
+    <p style="font-size: 13px; color: #999; margin-top: 20px;">
+      Vragen? Neem contact op via info@toptalentjobs.nl of +31 6 49 71 37 66.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Met vriendelijke groet,<br>
+      Team TopTalent Jobs
+    </p>`;
+
+  return emailWrapper(content);
+}
+
+export function buildContractGetekendEmailHtml(params: {
+  medewerkerNaam: string;
+  contractTitel: string;
+  contractNummer: string;
+}): string {
+  const content = `
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.medewerkerNaam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Goed nieuws! Je contract is door beide partijen ondertekend en nu actief.
+    </p>
+    ${infoBlock([
+      { label: "Contract", value: params.contractTitel },
+      { label: "Contractnummer", value: params.contractNummer },
+      { label: "Status", value: "Actief" },
+    ])}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Je kunt je contract altijd terugvinden in je medewerkerportaal.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">
+      Met vriendelijke groet,<br>
+      Team TopTalent Jobs
+    </p>`;
+
+  return emailWrapper(content);
+}
