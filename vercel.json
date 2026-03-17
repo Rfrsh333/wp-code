@@ -3,6 +3,21 @@
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 10
+    },
+    "src/app/api/admin/news/clusters/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/news/drafts/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/news/drafts/*/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/linkedin/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/editorial-pipeline/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [
