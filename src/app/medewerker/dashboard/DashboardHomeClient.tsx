@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Euro, TrendingUp, ArrowRight, Star } from "lucide-react";
+import { Calendar, Clock, Euro, TrendingUp, ArrowRight, Star, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import PushNotificationBanner from "@/components/medewerker/PushNotificationBanner";
@@ -35,6 +35,16 @@ export default function DashboardHomeClient() {
     gemiddelde_rating: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => { setIsOffline(false); fetchDashboardData(); };
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    setIsOffline(!navigator.onLine);
+    return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
@@ -44,12 +54,15 @@ export default function DashboardHomeClient() {
     try {
       setLoading(true);
       const res = await fetch("/api/medewerker/dashboard");
+      const fromCache = res.headers.get("X-From-Cache");
+      if (fromCache === "true") setIsOffline(true);
       if (res.ok) {
         const data = await res.json();
         setStats(data.stats || {});
       }
     } catch (err) {
       console.error("Fetch dashboard error:", err);
+      if (!navigator.onLine) setIsOffline(true);
     } finally {
       setLoading(false);
     }
@@ -96,6 +109,15 @@ export default function DashboardHomeClient() {
       <div className="min-h-screen bg-[var(--mp-bg)]">
         {/* Push Notification Banner */}
         <PushNotificationBanner />
+
+        {/* Offline indicator */}
+        {isOffline && (
+          <div className="mx-4 mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+            <WifiOff className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <p className="text-xs text-amber-800">Je bent offline. Je ziet de laatst opgeslagen gegevens.</p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="bg-gradient-to-br from-[var(--mp-accent)] to-[var(--mp-accent-dark)] pt-8 pb-16 px-4">
           <div className="max-w-4xl mx-auto">

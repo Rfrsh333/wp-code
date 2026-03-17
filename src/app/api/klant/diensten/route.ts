@@ -165,5 +165,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // Dienst heropenen: zet status terug naar "open" en herbereken plekken
+  if (action === "heropenen") {
+    // Verifieer dat dienst bij klant hoort
+    const { data: dienst } = await supabaseAdmin
+      .from("diensten")
+      .select("id, klant_id, aantal_nodig, status")
+      .eq("id", dienst_id)
+      .eq("klant_id", klant.id)
+      .single();
+
+    if (!dienst) {
+      return NextResponse.json({ error: "Dienst niet gevonden" }, { status: 404 });
+    }
+
+    // Tel huidige geaccepteerde aanmeldingen
+    const { count: geaccepteerdCount } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id", { count: "exact", head: true })
+      .eq("dienst_id", dienst_id)
+      .eq("status", "geaccepteerd");
+
+    const aantalGeaccepteerd = geaccepteerdCount || 0;
+    const plekkenBeschikbaar = Math.max(0, (dienst.aantal_nodig || 1) - aantalGeaccepteerd);
+
+    await supabaseAdmin
+      .from("diensten")
+      .update({
+        status: plekkenBeschikbaar > 0 ? "open" : "vol",
+        plekken_beschikbaar: plekkenBeschikbaar,
+      })
+      .eq("id", dienst_id);
+
+    return NextResponse.json({
+      success: true,
+      status: plekkenBeschikbaar > 0 ? "open" : "vol",
+      plekken_beschikbaar: plekkenBeschikbaar,
+    });
+  }
+
   return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
 }

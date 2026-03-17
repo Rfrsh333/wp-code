@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, Check, Clock } from "lucide-react";
+import { Calendar, Check, Clock, WifiOff } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import DienstCard from "@/components/medewerker/DienstCard";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
@@ -41,6 +41,25 @@ export default function MijnDienstenClient() {
   const [diensten, setDiensten] = useState<Dienst[]>([]);
   const [vervangingVerzoeken, setVervangingVerzoeken] = useState<VervangingVerzoek[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
+  const [isCachedData, setIsCachedData] = useState(false);
+
+  // Luister naar online/offline events
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => {
+      setIsOffline(false);
+      setIsCachedData(false);
+      fetchDiensten();
+    };
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    setIsOffline(!navigator.onLine);
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
+  }, []);
 
   useEffect(() => {
     fetchDiensten();
@@ -50,7 +69,21 @@ export default function MijnDienstenClient() {
     try {
       setLoading(true);
       const res = await fetch(`/api/medewerker/diensten/lijst?status=${activeTab}`);
+
+      // Check of data uit de SW cache komt
+      const fromCache = res.headers.get("X-From-Cache");
+      if (fromCache === "true") {
+        setIsCachedData(true);
+      } else {
+        setIsCachedData(false);
+      }
+
       if (!res.ok) {
+        // 503 met offline flag = geen cache beschikbaar
+        if (res.status === 503) {
+          setIsOffline(true);
+          return;
+        }
         toast.error("Diensten ophalen mislukt");
         return;
       }
@@ -59,7 +92,11 @@ export default function MijnDienstenClient() {
       setVervangingVerzoeken(data.vervangingVerzoeken || []);
     } catch (err) {
       console.error("Fetch diensten error:", err);
-      toast.error("Er ging iets mis");
+      if (!navigator.onLine) {
+        setIsOffline(true);
+      } else {
+        toast.error("Er ging iets mis");
+      }
     } finally {
       setLoading(false);
     }
@@ -167,6 +204,18 @@ export default function MijnDienstenClient() {
           </div>
         </div>
       </div>
+
+      {/* Offline / Cached data indicator */}
+      {(isOffline || isCachedData) && (
+        <div className="mx-4 mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+          <WifiOff className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <p className="text-xs text-amber-800">
+            {isOffline && diensten.length === 0
+              ? "Je bent offline. Geen gecachede data beschikbaar."
+              : "Je bent offline. Je ziet de laatst opgeslagen versie van je diensten."}
+          </p>
+        </div>
+      )}
 
       {/* Vervanging verzoeken */}
       {!loading && vervangingVerzoeken.length > 0 && (

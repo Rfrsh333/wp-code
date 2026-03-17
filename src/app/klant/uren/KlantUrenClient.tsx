@@ -219,10 +219,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const [aanmeldingen, setAanmeldingen] = useState<DienstAanmelding[]>([]);
   const [aanmeldingenLoading, setAanmeldingenLoading] = useState(false);
   const [aanmeldingenActie, setAanmeldingenActie] = useState<string | null>(null);
-  const [scanReminderPopup, setScanReminderPopup] = useState<{
-    open: boolean;
-    medewerkers: Array<{ naam: string; dienst_datum: string; dienst_tijd: string }>;
-  }>({ open: false, medewerkers: [] });
   const [approveModal, setApproveModal] = useState<{
     open: boolean;
     uren: UrenRegistratie | null;
@@ -241,31 +237,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
       return false;
     }
   };
-
-  // Check for non-scanned medewerkers when aanmeldingen are loaded
-  useEffect(() => {
-    if (!aanmeldingenOpen || aanmeldingen.length === 0) return;
-
-    const nonScannedMedewerkers = aanmeldingen.filter(
-      (a) => a.status === "geaccepteerd" && !a.check_in_at
-    );
-
-    if (nonScannedMedewerkers.length > 0) {
-      // Get dienst info for display
-      const dienst = dienstenVolledig.find((d) => d.id === aanmeldingenOpen);
-
-      const medewerkersList = nonScannedMedewerkers.map((a) => {
-        const mw = Array.isArray(a.medewerker) ? a.medewerker[0] : a.medewerker;
-        return {
-          naam: mw?.naam || "Onbekend",
-          dienst_datum: dienst?.datum ? formatDateLong(dienst.datum) : "",
-          dienst_tijd: dienst ? `${formatTime(dienst.start_tijd)} - ${formatTime(dienst.eind_tijd)}` : "",
-        };
-      });
-
-      setScanReminderPopup({ open: true, medewerkers: medewerkersList });
-    }
-  }, [aanmeldingen, aanmeldingenOpen, dienstenVolledig]);
 
   const submitBeoordeling = async () => {
     if (!beoordeelModal.item) return;
@@ -822,9 +793,26 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                 {formatDateLong(dienst.datum)} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}
                               </p>
                             </div>
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone[dienst.status] || "bg-neutral-200 text-neutral-700"}`}>
-                              {dienst.status}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone[dienst.status] || "bg-neutral-200 text-neutral-700"}`}>
+                                {dienst.status}
+                              </span>
+                              {dienst.status === "vol" && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await dienstenMutation.mutateAsync({ action: "heropenen", dienst_id: dienst.id });
+                                      toast.success("Dienst heropend! Medewerkers kunnen zich weer aanmelden.");
+                                    } catch (err) {
+                                      toast.error(err instanceof Error ? err.message : "Heropenen mislukt");
+                                    }
+                                  }}
+                                  className="rounded-full px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                                >
+                                  Heropenen
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-600">
                             <span className="rounded-full bg-neutral-100 px-3 py-1">{dienst.functie}</span>
@@ -1236,65 +1224,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
               <button onClick={submitAanpassing}
                 className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition">
                 Versturen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Scan Reminder Popup */}
-      {scanReminderPopup.open && scanReminderPopup.medewerkers.length > 0 && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-neutral-900">Medewerker(s) niet gescand</h3>
-                <p className="text-sm text-neutral-600 mt-1">
-                  De volgende medewerker(s) zijn geaccepteerd maar nog niet ingecheckt via QR-scan:
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-orange-50 rounded-xl p-4 mb-4 space-y-2">
-              {scanReminderPopup.medewerkers.map((mw, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-neutral-900">{mw.naam}</p>
-                    <p className="text-xs text-neutral-600">
-                      {mw.dienst_datum} · {mw.dienst_tijd}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-sm text-neutral-600 mb-4">
-              Scan de QR-pas van deze medewerker(s) voordat de dienst begint, zodat zij later hun uren kunnen indienen.
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setScanReminderPopup({ open: false, medewerkers: [] })}
-                className="flex-1 px-4 py-2 border border-neutral-200 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition"
-              >
-                Later
-              </button>
-              <button
-                onClick={() => {
-                  setScanReminderPopup({ open: false, medewerkers: [] });
-                  setActiveTab("qr-scanner");
-                }}
-                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition"
-              >
-                Scan nu
               </button>
             </div>
           </div>
@@ -2133,7 +2062,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
    Feature 4: Rooster Tab
    ============================================================ */
 function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => string; statusTone: Record<string, string> }) {
-  const [view, setView] = useState<"week" | "maand">("week");
+  const [view, setView] = useState<"week" | "tijdlijn" | "maand">("week");
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getWeekRange = (date: Date) => {
@@ -2152,7 +2081,7 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     return { start, end };
   };
 
-  const range = view === "week" ? getWeekRange(currentDate) : getMonthRange(currentDate);
+  const range = view === "maand" ? getMonthRange(currentDate) : getWeekRange(currentDate);
   const startStr = range.start.toISOString().split("T")[0];
   const endStr = range.end.toISOString().split("T")[0];
 
@@ -2161,8 +2090,8 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
 
   const navigate = (dir: number) => {
     const d = new Date(currentDate);
-    if (view === "week") d.setDate(d.getDate() + dir * 7);
-    else d.setMonth(d.getMonth() + dir);
+    if (view === "maand") d.setMonth(d.getMonth() + dir);
+    else d.setDate(d.getDate() + dir * 7);
     setCurrentDate(d);
   };
 
@@ -2175,7 +2104,110 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     geannuleerd: "bg-red-500",
   };
 
+  const statusBarColor: Record<string, string> = {
+    bevestigd: "bg-green-400",
+    open: "bg-amber-400",
+    vol: "bg-green-400",
+    bezig: "bg-amber-400",
+    afgerond: "bg-neutral-300",
+    geannuleerd: "bg-red-300",
+  };
+
   const dagNamen = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+
+  // Tijdlijn helpers
+  const TIMELINE_START = 6; // 06:00
+  const TIMELINE_END = 24; // 00:00 (middernacht)
+  const TIMELINE_HOURS = TIMELINE_END - TIMELINE_START;
+
+  const timeToPercent = (timeStr: string) => {
+    const [h, m] = timeStr.split(":").map(Number);
+    let hour = h + m / 60;
+    if (hour < TIMELINE_START) hour += 24; // nachtdienst
+    return Math.max(0, Math.min(100, ((hour - TIMELINE_START) / TIMELINE_HOURS) * 100));
+  };
+
+  const renderTijdlijnView = () => {
+    const { start } = getWeekRange(currentDate);
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+    const uurLabels = Array.from({ length: TIMELINE_HOURS + 1 }, (_, i) => TIMELINE_START + i);
+
+    return (
+      <div className="space-y-4">
+        {/* Uur labels header */}
+        <div className="flex items-end gap-0 pl-[120px]">
+          {uurLabels.map((h) => (
+            <div key={h} className="flex-1 text-[10px] text-neutral-400 text-center">
+              {h === 24 ? "00" : String(h).padStart(2, "0")}:00
+            </div>
+          ))}
+        </div>
+
+        {days.map((day) => {
+          const dateStr = day.toISOString().split("T")[0];
+          const dayItems = rooster.filter((r) => r.datum === dateStr);
+          const isToday = dateStr === new Date().toISOString().split("T")[0];
+
+          return (
+            <div key={dateStr} className={`rounded-2xl border p-3 ${isToday ? "border-[#F27501]/30 bg-orange-50/30" : "border-neutral-200 bg-white"}`}>
+              {/* Dag label + tijdlijn */}
+              <div className="flex items-start gap-0">
+                <div className="w-[120px] flex-shrink-0 pr-3">
+                  <p className={`text-xs font-semibold ${isToday ? "text-[#F27501]" : "text-neutral-700"}`}>
+                    {day.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" })}
+                  </p>
+                  {isToday && <span className="text-[10px] text-[#F27501]">Vandaag</span>}
+                  <p className="text-[10px] text-neutral-400 mt-0.5">{dayItems.length} dienst{dayItems.length !== 1 ? "en" : ""}</p>
+                </div>
+
+                {/* Tijdlijn container */}
+                <div className="flex-1 min-w-0">
+                  {dayItems.length === 0 ? (
+                    <div className="h-10 rounded-lg bg-neutral-50 border border-dashed border-neutral-200 flex items-center justify-center">
+                      <span className="text-[10px] text-neutral-300">Vrij</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {dayItems.map((item) => {
+                        const left = timeToPercent(item.start_tijd);
+                        const right = timeToPercent(item.eind_tijd);
+                        const width = Math.max(right - left, 5); // minimaal 5%
+
+                        return (
+                          <div key={item.id} className="relative h-9 bg-neutral-50 rounded-lg border border-neutral-100">
+                            {/* Uur gridlijnen */}
+                            {uurLabels.slice(0, -1).map((h) => (
+                              <div key={h} className="absolute top-0 bottom-0 border-l border-neutral-100" style={{ left: `${((h - TIMELINE_START) / TIMELINE_HOURS) * 100}%` }} />
+                            ))}
+                            {/* Dienst balk */}
+                            <div
+                              className={`absolute top-1 bottom-1 rounded-md ${statusBarColor[item.status] || "bg-neutral-300"} flex items-center px-2 overflow-hidden cursor-default`}
+                              style={{ left: `${left}%`, width: `${width}%` }}
+                              title={`${item.functie} · ${formatTime(item.start_tijd)}-${formatTime(item.eind_tijd)} · ${item.medewerkers.map(m => m.naam).join(", ") || "Geen medewerkers"}`}
+                            >
+                              <span className="text-[10px] font-semibold text-white truncate">
+                                {item.functie} · {item.medewerkers.length > 0
+                                  ? item.medewerkers.map(m => m.naam.split(" ")[0]).join(", ")
+                                  : "Geen MW"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderWeekView = () => {
     const { start } = getWeekRange(currentDate);
@@ -2209,7 +2241,20 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
                         <p className="text-sm font-medium text-neutral-900">{item.locatie || item.functie}</p>
                         <p className="text-xs text-neutral-500">{formatTime(item.start_tijd)} - {formatTime(item.eind_tijd)} · {item.functie}</p>
                         {item.medewerkers.length > 0 && (
-                          <p className="text-xs text-neutral-400 mt-1">{item.medewerkers.map(m => m.naam).join(", ")}</p>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {item.medewerkers.map((mw) => (
+                              <span key={mw.id} className="inline-flex items-center gap-1 rounded-full bg-white border border-neutral-200 px-2 py-0.5 text-[10px] font-medium text-neutral-700">
+                                {mw.profile_photo_url ? (
+                                  <img src={mw.profile_photo_url} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                                ) : (
+                                  <span className="w-3.5 h-3.5 rounded-full bg-[#F27501]/10 text-[#F27501] text-[8px] font-bold flex items-center justify-center">
+                                    {mw.naam.charAt(0)}
+                                  </span>
+                                )}
+                                {mw.naam}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusTone[item.status] || "bg-neutral-200 text-neutral-700"}`}>
@@ -2235,7 +2280,7 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     const totalDays = lastDay.getDate();
     const todayStr = new Date().toISOString().split("T")[0];
 
-    const cells = [];
+    const cells: (number | null)[] = [];
     for (let i = 0; i < startOffset; i++) cells.push(null);
     for (let d = 1; d <= totalDays; d++) cells.push(d);
 
@@ -2269,20 +2314,18 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-neutral-900">Rooster</h2>
           <p className="mt-1 text-sm text-neutral-500">Overzicht van alle ingeplande diensten.</p>
         </div>
         <div className="flex gap-1 bg-neutral-100 rounded-xl p-1">
-          <button onClick={() => setView("week")}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === "week" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}>
-            Week
-          </button>
-          <button onClick={() => setView("maand")}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === "maand" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}>
-            Maand
-          </button>
+          {(["week", "tijdlijn", "maand"] as const).map((v) => (
+            <button key={v} onClick={() => setView(v)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === v ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}>
+              {v === "week" ? "Week" : v === "tijdlijn" ? "Tijdlijn" : "Maand"}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -2292,9 +2335,9 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
           <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
         <span className="text-sm font-semibold text-neutral-900">
-          {view === "week"
-            ? `Week van ${getWeekRange(currentDate).start.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}`
-            : currentDate.toLocaleDateString("nl-NL", { month: "long", year: "numeric" })}
+          {view === "maand"
+            ? currentDate.toLocaleDateString("nl-NL", { month: "long", year: "numeric" })
+            : `Week van ${getWeekRange(currentDate).start.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}`}
         </span>
         <button onClick={() => navigate(1)} className="p-2 hover:bg-neutral-100 rounded-lg transition">
           <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -2303,14 +2346,14 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Bevestigd</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> In afwachting</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Aangevraagd</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Bevestigd / Vol</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Open / In afwachting</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-neutral-400" /> Afgerond</span>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full" /></div>
-      ) : view === "week" ? renderWeekView() : renderMonthView()}
+      ) : view === "tijdlijn" ? renderTijdlijnView() : view === "week" ? renderWeekView() : renderMonthView()}
     </div>
   );
 }
@@ -2673,7 +2716,7 @@ function QRScannerTab() {
                 setMultipleData({ ...data, medewerker_id: qrData.id! });
                 setResult({ type: "multiple", data });
               } else {
-                setResult({ type: "success", data });
+                  setResult({ type: "success", data });
                 toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
               }
             } else if (data.status === 409) {

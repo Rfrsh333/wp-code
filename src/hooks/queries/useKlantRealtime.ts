@@ -14,12 +14,12 @@ export function useKlantRealtime(klantId: string | null) {
     {
       table: 'diensten',
       event: '*' as const,
-      queryKeys: [klantKeys.diensten(), klantKeys.dashboard()],
+      queryKeys: [klantKeys.diensten(), klantKeys.dashboard(), klantKeys.rooster()],
     },
     {
       table: 'dienst_aanmeldingen',
       event: '*' as const,
-      queryKeys: [klantKeys.diensten(), klantKeys.dashboard()],
+      queryKeys: [klantKeys.diensten(), klantKeys.dashboard(), klantKeys.checkin()],
     },
     {
       table: 'facturen',
