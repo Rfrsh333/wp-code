@@ -7,6 +7,7 @@ import { brandGeneratedHeroImage } from "@/lib/content/services/image-service";
 import { createJobRun, failJobRun, finishJobRun } from "@/lib/content/job-runs";
 import { uploadEditorialImage } from "@/lib/images/storage";
 import { ContentPipelineError, getErrorMessage } from "@/lib/content/errors";
+import { createPlaceholderHeroImage } from "@/lib/images/hero-branding";
 
 interface UnsplashPhoto {
   urls: { regular?: string; full?: string };
@@ -337,14 +338,32 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
     }
 
     // Download and validate
-    const imageBuffer = await downloadImage(imageUrl);
+    let imageBuffer: Buffer;
+    let imageSource: string;
+    let usePlaceholder = false;
 
-    if (imageBuffer.length < 10_000) {
-      throw new ContentPipelineError("Image too small (likely a placeholder)", "image_too_small", { url: imageUrl });
+    try {
+      imageBuffer = await downloadImage(imageUrl);
+
+      if (imageBuffer.length < 10_000) {
+        console.warn(`[hero-image] Image too small from ${imageUrl}, using placeholder`);
+        usePlaceholder = true;
+      } else if (!(await isUsablePhotoDimensions(imageBuffer))) {
+        console.warn(`[hero-image] Image dimensions not suitable from ${imageUrl}, using placeholder`);
+        usePlaceholder = true;
+      }
+    } catch (downloadError) {
+      console.warn(`[hero-image] Failed to download ${imageUrl}, using placeholder:`, downloadError);
+      usePlaceholder = true;
     }
 
-    if (!(await isUsablePhotoDimensions(imageBuffer))) {
-      throw new ContentPipelineError("Image dimensions not suitable (too small or not landscape)", "image_dimensions_unsuitable", { url: imageUrl });
+    if (usePlaceholder) {
+      // Use placeholder when source image is not suitable
+      const logoPath = path.join(process.cwd(), "public", "logo.png");
+      imageBuffer = await createPlaceholderHeroImage({ logoPath });
+      imageSource = "placeholder";
+    } else {
+      imageSource = imageUrl;
     }
 
     const altText = String(draft.title);
@@ -355,9 +374,9 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
       .insert({
         draft_id: draftId,
         status: "generating",
-        prompt: `Image from: ${imageUrl}`,
+        prompt: `Image from: ${imageSource}`,
         alt_text: altText,
-        generation_model: "source_og_image",
+        generation_model: usePlaceholder ? "placeholder" : "source_og_image",
       })
       .select("id")
       .single();
@@ -386,11 +405,17 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
       .eq("id", generatedImageId);
 
     // Apply branding (logo bottom-right + orange gradient)
-    const logoPath = path.join(process.cwd(), "public", "logo.png");
-    const brandedBuffer = await brandGeneratedHeroImage({
-      buffer: imageBuffer,
-      logoPath,
-    });
+    // Note: if usePlaceholder, imageBuffer is already branded
+    let brandedBuffer: Buffer;
+    if (usePlaceholder) {
+      brandedBuffer = imageBuffer; // Already branded by createPlaceholderHeroImage
+    } else {
+      const logoPath = path.join(process.cwd(), "public", "logo.png");
+      brandedBuffer = await brandGeneratedHeroImage({
+        buffer: imageBuffer,
+        logoPath,
+      });
+    }
     const brandedPath = `${storageBase}/branded.webp`;
 
     await uploadEditorialImage({
@@ -461,20 +486,29 @@ export async function generateHeroImageForDraft(draftId: string) {
   const unsplashQuery = buildUnsplashQuery(String(draft.title), String(draft.excerpt));
   const unsplashResult = await searchUnsplashImage(unsplashQuery);
 
-  if (!unsplashResult) {
-    throw new ContentPipelineError(
-      "Geen bronafbeelding of Unsplash resultaat gevonden",
-      "no_image_source",
-      { draftId },
-    );
-  }
-
   const jobRunId = await createJobRun("content.generateHeroImage", { draftId });
 
   try {
-    const altText = unsplashResult.altText;
-    const generationModel = `unsplash (${unsplashResult.attribution})`;
-    const imageSource = `unsplash:${unsplashQuery}`;
+    let imageBuffer: Buffer;
+    let altText: string;
+    let generationModel: string;
+    let imageSource: string;
+
+    if (unsplashResult) {
+      // Use Unsplash image
+      imageBuffer = unsplashResult.buffer;
+      altText = unsplashResult.altText;
+      generationModel = `unsplash (${unsplashResult.attribution})`;
+      imageSource = `unsplash:${unsplashQuery}`;
+    } else {
+      // Fallback to placeholder when Unsplash fails
+      console.warn(`[hero-image] No Unsplash result for ${unsplashQuery}, using placeholder`);
+      const logoPath = path.join(process.cwd(), "public", "logo.png");
+      imageBuffer = await createPlaceholderHeroImage({ logoPath });
+      altText = String(draft.title);
+      generationModel = "placeholder";
+      imageSource = "placeholder";
+    }
 
     // Create image record
     const { data: imageRow, error: imageInsertError } = await supabaseAdmin
@@ -500,7 +534,7 @@ export async function generateHeroImageForDraft(draftId: string) {
     const originalPath = `${storageBase}/original.png`;
     await uploadEditorialImage({
       path: originalPath,
-      buffer: unsplashResult.buffer,
+      buffer: imageBuffer,
       contentType: "image/png",
     });
 
@@ -512,12 +546,17 @@ export async function generateHeroImageForDraft(draftId: string) {
       })
       .eq("id", generatedImageId);
 
-    // Apply branding
-    const logoPath = path.join(process.cwd(), "public", "logo.png");
-    const brandedBuffer = await brandGeneratedHeroImage({
-      buffer: unsplashResult.buffer,
-      logoPath,
-    });
+    // Apply branding (skip if placeholder, as it's already branded)
+    let brandedBuffer: Buffer;
+    if (generationModel === "placeholder") {
+      brandedBuffer = imageBuffer; // Already branded by createPlaceholderHeroImage
+    } else {
+      const logoPath = path.join(process.cwd(), "public", "logo.png");
+      brandedBuffer = await brandGeneratedHeroImage({
+        buffer: imageBuffer,
+        logoPath,
+      });
+    }
     const brandedPath = `${storageBase}/branded.webp`;
 
     await uploadEditorialImage({

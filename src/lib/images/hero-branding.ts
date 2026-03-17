@@ -43,7 +43,7 @@ export async function applyEditorialHeroBranding(
   const logoHeight = logoMeta.height ?? Math.round(logoWidth * 0.4);
 
   return sharp(inputBuffer)
-    .resize(width, height, { fit: "cover" })
+    .resize(width, height, { fit: "cover", position: "center" })
     .composite([
       {
         input: buildOrangeGradient(width, height),
@@ -59,4 +59,31 @@ export async function applyEditorialHeroBranding(
     ])
     .webp({ quality: 84 })
     .toBuffer();
+}
+
+/**
+ * Create a placeholder hero image with TopTalent branding when no source image is available
+ */
+export async function createPlaceholderHeroImage(
+  options: HeroBrandingOptions,
+): Promise<Buffer> {
+  const width = options.outputWidth ?? 1600;
+  const height = options.outputHeight ?? 900;
+
+  // Create a gradient background SVG
+  const gradientSvg = `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#F27501;stop-opacity:0.15" />
+          <stop offset="50%" style="stop-color:#F27501;stop-opacity:0.08" />
+          <stop offset="100%" style="stop-color:#F27501;stop-opacity:0.15" />
+        </linearGradient>
+      </defs>
+      <rect width="${width}" height="${height}" fill="#f5f5f5"/>
+      <rect width="${width}" height="${height}" fill="url(#bgGradient)"/>
+    </svg>
+  `;
+
+  return applyEditorialHeroBranding(Buffer.from(gradientSvg), options);
 }
