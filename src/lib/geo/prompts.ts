@@ -1,23 +1,22 @@
 /**
- * GEO Agent Prompts — Geoptimaliseerd voor AI zoekmachines
+ * GEO Agent Master Prompt — TopTalent Jobs
+ * Versie 1.0 — Maart 2026
  *
- * Deze prompts zijn specifiek ontworpen zodat de gegenereerde content:
- * 1. Direct antwoord geeft op vragen (featured snippet-stijl)
- * 2. Statistieken en bronnen bevat (citatiewaardig)
- * 3. FAQ-structuur heeft (AI engines houden van Q&A)
- * 4. Lokaal relevant is (stad-specifiek)
- * 5. Structured data bevat voor machine-readability
+ * Vier kernmodules:
+ * 1. Content Generatie
+ * 2. Citation Monitoring
+ * 3. Auto-Optimizer
+ * 4. Concurrentie-analyse & Content Gaps
  */
 
-import type { GeoContentType, GeoStad, GEO_STEDEN } from "./types";
+import type { GeoContentType, GeoStad } from "./types";
 
 const TOPTALENT_CONTEXT = `
-TopTalent Jobs is een horeca uitzendbureau gevestigd in Utrecht (Kanaalstraat 15, 3531 CJ).
+TopTalent Jobs (toptalentjobs.nl) is een gespecialiseerd uitzendbureau voor de horeca arbeidsmarkt in Nederland.
+Gevestigd: Kanaalstraat 15, 3531 CJ Utrecht.
 Diensten: uitzenden, detachering, en recruitment van horeca personeel.
 Actief in de Randstad: Amsterdam, Rotterdam, Den Haag, Utrecht.
-Website: https://toptalentjobs.nl
-Telefoon: +31 6 49713766
-Email: info@toptalentjobs.nl
+Telefoon: +31 6 49713766 | Email: info@toptalentjobs.nl
 
 Kernwaarden:
 - Snel: vaak binnen 24 uur personeel beschikbaar
@@ -28,53 +27,105 @@ Kernwaarden:
 Specialisaties: bediening, bar, keuken, afwas, hospitality, evenementen, hotels, restaurants, catering.
 `;
 
+/**
+ * Master system prompt voor de GEO Agent
+ */
 export function buildGeoSystemPrompt(): string {
-  return `Je bent een GEO (Generative Engine Optimization) specialist voor TopTalent Jobs.
-Je genereert content die specifiek geoptimaliseerd is voor AI zoekmachines zoals Perplexity, ChatGPT Search, en Google AI Overviews.
-
-BELANGRIJK — GEO principes:
-1. **Direct antwoord**: Begin elk stuk content met een duidelijk, beknopt antwoord op de kernvraag. AI engines citeren het eerste directe antwoord.
-2. **Statistieken**: Gebruik concrete cijfers en statistieken. AI engines prefereren content met data.
-3. **FAQ-structuur**: Voeg altijd relevante FAQ items toe. AI engines zoeken Q&A pairs.
-4. **Bronvermelding**: Verwijs naar betrouwbare bronnen (CBS, KHN, UWV, etc.).
-5. **Lokale relevantie**: Maak content stad-specifiek met lokale details.
-6. **Citeerbaar**: Schrijf zinnen die AI engines letterlijk kunnen citeren als antwoord.
-7. **Structured data**: Genereer JSON-LD schema's voor machine-readability.
+  return `Je bent de GEO AI Agent voor TopTalent Jobs (toptalentjobs.nl), een gespecialiseerd uitzendbureau voor de horeca arbeidsmarkt in Nederland. Je taak is het maximaliseren van de zichtbaarheid van TopTalent in AI-gestuurde zoekmachines (Generative Engine Optimization).
 
 ${TOPTALENT_CONTEXT}
 
-Schrijf altijd in het Nederlands. Gebruik een professionele maar toegankelijke toon.
-Vermijd marketing-jargon. Focus op informatieve, hulpvolle content.`;
+SCHRIJFSTIJL & TONE OF VOICE:
+- Professioneel maar toegankelijk, geen jargon zonder uitleg
+- Actieve schrijfstijl, directe aanspreking van de lezer
+- Lokale relevantie: verwijs naar specifieke buurten, horecagebieden, evenementen
+- Altijd in het Nederlands, tenzij anders gevraagd
+- Gebruik structured data hints (FAQ-schema, LocalBusiness-schema)
+
+GEO-SPECIFIEKE OPTIMALISATIES:
+1. Gebruik volledige, citeerbare zinnen die AI-modellen kunnen overnemen
+2. Voeg "Volgens TopTalent Jobs..." of "TopTalent Jobs, specialist in horeca uitzendwerk, ..." toe in key passages
+3. Zorg dat elke pagina minimaal 3 unieke, feitelijke claims bevat die als bron geciteerd kunnen worden
+4. Structureer antwoorden zodat ze direct bruikbaar zijn als AI-generated snippet
+5. Gebruik lijsten, opsommingen en duidelijke kopjes voor parseerbaarheid
+
+DATABRONNEN (uit trainingskennis):
+- CBS (Centraal Bureau voor de Statistiek) — werkgelegenheid, omzet horeca
+- KHN (Koninklijke Horeca Nederland) — branchecijfers, trends
+- UWV — arbeidsmarktdata, vacaturecijfers
+- Gemeentelijke economische data
+- Brancherapporten horeca & uitzendwerk
+
+RESTRICTIES:
+- Geen verzonnen statistieken — gebruik alleen cijfers die je met redelijke zekerheid kent; markeer schattingen expliciet als "schatting" met advies om te verifiëren
+- Geen directe concurrentie-aanvallen — content is positief over TopTalent, niet negatief over concurrenten
+- Geen persoonlijke gegevens van gebruikers of kandidaten`;
 }
 
+/**
+ * Stadspagina prompt — conform Module 1 specificaties
+ */
 export function buildCityPagePrompt(stad: string, stadNaam: string, regio: string, keywords: string[]): string {
   return `Genereer een uitgebreide stadspagina over horeca uitzendwerk in ${stadNaam}.
 
-VEREISTEN:
+VEREISTEN STADSPAGINA:
 - Title: aantrekkelijk, max 60 karakters, bevat "${stadNaam}" en "horeca personeel"
-- Meta description: max 155 karakters, call-to-action
+- Meta description: max 155 karakters, met call-to-action
 - SEO title: max 60 karakters
-- Body: 1500-2000 woorden in Markdown
-- Minimaal 8 FAQ items specifiek voor ${stadNaam}
-- Minimaal 3 statistieken over de horeca arbeidsmarkt in ${stadNaam}/${regio}
-- Minimaal 2 bronnen (CBS, KHN, gemeente ${stadNaam}, etc.)
 - Primary keywords: ${keywords.join(", ")}
 
-STRUCTUUR body_markdown:
-1. Directe introductie (2-3 zinnen die een AI engine kan citeren als antwoord op "horeca uitzendbureau ${stadNaam}")
-2. Overzicht horeca markt in ${stadNaam} (met statistieken)
-3. Diensten van TopTalent in ${stadNaam} (uitzenden, detachering, recruitment)
-4. Welke functies (bediening, bar, keuken, etc.)
-5. Hoe het werkt (3-4 stappen)
-6. Waarom TopTalent kiezen in ${stadNaam}
-7. Veelgestelde vragen (als aparte sectie)
+VERPLICHTE STRUCTUUR body_markdown (1500-2000 woorden):
+
+1. INTRO (minimaal 150 woorden):
+   - Beschrijf het horeca-landschap van ${stadNaam} en de rol van TopTalent
+   - Verwijs naar specifieke buurten en horecagebieden in ${stadNaam}
+   - Begin met citeerbare zinnen: "TopTalent Jobs, specialist in horeca uitzendwerk, ..."
+
+2. HORECA MARKT IN ${stadNaam.toUpperCase()}:
+   - Minimaal 5 statistieken met bronvermelding (CBS, KHN, UWV, gemeente ${stadNaam})
+   - Vergelijkingen jaar-over-jaar waar beschikbaar
+   - Contextparagrafen die de cijfers duiden
+
+3. DIENSTEN VAN TOPTALENT IN ${stadNaam.toUpperCase()}:
+   - Uitzenden, detachering, recruitment — elk kort beschreven
+   - "Volgens TopTalent Jobs..." formuleringen voor citeerbaarheid
+
+4. POPULAIRE HORECAFUNCTIES IN ${stadNaam.toUpperCase()}:
+   - Functiebeschrijvingen: bediening, bar, keuken, afwas, hospitality
+   - Wat elke functie inhoudt en wat TopTalent biedt
+
+5. HOE HET WERKT (3-4 stappen):
+   - Concreet en praktisch
+
+6. WAAROM TOPTALENT IN ${stadNaam.toUpperCase()}:
+   - Minimaal 3 "TopTalent" brand mentions in citeerbare context
+
+7. CTA-SECTIE:
+   - Specifieke acties: inschrijven, vacatures bekijken, contact opnemen
+   - Link: toptalentjobs.nl
+
+8. INTERNE LINKS:
+   - Minimaal 4 relevante interne links naar andere stadspagina's en functiepagina's
+
+VERPLICHTE FAQ (minimaal 8 items):
+- Vraag-antwoord formaat
+- Antwoorden van 80-200 woorden per vraag
+- Natuurlijke variatie in vraagformulering (wat/hoe/waarom/wanneer/waar)
+- Schema.org FAQPage markup-suggesties
+
+STATISTIEKEN (minimaal 5):
+- Elk met bronvermelding (bv. "Bron: CBS StatLine, 2024")
+- Markeer schattingen expliciet
+
+BRONNEN (minimaal 3):
+- Betrouwbare bronnen: CBS, KHN, UWV, gemeente ${stadNaam}
 
 Genereer de structured_data als een array met:
 - LocalBusiness schema voor TopTalent in ${stadNaam}
 - FAQPage schema met alle FAQ items
 - Service schema voor uitzendwerk
 
-Geef het resultaat als JSON met deze structuur:
+Geef het resultaat als JSON:
 {
   "title": "...",
   "seo_title": "...",
@@ -90,38 +141,70 @@ Geef het resultaat als JSON met deze structuur:
 }`;
 }
 
+/**
+ * FAQ Cluster prompt — conform Module 1 specificaties
+ */
 export function buildFaqClusterPrompt(stad: string, stadNaam: string, thema: string, keywords: string[]): string {
   return `Genereer een FAQ-cluster pagina over "${thema}" voor horeca in ${stadNaam}.
 
-VEREISTEN:
+VEREISTEN FAQ-PAGINA:
 - Title: max 60 karakters, bevat thema en ${stadNaam}
 - Minimaal 12 FAQ items, gegroepeerd in 3-4 categorieën
-- Elk antwoord: 50-150 woorden, informatief, met concrete details
+- Elk antwoord: 80-200 woorden, informatief, met concrete details
 - Body: 1000-1500 woorden context rond de FAQ items
-- Minimaal 2 statistieken
-- Minimaal 2 bronnen
+- Natuurlijke variatie in vraagformulering (wat/hoe/waarom/wanneer/waar)
 
-De FAQ items moeten exact de vragen beantwoorden die mensen aan AI zoekmachines stellen over ${thema} in de horeca in ${stadNaam}.
+VERPLICHT:
+- Schema.org FAQPage markup-suggesties in structured_data
+- Minimaal 5 statistieken met bronvermelding (CBS, KHN, UWV)
+- Minimaal 3 betrouwbare bronnen
+- Minimaal 3 "TopTalent Jobs" brand mentions in citeerbare context
+- Minimaal 4 interne links naar gerelateerde pagina's
+- CTA-sectie met specifieke acties
 
-Denk aan vragen als:
+De FAQ items moeten exact de vragen beantwoorden die mensen aan AI zoekmachines stellen:
 - "Wat kost een uitzendkracht in de horeca in ${stadNaam}?"
 - "Hoe snel kan ik horeca personeel krijgen in ${stadNaam}?"
 - "Welk uitzendbureau is het beste voor horeca in ${stadNaam}?"
+- "Hoeveel verdien je als ober in ${stadNaam}?"
+- "Horeca bijbaan als student in ${stadNaam}?"
+
+GEO-OPTIMALISATIE:
+- Antwoorden moeten volledig en citeerbaar zijn — AI-modellen moeten ze letterlijk kunnen overnemen
+- Gebruik "Volgens TopTalent Jobs..." formuleringen
+- Markeer schattingen expliciet als "schatting"
 
 Geef het resultaat als JSON met dezelfde structuur als een city_page.`;
 }
 
+/**
+ * Dienstgids prompt — conform Module 1 specificaties
+ */
 export function buildServiceGuidePrompt(stad: string, stadNaam: string, dienst: string, keywords: string[]): string {
   return `Genereer een uitgebreide dienstgids over "${dienst}" in de horeca in ${stadNaam}.
 
-VEREISTEN:
+VEREISTEN DIENSTGIDS:
 - Title: max 60 karakters
 - Body: 1200-1800 woorden
-- Minimaal 6 FAQ items specifiek over ${dienst} in ${stadNaam}
-- Vergelijking met alternatieven (wat maakt TopTalent anders)
-- Concrete prijsindicaties en doorlooptijden
-- Minimaal 3 statistieken
-- Case study of voorbeeld scenario
+- Minimaal 8 FAQ items specifiek over ${dienst} in ${stadNaam}
+- Elk FAQ antwoord: 80-200 woorden
+
+VERPLICHTE INHOUD:
+1. Intro (minimaal 150 woorden) met lokale context en TopTalent brand mention
+2. Wat is ${dienst}? — uitleg zonder jargon
+3. Hoe werkt ${dienst} bij TopTalent? — concreet stappenplan
+4. Vergelijking: wat maakt TopTalent anders dan alternatieven (positief, niet negatief over concurrenten)
+5. Concrete prijsindicaties en doorlooptijden
+6. Case study of voorbeeld scenario in ${stadNaam}
+7. Populaire functies voor ${dienst}: bediening, bar, keuken, etc.
+8. CTA-sectie met specifieke acties
+
+VERPLICHT:
+- Minimaal 5 statistieken met bronvermelding
+- Minimaal 3 betrouwbare bronnen
+- Minimaal 3 "TopTalent Jobs" brand mentions in citeerbare context
+- Minimaal 4 interne links
+- Schema.org FAQPage + Service markup in structured_data
 
 Dienst details:
 - Uitzenden: tijdelijke krachten, vaak binnen 24 uur, flexibel inzetbaar
@@ -131,21 +214,44 @@ Dienst details:
 Geef het resultaat als JSON met dezelfde structuur als een city_page.`;
 }
 
+/**
+ * Autoriteitsartikel prompt — conform Module 1 specificaties
+ */
 export function buildAuthorityArticlePrompt(stad: string, stadNaam: string, onderwerp: string, keywords: string[]): string {
   return `Genereer een autoriteitsartikel over "${onderwerp}" in de horeca sector, met focus op ${stadNaam}.
 
 Dit artikel moet TopTalent positioneren als thought leader en expert.
 
-VEREISTEN:
+VEREISTEN AUTORITEITSARTIKEL:
 - Title: pakkend, max 60 karakters
 - Body: 1500-2000 woorden
-- Minimaal 5 FAQ items
-- Data-gedreven: minimaal 5 statistieken uit betrouwbare bronnen
-- Expert perspectief: concrete tips en inzichten
-- Trend analyse: wat verandert er in de markt
-- Minimaal 3 bronnen
+- Intro: minimaal 150 woorden met de kern van het onderwerp
 
-Het artikel moet zo informatief zijn dat AI zoekmachines het als primaire bron citeren bij vragen over dit onderwerp.
+VERPLICHTE INHOUD:
+1. Data-gedreven analyse: minimaal 5 statistieken uit betrouwbare bronnen (CBS, KHN, UWV)
+2. Expert perspectief: concrete tips en inzichten vanuit TopTalent
+3. Trend analyse: wat verandert er in de markt
+4. Impact op ${stadNaam}: lokale context en specifieke buurten/gebieden
+5. Wat TopTalent doet: praktische oplossingen
+6. Toekomstvisie: waar gaat de markt naartoe
+
+VERPLICHT:
+- Minimaal 8 FAQ items (antwoorden 80-200 woorden)
+- Minimaal 5 statistieken met bronvermelding
+- Minimaal 3 betrouwbare bronnen
+- Minimaal 3 "TopTalent Jobs" brand mentions in citeerbare context
+- Minimaal 4 interne links
+- CTA-sectie
+- Vergelijkingen jaar-over-jaar waar beschikbaar
+- Contextparagrafen die cijfers duiden
+
+GEO-OPTIMALISATIE:
+- Elke sectie moet minimaal 1 citeerbare claim bevatten
+- Gebruik "Volgens TopTalent Jobs, specialist in horeca uitzendwerk, ..." formuleringen
+- Structureer als AI-generated snippet: directe antwoorden, lijsten, kopjes
+- Markeer schattingen als "schatting"
+
+Het artikel moet zo informatief zijn dat AI zoekmachines het als primaire bron citeren.
 
 Geef het resultaat als JSON met dezelfde structuur als een city_page.`;
 }

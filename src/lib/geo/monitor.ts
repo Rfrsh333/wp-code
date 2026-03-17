@@ -1,10 +1,12 @@
 import "server-only";
 
 /**
- * GEO Monitor — Checkt of AI zoekmachines TopTalent content citeren
+ * GEO Agent Module 2: Citation Monitoring
  *
- * Werkt door zoekopdrachten te simuleren via de Perplexity/OpenAI API's
- * en te analyseren of TopTalent in de bronnen/citaties voorkomt.
+ * Monitor of en hoe AI-zoekmachines TopTalent Jobs citeren
+ * bij relevante horeca-gerelateerde zoekopdrachten.
+ *
+ * Conform Master Prompt v1.0 specificaties.
  */
 
 import { supabaseAdmin } from "@/lib/supabase";
@@ -16,6 +18,7 @@ interface CitationCheckResult {
   engine: AIEngine;
   zoekopdracht: string;
   geciteerd: boolean;
+  brand_mention: boolean;
   citatie_positie: number | null;
   citatie_tekst: string | null;
   bron_url: string | null;
@@ -23,59 +26,92 @@ interface CitationCheckResult {
   concurrenten_urls: string[];
   response_snippet: string;
   relevantie_score: number;
+  sentiment: "positive" | "neutral" | "negative" | null;
 }
 
 /**
- * Genereer zoekopdrachten op basis van content
- * Dit zijn de queries die echte gebruikers aan AI zoekmachines stellen
+ * Query-set samenstellen — conform Module 2 specificaties
+ *
+ * Categorieën:
+ * 1. Stad + dienst: "horeca uitzendbureau [stad]"
+ * 2. Functie + stad: "kok vacature [stad]", "barista werk [stad]"
+ * 3. Generiek: "beste horeca uitzendbureau Nederland"
+ * 4. Long-tail: "hoeveel verdien je als ober in Amsterdam"
  */
 export function generateSearchQueries(content: GeoContent): string[] {
   const stadNaam = content.stad === "den-haag"
     ? "Den Haag"
     : content.stad.charAt(0).toUpperCase() + content.stad.slice(1);
 
-  const baseQueries = [
-    `horeca uitzendbureau ${stadNaam}`,
-    `horeca personeel ${stadNaam}`,
-    `beste uitzendbureau horeca ${stadNaam}`,
-    `snel horeca personeel nodig ${stadNaam}`,
-    `uitzendkracht horeca kosten ${stadNaam}`,
-  ];
+  const queries: string[] = [];
 
-  // Voeg content-specifieke queries toe
+  // Categorie 1: Stad + dienst
+  queries.push(
+    `horeca uitzendbureau ${stadNaam}`,
+    `horecapersoneel inhuren ${stadNaam}`,
+    `horeca personeel ${stadNaam}`,
+    `uitzendkracht horeca ${stadNaam}`,
+  );
+
+  // Categorie 2: Functie + stad
+  queries.push(
+    `kok vacature ${stadNaam}`,
+    `barista werk ${stadNaam}`,
+    `ober vacature ${stadNaam}`,
+    `afwasser werk ${stadNaam}`,
+  );
+
+  // Categorie 3: Generiek
+  queries.push(
+    `beste horeca uitzendbureau Nederland`,
+    `tijdelijk horecapersoneel`,
+  );
+
+  // Categorie 4: Long-tail
+  queries.push(
+    `hoeveel verdien je als ober in ${stadNaam}`,
+    `horeca bijbaan als student ${stadNaam}`,
+    `snel horecapersoneel nodig ${stadNaam}`,
+  );
+
+  // Content-specifieke queries
   if (content.content_type === "faq_cluster" && content.faq_items?.length > 0) {
-    // Gebruik FAQ vragen als zoekopdrachten (dat is precies wat mensen vragen)
     const faqQueries = content.faq_items
       .slice(0, 3)
       .map((faq) => faq.question.replace(/\?$/, ""));
-    baseQueries.push(...faqQueries);
+    queries.push(...faqQueries);
   }
 
   if (content.content_type === "service_guide") {
-    baseQueries.push(
+    queries.push(
       `uitzenden horeca ${stadNaam} hoe werkt het`,
       `detachering horeca ${stadNaam}`,
-      `recruitment horeca personeel ${stadNaam}`
+      `recruitment horeca personeel ${stadNaam}`,
     );
   }
 
-  // Voeg primary keywords toe als queries
   if (content.primary_keywords?.length > 0) {
-    baseQueries.push(...content.primary_keywords.slice(0, 2));
+    queries.push(...content.primary_keywords.slice(0, 2));
   }
 
-  // Deduplicate
-  return [...new Set(baseQueries)].slice(0, 10);
+  // Deduplicate en limiteer
+  return [...new Set(queries)].slice(0, 15);
 }
 
 /**
- * Check Perplexity API of TopTalent geciteerd wordt
- * Gebruikt de Perplexity Online API (sonar model) die bronnen teruggeeft
+ * Check Perplexity API (primair)
+ *
+ * Parse antwoord op:
+ * a. Wordt toptalentjobs.nl expliciet geciteerd in de bronnenlijst?
+ * b. Wordt TopTalent bij naam genoemd in de antwoordtekst?
+ * c. Welke concurrenten worden wél geciteerd?
+ * d. Wat is de positie van TopTalent in de bronnenlijst?
  */
 async function checkPerplexity(query: string): Promise<CitationCheckResult> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
 
   if (!apiKey) {
+    console.warn("[GEO Monitor] Geen PERPLEXITY_API_KEY geconfigureerd — Perplexity check overgeslagen");
     return createEmptyResult("perplexity", query, "Geen PERPLEXITY_API_KEY geconfigureerd");
   }
 
@@ -88,12 +124,7 @@ async function checkPerplexity(query: string): Promise<CitationCheckResult> {
       },
       body: JSON.stringify({
         model: "sonar",
-        messages: [
-          {
-            role: "user",
-            content: query,
-          },
-        ],
+        messages: [{ role: "user", content: query }],
         return_citations: true,
         return_related_questions: false,
       }),
@@ -109,38 +140,41 @@ async function checkPerplexity(query: string): Promise<CitationCheckResult> {
     const content = data.choices?.[0]?.message?.content || "";
     const citations: string[] = data.citations || [];
 
-    // Check of TopTalent in de bronnen staat
+    // a. Wordt toptalentjobs.nl geciteerd in de bronnenlijst?
     const toptalentIndex = citations.findIndex(
-      (url: string) =>
-        url.includes("toptalentjobs.nl") ||
-        url.includes("toptalent.nl") ||
-        url.includes("toptalentjobs")
+      (url: string) => url.includes("toptalentjobs.nl") || url.includes("toptalentjobs")
     );
-
     const geciteerd = toptalentIndex !== -1;
+
+    // b. Wordt TopTalent bij naam genoemd in de antwoordtekst?
+    const brandMention = content.toLowerCase().includes("toptalent");
+
+    // c. Welke concurrenten worden wél geciteerd?
     const concurrenten = citations.filter(
       (url: string) =>
         !url.includes("toptalentjobs") &&
-        (url.includes("uitzendbureau") ||
-          url.includes("horeca") ||
-          url.includes("personeel") ||
-          url.includes("staffing"))
+        !url.includes("toptalent.nl") &&
+        (url.includes("uitzend") || url.includes("horeca") || url.includes("personeel") ||
+         url.includes("staffing") || url.includes("temper") || url.includes("randstad") ||
+         url.includes("young") || url.includes("olympia") || url.includes("recruit"))
     );
 
-    // Bereken relevantie score
-    const relevantieScore = berekenRelevantie(content, query);
+    // d. Positie in bronnenlijst
+    const positie = geciteerd ? toptalentIndex + 1 : null;
 
     return {
       engine: "perplexity",
       zoekopdracht: query,
       geciteerd,
-      citatie_positie: geciteerd ? toptalentIndex + 1 : null,
+      brand_mention: brandMention,
+      citatie_positie: positie,
       citatie_tekst: geciteerd ? extractCitationContext(content, "toptalentjobs") : null,
       bron_url: geciteerd ? citations[toptalentIndex] : null,
       totaal_bronnen: citations.length,
       concurrenten_urls: concurrenten.slice(0, 10),
       response_snippet: content.slice(0, 500),
-      relevantie_score: relevantieScore,
+      relevantie_score: berekenRelevantie(content, query),
+      sentiment: brandMention ? detectSentiment(content, "toptalent") : null,
     };
   } catch (error) {
     console.error(`[GEO Monitor] Perplexity check fout:`, error);
@@ -149,13 +183,18 @@ async function checkPerplexity(query: string): Promise<CitationCheckResult> {
 }
 
 /**
- * Check via OpenAI (ChatGPT) web search
- * Gebruikt het GPT-4o model met web browsing
+ * Check OpenAI/ChatGPT (secundair)
+ *
+ * Parse antwoord op:
+ * a. Wordt TopTalent of toptalentjobs.nl genoemd?
+ * b. Welke concurrenten worden genoemd?
+ * c. Wat is de toon/context van de vermelding?
  */
 async function checkChatGPT(query: string): Promise<CitationCheckResult> {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
+    console.warn("[GEO Monitor] Geen OPENAI_API_KEY geconfigureerd — ChatGPT check overgeslagen");
     return createEmptyResult("chatgpt", query, "Geen OPENAI_API_KEY geconfigureerd");
   }
 
@@ -171,8 +210,7 @@ async function checkChatGPT(query: string): Promise<CitationCheckResult> {
         messages: [
           {
             role: "system",
-            content:
-              "Je bent een zoekhulp. Beantwoord de vraag en vermeld altijd je bronnen met URLs. Noem specifieke bedrijven en websites.",
+            content: "Je bent een zoekhulp. Beantwoord de vraag en vermeld altijd je bronnen met URLs. Noem specifieke bedrijven en websites.",
           },
           {
             role: "user",
@@ -191,38 +229,38 @@ async function checkChatGPT(query: string): Promise<CitationCheckResult> {
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Check of TopTalent genoemd wordt in het antwoord
-    const geciteerd =
-      content.toLowerCase().includes("toptalent") ||
-      content.toLowerCase().includes("toptalentjobs");
+    // a. Wordt TopTalent genoemd?
+    const mentioned = content.toLowerCase().includes("toptalent") || content.toLowerCase().includes("toptalentjobs");
 
-    // Zoek concurrenten in het antwoord
+    // b. Welke concurrenten worden genoemd?
     const concurrentenPatterns = [
       /(?:www\.)?(\w+(?:uitzend|staffing|horeca|personeel)\w*\.(?:nl|com))/gi,
       /(?:www\.)?(\w+\.nl)/gi,
     ];
-
     const gevondenUrls: string[] = [];
     for (const pattern of concurrentenPatterns) {
       const matches = content.matchAll(pattern);
       for (const match of matches) {
-        if (!match[0].includes("toptalent")) {
-          gevondenUrls.push(match[0]);
-        }
+        if (!match[0].includes("toptalent")) gevondenUrls.push(match[0]);
       }
     }
+
+    // c. Toon/context
+    const sentiment = mentioned ? detectSentiment(content, "toptalent") : null;
 
     return {
       engine: "chatgpt",
       zoekopdracht: query,
-      geciteerd,
-      citatie_positie: geciteerd ? 1 : null,
-      citatie_tekst: geciteerd ? extractCitationContext(content, "toptalent") : null,
-      bron_url: geciteerd ? "https://toptalentjobs.nl" : null,
-      totaal_bronnen: 0, // ChatGPT geeft geen gestructureerde bronnenlijst
+      geciteerd: mentioned,
+      brand_mention: mentioned,
+      citatie_positie: mentioned ? 1 : null,
+      citatie_tekst: mentioned ? extractCitationContext(content, "toptalent") : null,
+      bron_url: mentioned ? "https://toptalentjobs.nl" : null,
+      totaal_bronnen: 0,
       concurrenten_urls: [...new Set(gevondenUrls)].slice(0, 10),
       response_snippet: content.slice(0, 500),
       relevantie_score: berekenRelevantie(content, query),
+      sentiment,
     };
   } catch (error) {
     console.error(`[GEO Monitor] ChatGPT check fout:`, error);
@@ -231,7 +269,7 @@ async function checkChatGPT(query: string): Promise<CitationCheckResult> {
 }
 
 /**
- * Voer een volledige citation check uit voor één content item
+ * Voer citation check uit voor één content item
  */
 export async function checkContentCitations(
   content: GeoContent,
@@ -240,8 +278,20 @@ export async function checkContentCitations(
   const queries = generateSearchQueries(content);
   const results: CitationCheckResult[] = [];
 
-  for (const query of queries.slice(0, 5)) {
-    for (const engine of engines) {
+  // Fallback-gedrag conform master prompt
+  const beschikbareEngines = engines.filter((e) => {
+    if (e === "perplexity" && !process.env.PERPLEXITY_API_KEY) return false;
+    if (e === "chatgpt" && !process.env.OPENAI_API_KEY) return false;
+    return true;
+  });
+
+  if (beschikbareEngines.length === 0) {
+    console.error("[GEO Monitor] Geen monitoring API keys beschikbaar — module 2 uitgeschakeld");
+    return [];
+  }
+
+  for (const query of queries.slice(0, 10)) {
+    for (const engine of beschikbareEngines) {
       let result: CitationCheckResult;
 
       switch (engine) {
@@ -257,7 +307,7 @@ export async function checkContentCitations(
 
       results.push(result);
 
-      // Sla op in database
+      // Log in gestructureerd formaat conform master prompt
       await supabaseAdmin.from("geo_citations").insert({
         geo_content_id: content.id,
         engine: result.engine,
@@ -273,7 +323,7 @@ export async function checkContentCitations(
         check_type: "automatisch",
       });
 
-      // Rate limiting: wacht tussen API calls
+      // Rate limiting — respecteer API limits
       await new Promise((r) => setTimeout(r, 1500));
     }
   }
@@ -282,7 +332,7 @@ export async function checkContentCitations(
 }
 
 /**
- * Run monitoring voor alle gepubliceerde content
+ * Run monitoring — dagelijks top 20, wekelijks alle queries
  */
 export async function runFullMonitoring(options?: {
   maxItems?: number;
@@ -290,12 +340,12 @@ export async function runFullMonitoring(options?: {
 }): Promise<{
   checked: number;
   citaties_gevonden: number;
+  brand_mentions: number;
   errors: string[];
 }> {
   const maxItems = options?.maxItems || 5;
   const engines = options?.engines || ["perplexity"];
 
-  // Haal gepubliceerde content op, gesorteerd op laatst gecheckt
   const { data: content } = await supabaseAdmin
     .from("geo_content")
     .select("*")
@@ -304,11 +354,12 @@ export async function runFullMonitoring(options?: {
     .limit(maxItems);
 
   if (!content || content.length === 0) {
-    return { checked: 0, citaties_gevonden: 0, errors: ["Geen gepubliceerde content om te monitoren"] };
+    return { checked: 0, citaties_gevonden: 0, brand_mentions: 0, errors: ["Geen gepubliceerde content om te monitoren"] };
   }
 
   let checked = 0;
   let citaties_gevonden = 0;
+  let brand_mentions = 0;
   const errors: string[] = [];
 
   for (const item of content) {
@@ -316,11 +367,11 @@ export async function runFullMonitoring(options?: {
       console.log(`[GEO Monitor] Checken: ${item.title}`);
       const results = await checkContentCitations(item as GeoContent, engines);
 
-      const citaties = results.filter((r) => r.geciteerd).length;
-      citaties_gevonden += citaties;
+      citaties_gevonden += results.filter((r) => r.geciteerd).length;
+      brand_mentions += results.filter((r) => r.brand_mention).length;
       checked++;
 
-      console.log(`[GEO Monitor] ✅ ${item.title}: ${citaties}/${results.length} citaties`);
+      console.log(`[GEO Monitor] ✅ ${item.title}: ${results.filter((r) => r.geciteerd).length} citaties, ${results.filter((r) => r.brand_mention).length} brand mentions`);
     } catch (err) {
       errors.push(`Fout bij ${item.title}: ${(err as Error).message}`);
       console.error(`[GEO Monitor] ❌ ${item.title}:`, err);
@@ -330,7 +381,7 @@ export async function runFullMonitoring(options?: {
   // Update dagelijkse performance metrics
   await updateDailyPerformance();
 
-  return { checked, citaties_gevonden, errors };
+  return { checked, citaties_gevonden, brand_mentions, errors };
 }
 
 /**
@@ -339,7 +390,6 @@ export async function runFullMonitoring(options?: {
 async function updateDailyPerformance(): Promise<void> {
   const today = new Date().toISOString().split("T")[0];
 
-  // Haal alle content IDs op
   const { data: contentItems } = await supabaseAdmin
     .from("geo_content")
     .select("id")
@@ -348,7 +398,6 @@ async function updateDailyPerformance(): Promise<void> {
   if (!contentItems) return;
 
   for (const item of contentItems) {
-    // Tel citaties van vandaag per engine
     const { data: todayCitations } = await supabaseAdmin
       .from("geo_citations")
       .select("engine, geciteerd, citatie_positie")
@@ -404,9 +453,7 @@ export async function getPerformanceData(options?: {
     .gte("datum", sinceDate.toISOString().split("T")[0])
     .order("datum", { ascending: false });
 
-  if (options?.content_id) {
-    query = query.eq("geo_content_id", options.content_id);
-  }
+  if (options?.content_id) query = query.eq("geo_content_id", options.content_id);
 
   const { data } = await query.limit(500);
   return data || [];
@@ -439,6 +486,7 @@ function createEmptyResult(engine: AIEngine, query: string, reden: string): Cita
     engine,
     zoekopdracht: query,
     geciteerd: false,
+    brand_mention: false,
     citatie_positie: null,
     citatie_tekst: null,
     bron_url: null,
@@ -446,6 +494,7 @@ function createEmptyResult(engine: AIEngine, query: string, reden: string): Cita
     concurrenten_urls: [],
     response_snippet: `Check niet uitgevoerd: ${reden}`,
     relevantie_score: 0,
+    sentiment: null,
   };
 }
 
@@ -465,10 +514,27 @@ function berekenRelevantie(response: string, query: string): number {
 
   let matches = 0;
   for (const word of queryWords) {
-    if (word.length > 2 && responseLower.includes(word)) {
-      matches++;
-    }
+    if (word.length > 2 && responseLower.includes(word)) matches++;
   }
 
   return queryWords.length > 0 ? Math.min(1, matches / queryWords.length) : 0;
+}
+
+function detectSentiment(text: string, keyword: string): "positive" | "neutral" | "negative" {
+  const lowerText = text.toLowerCase();
+  const idx = lowerText.indexOf(keyword.toLowerCase());
+  if (idx === -1) return "neutral";
+
+  // Neem de context rond de mention
+  const context = lowerText.slice(Math.max(0, idx - 200), Math.min(lowerText.length, idx + 200));
+
+  const positiveWords = ["goed", "best", "aanbevol", "betrouwbaar", "snel", "professioneel", "ervaren", "specialist", "kwaliteit", "top"];
+  const negativeWords = ["slecht", "duur", "langzaam", "probleem", "klacht", "niet aanbev", "matig", "teleurstell"];
+
+  const posCount = positiveWords.filter((w) => context.includes(w)).length;
+  const negCount = negativeWords.filter((w) => context.includes(w)).length;
+
+  if (posCount > negCount) return "positive";
+  if (negCount > posCount) return "negative";
+  return "neutral";
 }
