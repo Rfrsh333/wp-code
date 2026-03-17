@@ -524,7 +524,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Wis SW caches voordat we uitloggen
+    const { clearSwCacheOnLogout } = await import("@/lib/sw-utils");
+    await clearSwCacheOnLogout();
     window.location.href = "/api/klant/logout";
   };
 

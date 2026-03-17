@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createMollieClient } from "@mollie/api-client";
 import { logAuditEvent } from "@/lib/audit-log";
+import crypto from "crypto";
 
 function getMollieClient() {
   if (!process.env.MOLLIE_API_KEY) {
@@ -10,10 +11,71 @@ function getMollieClient() {
   return createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
 }
 
+/**
+ * Verify Mollie webhook signature (HMAC-SHA256).
+ * Mollie sends a `Mollie-Signature` header when a webhook secret is configured.
+ * Format: "v1=<hex-encoded HMAC-SHA256>"
+ */
+function verifyMollieSignature(rawBody: string, signatureHeader: string | null): boolean {
+  const webhookSecret = process.env.MOLLIE_WEBHOOK_SECRET;
+
+  // Als er geen webhook secret is geconfigureerd, log een waarschuwing
+  if (!webhookSecret) {
+    console.warn("[MOLLIE WEBHOOK] MOLLIE_WEBHOOK_SECRET niet geconfigureerd — signature verificatie overgeslagen. Stel dit in voor productie!");
+    return true; // Sta toe maar waarschuw
+  }
+
+  if (!signatureHeader) {
+    console.error("[MOLLIE WEBHOOK] Geen Mollie-Signature header ontvangen");
+    return false;
+  }
+
+  // Mollie stuurt "v1=<hmac>"
+  const parts = signatureHeader.split("=");
+  if (parts.length < 2 || parts[0] !== "v1") {
+    console.error("[MOLLIE WEBHOOK] Ongeldig signature formaat:", signatureHeader);
+    return false;
+  }
+
+  const receivedHmac = parts.slice(1).join("="); // Rejoin in case of '=' in hash
+  const expectedHmac = crypto
+    .createHmac("sha256", webhookSecret)
+    .update(rawBody)
+    .digest("hex");
+
+  // Timing-safe vergelijking om timing attacks te voorkomen
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(receivedHmac, "hex"),
+      Buffer.from(expectedHmac, "hex")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.formData();
-    const paymentId = body.get("id") as string;
+    // Lees raw body voor signature verificatie
+    const rawBody = await request.text();
+    const signatureHeader = request.headers.get("mollie-signature");
+
+    // Verifieer webhook signature
+    if (!verifyMollieSignature(rawBody, signatureHeader)) {
+      console.error("[MOLLIE WEBHOOK] Ongeldige signature — mogelijke spoofing poging");
+      await logAuditEvent({
+        action: "mollie_webhook_signature_invalid",
+        targetTable: "boetes",
+        targetId: "unknown",
+        summary: "Mollie webhook ontvangen met ongeldige signature",
+        metadata: { signature: signatureHeader?.substring(0, 20) || "missing" },
+      });
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Parse form data uit de raw body
+    const params = new URLSearchParams(rawBody);
+    const paymentId = params.get("id");
 
     if (!paymentId) {
       return new NextResponse("Missing payment ID", { status: 400 });

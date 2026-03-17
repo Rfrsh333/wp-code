@@ -73,6 +73,16 @@ export const contractSignRateLimit = redis
     })
   : null;
 
+// Striktere rate limit voor AI endpoints (kostbaar + misbruikgevoelig)
+export const aiRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "1 m"), // 5 AI requests per minute
+      analytics: true,
+      prefix: "ratelimit:ai-strict",
+    })
+  : null;
+
 // Helper to get client IP from request
 export function getClientIP(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");

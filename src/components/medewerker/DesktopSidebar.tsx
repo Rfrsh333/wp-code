@@ -76,6 +76,9 @@ export default function DesktopSidebar({
 
   const handleLogout = async () => {
     try {
+      // Wis SW caches voordat we uitloggen
+      const { clearSwCacheOnLogout } = await import("@/lib/sw-utils");
+      await clearSwCacheOnLogout();
       const res = await fetch("/api/medewerker/logout", { method: "POST" });
       if (res.ok) {
         router.push("/medewerker/login");

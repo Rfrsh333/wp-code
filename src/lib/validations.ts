@@ -38,6 +38,30 @@ export const inschrijvenSchema = z.object({
   utmCampaign: z.string().max(100).optional(),
 });
 
+export const personeelAanvraagSchema = z.object({
+  bedrijfsnaam: z.string().min(1, "Bedrijfsnaam is verplicht").max(200),
+  contactpersoon: z.string().min(1, "Contactpersoon is verplicht").max(200),
+  email: z.string().email("Ongeldig e-mailadres").max(255),
+  telefoon: z.string().min(1, "Telefoonnummer is verplicht").max(20),
+  typePersoneel: z.array(z.string().max(100)).min(1, "Selecteer minimaal 1 type personeel"),
+  aantalPersonen: z.string().max(10),
+  contractType: z.array(z.string().max(50)),
+  gewenstUurtarief: z.string().max(10).optional().or(z.literal("")),
+  startDatum: z.string().min(1, "Startdatum is verplicht").max(20),
+  eindDatum: z.string().max(20).optional().or(z.literal("")),
+  werkdagen: z.array(z.string().max(20)),
+  werktijden: z.string().max(100),
+  locatie: z.string().max(500),
+  opmerkingen: z.string().max(5000).optional().or(z.literal("")),
+  recaptchaToken: z.string().optional(),
+  leadSource: z.string().max(100).optional(),
+  campaignName: z.string().max(100).optional(),
+  utmSource: z.string().max(100).optional(),
+  utmMedium: z.string().max(100).optional(),
+  utmCampaign: z.string().max(100).optional(),
+  referralCode: z.string().max(100).optional(),
+});
+
 export const beschikbaarheidSchema = z.object({
   beschikbaarheid: z.record(z.string(), z.array(z.string())),
   beschikbaar_vanaf: z.string().min(1, "Datum is verplicht"),

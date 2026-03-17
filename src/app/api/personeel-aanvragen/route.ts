@@ -7,6 +7,8 @@ import { sendTelegramAlert } from "@/lib/telegram";
 import { generateAutoReply, generateAutoReplySubject } from "@/lib/inquiry-auto-reply";
 import { buildAutoReplyEmailHtml } from "@/lib/email-templates";
 import { getOfferteAutoMode } from "@/lib/agents/offerte-generator";
+import { escapeHtml } from "@/lib/sanitize";
+import { personeelAanvraagSchema, formatZodErrors } from "@/lib/validations";
 
 interface FormData {
   bedrijfsnaam: string;
@@ -57,7 +59,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data: FormData = await request.json();
+    const rawData = await request.json();
+
+    // Zod validatie
+    const parsed = personeelAanvraagSchema.safeParse(rawData);
+    if (!parsed.success) {
+      return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
+    }
+    const data: FormData = parsed.data as FormData;
 
     // Verify reCAPTCHA - verplicht in productie, overgeslagen in development
     if (process.env.NODE_ENV === "development") {
@@ -104,22 +113,22 @@ export async function POST(request: NextRequest) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #666; width: 40%;">Bedrijfsnaam:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.bedrijfsnaam}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.bedrijfsnaam)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;">Contactpersoon:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.contactpersoon}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.contactpersoon)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;">E-mail:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 500;">
-                  <a href="mailto:${data.email}" style="color: #F27501;">${data.email}</a>
+                  <a href="mailto:${escapeHtml(data.email)}" style="color: #F27501;">${escapeHtml(data.email)}</a>
                 </td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;">Telefoon:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 500;">
-                  <a href="tel:${data.telefoon}" style="color: #F27501;">${data.telefoon}</a>
+                  <a href="tel:${escapeHtml(data.telefoon)}" style="color: #F27501;">${escapeHtml(data.telefoon)}</a>
                 </td>
               </tr>
             </table>
@@ -132,20 +141,20 @@ export async function POST(request: NextRequest) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #666; width: 40%;">Type personeel:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.typePersoneel.join(", ")}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.typePersoneel.map(t => escapeHtml(t)).join(", ")}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;">Aantal personen:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.aantalPersonen}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.aantalPersonen)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;">Contractvorm:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.contractType.map(ct => contractTypeLabels[ct] || ct).join(", ")}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.contractType.map(ct => escapeHtml(contractTypeLabels[ct] || ct)).join(", ")}</td>
               </tr>
               ${data.gewenstUurtarief ? `
               <tr>
                 <td style="padding: 8px 0; color: #666;">Gewenst uurtarief:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">€${data.gewenstUurtarief} per uur</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">&euro;${escapeHtml(data.gewenstUurtarief)} per uur</td>
               </tr>
               ` : ""}
             </table>
@@ -158,21 +167,21 @@ export async function POST(request: NextRequest) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #666; width: 40%;">Startdatum:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.startDatum}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.startDatum)}</td>
               </tr>
               ${data.eindDatum ? `
               <tr>
                 <td style="padding: 8px 0; color: #666;">Einddatum:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.eindDatum}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.eindDatum)}</td>
               </tr>
               ` : ""}
               <tr>
                 <td style="padding: 8px 0; color: #666;">Werkdagen:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.werkdagen.join(", ")}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.werkdagen.map(d => escapeHtml(d)).join(", ")}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;">Werktijden:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.werktijden}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.werktijden)}</td>
               </tr>
             </table>
           </div>
@@ -184,12 +193,12 @@ export async function POST(request: NextRequest) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #666; width: 40%;">Locatie:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.locatie}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.locatie)}</td>
               </tr>
               ${data.opmerkingen ? `
               <tr>
                 <td style="padding: 8px 0; color: #666; vertical-align: top;">Opmerkingen:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.opmerkingen}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.opmerkingen)}</td>
               </tr>
               ` : ""}
             </table>
@@ -206,14 +215,13 @@ export async function POST(request: NextRequest) {
 
     // Send email via Resend
     if (!process.env.RESEND_API_KEY) {
-      console.log("RESEND_API_KEY not set - email would be sent:", data.bedrijfsnaam);
-      // Return success for testing without API key
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[DEV] RESEND_API_KEY niet ingesteld — email overgeslagen");
+      }
       return NextResponse.json({ success: true });
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-
-    console.log("Attempting to send email from info@toptalentjobs.nl");
 
     const { data: emailData, error } = await resend.emails.send({
       from: "TopTalent Jobs <info@toptalentjobs.nl>",
@@ -234,8 +242,6 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-    } else {
-      console.log("Email successfully sent! ID:", emailData?.id);
     }
 
     // Opslaan in Supabase

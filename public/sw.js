@@ -97,6 +97,21 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
+// Luister naar logout berichten om user-specifieke caches te wissen
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "LOGOUT") {
+    console.log("[SW] Logout ontvangen — API cache en dynamische cache wissen");
+    event.waitUntil(
+      Promise.all([
+        caches.delete(API_CACHE),
+        caches.delete(DYNAMIC_CACHE),
+      ]).then(() => {
+        console.log("[SW] User-specifieke caches gewist na logout");
+      })
+    );
+  }
+});
+
 // Helper: check of een API route gecached mag worden
 function isCacheableApi(pathname) {
   return CACHEABLE_API_ROUTES.some((route) => pathname.startsWith(route));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyKlantSession } from "@/lib/session";
+import { checkRedisRateLimit, apiRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -10,11 +11,23 @@ async function getKlant() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limiting: voorkom misbruik van AI endpoint
+  const ip = getClientIP(request);
+  const rateLimitResult = await checkRedisRateLimit(`ai-offerte:${ip}`, apiRateLimit);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het over een minuut opnieuw." },
+      { status: 429 }
+    );
+  }
+
   const klant = await getKlant();
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { beschrijving } = await request.json();
-  if (!beschrijving) return NextResponse.json({ error: "Beschrijving vereist" }, { status: 400 });
+  if (!beschrijving || typeof beschrijving !== "string" || beschrijving.length > 5000) {
+    return NextResponse.json({ error: "Beschrijving vereist (max 5000 tekens)" }, { status: 400 });
+  }
 
   try {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;

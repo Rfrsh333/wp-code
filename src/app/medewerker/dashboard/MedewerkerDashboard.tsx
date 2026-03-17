@@ -251,6 +251,9 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
   };
 
   const handleLogout = async () => {
+    // Wis SW caches voordat we uitloggen
+    const { clearSwCacheOnLogout } = await import("@/lib/sw-utils");
+    await clearSwCacheOnLogout();
     await fetch("/api/medewerker/logout", { method: "POST" });
     router.push("/medewerker/login");
   };

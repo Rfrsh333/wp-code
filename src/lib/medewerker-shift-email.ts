@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { escapeHtml } from "@/lib/sanitize";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -65,17 +66,17 @@ export async function sendMedewerkerShiftConfirmationEmail(input: ShiftConfirmat
       <div style="background:#fff7f1;border:1px solid #f8d4b4;border-radius:12px;padding:20px;margin:24px 0;">
         <p style="margin:0 0 8px;"><strong>Dienstinformatie</strong></p>
         <ul style="margin:0;padding-left:20px;">
-          <li><strong>Klant:</strong> ${input.klantNaam}</li>
-          <li><strong>Functie:</strong> ${input.functie}</li>
+          <li><strong>Klant:</strong> ${escapeHtml(input.klantNaam)}</li>
+          <li><strong>Functie:</strong> ${escapeHtml(input.functie)}</li>
           <li><strong>Datum:</strong> ${formatDutchDate(input.datum)}</li>
-          <li><strong>Tijd:</strong> ${input.startTijd.substring(0, 5)} - ${input.eindTijd.substring(0, 5)}</li>
-          <li><strong>Locatie:</strong> ${input.locatie}</li>
+          <li><strong>Tijd:</strong> ${escapeHtml(input.startTijd.substring(0, 5))} - ${escapeHtml(input.eindTijd.substring(0, 5))}</li>
+          <li><strong>Locatie:</strong> ${escapeHtml(input.locatie)}</li>
         </ul>
       </div>
 
       <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:24px 0;">
         <p style="margin:0 0 8px;"><strong>Kledingvoorschrift</strong></p>
-        <p style="margin:0;">${kledingvoorschrift}</p>
+        <p style="margin:0;">${escapeHtml(kledingvoorschrift)}</p>
       </div>
 
       <p style="text-align:center;margin:32px 0;">

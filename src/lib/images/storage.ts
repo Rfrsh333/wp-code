@@ -17,7 +17,11 @@ export async function uploadEditorialImage(params: {
     });
 
   if (error) {
-    throw error;
+    console.error(`[storage] Upload failed to bucket '${EDITORIAL_BUCKET}':`, error);
+    throw new Error(
+      `Failed to upload image to storage bucket '${EDITORIAL_BUCKET}': ${error.message}. ` +
+      `Please ensure the bucket exists and has correct permissions.`
+    );
   }
 
   return params.path;

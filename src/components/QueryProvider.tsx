@@ -9,7 +9,7 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 10_000,
+            staleTime: 30_000, // 30 seconden — vermindert onnodige API calls
             refetchOnWindowFocus: true,
             refetchOnReconnect: true,
             retry: 2,

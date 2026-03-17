@@ -2,6 +2,8 @@
  * Herbruikbare HTML email templates voor TopTalent Jobs
  */
 
+import { escapeHtml } from "@/lib/sanitize";
+
 const BRAND_COLOR = "#F27501";
 const BRAND_GRADIENT = "linear-gradient(135deg, #F27501 0%, #d96800 100%)";
 const KANDIDAAT_COLOR = "#8B5CF6";
@@ -63,9 +65,9 @@ export function buildAutoReplyEmailHtml(bodyText: string, bookingUrl: string): s
       const trimmed = line.trim();
       if (!trimmed) return "<br>";
       if (trimmed.startsWith("http") && trimmed.includes("afspraak-plannen")) {
-        return bookingButton(trimmed);
+        return bookingButton(escapeHtml(trimmed));
       }
-      return `<p style="margin: 0 0 8px 0; font-size: 15px; line-height: 1.6; color: #333;">${trimmed}</p>`;
+      return `<p style="margin: 0 0 8px 0; font-size: 15px; line-height: 1.6; color: #333;">${escapeHtml(trimmed)}</p>`;
     })
     .join("");
 

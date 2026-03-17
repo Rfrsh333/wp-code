@@ -51,8 +51,8 @@ export default function BerichtenTab() {
   const [templateForm, setTemplateForm] = useState({ naam: "", onderwerp: "", inhoud: "", categorie: "algemeen" });
 
   const getAuthHeaders = useCallback(() => {
-    const token = localStorage.getItem("admin_token") || sessionStorage.getItem("admin_token") || "";
-    return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+    // Auth gaat via httpOnly cookies (verifyAdmin server-side) — geen token nodig in headers
+    return { "Content-Type": "application/json" };
   }, []);
 
   useEffect(() => {

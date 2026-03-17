@@ -99,6 +99,18 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
+// Luister naar logout berichten om user-specifieke caches te wissen
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "LOGOUT") {
+    console.log("[SW-BUSINESS] Logout ontvangen — cache wissen");
+    event.waitUntil(
+      caches.delete(CACHE_NAME).then(() => {
+        console.log("[SW-BUSINESS] Cache gewist na logout");
+      })
+    );
+  }
+});
+
 // Push notificaties (optioneel — voor toekomstige gebruik)
 self.addEventListener("push", (event) => {
   if (!event.data) return;

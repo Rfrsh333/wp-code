@@ -5,6 +5,7 @@ import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limi
 import { verifyRecaptcha } from "@/lib/recaptcha";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { contactSchema, formatZodErrors } from "@/lib/validations";
+import { escapeHtml } from "@/lib/sanitize";
 
 interface ContactFormData {
   naam: string;
@@ -89,29 +90,29 @@ export async function POST(request: NextRequest) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #666; width: 30%;">Naam:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.naam}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.naam)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666;">E-mail:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 500;">
-                  <a href="mailto:${data.email}" style="color: #F27501;">${data.email}</a>
+                  <a href="mailto:${escapeHtml(data.email)}" style="color: #F27501;">${escapeHtml(data.email)}</a>
                 </td>
               </tr>
               ${data.telefoon ? `
               <tr>
                 <td style="padding: 8px 0; color: #666;">Telefoon:</td>
                 <td style="padding: 8px 0; color: #333; font-weight: 500;">
-                  <a href="tel:${data.telefoon}" style="color: #F27501;">${data.telefoon}</a>
+                  <a href="tel:${escapeHtml(data.telefoon)}" style="color: #F27501;">${escapeHtml(data.telefoon)}</a>
                 </td>
               </tr>
               ` : ""}
               <tr>
                 <td style="padding: 8px 0; color: #666;">Onderwerp:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500;">${data.onderwerp}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(data.onderwerp)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #666; vertical-align: top;">Bericht:</td>
-                <td style="padding: 8px 0; color: #333; font-weight: 500; white-space: pre-wrap;">${data.bericht}</td>
+                <td style="padding: 8px 0; color: #333; font-weight: 500; white-space: pre-wrap;">${escapeHtml(data.bericht)}</td>
               </tr>
             </table>
           </div>
