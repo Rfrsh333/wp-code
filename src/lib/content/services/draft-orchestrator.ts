@@ -3,9 +3,6 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase";
 import { OpenAIContentClient } from "@/lib/ai/openai-content-client";
 import { generateEditorialDraftWithTemplate } from "@/lib/content/services/draft-generation-service";
-import { generateHeroImageForDraft } from "@/lib/content/services/hero-image-orchestrator";
-import { checkDraftQuality, passesQualityCheck, formatQualityNotes } from "@/lib/content/services/draft-quality-service";
-
 function normalizeSlug(value: string) {
   return value
     .toLowerCase()
@@ -150,44 +147,7 @@ export async function generateDraftFromCluster(clusterId: string) {
     }
   }
 
-  // AI kwaliteitscheck + hero image in background (niet blokkeren)
-  const backgroundTasks = async () => {
-    try {
-      const qualityScore = await checkDraftQuality(client, {
-        title: draft.title,
-        excerpt: draft.excerpt,
-        bodyMarkdown: draft.bodyMarkdown,
-        bodyBlocks: draft.bodyBlocks as Array<Record<string, unknown>> | undefined,
-        keyTakeaways: draft.keyTakeaways,
-        seoTitle: draft.seoTitle,
-        metaDescription: draft.metaDescription,
-      });
-
-      const qualityNotes = formatQualityNotes(qualityScore);
-      const reviewStatus = passesQualityCheck(qualityScore) ? "needs_review" : "draft";
-
-      await supabaseAdmin
-        .from("editorial_drafts")
-        .update({
-          review_notes: qualityNotes,
-          review_status: reviewStatus,
-        })
-        .eq("id", draftId);
-
-      console.log(`[content] Draft ${draftId} quality: ${qualityScore.overallScore}/100 → ${reviewStatus}`);
-    } catch (qualityError) {
-      console.error(`[content] Quality check mislukt voor draft ${draftId}`, qualityError);
-    }
-
-    try {
-      await generateHeroImageForDraft(draftId);
-    } catch (imageError) {
-      console.error(`[content] Hero image generatie mislukt voor draft ${draftId}`, imageError);
-    }
-  };
-
-  // Fire-and-forget: voorkomt Vercel timeout bij serverless functions
-  backgroundTasks().catch((err) => console.error(`[content] Background tasks failed for draft ${draftId}`, err));
+  // Quality check en hero image worden getriggerd vanuit admin UI (past niet in Vercel Hobby 10s limiet)
 
   return { status: "generated" as const, draftId };
 }
@@ -354,39 +314,7 @@ export async function generateDraftsFromTopClusters(limit = 5) {
         }
       }
 
-      // AI kwaliteitscheck
-      try {
-        const qualityScore = await checkDraftQuality(client, {
-          title: draft.title,
-          excerpt: draft.excerpt,
-          bodyMarkdown: draft.bodyMarkdown,
-          keyTakeaways: draft.keyTakeaways,
-          seoTitle: draft.seoTitle,
-          metaDescription: draft.metaDescription,
-        });
-
-        const qualityNotes = formatQualityNotes(qualityScore);
-        const reviewStatus = passesQualityCheck(qualityScore) ? "needs_review" : "draft";
-
-        await supabaseAdmin
-          .from("editorial_drafts")
-          .update({
-            review_notes: qualityNotes,
-            review_status: reviewStatus,
-          })
-          .eq("id", draftId);
-
-        console.log(`[content] Draft ${draftId} quality: ${qualityScore.overallScore}/100 → ${reviewStatus}`);
-      } catch (qualityError) {
-        console.error(`[content] Quality check mislukt voor draft ${draftId}`, qualityError);
-      }
-
-      // Automatisch hero image genereren
-      try {
-        await generateHeroImageForDraft(draftId);
-      } catch (imageError) {
-        console.error(`[content] Hero image generatie mislukt voor draft ${draftId}`, imageError);
-      }
+      // Quality check en hero image worden getriggerd vanuit admin UI
 
       results.push({
         clusterId,

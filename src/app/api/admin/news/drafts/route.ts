@@ -6,12 +6,13 @@ import { listDraftsByStatus } from "@/lib/content/repository";
 import { recordReviewEvent } from "@/lib/content/review-events";
 import { logAuditEvent } from "@/lib/audit-log";
 import { queueDraftForPublish, publishApprovedDraft } from "@/lib/content/services/publish-service";
-import { generateHeroImageForDraft } from "@/lib/content/services/hero-image-orchestrator";
+import { generateHeroImageForDraft, findBestSourceImageUrl, downloadBrandAndUpload } from "@/lib/content/services/hero-image-orchestrator";
 import { regenerateBodyBlocks } from "@/lib/content/services/draft-generation-service";
 
 const draftActionSchema = z.object({
   draftId: z.string().uuid(),
-  action: z.enum(["approve", "reject", "queue_publish", "publish_now", "generate_image", "regenerate_blocks", "delete"]),
+  action: z.enum(["approve", "reject", "queue_publish", "publish_now", "generate_image", "find_source_image", "brand_and_upload_image", "regenerate_blocks", "delete"]),
+  imageUrl: z.string().url().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -84,6 +85,35 @@ export async function POST(request: NextRequest) {
     } else if (parsed.data.action === "generate_image") {
       await generateHeroImageForDraft(parsed.data.draftId);
       nextStatus = "image_generated";
+    } else if (parsed.data.action === "find_source_image") {
+      const result = await findBestSourceImageUrl(parsed.data.draftId);
+      await logAuditEvent({
+        actorEmail: email,
+        actorRole: role,
+        action: "content_draft_find_source_image",
+        targetTable: "editorial_drafts",
+        targetId: parsed.data.draftId,
+        summary: result ? `Found source image: ${result.imageUrl}` : "No source image found",
+        metadata: { imageUrl: result?.imageUrl ?? null },
+      });
+      return NextResponse.json({ imageUrl: result?.imageUrl ?? null, sourceArticleUrl: result?.sourceArticleUrl ?? null });
+    } else if (parsed.data.action === "brand_and_upload_image") {
+      if (!parsed.data.imageUrl) {
+        return NextResponse.json({ error: "imageUrl is vereist voor brand_and_upload_image" }, { status: 400 });
+      }
+      const result = await downloadBrandAndUpload(parsed.data.draftId, parsed.data.imageUrl);
+      nextStatus = "image_generated";
+      await logAuditEvent({
+        actorEmail: email,
+        actorRole: role,
+        action: "content_draft_brand_and_upload_image",
+        targetTable: "editorial_drafts",
+        targetId: parsed.data.draftId,
+        summary: `Branded and uploaded image`,
+        metadata: { generatedImageId: result.generatedImageId, brandedPath: result.brandedPath },
+      });
+      const drafts = await listDraftsByStatus(undefined, 40);
+      return NextResponse.json({ drafts, generatedImageId: result.generatedImageId });
     } else if (parsed.data.action === "regenerate_blocks") {
       await regenerateBodyBlocks(parsed.data.draftId);
       nextStatus = "blocks_regenerated";

@@ -44,6 +44,7 @@ export default function DraftReviewPanel() {
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyDraftId, setBusyDraftId] = useState<string | null>(null);
+  const [imageStatus, setImageStatus] = useState<Record<string, "finding" | "branding" | "done" | "not_found">>({});
 
   const loadDrafts = async () => {
     try {
@@ -64,9 +65,45 @@ export default function DraftReviewPanel() {
     loadDrafts();
   }, []);
 
+  const runImageFlow = async (draftId: string) => {
+    setBusyDraftId(draftId);
+    setImageStatus((prev) => ({ ...prev, [draftId]: "finding" }));
+    try {
+      const headers = await getAuthHeaders();
+      const findRes = await fetch("/api/admin/news/drafts", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ draftId, action: "find_source_image" }),
+      });
+      if (!findRes.ok) throw new Error("Bronafbeelding zoeken mislukt.");
+      const findData = await findRes.json();
+
+      if (!findData.imageUrl) {
+        setImageStatus((prev) => ({ ...prev, [draftId]: "not_found" }));
+        setBusyDraftId(null);
+        return;
+      }
+
+      setImageStatus((prev) => ({ ...prev, [draftId]: "branding" }));
+      const brandRes = await fetch("/api/admin/news/drafts", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ draftId, action: "brand_and_upload_image", imageUrl: findData.imageUrl }),
+      });
+      if (!brandRes.ok) throw new Error("Afbeelding branden/uploaden mislukt.");
+
+      setImageStatus((prev) => ({ ...prev, [draftId]: "done" }));
+      await loadDrafts();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Afbeelding genereren mislukt");
+    } finally {
+      setBusyDraftId(null);
+    }
+  };
+
   const updateStatus = async (
     draftId: string,
-    action: "approve" | "reject" | "queue_publish" | "publish_now" | "generate_image" | "delete",
+    action: "approve" | "reject" | "queue_publish" | "publish_now" | "delete",
   ) => {
     setBusyDraftId(draftId);
     try {
@@ -124,6 +161,11 @@ export default function DraftReviewPanel() {
                   <span className="rounded-full bg-neutral-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-600">
                     {draft.heroImageId ? "hero image klaar" : "geen hero image"}
                   </span>
+                  {imageStatus[draft.id] === "not_found" ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                      geen bronafbeelding
+                    </span>
+                  ) : null}
                   {draft.factCheckFlags && draft.factCheckFlags.length > 0 ? (
                     <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
                       fact-check nodig
@@ -148,8 +190,8 @@ export default function DraftReviewPanel() {
                 <button disabled={busyDraftId === draft.id} onClick={() => updateStatus(draft.id, "reject")} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-60">
                   Afwijzen
                 </button>
-                <button disabled={busyDraftId === draft.id} onClick={() => updateStatus(draft.id, "generate_image")} className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-[#F27501] transition hover:bg-orange-100 disabled:opacity-60">
-                  Hero image
+                <button disabled={busyDraftId === draft.id} onClick={() => runImageFlow(draft.id)} className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-[#F27501] transition hover:bg-orange-100 disabled:opacity-60">
+                  {imageStatus[draft.id] === "finding" ? "Zoeken..." : imageStatus[draft.id] === "branding" ? "Branden..." : "Hero image"}
                 </button>
                 <button disabled={busyDraftId === draft.id} onClick={() => updateStatus(draft.id, "queue_publish")} className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-[#F27501] hover:text-[#F27501] disabled:opacity-60">
                   In queue

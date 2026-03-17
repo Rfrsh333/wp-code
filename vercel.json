@@ -2,22 +2,7 @@
   "regions": ["arn1"],
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 30
-    },
-    "src/app/api/admin/news/clusters/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/admin/news/drafts/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/admin/news/drafts/*/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/admin/linkedin/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/cron/**/*.ts": {
-      "maxDuration": 60
+      "maxDuration": 10
     }
   },
   "crons": [

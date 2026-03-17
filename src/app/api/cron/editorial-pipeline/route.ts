@@ -53,7 +53,9 @@ export async function GET(request: NextRequest) {
       articlesLinked: clustering.linkedArticles,
     };
 
-    // Stap 5: Drafts genereren van top clusters (max 3) — hero images worden automatisch mee gegenereerd
+    // Stap 5: Drafts genereren van top clusters (max 3)
+    // Hero images en quality check worden handmatig getriggerd vanuit admin UI
+    // (past niet in Vercel Hobby 10s limiet)
     const drafts = await generateDraftsFromTopClusters(3);
     log.drafts = {
       attempted: drafts.attempted,

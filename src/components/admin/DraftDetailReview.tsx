@@ -121,6 +121,8 @@ export default function DraftDetailReview() {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [showMarkdown, setShowMarkdown] = useState(false);
+  const [imageStep, setImageStep] = useState<"idle" | "finding" | "found" | "branding" | "done" | "not_found">("idle");
+  const [foundImageUrl, setFoundImageUrl] = useState<string | null>(null);
 
   const loadDraft = useCallback(async () => {
     try {
@@ -165,6 +167,42 @@ export default function DraftDetailReview() {
       setTimeout(() => setSaveMessage(null), 2000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Opslaan mislukt");
+    }
+  };
+
+  const runImageFlow = async () => {
+    setError(null);
+    setImageStep("finding");
+    try {
+      const headers = await getAuthHeaders();
+      const findRes = await fetch("/api/admin/news/drafts", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ draftId: params.id, action: "find_source_image" }),
+      });
+      if (!findRes.ok) throw new Error("Bronafbeelding zoeken mislukt.");
+      const findData = await findRes.json();
+
+      if (!findData.imageUrl) {
+        setImageStep("not_found");
+        return;
+      }
+
+      setFoundImageUrl(findData.imageUrl);
+      setImageStep("branding");
+
+      const brandRes = await fetch("/api/admin/news/drafts", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ draftId: params.id, action: "brand_and_upload_image", imageUrl: findData.imageUrl }),
+      });
+      if (!brandRes.ok) throw new Error("Afbeelding branden/uploaden mislukt.");
+
+      setImageStep("done");
+      await loadDraft();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Afbeelding genereren mislukt");
+      setImageStep("idle");
     }
   };
 
@@ -231,7 +269,9 @@ export default function DraftDetailReview() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => runAction("approve")} disabled={busyAction !== null} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 disabled:opacity-60">Goedkeuren</button>
-          <button onClick={() => runAction("generate_image")} disabled={busyAction !== null} className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-[#F27501] disabled:opacity-60">Hero image</button>
+          <button onClick={runImageFlow} disabled={busyAction !== null || imageStep === "finding" || imageStep === "branding"} className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-[#F27501] disabled:opacity-60">
+            {imageStep === "finding" ? "Bronafbeelding zoeken..." : imageStep === "branding" ? "Branden & uploaden..." : "Hero image"}
+          </button>
           <button onClick={() => runAction("regenerate_blocks")} disabled={busyAction !== null} className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 disabled:opacity-60">{busyAction === "regenerate_blocks" ? "Blocks genereren..." : "Regenereer blocks"}</button>
           <button onClick={() => runAction("queue_publish")} disabled={busyAction !== null} className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 disabled:opacity-60">In queue</button>
           <button onClick={() => runAction("publish_now")} disabled={busyAction !== null} className="rounded-xl bg-[#F27501] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Publiceer nu</button>
@@ -240,6 +280,12 @@ export default function DraftDetailReview() {
       </div>
 
       {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+
+      {imageStep === "not_found" ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Geen bronafbeelding gevonden in de bronartikelen. Je kunt handmatig een afbeelding uploaden.
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-6">

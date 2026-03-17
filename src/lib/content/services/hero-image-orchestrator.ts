@@ -7,7 +7,6 @@ import { brandGeneratedHeroImage } from "@/lib/content/services/image-service";
 import { createJobRun, failJobRun, finishJobRun } from "@/lib/content/job-runs";
 import { uploadEditorialImage } from "@/lib/images/storage";
 import { ContentPipelineError, getErrorMessage } from "@/lib/content/errors";
-import { generateAiImage } from "@/lib/ai/openai-image-client";
 
 interface UnsplashPhoto {
   urls: { regular?: string; full?: string };
@@ -45,7 +44,7 @@ async function searchUnsplashImage(
         Authorization: `Client-ID ${accessKey}`,
         "Accept-Version": "v1",
       },
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(4_000),
     });
 
     if (!response.ok) {
@@ -134,7 +133,7 @@ async function extractOgImage(articleUrl: string): Promise<string | null> {
         Accept: "text/html",
       },
       redirect: "follow",
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(4_000),
     });
 
     if (!response.ok) {
@@ -170,7 +169,7 @@ async function downloadImage(imageUrl: string): Promise<Buffer> {
       Accept: "image/*",
     },
     redirect: "follow",
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(4_000),
   });
 
   if (!response.ok) {
@@ -199,7 +198,7 @@ async function getDraftSourceUrls(draftId: string): Promise<string[]> {
     `)
     .eq("draft_id", draftId)
     .order("source_order", { ascending: true })
-    .limit(10);
+    .limit(3);
 
   if (!sources?.length) {
     return [];
@@ -269,12 +268,12 @@ async function isUsablePhotoDimensions(buffer: Buffer): Promise<boolean> {
 }
 
 /**
- * Try to find a usable og:image from source articles.
- * Returns the first successful image buffer found.
- * Filters out logos, icons and generic placeholder images.
+ * Try to find a usable og:image URL from source articles (without downloading).
+ * Returns the URL and source article URL, or null.
+ * Checks max 3 sources with 4s timeout per fetch.
  */
-async function findSourceArticleImage(sourceUrls: string[]): Promise<{ buffer: Buffer; sourceUrl: string } | null> {
-  for (const url of sourceUrls) {
+async function findSourceImageUrl(sourceUrls: string[]): Promise<{ imageUrl: string; sourceArticleUrl: string } | null> {
+  for (const url of sourceUrls.slice(0, 3)) {
     try {
       const ogImageUrl = await extractOgImage(url);
       if (!ogImageUrl) {
@@ -292,22 +291,8 @@ async function findSourceArticleImage(sourceUrls: string[]): Promise<{ buffer: B
         continue;
       }
 
-      const buffer = await downloadImage(absoluteUrl);
-
-      // Minimum file size check (at least 10KB — skip tiny placeholders)
-      if (buffer.length < 10_000) {
-        continue;
-      }
-
-      // Dimension check — must be a real landscape photo, not a logo/icon
-      if (!(await isUsablePhotoDimensions(buffer))) {
-        console.log(`[hero-image] Skipped non-photo image from: ${absoluteUrl}`);
-        continue;
-      }
-
-      return { buffer, sourceUrl: absoluteUrl };
+      return { imageUrl: absoluteUrl, sourceArticleUrl: url };
     } catch {
-      // Try next source
       continue;
     }
   }
@@ -315,13 +300,35 @@ async function findSourceArticleImage(sourceUrls: string[]): Promise<{ buffer: B
   return null;
 }
 
-export async function generateHeroImageForDraft(draftId: string) {
-  const jobRunId = await createJobRun("content.generateHeroImage", { draftId });
+/**
+ * Step 1: Find the best source image URL for a draft.
+ * Only scrapes og:image from max 3 source articles. Does NOT download the image.
+ * Designed to fit within ~3s.
+ */
+export async function findBestSourceImageUrl(draftId: string): Promise<{ imageUrl: string; sourceArticleUrl: string } | null> {
+  const sourceUrls = await getDraftSourceUrls(draftId);
+  if (!sourceUrls.length) {
+    return null;
+  }
+
+  return findSourceImageUrl(sourceUrls);
+}
+
+/**
+ * Step 2: Download image from URL, validate, brand with logo+gradient, and upload to Supabase.
+ * Designed to fit within ~5s.
+ */
+export async function downloadBrandAndUpload(draftId: string, imageUrl: string): Promise<{
+  draftId: string;
+  generatedImageId: string;
+  brandedPath: string;
+}> {
+  const jobRunId = await createJobRun("content.brandAndUploadImage", { draftId, imageUrl });
 
   try {
     const { data: draft, error } = await supabaseAdmin
       .from("editorial_drafts")
-      .select("id, slug, title, excerpt")
+      .select("id, slug, title")
       .eq("id", draftId)
       .single();
 
@@ -329,52 +336,147 @@ export async function generateHeroImageForDraft(draftId: string) {
       throw error ?? new Error("Draft not found.");
     }
 
-    // 1. Try og:image from source articles
-    const sourceUrls = await getDraftSourceUrls(draftId);
-    const sourceImage = await findSourceArticleImage(sourceUrls);
+    // Download and validate
+    const imageBuffer = await downloadImage(imageUrl);
 
-    // 2. Fallback to Unsplash if no og:image found
-    let imageBuffer: Buffer;
-    let imageSource: string;
-    let altText = String(draft.title);
-    let generationModel: string;
-
-    if (sourceImage) {
-      imageBuffer = sourceImage.buffer;
-      imageSource = sourceImage.sourceUrl;
-      generationModel = "source_og_image";
-    } else {
-      const unsplashQuery = buildUnsplashQuery(String(draft.title), String(draft.excerpt));
-      const unsplashResult = await searchUnsplashImage(unsplashQuery);
-
-      if (unsplashResult) {
-        imageBuffer = unsplashResult.buffer;
-        imageSource = `unsplash:${unsplashQuery}`;
-        altText = unsplashResult.altText;
-        generationModel = `unsplash (${unsplashResult.attribution})`;
-        console.log(`[hero-image] Using Unsplash fallback for draft ${draftId}: "${unsplashQuery}"`);
-      } else {
-        // 3. AI image generation fallback (gpt-image-1)
-        console.log(`[hero-image] No og:image or Unsplash result, generating AI image for draft ${draftId}`);
-
-        const { data: draftDetails } = await supabaseAdmin
-          .from("editorial_drafts")
-          .select("image_prompt_suggestion, visual_direction")
-          .eq("id", draftId)
-          .single();
-
-        const aiPrompt = draftDetails?.image_prompt_suggestion
-          ? String(draftDetails.image_prompt_suggestion)
-          : `Photojournalistic editorial photo for an article titled "${String(draft.title)}". Professional DSLR quality, natural lighting, real Dutch hospitality setting, no text or overlays.`;
-
-        imageBuffer = await generateAiImage(aiPrompt);
-        imageSource = "gpt-image-1";
-        generationModel = "gpt-image-1";
-        console.log(`[hero-image] AI image generated for draft ${draftId}`);
-      }
+    if (imageBuffer.length < 10_000) {
+      throw new ContentPipelineError("Image too small (likely a placeholder)", "image_too_small", { url: imageUrl });
     }
 
-    // 3. Create image record
+    if (!(await isUsablePhotoDimensions(imageBuffer))) {
+      throw new ContentPipelineError("Image dimensions not suitable (too small or not landscape)", "image_dimensions_unsuitable", { url: imageUrl });
+    }
+
+    const altText = String(draft.title);
+
+    // Create image record
+    const { data: imageRow, error: imageInsertError } = await supabaseAdmin
+      .from("generated_images")
+      .insert({
+        draft_id: draftId,
+        status: "generating",
+        prompt: `Image from: ${imageUrl}`,
+        alt_text: altText,
+        generation_model: "source_og_image",
+      })
+      .select("id")
+      .single();
+
+    if (imageInsertError || !imageRow) {
+      throw imageInsertError ?? new Error("Failed to create image row.");
+    }
+
+    const generatedImageId = String(imageRow.id);
+    const storageBase = buildStorageBase(String(draft.slug));
+
+    // Upload original
+    const originalPath = `${storageBase}/original.png`;
+    await uploadEditorialImage({
+      path: originalPath,
+      buffer: imageBuffer,
+      contentType: "image/png",
+    });
+
+    await supabaseAdmin
+      .from("generated_images")
+      .update({
+        status: "branding",
+        storage_path_original: originalPath,
+      })
+      .eq("id", generatedImageId);
+
+    // Apply branding (logo bottom-right + orange gradient)
+    const logoPath = path.join(process.cwd(), "public", "logo.png");
+    const brandedBuffer = await brandGeneratedHeroImage({
+      buffer: imageBuffer,
+      logoPath,
+    });
+    const brandedPath = `${storageBase}/branded.webp`;
+
+    await uploadEditorialImage({
+      path: brandedPath,
+      buffer: brandedBuffer,
+      contentType: "image/webp",
+    });
+
+    // Finalize
+    await supabaseAdmin
+      .from("generated_images")
+      .update({
+        status: "completed",
+        storage_path_branded: brandedPath,
+        width: 1600,
+        height: 900,
+      })
+      .eq("id", generatedImageId);
+
+    await supabaseAdmin
+      .from("editorial_drafts")
+      .update({
+        hero_image_id: generatedImageId,
+      })
+      .eq("id", draftId);
+
+    await finishJobRun(jobRunId, {
+      draftId,
+      generatedImageId,
+      brandedPath,
+      imageSource: imageUrl,
+    });
+
+    return {
+      draftId,
+      generatedImageId,
+      brandedPath,
+    };
+  } catch (error) {
+    await failJobRun(jobRunId, error);
+    throw error;
+  }
+}
+
+/**
+ * Legacy all-in-one function. Now uses the split steps internally.
+ * Tries og:image first, then Unsplash. No AI fallback (doesn't fit in 10s).
+ */
+export async function generateHeroImageForDraft(draftId: string) {
+  // Step 1: Try og:image from source articles
+  const sourceResult = await findBestSourceImageUrl(draftId);
+
+  if (sourceResult) {
+    return downloadBrandAndUpload(draftId, sourceResult.imageUrl);
+  }
+
+  // Step 2: Fallback to Unsplash
+  const { data: draft, error } = await supabaseAdmin
+    .from("editorial_drafts")
+    .select("id, slug, title, excerpt")
+    .eq("id", draftId)
+    .single();
+
+  if (error || !draft) {
+    throw error ?? new Error("Draft not found.");
+  }
+
+  const unsplashQuery = buildUnsplashQuery(String(draft.title), String(draft.excerpt));
+  const unsplashResult = await searchUnsplashImage(unsplashQuery);
+
+  if (!unsplashResult) {
+    throw new ContentPipelineError(
+      "Geen bronafbeelding of Unsplash resultaat gevonden",
+      "no_image_source",
+      { draftId },
+    );
+  }
+
+  const jobRunId = await createJobRun("content.generateHeroImage", { draftId });
+
+  try {
+    const altText = unsplashResult.altText;
+    const generationModel = `unsplash (${unsplashResult.attribution})`;
+    const imageSource = `unsplash:${unsplashQuery}`;
+
+    // Create image record
     const { data: imageRow, error: imageInsertError } = await supabaseAdmin
       .from("generated_images")
       .insert({
@@ -394,11 +496,11 @@ export async function generateHeroImageForDraft(draftId: string) {
     const generatedImageId = String(imageRow.id);
     const storageBase = buildStorageBase(String(draft.slug));
 
-    // 4. Upload original
+    // Upload original
     const originalPath = `${storageBase}/original.png`;
     await uploadEditorialImage({
       path: originalPath,
-      buffer: imageBuffer,
+      buffer: unsplashResult.buffer,
       contentType: "image/png",
     });
 
@@ -410,10 +512,10 @@ export async function generateHeroImageForDraft(draftId: string) {
       })
       .eq("id", generatedImageId);
 
-    // 5. Apply branding (logo bottom-right + orange gradient)
+    // Apply branding
     const logoPath = path.join(process.cwd(), "public", "logo.png");
     const brandedBuffer = await brandGeneratedHeroImage({
-      buffer: imageBuffer,
+      buffer: unsplashResult.buffer,
       logoPath,
     });
     const brandedPath = `${storageBase}/branded.webp`;
@@ -424,7 +526,7 @@ export async function generateHeroImageForDraft(draftId: string) {
       contentType: "image/webp",
     });
 
-    // 6. Finalize
+    // Finalize
     await supabaseAdmin
       .from("generated_images")
       .update({
