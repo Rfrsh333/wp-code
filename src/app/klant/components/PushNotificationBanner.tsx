@@ -8,14 +8,17 @@ export default function KlantPushNotificationBanner() {
   const { permission, isSubscribed, loading, subscribe } = usePushNotifications();
   const [dismissed, setDismissed] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isPWA, setIsPWA] = useState(false);
 
   useEffect(() => {
     const wasDismissed = localStorage.getItem("push_banner_klant_dismissed");
     if (wasDismissed) setDismissed(true);
 
-    // Toon alleen op mobiel/PWA — op desktop is de banner niet relevant
-    setIsMobile(window.innerWidth < 768);
+    // Toon alleen in PWA standalone mode (geïnstalleerde app op mobiel/tablet)
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as any).standalone === true;
+    setIsPWA(isStandalone);
   }, []);
 
   const handleDismiss = () => {
@@ -31,8 +34,8 @@ export default function KlantPushNotificationBanner() {
     }
   };
 
-  // Verberg op desktop en als al ingeschakeld/geweigerd/dismissed
-  if (!isMobile || isSubscribed || permission === "unsupported" || permission === "denied" || dismissed) {
+  // Verberg in browser (niet-PWA) en als al ingeschakeld/geweigerd/dismissed
+  if (!isPWA || isSubscribed || permission === "unsupported" || permission === "denied" || dismissed) {
     return null;
   }
 
