@@ -14,7 +14,7 @@ export function useKlantRealtime(klantId: string | null) {
     {
       table: 'diensten',
       event: '*' as const,
-      queryKeys: [klantKeys.diensten(), klantKeys.dashboard(), klantKeys.rooster()],
+      queryKeys: [klantKeys.diensten(), klantKeys.dashboard(), ['klant', 'rooster'] as const],
     },
     {
       table: 'dienst_aanmeldingen',
