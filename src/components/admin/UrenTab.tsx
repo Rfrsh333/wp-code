@@ -19,12 +19,33 @@ interface UrenRegistratie {
   };
 }
 
+interface AanmeldingZonderUren {
+  id: string;
+  status: string;
+  check_in_at: string | null;
+  medewerker: { id: string; naam: string; email: string };
+  dienst: { id: string; klant_naam: string; datum: string; start_tijd: string; eind_tijd: string; locatie: string; uurtarief: number; functie: string };
+}
+
 export default function UrenTab() {
   const [uren, setUren] = useState<UrenRegistratie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"goedgekeurd" | "klant_goedgekeurd" | "ingediend" | "alle">("ingediend");
   const [adjustModal, setAdjustModal] = useState<UrenRegistratie | null>(null);
   const [adjustForm, setAdjustForm] = useState({
+    start_tijd: "",
+    eind_tijd: "",
+    pauze_minuten: "0",
+    reiskosten_km: "0",
+    opmerking: "",
+  });
+
+  // Handmatig registreren state
+  const [showHandmatig, setShowHandmatig] = useState(false);
+  const [aanmeldingenZonderUren, setAanmeldingenZonderUren] = useState<AanmeldingZonderUren[]>([]);
+  const [loadingAanmeldingen, setLoadingAanmeldingen] = useState(false);
+  const [selectedAanmelding, setSelectedAanmelding] = useState<AanmeldingZonderUren | null>(null);
+  const [handmatigForm, setHandmatigForm] = useState({
     start_tijd: "",
     eind_tijd: "",
     pauze_minuten: "0",
@@ -116,6 +137,77 @@ export default function UrenTab() {
     fetchUren();
   };
 
+  const fetchAanmeldingenZonderUren = async () => {
+    setLoadingAanmeldingen(true);
+    const headers = await getAuthHeader();
+    const res = await fetch("/api/admin/uren?filter=zonder_uren", { headers });
+    const { data } = await res.json();
+    setAanmeldingenZonderUren((data || []).map((a: any) => ({
+      ...a,
+      medewerker: Array.isArray(a.medewerker) ? a.medewerker[0] : a.medewerker,
+      dienst: Array.isArray(a.dienst) ? a.dienst[0] : a.dienst,
+    })));
+    setLoadingAanmeldingen(false);
+  };
+
+  const openHandmatig = async () => {
+    setShowHandmatig(true);
+    setSelectedAanmelding(null);
+    await fetchAanmeldingenZonderUren();
+  };
+
+  const selectAanmelding = (a: AanmeldingZonderUren) => {
+    setSelectedAanmelding(a);
+    setHandmatigForm({
+      start_tijd: a.dienst?.start_tijd?.slice(0, 5) || "",
+      eind_tijd: a.dienst?.eind_tijd?.slice(0, 5) || "",
+      pauze_minuten: "0",
+      reiskosten_km: "0",
+      opmerking: "",
+    });
+  };
+
+  const submitHandmatig = async () => {
+    if (!selectedAanmelding) return;
+
+    const headers = await getAuthHeader();
+    const res = await fetch("/api/admin/uren", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "handmatig_registreren",
+        data: {
+          aanmelding_id: selectedAanmelding.id,
+          start_tijd: handmatigForm.start_tijd,
+          eind_tijd: handmatigForm.eind_tijd,
+          pauze_minuten: Number(handmatigForm.pauze_minuten),
+          reiskosten_km: Number(handmatigForm.reiskosten_km),
+          opmerking: handmatigForm.opmerking,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.error || "Uren registreren mislukt");
+      return;
+    }
+
+    setShowHandmatig(false);
+    setSelectedAanmelding(null);
+    fetchUren();
+  };
+
+  const berekenHandmatigUren = () => {
+    if (!handmatigForm.start_tijd || !handmatigForm.eind_tijd) return "0.0";
+    const [sh, sm] = handmatigForm.start_tijd.split(":").map(Number);
+    const [eh, em] = handmatigForm.eind_tijd.split(":").map(Number);
+    let totalMin = (eh * 60 + em) - (sh * 60 + sm);
+    if (totalMin <= 0) totalMin += 24 * 60;
+    totalMin -= Number(handmatigForm.pauze_minuten) || 0;
+    return Math.max(0, totalMin / 60).toFixed(1);
+  };
+
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
 
   if (isLoading) return <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full"></div></div>;
@@ -129,18 +221,21 @@ export default function UrenTab() {
             Medewerkers vullen uren in bij Mijn diensten. Nieuwe inzendingen beoordeel je hier, en zodra uren definitief goedgekeurd zijn verschijnen ze onder Klaar voor factuur.
           </p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setFilter("goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
-            Klaar voor factuur
-          </button>
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => setFilter("ingediend")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "ingediend" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Nieuw van medewerker
           </button>
           <button onClick={() => setFilter("klant_goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "klant_goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Klant akkoord
           </button>
+          <button onClick={() => setFilter("goedgekeurd")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "goedgekeurd" ? "bg-[#F27501] text-white" : "bg-white"}`}>
+            Klaar voor factuur
+          </button>
           <button onClick={() => setFilter("alle")} className={`px-4 py-2 rounded-xl text-sm font-medium ${filter === "alle" ? "bg-[#F27501] text-white" : "bg-white"}`}>
             Alle
+          </button>
+          <button onClick={openHandmatig} className="px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition ml-auto">
+            + Handmatig registreren
           </button>
         </div>
       </div>
@@ -209,6 +304,100 @@ export default function UrenTab() {
         </table>
         {uren.length === 0 && <div className="text-center py-12 text-neutral-500">Geen uren gevonden</div>}
       </div>
+
+      {/* Handmatig registreren modal */}
+      {showHandmatig && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-1">Handmatig uren registreren</h3>
+            <p className="text-sm text-neutral-500 mb-4">
+              Voor medewerkers die niet ingecheckt zijn via QR code.
+            </p>
+
+            {!selectedAanmelding ? (
+              <>
+                <p className="text-sm font-medium text-neutral-700 mb-3">Selecteer een dienst:</p>
+                {loadingAanmeldingen ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin w-6 h-6 border-3 border-[#F27501] border-t-transparent rounded-full" />
+                  </div>
+                ) : aanmeldingenZonderUren.length === 0 ? (
+                  <p className="text-sm text-neutral-400 text-center py-8">Geen aanmeldingen zonder uren gevonden.</p>
+                ) : (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {aanmeldingenZonderUren.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => selectAanmelding(a)}
+                        className="w-full text-left p-3 rounded-xl border-2 border-neutral-200 hover:border-[#F27501] transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm">{a.medewerker?.naam || "Onbekend"}</span>
+                          {!a.check_in_at && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">Geen check-in</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-neutral-500 mt-1">
+                          {a.dienst?.klant_naam} · {a.dienst?.functie} · {a.dienst?.datum ? formatDate(a.dienst.datum) : "—"}
+                        </div>
+                        <div className="text-xs text-neutral-400 mt-0.5">
+                          {a.dienst?.start_tijd?.slice(0, 5)} - {a.dienst?.eind_tijd?.slice(0, 5)} · {a.dienst?.locatie}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-4">
+                  <button onClick={() => setShowHandmatig(false)} className="w-full py-2 border rounded-lg text-sm">Sluiten</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-neutral-50 rounded-xl p-3 mb-4">
+                  <p className="font-medium text-sm">{selectedAanmelding.medewerker?.naam}</p>
+                  <p className="text-xs text-neutral-500">
+                    {selectedAanmelding.dienst?.klant_naam} · {selectedAanmelding.dienst?.functie} · {selectedAanmelding.dienst?.datum ? formatDate(selectedAanmelding.dienst.datum) : "—"} · {selectedAanmelding.dienst?.locatie}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Starttijd</label>
+                      <input type="time" value={handmatigForm.start_tijd} onChange={(e) => setHandmatigForm({ ...handmatigForm, start_tijd: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Eindtijd</label>
+                      <input type="time" value={handmatigForm.eind_tijd} onChange={(e) => setHandmatigForm({ ...handmatigForm, eind_tijd: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Pauze (min)</label>
+                      <input type="number" min="0" value={handmatigForm.pauze_minuten} onChange={(e) => setHandmatigForm({ ...handmatigForm, pauze_minuten: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Reiskosten (km)</label>
+                      <input type="number" min="0" value={handmatigForm.reiskosten_km} onChange={(e) => setHandmatigForm({ ...handmatigForm, reiskosten_km: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+                    <span className="text-sm text-neutral-600">Gewerkte uren</span>
+                    <span className="font-bold text-green-700">{berekenHandmatigUren()} uur</span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Reden (intern)</label>
+                    <textarea rows={2} value={handmatigForm.opmerking} onChange={(e) => setHandmatigForm({ ...handmatigForm, opmerking: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Bijv. medewerker kon niet inchecken, klant bevestigt aanwezigheid" />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button onClick={() => setSelectedAanmelding(null)} className="flex-1 py-2 border rounded-lg text-sm">Terug</button>
+                  <button onClick={submitHandmatig} className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition">Uren registreren</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {adjustModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

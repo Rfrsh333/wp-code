@@ -13,6 +13,28 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const filter = searchParams.get("filter") || "alle";
 
+  // Fetch aanmeldingen zonder uren (voor handmatig registreren)
+  if (filter === "zonder_uren") {
+    const { data: aanmeldingen } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, status, check_in_at, medewerker:medewerkers(id, naam, email), dienst:diensten(id, klant_naam, datum, start_tijd, eind_tijd, locatie, uurtarief, functie)")
+      .in("status", ["bevestigd", "geaccepteerd"])
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    // Filter out those that already have uren_registraties
+    const aanmeldingIds = (aanmeldingen || []).map(a => a.id);
+    const { data: bestaandeUren } = await supabaseAdmin
+      .from("uren_registraties")
+      .select("aanmelding_id")
+      .in("aanmelding_id", aanmeldingIds.length > 0 ? aanmeldingIds : ["none"]);
+
+    const urenSet = new Set((bestaandeUren || []).map(u => u.aanmelding_id));
+    const zonderUren = (aanmeldingen || []).filter(a => !urenSet.has(a.id));
+
+    return NextResponse.json({ data: zonderUren });
+  }
+
   let query = supabaseAdmin
     .from("uren_registraties")
     .select("*, aanmelding:dienst_aanmeldingen(medewerker:medewerkers(naam, email), dienst:diensten(klant_naam, datum, locatie, uurtarief))")
@@ -77,6 +99,61 @@ export async function POST(request: NextRequest) {
           .is("eerste_goedkeuring", null);
       }
     }
+  }
+
+  // Admin handmatig uren registreren (voor medewerkers zonder QR check-in)
+  if (action === "handmatig_registreren") {
+    const { aanmelding_id, start_tijd, eind_tijd, pauze_minuten, reiskosten_km, opmerking } = data || {};
+
+    if (!aanmelding_id || !start_tijd || !eind_tijd) {
+      return NextResponse.json({ error: "Aanmelding ID, start- en eindtijd zijn verplicht" }, { status: 400 });
+    }
+
+    // Verify aanmelding exists
+    const { data: aanmelding } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, medewerker_id, dienst_id, status")
+      .eq("id", aanmelding_id)
+      .single();
+
+    if (!aanmelding) {
+      return NextResponse.json({ error: "Aanmelding niet gevonden" }, { status: 404 });
+    }
+
+    // Check if uren already registered
+    const { data: bestaand } = await supabaseAdmin
+      .from("uren_registraties")
+      .select("id")
+      .eq("aanmelding_id", aanmelding_id)
+      .maybeSingle();
+
+    if (bestaand) {
+      return NextResponse.json({ error: "Voor deze aanmelding zijn al uren geregistreerd" }, { status: 409 });
+    }
+
+    // Calculate hours
+    const [sh, sm] = start_tijd.split(":").map(Number);
+    const [eh, em] = eind_tijd.split(":").map(Number);
+    let totalMin = (eh * 60 + em) - (sh * 60 + sm);
+    if (totalMin <= 0) totalMin += 24 * 60; // nachtdienst
+    totalMin -= (pauze_minuten || 0);
+    const gewerkte_uren = Math.round(Math.max(0, totalMin / 60) * 100) / 100;
+
+    const km = Math.max(0, Number(reiskosten_km) || 0);
+    const reiskosten_bedrag = Math.round(km * 0.21 * 100) / 100;
+
+    await supabaseAdmin.from("uren_registraties").insert({
+      aanmelding_id,
+      start_tijd,
+      eind_tijd,
+      pauze_minuten: pauze_minuten || 0,
+      gewerkte_uren,
+      reiskosten_km: km,
+      reiskosten_bedrag,
+      status: "ingediend",
+    });
+
+    console.log(`[ADMIN] ${email} registered hours manually for aanmelding ${aanmelding_id}: ${gewerkte_uren}h, reason: ${opmerking || "geen"}`);
   }
 
   if (action === "adjust") {
