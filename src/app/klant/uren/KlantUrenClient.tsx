@@ -1496,6 +1496,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [isSending, setIsSending] = useState(false);
+  const [showAndereFunctie, setShowAndereFunctie] = useState(false);
+  const [andereFunctieNaam, setAndereFunctieNaam] = useState("");
   const [form, setForm] = useState({
     functie: "", // ✅ Will be set based on selected functions
     categorie_id: "",
@@ -1701,7 +1703,9 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
               value=""
               onChange={(e) => {
                 const functie = e.target.value;
-                if (functie && !form.functies_met_aantal.find(f => f.functie === functie)) {
+                if (functie === "__anders") {
+                  setShowAndereFunctie(true);
+                } else if (functie && !form.functies_met_aantal.find(f => f.functie === functie)) {
                   setForm({
                     ...form,
                     functies_met_aantal: [...form.functies_met_aantal, { functie, aantal: 1, uurtarief: "" }]
@@ -1716,7 +1720,49 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                 .map((functie) => (
                   <option key={functie} value={functie}>{functie}</option>
                 ))}
+              <option value="__anders">Anders...</option>
             </select>
+
+            {showAndereFunctie && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  value={andereFunctieNaam}
+                  onChange={(e) => setAndereFunctieNaam(e.target.value)}
+                  placeholder="Typ de gewenste functie..."
+                  className="flex-1 px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && andereFunctieNaam.trim()) {
+                      if (!form.functies_met_aantal.find(f => f.functie === andereFunctieNaam.trim())) {
+                        setForm({
+                          ...form,
+                          functies_met_aantal: [...form.functies_met_aantal, { functie: andereFunctieNaam.trim(), aantal: 1, uurtarief: "" }]
+                        });
+                      }
+                      setAndereFunctieNaam("");
+                      setShowAndereFunctie(false);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (andereFunctieNaam.trim() && !form.functies_met_aantal.find(f => f.functie === andereFunctieNaam.trim())) {
+                      setForm({
+                        ...form,
+                        functies_met_aantal: [...form.functies_met_aantal, { functie: andereFunctieNaam.trim(), aantal: 1, uurtarief: "" }]
+                      });
+                    }
+                    setAndereFunctieNaam("");
+                    setShowAndereFunctie(false);
+                  }}
+                  disabled={!andereFunctieNaam.trim()}
+                  className="px-4 py-2 bg-[#F27501] text-white text-sm font-medium rounded-xl hover:bg-[#d96800] transition-colors disabled:opacity-50"
+                >
+                  Toevoegen
+                </button>
+              </div>
+            )}
 
             <div className="space-y-2 mt-3">
               {form.functies_met_aantal.map((functieData) => (
