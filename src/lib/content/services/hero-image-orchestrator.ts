@@ -399,7 +399,7 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
 
     // Download and validate source image
     let imageBuffer: Buffer | null = null;
-    let imageSource: string;
+    let imageSource: string = imageUrl;
     let generationModel: string = "source_og_image";
 
     try {
