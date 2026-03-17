@@ -302,6 +302,66 @@ async function findSourceImageUrl(sourceUrls: string[]): Promise<{ imageUrl: str
 }
 
 /**
+ * Generate a realistic AI image based on draft content using OpenAI DALL-E.
+ * Returns the image buffer and generation info, or null if generation fails.
+ */
+async function generateAIImage(
+  title: string,
+  excerpt: string,
+): Promise<{ buffer: Buffer; prompt: string } | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.log("[hero-image] OPENAI_API_KEY not configured, skipping AI generation");
+    return null;
+  }
+
+  try {
+    // Build a descriptive prompt based on the article content
+    const prompt = `Professional high-quality photograph for a business article about "${title}". ${excerpt}. Style: realistic, professional, bright lighting, modern workplace setting. No text or watermarks.`;
+
+    console.log(`[hero-image] Generating AI image with prompt: ${prompt.substring(0, 100)}...`);
+
+    const response = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "dall-e-3",
+        prompt: prompt,
+        n: 1,
+        size: "1792x1024",
+        quality: "standard",
+        style: "natural",
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!response.ok) {
+      console.warn(`[hero-image] OpenAI API failed: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json() as { data: Array<{ url: string; revised_prompt?: string }> };
+    if (!data.data?.length || !data.data[0]?.url) {
+      return null;
+    }
+
+    const imageUrl = data.data[0].url;
+    const imageBuffer = await downloadImage(imageUrl);
+
+    return {
+      buffer: imageBuffer,
+      prompt: data.data[0].revised_prompt ?? prompt,
+    };
+  } catch (error) {
+    console.warn(`[hero-image] AI generation error: ${getErrorMessage(error)}`);
+    return null;
+  }
+}
+
+/**
  * Step 1: Find the best source image URL for a draft.
  * Only scrapes og:image from max 3 source articles. Does NOT download the image.
  * Designed to fit within ~3s.
@@ -337,41 +397,68 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
       throw error ?? new Error("Draft not found.");
     }
 
-    // Download and validate
-    let imageBuffer: Buffer;
+    // Download and validate source image
+    let imageBuffer: Buffer | null = null;
     let imageSource: string;
-    let usePlaceholder = false;
+    let generationModel: string = "source_og_image";
 
     try {
-      imageBuffer = await downloadImage(imageUrl);
+      const downloadedBuffer = await downloadImage(imageUrl);
 
-      if (imageBuffer.length < 10_000) {
-        console.warn(`[hero-image] Image too small from ${imageUrl}, using placeholder`);
-        usePlaceholder = true;
-      } else if (!(await isUsablePhotoDimensions(imageBuffer))) {
-        console.warn(`[hero-image] Image dimensions not suitable from ${imageUrl}, using placeholder`);
-        usePlaceholder = true;
+      if (downloadedBuffer.length < 10_000) {
+        console.warn(`[hero-image] Image too small from ${imageUrl}`);
+      } else if (!(await isUsablePhotoDimensions(downloadedBuffer))) {
+        console.warn(`[hero-image] Image dimensions not suitable from ${imageUrl}`);
+      } else {
+        // Source image is good!
+        imageBuffer = downloadedBuffer;
+        imageSource = imageUrl;
+        console.log(`[hero-image] Using source image from ${imageUrl}`);
       }
     } catch (downloadError) {
-      console.warn(`[hero-image] Failed to download ${imageUrl}, using placeholder:`, downloadError);
-      usePlaceholder = true;
-      imageBuffer = Buffer.alloc(0);
+      console.warn(`[hero-image] Failed to download ${imageUrl}:`, downloadError);
     }
 
-    if (usePlaceholder) {
-      // Use placeholder when source image is not suitable
+    // Fallback 1: Try Unsplash if source image failed
+    if (!imageBuffer) {
+      console.log(`[hero-image] Trying Unsplash as fallback...`);
+      const unsplashQuery = buildUnsplashQuery(String(draft.title), String(draft.slug));
+      const unsplashResult = await searchUnsplashImage(unsplashQuery);
+
+      if (unsplashResult) {
+        imageBuffer = unsplashResult.buffer;
+        imageSource = `unsplash:${unsplashQuery}`;
+        generationModel = `unsplash (${unsplashResult.attribution})`;
+        console.log(`[hero-image] Using Unsplash image`);
+      }
+    }
+
+    // Fallback 2: Try AI generation if Unsplash failed
+    if (!imageBuffer) {
+      console.log(`[hero-image] Trying AI generation as fallback...`);
+      const aiResult = await generateAIImage(String(draft.title), String(draft.slug));
+
+      if (aiResult) {
+        imageBuffer = aiResult.buffer;
+        imageSource = `ai:${aiResult.prompt.substring(0, 50)}...`;
+        generationModel = "dall-e-3";
+        console.log(`[hero-image] Using AI-generated image`);
+      }
+    }
+
+    // Fallback 3: Use placeholder as last resort
+    if (!imageBuffer) {
+      console.log(`[hero-image] All sources failed, using placeholder`);
       try {
         const logoPath = path.join(process.cwd(), "public", "logo.png");
-        console.log(`[hero-image] Creating placeholder with logo from: ${logoPath}`);
         imageBuffer = await createPlaceholderHeroImage({ logoPath });
         imageSource = "placeholder";
-        console.log(`[hero-image] Placeholder created successfully (${imageBuffer.length} bytes)`);
+        generationModel = "placeholder";
+        console.log(`[hero-image] Placeholder created successfully`);
       } catch (placeholderError) {
         console.error(`[hero-image] Failed to create placeholder:`, placeholderError);
         throw new Error(`Placeholder creatie mislukt: ${placeholderError instanceof Error ? placeholderError.message : "Unknown error"}`);
       }
-    } else {
-      imageSource = imageUrl;
     }
 
     const altText = String(draft.title);
@@ -384,7 +471,7 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
         status: "generating",
         prompt: `Image from: ${imageSource}`,
         alt_text: altText,
-        generation_model: usePlaceholder ? "placeholder" : "source_og_image",
+        generation_model: generationModel,
       })
       .select("id")
       .single();
@@ -413,9 +500,9 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
       .eq("id", generatedImageId);
 
     // Apply branding (logo bottom-right + orange gradient)
-    // Note: if usePlaceholder, imageBuffer is already branded
+    // Note: if placeholder, imageBuffer is already branded
     let brandedBuffer: Buffer;
-    if (usePlaceholder) {
+    if (generationModel === "placeholder") {
       brandedBuffer = imageBuffer; // Already branded by createPlaceholderHeroImage
     } else {
       const logoPath = path.join(process.cwd(), "public", "logo.png");
