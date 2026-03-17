@@ -71,6 +71,7 @@ const DienstFiltersTab = dynamic(() => import("./tabs/DienstFiltersTab"), { load
 const LiveChatNotification = dynamic(() => import("./LiveChatNotification"), { ssr: false });
 const LinkedInTab = dynamic(() => import("./LinkedInTab"), { loading: () => <TabSkeleton />, ssr: false });
 const PlatformOptionsTab = dynamic(() => import("./PlatformOptionsTab"), { loading: () => <TabSkeleton />, ssr: false });
+const GeoTab = dynamic(() => import("./GeoTab"), { loading: () => <TabSkeleton />, ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -1625,6 +1626,9 @@ export default function AdminDashboard() {
             {activeTab === "linkedin" && <LinkedInTab />}
 
             {activeTab === "platform-options" && <PlatformOptionsTab />}
+
+            {/* GEO Agent Tab */}
+            {activeTab === "geo" && <GeoTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

@@ -31,6 +31,7 @@ export const adminTabs = [
   "contracten",
   "linkedin",
   "platform-options",
+  "geo",
 ] as const;
 
 export type AdminTab = (typeof adminTabs)[number];

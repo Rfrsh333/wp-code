@@ -12,6 +12,7 @@ import {
   Filter,
   FolderKanban,
   Gauge,
+  Globe,
   Inbox,
   Linkedin,
   MessageCircle,
@@ -246,6 +247,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["social", "posts", "linkedin"],
   },
+  geo: {
+    id: "geo",
+    title: "GEO Agent",
+    icon: Globe,
+    kind: "tab",
+    tab: "geo",
+    pinnable: true,
+    keywords: ["geo", "ai search", "perplexity", "seo", "content", "generative"],
+  },
   platformOptions: {
     id: "platformOptions",
     title: "Platform opties",
@@ -309,7 +319,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "content",
     label: "Content",
-    itemIds: ["contentOverview", "contentSources", "contentClusters", "contentDrafts", "linkedin"],
+    itemIds: ["contentOverview", "contentSources", "contentClusters", "contentDrafts", "linkedin", "geo"],
     collapsible: true,
     dividerBefore: true,
   },
