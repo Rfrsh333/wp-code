@@ -90,7 +90,10 @@ export default function DraftReviewPanel() {
         headers,
         body: JSON.stringify({ draftId, action: "brand_and_upload_image", imageUrl: findData.imageUrl }),
       });
-      if (!brandRes.ok) throw new Error("Afbeelding branden/uploaden mislukt.");
+      if (!brandRes.ok) {
+        const errorData = await brandRes.json().catch(() => ({ error: "Afbeelding branden/uploaden mislukt" }));
+        throw new Error(errorData.error || "Afbeelding branden/uploaden mislukt");
+      }
 
       setImageStatus((prev) => ({ ...prev, [draftId]: "done" }));
       await loadDrafts();
