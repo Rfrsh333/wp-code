@@ -22,8 +22,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const sources = await listActiveSources();
-  return NextResponse.json({ sources });
+  try {
+    const sources = await listActiveSources();
+    return NextResponse.json({ sources });
+  } catch (error) {
+    console.error("[news/sources] GET error:", error);
+    return NextResponse.json({ sources: [], error: "Bronnen konden niet geladen worden" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {

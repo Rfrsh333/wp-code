@@ -11,8 +11,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const clusters = await listRecentClusters(25);
-  return NextResponse.json({ clusters });
+  try {
+    const clusters = await listRecentClusters(25);
+    return NextResponse.json({ clusters });
+  } catch (error) {
+    console.error("[news/clusters] GET error:", error);
+    return NextResponse.json({ clusters: [], error: "Clusters konden niet geladen worden" }, { status: 500 });
+  }
 }
 
 const clusterActionSchema = z.object({

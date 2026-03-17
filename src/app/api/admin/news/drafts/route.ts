@@ -20,8 +20,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const drafts = await listDraftsByStatus(undefined, 40);
-  return NextResponse.json({ drafts });
+  try {
+    const drafts = await listDraftsByStatus(undefined, 40);
+    return NextResponse.json({ drafts });
+  } catch (error) {
+    console.error("[news/drafts] GET error:", error);
+    return NextResponse.json({ drafts: [], error: "Drafts konden niet geladen worden" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
