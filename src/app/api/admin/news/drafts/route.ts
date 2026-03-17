@@ -83,8 +83,20 @@ export async function POST(request: NextRequest) {
       await publishApprovedDraft(parsed.data.draftId);
       nextStatus = "published";
     } else if (parsed.data.action === "generate_image") {
-      await generateHeroImageForDraft(parsed.data.draftId);
-      nextStatus = "image_generated";
+      try {
+        await generateHeroImageForDraft(parsed.data.draftId);
+        nextStatus = "image_generated";
+      } catch (imageError) {
+        console.error("[drafts] Hero image generation failed:", imageError);
+        return NextResponse.json(
+          {
+            error: imageError instanceof Error
+              ? `Afbeelding genereren mislukt: ${imageError.message}`
+              : "Afbeelding genereren mislukt",
+          },
+          { status: 500 }
+        );
+      }
     } else if (parsed.data.action === "find_source_image") {
       const result = await findBestSourceImageUrl(parsed.data.draftId);
       await logAuditEvent({
