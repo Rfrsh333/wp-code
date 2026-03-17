@@ -566,12 +566,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Aanmelding of dienst niet gevonden" }, { status: 404 });
     }
 
-    if (aanmelding.status !== "geaccepteerd") {
-      return NextResponse.json({ error: "Je kunt alleen uren indienen voor geaccepteerde diensten" }, { status: 400 });
+    if (!["geaccepteerd", "bevestigd"].includes(aanmelding.status)) {
+      return NextResponse.json({ error: "Je kunt alleen uren indienen voor bevestigde diensten" }, { status: 400 });
     }
 
-    // Check of medewerker is ingecheckt via QR scan
-    if (!aanmelding.check_in_at) {
+    // Check of dienst al voorbij is (voltooid) - dan is QR check-in niet meer nodig
+    const dienstDatum = new Date(dienst.datum);
+    const vandaag = new Date();
+    vandaag.setHours(0, 0, 0, 0);
+    const isDienstVoorbij = dienstDatum < vandaag;
+
+    // Check of medewerker is ingecheckt via QR scan (niet vereist voor voltooide diensten)
+    if (!aanmelding.check_in_at && !isDienstVoorbij) {
       return NextResponse.json({ error: "Je moet eerst worden ingecheckt door de klant voordat je uren kunt indienen" }, { status: 400 });
     }
 
