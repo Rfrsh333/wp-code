@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+/** AI geeft soms een array terug waar een string verwacht wordt — flatten naar string */
+const coerceString = z.preprocess(
+  (val) => (Array.isArray(val) ? val.join("\n") : val),
+  z.string(),
+);
+
 const sectionSchema = z.object({
   heading: z.string(),
   paragraphs: z.array(z.string()).min(1),
@@ -9,7 +15,7 @@ const sectionSchema = z.object({
   })).default([]),
   highlight: z.object({
     title: z.string(),
-    content: z.string(),
+    content: coerceString,
     variant: z.enum(["info", "tip", "warning", "definition"]).default("info"),
   }).optional(),
   checklistTitle: z.string().optional(),
@@ -34,7 +40,7 @@ export const templateDraftSchema = z.object({
   introText: z.string().min(50),
   contextHighlight: z.object({
     title: z.string(),
-    content: z.string(),
+    content: coerceString,
   }),
   sections: z.array(sectionSchema).min(3),
   stats: z.array(z.object({
