@@ -191,8 +191,8 @@ export function buildBodyBlocksFromTemplate(
     points: draft.keyTakeaways,
   });
 
-  // 7. Final CTA (dark)
-  blocks.push(getCtaForAudience(audience, "dark"));
+  // 7. Final CTA (orange)
+  blocks.push(getCtaForAudience(audience, "orange"));
 
   return blocks;
 }
