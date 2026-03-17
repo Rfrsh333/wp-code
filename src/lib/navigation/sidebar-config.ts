@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   BarChart3,
+  Building2,
   BriefcaseBusiness,
   Calculator,
   CalendarRange,
@@ -190,6 +191,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["leads", "acquisitie", "facebook", "linkedin", "bookmarklet"],
   },
+  klanten: {
+    id: "klanten",
+    title: "Klanten",
+    icon: Building2,
+    kind: "tab",
+    tab: "klanten",
+    pinnable: true,
+    keywords: ["klant", "bedrijf", "client", "qr"],
+  },
   offertes: {
     id: "offertes",
     title: "Offertes",
@@ -270,7 +280,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "recruitment",
     label: "Recruitment",
-    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "diensten", "filters", "planning", "contracten"],
+    itemIds: ["aanvragen", "inschrijvingen", "medewerkers", "klanten", "diensten", "filters", "planning", "contracten"],
     collapsible: true,
     defaultOpen: true,
     dividerBefore: true,
