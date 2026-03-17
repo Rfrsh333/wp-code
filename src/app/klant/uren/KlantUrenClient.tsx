@@ -179,10 +179,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const { data: dienstenData } = useKlantDiensten();
   const { data: facturenData } = useKlantFacturen();
 
-  // Platform opties (functies & vaardigheden uit admin)
-  const { data: functieOptions = [] } = usePlatformOptions("functie");
-  const { data: vaardigheidOptions = [] } = usePlatformOptions("vaardigheid");
-
   // Realtime subscriptions
   useKlantRealtime(klant.id);
 
@@ -1519,6 +1515,10 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const { data: aanvraagData } = useKlantAanvraagLocaties();
   const { data: favData } = useKlantFavorieten();
   const { data: templData } = useKlantTemplates();
+
+  // Platform opties (functies & vaardigheden uit admin)
+  const { data: functieOptions = [] } = usePlatformOptions("functie");
+  const { data: vaardigheidOptions = [] } = usePlatformOptions("vaardigheid");
   const templateAction = useTemplateAction();
   const aanvraagAction = useAanvraagAction();
 
