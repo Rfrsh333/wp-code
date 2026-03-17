@@ -44,10 +44,10 @@ export default function ClusterReviewPanel() {
         headers: await getAuthHeaders(),
       });
       if (!response.ok) {
-        throw new Error("Clusters konden niet geladen worden.");
+        throw new Error(`Clusters konden niet geladen worden (${response.status}).`);
       }
       const payload = (await response.json()) as { clusters: ClusterItem[] };
-      setClusters(payload.clusters);
+      setClusters(payload.clusters ?? []);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Onbekende fout");
     }
@@ -72,16 +72,22 @@ export default function ClusterReviewPanel() {
         body: JSON.stringify({ clusterId, action: "generate_draft" }),
       });
 
-      const payload = await response.json();
-
       if (!response.ok) {
+        let reason = `Server error (${response.status})`;
+        try {
+          const errPayload = await response.json();
+          reason = errPayload.error ?? reason;
+        } catch {
+          // Response is niet JSON (bijv. 504 timeout)
+        }
         setDraftResults((prev) => ({
           ...prev,
-          [clusterId]: { status: "error", reason: payload.error ?? "Onbekende fout" },
+          [clusterId]: { status: "error", reason },
         }));
         return;
       }
 
+      const payload = await response.json();
       setDraftResults((prev) => ({
         ...prev,
         [clusterId]: payload,
