@@ -84,6 +84,19 @@ interface MedewerkerDetail {
     verdiensten: number;
     diensten: number;
   }[];
+  beoordelingen: {
+    id: string;
+    score: number;
+    opmerking: string | null;
+    created_at: string;
+    score_punctualiteit: number | null;
+    score_professionaliteit: number | null;
+    score_vaardigheden: number | null;
+    score_communicatie: number | null;
+    zou_opnieuw_boeken: boolean | null;
+    klanten: { id: string; bedrijfsnaam: string } | null;
+    diensten: { id: string; datum: string; locatie: string; functie: string } | null;
+  }[];
   stats: {
     opkomst_percentage: number;
     totaal_uren: number;
@@ -92,7 +105,7 @@ interface MedewerkerDetail {
   };
 }
 
-type TabId = "profiel" | "diensten" | "financieel" | "documenten" | "ai-screening";
+type TabId = "profiel" | "diensten" | "financieel" | "documenten" | "beoordelingen" | "ai-screening";
 
 interface Props {
   medewerkerId: string;
@@ -158,6 +171,7 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
     { id: "diensten", label: "Diensten", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
     { id: "financieel", label: "Financieel", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
     { id: "documenten", label: "Documenten", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+    { id: "beoordelingen", label: "Beoordelingen", icon: "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" },
     { id: "ai-screening", label: "AI Screening", icon: "M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3" },
   ];
 
@@ -180,7 +194,7 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
     );
   }
 
-  const { profiel, werkervaring, vaardigheden, documenten, diensten, financieel, stats } = data;
+  const { profiel, werkervaring, vaardigheden, documenten, diensten, financieel, beoordelingen, stats } = data;
 
   return (
     <div>
@@ -614,6 +628,130 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
           </div>
           {documenten.length === 0 && (
             <div className="text-center py-12 text-neutral-500">Nog geen documenten geupload</div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "beoordelingen" && (
+        <div className="space-y-6">
+          {/* Gemiddelde overzicht */}
+          {beoordelingen.length > 0 && (() => {
+            const avgScore = beoordelingen.reduce((s, b) => s + b.score, 0) / beoordelingen.length;
+            const avgPunct = beoordelingen.filter(b => b.score_punctualiteit).reduce((s, b) => s + (b.score_punctualiteit || 0), 0) / (beoordelingen.filter(b => b.score_punctualiteit).length || 1);
+            const avgProf = beoordelingen.filter(b => b.score_professionaliteit).reduce((s, b) => s + (b.score_professionaliteit || 0), 0) / (beoordelingen.filter(b => b.score_professionaliteit).length || 1);
+            const avgVaard = beoordelingen.filter(b => b.score_vaardigheden).reduce((s, b) => s + (b.score_vaardigheden || 0), 0) / (beoordelingen.filter(b => b.score_vaardigheden).length || 1);
+            const avgComm = beoordelingen.filter(b => b.score_communicatie).reduce((s, b) => s + (b.score_communicatie || 0), 0) / (beoordelingen.filter(b => b.score_communicatie).length || 1);
+            const rebookPct = beoordelingen.filter(b => b.zou_opnieuw_boeken !== null).length > 0
+              ? Math.round((beoordelingen.filter(b => b.zou_opnieuw_boeken === true).length / beoordelingen.filter(b => b.zou_opnieuw_boeken !== null).length) * 100)
+              : null;
+            const categories = [
+              { label: "Punctualiteit", emoji: "⏰", avg: avgPunct },
+              { label: "Professionaliteit", emoji: "💼", avg: avgProf },
+              { label: "Vaardigheden", emoji: "🎯", avg: avgVaard },
+              { label: "Communicatie", emoji: "💬", avg: avgComm },
+            ];
+            return (
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-neutral-900">Gemiddelde beoordeling</h4>
+                  <span className="text-sm text-neutral-500">{beoordelingen.length} beoordeling{beoordelingen.length !== 1 ? "en" : ""}</span>
+                </div>
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <svg key={s} className="w-6 h-6" viewBox="0 0 24 24" fill={s <= Math.round(avgScore) ? "#F27501" : "#e5e7eb"} stroke="none">
+                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="text-2xl font-bold text-neutral-900">{avgScore.toFixed(1)}</span>
+                    <span className="text-sm text-neutral-500">/ 5</span>
+                  </div>
+                  {rebookPct !== null && (
+                    <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-full">
+                      <span className="text-sm">🔄</span>
+                      <span className="text-sm font-semibold text-green-700">{rebookPct}% zou opnieuw boeken</span>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {categories.map((cat) => (
+                    <div key={cat.label} className="bg-neutral-50 rounded-xl p-3 text-center">
+                      <span className="text-lg">{cat.emoji}</span>
+                      <p className="text-xs text-neutral-500 mt-1">{cat.label}</p>
+                      <p className="text-lg font-bold text-neutral-900">{cat.avg.toFixed(1)}<span className="text-xs text-neutral-400 font-normal">/5</span></p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Per beoordeling */}
+          <div className="space-y-3">
+            {beoordelingen.map((b) => (
+              <div key={b.id} className="bg-white rounded-2xl shadow-sm p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-neutral-900">{b.klanten?.bedrijfsnaam || "Onbekende klant"}</p>
+                    <p className="text-sm text-neutral-500">
+                      {b.diensten ? `${formatDate(b.diensten.datum)} · ${b.diensten.locatie} · ${b.diensten.functie}` : formatDate(b.created_at)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <svg key={s} className="w-4 h-4" viewBox="0 0 24 24" fill={s <= b.score ? "#F27501" : "#e5e7eb"} stroke="none">
+                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="text-sm font-bold text-neutral-900">{b.score}/5</span>
+                  </div>
+                </div>
+
+                {/* Category scores */}
+                {(b.score_punctualiteit || b.score_professionaliteit || b.score_vaardigheden || b.score_communicatie) && (
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {[
+                      { label: "Punctualiteit", value: b.score_punctualiteit, emoji: "⏰" },
+                      { label: "Professionaliteit", value: b.score_professionaliteit, emoji: "💼" },
+                      { label: "Vaardigheden", value: b.score_vaardigheden, emoji: "🎯" },
+                      { label: "Communicatie", value: b.score_communicatie, emoji: "💬" },
+                    ].filter(c => c.value).map((cat) => (
+                      <span key={cat.label} className="inline-flex items-center gap-1 px-2 py-1 bg-neutral-50 rounded-lg text-xs text-neutral-600">
+                        <span>{cat.emoji}</span> {cat.label}: <span className="font-semibold text-neutral-900">{cat.value}/5</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {b.opmerking && (
+                  <div className="bg-neutral-50 rounded-xl p-3 mt-2">
+                    <p className="text-sm text-neutral-700 italic">&ldquo;{b.opmerking}&rdquo;</p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 mt-3 text-xs text-neutral-400">
+                  <span>{formatDate(b.created_at)}</span>
+                  {b.zou_opnieuw_boeken !== null && (
+                    <span className={b.zou_opnieuw_boeken ? "text-green-600" : "text-red-500"}>
+                      {b.zou_opnieuw_boeken ? "✓ Zou opnieuw boeken" : "✗ Niet opnieuw boeken"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {beoordelingen.length === 0 && (
+            <div className="bg-white rounded-2xl shadow-sm p-12 text-center text-neutral-400">
+              <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+              <p className="text-sm">Nog geen beoordelingen ontvangen</p>
+            </div>
           )}
         </div>
       )}

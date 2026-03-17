@@ -70,6 +70,7 @@ const ContractenTab = dynamic(() => import("./ContractenTab"), { loading: () => 
 const DienstFiltersTab = dynamic(() => import("./tabs/DienstFiltersTab"), { loading: () => <TabSkeleton />, ssr: false });
 const LiveChatNotification = dynamic(() => import("./LiveChatNotification"), { ssr: false });
 const LinkedInTab = dynamic(() => import("./LinkedInTab"), { loading: () => <TabSkeleton />, ssr: false });
+const PlatformOptionsTab = dynamic(() => import("./PlatformOptionsTab"), { loading: () => <TabSkeleton />, ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -1622,6 +1623,8 @@ export default function AdminDashboard() {
 
             {/* LinkedIn Tab */}
             {activeTab === "linkedin" && <LinkedInTab />}
+
+            {activeTab === "platform-options" && <PlatformOptionsTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

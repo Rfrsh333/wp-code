@@ -4,6 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { ensureKlantForDienst } from "@/lib/klanten-sync";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { dienstenPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { notifyKlantMedewerkerAssigned } from "@/lib/klant-push-triggers";
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -158,6 +159,17 @@ export async function POST(request: NextRequest) {
           klantNaam: dienst.klant_naam,
           kledingvoorschrift: dienst.notities,
         });
+
+        // Push notificatie naar klant: medewerker toegewezen
+        const { data: klantRecord } = await supabaseAdmin
+          .from("klanten")
+          .select("id")
+          .eq("bedrijfsnaam", dienst.klant_naam)
+          .maybeSingle();
+        if (klantRecord) {
+          const formattedDate = new Date(dienst.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+          void notifyKlantMedewerkerAssigned(klantRecord.id, medewerker.naam, dienst.functie, formattedDate);
+        }
       }
     }
   }

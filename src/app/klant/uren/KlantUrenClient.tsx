@@ -14,8 +14,10 @@ import KlantPushNotificationBanner from "../components/PushNotificationBanner";
 import QuickActions from "@/components/klant/QuickActions";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
+import StarRating from "@/components/ui/StarRating";
 import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useKlantFavorieten, useKlantTemplates, useKlantAanvraagLocaties, useKlantRooster, useKlantKosten, useKlantCheckins, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction, useFavorietAction, useAanvraagAction, useTemplateAction, useCheckinAction, klantKeys } from "@/hooks/queries/useKlantQueries";
 import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
+import { usePlatformOptions } from "@/hooks/queries/usePlatformOptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Klant {
@@ -176,6 +178,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const { data: dashboardData } = useKlantDashboard();
   const { data: dienstenData } = useKlantDiensten();
   const { data: facturenData } = useKlantFacturen();
+
+  // Platform opties (functies & vaardigheden uit admin)
+  const { data: functieOptions = [] } = usePlatformOptions("functie");
+  const { data: vaardigheidOptions = [] } = usePlatformOptions("vaardigheid");
 
   // Realtime subscriptions
   useKlantRealtime(klant.id);
@@ -1081,72 +1087,95 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         )}
       </KlantPortalLayout>
 
-      {/* Beoordeling Modal */}
+      {/* Beoordeling Modal — Premium Design */}
       {beoordeelModal.open && beoordeelModal.item && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-neutral-900 mb-2">Medewerker Beoordelen</h3>
-            <p className="text-sm text-neutral-500 mb-4">{beoordeelModal.item.medewerker_naam} · {beoordeelModal.item.locatie}</p>
-
-            {/* Algemene score */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Algemene score</label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <button key={s} onClick={() => setBeoordeelModal({ ...beoordeelModal, score: s })}
-                    className={`w-10 h-10 rounded-full text-lg font-medium transition ${beoordeelModal.score >= s ? "bg-yellow-400 text-white" : "bg-neutral-100 text-neutral-400"}`}>
-                    ★
-                  </button>
-                ))}
-              </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setBeoordeelModal({ ...beoordeelModal, open: false })}>
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Header with gradient */}
+            <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] rounded-t-3xl px-6 py-5 text-white">
+              <h3 className="text-lg font-bold">Beoordeling</h3>
+              <p className="text-white/70 text-sm mt-0.5">{beoordeelModal.item.medewerker_naam} · {beoordeelModal.item.locatie}</p>
             </div>
 
-            {/* Categorie scores */}
-            <div className="mb-4 space-y-3">
-              <p className="text-sm font-medium text-neutral-700">Score per categorie</p>
-              {([
-                { key: "score_punctualiteit" as const, label: "Op tijd" },
-                { key: "score_professionaliteit" as const, label: "Professionaliteit" },
-                { key: "score_vaardigheden" as const, label: "Vaardigheden" },
-                { key: "score_communicatie" as const, label: "Communicatie" },
-              ]).map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600">{label}</span>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <button key={s} onClick={() => setBeoordeelModal({ ...beoordeelModal, [key]: s })}
-                        className={`w-7 h-7 rounded-full text-sm transition ${beoordeelModal[key] >= s ? "bg-yellow-400 text-white" : "bg-neutral-100 text-neutral-400"}`}>
-                        ★
-                      </button>
-                    ))}
-                  </div>
+            <div className="px-6 py-5 space-y-5">
+              {/* Algemene score — groot en centraal */}
+              <div className="text-center">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">Algemene score</label>
+                <div className="flex justify-center">
+                  <StarRating value={beoordeelModal.score} onChange={(s) => setBeoordeelModal({ ...beoordeelModal, score: s })} size="lg" />
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {/* Zou opnieuw boeken */}
-            <div className="mb-4">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={beoordeelModal.zou_opnieuw_boeken}
-                  onChange={(e) => setBeoordeelModal({ ...beoordeelModal, zou_opnieuw_boeken: e.target.checked })}
-                  className="w-5 h-5 rounded border-neutral-300 text-[#F27501] focus:ring-[#F27501]"
-                />
+              {/* Divider */}
+              <div className="border-t border-neutral-100" />
+
+              {/* Categorie scores — compact grid */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">Score per categorie</label>
+                <div className="space-y-3">
+                  {([
+                    { key: "score_punctualiteit" as const, label: "Op tijd", emoji: "⏰" },
+                    { key: "score_professionaliteit" as const, label: "Professionaliteit", emoji: "💼" },
+                    { key: "score_vaardigheden" as const, label: "Vaardigheden", emoji: "🎯" },
+                    { key: "score_communicatie" as const, label: "Communicatie", emoji: "💬" },
+                  ]).map(({ key, label, emoji }) => (
+                    <div key={key} className="flex items-center justify-between bg-neutral-50 rounded-xl px-3 py-2.5">
+                      <span className="text-sm text-neutral-700 flex items-center gap-2">
+                        <span className="text-base">{emoji}</span>
+                        {label}
+                      </span>
+                      <StarRating value={beoordeelModal[key]} onChange={(s) => setBeoordeelModal({ ...beoordeelModal, [key]: s })} size="sm" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Zou opnieuw boeken — toggle style */}
+              <button
+                type="button"
+                onClick={() => setBeoordeelModal({ ...beoordeelModal, zou_opnieuw_boeken: !beoordeelModal.zou_opnieuw_boeken })}
+                className={`flex items-center gap-3 w-full rounded-xl px-4 py-3 border-2 transition-all ${
+                  beoordeelModal.zou_opnieuw_boeken
+                    ? "border-green-300 bg-green-50"
+                    : "border-neutral-200 bg-white"
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
+                  beoordeelModal.zou_opnieuw_boeken ? "bg-green-500 text-white" : "bg-neutral-200 text-transparent"
+                }`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </div>
                 <span className="text-sm font-medium text-neutral-700">Ik zou deze medewerker opnieuw boeken</span>
-              </label>
-            </div>
+              </button>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Opmerking (optioneel)</label>
-              <textarea value={beoordeelModal.opmerking} onChange={(e) => setBeoordeelModal({ ...beoordeelModal, opmerking: e.target.value })}
-                rows={2} className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" placeholder="Hoe was de medewerker?" />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setBeoordeelModal({ ...beoordeelModal, open: false })}
-                className="flex-1 px-4 py-2 border border-neutral-200 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition">Annuleren</button>
-              <button onClick={submitBeoordeling}
-                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition">Versturen</button>
+              {/* Opmerking */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">Opmerking (optioneel)</label>
+                <textarea
+                  value={beoordeelModal.opmerking}
+                  onChange={(e) => setBeoordeelModal({ ...beoordeelModal, opmerking: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] text-sm resize-none"
+                  placeholder="Hoe was de medewerker?"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setBeoordeelModal({ ...beoordeelModal, open: false })}
+                  className="flex-1 px-4 py-3 border border-neutral-200 text-neutral-600 rounded-xl font-medium hover:bg-neutral-50 transition text-sm"
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={submitBeoordeling}
+                  disabled={beoordelingAction.isPending}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-[#F27501] to-[#ff8a1e] text-white rounded-xl font-semibold hover:from-[#d96800] hover:to-[#F27501] transition text-sm shadow-md shadow-orange-200 disabled:opacity-60"
+                >
+                  {beoordelingAction.isPending ? "Versturen..." : "Versturen"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1667,29 +1696,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
             <p className="text-sm text-neutral-600 mb-4">Selecteer één of meerdere functies en vul het aantal medewerkers in per functie</p>
 
             <div className="space-y-2">
-              {[
-                'Administratief medewerker',
-                'Barista',
-                'Bartending',
-                'Bediening',
-                'Bedrijfscatering',
-                'Bezorging',
-                'Catering',
-                'Festivalmedewerker',
-                'Garderobe',
-                'Gebruikersonderzoeken',
-                'Hosting',
-                'Housekeeping',
-                'Hulpkok',
-                'Productiemedewerker',
-                'Receptie medewerker',
-                'Roomservice',
-                'Schoonmaak',
-                'Sitecrew - Hospitality',
-                'Spoelkeuken medewerker',
-                'Training',
-                'Zelfstandig werkend kok'
-              ].map((functie) => {
+              {functieOptions.map((opt) => opt.value).map((functie) => {
                 const functieData = form.functies_met_aantal.find(f => f.functie === functie);
                 const selected = !!functieData;
 
@@ -1867,24 +1874,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
               <label className="block text-sm font-medium text-neutral-700 mb-2">Vereiste vaardigheden (optioneel)</label>
               <p className="text-xs text-neutral-500 mb-2">Selecteer vaardigheden waar de medewerker aan moet voldoen</p>
               <div className="flex flex-wrap gap-2">
-                {[
-                  'Barista ervaring',
-                  'Cocktail making',
-                  'Food handling certificaat',
-                  'HACCP certificaat',
-                  'Kassa ervaring',
-                  'POS systeem kennis',
-                  'Engels spreken',
-                  'Zweeds spreken',
-                  'Leiding geven',
-                  'Event ervaring',
-                  'Rijbewijs B',
-                  'Heftruckcertificaat',
-                  'VCA certificaat',
-                  'BHV diploma',
-                  'Schoonmaak ervaring',
-                  'Klantenservice',
-                ].map((skill) => {
+                {vaardigheidOptions.map((opt) => opt.value).map((skill) => {
                   const selected = form.vereiste_vaardigheden.includes(skill);
                   return (
                     <button
@@ -1908,25 +1898,81 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
               </div>
             </div>
 
+            {/* Locatie */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Locatie</label>
-              {locaties.length > 0 ? (
-                <select value={form.locatie} onChange={(e) => setForm({ ...form, locatie: e.target.value })}
-                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]">
-                  <option value="">Selecteer locatie...</option>
-                  {locaties.map((l) => <option key={l} value={l}>{l}</option>)}
-                  <option value="__nieuw">Andere locatie...</option>
-                </select>
-              ) : (
-                <input type="text" value={form.locatie} onChange={(e) => setForm({ ...form, locatie: e.target.value })}
-                  placeholder="Adres of naam van de locatie"
-                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+
+              {/* Saved locations dropdown */}
+              {locaties.length > 0 && (
+                <div className="mb-3">
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value && e.target.value !== "__nieuw") {
+                        setForm({ ...form, locatie: e.target.value });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  >
+                    <option value="">Kies uit opgeslagen locaties...</option>
+                    {locaties.map((l) => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
               )}
-              {form.locatie === "__nieuw" && (
-                <input type="text" onChange={(e) => setForm({ ...form, locatie: e.target.value })}
-                  placeholder="Vul locatie in..."
-                  className="w-full mt-2 px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
-              )}
+
+              {/* Structured address fields */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs text-neutral-500 mb-1">Straatnaam + huisnummer</label>
+                  <input
+                    type="text"
+                    value={form.locatie.includes(",") ? form.locatie.split(",")[0].trim() : form.locatie}
+                    onChange={(e) => {
+                      const parts = form.locatie.split(",").map(p => p.trim());
+                      parts[0] = e.target.value;
+                      setForm({ ...form, locatie: parts.filter(Boolean).join(", ") });
+                    }}
+                    placeholder="Bijv. Keizersgracht 100"
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-neutral-500 mb-1">Postcode</label>
+                  <input
+                    type="text"
+                    value={(() => {
+                      const parts = form.locatie.split(",").map(p => p.trim());
+                      return parts[1] || "";
+                    })()}
+                    onChange={(e) => {
+                      const parts = form.locatie.split(",").map(p => p.trim());
+                      while (parts.length < 3) parts.push("");
+                      parts[1] = e.target.value;
+                      setForm({ ...form, locatie: parts.filter(Boolean).join(", ") });
+                    }}
+                    placeholder="1015 AB"
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-neutral-500 mb-1">Stad</label>
+                  <input
+                    type="text"
+                    value={(() => {
+                      const parts = form.locatie.split(",").map(p => p.trim());
+                      return parts[2] || "";
+                    })()}
+                    onChange={(e) => {
+                      const parts = form.locatie.split(",").map(p => p.trim());
+                      while (parts.length < 3) parts.push("");
+                      parts[2] = e.target.value;
+                      setForm({ ...form, locatie: parts.filter(Boolean).join(", ") });
+                    }}
+                    placeholder="Amsterdam"
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Opmerkingen (optioneel)</label>

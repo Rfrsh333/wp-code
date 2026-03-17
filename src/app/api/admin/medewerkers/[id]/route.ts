@@ -21,6 +21,7 @@ export async function GET(
     documentenRes,
     dienstenRes,
     urenRes,
+    beoordelingenRes,
   ] = await Promise.all([
     // Profiel
     supabaseAdmin
@@ -72,6 +73,19 @@ export async function GET(
       .eq("medewerker_id", id)
       .order("created_at", { ascending: false })
       .limit(100),
+    // Beoordelingen van klanten
+    supabaseAdmin
+      .from("beoordelingen")
+      .select(`
+        id, score, opmerking, created_at,
+        score_punctualiteit, score_professionaliteit, score_vaardigheden, score_communicatie,
+        zou_opnieuw_boeken,
+        klanten (id, bedrijfsnaam),
+        diensten (id, datum, locatie, functie)
+      `)
+      .eq("medewerker_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
 
   if (profielRes.error || !profielRes.data) {
@@ -112,6 +126,7 @@ export async function GET(
     documenten: documentenRes.data || [],
     diensten: dienstenRes.data || [],
     financieel,
+    beoordelingen: beoordelingenRes.data || [],
     stats: {
       opkomst_percentage: opkomstPct,
       totaal_uren: totalUren,

@@ -5,6 +5,7 @@ import { Calendar, Clock, Euro, TrendingUp, ArrowRight, Star, WifiOff } from "lu
 import { useRouter } from "next/navigation";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import PushNotificationBanner from "@/components/medewerker/PushNotificationBanner";
+import RatingsCard from "@/components/medewerker/RatingsCard";
 import { toast } from "sonner";
 
 interface DashboardStats {
@@ -245,6 +246,11 @@ export default function DashboardHomeClient() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Beoordelingen */}
+        <div className="max-w-4xl mx-auto px-4 mt-6">
+          <RatingsCard />
         </div>
 
         {/* Spacing for bottom nav */}

@@ -236,6 +236,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["social", "posts", "linkedin"],
   },
+  platformOptions: {
+    id: "platformOptions",
+    title: "Platform opties",
+    icon: Settings,
+    kind: "tab",
+    tab: "platform-options",
+    pinnable: true,
+    keywords: ["functies", "vaardigheden", "opties", "instellingen", "configuratie"],
+  },
   settings: {
     id: "settings",
     title: "Instellingen",
@@ -297,7 +306,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "system",
     label: "System",
-    itemIds: ["settings"],
+    itemIds: ["platformOptions", "settings"],
     collapsible: true,
     dividerBefore: true,
   },
