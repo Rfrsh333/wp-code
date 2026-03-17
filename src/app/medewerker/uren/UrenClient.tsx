@@ -177,7 +177,11 @@ export default function UrenClient() {
 
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error || "Indienen mislukt");
+        if (data.error?.includes("QR") || data.error?.includes("ingecheckt")) {
+          toast.error("QR nog niet gescand. Vraag de klant om je QR code te scannen voordat je uren kunt indienen.");
+        } else {
+          toast.error(data.error || "Indienen mislukt");
+        }
         return;
       }
 

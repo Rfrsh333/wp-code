@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import BeschikbaarheidForm from "@/components/medewerker/BeschikbaarheidForm";
+import { useToast } from "@/components/ui/Toast";
 
 interface Medewerker {
   id: string;
@@ -60,6 +61,7 @@ interface KlantAanpassing {
 }
 
 export default function MedewerkerDienstenClient({ medewerker }: { medewerker: Medewerker }) {
+  const toast = useToast();
   const [diensten, setDiensten] = useState<Dienst[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState<"beschikbaar" | "mijn" | "aanpassingen" | "beschikbaarheid">("beschikbaar");
@@ -113,23 +115,39 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
     const uren = (eind[0] * 60 + eind[1] - start[0] * 60 - start[1] - parseInt(urenForm.pauze)) / 60;
     const reiskostenKm = Math.max(0, Number(urenForm.reiskosten_km) || 0);
 
-    await fetch("/api/medewerker/diensten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "uren_indienen",
-        aanmelding_id: urenModal.aanmelding_id,
-        data: {
-          start: urenForm.start,
-          eind: urenForm.eind,
-          pauze: parseInt(urenForm.pauze),
-          uren: Math.round(uren * 100) / 100,
-          reiskosten_km: reiskostenKm,
-        },
-      }),
-    });
-    setUrenModal(null);
-    fetchData();
+    try {
+      const res = await fetch("/api/medewerker/diensten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "uren_indienen",
+          aanmelding_id: urenModal.aanmelding_id,
+          data: {
+            start: urenForm.start,
+            eind: urenForm.eind,
+            pauze: parseInt(urenForm.pauze),
+            uren: Math.round(uren * 100) / 100,
+            reiskosten_km: reiskostenKm,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        if (data.error?.includes("QR") || data.error?.includes("ingecheckt")) {
+          toast.error("QR nog niet gescand. Vraag de klant om je QR code te scannen voordat je uren kunt indienen.");
+        } else {
+          toast.error(data.error || "Indienen mislukt");
+        }
+        return;
+      }
+
+      toast.success("Uren ingediend!");
+      setUrenModal(null);
+      fetchData();
+    } catch {
+      toast.error("Er ging iets mis bij het indienen");
+    }
   };
 
   const accepteerAanpassing = async (id: string) => {
