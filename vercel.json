@@ -2,8 +2,7 @@
   "regions": ["arn1"],
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 10,
-      "memory": 1024
+      "maxDuration": 10
     }
   },
   "crons": [
