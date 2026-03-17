@@ -40,6 +40,7 @@ interface Klant {
   churn_risico: string;
   notities: string | null;
   gemiddelde_beoordeling: number;
+  qr_verplicht: boolean;
 }
 
 interface KlantStats {
@@ -245,6 +246,30 @@ export default function KlantenTab() {
               </p>
               <p className="text-xs text-neutral-500">Sinds laatste dienst</p>
             </div>
+          </div>
+
+          {/* QR Verplicht toggle */}
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100">
+            <div>
+              <p className="text-sm font-medium text-neutral-700">QR code verplicht</p>
+              <p className="text-xs text-neutral-500">Medewerkers moeten ingecheckt worden via QR voordat ze uren kunnen indienen</p>
+            </div>
+            <button
+              onClick={async () => {
+                const newValue = !k.qr_verplicht;
+                // Optimistic update
+                setKlantDetail(prev => prev ? { ...prev, klant: { ...prev.klant, qr_verplicht: newValue } } : prev);
+                setKlanten(prev => prev.map(kl => kl.id === k.id ? { ...kl, qr_verplicht: newValue } : kl));
+                await fetch("/api/admin/klanten/analytics", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ klant_id: k.id, qr_verplicht: newValue }),
+                });
+              }}
+              className={`relative w-11 h-6 rounded-full transition-colors ${k.qr_verplicht ? "bg-[#F27501]" : "bg-neutral-300"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${k.qr_verplicht ? "translate-x-5" : ""}`} />
+            </button>
           </div>
         </div>
 

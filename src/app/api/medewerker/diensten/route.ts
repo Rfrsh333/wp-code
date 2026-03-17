@@ -57,10 +57,11 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from("diensten")
       .select(`
-        id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief,
+        id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, klant_id, status, notities, aantal_nodig, uurtarief,
         categorie_id, functie_id, vereiste_taal,
         categorie:dienst_categorieen(naam, slug),
-        functie_ref:dienst_functies(naam, slug)
+        functie_ref:dienst_functies(naam, slug),
+        klant:klanten(qr_verplicht)
       `)
       .in("status", ["open", "vol"])
       .gte("datum", new Date().toISOString().split("T")[0])
@@ -155,6 +156,7 @@ export async function GET(request: NextRequest) {
     aanmelding_status: aanmeldMap.get(d.id)?.status,
     check_in_at: aanmeldMap.get(d.id)?.check_in_at,
     uren_status: aanmeldMap.get(d.id)?.uren_status,
+    qr_verplicht: (d as any).klant?.qr_verplicht !== false,
   }));
 
   // FASE 6: Compute automatic tags
@@ -578,7 +580,7 @@ export async function POST(request: NextRequest) {
   if (action === "uren_indienen") {
     const { data: aanmelding } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("id, status, check_in_at, dienst:diensten(datum, eind_tijd)")
+      .select("id, status, check_in_at, dienst:diensten(datum, eind_tijd, klant_id)")
       .eq("id", aanmelding_id)
       .eq("medewerker_id", medewerker.id)
       .single();
@@ -593,10 +595,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Je kunt alleen uren indienen voor bevestigde diensten" }, { status: 400 });
     }
 
-    // Medewerker moet altijd ingecheckt zijn via QR scan
-    // Bij problemen: neem contact op met admin, die kan uren handmatig corrigeren
-    if (!aanmelding.check_in_at) {
-      return NextResponse.json({ error: "Je moet eerst ingecheckt worden door de klant via QR code. Neem contact op met admin als dit niet mogelijk is." }, { status: 400 });
+    // Check of QR verplicht is voor deze klant
+    let qrVerplicht = true;
+    if ((dienst as any).klant_id) {
+      const { data: klant } = await supabaseAdmin
+        .from("klanten")
+        .select("qr_verplicht")
+        .eq("id", (dienst as any).klant_id)
+        .single();
+      if (klant && klant.qr_verplicht === false) {
+        qrVerplicht = false;
+      }
+    }
+
+    if (qrVerplicht && !aanmelding.check_in_at) {
+      return NextResponse.json({ error: "QR nog niet gescand. Vraag de klant om je QR code te scannen voordat je uren kunt indienen." }, { status: 400 });
     }
 
     const { data: bestaandUrenItem } = await supabaseAdmin

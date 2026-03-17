@@ -38,6 +38,7 @@ interface Dienst {
   aanmelding_id?: string;
   aanmelding_status?: string;
   uren_status?: string;
+  qr_verplicht?: boolean;
 }
 
 interface KlantAanpassing {
@@ -104,8 +105,8 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
   };
 
   const openUrenModal = (dienst: Dienst) => {
-    if (!dienst.check_in_at) {
-      toast.error("QR nog niet gescand. Vraag de klant om je QR code te scannen voordat je uren kunt indienen.");
+    if (dienst.qr_verplicht !== false && !dienst.check_in_at) {
+      alert("QR nog niet gescand.\n\nVraag de klant om je QR code te scannen voordat je uren kunt indienen.");
       return;
     }
     setUrenForm({ start: dienst.start_tijd.slice(0, 5), eind: dienst.eind_tijd.slice(0, 5), pauze: "0", reiskosten_km: "0" });
@@ -417,9 +418,18 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
                           Afmelden
                         </button>
                       ) : dienst.aanmelding_status === "geaccepteerd" && !dienst.uren_status && new Date(dienst.datum) <= new Date() ? (
-                        <button onClick={() => openUrenModal(dienst)} className="px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
-                          Uren invullen
-                        </button>
+                        dienst.qr_verplicht !== false && !dienst.check_in_at ? (
+                          <div className="text-center">
+                            <p className="text-xs text-red-600 font-medium mb-1">⚠ QR nog niet gescand</p>
+                            <button onClick={() => openUrenModal(dienst)} className="px-5 py-2 bg-neutral-300 text-neutral-600 rounded-xl text-sm font-semibold">
+                              Uren invullen
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => openUrenModal(dienst)} className="px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
+                            Uren invullen
+                          </button>
+                        )
                       ) : dienst.uren_status ? (
                         <span className={`px-3 py-1.5 rounded-xl text-xs font-medium ${dienst.uren_status === "goedgekeurd" || dienst.uren_status === "gefactureerd" ? "bg-green-100 text-green-700" : dienst.uren_status === "klant_goedgekeurd" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}>
                           Uren {dienst.uren_status}

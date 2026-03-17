@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   // Haal alle klanten op met loyalty velden
   const { data: klanten, error } = await supabaseAdmin
     .from("klanten")
-    .select("id, bedrijfsnaam, contactpersoon, email, telefoon, stad, loyalty_tier, totaal_diensten, totaal_omzet, laatste_dienst_datum, churn_risico, notities, gemiddelde_beoordeling")
+    .select("id, bedrijfsnaam, contactpersoon, email, telefoon, stad, loyalty_tier, totaal_diensten, totaal_omzet, laatste_dienst_datum, churn_risico, notities, gemiddelde_beoordeling, qr_verplicht")
     .order("totaal_omzet", { ascending: false })
     .limit(500);
 
@@ -50,4 +50,26 @@ export async function GET(request: NextRequest) {
   }, {
     headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
   });
+}
+
+export async function PATCH(request: NextRequest) {
+  const { isAdmin } = await verifyAdmin(request);
+  if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { klant_id, qr_verplicht } = await request.json();
+
+  if (!klant_id || typeof qr_verplicht !== "boolean") {
+    return NextResponse.json({ error: "klant_id en qr_verplicht (boolean) zijn verplicht" }, { status: 400 });
+  }
+
+  const { error } = await supabaseAdmin
+    .from("klanten")
+    .update({ qr_verplicht })
+    .eq("id", klant_id);
+
+  if (error) {
+    return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }
