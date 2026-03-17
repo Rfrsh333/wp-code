@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Calendar, Clock, Euro, TrendingUp, ArrowRight, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
+import PushNotificationBanner from "@/components/medewerker/PushNotificationBanner";
 import { toast } from "sonner";
 
 interface DashboardStats {
@@ -93,6 +94,8 @@ export default function DashboardHomeClient() {
   return (
     <MedewerkerResponsiveLayout>
       <div className="min-h-screen bg-[var(--mp-bg)]">
+        {/* Push Notification Banner */}
+        <PushNotificationBanner />
         {/* Header */}
         <div className="bg-gradient-to-br from-[var(--mp-accent)] to-[var(--mp-accent-dark)] pt-8 pb-16 px-4">
           <div className="max-w-4xl mx-auto">

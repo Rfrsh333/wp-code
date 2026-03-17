@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
+import { sendPushToUser } from "@/lib/push-notifications";
 
 type UrenRegistratie = { status: string };
 
@@ -352,6 +353,28 @@ export async function POST(request: NextRequest) {
           status: nieuwBeschikbaar === 0 ? "vol" : "open"
         })
         .eq("id", dienst_id);
+    }
+
+    // Push notificatie naar klant: iemand heeft zich aangemeld
+    const { data: dienstDetails } = await supabaseAdmin
+      .from("diensten")
+      .select("klant_id, datum, functie, start_tijd, eind_tijd")
+      .eq("id", dienst_id)
+      .single();
+
+    const { data: mwNaam } = await supabaseAdmin
+      .from("medewerkers")
+      .select("voornaam")
+      .eq("id", medewerker.id)
+      .single();
+
+    if (dienstDetails?.klant_id) {
+      sendPushToUser(dienstDetails.klant_id, "klant", {
+        title: "Nieuwe aanmelding!",
+        body: `${mwNaam?.voornaam || "Een medewerker"} heeft zich aangemeld voor ${dienstDetails.functie || "dienst"} op ${dienstDetails.datum}`,
+        url: "/klant/uren/",
+        tag: `aanmelding-${dienst_id}`,
+      }).catch((err) => console.error("Push naar klant mislukt:", err));
     }
   }
 

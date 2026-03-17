@@ -49,6 +49,42 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Push notificaties
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  const data = event.data.json();
+  const options = {
+    body: data.body ?? "",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-192x192.png",
+    tag: data.tag ?? "medewerker-notif",
+    data: { url: data.url ?? "/medewerker/dashboard/" },
+    actions: data.actions ?? [],
+    vibrate: [200, 100, 200],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "TopTalent", options)
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? "/medewerker/dashboard/";
+  event.waitUntil(
+    clients.matchAll({ type: "window" }).then((windowClients) => {
+      const existing = windowClients.find((c) => c.url.includes("/medewerker"));
+      if (existing) {
+        existing.focus();
+        existing.navigate(url);
+      } else {
+        clients.openWindow(url);
+      }
+    })
+  );
+});
+
 // Fetch event - network first with cache fallback
 self.addEventListener("fetch", (event) => {
   const { request } = event;

@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { verifyKlantSession } from "@/lib/session";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { sendPushToAllOfType } from "@/lib/push-notifications";
 
 export async function POST(request: NextRequest) {
   try {
@@ -175,6 +176,14 @@ export async function POST(request: NextRequest) {
       `${opmerkingen ? `💬 Opmerkingen: ${opmerkingen}\n` : ""}` +
       `${favoriet_medewerker_ids?.length ? `⭐ Voorkeur medewerkers: ${favoriet_medewerker_ids.length}` : ""}`
     ).catch((err) => console.error("Telegram alert mislukt:", err));
+
+    // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar
+    sendPushToAllOfType("medewerker", {
+      title: "Nieuwe dienst beschikbaar!",
+      body: `${functieSummary} op ${datum} (${start_tijd} - ${eind_tijd})${locatie ? ` in ${locatie}` : ""}`,
+      url: "/medewerker/diensten/",
+      tag: `nieuwe-dienst-${datum}`,
+    }).catch((err) => console.error("Push notificatie mislukt:", err));
 
     return NextResponse.json({
       success: true,

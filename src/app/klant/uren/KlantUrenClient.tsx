@@ -10,6 +10,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import DashboardWidgets from "@/components/klant/DashboardWidgets";
+import KlantPushNotificationBanner from "../components/PushNotificationBanner";
 import QuickActions from "@/components/klant/QuickActions";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
@@ -564,6 +565,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         contactpersoon={klant.contactpersoon}
         ongelezen={totalNotifCount}
       />
+      <KlantPushNotificationBanner />
       <KlantPortalLayout
         tabs={tabs}
         activeTab={activeTab}

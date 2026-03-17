@@ -111,6 +111,7 @@ self.addEventListener("push", (event) => {
     tag: data.tag ?? "business-notif",
     data: { url: data.url ?? "/klant/" },
     actions: data.actions ?? [],
+    vibrate: [200, 100, 200],
   };
 
   event.waitUntil(
