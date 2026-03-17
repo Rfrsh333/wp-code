@@ -1498,6 +1498,9 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const [isSending, setIsSending] = useState(false);
   const [showAndereFunctie, setShowAndereFunctie] = useState(false);
   const [andereFunctieNaam, setAndereFunctieNaam] = useState("");
+  const [dienstImage, setDienstImage] = useState<File | null>(null);
+  const [dienstImagePreview, setDienstImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [form, setForm] = useState({
     functie: "", // ✅ Will be set based on selected functions
     categorie_id: "",
@@ -1554,7 +1557,33 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
 
   const submit = async () => {
     setIsSending(true);
-    aanvraagAction.mutate(form, {
+
+    // Upload afbeelding als die is geselecteerd
+    let afbeelding_url: string | undefined;
+    if (dienstImage) {
+      try {
+        setIsUploadingImage(true);
+        const { compressImage } = await import("@/lib/image-compress");
+        const compressed = await compressImage(dienstImage);
+        const uploadForm = new FormData();
+        uploadForm.append("file", compressed, "dienst.jpg");
+        const uploadRes = await fetch("/api/klant/dienst-afbeelding", {
+          method: "POST",
+          body: uploadForm,
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData.url) {
+          afbeelding_url = uploadData.url;
+        }
+      } catch (err) {
+        console.error("Image upload error:", err);
+        // Niet-kritiek: ga door zonder afbeelding
+      } finally {
+        setIsUploadingImage(false);
+      }
+    }
+
+    aanvraagAction.mutate({ ...form, afbeelding_url }, {
       onSuccess: () => {
         // Invalidate queries to refresh data (React Query v5)
         queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
@@ -2038,6 +2067,50 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                 </div>
               </div>
             </div>
+            {/* Dienst afbeelding */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Foto van de locatie (optioneel)</label>
+              <p className="text-xs text-neutral-500 mb-2">Voeg een foto toe zodat medewerkers de locatie herkennen. Max 5MB, wordt automatisch gecomprimeerd.</p>
+              {dienstImagePreview ? (
+                <div className="relative w-full aspect-[2/1] rounded-xl overflow-hidden border border-neutral-200 mb-2">
+                  <img src={dienstImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDienstImage(null);
+                      if (dienstImagePreview) URL.revokeObjectURL(dienstImagePreview);
+                      setDienstImagePreview(null);
+                    }}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center text-sm hover:bg-black/80"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-neutral-300 rounded-xl cursor-pointer hover:border-[#F27501] hover:bg-[#F27501]/5 transition-all">
+                  <svg className="w-6 h-6 text-neutral-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-xs text-neutral-500">Klik om een foto te uploaden</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error("Afbeelding is te groot (max 5MB)");
+                        return;
+                      }
+                      setDienstImage(file);
+                      setDienstImagePreview(URL.createObjectURL(file));
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Opmerkingen (optioneel)</label>
               <textarea value={form.opmerkingen} onChange={(e) => setForm({ ...form, opmerkingen: e.target.value })}

@@ -1,14 +1,17 @@
 /**
- * OpenKVK Scraper — haalt nieuwe bedrijfsregistraties op via de OpenKVK API.
+ * OpenKVK Scraper — haalt bedrijfsregistraties op via de overheid.io OpenKVK API.
  * Focust op sectoren relevant voor TopTalent (horeca, retail, logistiek, schoonmaak).
+ *
+ * De API bevat basisgegevens uit het Handelsregister. Per sector zoeken we op
+ * relevante trefwoorden in de handelsnaam, gefilterd op plaats.
+ *
+ * Scrapt de hele Randstad + omgeving, geen limiet, inclusief email scraping.
  *
  * Gebruik:
  *   node scripts/kvk-scraper.js
  *
  * Omgevingsvariabelen (optioneel):
- *   REGIO=Utrecht         — zoek in specifieke regio
- *   MAX_RESULTS=100       — max resultaten per sector
- *   SCRAPE_WEBSITE=1      — probeer email van bedrijfswebsite te scrapen
+ *   OVERHEID_API_KEY=xxx       — overheid.io API key (standaard ingebouwd)
  */
 
 const fs = require("fs");
@@ -17,18 +20,40 @@ const path = require("path");
 // ─── Configuratie ───────────────────────────────────────────────────────────
 
 const CONFIG = {
+  // Zoektermen per sector — matchen op handelsnaam
   sectoren: [
-    { sbi: "56", naam: "Horeca" },
-    { sbi: "5610", naam: "Restaurants" },
-    { sbi: "5630", naam: "Cafes" },
-    { sbi: "47", naam: "Retail" },
-    { sbi: "52", naam: "Logistiek" },
-    { sbi: "81", naam: "Schoonmaak" },
+    { zoektermen: ["restaurant", "eetcafe", "eetcafé", "trattoria", "bistro", "pizzeria", "sushi", "wok", "grill", "diner", "brasserie", "lunchroom", "broodjeszaak"], naam: "Restaurants" },
+    { zoektermen: ["cafe", "café", "koffiebar", "koffie", "coffeeshop", "espresso", "tearoom", "theehuis"], naam: "Cafes" },
+    { zoektermen: ["bar", "lounge", "kroeg", "pub", "tapperij", "proeflokaal", "cocktail"], naam: "Bars" },
+    { zoektermen: ["hotel", "hostel", "b&b", "pension", "lodge", "aparthotel"], naam: "Hotels" },
+    { zoektermen: ["catering", "horeca", "keuken", "food", "maaltijd", "banquet", "feest", "evenement"], naam: "Catering/Horeca" },
+    { zoektermen: ["schoonmaak", "cleaning", "reiniging", "glazenwas", "facilitair", "hygiene"], naam: "Schoonmaak" },
+    { zoektermen: ["logistiek", "transport", "bezorg", "koerier", "warehouse", "distributie", "vracht", "expeditie"], naam: "Logistiek" },
+    { zoektermen: ["uitzend", "detachering", "payroll", "personeels", "staffing", "recruitment", "werving"], naam: "Uitzend/Personeel" },
   ],
-  regio: process.env.REGIO || "Utrecht",
-  maxResultaten: Number(process.env.MAX_RESULTS || 100),
-  scrapeWebsite: process.env.SCRAPE_WEBSITE === "1",
-  outputDir: path.join("data", "kvk"),
+
+  // Randstad + omgeving — alle relevante steden
+  regios: [
+    // Utrecht provincie
+    "Utrecht", "Amersfoort", "Veenendaal", "Nieuwegein", "Zeist", "Houten",
+    "IJsselstein", "Woerden", "De Bilt", "Soest", "Bilthoven", "Maarssen",
+    "Driebergen", "Bunnik", "Breukelen", "Vianen", "Leerdam",
+    // Noord-Holland / Amsterdam regio
+    "Amsterdam", "Haarlem", "Zaandam", "Amstelveen", "Hoofddorp",
+    "Hilversum", "Almere", "Bussum", "Naarden", "Huizen", "Laren",
+    "Weesp", "Diemen", "Ouderkerk aan de Amstel", "Badhoevedorp",
+    "Purmerend", "Zaandijk", "Schiphol",
+    // Zuid-Holland / Den Haag + Rotterdam regio
+    "Rotterdam", "Den Haag", "Leiden", "Delft", "Dordrecht",
+    "Zoetermeer", "Gouda", "Schiedam", "Vlaardingen", "Capelle aan den IJssel",
+    "Rijswijk", "Voorburg", "Leidschendam", "Wassenaar", "Alphen aan den Rijn",
+    "Spijkenisse", "Barendrecht", "Ridderkerk", "Papendrecht",
+    // Flevoland
+    "Lelystad",
+  ],
+
+  maxResultaten: Infinity, // Geen limiet — alles ophalen
+  scrapeWebsite: true,     // Altijd emails proberen te scrapen
   outputFile: path.join("data", "kvk", "kvk_leads.csv"),
   existingLeadsFiles: [
     path.join("data", "clean", "maps_multi_amsterdam.csv"),
@@ -37,6 +62,7 @@ const CONFIG = {
 };
 
 const API_BASE = "https://api.overheid.io/openkvk";
+const API_KEY = process.env.OVERHEID_API_KEY || "ce01a3ff52f9a780e65db8ce9cd8a7bafa29912ffe2787b32a6bb3329b0855e1";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -53,15 +79,14 @@ function csvEscape(val) {
 const CSV_HEADER = [
   "naam",
   "kvk_nummer",
-  "sbi_code",
-  "sbi_omschrijving",
+  "sector",
   "adres",
   "stad",
   "postcode",
   "website",
   "email",
   "telefoon",
-  "oprichtingsdatum",
+  "zoekterm",
 ];
 
 function writeCsv(filePath, rows) {
@@ -140,11 +165,10 @@ function loadExistingSeen() {
 
 // ─── Email scraping ─────────────────────────────────────────────────────────
 
-const emailRegex = /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g;
-
 function extractEmailsFromHtml(html) {
   const emails = new Set();
   const mailtoRegex = /mailto:([^"'>\s]+)/gi;
+  const emailRegex = /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g;
   let m;
   while ((m = mailtoRegex.exec(html))) {
     const email = m[1].trim().toLowerCase();
@@ -201,30 +225,8 @@ async function scrapeEmailFromWebsite(url) {
 
 // ─── OpenKVK API ────────────────────────────────────────────────────────────
 
-async function queryOpenKvk(sbiCode, plaats, page = 1) {
-  // overheid.io API: filters op plaats, query voor SBI-gerelateerde zoektermen
-  const params = new URLSearchParams();
-  params.set("size", "100");
-  params.set("page", String(page));
-  params.set("filters[plaats]", plaats);
-
-  // SBI-code mapping naar zoektermen voor de query
-  const sbiQueryMap = {
-    "56": "horeca",
-    "5610": "restaurant",
-    "5630": "cafe",
-    "47": "retail winkel",
-    "52": "logistiek transport",
-    "81": "schoonmaak",
-  };
-  const queryTerm = sbiQueryMap[sbiCode] || "";
-  if (queryTerm) {
-    params.set("query", queryTerm);
-    params.set("queryfields[]", "handelsnaam");
-  }
-
-  const url = `${API_BASE}?${params.toString()}`;
-  console.log(`  API request: SBI=${sbiCode}, plaats=${plaats}, page=${page}`);
+async function searchKvk(zoekterm, plaats, page = 1) {
+  const url = `${API_BASE}?query=${encodeURIComponent(zoekterm)}&queryfields[]=handelsnaam&filters[plaats]=${encodeURIComponent(plaats)}&size=100&page=${page}`;
 
   try {
     const controller = new AbortController();
@@ -233,7 +235,7 @@ async function queryOpenKvk(sbiCode, plaats, page = 1) {
       signal: controller.signal,
       headers: {
         Accept: "application/json",
-        "User-Agent": "TopTalent-KVK-Scraper/1.0",
+        "ovio-api-key": API_KEY,
       },
     });
     clearTimeout(timeout);
@@ -244,11 +246,9 @@ async function queryOpenKvk(sbiCode, plaats, page = 1) {
     }
 
     const data = await res.json();
-
-    // overheid.io wraps results in embedded._embedded or _embedded.openkvk
     const embedded = data._embedded || {};
-    const results = embedded.openkvk || embedded.items || [];
-    const total = data.totalItemCount || data.total || results.length;
+    const results = embedded.bedrijf || [];
+    const total = data.totalItemCount || 0;
 
     return { results, total };
   } catch (err) {
@@ -257,32 +257,53 @@ async function queryOpenKvk(sbiCode, plaats, page = 1) {
   }
 }
 
-function parseCompany(item) {
+async function fetchCompanyDetail(selfHref) {
+  const url = `https://api.overheid.io${selfHref}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "ovio-api-key": API_KEY,
+      },
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function parseCompany(item, sector, zoekterm) {
   return {
-    naam: item.handelsnaam || item.trade_name || item.name || "",
-    kvk_nummer: item.dossiernummer || item.kvk_number || item.kvkNumber || "",
-    sbi_code: item.sbiCode || item.sbi_code || "",
-    sbi_omschrijving: item.sbiOmschrijving || item.sbi_description || "",
-    adres: [item.straat || item.street || "", item.huisnummer || item.house_number || ""]
-      .filter(Boolean)
-      .join(" "),
-    stad: item.plaats || item.city || "",
-    postcode: item.postcode || item.postal_code || "",
-    website: item.website || item.url || "",
+    naam: item.handelsnaam || "",
+    kvk_nummer: item.dossiernummer || "",
+    sector: sector,
+    adres: [item.straat || "", item.huisnummer || ""].filter(Boolean).join(" "),
+    stad: item.plaats || "",
+    postcode: item.postcode || "",
+    website: "",
     email: "",
-    telefoon: item.telefoon || item.phone || "",
-    oprichtingsdatum: item.registratiedatum || item.registration_date || item.startDate || "",
+    telefoon: "",
+    zoekterm: zoekterm,
   };
 }
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 async function main() {
+  const steden = CONFIG.regios;
+  const totalCombos = CONFIG.sectoren.reduce((sum, s) => sum + s.zoektermen.length, 0) * steden.length;
+
   console.log("=== OpenKVK Scraper voor TopTalent ===\n");
-  console.log(`Regio: ${CONFIG.regio}`);
-  console.log(`Max resultaten per sector: ${CONFIG.maxResultaten}`);
-  console.log(`Website scraping: ${CONFIG.scrapeWebsite ? "aan" : "uit"}`);
-  console.log(`Sectoren: ${CONFIG.sectoren.map((s) => s.naam).join(", ")}\n`);
+  console.log(`Steden: ${steden.length} (Randstad + omgeving)`);
+  console.log(`Sectoren: ${CONFIG.sectoren.length}`);
+  console.log(`Zoektermen: ${totalCombos} combinaties (sector x stad)`);
+  console.log(`Limiet: geen — alles ophalen`);
+  console.log(`Website/email scraping: aan\n`);
 
   ensureDir(CONFIG.outputFile);
 
@@ -301,69 +322,98 @@ async function main() {
 
   const allRows = [...existingRows];
   let newCount = 0;
+  let apiCalls = 0;
 
   for (const sector of CONFIG.sectoren) {
-    console.log(`\n--- Sector: ${sector.naam} (SBI ${sector.sbi}) ---`);
-    let collected = 0;
-    let page = 1;
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`SECTOR: ${sector.naam}`);
+    console.log(`${"=".repeat(60)}`);
+    let sectorCount = 0;
 
-    while (collected < CONFIG.maxResultaten) {
-      const { results, total } = await queryOpenKvk(sector.sbi, CONFIG.regio, page);
+    for (const stad of steden) {
+      let stadCount = 0;
 
-      if (results.length === 0) {
-        if (page === 1) console.log("  Geen resultaten gevonden.");
-        break;
+      for (const zoekterm of sector.zoektermen) {
+        let page = 1;
+
+        while (true) {
+          const { results, total } = await searchKvk(zoekterm, stad, page);
+          apiCalls++;
+
+          if (results.length === 0) break;
+          if (page === 1 && total > 0) {
+            console.log(`  [${stad}] "${zoekterm}" — ${total} resultaten`);
+          }
+
+          for (const item of results) {
+            const selfHref = item._links?.self?.href;
+            let detail = null;
+            if (selfHref) {
+              detail = await fetchCompanyDetail(selfHref);
+              apiCalls++;
+              await new Promise((r) => setTimeout(r, 150));
+            }
+
+            const source = detail || item;
+            const company = parseCompany(source, sector.naam, zoekterm);
+            if (!company.naam) continue;
+
+            // Alleen actieve bedrijven
+            if (detail && detail.actief === false) continue;
+
+            const key = dedupeKey(company.naam, company.stad);
+            if (seen.has(key)) continue;
+            seen.add(key);
+
+            // Email scrapen van website
+            if (company.website) {
+              company.email = await scrapeEmailFromWebsite(company.website);
+              await new Promise((r) => setTimeout(r, 200));
+            }
+
+            const row = CSV_HEADER.map((h) => csvEscape(company[h])).join(",");
+            allRows.push(row);
+            sectorCount++;
+            stadCount++;
+            newCount++;
+
+            console.log(
+              `  + ${company.naam} — ${company.stad} (${company.postcode}) [totaal: ${newCount}]`
+            );
+
+            // Autosave elke 25 resultaten
+            if (newCount % 25 === 0) {
+              writeCsv(CONFIG.outputFile, allRows);
+              console.log(`  [autosave: ${allRows.length} rijen | ${apiCalls} API calls]`);
+            }
+          }
+
+          if (results.length < 100) break;
+          page++;
+          await new Promise((r) => setTimeout(r, 300));
+        }
       }
 
-      if (page === 1) console.log(`  Totaal beschikbaar: ${total}`);
-
-      for (const item of results) {
-        if (collected >= CONFIG.maxResultaten) break;
-
-        const company = parseCompany(item);
-        if (!company.naam) continue;
-
-        const key = dedupeKey(company.naam, company.stad);
-        if (seen.has(key)) continue;
-        seen.add(key);
-
-        // Email scrapen van website indien gewenst
-        if (CONFIG.scrapeWebsite && company.website) {
-          company.email = await scrapeEmailFromWebsite(company.website);
-          // Kleine pauze om niet te agressief te zijn
-          await new Promise((r) => setTimeout(r, 500));
-        }
-
-        const row = CSV_HEADER.map((h) => csvEscape(company[h])).join(",");
-        allRows.push(row);
-        collected++;
-        newCount++;
-
-        console.log(
-          `  + ${company.naam}${company.stad ? ` (${company.stad})` : ""} [${collected}/${CONFIG.maxResultaten}]`
-        );
-
-        // Autosave elke 20 resultaten
-        if (newCount % 20 === 0) {
-          writeCsv(CONFIG.outputFile, allRows);
-          console.log(`  Autosave: ${allRows.length} rijen`);
-        }
+      if (stadCount > 0) {
+        console.log(`  => ${stad}: +${stadCount} leads`);
       }
-
-      page++;
-
-      // Pauze tussen pagina's
-      await new Promise((r) => setTimeout(r, 1000));
     }
 
-    console.log(`  Sector ${sector.naam}: ${collected} nieuwe leads`);
+    // Save na elke sector
+    writeCsv(CONFIG.outputFile, allRows);
+    console.log(`\n  SECTOR ${sector.naam} KLAAR: ${sectorCount} nieuwe leads`);
+    console.log(`  Totaal tot nu toe: ${allRows.length} rijen\n`);
   }
 
   // Final save
   writeCsv(CONFIG.outputFile, allRows);
-  console.log(`\n=== Klaar ===`);
+  console.log(`\n${"=".repeat(60)}`);
+  console.log(`KLAAR`);
+  console.log(`${"=".repeat(60)}`);
   console.log(`${newCount} nieuwe leads toegevoegd`);
   console.log(`${allRows.length} totale rijen in ${CONFIG.outputFile}`);
+  console.log(`${apiCalls} API calls gemaakt`);
+  console.log(`${seen.size} unieke bedrijven in database`);
 }
 
 main().catch((err) => {

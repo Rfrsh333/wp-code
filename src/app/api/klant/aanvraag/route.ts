@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief } = body;
+    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief, afbeelding_url } = body;
 
     // Support both old (single functie) and new (multiple functies with per-function rates) format
     if (!datum || !start_tijd || !eind_tijd) {
@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
         if (vereiste_vaardigheden && vereiste_vaardigheden.length > 0) {
           insertData.vereiste_vaardigheden = vereiste_vaardigheden;
         }
+        if (afbeelding_url) insertData.afbeelding_url = afbeelding_url;
 
         dienstenToCreate.push(insertData);
       }
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
         insertData.vereiste_vaardigheden = vereiste_vaardigheden;
       }
       if (opmerkingen) insertData.notities = opmerkingen;
+      if (afbeelding_url) insertData.afbeelding_url = afbeelding_url;
 
       dienstenToCreate.push(insertData);
     }

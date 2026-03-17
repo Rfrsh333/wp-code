@@ -14,6 +14,7 @@ interface ShiftCardProps {
     uurtarief: number;
     plekken_beschikbaar: number;
     plekken_totaal: number;
+    afbeelding_url?: string | null;
     klant: {
       bedrijfsnaam: string;
       bedrijf_foto_url?: string;
@@ -53,14 +54,15 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false }: Shi
 
   return (
     <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] overflow-hidden shadow-[var(--mp-shadow)]">
-      {/* Bedrijfsfoto — compact: smaller aspect ratio */}
+      {/* Dienst/bedrijfsfoto — dienst afbeelding heeft prioriteit */}
       <div className="relative w-full aspect-[2/1] bg-[var(--mp-bg)]">
-        {shift.klant.bedrijf_foto_url ? (
+        {(shift.afbeelding_url || shift.klant.bedrijf_foto_url) ? (
           <Image
-            src={shift.klant.bedrijf_foto_url}
+            src={shift.afbeelding_url || shift.klant.bedrijf_foto_url!}
             alt={shift.klant.bedrijfsnaam}
             fill
             className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--mp-accent)]/10 to-[var(--mp-accent)]/5">

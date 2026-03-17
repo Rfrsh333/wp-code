@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         klant_naam,
         klant_id,
         status,
+        afbeelding_url,
         klant:klanten!left (
           id,
           bedrijfsnaam,
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
       console.warn("[SHIFTS BESCHIKBAAR] Join query failed, using fallback:", error);
       const { data: fallbackDiensten } = await supabaseAdmin
         .from("diensten")
-        .select("id, datum, start_tijd, eind_tijd, locatie, notities, uurtarief, aantal_nodig, plekken_totaal, plekken_beschikbaar, functie, klant_naam, klant_id, status")
+        .select("id, datum, start_tijd, eind_tijd, locatie, notities, uurtarief, aantal_nodig, plekken_totaal, plekken_beschikbaar, functie, klant_naam, klant_id, status, afbeelding_url")
         .in("status", ["open", "vol"])
         .gte("datum", vandaag)
         .order("datum", { ascending: true })
@@ -112,6 +113,7 @@ export async function GET(request: NextRequest) {
           uurtarief: d.uurtarief,
           plekken_beschikbaar: plekkenBeschikbaar,
           plekken_totaal: plekkenTotaal,
+          afbeelding_url: d.afbeelding_url || null,
           klant: {
             bedrijfsnaam: klant?.bedrijfsnaam || (d as any).klant_naam || "Onbekend",
             bedrijf_foto_url: klant?.bedrijf_foto_url,
