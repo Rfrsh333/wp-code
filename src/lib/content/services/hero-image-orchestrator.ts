@@ -398,30 +398,30 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
     }
 
     // Download and validate source image
-    let imageBuffer: Buffer | null = null;
-    let imageSource: string = imageUrl;
-    let generationModel: string = "source_og_image" as string;
+    let imageBuffer: Buffer;
+    let imageSource: string;
+    let generationModel: string;
 
     try {
       const downloadedBuffer = await downloadImage(imageUrl);
 
       if (downloadedBuffer.length < 10_000) {
-        console.warn(`[hero-image] Image too small from ${imageUrl}`);
+        console.warn(`[hero-image] Image too small from ${imageUrl}, trying Unsplash...`);
+        throw new Error("Image too small");
       } else if (!(await isUsablePhotoDimensions(downloadedBuffer))) {
-        console.warn(`[hero-image] Image dimensions not suitable from ${imageUrl}`);
-      } else {
-        // Source image is good!
-        imageBuffer = downloadedBuffer;
-        imageSource = imageUrl;
-        console.log(`[hero-image] Using source image from ${imageUrl}`);
+        console.warn(`[hero-image] Image dimensions not suitable from ${imageUrl}, trying Unsplash...`);
+        throw new Error("Image dimensions not suitable");
       }
-    } catch (downloadError) {
-      console.warn(`[hero-image] Failed to download ${imageUrl}:`, downloadError);
-    }
 
-    // Fallback 1: Try Unsplash if source image failed
-    if (!imageBuffer) {
-      console.log(`[hero-image] Trying Unsplash as fallback...`);
+      // Source image is good!
+      imageBuffer = downloadedBuffer;
+      imageSource = imageUrl;
+      generationModel = "source_og_image";
+      console.log(`[hero-image] ✓ Using source image from ${imageUrl}`);
+
+    } catch (sourceError) {
+      // Fallback 1: Try Unsplash if source image failed
+      console.log(`[hero-image] Source failed, trying Unsplash...`);
       const unsplashQuery = buildUnsplashQuery(String(draft.title), String(draft.slug));
       const unsplashResult = await searchUnsplashImage(unsplashQuery);
 
@@ -429,35 +429,15 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
         imageBuffer = unsplashResult.buffer;
         imageSource = `unsplash:${unsplashQuery}`;
         generationModel = `unsplash (${unsplashResult.attribution})`;
-        console.log(`[hero-image] Using Unsplash image`);
-      }
-    }
-
-    // Fallback 2: Try AI generation if Unsplash failed
-    if (!imageBuffer) {
-      console.log(`[hero-image] Trying AI generation as fallback...`);
-      const aiResult = await generateAIImage(String(draft.title), String(draft.slug));
-
-      if (aiResult) {
-        imageBuffer = aiResult.buffer;
-        imageSource = `ai:${aiResult.prompt.substring(0, 50)}...`;
-        generationModel = "dall-e-3";
-        console.log(`[hero-image] Using AI-generated image`);
-      }
-    }
-
-    // Fallback 3: Use placeholder as last resort
-    if (!imageBuffer) {
-      console.log(`[hero-image] All sources failed, using placeholder`);
-      try {
+        console.log(`[hero-image] ✓ Using Unsplash image for: ${unsplashQuery}`);
+      } else {
+        // Fallback 2: Use placeholder as last resort
+        console.log(`[hero-image] Unsplash failed, using placeholder`);
         const logoPath = path.join(process.cwd(), "public", "logo.png");
         imageBuffer = await createPlaceholderHeroImage({ logoPath });
         imageSource = "placeholder";
         generationModel = "placeholder";
-        console.log(`[hero-image] Placeholder created successfully`);
-      } catch (placeholderError) {
-        console.error(`[hero-image] Failed to create placeholder:`, placeholderError);
-        throw new Error(`Placeholder creatie mislukt: ${placeholderError instanceof Error ? placeholderError.message : "Unknown error"}`);
+        console.log(`[hero-image] ✓ Using placeholder`);
       }
     }
 
