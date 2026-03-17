@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import AdminShell from "@/components/navigation/AdminShell";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/admin/dashboard/StatCard";
+import DashboardOverzicht from "@/components/admin/dashboard/DashboardOverzicht";
 import { BriefcaseBusiness, Calculator, Inbox, Users, Plus, ClipboardList, Target, CalendarRange } from "lucide-react";
 import { isAdminTab } from "@/lib/navigation/sidebar-config";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
@@ -997,291 +998,34 @@ export default function AdminDashboard() {
           <>
             {/* Overzicht Tab */}
             {activeTab === "overzicht" && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900">Dashboard Overzicht</h2>
-                </div>
-
-                {/* Snelle Acties */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  <button
-                    onClick={() => setActiveTab("inschrijvingen")}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
-                  >
-                    <Plus className="h-4 w-4 text-[#F27501]" />
-                    Nieuwe Medewerker
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("aanvragen")}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
-                  >
-                    <ClipboardList className="h-4 w-4 text-blue-500" />
-                    Aanvraag verwerken
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("leads")}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
-                  >
-                    <Target className="h-4 w-4 text-green-500" />
-                    Lead toevoegen
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("planning")}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 hover:border-neutral-300"
-                  >
-                    <CalendarRange className="h-4 w-4 text-purple-500" />
-                    Planning
-                  </button>
-                </div>
-
-                {/* Stat Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <StatCard
-                    title="Personeel aanvragen"
-                    value={stats.aanvragen.total}
-                    icon={BriefcaseBusiness}
-                    iconBg="bg-blue-100"
-                    iconColor="text-blue-600"
-                    badge={stats.aanvragen.nieuw > 0 ? { count: stats.aanvragen.nieuw, label: "nieuw", color: "bg-red-100 text-red-600" } : undefined}
-                    onClick={() => setActiveTab("aanvragen")}
-                  />
-                  <StatCard
-                    title="Inschrijvingen"
-                    value={stats.inschrijvingen.total}
-                    icon={Users}
-                    iconBg="bg-green-100"
-                    iconColor="text-green-600"
-                    badge={stats.inschrijvingen.nieuw > 0 ? { count: stats.inschrijvingen.nieuw, label: "nieuw", color: "bg-red-100 text-red-600" } : undefined}
-                    onClick={() => setActiveTab("inschrijvingen")}
-                  />
-                  <StatCard
-                    title="Contact berichten"
-                    value={stats.contact.total}
-                    icon={Inbox}
-                    iconBg="bg-purple-100"
-                    iconColor="text-purple-600"
-                    badge={stats.contact.nieuw > 0 ? { count: stats.contact.nieuw, label: "nieuw", color: "bg-red-100 text-red-600" } : undefined}
-                    onClick={() => setActiveTab("contact")}
-                  />
-                  <StatCard
-                    title="Calculator leads"
-                    value={stats.calculator.total}
-                    icon={Calculator}
-                    iconBg="bg-orange-100"
-                    iconColor="text-orange-600"
-                    badge={stats.calculator.downloaded > 0 ? { count: stats.calculator.downloaded, label: "PDF", color: "bg-green-100 text-green-600" } : undefined}
-                    onClick={() => setActiveTab("calculator")}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6 mb-8">
-                  <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-neutral-900">Onboarding Funnel</h3>
-                      <button
-                        onClick={exportOnboardingMetrics}
-                        className="px-3 py-2 rounded-xl bg-neutral-100 text-sm font-medium text-neutral-700 hover:bg-neutral-200"
-                      >
-                        Exporteer funnel
-                      </button>
-                    </div>
-                    {(() => {
-                      const { metrics, avgProcessingTime } = calculateOnboardingMetrics();
-                      const totalActive = Math.max(
-                        1,
-                        Object.entries(metrics)
-                          .filter(([status]) => status !== "afgewezen")
-                          .reduce((sum, [, value]) => sum + value, 0)
-                      );
-
-                      return (
-                        <>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {([
-                              ["Nieuw", metrics.nieuw],
-                              ["Docs opvragen", metrics.documenten_opvragen],
-                              ["Goedgekeurd", metrics.goedgekeurd],
-                              ["Inzetbaar", metrics.inzetbaar],
-                            ] as const).map(([label, value]) => (
-                              <div key={label} className="rounded-xl bg-neutral-50 p-4">
-                                <p className="text-sm text-neutral-500">{label}</p>
-                                <p className="text-2xl font-bold text-neutral-900">{value}</p>
-                                <p className="text-xs text-neutral-500 mt-1">{Math.round((value / totalActive) * 100)}%</p>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-4 rounded-xl bg-orange-50 border border-orange-100 px-4 py-3 text-sm text-orange-900">
-                            Gemiddelde doorlooptijd: <strong>{avgProcessingTime > 0 ? `${avgProcessingTime.toFixed(1)} dagen` : "nog onvoldoende data"}</strong>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
-                        <span className="text-amber-500">&#9889;</span>
-                        Actie Vereist
-                      </h3>
-                      <span className="text-xs text-neutral-500">Vandaag</span>
-                    </div>
-                    <div className="space-y-2">
-                      {stats.aanvragen.nieuw > 0 && (
-                        <button
-                          onClick={() => setActiveTab("aanvragen")}
-                          className="flex w-full items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left transition hover:bg-red-100"
-                        >
-                          <span className="text-sm font-medium text-red-800">{stats.aanvragen.nieuw} nieuwe aanvragen</span>
-                          <span className="text-neutral-400">&rarr;</span>
-                        </button>
-                      )}
-                      {workflowAlerts.length === 0 && stats.aanvragen.nieuw === 0 ? (
-                        <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
-                          Alles is bijgewerkt — geen openstaande acties.
-                        </div>
-                      ) : (
-                        workflowAlerts.map((alert) => (
-                          <button
-                            key={alert.label}
-                            onClick={() => setActiveTab("inschrijvingen")}
-                            className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition hover:opacity-80 ${alert.tone}`}
-                          >
-                            <span className="text-sm font-medium">{alert.label}: <strong>{alert.value}</strong></span>
-                            <span className="text-neutral-400">&rarr;</span>
-                          </button>
-                        ))
-                      )}
-                      <div className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3 text-sm text-neutral-700">
-                        Open taken: <strong>{opsSnapshot?.counters.openTasks ?? 0}</strong> &middot; Testkandidaten: <strong>{opsSnapshot?.counters.testCandidates ?? 0}</strong>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Activity */}
-                <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
-                  <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-neutral-900">Recente activiteit</h3>
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    {[...aanvragen.slice(0, 4).map((a) => ({ ...a, type: "aanvraag" as const })),
-                      ...inschrijvingen.slice(0, 4).map((i) => ({ ...i, type: "inschrijving" as const })),
-                      ...contactBerichten.slice(0, 4).map((c) => ({ ...c, type: "contact" as const }))]
-                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                      .slice(0, 8)
-                      .map((item) => {
-                        const typeConfig = {
-                          aanvraag: { icon: BriefcaseBusiness, bg: "bg-blue-100", color: "text-blue-600", badgeColor: "bg-blue-100 text-blue-700", badgeLabel: "Aanvraag" },
-                          inschrijving: { icon: Users, bg: "bg-green-100", color: "text-green-600", badgeColor: "bg-green-100 text-green-700", badgeLabel: "Kandidaat" },
-                          contact: { icon: Inbox, bg: "bg-purple-100", color: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", badgeLabel: "Bericht" },
-                        }[item.type];
-                        const Icon = typeConfig.icon;
-                        const timeAgo = (() => {
-                          const diff = Date.now() - new Date(item.created_at).getTime();
-                          const mins = Math.floor(diff / 60000);
-                          if (mins < 1) return "Nu";
-                          if (mins < 60) return `${mins} min`;
-                          const hours = Math.floor(mins / 60);
-                          if (hours < 24) return `${hours} uur`;
-                          const days = Math.floor(hours / 24);
-                          if (days === 1) return "Gisteren";
-                          return `${days} dagen`;
-                        })();
-                        return (
-                          <div key={item.id} className="flex items-center gap-3 py-2.5">
-                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${typeConfig.bg}`}>
-                              <Icon className={`h-4 w-4 ${typeConfig.color}`} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-neutral-900">
-                                {item.type === "aanvraag" && (item as PersoneelAanvraag).bedrijfsnaam}
-                                {item.type === "inschrijving" && `${(item as Inschrijving).voornaam} ${(item as Inschrijving).achternaam}`}
-                                {item.type === "contact" && (item as ContactBericht).naam}
-                              </p>
-                            </div>
-                            <span className={`hidden sm:inline-block shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${typeConfig.badgeColor}`}>
-                              {typeConfig.badgeLabel}
-                            </span>
-                            <span className="shrink-0 text-xs text-neutral-400 tabular-nums">{timeAgo}</span>
-                          </div>
-                        );
-                      })}
-                  </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="bg-white rounded-2xl p-6 shadow-sm">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-neutral-900">Operations</h3>
-                        <span className="text-xs text-neutral-500">Live checks</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="rounded-xl bg-neutral-50 p-4">
-                          <p className="text-sm text-neutral-500">Verlopen uploadlinks</p>
-                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.expiredUploadLinks ?? 0}</p>
-                        </div>
-                        <div className="rounded-xl bg-neutral-50 p-4">
-                          <p className="text-sm text-neutral-500">Kandidaten wachten te lang</p>
-                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.candidatesWaitingTooLong ?? 0}</p>
-                        </div>
-                        <div className="rounded-xl bg-neutral-50 p-4">
-                          <p className="text-sm text-neutral-500">In review documenten</p>
-                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.pendingDocumentReviews ?? 0}</p>
-                        </div>
-                        <div className="rounded-xl bg-neutral-50 p-4">
-                          <p className="text-sm text-neutral-500">Inzetbaar zonder profiel</p>
-                          <p className="text-2xl font-bold text-neutral-900">{opsSnapshot?.counters.inzetbaarWithoutProfile ?? 0}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 space-y-2 text-sm">
-                        <div className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
-                          <span>Redis rate limiting</span>
-                          <span className={opsSnapshot?.health.redisConfigured ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                            {opsSnapshot?.health.redisConfigured ? "Actief" : "Mist"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
-                          <span>Cron secret</span>
-                          <span className={opsSnapshot?.health.cronConfigured ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                            {opsSnapshot?.health.cronConfigured ? "Actief" : "Mist"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
-                          <span>Resend</span>
-                          <span className={opsSnapshot?.health.resendConfigured ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                            {opsSnapshot?.health.resendConfigured ? "Actief" : "Mist"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 shadow-sm">
-                      <h3 className="text-lg font-semibold text-neutral-900 mb-4">Audit log</h3>
-                      <div className="space-y-3">
-                        {(opsSnapshot?.recentAudit || []).slice(0, 5).map((item) => (
-                          <div key={item.id} className="rounded-xl bg-neutral-50 p-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-sm font-medium text-neutral-900">{item.summary}</p>
-                              <span className="text-xs text-neutral-500">
-                                {new Date(item.created_at).toLocaleString("nl-NL")}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-xs text-neutral-500">
-                              {(item.actor_email || "onbekend")} · {item.target_table} · {item.action}
-                            </p>
-                          </div>
-                        ))}
-                        {(!opsSnapshot?.recentAudit || opsSnapshot.recentAudit.length === 0) && (
-                          <p className="text-sm text-neutral-500">Nog geen audit events gevonden.</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <DashboardOverzicht
+                stats={stats}
+                onboardingMetrics={calculateOnboardingMetrics()}
+                workflowAlerts={workflowAlerts}
+                opsSnapshot={opsSnapshot}
+                activityItems={[
+                  ...aanvragen.slice(0, 6).map((a) => ({
+                    id: a.id,
+                    created_at: a.created_at,
+                    type: "aanvraag" as const,
+                    naam: a.bedrijfsnaam,
+                  })),
+                  ...inschrijvingen.slice(0, 6).map((i) => ({
+                    id: i.id,
+                    created_at: i.created_at,
+                    type: "inschrijving" as const,
+                    naam: `${i.voornaam} ${i.achternaam}`,
+                  })),
+                  ...contactBerichten.slice(0, 6).map((c) => ({
+                    id: c.id,
+                    created_at: c.created_at,
+                    type: "contact" as const,
+                    naam: c.naam,
+                  })),
+                ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())}
+                onTabChange={setActiveTab}
+                onExportFunnel={exportOnboardingMetrics}
+              />
             )}
 
             {/* Personeel Aanvragen Tab */}

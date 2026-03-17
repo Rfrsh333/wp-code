@@ -36,6 +36,7 @@ export const adminKeys = {
   leads: () => [...adminKeys.all, 'leads'] as const,
   offertes: () => [...adminKeys.all, 'offertes'] as const,
   onboarding: () => [...adminKeys.all, 'onboarding'] as const,
+  dashboardExtended: () => [...adminKeys.all, 'dashboard-extended'] as const,
 };
 
 // === QUERIES ===
@@ -64,6 +65,41 @@ export function useAdminOverzicht() {
         offertes: offertesRes.data || [],
       };
     },
+  });
+}
+
+export interface DashboardExtendedData {
+  vandaag: {
+    dienstenActief: number;
+    medewerkerIngepland: number;
+    openDiensten: number;
+    noShows: number;
+  };
+  beschikbaarheid: {
+    totaal: number;
+    actief: number;
+    ingepland: number;
+    beschikbaar: number;
+    gepauzeerd: number;
+  };
+  omzet: {
+    dezeMaand: number;
+    vorigeMaand: number;
+    openstaand: number;
+    weekData: { week: string; omzet: number }[];
+  };
+}
+
+export function useAdminDashboardExtended() {
+  return useQuery<DashboardExtendedData>({
+    queryKey: adminKeys.dashboardExtended(),
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/admin/dashboard-extended', { headers });
+      if (!res.ok) throw new Error('Dashboard data ophalen mislukt');
+      return res.json();
+    },
+    refetchInterval: 60_000, // refresh elke minuut
   });
 }
 
