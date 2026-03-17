@@ -27,22 +27,24 @@ async function getAuthHeaders() {
   return { Authorization: `Bearer ${session?.access_token}` }
 }
 
-const platformIcons = {
+const platformIcons: Record<string, typeof Facebook> = {
   facebook: Facebook,
   linkedin: Linkedin,
   instagram: Instagram,
   google: MapPin,
   website: Globe,
   handmatig: Globe,
+  kvk: Globe,
 }
 
-const platformColors = {
+const platformColors: Record<string, string> = {
   facebook: 'bg-blue-100 text-blue-700',
   linkedin: 'bg-blue-100 text-blue-800',
   instagram: 'bg-pink-100 text-pink-700',
   google: 'bg-red-100 text-red-700',
   website: 'bg-gray-100 text-gray-700',
   handmatig: 'bg-gray-100 text-gray-700',
+  kvk: 'bg-orange-100 text-orange-700',
 }
 
 const statusOptions: { value: LeadStatus | 'all'; label: string; color: string }[] = [

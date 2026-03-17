@@ -11,13 +11,14 @@ async function getAuthHeaders() {
   return { Authorization: `Bearer ${session?.access_token}` }
 }
 
-const platformIcons = {
+const platformIcons: Record<string, typeof Facebook> = {
   facebook: Facebook,
   linkedin: Linkedin,
   instagram: Instagram,
   google: MapPin,
   website: Globe,
   handmatig: Globe,
+  kvk: Globe,
 }
 
 const columns: { id: LeadStatus; label: string; color: string }[] = [
