@@ -355,6 +355,7 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
     } catch (downloadError) {
       console.warn(`[hero-image] Failed to download ${imageUrl}, using placeholder:`, downloadError);
       usePlaceholder = true;
+      imageBuffer = Buffer.alloc(0);
     }
 
     if (usePlaceholder) {
