@@ -359,9 +359,16 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
 
     if (usePlaceholder) {
       // Use placeholder when source image is not suitable
-      const logoPath = path.join(process.cwd(), "public", "logo.png");
-      imageBuffer = await createPlaceholderHeroImage({ logoPath });
-      imageSource = "placeholder";
+      try {
+        const logoPath = path.join(process.cwd(), "public", "logo.png");
+        console.log(`[hero-image] Creating placeholder with logo from: ${logoPath}`);
+        imageBuffer = await createPlaceholderHeroImage({ logoPath });
+        imageSource = "placeholder";
+        console.log(`[hero-image] Placeholder created successfully (${imageBuffer.length} bytes)`);
+      } catch (placeholderError) {
+        console.error(`[hero-image] Failed to create placeholder:`, placeholderError);
+        throw new Error(`Placeholder creatie mislukt: ${placeholderError instanceof Error ? placeholderError.message : "Unknown error"}`);
+      }
     } else {
       imageSource = imageUrl;
     }
@@ -503,11 +510,18 @@ export async function generateHeroImageForDraft(draftId: string) {
     } else {
       // Fallback to placeholder when Unsplash fails
       console.warn(`[hero-image] No Unsplash result for ${unsplashQuery}, using placeholder`);
-      const logoPath = path.join(process.cwd(), "public", "logo.png");
-      imageBuffer = await createPlaceholderHeroImage({ logoPath });
-      altText = String(draft.title);
-      generationModel = "placeholder";
-      imageSource = "placeholder";
+      try {
+        const logoPath = path.join(process.cwd(), "public", "logo.png");
+        console.log(`[hero-image] Creating placeholder with logo from: ${logoPath}`);
+        imageBuffer = await createPlaceholderHeroImage({ logoPath });
+        altText = String(draft.title);
+        generationModel = "placeholder";
+        imageSource = "placeholder";
+        console.log(`[hero-image] Placeholder created successfully (${imageBuffer.length} bytes)`);
+      } catch (placeholderError) {
+        console.error(`[hero-image] Failed to create placeholder:`, placeholderError);
+        throw new Error(`Placeholder creatie mislukt: ${placeholderError instanceof Error ? placeholderError.message : "Unknown error"}`);
+      }
     }
 
     // Create image record

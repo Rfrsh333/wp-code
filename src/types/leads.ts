@@ -1,6 +1,6 @@
 // Social Lead Capture System Types
 
-export type Platform = 'facebook' | 'linkedin' | 'instagram' | 'google' | 'website' | 'handmatig'
+export type Platform = 'facebook' | 'linkedin' | 'instagram' | 'google' | 'website' | 'handmatig' | 'kvk'
 
 export type LeadStatus = 'nieuw' | 'benaderd' | 'in_gesprek' | 'geplaatst' | 'archief' | 'niet_interested'
 

@@ -113,19 +113,31 @@ export async function POST(request: NextRequest) {
       if (!parsed.data.imageUrl) {
         return NextResponse.json({ error: "imageUrl is vereist voor brand_and_upload_image" }, { status: 400 });
       }
-      const result = await downloadBrandAndUpload(parsed.data.draftId, parsed.data.imageUrl);
-      nextStatus = "image_generated";
-      await logAuditEvent({
-        actorEmail: email,
-        actorRole: role,
-        action: "content_draft_brand_and_upload_image",
-        targetTable: "editorial_drafts",
-        targetId: parsed.data.draftId,
-        summary: `Branded and uploaded image`,
-        metadata: { generatedImageId: result.generatedImageId, brandedPath: result.brandedPath },
-      });
-      const drafts = await listDraftsByStatus(undefined, 40);
-      return NextResponse.json({ drafts, generatedImageId: result.generatedImageId });
+      try {
+        const result = await downloadBrandAndUpload(parsed.data.draftId, parsed.data.imageUrl);
+        nextStatus = "image_generated";
+        await logAuditEvent({
+          actorEmail: email,
+          actorRole: role,
+          action: "content_draft_brand_and_upload_image",
+          targetTable: "editorial_drafts",
+          targetId: parsed.data.draftId,
+          summary: `Branded and uploaded image`,
+          metadata: { generatedImageId: result.generatedImageId, brandedPath: result.brandedPath },
+        });
+        const drafts = await listDraftsByStatus(undefined, 40);
+        return NextResponse.json({ drafts, generatedImageId: result.generatedImageId });
+      } catch (brandError) {
+        console.error("[drafts] Brand and upload failed:", brandError);
+        return NextResponse.json(
+          {
+            error: brandError instanceof Error
+              ? `Afbeelding branden/uploaden mislukt: ${brandError.message}`
+              : "Afbeelding branden/uploaden mislukt",
+          },
+          { status: 500 }
+        );
+      }
     } else if (parsed.data.action === "regenerate_blocks") {
       await regenerateBodyBlocks(parsed.data.draftId);
       nextStatus = "blocks_regenerated";
