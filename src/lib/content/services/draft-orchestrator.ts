@@ -150,40 +150,44 @@ export async function generateDraftFromCluster(clusterId: string) {
     }
   }
 
-  // AI kwaliteitscheck
-  try {
-    const qualityScore = await checkDraftQuality(client, {
-      title: draft.title,
-      excerpt: draft.excerpt,
-      bodyMarkdown: draft.bodyMarkdown,
-      bodyBlocks: draft.bodyBlocks as Array<Record<string, unknown>> | undefined,
-      keyTakeaways: draft.keyTakeaways,
-      seoTitle: draft.seoTitle,
-      metaDescription: draft.metaDescription,
-    });
+  // AI kwaliteitscheck + hero image in background (niet blokkeren)
+  const backgroundTasks = async () => {
+    try {
+      const qualityScore = await checkDraftQuality(client, {
+        title: draft.title,
+        excerpt: draft.excerpt,
+        bodyMarkdown: draft.bodyMarkdown,
+        bodyBlocks: draft.bodyBlocks as Array<Record<string, unknown>> | undefined,
+        keyTakeaways: draft.keyTakeaways,
+        seoTitle: draft.seoTitle,
+        metaDescription: draft.metaDescription,
+      });
 
-    const qualityNotes = formatQualityNotes(qualityScore);
-    const reviewStatus = passesQualityCheck(qualityScore) ? "needs_review" : "draft";
+      const qualityNotes = formatQualityNotes(qualityScore);
+      const reviewStatus = passesQualityCheck(qualityScore) ? "needs_review" : "draft";
 
-    await supabaseAdmin
-      .from("editorial_drafts")
-      .update({
-        review_notes: qualityNotes,
-        review_status: reviewStatus,
-      })
-      .eq("id", draftId);
+      await supabaseAdmin
+        .from("editorial_drafts")
+        .update({
+          review_notes: qualityNotes,
+          review_status: reviewStatus,
+        })
+        .eq("id", draftId);
 
-    console.log(`[content] Draft ${draftId} quality: ${qualityScore.overallScore}/100 → ${reviewStatus}`);
-  } catch (qualityError) {
-    console.error(`[content] Quality check mislukt voor draft ${draftId}`, qualityError);
-  }
+      console.log(`[content] Draft ${draftId} quality: ${qualityScore.overallScore}/100 → ${reviewStatus}`);
+    } catch (qualityError) {
+      console.error(`[content] Quality check mislukt voor draft ${draftId}`, qualityError);
+    }
 
-  // Automatisch hero image genereren
-  try {
-    await generateHeroImageForDraft(draftId);
-  } catch (imageError) {
-    console.error(`[content] Hero image generatie mislukt voor draft ${draftId}`, imageError);
-  }
+    try {
+      await generateHeroImageForDraft(draftId);
+    } catch (imageError) {
+      console.error(`[content] Hero image generatie mislukt voor draft ${draftId}`, imageError);
+    }
+  };
+
+  // Fire-and-forget: voorkomt Vercel timeout bij serverless functions
+  backgroundTasks().catch((err) => console.error(`[content] Background tasks failed for draft ${draftId}`, err));
 
   return { status: "generated" as const, draftId };
 }

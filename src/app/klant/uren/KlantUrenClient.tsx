@@ -1512,15 +1512,12 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateNaam, setTemplateNaam] = useState("");
 
+  // Platform opties (functies & vaardigheden uit admin)
   const { data: functieOptions = [] } = usePlatformOptions("functie");
   const { data: vaardigheidOptions = [] } = usePlatformOptions("vaardigheid");
   const { data: aanvraagData } = useKlantAanvraagLocaties();
   const { data: favData } = useKlantFavorieten();
   const { data: templData } = useKlantTemplates();
-
-  // Platform opties (functies & vaardigheden uit admin)
-  const { data: functieOptions = [] } = usePlatformOptions("functie");
-  const { data: vaardigheidOptions = [] } = usePlatformOptions("vaardigheid");
   const templateAction = useTemplateAction();
   const aanvraagAction = useAanvraagAction();
 

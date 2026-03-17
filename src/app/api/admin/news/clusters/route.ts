@@ -5,6 +5,8 @@ import { listRecentClusters } from "@/lib/content/repository";
 import { generateDraftFromCluster } from "@/lib/content/services/draft-orchestrator";
 import { logAuditEvent } from "@/lib/audit-log";
 
+export const maxDuration = 60;
+
 export async function GET(request: NextRequest) {
   const { isAdmin } = await verifyAdmin(request);
   if (!isAdmin) {
