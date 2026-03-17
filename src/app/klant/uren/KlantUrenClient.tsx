@@ -1697,86 +1697,86 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
             <h3 className="text-lg font-bold text-neutral-900 mb-2">Welke functie(s) zoekt u?</h3>
             <p className="text-sm text-neutral-600 mb-4">Selecteer één of meerdere functies en vul het aantal medewerkers in per functie</p>
 
-            <div className="space-y-2">
-              {functieOptions.map((opt) => opt.value).map((functie) => {
-                const functieData = form.functies_met_aantal.find(f => f.functie === functie);
-                const selected = !!functieData;
+            <select
+              value=""
+              onChange={(e) => {
+                const functie = e.target.value;
+                if (functie && !form.functies_met_aantal.find(f => f.functie === functie)) {
+                  setForm({
+                    ...form,
+                    functies_met_aantal: [...form.functies_met_aantal, { functie, aantal: 1, uurtarief: "" }]
+                  });
+                }
+              }}
+              className="w-full px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+            >
+              <option value="">Kies een functie...</option>
+              {functieOptions.map((opt) => opt.value)
+                .filter((functie) => !form.functies_met_aantal.find(f => f.functie === functie))
+                .map((functie) => (
+                  <option key={functie} value={functie}>{functie}</option>
+                ))}
+            </select>
 
-                return (
-                  <div key={functie} className={`p-3 rounded-xl border-2 transition-all ${
-                    selected ? "border-[#F27501] bg-[#F27501]/5" : "border-neutral-200 hover:border-neutral-300"
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (selected) {
-                            setForm({
-                              ...form,
-                              functies_met_aantal: form.functies_met_aantal.filter(f => f.functie !== functie)
-                            });
-                          } else {
-                            setForm({
-                              ...form,
-                              functies_met_aantal: [...form.functies_met_aantal, { functie, aantal: 1, uurtarief: "" }]
-                            });
-                          }
+            <div className="space-y-2 mt-3">
+              {form.functies_met_aantal.map((functieData) => (
+                <div key={functieData.functie} className="p-3 rounded-xl border-2 border-[#F27501] bg-[#F27501]/5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex-1 text-sm font-medium text-[#F27501]">
+                      {functieData.functie}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-neutral-600 whitespace-nowrap">Aantal:</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={functieData.aantal}
+                        onChange={(e) => {
+                          const aantal = Math.max(1, parseInt(e.target.value) || 1);
+                          setForm({
+                            ...form,
+                            functies_met_aantal: form.functies_met_aantal.map(f =>
+                              f.functie === functieData.functie ? { ...f, aantal } : f
+                            )
+                          });
                         }}
-                        className="flex-1 text-left">
-                        <span className={`text-sm font-medium ${selected ? "text-[#F27501]" : "text-neutral-700"}`}>
-                          {functie}
-                        </span>
-                      </button>
-
-                      {selected && (
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-neutral-600 whitespace-nowrap">Aantal:</label>
-                          <input
-                            type="number"
-                            min="1"
-                            max="50"
-                            value={functieData?.aantal || 1}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => {
-                              const aantal = Math.max(1, parseInt(e.target.value) || 1);
-                              setForm({
-                                ...form,
-                                functies_met_aantal: form.functies_met_aantal.map(f =>
-                                  f.functie === functie ? { ...f, aantal } : f
-                                )
-                              });
-                            }}
-                            className="w-16 px-2 py-1 border border-neutral-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
-                          />
-                        </div>
-                      )}
+                        className="w-16 px-2 py-1 border border-neutral-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                      />
                     </div>
-
-                    {selected && (
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#F27501]/20">
-                        <label className="text-xs text-neutral-600 whitespace-nowrap">Uurtarief €:</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.50"
-                          value={functieData?.uurtarief || ""}
-                          placeholder="Bijv. 14.50"
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => {
-                            setForm({
-                              ...form,
-                              functies_met_aantal: form.functies_met_aantal.map(f =>
-                                f.functie === functie ? { ...f, uurtarief: e.target.value } : f
-                              )
-                            });
-                          }}
-                          className="flex-1 px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
-                        />
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setForm({
+                        ...form,
+                        functies_met_aantal: form.functies_met_aantal.filter(f => f.functie !== functieData.functie)
+                      })}
+                      className="text-neutral-400 hover:text-red-500 ml-1"
+                    >
+                      &times;
+                    </button>
                   </div>
-                );
-              })}
+
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#F27501]/20">
+                    <label className="text-xs text-neutral-600 whitespace-nowrap">Uurtarief €:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.50"
+                      value={functieData.uurtarief}
+                      placeholder="Bijv. 14.50"
+                      onChange={(e) => {
+                        setForm({
+                          ...form,
+                          functies_met_aantal: form.functies_met_aantal.map(f =>
+                            f.functie === functieData.functie ? { ...f, uurtarief: e.target.value } : f
+                          )
+                        });
+                      }}
+                      className="flex-1 px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {form.functies_met_aantal.length > 0 && (
