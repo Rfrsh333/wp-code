@@ -541,7 +541,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         contactpersoon={klant.contactpersoon}
         ongelezen={totalNotifCount}
       />
-      <KlantPushNotificationBanner />
       <KlantPortalLayout
         tabs={tabs}
         activeTab={activeTab}
@@ -559,6 +558,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
             {/* Tab: Overzicht */}
             {activeTab === "overzicht" && (
               <div className="space-y-5">
+                <KlantPushNotificationBanner />
                 {/* Greeting */}
                 <div>
                   <h2 className="text-xl font-bold text-[var(--kp-text-primary)]">

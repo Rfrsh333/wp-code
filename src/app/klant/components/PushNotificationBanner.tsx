@@ -8,17 +8,14 @@ export default function KlantPushNotificationBanner() {
   const { permission, isSubscribed, loading, subscribe } = usePushNotifications();
   const [dismissed, setDismissed] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isStandalone, setIsStandalone] = useState<boolean | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const wasDismissed = localStorage.getItem("push_banner_klant_dismissed");
     if (wasDismissed) setDismissed(true);
 
-    // Check standalone mode: matchMedia for Android/Chrome, navigator.standalone for iOS Safari
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
-    setIsStandalone(standalone);
+    // Toon alleen op mobiel/PWA — op desktop is de banner niet relevant
+    setIsMobile(window.innerWidth < 768);
   }, []);
 
   const handleDismiss = () => {
@@ -34,8 +31,8 @@ export default function KlantPushNotificationBanner() {
     }
   };
 
-  // Wacht tot standalone check klaar is, verberg op desktop (niet-standalone)
-  if (isStandalone === null || !isStandalone || isSubscribed || permission === "unsupported" || permission === "denied" || dismissed) {
+  // Verberg op desktop en als al ingeschakeld/geweigerd/dismissed
+  if (!isMobile || isSubscribed || permission === "unsupported" || permission === "denied" || dismissed) {
     return null;
   }
 
@@ -49,23 +46,20 @@ export default function KlantPushNotificationBanner() {
   }
 
   return (
-    <div className="mx-4 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
-      <Bell className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">Blijf op de hoogte</p>
-        <p className="text-xs text-gray-600 mt-0.5">
-          Ontvang een melding wanneer iemand zich aanmeldt voor uw dienst.
-        </p>
-        <button
-          onClick={handleSubscribe}
-          disabled={loading}
-          className="mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          {loading ? "Bezig..." : "Notificaties inschakelen"}
-        </button>
-      </div>
+    <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-2.5">
+      <Bell className="w-4 h-4 text-blue-600 flex-shrink-0" />
+      <p className="flex-1 text-xs text-gray-700 min-w-0">
+        Ontvang meldingen bij aanmeldingen.
+      </p>
+      <button
+        onClick={handleSubscribe}
+        disabled={loading}
+        className="px-2.5 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex-shrink-0"
+      >
+        {loading ? "..." : "Aan"}
+      </button>
       <button onClick={handleDismiss} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );
