@@ -104,6 +104,10 @@ export default function MedewerkerDienstenClient({ medewerker }: { medewerker: M
   };
 
   const openUrenModal = (dienst: Dienst) => {
+    if (!dienst.check_in_at) {
+      toast.error("QR nog niet gescand. Vraag de klant om je QR code te scannen voordat je uren kunt indienen.");
+      return;
+    }
     setUrenForm({ start: dienst.start_tijd.slice(0, 5), eind: dienst.eind_tijd.slice(0, 5), pauze: "0", reiskosten_km: "0" });
     setUrenModal(dienst);
   };
