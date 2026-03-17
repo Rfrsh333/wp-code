@@ -400,7 +400,7 @@ export async function downloadBrandAndUpload(draftId: string, imageUrl: string):
     // Download and validate source image
     let imageBuffer: Buffer;
     let imageSource: string;
-    let generationModel: string;
+    let generationModel: "source_og_image" | "placeholder" | string;
 
     try {
       const downloadedBuffer = await downloadImage(imageUrl);
