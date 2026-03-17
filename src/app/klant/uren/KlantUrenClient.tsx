@@ -1512,6 +1512,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateNaam, setTemplateNaam] = useState("");
 
+  const { data: functieOptions = [] } = usePlatformOptions("functie");
+  const { data: vaardigheidOptions = [] } = usePlatformOptions("vaardigheid");
   const { data: aanvraagData } = useKlantAanvraagLocaties();
   const { data: favData } = useKlantFavorieten();
   const { data: templData } = useKlantTemplates();
