@@ -157,13 +157,7 @@ export function buildBodyBlocksFromTemplate(
     const section = draft.sections[i];
     blocks.push(...buildSectionBlocks(section, i));
 
-    // CTA after section 0 and section 2
-    if (i === 0) {
-      blocks.push(getCtaForAudience(audience, "orange"));
-    }
-    if (i === 2) {
-      blocks.push(getCtaForAudience(audience, "orange"));
-    }
+    // Geen tussentijdse CTA's — alleen 1x aan het eind
 
     // Related link after section 1
     if (i === 1) {
