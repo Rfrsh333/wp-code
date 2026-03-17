@@ -1546,7 +1546,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const canNext = () => {
     if (step === 1) return form.functies_met_aantal.length > 0 && form.functies_met_aantal.every(f => f.uurtarief && parseFloat(f.uurtarief) > 0);
     if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd;
-    if (step === 3) return true;
+    if (step === 3) return !!form.locatie.trim();
     return true;
   };
 
@@ -1875,34 +1875,50 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Vereiste vaardigheden (optioneel)</label>
               <p className="text-xs text-neutral-500 mb-2">Selecteer vaardigheden waar de medewerker aan moet voldoen</p>
-              <div className="flex flex-wrap gap-2">
-                {vaardigheidOptions.map((opt) => opt.value).map((skill) => {
-                  const selected = form.vereiste_vaardigheden.includes(skill);
-                  return (
-                    <button
+              <select
+                value=""
+                onChange={(e) => {
+                  const skill = e.target.value;
+                  if (skill && !form.vereiste_vaardigheden.includes(skill)) {
+                    setForm({ ...form, vereiste_vaardigheden: [...form.vereiste_vaardigheden, skill] });
+                  }
+                }}
+                className="w-full px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+              >
+                <option value="">Kies een vaardigheid...</option>
+                {vaardigheidOptions.map((opt) => opt.value)
+                  .filter((skill) => !form.vereiste_vaardigheden.includes(skill))
+                  .map((skill) => (
+                    <option key={skill} value={skill}>{skill}</option>
+                  ))}
+              </select>
+              {form.vereiste_vaardigheden.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.vereiste_vaardigheden.map((skill) => (
+                    <span
                       key={skill}
-                      type="button"
-                      onClick={() => setForm({
-                        ...form,
-                        vereiste_vaardigheden: selected
-                          ? form.vereiste_vaardigheden.filter(s => s !== skill)
-                          : [...form.vereiste_vaardigheden, skill]
-                      })}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all ${
-                        selected
-                          ? 'border-[#F27501] bg-[#F27501]/10 text-[#F27501]'
-                          : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'
-                      }`}>
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border-2 border-[#F27501] bg-[#F27501]/10 text-[#F27501]"
+                    >
                       {skill}
-                    </button>
-                  );
-                })}
-              </div>
+                      <button
+                        type="button"
+                        onClick={() => setForm({
+                          ...form,
+                          vereiste_vaardigheden: form.vereiste_vaardigheden.filter(s => s !== skill)
+                        })}
+                        className="ml-1 hover:text-[#d96800]"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Locatie */}
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Locatie</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Locatie *</label>
 
               {/* Saved locations dropdown */}
               {locaties.length > 0 && (

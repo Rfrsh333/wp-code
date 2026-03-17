@@ -27,6 +27,7 @@ interface FormData {
   // Stap 4: Extra informatie
   locatie: string;
   opmerkingen: string;
+  andereTypePersoneel: string;
   // Lead tracking
   leadSource?: string;
   campaignName?: string;
@@ -51,6 +52,7 @@ const initialFormData: FormData = {
   werktijden: "",
   locatie: "",
   opmerkingen: "",
+  andereTypePersoneel: "",
 };
 
 const typePersoneelOptions = [
@@ -219,13 +221,19 @@ export default function PersoneelAanvragenWizard() {
       // Get reCAPTCHA token
       const recaptchaToken = await executeRecaptcha("personeel_aanvragen");
 
+      // If "Anders" is selected and user typed a custom function, replace it in typePersoneel
+      const submitData = {
+        ...formData,
+        typePersoneel: formData.typePersoneel.includes("Anders") && formData.andereTypePersoneel.trim()
+          ? formData.typePersoneel.map(t => t === "Anders" ? formData.andereTypePersoneel.trim() : t)
+          : formData.typePersoneel,
+        recaptchaToken,
+      };
+
       const response = await fetch("/api/personeel-aanvragen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          recaptchaToken,
-        }),
+        body: JSON.stringify(submitData),
       });
 
       if (response.ok) {
@@ -428,6 +436,17 @@ export default function PersoneelAanvragenWizard() {
                       </button>
                     ))}
                   </div>
+                  {formData.typePersoneel.includes("Anders") && (
+                    <div className="mt-3">
+                      <input
+                        type="text"
+                        value={formData.andereTypePersoneel}
+                        onChange={(e) => updateField("andereTypePersoneel", e.target.value)}
+                        className="w-full px-4 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
+                        placeholder="Beschrijf de gewenste functie..."
+                      />
+                    </div>
+                  )}
                   {errors.typePersoneel !== undefined && formData.typePersoneel.length === 0 && (
                     <p className="text-red-500 text-sm mt-2">Selecteer minimaal één type personeel</p>
                   )}

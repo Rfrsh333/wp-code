@@ -8,10 +8,17 @@ export default function KlantPushNotificationBanner() {
   const { permission, isSubscribed, loading, subscribe } = usePushNotifications();
   const [dismissed, setDismissed] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isStandalone, setIsStandalone] = useState<boolean | null>(null);
 
   useEffect(() => {
     const wasDismissed = localStorage.getItem("push_banner_klant_dismissed");
     if (wasDismissed) setDismissed(true);
+
+    // Check standalone mode: matchMedia for Android/Chrome, navigator.standalone for iOS Safari
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
   }, []);
 
   const handleDismiss = () => {
@@ -27,7 +34,8 @@ export default function KlantPushNotificationBanner() {
     }
   };
 
-  if (isSubscribed || permission === "unsupported" || permission === "denied" || dismissed) {
+  // Wacht tot standalone check klaar is, verberg op desktop (niet-standalone)
+  if (isStandalone === null || !isStandalone || isSubscribed || permission === "unsupported" || permission === "denied" || dismissed) {
     return null;
   }
 
