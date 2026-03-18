@@ -4,7 +4,7 @@ const REDIRECT_TARGET = "https://www.toptalentjobs.nl/";
 const ADMIN_LOGIN = "/admin/login";
 const KLANT_LOGIN = "/klant/login";
 const MEDEWERKER_LOGIN = "/medewerker/login";
-const CSRF_EXEMPT = ["/api/webhooks/"];
+const CSRF_EXEMPT = ["/api/webhooks/", "/api/cron/"];
 
 export function proxy(request: NextRequest) {
   const { searchParams } = request.nextUrl;
