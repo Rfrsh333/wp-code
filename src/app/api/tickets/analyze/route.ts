@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { chatCompletion, isOpenAIConfigured } from "@/lib/openai";
 import { Resend } from "resend";
+import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -20,6 +21,13 @@ interface AIAnalysis {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const clientIP = getClientIP(request);
+  const rateLimitResult = await checkRedisRateLimit(`ticket:${clientIP}`, formRateLimit);
+  if (!rateLimitResult.success) {
+    return NextResponse.json({ error: "Te veel aanvragen. Probeer het later opnieuw." }, { status: 429 });
+  }
+
   try {
     const body: TicketSubmission = await request.json();
 

@@ -14,9 +14,9 @@ const securityHeaders = [
     value: 'nosniff',
   },
   {
-    // Activeert XSS filter in browsers
+    // Verouderde header, zet op 0 — CSP biedt XSS-bescherming
     key: 'X-XSS-Protection',
-    value: '1; mode=block',
+    value: '0',
   },
   {
     // Controleert referrer informatie
@@ -38,9 +38,9 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://vercel.live https://www.clarity.ms https://c.clarity.ms https://scripts.clarity.ms https://va.vercel-scripts.com",
+      "script-src 'self' 'unsafe-inline' 'strict-dynamic' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://vercel.live https://www.clarity.ms https://c.clarity.ms https://scripts.clarity.ms https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https:",
+      "img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com https://www.googletagmanager.com https://www.google.com https://www.gstatic.com https://lh3.googleusercontent.com https://images.unsplash.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "frame-src https://www.google.com https://vercel.live",
       "worker-src 'self' blob:",

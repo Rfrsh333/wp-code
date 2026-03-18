@@ -315,11 +315,13 @@ export default function InschrijfFormulier() {
   useEffect(() => {
     setMounted(true);
     try {
-      const saved = localStorage.getItem(AUTOSAVE_KEY);
+      // Gebruik sessionStorage, migreer oud localStorage draft
+      const saved = sessionStorage.getItem(AUTOSAVE_KEY) || localStorage.getItem(AUTOSAVE_KEY);
+      if (localStorage.getItem(AUTOSAVE_KEY)) localStorage.removeItem(AUTOSAVE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.formData) {
-          setFormData(parsed.formData);
+          setFormData(prev => ({ ...prev, ...parsed.formData }));
           setCurrentStep(parsed.step || 0);
           setDraftRestored(true);
         }
@@ -332,8 +334,22 @@ export default function InschrijfFormulier() {
   // Autosave to localStorage
   const saveDraft = useCallback(() => {
     try {
-      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
-        formData,
+      // Sla alleen niet-gevoelige velden op (geen PII zoals naam, email, telefoon, geboortedatum)
+      const safeDraft = {
+        stad: formData.stad,
+        horecaErvaring: formData.horecaErvaring,
+        motivatie: formData.motivatie,
+        hoeGekomen: formData.hoeGekomen,
+        uitbetalingswijze: formData.uitbetalingswijze,
+        beschikbaarheid: formData.beschikbaarheid,
+        beschikbaarVanaf: formData.beschikbaarVanaf,
+        maxUrenPerWeek: formData.maxUrenPerWeek,
+        eigenVervoer: formData.eigenVervoer,
+        functies: formData.functies,
+        talen: formData.talen,
+      };
+      sessionStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
+        formData: safeDraft,
         step: currentStep,
         savedAt: new Date().toISOString(),
       }));
@@ -350,7 +366,8 @@ export default function InschrijfFormulier() {
 
   const clearDraft = () => {
     try {
-      localStorage.removeItem(AUTOSAVE_KEY);
+      sessionStorage.removeItem(AUTOSAVE_KEY);
+      localStorage.removeItem(AUTOSAVE_KEY); // Clean up oude data
     } catch {
       // ignore
     }

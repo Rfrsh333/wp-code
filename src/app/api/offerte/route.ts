@@ -24,14 +24,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const authHeader = request.headers.get("authorization");
-    const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
-    const { isAdmin, email } = await verifyAdmin(request);
-    if (!isAdmin && !cronAuthorized) {
-      console.warn(`[SECURITY] Unauthorized offerte POST attempt by: ${email || "unknown"}`);
-      return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
-    }
-
     const { aanvraagId } = await request.json();
 
     if (!aanvraagId) {

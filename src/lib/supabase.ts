@@ -10,7 +10,6 @@ function getSupabaseUrl(): string {
     console.error('Supabase URL missing. Env vars:', {
       NODE_ENV: process.env.NODE_ENV,
       hasUrl: !!url,
-      url: url?.substring(0, 20) + '...',
     });
     throw new Error("NEXT_PUBLIC_SUPABASE_URL is missing or empty. Check Vercel environment variables.");
   }
@@ -23,7 +22,6 @@ function getSupabaseAnonKey(): string {
     console.error('Supabase Anon Key missing. Env vars:', {
       NODE_ENV: process.env.NODE_ENV,
       hasKey: !!key,
-      keyPrefix: key?.substring(0, 20) + '...',
     });
     throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty. Check Vercel environment variables.");
   }
@@ -40,17 +38,15 @@ function getSupabaseClient(): SupabaseClient {
 function getSupabaseAdminClient(): SupabaseClient {
   if (!_supabaseAdmin) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!serviceKey && process.env.NODE_ENV === 'production') {
-      throw new Error("[SECURITY] SUPABASE_SERVICE_ROLE_KEY is required in production. Admin client cannot fall back to anon key.");
+    if (!serviceKey) {
+      throw new Error("[SECURITY] SUPABASE_SERVICE_ROLE_KEY is required. Admin client cannot fall back to anon key.");
     }
-    _supabaseAdmin = serviceKey
-      ? createClient(getSupabaseUrl(), serviceKey, {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-          },
-        })
-      : createClient(getSupabaseUrl(), getSupabaseAnonKey());
+    _supabaseAdmin = createClient(getSupabaseUrl(), serviceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
   }
   return _supabaseAdmin;
 }

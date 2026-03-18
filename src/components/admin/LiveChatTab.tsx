@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import type { ChatbotConversation, ChatbotMessage, ConversationStatus } from "@/types/chatbot";
 

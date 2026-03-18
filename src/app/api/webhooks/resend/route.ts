@@ -52,11 +52,7 @@ const ENGAGEMENT_POINTS: Record<string, number> = {
 function verifyWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[WEBHOOK] RESEND_WEBHOOK_SECRET niet ingesteld — accepteer zonder verificatie (dev mode)");
-      return true;
-    }
-    console.error("[WEBHOOK] RESEND_WEBHOOK_SECRET niet ingesteld in productie — verwerp request");
+    console.error("[WEBHOOK] RESEND_WEBHOOK_SECRET niet ingesteld — webhook geweigerd");
     return false;
   }
   const hmac = createHmac("sha256", secret);

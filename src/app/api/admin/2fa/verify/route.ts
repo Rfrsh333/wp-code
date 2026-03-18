@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyTOTP, verifyBackupCode } from "@/lib/two-factor";
+import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 
 /**
  * POST /api/admin/2fa/verify
  * Verifieer 2FA code tijdens login (kan ook backup code zijn)
  */
 export async function POST(request: NextRequest) {
+  // Rate limiting per IP
+  const clientIP = getClientIP(request);
+  const rateLimitResult = await checkRedisRateLimit(`2fa-verify:${clientIP}`, loginRateLimit);
+  if (!rateLimitResult.success) {
+    return NextResponse.json({ error: "Te veel pogingen. Probeer het later opnieuw." }, { status: 429 });
+  }
+
   try {
     const { email, code, isBackupCode = false } = await request.json();
 

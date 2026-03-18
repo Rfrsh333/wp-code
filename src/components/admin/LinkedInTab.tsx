@@ -404,7 +404,17 @@ export default function LinkedInTab() {
       });
       if (res.ok) {
         const data = await res.json();
-        window.location.href = data.url;
+        // Valideer dat de URL naar LinkedIn wijst
+        try {
+          const url = new URL(data.url);
+          if (url.hostname.endsWith("linkedin.com")) {
+            window.location.href = data.url;
+          } else {
+            setError("Ongeldige redirect URL");
+          }
+        } catch {
+          setError("Ongeldige redirect URL");
+        }
       } else {
         setError("Kan OAuth flow niet starten");
       }

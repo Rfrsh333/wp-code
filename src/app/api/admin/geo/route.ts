@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("[GEO ADMIN] GET Error:", error);
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 }
 
@@ -228,6 +228,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("[GEO ADMIN] POST Error:", error);
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 }

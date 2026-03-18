@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
 
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -10,6 +11,13 @@ const ALLOWED_TYPES = [
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const clientIP = getClientIP(request);
+  const rateLimitResult = await checkRedisRateLimit(`cv-upload:${clientIP}`, formRateLimit);
+  if (!rateLimitResult.success) {
+    return NextResponse.json({ error: "Te veel uploads. Probeer het later opnieuw." }, { status: 429 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;

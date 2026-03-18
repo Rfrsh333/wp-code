@@ -233,6 +233,32 @@ export default async function GeoPage({ params }: PageProps) {
  * Basic markdown to HTML converter
  * Handles headings, bold, italic, links, lists, paragraphs
  */
+/**
+ * Sanitize a URL to prevent javascript: and data: protocol attacks
+ */
+function sanitizeUrl(url: string): string {
+  const trimmed = url.trim().toLowerCase();
+  if (trimmed.startsWith("javascript:") || trimmed.startsWith("data:") || trimmed.startsWith("vbscript:")) {
+    return "#";
+  }
+  return url;
+}
+
+/**
+ * Strip dangerous HTML tags and event handlers from generated HTML
+ */
+function sanitizeHtmlOutput(html: string): string {
+  return html
+    // Remove script tags and content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    // Remove event handlers (on*)
+    .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, "")
+    // Remove iframe, object, embed tags
+    .replace(/<\s*\/?\s*(iframe|object|embed|form|input|textarea|button)\b[^>]*>/gi, "")
+    // Remove style tags with content
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+}
+
 function markdownToHtml(markdown: string): string {
   if (!markdown) return "";
 
@@ -245,8 +271,8 @@ function markdownToHtml(markdown: string): string {
     .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    // Links — sanitize href to block javascript: URLs
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`)
     // Unordered lists
     .replace(/^[*-] (.+)$/gm, "<li>$1</li>")
     // Ordered lists
@@ -271,5 +297,6 @@ function markdownToHtml(markdown: string): string {
   html = html.replace(/<p>\s*<(h[1-3]|ul|ol|hr)/g, "<$1");
   html = html.replace(/<\/(h[1-3]|ul|ol)>\s*<\/p>/g, "</$1>");
 
-  return html;
+  // Sanitize output to strip dangerous HTML
+  return sanitizeHtmlOutput(html);
 }

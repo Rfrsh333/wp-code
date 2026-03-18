@@ -19,10 +19,10 @@ function getMollieClient() {
 function verifyMollieSignature(rawBody: string, signatureHeader: string | null): boolean {
   const webhookSecret = process.env.MOLLIE_WEBHOOK_SECRET;
 
-  // Als er geen webhook secret is geconfigureerd, log een waarschuwing
+  // Fail-closed: zonder secret wordt de webhook geweigerd
   if (!webhookSecret) {
-    console.warn("[MOLLIE WEBHOOK] MOLLIE_WEBHOOK_SECRET niet geconfigureerd — signature verificatie overgeslagen. Stel dit in voor productie!");
-    return true; // Sta toe maar waarschuw
+    console.error("[MOLLIE WEBHOOK] MOLLIE_WEBHOOK_SECRET niet geconfigureerd — webhook geweigerd");
+    return false;
   }
 
   if (!signatureHeader) {

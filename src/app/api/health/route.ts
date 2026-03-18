@@ -1,9 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { verifyAdmin } from "@/lib/admin-auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Basis health check voor monitoring (altijd publiek)
+  let supabaseOk = false;
+  try {
+    const { error } = await supabaseAdmin
+      .from("inschrijvingen")
+      .select("id", { head: true, count: "exact" });
+    supabaseOk = !error;
+  } catch {
+    supabaseOk = false;
+  }
+
+  // Alleen admins krijgen gedetailleerde informatie
+  const { isAdmin } = await verifyAdmin(request);
+
+  if (!isAdmin) {
+    return NextResponse.json(
+      { status: supabaseOk ? "ok" : "degraded", timestamp: new Date().toISOString() },
+      { status: supabaseOk ? 200 : 503, headers: { "Cache-Control": "no-cache, max-age=60" } }
+    );
+  }
+
+  // Admin: volledige checks
   const checks: Record<string, boolean> = {
-    supabase: false,
+    supabase: supabaseOk,
     resend: Boolean(process.env.RESEND_API_KEY),
     redis: Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
     cron: Boolean(process.env.CRON_SECRET),
@@ -13,18 +36,6 @@ export async function GET() {
     kandidaatSecret: Boolean(process.env.KANDIDAAT_TOKEN_SECRET),
   };
 
-  // Supabase connectivity check
-  try {
-    const { error } = await supabaseAdmin
-      .from("inschrijvingen")
-      .select("id", { head: true, count: "exact" });
-
-    checks.supabase = !error;
-  } catch {
-    checks.supabase = false;
-  }
-
-  // Redis connectivity check
   if (checks.redis) {
     try {
       const { Redis } = await import("@upstash/redis");

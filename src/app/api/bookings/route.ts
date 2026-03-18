@@ -12,6 +12,7 @@ import {
   buildKandidaatBookingNotificatie,
 } from "@/lib/email-templates";
 import { randomBytes } from "crypto";
+import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
 
 interface EventType {
   id: string;
@@ -307,6 +308,13 @@ export async function GET(request: NextRequest) {
 
 // POST: Afspraak boeken
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const clientIP = getClientIP(request);
+  const rateLimitResult = await checkRedisRateLimit(`booking:${clientIP}`, formRateLimit);
+  if (!rateLimitResult.success) {
+    return NextResponse.json({ error: "Te veel boekingen. Probeer het later opnieuw." }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const {

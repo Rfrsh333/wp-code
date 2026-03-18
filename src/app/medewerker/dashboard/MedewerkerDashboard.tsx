@@ -341,7 +341,17 @@ export default function MedewerkerDashboard({ medewerker }: { medewerker: Medewe
                 boeteBetaal.mutate(undefined, {
                   onSuccess: (data) => {
                     if (data.checkoutUrl) {
-                      window.location.href = data.checkoutUrl;
+                      // Valideer dat URL naar een bekende betaalprovider wijst
+                      try {
+                        const url = new URL(data.checkoutUrl);
+                        if (url.hostname.endsWith("mollie.com") || url.hostname.endsWith("stripe.com")) {
+                          window.location.href = data.checkoutUrl;
+                        } else {
+                          toast.error("Ongeldige betaallink");
+                        }
+                      } catch {
+                        toast.error("Ongeldige betaallink");
+                      }
                     } else {
                       toast.error("Kon betaallink niet aanmaken");
                     }

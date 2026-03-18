@@ -8,8 +8,8 @@ const WA_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
 
 function verifyWhatsAppSignature(rawBody: string, signatureHeader: string | null): boolean {
   if (!WA_APP_SECRET) {
-    console.warn("[WhatsApp] WHATSAPP_APP_SECRET niet geconfigureerd — signature verificatie overgeslagen");
-    return true; // Fail-open in dev, maar log warning
+    console.error("[WhatsApp] WHATSAPP_APP_SECRET niet geconfigureerd — webhook geweigerd");
+    return false;
   }
   if (!signatureHeader) {
     console.warn("[WhatsApp] Geen X-Hub-Signature-256 header ontvangen");
