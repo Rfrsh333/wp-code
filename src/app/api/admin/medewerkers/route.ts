@@ -4,6 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import bcrypt from "bcryptjs";
 import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { validatePasswordSecurity } from "@/lib/password-security";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -95,8 +96,10 @@ export async function POST(request: NextRequest) {
   if (action === "create" || action === "update") {
     const payload: Record<string, unknown> = { ...data };
     if (data.wachtwoord) {
-      if (data.wachtwoord.length < 8) {
-        return NextResponse.json({ error: "Wachtwoord moet minimaal 8 tekens bevatten" }, { status: 400 });
+      // Validate password security (length, weakness, leaked passwords)
+      const passwordValidation = await validatePasswordSecurity(data.wachtwoord);
+      if (!passwordValidation.valid) {
+        return NextResponse.json({ error: passwordValidation.error }, { status: 400 });
       }
       payload.wachtwoord = await bcrypt.hash(data.wachtwoord, 10);
     } else {

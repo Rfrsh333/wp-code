@@ -5,6 +5,7 @@ import { checkRedisRateLimit, getClientIP, klantRegisterRateLimit } from "@/lib/
 import bcrypt from "bcryptjs";
 import { signKlantSession } from "@/lib/session";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { validatePasswordSecurity } from "@/lib/password-security";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -31,8 +32,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ongeldig emailadres" }, { status: 400 });
     }
 
-    if (wachtwoord.length < 8) {
-      return NextResponse.json({ error: "Wachtwoord moet minimaal 8 tekens bevatten" }, { status: 400 });
+    // Validate password security (length, weakness, leaked passwords)
+    const passwordValidation = await validatePasswordSecurity(wachtwoord);
+    if (!passwordValidation.valid) {
+      return NextResponse.json({ error: passwordValidation.error }, { status: 400 });
     }
 
     // Check of email al bestaat
