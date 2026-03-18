@@ -53,7 +53,7 @@ export default function MarketingDashboard() {
   const router = useRouter();
 
   const tabParam = searchParams.get("tab");
-  const activeTabValue: MarketingTab = isMarketingTab(tabParam ?? "")
+  const activeTabValue: MarketingTab = tabParam && isMarketingTab(tabParam)
     ? tabParam
     : "dashboard";
 
