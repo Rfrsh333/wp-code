@@ -54,6 +54,9 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   compress: true,
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    '/': ['./middleware.ts'],
+  },
   async rewrites() {
     return {
       beforeFiles: [
