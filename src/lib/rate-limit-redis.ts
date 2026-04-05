@@ -107,6 +107,105 @@ export interface RateLimitResult {
   reset: number;
 }
 
+interface FallbackRateLimitOptions {
+  windowMs: number;
+  maxRequests: number;
+}
+
+interface FallbackRateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+const fallbackRateLimitMap = new Map<string, FallbackRateLimitEntry>();
+
+let hasWarnedAboutMissingRedis = false;
+let hasWarnedAboutRedisErrors = false;
+
+function inferFallbackRateLimitOptions(identifier: string): FallbackRateLimitOptions {
+  if (
+    identifier.startsWith("admin-login:") ||
+    identifier.startsWith("medewerker-login:") ||
+    identifier.startsWith("klant-login:") ||
+    identifier.startsWith("medewerker-password-reset:") ||
+    identifier.startsWith("medewerker-reset:") ||
+    identifier.startsWith("admin-password-reset:") ||
+    identifier.startsWith("admin-reset-update:") ||
+    identifier.startsWith("2fa-verify:")
+  ) {
+    return { windowMs: 15 * 60 * 1000, maxRequests: 5 };
+  }
+
+  if (identifier.startsWith("klant-register:")) {
+    return { windowMs: 15 * 60 * 1000, maxRequests: 3 };
+  }
+
+  if (identifier.startsWith("calculator-lead:")) {
+    return { windowMs: 60 * 60 * 1000, maxRequests: 10 };
+  }
+
+  if (identifier.startsWith("ai-chat:")) {
+    return { windowMs: 60 * 1000, maxRequests: 5 };
+  }
+
+  if (
+    identifier.startsWith("leads:post:") ||
+    identifier.startsWith("ai-offerte:")
+  ) {
+    return { windowMs: 60 * 1000, maxRequests: 10 };
+  }
+
+  return { windowMs: 60 * 1000, maxRequests: 5 };
+}
+
+function checkMemoryFallbackRateLimit(identifier: string): RateLimitResult {
+  const { windowMs, maxRequests } = inferFallbackRateLimitOptions(identifier);
+  const now = Date.now();
+  const entry = fallbackRateLimitMap.get(identifier);
+
+  if (!entry || now > entry.resetTime) {
+    fallbackRateLimitMap.set(identifier, {
+      count: 1,
+      resetTime: now + windowMs,
+    });
+
+    return {
+      success: true,
+      limit: maxRequests,
+      remaining: maxRequests - 1,
+      reset: now + windowMs,
+    };
+  }
+
+  if (entry.count >= maxRequests) {
+    return {
+      success: false,
+      limit: maxRequests,
+      remaining: 0,
+      reset: entry.resetTime,
+    };
+  }
+
+  entry.count += 1;
+
+  return {
+    success: true,
+    limit: maxRequests,
+    remaining: maxRequests - entry.count,
+    reset: entry.resetTime,
+  };
+}
+
+setInterval(() => {
+  const now = Date.now();
+
+  for (const [key, entry] of fallbackRateLimitMap.entries()) {
+    if (now > entry.resetTime) {
+      fallbackRateLimitMap.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 /**
  * Check rate limit using Upstash Redis (production) or in-memory fallback (development)
  *
@@ -119,22 +218,12 @@ export async function checkRedisRateLimit(
   limiter: Ratelimit | null
 ): Promise<RateLimitResult> {
   if (!limiter) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn("[RATE LIMIT] Redis not configured (development mode), allowing request");
-      return {
-        success: true,
-        limit: 999,
-        remaining: 999,
-        reset: Date.now() + 60000,
-      };
+    if (!hasWarnedAboutMissingRedis) {
+      console.warn("[RATE LIMIT] Redis not configured, using in-memory fallback rate limiting");
+      hasWarnedAboutMissingRedis = true;
     }
-    console.warn("[RATE LIMIT] Redis not configured, blocking request");
-    return {
-      success: false,
-      limit: 0,
-      remaining: 0,
-      reset: Date.now() + 60000,
-    };
+
+    return checkMemoryFallbackRateLimit(identifier);
   }
 
   try {
@@ -148,19 +237,11 @@ export async function checkRedisRateLimit(
     };
   } catch (error) {
     console.error("[RATE LIMIT] Error checking rate limit:", error);
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        success: true,
-        limit: 999,
-        remaining: 999,
-        reset: Date.now() + 60000,
-      };
+    if (!hasWarnedAboutRedisErrors) {
+      console.warn("[RATE LIMIT] Falling back to in-memory rate limiting after Redis error");
+      hasWarnedAboutRedisErrors = true;
     }
-    return {
-      success: false,
-      limit: 0,
-      remaining: 0,
-      reset: Date.now(),
-    };
+
+    return checkMemoryFallbackRateLimit(identifier);
   }
 }
