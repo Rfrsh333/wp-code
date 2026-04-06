@@ -126,19 +126,29 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
+    const contactRecipients =
+      process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim()).filter(Boolean) || ["info@toptalentjobs.nl"];
+
     // Send email via Resend
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const { error } = await resend.emails.send({
-        from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
-        to: ["info@toptalentjobs.nl"],
+        from: process.env.RESEND_FROM || "TopTalent Jobs <info@toptalentjobs.nl>",
+        to: contactRecipients,
         replyTo: data.email,
         subject: `Contact: ${data.onderwerp} - ${data.naam}`,
         html: emailHtml,
       });
 
       if (error) {
-        console.error("Resend error:", error);
+        console.error("Resend error details:", JSON.stringify(error, null, 2));
+
+        if (process.env.NODE_ENV !== "development") {
+          return NextResponse.json(
+            { error: "Fout bij verzenden e-mail. Probeer het later opnieuw." },
+            { status: 500 }
+          );
+        }
       }
     }
 
