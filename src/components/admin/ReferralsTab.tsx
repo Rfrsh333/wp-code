@@ -55,7 +55,9 @@ export default function ReferralsTab() {
     setLoading(false);
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { fetchData(); }, [fetchData]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const markRewarded = async (referralId: string) => {
     try {

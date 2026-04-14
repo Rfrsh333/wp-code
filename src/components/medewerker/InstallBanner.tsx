@@ -26,12 +26,14 @@ export default function InstallBanner() {
 
     const standalone = window.matchMedia("(display-mode: standalone)").matches
       || (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    setIsStandalone(standalone);
-    if (standalone) return;
+    if (standalone) {
+      queueMicrotask(() => setIsStandalone(true));
+      return;
+    }
 
     const ua = navigator.userAgent;
     const isIOSDevice = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream;
-    setIsIOS(isIOSDevice);
+    queueMicrotask(() => setIsIOS(isIOSDevice));
 
     const handler = (e: Event) => {
       e.preventDefault();

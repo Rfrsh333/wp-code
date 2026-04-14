@@ -147,21 +147,24 @@ export async function GET(request: NextRequest) {
     ]) || []
   );
 
-  const baseDiensten = (alleDienstenCompat || []).map((d: any) => ({
+  const baseDiensten = (alleDienstenCompat || []).map((d: Record<string, unknown>) => ({
     ...d,
-    categorie_naam: (d.categorie as any)?.naam || null,
-    functie_naam: (d.functie_ref as any)?.naam || null,
-    aangemeld: aanmeldMap.has(d.id),
-    aanmelding_id: aanmeldMap.get(d.id)?.id,
-    aanmelding_status: aanmeldMap.get(d.id)?.status,
-    check_in_at: aanmeldMap.get(d.id)?.check_in_at,
-    uren_status: aanmeldMap.get(d.id)?.uren_status,
-    qr_verplicht: (d as any).klant?.qr_verplicht !== false,
+    id: d.id as string,
+    aantal_nodig: d.aantal_nodig as number | null,
+    klant_naam: d.klant_naam as string | null,
+    categorie_naam: (d.categorie as Record<string, unknown> | null)?.naam || null,
+    functie_naam: (d.functie_ref as Record<string, unknown> | null)?.naam || null,
+    aangemeld: aanmeldMap.has(d.id as string),
+    aanmelding_id: aanmeldMap.get(d.id as string)?.id,
+    aanmelding_status: aanmeldMap.get(d.id as string)?.status,
+    check_in_at: aanmeldMap.get(d.id as string)?.check_in_at,
+    uren_status: aanmeldMap.get(d.id as string)?.uren_status,
+    qr_verplicht: (d.klant as Record<string, unknown> | null)?.qr_verplicht !== false,
   }));
 
   // FASE 6: Compute automatic tags
   const dienstIds = baseDiensten.map(d => d.id);
-  let computedTagsMap = new Map<string, string[]>();
+  const computedTagsMap = new Map<string, string[]>();
 
   if (dienstIds.length > 0) {
     // Batch 1: Get all aanmeldingen counts per dienst
@@ -195,7 +198,7 @@ export async function GET(request: NextRequest) {
 
     const previousKlanten = new Set(
       (previousDiensten || [])
-        .map(d => (d.dienst as any)?.klant_naam)
+        .map(d => (d.dienst as unknown as Record<string, unknown> | null)?.klant_naam)
         .filter(Boolean)
     );
 
@@ -597,11 +600,11 @@ export async function POST(request: NextRequest) {
 
     // Check of QR verplicht is voor deze klant
     let qrVerplicht = true;
-    if ((dienst as any).klant_id) {
+    if ((dienst as Record<string, unknown>).klant_id) {
       const { data: klant } = await supabaseAdmin
         .from("klanten")
         .select("qr_verplicht")
-        .eq("id", (dienst as any).klant_id)
+        .eq("id", (dienst as Record<string, unknown>).klant_id as string)
         .single();
       if (klant && klant.qr_verplicht === false) {
         qrVerplicht = false;

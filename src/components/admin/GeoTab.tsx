@@ -16,8 +16,6 @@ import {
   Archive,
   Activity,
   Search,
-  TrendingUp,
-  AlertCircle,
   Users,
   Target,
   Wrench,
@@ -50,6 +48,49 @@ interface GeoStats {
   per_type: Record<string, number>;
   tokens_totaal: number;
   laatste_generatie: string | null;
+}
+
+interface CitationRecord {
+  id: string;
+  geciteerd: boolean;
+  engine: string;
+  citatie_positie: number | null;
+  created_at: string;
+  zoekopdracht: string;
+  geo_content?: { title: string };
+  concurrenten_urls?: string[];
+}
+
+interface PerformanceRecord {
+  totaal_citaties: number;
+  totaal_checks: number;
+  citatie_percentage: number;
+}
+
+interface ConcurrentRecord {
+  id: string;
+  naam: string;
+  website: string;
+  stad: string | null;
+  totaal_citaties: number;
+}
+
+interface GapRecord {
+  id: string;
+  geschat_volume: string;
+  prioriteit: number;
+  stad: string | null;
+  zoekopdracht: string;
+  voorgesteld_type: string | null;
+  concurrent_urls?: string[];
+  status: string;
+}
+
+interface AnalyseResult {
+  score: number;
+  sterke_punten: string[];
+  verbeterpunten: string[];
+  suggesties: string[];
 }
 
 const STEDEN = [
@@ -102,15 +143,15 @@ export default function GeoTab() {
   const [successMsg, setSuccessMsg] = useState<string>("");
 
   // Monitoring state
-  const [citations, setCitations] = useState<any[]>([]);
-  const [performance, setPerformance] = useState<any[]>([]);
+  const [citations, setCitations] = useState<CitationRecord[]>([]);
+  const [performance, setPerformance] = useState<PerformanceRecord[]>([]);
 
   // Competitor state
-  const [concurrenten, setConcurrenten] = useState<any[]>([]);
-  const [gaps, setGaps] = useState<any[]>([]);
+  const [concurrenten, setConcurrenten] = useState<ConcurrentRecord[]>([]);
+  const [gaps, setGaps] = useState<GapRecord[]>([]);
 
   // Analyse state
-  const [analyseResult, setAnalyseResult] = useState<any>(null);
+  const [analyseResult, setAnalyseResult] = useState<AnalyseResult | null>(null);
   const [analyseLoading, setAnalyseLoading] = useState(false);
 
   // Generate form
@@ -235,7 +276,7 @@ export default function GeoTab() {
         setSuccessMsg(`Analyse: ${data.concurrenten} concurrenten, ${data.gaps} gaps gevonden`);
         fetchConcurrenten(); fetchGaps();
       } else {
-        const data = await apiFetch("/api/cron/geo-agent?max=3&mode=full");
+        await apiFetch("/api/cron/geo-agent?max=3&mode=full");
         setSuccessMsg(`Pipeline voltooid`);
         fetchContent(); fetchStats(); fetchCitations(); fetchPerformance();
       }
@@ -255,7 +296,7 @@ export default function GeoTab() {
   const stadLabel = (stad: string) => STEDEN.find((s) => s.value === stad)?.label || stad;
   const typeLabel = (type: string) => CONTENT_TYPES.find((t) => t.value === type)?.label || type;
 
-  const VIEWS: { id: TabView; label: string; icon: any }[] = [
+  const VIEWS: { id: TabView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "content", label: "Content", icon: FileText },
     { id: "monitoring", label: "Monitoring", icon: Activity },
     { id: "optimizer", label: "Optimizer", icon: Wrench },
@@ -626,7 +667,7 @@ export default function GeoTab() {
             </div>
           ) : (
             <div className="space-y-2">
-              {citations.map((c: any) => (
+              {citations.map((c) => (
                 <div key={c.id} className={`bg-white rounded-xl p-4 shadow-sm border ${c.geciteerd ? "border-green-200" : "border-neutral-100"}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -646,9 +687,9 @@ export default function GeoTab() {
                   </div>
                   <p className="text-sm text-neutral-700 mt-1.5 font-medium">&quot;{c.zoekopdracht}&quot;</p>
                   {c.geo_content?.title && <p className="text-xs text-neutral-400 mt-0.5">Content: {c.geo_content.title}</p>}
-                  {c.concurrenten_urls?.length > 0 && (
+                  {(c.concurrenten_urls?.length ?? 0) > 0 && (
                     <div className="mt-2 text-[10px] text-neutral-400">
-                      Concurrenten: {c.concurrenten_urls.slice(0, 3).join(", ")}
+                      Concurrenten: {c.concurrenten_urls!.slice(0, 3).join(", ")}
                     </div>
                   )}
                 </div>
@@ -736,7 +777,7 @@ export default function GeoTab() {
             </div>
           ) : (
             <div className="space-y-2">
-              {concurrenten.map((c: any) => (
+              {concurrenten.map((c) => (
                 <div key={c.id} className="bg-white rounded-xl p-4 shadow-sm border border-neutral-100 flex items-center justify-between">
                   <div>
                     <h4 className="font-semibold text-neutral-900 text-sm">{c.naam}</h4>
@@ -774,7 +815,7 @@ export default function GeoTab() {
             </div>
           ) : (
             <div className="space-y-2">
-              {gaps.map((g: any) => (
+              {gaps.map((g) => (
                 <div key={g.id} className="bg-white rounded-xl p-4 shadow-sm border border-neutral-100">
                   <div className="flex items-start justify-between">
                     <div>
@@ -792,8 +833,8 @@ export default function GeoTab() {
                       {g.voorgesteld_type && (
                         <p className="text-xs text-neutral-500 mt-1">Suggestie: {typeLabel(g.voorgesteld_type)}</p>
                       )}
-                      {g.concurrent_urls?.length > 0 && (
-                        <p className="text-[10px] text-neutral-400 mt-1">Concurrent: {g.concurrent_urls.slice(0, 2).join(", ")}</p>
+                      {(g.concurrent_urls?.length ?? 0) > 0 && (
+                        <p className="text-[10px] text-neutral-400 mt-1">Concurrent: {g.concurrent_urls!.slice(0, 2).join(", ")}</p>
                       )}
                     </div>
                     {g.status === "open" && (

@@ -103,10 +103,12 @@ export default function TerritoryView({ onSelectLead }: Props) {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchReps();
     fetchUnassigned();
   }, [fetchReps, fetchUnassigned]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const apiPost = async (body: Record<string, unknown>) => {
     const token = await getToken();

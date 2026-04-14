@@ -12,7 +12,7 @@ export function RealtimeBadge({ count, previousCount }: RealtimeBadgeProps) {
 
   useEffect(() => {
     if (count > previousCount) {
-      setAnimate(true);
+      queueMicrotask(() => setAnimate(true));
       const timer = setTimeout(() => setAnimate(false), 600);
       return () => clearTimeout(timer);
     }

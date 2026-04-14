@@ -50,12 +50,7 @@ export default function LeadDetailPanel({
     setEditedLead(lead)
   }, [lead])
 
-  useEffect(() => {
-    fetchOutreachHistory()
-    fetchTemplates()
-  }, [lead.id])
-
-  async function fetchOutreachHistory() {
+  const fetchOutreachHistory = async () => {
     try {
       const headers = await getAuthHeaders()
       const res = await fetch(`/api/leads/${lead.id}`, { headers })
@@ -66,7 +61,7 @@ export default function LeadDetailPanel({
     }
   }
 
-  async function fetchTemplates() {
+  const fetchTemplates = async () => {
     try {
       const headers = await getAuthHeaders()
       const res = await fetch('/api/leads/templates?kanaal=whatsapp', { headers })
@@ -76,6 +71,11 @@ export default function LeadDetailPanel({
       console.error('Error fetching templates:', error)
     }
   }
+
+  useEffect(() => {
+    fetchOutreachHistory()
+    fetchTemplates()
+  }, [lead.id])
 
   async function saveChanges() {
     try {

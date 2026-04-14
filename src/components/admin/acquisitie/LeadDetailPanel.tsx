@@ -174,9 +174,9 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
     setIsLoading(false);
   }, [leadId, getToken]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void fetchLead();
-    // Fetch sales reps voor toewijzing
     (async () => {
       const token = await getToken();
       const res = await fetch("/api/admin/acquisitie/territory?view=reps", {
@@ -188,6 +188,7 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
       }
     })();
   }, [fetchLead, getToken]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const assignToRep = async (repId: string | null) => {
     setIsAssigning(true);

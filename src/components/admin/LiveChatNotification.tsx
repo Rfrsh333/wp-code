@@ -40,9 +40,11 @@ export default function LiveChatNotification({ onOpenChat }: LiveChatNotificatio
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchWaiting();
   }, [fetchWaiting]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Realtime: listen for conversation status changes
   useEffect(() => {

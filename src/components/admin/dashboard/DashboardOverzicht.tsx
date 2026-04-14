@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAdminDashboardExtended, type DashboardExtendedData } from "@/hooks/queries/useAdminQueries";
+import { useAdminDashboardExtended } from "@/hooks/queries/useAdminQueries";
 import StatCard from "./StatCard";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
 
@@ -120,18 +120,19 @@ function DonutChart({ segments, size = 100 }: { segments: { value: number; color
       </svg>
     );
   }
-  let cumulative = 0;
   const r = 36;
   const circumference = 2 * Math.PI * r;
+  const visibleSegments = segments.filter((s) => s.value > 0);
+  const offsets = visibleSegments.reduce<number[]>((acc, seg, i) => {
+    acc.push(i === 0 ? 0 : acc[i - 1] + visibleSegments[i - 1].value);
+    return acc;
+  }, []);
 
   return (
     <svg width={size} height={size} viewBox="0 0 100 100">
-      {segments
-        .filter((s) => s.value > 0)
-        .map((seg, i) => {
-          const offset = (cumulative / total) * circumference;
+      {visibleSegments.map((seg, i) => {
+          const offset = (offsets[i] / total) * circumference;
           const length = (seg.value / total) * circumference;
-          cumulative += seg.value;
           return (
             <circle
               key={i}
@@ -215,6 +216,7 @@ export default function DashboardOverzicht({
   const { data: extendedData } = useAdminDashboardExtended();
   const [showHiddenStats, setShowHiddenStats] = useState(false);
   const [activityFilter, setActivityFilter] = useState<"week" | "vandaag" | "maand">("week");
+  const [now] = useState(() => Date.now());
 
   const vandaag = extendedData?.vandaag ?? { dienstenActief: 0, medewerkerIngepland: 0, openDiensten: 0, noShows: 0 };
   const beschikbaarheid = extendedData?.beschikbaarheid ?? { totaal: 0, actief: 0, ingepland: 0, beschikbaar: 0, gepauzeerd: 0 };
@@ -243,18 +245,16 @@ export default function DashboardOverzicht({
 
   // Filter activity items
   const filteredActivity = useMemo(() => {
-    const now = Date.now();
     return activityItems.filter((item) => {
       const age = now - new Date(item.created_at).getTime();
       if (activityFilter === "vandaag") return age < 24 * 60 * 60 * 1000;
       if (activityFilter === "week") return age < 7 * 24 * 60 * 60 * 1000;
       return age < 30 * 24 * 60 * 60 * 1000;
     });
-  }, [activityItems, activityFilter]);
+  }, [activityItems, activityFilter, now]);
 
   // Hidden stat cards (value = 0)
   const hasHiddenStats = stats.contact.total === 0 || stats.calculator.total === 0;
-  const visibleStatsCount = (stats.contact.total > 0 || showHiddenStats ? 1 : 0) + (stats.calculator.total > 0 || showHiddenStats ? 1 : 0);
 
   const { metrics, avgProcessingTime } = onboardingMetrics;
   const totalActive = Math.max(1, metrics.nieuw + metrics.documenten_opvragen + metrics.goedgekeurd + metrics.inzetbaar);
@@ -538,7 +538,7 @@ export default function DashboardOverzicht({
                   contact: { icon: Inbox, bg: "bg-purple-100", color: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", badgeLabel: "Bericht" },
                 }[item.type];
                 const Icon = typeConfig.icon;
-                const timeAgo = getTimeAgo(item.created_at);
+                const timeAgo = getTimeAgo(item.created_at, now);
                 return (
                   <div key={item.id} className="flex items-center gap-3 py-2">
                     <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", typeConfig.bg)}>
@@ -614,8 +614,8 @@ export default function DashboardOverzicht({
   );
 }
 
-function getTimeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+function getTimeAgo(dateStr: string, referenceNow?: number): string {
+  const diff = (referenceNow ?? Date.now()) - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "Nu";
   if (mins < 60) return `${mins} min`;

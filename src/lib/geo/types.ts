@@ -46,7 +46,7 @@ export interface GeoContent {
   canonical_url: string | null;
   body_markdown: string;
   excerpt: string | null;
-  structured_data: any[];
+  structured_data: Record<string, unknown>[];
   faq_items: FaqItem[];
   bronnen: Bron[];
   statistieken: Statistiek[];
@@ -96,7 +96,7 @@ export interface GeoLogEntry {
   created_at: string;
   content_id: string | null;
   actie: string;
-  details: any;
+  details: Record<string, unknown>;
   tokens_gebruikt: number;
   model: string;
   duur_ms: number;

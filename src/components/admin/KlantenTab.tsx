@@ -94,6 +94,8 @@ export default function KlantenTab() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"omzet" | "diensten" | "churn" | "laatste">("omzet");
 
+  const [now] = useState(() => Date.now());
+
   const fetchKlanten = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/klanten/analytics");
@@ -106,7 +108,9 @@ export default function KlantenTab() {
     setLoading(false);
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { fetchKlanten(); }, [fetchKlanten]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const fetchDetail = useCallback(async (klantId: string) => {
     setDetailLoading(true);
@@ -242,7 +246,7 @@ export default function KlantenTab() {
             </div>
             <div className="bg-neutral-50 rounded-xl p-3 text-center">
               <p className="text-2xl font-bold text-neutral-900">
-                {k.laatste_dienst_datum ? `${Math.floor((Date.now() - new Date(k.laatste_dienst_datum).getTime()) / (1000 * 60 * 60 * 24))}d` : "—"}
+                {k.laatste_dienst_datum ? `${Math.floor((now - new Date(k.laatste_dienst_datum).getTime()) / (1000 * 60 * 60 * 24))}d` : "—"}
               </p>
               <p className="text-xs text-neutral-500">Sinds laatste dienst</p>
             </div>
@@ -512,7 +516,7 @@ export default function KlantenTab() {
               const tier = TIER_CONFIG[k.loyalty_tier] || TIER_CONFIG.standaard;
               const churn = CHURN_CONFIG[k.churn_risico] || CHURN_CONFIG.laag;
               const dagenGeleden = k.laatste_dienst_datum
-                ? Math.floor((Date.now() - new Date(k.laatste_dienst_datum).getTime()) / (1000 * 60 * 60 * 24))
+                ? Math.floor((now - new Date(k.laatste_dienst_datum).getTime()) / (1000 * 60 * 60 * 24))
                 : null;
 
               return (

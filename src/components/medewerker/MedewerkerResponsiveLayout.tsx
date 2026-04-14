@@ -21,11 +21,6 @@ export default function MedewerkerResponsiveLayout({
   const [isMounted, setIsMounted] = useState(false);
   const [accountGepauzeerd, setAccountGepauzeerd] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-    checkAccountStatus();
-  }, []);
-
   const checkAccountStatus = async () => {
     try {
       const res = await fetch("/api/medewerker/status");
@@ -37,6 +32,13 @@ export default function MedewerkerResponsiveLayout({
       console.error("Check status error:", err);
     }
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setIsMounted(true);
+      checkAccountStatus();
+    });
+  }, []);
 
   if (!isMounted) {
     // Prevent hydration mismatch

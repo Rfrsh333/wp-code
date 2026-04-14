@@ -1,25 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Bell, X } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export default function KlantPushNotificationBanner() {
   const { permission, isSubscribed, loading, subscribe } = usePushNotifications();
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("push_banner_klant_dismissed");
+  });
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isPWA, setIsPWA] = useState(false);
-
-  useEffect(() => {
-    const wasDismissed = localStorage.getItem("push_banner_klant_dismissed");
-    if (wasDismissed) setDismissed(true);
-
-    // Toon alleen in PWA standalone mode (geïnstalleerde app op mobiel/tablet)
-    const isStandalone =
+  const [isPWA] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return (
       window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone === true;
-    setIsPWA(isStandalone);
-  }, []);
+      (navigator as Navigator & { standalone?: boolean }).standalone === true
+    );
+  });
 
   const handleDismiss = () => {
     setDismissed(true);

@@ -61,9 +61,9 @@ export async function GET(request: NextRequest) {
     let totaal_uren_deze_maand = 0;
 
     for (const uur of urenDezeMaand || []) {
-      const aanmelding = uur.aanmelding as any;
-      const dienst = aanmelding?.dienst;
-      const klantUurtarief = dienst?.uurtarief || 0;
+      const aanmelding = uur.aanmelding as unknown as Record<string, unknown> | null;
+      const dienst = aanmelding?.dienst as Record<string, unknown> | null;
+      const klantUurtarief = (dienst?.uurtarief as number) || 0;
       const medewerkerUurtarief = klantUurtarief - 4; // €4 margin
       deze_maand_verdiensten += uur.gewerkte_uren * medewerkerUurtarief;
       totaal_uren_deze_maand += uur.gewerkte_uren;

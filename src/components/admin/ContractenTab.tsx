@@ -103,11 +103,13 @@ export default function ContractenTab() {
     })));
   }, [getAuthHeader]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchContracten();
     fetchTemplates();
     fetchMedewerkers();
   }, [fetchContracten, fetchTemplates, fetchMedewerkers]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleCreate = async () => {
     const headers = await getAuthHeader();

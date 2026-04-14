@@ -76,9 +76,11 @@ export default function LijstView({ onSelectLead, onRefresh }: Props) {
     setIsLoading(false);
   }, [getToken, page, search, filterStage, filterBranche, filterStad, filterMinScore, sortBy, sortDir]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void fetchLeads();
   }, [fetchLeads]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {

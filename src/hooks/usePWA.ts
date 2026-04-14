@@ -8,19 +8,16 @@ export function usePWA() {
   const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
-    // Check if running in standalone mode (PWA)
     const standalone = window.matchMedia("(display-mode: standalone)").matches;
-    setIsStandalone(standalone);
-
-    // Detect iOS
     const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
-    setIsIOS(ios);
-
-    // Detect Android
     const android = /Android/.test(navigator.userAgent);
-    setIsAndroid(android);
 
-    // Listen for display mode changes
+    queueMicrotask(() => {
+      setIsStandalone(standalone);
+      setIsIOS(ios);
+      setIsAndroid(android);
+    });
+
     const mediaQuery = window.matchMedia("(display-mode: standalone)");
     const handler = (e: MediaQueryListEvent) => setIsStandalone(e.matches);
 

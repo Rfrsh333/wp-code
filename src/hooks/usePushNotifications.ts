@@ -25,13 +25,12 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setPermission("unsupported");
+      queueMicrotask(() => setPermission("unsupported"));
       return;
     }
 
-    setPermission(Notification.permission as PushPermissionState);
+    queueMicrotask(() => setPermission(Notification.permission as PushPermissionState));
 
-    // Check bestaande subscription
     navigator.serviceWorker.ready.then((registration) => {
       registration.pushManager.getSubscription().then((sub) => {
         setIsSubscribed(!!sub);

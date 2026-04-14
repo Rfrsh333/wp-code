@@ -7,13 +7,12 @@ const CONSENT_KEY = "ttj_cookie_consent";
 const GTM_ID = "GTM-5X3QX6Z6";
 
 export default function GtmLoader() {
-  const [hasConsent, setHasConsent] = useState(false);
+  const [hasConsent, setHasConsent] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(CONSENT_KEY) === "all";
+  });
 
   useEffect(() => {
-    if (window.localStorage.getItem(CONSENT_KEY) === "all") {
-      setHasConsent(true);
-    }
-
     const onConsentChange = (event: Event) => {
       const detail = (event as CustomEvent<string>).detail;
       setHasConsent(detail === "all");

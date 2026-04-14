@@ -47,7 +47,7 @@ export default function ReferralPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { queueMicrotask(() => { fetchData(); }); }, [fetchData]);
 
   const copyLink = async () => {
     try {

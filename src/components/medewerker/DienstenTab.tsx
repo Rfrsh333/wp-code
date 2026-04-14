@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface Dienst {
@@ -47,13 +47,18 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
     new Date(date).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
 
   const [vervangingModal, setVervangingModal] = useState<{ aanmeldingId: string; dienstId: string } | null>(null);
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    queueMicrotask(() => setNow(Date.now()));
+  }, [diensten]);
 
   const beschikbareDiensten = diensten.filter((d) => !d.aangemeld);
   const mijnAanmeldingen = diensten.filter((d) => d.aangemeld);
 
   const getUrenTotStart = (dienst: Dienst) => {
     const start = new Date(`${dienst.datum}T${dienst.start_tijd}`);
-    return (start.getTime() - Date.now()) / (1000 * 60 * 60);
+    return (start.getTime() - now) / (1000 * 60 * 60);
   };
 
   const getStatusBadge = (dienst: Dienst) => {

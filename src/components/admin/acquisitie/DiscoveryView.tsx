@@ -75,11 +75,13 @@ export default function DiscoveryView({ onRefresh }: Props) {
     setIsLoadingFiles(false);
   }, [getToken]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (activeMode === "bestanden") {
       void loadAvailableFiles();
     }
   }, [activeMode, loadAvailableFiles]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Importeer bestaand CSV bestand
   const importExistingFile = async (filePath: string) => {

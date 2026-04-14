@@ -65,7 +65,7 @@ export async function GET() {
     .select("id")
     .eq("klant_id", klant.id);
 
-  let recentMedewerkers: {
+  const recentMedewerkers: {
     medewerker_id: string;
     naam: string;
     functie: string | string[];

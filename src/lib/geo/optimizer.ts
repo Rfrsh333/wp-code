@@ -168,8 +168,8 @@ export async function analyseContent(content: GeoContent): Promise<ContentAnalys
 
   // 7. Structured data hints (10 pt)
   const sd = content.structured_data || [];
-  const hasFaq = sd.some((s: any) => s?.["@type"] === "FAQPage");
-  const hasLocal = sd.some((s: any) => s?.["@type"] === "LocalBusiness" || s?.["@type"] === "EmploymentAgency");
+  const hasFaq = sd.some((s: Record<string, unknown>) => s?.["@type"] === "FAQPage");
+  const hasLocal = sd.some((s: Record<string, unknown>) => s?.["@type"] === "LocalBusiness" || s?.["@type"] === "EmploymentAgency");
   let sdScore = 0;
   if (hasFaq && hasLocal) sdScore = 10;
   else if (hasFaq || hasLocal) sdScore = 5;
@@ -327,7 +327,7 @@ Geef je resultaat als JSON:
     if (!response.ok) throw new Error(`Anthropic API fout: ${response.status}`);
 
     const data = await response.json();
-    const text = data.content?.filter((c: any) => c.type === "text").map((c: any) => c.text).join("") || "";
+    const text = data.content?.filter((c: { type: string; text?: string }) => c.type === "text").map((c: { type: string; text?: string }) => c.text).join("") || "";
     const tokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
 
     // Parse JSON
@@ -338,7 +338,7 @@ Geef je resultaat als JSON:
     const optimisaties = JSON.parse(cleaned.trim());
 
     const changes: string[] = [];
-    const updateData: any = { updated_at: new Date().toISOString() };
+    const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
     if (optimisaties.extra_faq_items?.length > 0) {
       updateData.faq_items = [...(content.faq_items || []), ...optimisaties.extra_faq_items];

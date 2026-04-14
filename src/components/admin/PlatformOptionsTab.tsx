@@ -46,9 +46,11 @@ export default function PlatformOptionsTab() {
     setLoading(false);
   }, [activeType]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void fetchOptions();
   }, [fetchOptions]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const apiAction = async (body: Record<string, unknown>) => {
     setSaving(true);

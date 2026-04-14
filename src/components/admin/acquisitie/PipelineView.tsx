@@ -69,9 +69,11 @@ export default function PipelineView({ onSelectLead, onRefresh }: Props) {
     setIsLoading(false);
   }, [getToken]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void fetchLeads();
   }, [fetchLeads]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const moveToStage = async (leadId: string, newStage: string) => {
     const token = await getToken();

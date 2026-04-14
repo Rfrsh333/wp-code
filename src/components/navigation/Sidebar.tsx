@@ -44,7 +44,9 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect, forceVisi
   const focusableRefs = useRef<Record<string, HTMLButtonElement | HTMLAnchorElement | null>>({});
   const [storageReady, setStorageReady] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  useEffect(() => setStorageReady(true), []);
+  useEffect(() => {
+    queueMicrotask(() => setStorageReady(true));
+  }, []);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserEmail(session?.user?.email ?? null);

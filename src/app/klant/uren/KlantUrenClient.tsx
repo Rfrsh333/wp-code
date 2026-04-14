@@ -1544,7 +1544,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const templates: DienstTemplate[] = templData?.templates ?? [];
 
   // Get functions for selected category
-  const selectedCategorie = filterOptions?.categorieen?.find((c: any) => c.id === form.categorie_id);
+  const selectedCategorie = filterOptions?.categorieen?.find((c: { id: string; functies?: unknown[] }) => c.id === form.categorie_id);
   const availableFuncties = selectedCategorie?.functies || [];
   const availableTags = filterOptions?.tags || [];
 
@@ -1605,7 +1605,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
 
   const stepLabels = ["Functie(s)", "Datum & Tijd", "Details", "Favorieten"];
 
-  const useTemplate = (template: DienstTemplate) => {
+  const applyTemplate = (template: DienstTemplate) => {
     setForm({
       functie: template.functie,
       categorie_id: "",
@@ -1688,7 +1688,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
             {templates.slice(0, 4).map((t) => (
               <button
                 key={t.id}
-                onClick={() => useTemplate(t)}
+                onClick={() => applyTemplate(t)}
                 className="text-left p-3 bg-white rounded-xl border border-orange-200 hover:border-[#F27501] hover:shadow-sm transition-all group"
               >
                 <p className="font-medium text-sm text-neutral-900 group-hover:text-[#F27501] transition">
@@ -3209,23 +3209,23 @@ function QRScannerTab() {
    ============================================================ */
 function KlantInstallBanner() {
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
-  const [bannerGesloten, setBannerGesloten] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
-
-  useEffect(() => {
-    // Only show on mobile/tablet — hide on desktop
+  const [bannerGesloten, setBannerGesloten] = useState(() => {
+    if (typeof window === "undefined") return false;
     const isMobileOrTablet = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
       || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
-    if (!isMobileOrTablet) {
-      setBannerGesloten(true);
-      return;
-    }
+    if (!isMobileOrTablet) return true;
+    return localStorage.getItem("klant-pwa-banner-gesloten") === "true";
+  });
+  const [isIOS] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
+  });
+  const [isStandalone] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(display-mode: standalone)").matches;
+  });
 
-    setBannerGesloten(localStorage.getItem("klant-pwa-banner-gesloten") === "true");
-    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent));
-    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
-
+  useEffect(() => {
     const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e); };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
@@ -3233,9 +3233,7 @@ function KlantInstallBanner() {
 
   const handleInstall = async () => {
     if (!installPrompt) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (installPrompt as unknown as { prompt: () => void }).prompt();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await (installPrompt as unknown as { userChoice: Promise<{ outcome: string }> }).userChoice;
     if (result.outcome === "accepted") setInstallPrompt(null);
   };

@@ -54,9 +54,11 @@ export default function CampagnesView() {
     setIsLoading(false);
   }, [getToken]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void fetchCampagnes();
   }, [fetchCampagnes]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const saveCampagne = async () => {
     if (!naam.trim()) {

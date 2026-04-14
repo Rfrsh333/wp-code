@@ -16,6 +16,16 @@ import { GEO_STEDEN } from "./types";
 
 // --- Interfaces conform Master Prompt Module 4 ---
 
+interface CitationRecord {
+  concurrenten_urls?: string[];
+  zoekopdracht?: string;
+  engine?: string;
+  citatie_positie?: number;
+  stad?: string;
+  toptalent_geciteerd?: boolean;
+  [key: string]: unknown;
+}
+
 interface ConcurrentScore {
   naam: string;
   website: string;
@@ -136,7 +146,7 @@ export async function genereerConcurrentieRapport(
  * + analyseert sterke/zwakke punten per concurrent
  */
 export async function analyseerConcurrenten(
-  citationsInput?: any[]
+  citationsInput?: CitationRecord[]
 ): Promise<ConcurrentScore[]> {
   let citations = citationsInput;
 
@@ -179,8 +189,8 @@ export async function analyseerConcurrenten(
       };
 
       existing.citaties++;
-      existing.queries.add(citation.zoekopdracht);
-      existing.engines.add(citation.engine);
+      if (citation.zoekopdracht) existing.queries.add(citation.zoekopdracht);
+      if (citation.engine) existing.engines.add(citation.engine);
 
       if (citation.citatie_positie) {
         existing.posities.push(citation.citatie_positie);
@@ -384,7 +394,7 @@ export async function detecteerContentGaps(): Promise<ContentGap[]> {
 /**
  * Haal concurrenten overzicht op voor dashboard
  */
-export async function getConcurrentenOverzicht(): Promise<any[]> {
+export async function getConcurrentenOverzicht(): Promise<Record<string, unknown>[]> {
   const { data } = await supabaseAdmin
     .from("geo_concurrenten")
     .select("*")
@@ -398,7 +408,7 @@ export async function getConcurrentenOverzicht(): Promise<any[]> {
 /**
  * Haal content gaps op voor dashboard
  */
-export async function getContentGaps(status?: string): Promise<any[]> {
+export async function getContentGaps(status?: string): Promise<Record<string, unknown>[]> {
   let query = supabaseAdmin
     .from("geo_content_gaps")
     .select("*")

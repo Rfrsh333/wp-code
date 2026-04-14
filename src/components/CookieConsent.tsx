@@ -8,12 +8,12 @@ const CONSENT_KEY = "ttj_cookie_consent";
 type ConsentValue = "all" | "necessary";
 
 export default function CookieConsent() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !window.localStorage.getItem(CONSENT_KEY);
+  });
 
   useEffect(() => {
-    if (!window.localStorage.getItem(CONSENT_KEY)) {
-      setIsVisible(true);
-    }
     const onOpen = () => setIsVisible(true);
     window.addEventListener("ttj-cookie-open", onOpen);
     return () => window.removeEventListener("ttj-cookie-open", onOpen);

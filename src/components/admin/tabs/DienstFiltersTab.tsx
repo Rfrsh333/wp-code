@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Check, X, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
 interface Categorie {
@@ -52,7 +52,7 @@ export default function DienstFiltersTab() {
 
   // Mutations
   const mutation = useMutation({
-    mutationFn: async (body: any) => {
+    mutationFn: async (body: Record<string, unknown>) => {
       const res = await fetch('/api/admin/dienst-filters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,10 +124,9 @@ function CategorieenSection({
   onMutate,
 }: {
   categorieen: Categorie[];
-  onMutate: (data: any) => void;
+  onMutate: (data: Record<string, unknown>) => void;
 }) {
   const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [newNaam, setNewNaam] = useState('');
   const [newIcon, setNewIcon] = useState('');
 
@@ -253,7 +252,7 @@ function FunctiesSection({
 }: {
   functies: Functie[];
   categorieen: Categorie[];
-  onMutate: (data: any) => void;
+  onMutate: (data: Record<string, unknown>) => void;
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [newNaam, setNewNaam] = useState('');
@@ -391,7 +390,7 @@ function TagsSection({
   onMutate,
 }: {
   tags: Tag[];
-  onMutate: (data: any) => void;
+  onMutate: (data: Record<string, unknown>) => void;
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [newNaam, setNewNaam] = useState('');

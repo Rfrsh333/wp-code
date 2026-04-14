@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       if (!id) return NextResponse.json({ error: 'ID vereist' }, { status: 400 });
 
       const validated = categorieSchema.partial().parse(data);
-      const updateData: Record<string, any> = {};
+      const updateData: Record<string, unknown> = {};
 
       if (validated.naam !== undefined) {
         updateData.naam = validated.naam;
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
       if (!id) return NextResponse.json({ error: 'ID vereist' }, { status: 400 });
 
       const validated = functieSchema.partial().parse(data);
-      const updateData: Record<string, any> = {};
+      const updateData: Record<string, unknown> = {};
 
       if (validated.naam !== undefined) {
         updateData.naam = validated.naam;
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       if (!id) return NextResponse.json({ error: 'ID vereist' }, { status: 400 });
 
       const validated = tagSchema.partial().parse(data);
-      const updateData: Record<string, any> = {};
+      const updateData: Record<string, unknown> = {};
 
       if (validated.naam !== undefined) {
         updateData.naam = validated.naam;
@@ -246,16 +246,16 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Onbekende actie' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[ADMIN DIENST-FILTERS POST] Error:', error);
 
-    if (error.name === 'ZodError') {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({
         error: 'Validatie fout',
-        details: error.errors,
+        details: (error as Error & { errors: unknown }).errors,
       }, { status: 400 });
     }
 
-    return NextResponse.json({ error: error.message || 'Actie mislukt' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Actie mislukt' }, { status: 500 });
   }
 }

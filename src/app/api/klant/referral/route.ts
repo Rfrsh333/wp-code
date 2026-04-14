@@ -21,7 +21,7 @@ export async function GET() {
   if (!klant) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
 
   // Haal bestaande referral code op of maak nieuwe
-  let { data: existing } = await supabaseAdmin
+  const { data: existing } = await supabaseAdmin
     .from("referrals")
     .select("referral_code")
     .eq("referrer_type", "klant")

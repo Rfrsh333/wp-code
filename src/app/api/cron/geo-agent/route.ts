@@ -3,6 +3,7 @@ import { runGeoContentPlan } from "@/lib/geo/engine";
 import { runFullMonitoring } from "@/lib/geo/monitor";
 import { runAutoOptimization } from "@/lib/geo/optimizer";
 import { runCompetitorAnalysis } from "@/lib/geo/competitor";
+import type { GeoStad } from "@/lib/geo/types";
 
 /**
  * Cron endpoint voor de volledige GEO Agent pipeline
@@ -26,13 +27,13 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const mode = searchParams.get("mode") || "full";
     const maxItems = Math.min(parseInt(searchParams.get("max") || "2"), 5);
-    const stad = searchParams.get("stad") as any;
+    const stad = searchParams.get("stad") as string | null;
     const autoPublish = searchParams.get("auto_publish") === "true";
-    const engines = (searchParams.get("engines") || "perplexity").split(",") as any[];
+    const engines = (searchParams.get("engines") || "perplexity").split(",");
 
     console.log(`[GEO CRON] Start mode=${mode}, max=${maxItems}`);
 
-    const results: Record<string, any> = {};
+    const results: Record<string, unknown> = {};
 
     // Stap 1: Content genereren
     if (mode === "full" || mode === "generate") {
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
       results.generate = await runGeoContentPlan({
         maxItems,
         autoPublish,
-        stad: stad || undefined,
+        stad: (stad as GeoStad) || undefined,
       });
     }
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       console.log("[GEO CRON] → Stap 2: Citation monitoring");
       results.monitor = await runFullMonitoring({
         maxItems: maxItems + 2,
-        engines,
+        engines: engines as ("perplexity" | "chatgpt" | "google_ai")[],
       });
     }
 

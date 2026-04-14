@@ -143,14 +143,14 @@ export async function GET(request: NextRequest) {
 
     // Validate platform filter against whitelist (SQL injection prevention)
     if (platform && platform !== 'all') {
-      if (VALID_PLATFORMS.includes(platform as any)) {
+      if ((VALID_PLATFORMS as readonly string[]).includes(platform)) {
         query = query.eq('platform', platform)
       }
     }
 
     // Validate status filter against whitelist
     if (status && status !== 'all') {
-      if (VALID_STATUSES.includes(status as any)) {
+      if ((VALID_STATUSES as readonly string[]).includes(status)) {
         query = query.eq('status', status)
       }
     }

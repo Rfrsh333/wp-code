@@ -44,11 +44,11 @@ export async function GET(request: NextRequest) {
 
     // Map naar simpele structuur en filter null diensten
     const uren = (urenRegistraties || [])
-      .filter((u) => u.aanmelding && (u.aanmelding as any).dienst)
+      .filter((u) => u.aanmelding && (u.aanmelding as unknown as Record<string, unknown>).dienst)
       .map((u) => {
-        const aanmelding = u.aanmelding as any;
-        const dienst = aanmelding.dienst;
-        const klant = dienst?.klant;
+        const aanmelding = u.aanmelding as unknown as Record<string, unknown>;
+        const dienst = aanmelding.dienst as Record<string, unknown> | null;
+        const klant = dienst?.klant as Record<string, unknown> | null;
 
         return {
           id: u.id,
@@ -56,11 +56,11 @@ export async function GET(request: NextRequest) {
           status: u.status,
           created_at: u.created_at,
           dienst: {
-            datum: dienst?.datum || "",
-            locatie: dienst?.locatie || "",
-            uurtarief: dienst?.uurtarief || 0,
+            datum: (dienst?.datum as string) || "",
+            locatie: (dienst?.locatie as string) || "",
+            uurtarief: (dienst?.uurtarief as number) || 0,
             klant: {
-              bedrijfsnaam: klant?.bedrijfsnaam || "Onbekend",
+              bedrijfsnaam: (klant?.bedrijfsnaam as string) || "Onbekend",
               bedrijf_foto_url: undefined, // Optional - kan later toegevoegd worden
             },
           },
@@ -110,16 +110,17 @@ export async function GET(request: NextRequest) {
     // Filter diensten die nog geen uren hebben
     const te_registreren = (dienstenZonderUren || [])
       .filter((aanmelding) => {
-        const dienstId = (aanmelding.dienst as any)?.id;
+        const dienstId = (aanmelding.dienst as unknown as Record<string, unknown> | null)?.id;
         return dienstId && !uren.some(u => {
-          const uDienstId = (u as any).aanmelding?.dienst?.id;
-          return uDienstId === dienstId;
+          const uDienst = (u as Record<string, unknown>).aanmelding;
+          const uDienstId = (uDienst as Record<string, unknown> | undefined)?.dienst;
+          return ((uDienstId as Record<string, unknown> | undefined)?.id) === dienstId;
         });
       })
       .slice(0, 10)
       .map((aanmelding) => {
-        const dienst = aanmelding.dienst as any;
-        const klant = dienst?.klant;
+        const dienst = aanmelding.dienst as unknown as Record<string, unknown> | null;
+        const klant = dienst?.klant as unknown as Record<string, unknown> | null;
         return {
           id: dienst?.id || "",
           aanmelding_id: aanmelding.id,
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
       .eq("status", "klant_aangepast")
       .eq("medewerker_id", medewerker.id);
 
-    const aanpassingen = (aanpassingenData || []).map((u: any) => ({
+    const aanpassingen = (aanpassingenData || []).map((u: Record<string, unknown>) => ({
       id: u.id,
       start_tijd: u.start_tijd,
       eind_tijd: u.eind_tijd,
@@ -165,9 +166,9 @@ export async function GET(request: NextRequest) {
       klant_reiskosten_km: u.klant_reiskosten_km,
       klant_reiskosten_bedrag: u.klant_reiskosten_bedrag,
       klant_opmerking: u.klant_opmerking,
-      dienst_datum: u.aanmelding?.dienst?.datum || "",
-      klant_naam: u.aanmelding?.dienst?.klant_naam || "",
-      locatie: u.aanmelding?.dienst?.locatie || "",
+      dienst_datum: ((u.aanmelding as Record<string, unknown> | null)?.dienst as Record<string, unknown> | null)?.datum || "",
+      klant_naam: ((u.aanmelding as Record<string, unknown> | null)?.dienst as Record<string, unknown> | null)?.klant_naam || "",
+      locatie: ((u.aanmelding as Record<string, unknown> | null)?.dienst as Record<string, unknown> | null)?.locatie || "",
     }));
 
     return NextResponse.json({

@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Bell, BellOff, X } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
+function getInitialDismissed(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("push_banner_dismissed") === "true";
+}
+
 export default function PushNotificationBanner() {
   const { permission, isSubscribed, loading, subscribe, unsubscribe } = usePushNotifications();
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(getInitialDismissed);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    // Check of banner al eerder is weggeklikt
-    const wasDismissed = localStorage.getItem("push_banner_dismissed");
-    if (wasDismissed) setDismissed(true);
-  }, []);
 
   const handleDismiss = () => {
     setDismissed(true);

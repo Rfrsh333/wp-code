@@ -442,7 +442,7 @@ async function updateDailyPerformance(): Promise<void> {
 export async function getPerformanceData(options?: {
   dagen?: number;
   content_id?: string;
-}): Promise<any[]> {
+}): Promise<Record<string, unknown>[]> {
   const dagen = options?.dagen || 30;
   const sinceDate = new Date();
   sinceDate.setDate(sinceDate.getDate() - dagen);
@@ -466,7 +466,7 @@ export async function getCitationDetails(options?: {
   content_id?: string;
   engine?: string;
   limit?: number;
-}): Promise<any[]> {
+}): Promise<Record<string, unknown>[]> {
   let query = supabaseAdmin
     .from("geo_citations")
     .select("*, geo_content(title, stad)")

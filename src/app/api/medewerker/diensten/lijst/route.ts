@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     // Stap 3: Haal klant info op (apart om join-problemen te voorkomen)
     const klantIds = [...new Set((diensten || []).map((d) => d.klant_id).filter(Boolean))];
-    let klantenMap: Record<string, { bedrijfsnaam: string; bedrijf_foto_url: string | null }> = {};
+    const klantenMap: Record<string, { bedrijfsnaam: string; bedrijf_foto_url: string | null }> = {};
 
     if (klantIds.length > 0) {
       const { data: klanten } = await supabaseAdmin

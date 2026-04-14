@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
 
   // Verifieer dat alle uren bij deze klant horen
   for (const uren of urenRegistraties) {
-    const aanmelding = uren.aanmelding as any;
-    const dienst = aanmelding?.dienst;
+    const aanmelding = uren.aanmelding as unknown as Record<string, unknown> | null;
+    const dienst = aanmelding?.dienst as Record<string, unknown> | null;
     if (dienst?.klant_id !== klant.id) {
       return NextResponse.json({ error: "Ongeautoriseerde uren" }, { status: 403 });
     }
@@ -75,25 +75,25 @@ export async function POST(request: NextRequest) {
 
   // Bereken totaal
   let subtotaal = 0;
-  const regels: any[] = [];
+  const regels: { uren_registratie_id: unknown; omschrijving: string; datum: string; medewerker_naam: string; uren: unknown; uurtarief: number; reiskosten: number; bedrag: number }[] = [];
 
   for (const uren of urenRegistraties) {
-    const aanmelding = uren.aanmelding as any;
-    const dienst = aanmelding?.dienst;
-    const medewerker = aanmelding?.medewerker;
+    const aanmelding = uren.aanmelding as unknown as Record<string, unknown> | null;
+    const dienst = aanmelding?.dienst as Record<string, unknown> | null;
+    const medewerker = aanmelding?.medewerker as Record<string, unknown> | null;
 
-    const urenBedrag = uren.gewerkte_uren * (dienst?.uurtarief || 0);
+    const urenBedrag = uren.gewerkte_uren * ((dienst?.uurtarief as number) || 0);
     const reiskosten = uren.reiskosten_bedrag || 0;
     const bedrag = urenBedrag + reiskosten;
     subtotaal += bedrag;
 
     regels.push({
       uren_registratie_id: uren.id,
-      omschrijving: `${dienst?.locatie || ''} - ${medewerker?.naam || ''}`,
-      datum: dienst?.datum || '',
-      medewerker_naam: medewerker?.naam || '',
+      omschrijving: `${(dienst?.locatie as string) || ''} - ${(medewerker?.naam as string) || ''}`,
+      datum: (dienst?.datum as string) || '',
+      medewerker_naam: (medewerker?.naam as string) || '',
       uren: uren.gewerkte_uren,
-      uurtarief: dienst?.uurtarief || 0,
+      uurtarief: (dienst?.uurtarief as number) || 0,
       reiskosten,
       bedrag,
     });

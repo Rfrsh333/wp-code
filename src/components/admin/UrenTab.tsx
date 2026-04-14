@@ -142,11 +142,11 @@ export default function UrenTab() {
     const headers = await getAuthHeader();
     const res = await fetch("/api/admin/uren?filter=zonder_uren", { headers });
     const { data } = await res.json();
-    setAanmeldingenZonderUren((data || []).map((a: any) => ({
+    setAanmeldingenZonderUren((data || []).map((a: Record<string, unknown>) => ({
       ...a,
       medewerker: Array.isArray(a.medewerker) ? a.medewerker[0] : a.medewerker,
       dienst: Array.isArray(a.dienst) ? a.dienst[0] : a.dienst,
-    })));
+    } as AanmeldingZonderUren)));
     setLoadingAanmeldingen(false);
   };
 

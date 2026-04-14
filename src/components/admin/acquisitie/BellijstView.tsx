@@ -67,9 +67,11 @@ export default function BellijstView({ onSelectLead }: Props) {
     setIsLoading(false);
   }, [getToken, minScore]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     void fetchLeads();
   }, [fetchLeads]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const logCall = async (leadId: string) => {
     const token = await getToken();

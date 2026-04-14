@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const vandaag = new Date().toISOString().split("T")[0];
 
     // Haal alle toekomstige open diensten op (met optionele klant join)
-    let { data: diensten, error }: { data: any; error: any } = await supabaseAdmin
+    const result = await supabaseAdmin
       .from("diensten")
       .select(`
         id,
@@ -47,6 +47,9 @@ export async function GET(request: NextRequest) {
       .order("start_tijd", { ascending: true })
       .limit(50);
 
+    let diensten = result.data as Record<string, unknown>[] | null;
+    const error = result.error;
+
     // Fallback: Als de join query faalt, gebruik simpele query
     if (error) {
       console.warn("[SHIFTS BESCHIKBAAR] Join query failed, using fallback:", error);
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
         .order("datum", { ascending: true })
         .limit(50);
       // Add null klant property to match type
-      diensten = (fallbackDiensten || []).map(d => ({ ...d, klant: null }));
+      diensten = (fallbackDiensten || []).map(d => ({ ...d, klant: null })) as Record<string, unknown>[];
     }
 
     // Filter uit: diensten waar medewerker al is aangemeld
@@ -70,37 +73,33 @@ export async function GET(request: NextRequest) {
     const aangemeldeDienstIds = new Set(aanmeldingen?.map((a) => a.dienst_id) || []);
 
     const beschikbareShifts = (diensten || [])
-      .filter((d: any) => {
-        // Filter: al aangemeld
-        if (aangemeldeDienstIds.has(d.id)) return false;
-        // Filter: geen plekken meer beschikbaar
-        const aantalNodig = d.aantal_nodig ?? 1;
+      .filter((d: Record<string, unknown>) => {
+        if (aangemeldeDienstIds.has(d.id as string)) return false;
+        const aantalNodig = (d.aantal_nodig as number) ?? 1;
         if (aantalNodig <= 0) return false;
         return true;
       })
-      .map((d: any) => {
-        const klant = d.klant as any;
+      .map((d: Record<string, unknown>) => {
+        const klant = d.klant as Record<string, unknown> | null;
         // ✅ Use plekken_beschikbaar/plekken_totaal if available, fallback to aantal_nodig
-        const plekkenBeschikbaar = d.plekken_beschikbaar ?? d.aantal_nodig ?? 1;
-        const plekkenTotaal = d.plekken_totaal ?? d.aantal_nodig ?? 1;
+        const plekkenBeschikbaar = (d.plekken_beschikbaar as number) ?? (d.aantal_nodig as number) ?? 1;
+        const plekkenTotaal = (d.plekken_totaal as number) ?? (d.aantal_nodig as number) ?? 1;
 
-        // Genereer tags op basis van shift eigenschappen
         const tags: string[] = [];
-        const uren = berekenUren(d.start_tijd, d.eind_tijd);
+        const uren = berekenUren(d.start_tijd as string, d.eind_tijd as string);
         if (uren < 4) tags.push("Korte shift");
         if (uren >= 8) tags.push("Hele dag");
 
-        const medewerkerUurtarief = d.uurtarief - 4;
+        const medewerkerUurtarief = (d.uurtarief as number) - 4;
         if (medewerkerUurtarief >= 16) tags.push("Goed betaald");
 
-        const datum = new Date(d.datum);
+        const datum = new Date(d.datum as string);
         const morgen = new Date();
         morgen.setDate(morgen.getDate() + 1);
         if (datum.toDateString() === morgen.toDateString()) {
           tags.push("Morgen");
         }
 
-        // Markeer als "speciaal" als uurtarief hoog is of veel plekken
         const is_speciaal = medewerkerUurtarief >= 18 || plekkenBeschikbaar >= 5;
 
         return {
@@ -115,9 +114,9 @@ export async function GET(request: NextRequest) {
           plekken_totaal: plekkenTotaal,
           afbeelding_url: d.afbeelding_url || null,
           klant: {
-            bedrijfsnaam: klant?.bedrijfsnaam || (d as any).klant_naam || "Onbekend",
+            bedrijfsnaam: (klant?.bedrijfsnaam as string) || (d.klant_naam as string) || "Onbekend",
             bedrijf_foto_url: klant?.bedrijf_foto_url,
-            rating: 4.5, // Placeholder - kan later dynamisch worden
+            rating: 4.5,
           },
           tags,
           is_speciaal,

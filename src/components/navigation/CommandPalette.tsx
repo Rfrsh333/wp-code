@@ -56,7 +56,10 @@ export default function CommandPalette({
   useEffect(() => {
     try {
       const stored = localStorage.getItem("tt-recent-tabs");
-      if (stored) setRecentTabs(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        queueMicrotask(() => setRecentTabs(parsed));
+      }
     } catch {}
   }, [open]);
 

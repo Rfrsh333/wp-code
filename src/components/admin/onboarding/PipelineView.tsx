@@ -37,6 +37,7 @@ const PIPELINE_COLUMNS = [
 
 export default function PipelineView({ inschrijvingen, onSelectKandidaat, onRefresh }: PipelineViewProps) {
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [now] = useState(() => Date.now());
 
   const getAuthHeader = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -66,7 +67,7 @@ export default function PipelineView({ inschrijvingen, onSelectKandidaat, onRefr
 
   const daysSince = (dateStr: string | null) => {
     if (!dateStr) return null;
-    const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+    const days = Math.floor((now - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
     return days;
   };
 

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Uurtarief is required either globally or per-function
-    const hasPerFunctionRates = functies_met_aantal?.length > 0 && functies_met_aantal.every((f: any) => f.uurtarief && parseFloat(f.uurtarief) > 0);
+    const hasPerFunctionRates = functies_met_aantal?.length > 0 && functies_met_aantal.every((f: { uurtarief?: string }) => f.uurtarief && parseFloat(f.uurtarief) > 0);
     if (!uurtarief && !hasPerFunctionRates) {
       return NextResponse.json({ error: "Uurtarief is verplicht (globaal of per functie)" }, { status: 400 });
     }
@@ -154,13 +154,13 @@ export async function POST(request: NextRequest) {
     // Build functie summary for telegram
     let functieSummary = '';
     if (functies_met_aantal && functies_met_aantal.length > 0) {
-      functieSummary = functies_met_aantal.map((f: any) => `${f.functie} (${f.aantal}x)`).join(', ');
+      functieSummary = functies_met_aantal.map((f: { functie: string; aantal: number }) => `${f.functie} (${f.aantal}x)`).join(', ');
     } else {
       functieSummary = functie || 'Onbekend';
     }
 
     const totaalPersoneel = functies_met_aantal
-      ? functies_met_aantal.reduce((sum: number, f: any) => sum + f.aantal, 0)
+      ? functies_met_aantal.reduce((sum: number, f: { aantal: number }) => sum + f.aantal, 0)
       : parseInt(aantal) || 1;
 
     // Telegram notification (don't let it block the response)

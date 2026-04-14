@@ -13,7 +13,7 @@ import type {
   GeoGenerationRequest,
   GeoGenerationResult,
 } from "./types";
-import { GEO_STEDEN } from "./types";
+import { GEO_STEDEN, type FaqItem, type Bron, type Statistiek } from "./types";
 import {
   buildGeoSystemPrompt,
   buildCityPagePrompt,
@@ -82,7 +82,7 @@ async function callAnthropic(userPrompt: string): Promise<{ text: string; tokens
 /**
  * Parse JSON uit Anthropic response (handelt markdown code blocks af)
  */
-function parseJsonResponse(text: string): any {
+function parseJsonResponse(text: string): Record<string, unknown> {
   // Strip eventuele markdown code blocks
   let cleaned = text.trim();
   if (cleaned.startsWith("```json")) {
@@ -163,7 +163,20 @@ export async function generateGeoContent(
 
   // Roep Anthropic aan
   const { text, tokens, model } = await callAnthropic(prompt);
-  const parsed = parseJsonResponse(text);
+  const parsed = parseJsonResponse(text) as Record<string, unknown> & {
+    slug?: string;
+    title?: string;
+    meta_description?: string | null;
+    seo_title?: string | null;
+    body_markdown?: string;
+    excerpt?: string | null;
+    structured_data?: Record<string, unknown>[];
+    faq_items?: FaqItem[];
+    bronnen?: Bron[];
+    statistieken?: Statistiek[];
+    primary_keywords?: string[];
+    secondary_keywords?: string[];
+  };
   const duurMs = Date.now() - startTime;
 
   // Bouw slug
@@ -302,7 +315,7 @@ export async function updateGeoContentStatus(
   status: string,
   notities?: string
 ): Promise<GeoContent> {
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     status,
     updated_at: new Date().toISOString(),
   };

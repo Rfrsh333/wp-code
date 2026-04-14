@@ -124,7 +124,7 @@ function StatCard({
   subtitle,
   color,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   value: string;
   subtitle: string;
@@ -157,7 +157,7 @@ function QuickAction({
   description,
   color,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
   color: "blue" | "indigo" | "purple";
@@ -189,7 +189,7 @@ function ActivityItem({
   subtitle,
   time,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   subtitle: string;
   time: string;

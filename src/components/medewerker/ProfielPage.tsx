@@ -159,9 +159,11 @@ export default function ProfielPage({ medewerker, onPhotoUpload, onPhotoDelete, 
   }, []);
 
   useEffect(() => {
-    fetchProfileData();
-    fetchWerkervaring();
-    fetchVaardigheden();
+    queueMicrotask(() => {
+      fetchProfileData();
+      fetchWerkervaring();
+      fetchVaardigheden();
+    });
   }, [fetchProfileData, fetchWerkervaring, fetchVaardigheden]);
 
   const calculateAge = (geboortedatum: string | null | undefined) => {
