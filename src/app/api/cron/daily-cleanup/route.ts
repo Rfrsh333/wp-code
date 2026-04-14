@@ -67,7 +67,6 @@ export async function POST(request: NextRequest) {
 
     results.oude_chats_gesloten = oudeChats?.length || 0;
 
-    console.log("[CRON] Daily cleanup voltooid:", results);
     return NextResponse.json({ success: true, results });
   } catch (error) {
     console.error("[CRON] Daily cleanup error:", error);

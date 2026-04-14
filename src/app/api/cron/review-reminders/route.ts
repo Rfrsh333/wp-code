@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
     gisteren.setDate(gisteren.getDate() - 1);
     const gisterenStr = gisteren.toISOString().split("T")[0];
 
-    console.log(`[CRON review-reminders] Checking diensten van ${gisterenStr}`);
-
     // Haal afgeronde diensten van gisteren op met geaccepteerde aanmeldingen
     const { data: aanmeldingen } = await supabaseAdmin
       .from("dienst_aanmeldingen")
@@ -43,7 +41,6 @@ export async function POST(request: NextRequest) {
       .limit(200);
 
     if (!aanmeldingen?.length) {
-      console.log("[CRON review-reminders] Geen afgeronde diensten van gisteren");
       return NextResponse.json({
         success: true,
         message: "Geen diensten van gisteren",
@@ -107,7 +104,6 @@ export async function POST(request: NextRequest) {
   }
 
   const duration = Date.now() - startTime;
-  console.log(`[CRON review-reminders] Klaar: ${sent} verzonden, ${skipped} overgeslagen, ${duration}ms`);
 
   return NextResponse.json({
     success: true,

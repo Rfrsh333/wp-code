@@ -10,8 +10,6 @@ export async function GET(request: NextRequest) {
 
   try {
     const overview = await getContentOverview();
-    console.log("[overview] metrics:", JSON.stringify(overview.metrics));
-    console.log("[overview] sources:", overview.sources.length, "clusters:", overview.clusters.length, "drafts:", overview.drafts.length);
     return NextResponse.json(overview);
   } catch (error) {
     console.error("[overview] Error loading overview:", error);

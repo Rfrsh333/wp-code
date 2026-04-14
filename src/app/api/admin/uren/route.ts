@@ -153,7 +153,6 @@ export async function POST(request: NextRequest) {
       status: "ingediend",
     });
 
-    console.log(`[ADMIN] ${email} registered hours manually for aanmelding ${aanmelding_id}: ${gewerkte_uren}h, reason: ${opmerking || "geen"}`);
   }
 
   if (action === "adjust") {

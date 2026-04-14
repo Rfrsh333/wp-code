@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[SHIFTS AANMELDEN] ${medewerker.naam} aangemeld voor dienst ${dienst_id}`);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[SHIFTS AANMELDEN] Error:", error);

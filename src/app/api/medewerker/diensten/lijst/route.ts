@@ -42,12 +42,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (!aanmeldingen || aanmeldingen.length === 0) {
-      console.log(`[LIJST] Geen aanmeldingen gevonden voor medewerker ${medewerker.id} met status ${statusFilter.join(",")}`);
       return NextResponse.json({ diensten: [], vervangingVerzoeken: [] });
     }
 
     const dienstIds = aanmeldingen.map((a) => a.dienst_id);
-    console.log(`[LIJST] ${aanmeldingen.length} aanmeldingen gevonden, dienst IDs:`, dienstIds);
 
     // Stap 2: Haal diensten op (los van aanmeldingen om join-problemen te voorkomen)
     const { data: diensten, error: dienstenError } = await supabaseAdmin
@@ -115,8 +113,6 @@ export async function GET(request: NextRequest) {
         if (status === "voltooid") return b.datum.localeCompare(a.datum);
         return a.datum.localeCompare(b.datum);
       });
-
-    console.log(`[LIJST] ${result.length} diensten na filtering voor tab "${status}"`);
 
     // Haal vervangingsverzoeken op
     const myVervangingAanmeldingen = (await supabaseAdmin

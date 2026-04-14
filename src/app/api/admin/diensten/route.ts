@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
     query = query.gte("datum", yesterday.toISOString().split("T")[0]);
   }
   const { data, error } = await query;
-  console.log(`[ADMIN DIENSTEN] Fetched ${data?.length || 0} diensten, error:`, error || "none");
   return NextResponse.json({ data });
 }
 

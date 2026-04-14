@@ -107,8 +107,6 @@ export async function POST(request: NextRequest) {
     // Log email met Resend email ID voor tracking
     await logEmail(kandidaat_id, action, kandidaat.email, subject, emailResult.data?.id);
 
-    // Log admin action
-    console.log(`[ONBOARDING EMAIL] Admin ${adminEmail} triggered ${action} email for kandidaat ${kandidaat.voornaam} ${kandidaat.achternaam}`);
     await logAuditEvent({
       actorEmail: adminEmail,
       actorRole: role,

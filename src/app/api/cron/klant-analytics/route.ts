@@ -7,8 +7,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log("[CRON] Klant analytics gestart");
-
   // Haal alle klanten op
   const { data: klanten } = await supabaseAdmin
     .from("klanten")
@@ -111,8 +109,6 @@ export async function GET(request: NextRequest) {
 
     updated++;
   }
-
-  console.log(`[CRON] Klant analytics voltooid: ${updated} klanten bijgewerkt`);
 
   return NextResponse.json({
     success: true,

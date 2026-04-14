@@ -22,20 +22,29 @@ const leadSchema = z.object({
 })
 
 // CORS headers for bookmarklet cross-origin requests
-function corsHeaders() {
+const ALLOWED_ORIGINS = [
+  'https://www.toptalentjobs.nl',
+  'https://toptalentjobs.nl',
+  ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:3001'] : []),
+]
+
+function corsHeaders(origin?: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   }
 }
 
 // Handle preflight CORS requests
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders() })
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin')
+  return new NextResponse(null, { status: 204, headers: corsHeaders(origin) })
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get('origin')
   try {
     // Rate limiting
     const clientIP = getClientIP(request)
@@ -43,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (!rateLimit.success) {
       return NextResponse.json(
         { error: 'Te veel verzoeken. Probeer het later opnieuw.' },
-        { status: 429, headers: corsHeaders() }
+        { status: 429, headers: corsHeaders(origin) }
       )
     }
 
@@ -53,7 +62,7 @@ export async function POST(request: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json(
         { error: 'Validatiefout' },
-        { status: 400, headers: corsHeaders() }
+        { status: 400, headers: corsHeaders(origin) }
       )
     }
 
@@ -65,7 +74,7 @@ export async function POST(request: NextRequest) {
       if (data.bookmarklet_token !== process.env.BOOKMARKLET_SECRET_TOKEN) {
         return NextResponse.json(
           { error: 'Unauthorized' },
-          { status: 401, headers: corsHeaders() }
+          { status: 401, headers: corsHeaders(origin) }
         )
       }
     } else {
@@ -74,7 +83,7 @@ export async function POST(request: NextRequest) {
       if (!isAdmin) {
         return NextResponse.json(
           { error: 'Unauthorized - Admin access required' },
-          { status: 403, headers: corsHeaders() }
+          { status: 403, headers: corsHeaders(origin) }
         )
       }
     }
@@ -96,19 +105,19 @@ export async function POST(request: NextRequest) {
       console.error('Supabase error:', error)
       return NextResponse.json(
         { error: 'Opslaan mislukt' },
-        { status: 500, headers: corsHeaders() }
+        { status: 500, headers: corsHeaders(origin) }
       )
     }
 
     return NextResponse.json(
       { success: true, lead },
-      { status: 201, headers: corsHeaders() }
+      { status: 201, headers: corsHeaders(origin) }
     )
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json(
       { error: 'Er is een fout opgetreden' },
-      { status: 500, headers: corsHeaders() }
+      { status: 500, headers: corsHeaders(origin) }
     )
   }
 }

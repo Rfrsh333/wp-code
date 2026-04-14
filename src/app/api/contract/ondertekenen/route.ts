@@ -181,8 +181,6 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", contract.id);
 
-    console.log(`[CONTRACT] Medewerker signed ${contract.id}, status: ${newStatus}`);
-
     return NextResponse.json({ success: true, status: newStatus });
   } catch (err) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);

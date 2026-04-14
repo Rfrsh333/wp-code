@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     // 1. Seed sources
     try {
       const r = await seedCuratedSources();
-      console.log("[pipeline] seed_sources result:", JSON.stringify(r));
+
       steps.push({ name: "seed_sources", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] seed_sources error:", e);
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     // 2. Feed ingestion
     try {
       const r = await runFeedIngestionPass();
-      console.log("[pipeline] run_ingestion result:", JSON.stringify(r));
+
       steps.push({ name: "run_ingestion", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_ingestion error:", e);
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     // 3. Extraction
     try {
       const r = await runPendingExtractionPass(20);
-      console.log("[pipeline] run_extraction result:", JSON.stringify(r));
+
       steps.push({ name: "run_extraction", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_extraction error:", e);
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     // 4. Deduplication
     try {
       const r = await runDeduplicationPass();
-      console.log("[pipeline] run_deduplication result:", JSON.stringify(r));
+
       steps.push({ name: "run_deduplication", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_deduplication error:", e);
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     // 5. Analysis
     try {
       const r = await runPendingAnalysisPass(20);
-      console.log("[pipeline] run_analysis result:", JSON.stringify(r));
+
       steps.push({ name: "run_analysis", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_analysis error:", e);
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
     // 6. Clustering
     try {
       const r = await runClusteringPass(50);
-      console.log("[pipeline] run_clustering result:", JSON.stringify(r));
+
       steps.push({ name: "run_clustering", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] run_clustering error:", e);
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
     // 7. Generate drafts
     try {
       const r = await generateDraftsFromTopClusters(3);
-      console.log("[pipeline] generate_drafts result:", JSON.stringify(r));
+
       steps.push({ name: "generate_drafts", result: r, error: null });
     } catch (e) {
       console.error("[pipeline] generate_drafts error:", e);

@@ -31,13 +31,10 @@ export async function GET(request: NextRequest) {
     const autoPublish = searchParams.get("auto_publish") === "true";
     const engines = (searchParams.get("engines") || "perplexity").split(",");
 
-    console.log(`[GEO CRON] Start mode=${mode}, max=${maxItems}`);
-
     const results: Record<string, unknown> = {};
 
     // Stap 1: Content genereren
     if (mode === "full" || mode === "generate") {
-      console.log("[GEO CRON] → Stap 1: Content genereren");
       results.generate = await runGeoContentPlan({
         maxItems,
         autoPublish,
@@ -47,7 +44,6 @@ export async function GET(request: NextRequest) {
 
     // Stap 2: Monitoring (citation checks)
     if (mode === "full" || mode === "monitor") {
-      console.log("[GEO CRON] → Stap 2: Citation monitoring");
       results.monitor = await runFullMonitoring({
         maxItems: maxItems + 2,
         engines: engines as ("perplexity" | "chatgpt" | "google_ai")[],
@@ -56,7 +52,6 @@ export async function GET(request: NextRequest) {
 
     // Stap 3: Auto-optimalisatie
     if (mode === "full" || mode === "optimize") {
-      console.log("[GEO CRON] → Stap 3: Auto-optimalisatie");
       results.optimize = await runAutoOptimization({
         maxItems,
         minScore: 60,
@@ -65,11 +60,8 @@ export async function GET(request: NextRequest) {
 
     // Stap 4: Concurrentie-analyse + content gaps
     if (mode === "full" || mode === "competitor") {
-      console.log("[GEO CRON] → Stap 4: Concurrentie-analyse");
       results.competitor = await runCompetitorAnalysis();
     }
-
-    console.log("[GEO CRON] Pipeline voltooid:", JSON.stringify(results, null, 2));
 
     return NextResponse.json({ success: true, mode, results });
   } catch (error) {

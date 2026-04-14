@@ -71,9 +71,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[WACHTWOORD RESET] Password updated for user: ${userData.user.email}, id: ${userId}`);
-    console.log(`[WACHTWOORD RESET] Updated_at: ${updateData.user.updated_at}`);
-
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[WACHTWOORD RESET] Error:", error);

@@ -87,7 +87,6 @@ export async function POST(request: NextRequest) {
           })
           .eq("id", document.inschrijving_id);
 
-        console.log(`✅ Kandidaat ${document.inschrijving_id} auto-goedgekeurd (alle documenten approved)`);
       }
     }
 

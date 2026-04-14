@@ -111,7 +111,6 @@ export async function POST(request: NextRequest) {
 
     // Send email with PDF attachment
     if (!process.env.RESEND_API_KEY) {
-      console.log("RESEND_API_KEY not set - email would be sent");
       return NextResponse.json({
         success: true,
         offerteNummer,

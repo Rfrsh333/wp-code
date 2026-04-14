@@ -46,7 +46,6 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    console.log("[CRON CONTRACT-EXPIRY]", JSON.stringify(result));
     return NextResponse.json(result);
   } catch (error) {
     console.error("[CRON CONTRACT-EXPIRY] Error:", error);

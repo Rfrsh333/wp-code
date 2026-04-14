@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       });
     } catch {
       // Table might not exist yet, that's okay
-      console.log("Offertes table not yet created");
+      // Table might not exist yet
     }
 
     // Create filename

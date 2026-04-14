@@ -166,9 +166,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Log bulk email action
-    console.log(`[BULK EMAIL] Admin ${adminEmail} sent ${sent} emails to kandidaten. Template: ${template}`);
-
     return NextResponse.json({
       success: true,
       sent,

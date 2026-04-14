@@ -7,8 +7,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log("[CRON] Referral check gestart");
-
   // Haal pending referrals op die een referred persoon hebben
   const { data: pendingReferrals } = await supabaseAdmin
     .from("referrals")
@@ -72,11 +70,8 @@ export async function GET(request: NextRequest) {
         .eq("id", referral.id);
 
       qualified++;
-      console.log(`[CRON] Referral ${referral.id} gekwalificeerd: ${referral.referred_naam}`);
     }
   }
-
-  console.log(`[CRON] Referral check voltooid: ${qualified} gekwalificeerd`);
 
   return NextResponse.json({ success: true, qualified, checked: pendingReferrals.length });
 }

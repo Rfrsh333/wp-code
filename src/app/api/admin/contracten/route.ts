@@ -112,7 +112,6 @@ export async function POST(request: NextRequest) {
         wijziging_reden: "Contract aangemaakt",
       });
 
-      console.log(`[CONTRACTEN] Created ${contractNummer} by ${email}`);
       return NextResponse.json({ data });
     }
 
@@ -221,7 +220,6 @@ export async function POST(request: NextRequest) {
               ondertekeningUrl,
             }),
           });
-          console.log(`[CONTRACTEN] Email sent to ${medewerker.email} for ${contract.contract_nummer}`);
         } catch (emailErr) {
           console.error("[CONTRACTEN] Email send failed:", emailErr);
           // Niet fataal - contract is al verzonden
@@ -272,7 +270,6 @@ export async function POST(request: NextRequest) {
         })
         .eq("id", id);
 
-      console.log(`[CONTRACTEN] Admin signed contract ${id}, new status: ${newStatus}`);
       return NextResponse.json({ success: true, status: newStatus });
     }
 

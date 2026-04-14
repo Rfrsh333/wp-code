@@ -77,8 +77,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, skipped: "no_email_id" });
     }
 
-    console.log(`[WEBHOOK] Resend: ${event.type} voor ${emailId}`);
-
     // === 1. Bestaande email_log tracking ===
     await handleEmailLog(event);
 

@@ -37,8 +37,6 @@ export async function POST(request: NextRequest) {
     morgen.setDate(morgen.getDate() + 1);
     const morgenStr = morgen.toISOString().split("T")[0]; // YYYY-MM-DD
 
-    console.log(`[CRON dienst-herinneringen] Checking diensten voor ${morgenStr}`);
-
     // Stap 1: Haal alle diensten op voor morgen die niet geannuleerd zijn
     const { data: diensten, error: dienstenError } = await supabaseAdmin
       .from("diensten")
@@ -52,7 +50,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!diensten || diensten.length === 0) {
-      console.log("[CRON dienst-herinneringen] Geen diensten voor morgen");
       return NextResponse.json({
         success: true,
         message: "Geen diensten voor morgen",
@@ -75,7 +72,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!aanmeldingen || aanmeldingen.length === 0) {
-      console.log("[CRON dienst-herinneringen] Geen bevestigde aanmeldingen voor morgen");
       return NextResponse.json({
         success: true,
         message: "Geen bevestigde aanmeldingen voor morgen",
@@ -208,9 +204,6 @@ export async function POST(request: NextRequest) {
   }
 
   const duration = Date.now() - startTime;
-  console.log(
-    `[CRON dienst-herinneringen] Klaar: ${sent} verzonden, ${skipped} overgeslagen, ${failed} mislukt, ${duration}ms`
-  );
 
   return NextResponse.json({
     success: true,

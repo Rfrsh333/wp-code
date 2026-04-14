@@ -303,7 +303,6 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  console.log(`[MEDEWERKER DIENSTEN] Found ${diensten.length} diensten for ${medewerker.naam}`);
   return NextResponse.json({ diensten, aanpassingen: mapped, vervangingVerzoeken, accountGepauzeerd });
 }
 

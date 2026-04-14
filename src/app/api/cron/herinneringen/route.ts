@@ -80,7 +80,6 @@ export async function GET(request: NextRequest) {
   }
 
   const duration = Date.now() - startTime;
-  console.log(`[CRON herinneringen] Completed: ${processed} sent, ${failed} failed, ${duration}ms`);
 
   return NextResponse.json({ success: true, results, metrics: { processed, failed, duration_ms: duration } });
 }

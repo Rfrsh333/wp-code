@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
     const result = await refreshAccessToken(connection);
 
     if (result) {
-      console.log("[LinkedIn Token Refresh] Token vernieuwd");
       return NextResponse.json({ refreshed: true });
     }
 

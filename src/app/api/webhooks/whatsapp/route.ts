@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
   const challenge = searchParams.get("hub.challenge");
 
   if (mode === "subscribe" && token === WA_VERIFY_TOKEN) {
-    console.log("[WhatsApp] Webhook verified");
     return new NextResponse(challenge, { status: 200 });
   }
 
@@ -66,8 +65,6 @@ export async function POST(request: NextRequest) {
       const text = message.text?.body || message.caption || "[media]";
       const timestamp = message.timestamp;
       const contactName = value.contacts?.[0]?.profile?.name || null;
-
-      console.log(`[WhatsApp] Inkomend van ${from}: ${text.slice(0, 100)}`);
 
       // Zoek lead op basis van telefoonnummer
       // Probeer verschillende formaten: 316..., 06..., +316...
