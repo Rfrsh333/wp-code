@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
@@ -302,142 +303,144 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Referral tracking: koppel aan referrer
-    if (data.referralCode) {
+    // Achtergrondtaken: referral tracking, telegram, auto-reply, offerte generatie
+    // Deze draaien NA de response zodat de gebruiker niet hoeft te wachten
+    after(async () => {
       try {
-        await supabase.from("referrals")
-          .update({
-            referred_naam: data.bedrijfsnaam,
-            referred_email: data.email,
-          })
-          .eq("referral_code", data.referralCode)
-          .eq("status", "pending")
-          .is("referred_id", null);
-      } catch (refError) {
-        console.error("Referral tracking error:", refError);
-      }
-    }
-
-    // Send Telegram alert (normale flow zonder database error)
-    sendTelegramAlert(
-      `👥 <b>NIEUWE PERSONEEL AANVRAAG!</b>\n\n` +
-      `🏢 ${data.bedrijfsnaam}\n` +
-      `👤 ${data.contactpersoon}\n` +
-      `📧 ${data.email}\n` +
-      `📞 ${data.telefoon}\n\n` +
-      `💼 ${data.typePersoneel.join(', ')}\n` +
-      `📊 ${data.aantalPersonen} personen\n` +
-      `📍 ${data.locatie}\n` +
-      `📅 Start: ${data.startDatum}`
-    ).catch(console.error);
-
-    // Auto-reply: check of het is ingeschakeld en stuur automatisch een reactie
-    try {
-      const { data: autoReplySetting } = await supabase
-        .from("admin_settings")
-        .select("value")
-        .eq("key", "auto_reply_enabled")
-        .single();
-
-      if (autoReplySetting?.value === "true" && process.env.RESEND_API_KEY) {
-        // Haal sender instellingen op
-        const { data: senderSettings } = await supabase
-          .from("admin_settings")
-          .select("key, value")
-          .in("key", ["sender_name", "sender_email"]);
-
-        const sMap = Object.fromEntries((senderSettings || []).map((s) => [s.key, s.value]));
-        const arSenderEmail = sMap.sender_email || "info@toptalentjobs.nl";
-        const arSenderName = sMap.sender_name || "TopTalent Jobs";
-
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl";
-        // Gebruik het opgeslagen record ID als inquiry ref
-        const savedId = (await supabase
-          .from("personeel_aanvragen")
-          .select("id")
-          .eq("email", data.email)
-          .eq("bedrijfsnaam", data.bedrijfsnaam)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single())?.data?.id;
-
-        const bookingUrl = `${baseUrl}/afspraak-plannen${savedId ? `?ref=${savedId}` : ""}`;
-
-        const emailBody = generateAutoReply(
-          {
-            id: savedId || "",
-            contactpersoon: data.contactpersoon,
-            bedrijfsnaam: data.bedrijfsnaam,
-            email: data.email,
-            type_personeel: data.typePersoneel,
-            aantal_personen: data.aantalPersonen,
-            start_datum: data.startDatum,
-            eind_datum: data.eindDatum || null,
-            opmerkingen: data.opmerkingen || null,
-            locatie: data.locatie,
-          },
-          { senderName: arSenderName, bookingUrl },
-        );
-
-        const htmlContent = buildAutoReplyEmailHtml(emailBody, bookingUrl);
-
-        const arResend = new Resend(process.env.RESEND_API_KEY);
-        const { data: arEmailData } = await arResend.emails.send({
-          from: `${arSenderName} <${arSenderEmail}>`,
-          to: [data.email],
-          subject: generateAutoReplySubject(),
-          html: htmlContent,
-        });
-
-        // Markeer als beantwoord
-        if (savedId && arEmailData?.id) {
-          await supabase
-            .from("personeel_aanvragen")
-            .update({
-              replied_at: new Date().toISOString(),
-              reply_email_id: arEmailData.id,
-            })
-            .eq("id", savedId);
-        }
-      }
-    } catch (autoReplyErr) {
-      // Auto-reply fout mag de hoofdflow niet breken
-      console.error("Auto-reply error:", autoReplyErr);
-    }
-
-    // Auto offerte generatie (fire-and-forget)
-    const autoMode = getOfferteAutoMode();
-    if (autoMode !== "off" && savedAanvraag?.id) {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-        const cronSecret = process.env.CRON_SECRET;
-        if (cronSecret) {
-          const offerteRes = await fetch(`${baseUrl}/api/admin/ai/offerte-generator`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${cronSecret}`,
-            },
-            body: JSON.stringify({ aanvraag_id: savedAanvraag.id }),
-          });
-
-          if (offerteRes.ok && autoMode === "send") {
-            // Direct versturen zonder review
-            await fetch(`${baseUrl}/api/offerte/send`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${cronSecret}`,
-              },
-              body: JSON.stringify({ aanvraagId: savedAanvraag.id }),
-            });
+        // Referral tracking: koppel aan referrer
+        if (data.referralCode) {
+          try {
+            await supabase.from("referrals")
+              .update({
+                referred_naam: data.bedrijfsnaam,
+                referred_email: data.email,
+              })
+              .eq("referral_code", data.referralCode)
+              .eq("status", "pending")
+              .is("referred_id", null);
+          } catch (refError) {
+            console.error("Referral tracking error:", refError);
           }
         }
-      } catch (offerteErr) {
-        // Offerte fout mag de hoofdflow niet blokkeren
-        console.error("Auto offerte generatie error:", offerteErr);
+
+        // Send Telegram alert
+        sendTelegramAlert(
+          `👥 <b>NIEUWE PERSONEEL AANVRAAG!</b>\n\n` +
+          `🏢 ${data.bedrijfsnaam}\n` +
+          `👤 ${data.contactpersoon}\n` +
+          `📧 ${data.email}\n` +
+          `📞 ${data.telefoon}\n\n` +
+          `💼 ${data.typePersoneel.join(', ')}\n` +
+          `📊 ${data.aantalPersonen} personen\n` +
+          `📍 ${data.locatie}\n` +
+          `📅 Start: ${data.startDatum}`
+        ).catch(console.error);
+
+        // Auto-reply: check of het is ingeschakeld en stuur automatisch een reactie
+        try {
+          const { data: autoReplySetting } = await supabase
+            .from("admin_settings")
+            .select("value")
+            .eq("key", "auto_reply_enabled")
+            .single();
+
+          if (autoReplySetting?.value === "true" && process.env.RESEND_API_KEY) {
+            const { data: senderSettings } = await supabase
+              .from("admin_settings")
+              .select("key, value")
+              .in("key", ["sender_name", "sender_email"]);
+
+            const sMap = Object.fromEntries((senderSettings || []).map((s) => [s.key, s.value]));
+            const arSenderEmail = sMap.sender_email || "info@toptalentjobs.nl";
+            const arSenderName = sMap.sender_name || "TopTalent Jobs";
+
+            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl";
+            const savedId = (await supabase
+              .from("personeel_aanvragen")
+              .select("id")
+              .eq("email", data.email)
+              .eq("bedrijfsnaam", data.bedrijfsnaam)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .single())?.data?.id;
+
+            const bookingUrl = `${baseUrl}/afspraak-plannen${savedId ? `?ref=${savedId}` : ""}`;
+
+            const emailBody = generateAutoReply(
+              {
+                id: savedId || "",
+                contactpersoon: data.contactpersoon,
+                bedrijfsnaam: data.bedrijfsnaam,
+                email: data.email,
+                type_personeel: data.typePersoneel,
+                aantal_personen: data.aantalPersonen,
+                start_datum: data.startDatum,
+                eind_datum: data.eindDatum || null,
+                opmerkingen: data.opmerkingen || null,
+                locatie: data.locatie,
+              },
+              { senderName: arSenderName, bookingUrl },
+            );
+
+            const htmlContent = buildAutoReplyEmailHtml(emailBody, bookingUrl);
+
+            const arResend = new Resend(process.env.RESEND_API_KEY);
+            const { data: arEmailData } = await arResend.emails.send({
+              from: `${arSenderName} <${arSenderEmail}>`,
+              to: [data.email],
+              subject: generateAutoReplySubject(),
+              html: htmlContent,
+            });
+
+            if (savedId && arEmailData?.id) {
+              await supabase
+                .from("personeel_aanvragen")
+                .update({
+                  replied_at: new Date().toISOString(),
+                  reply_email_id: arEmailData.id,
+                })
+                .eq("id", savedId);
+            }
+          }
+        } catch (autoReplyErr) {
+          console.error("Auto-reply error:", autoReplyErr);
+        }
+
+        // Auto offerte generatie
+        const autoMode = getOfferteAutoMode();
+        if (autoMode !== "off" && savedAanvraag?.id) {
+          try {
+            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+            const cronSecret = process.env.CRON_SECRET;
+            if (cronSecret) {
+              const offerteRes = await fetch(`${baseUrl}/api/admin/ai/offerte-generator`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${cronSecret}`,
+                },
+                body: JSON.stringify({ aanvraag_id: savedAanvraag.id }),
+              });
+
+              if (offerteRes.ok && autoMode === "send") {
+                await fetch(`${baseUrl}/api/offerte/send`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${cronSecret}`,
+                  },
+                  body: JSON.stringify({ aanvraagId: savedAanvraag.id }),
+                });
+              }
+            }
+          } catch (offerteErr) {
+            console.error("Auto offerte generatie error:", offerteErr);
+          }
+        }
+      } catch (bgErr) {
+        console.error("Background tasks error:", bgErr);
       }
-    }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
