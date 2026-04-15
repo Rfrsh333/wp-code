@@ -8,7 +8,7 @@ export function generateLocalBusinessSchema(location: LocationData) {
     "name": `TopTalent Jobs ${location.name}`,
     "image": "https://www.toptalentjobs.nl/logo.png",
     "url": `https://www.toptalentjobs.nl/locaties/${location.slug}`,
-    "telephone": "+31649713766",
+    "telephone": "+31617177939",
     "email": "info@toptalentjobs.nl",
     "priceRange": "$$",
     "openingHoursSpecification": {

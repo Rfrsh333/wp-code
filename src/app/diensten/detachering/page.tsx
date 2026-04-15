@@ -44,7 +44,7 @@ export default function DetacheringPage() {
                     </svg>
                   </Link>
                   <Link
-                    href="tel:+31649713766"
+                    href="tel:+31617177939"
                     className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
                     hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
                   >
@@ -357,11 +357,11 @@ export default function DetacheringPage() {
                     Gesprek inplannen
                   </Link>
                   <Link
-                    href="tel:+31649713766"
+                    href="tel:+31617177939"
                     className="border-2 border-neutral-600 text-white px-8 py-4 rounded-xl text-base font-semibold
                     hover:border-neutral-400 transition-all duration-300"
                   >
-                    Bel: +31 6 49 71 37 66
+                    Bel: +31 6 17 17 79 39
                   </Link>
                 </div>
               </div>

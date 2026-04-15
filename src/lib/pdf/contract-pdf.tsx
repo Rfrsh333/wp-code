@@ -297,7 +297,7 @@ export function ContractPDF({ data }: { data: ContractPDFData }) {
             <Text style={styles.companyInfo}>Utrecht</Text>
             <Text style={styles.companyInfo}>KvK: 73401161</Text>
             <Text style={styles.companyInfo}>info@toptalentjobs.nl</Text>
-            <Text style={styles.companyInfo}>+31 6 49 71 37 66</Text>
+            <Text style={styles.companyInfo}>+31 6 17 17 79 39</Text>
           </View>
         </View>
 

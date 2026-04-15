@@ -399,7 +399,7 @@ const contractData = z.object({
   template_id: uuid.optional(),
   medewerker_id: uuid.optional(),
   klant_id: uuid.optional(),
-  type: z.enum(["arbeidsovereenkomst", "uitzendovereenkomst", "oproepovereenkomst", "freelance", "stage", "custom"]).optional(),
+  type: z.enum(["arbeidsovereenkomst", "uitzendovereenkomst", "oproepovereenkomst", "freelance", "overeenkomst_van_opdracht", "stage", "custom"]).optional(),
   titel: z.string().max(255).optional(),
   contract_data: z.record(z.string(), z.unknown()).optional(),
   startdatum: z.string().max(20).optional(),

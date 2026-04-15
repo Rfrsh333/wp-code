@@ -42,7 +42,7 @@ export default function PrivacyPolicyPage() {
               <p className="mb-2"><strong>TopTalent B.V.</strong></p>
               <p className="mb-2">Gevestigd te Utrecht, Nederland</p>
               <p className="mb-2">E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a></p>
-              <p className="mb-2">Telefoon: <a href="tel:+31649713766" className="text-[#FF7A00] hover:underline">+31 6 49 71 37 66</a></p>
+              <p className="mb-2">Telefoon: <a href="tel:+31617177939" className="text-[#FF7A00] hover:underline">+31 6 17 17 79 39</a></p>
               <p className="mb-0">Website: <a href="https://www.toptalentjobs.nl" className="text-[#FF7A00] hover:underline">www.toptalentjobs.nl</a></p>
             </div>
             <p>Voor vragen over deze privacy policy of over de verwerking van uw persoonsgegevens kunt u contact opnemen via bovenstaande contactgegevens.</p>
@@ -610,7 +610,7 @@ export default function PrivacyPolicyPage() {
               <p className="mb-2">T.a.v. Privacyzaken</p>
               <p className="mb-2">Utrecht, Nederland</p>
               <p className="mb-2">E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a></p>
-              <p className="mb-0">Telefoon: <a href="tel:+31649713766" className="text-[#FF7A00] hover:underline">+31 6 49 71 37 66</a></p>
+              <p className="mb-0">Telefoon: <a href="tel:+31617177939" className="text-[#FF7A00] hover:underline">+31 6 17 17 79 39</a></p>
             </div>
             <p>Wij streven ernaar om uw vragen en verzoeken zo spoedig mogelijk, maar in ieder geval binnen de wettelijke termijnen, te beantwoorden.</p>
 

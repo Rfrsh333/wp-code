@@ -96,7 +96,7 @@ ${options.bookingUrl}
 
 Het gesprekje duurt zo'n 15-20 minuten. Geen verplichtingen, gewoon even kennismaken en kijken wat we voor je kunnen betekenen.
 
-Als je liever belt: ik ben bereikbaar op +31 6 49 71 37 66.
+Als je liever belt: ik ben bereikbaar op +31 6 17 17 79 39.
 
 Groet,
 ${options.senderName}

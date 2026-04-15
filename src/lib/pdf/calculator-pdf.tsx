@@ -463,7 +463,7 @@ export function CalculatorPDF({ lead, inputs, resultaten, createdAt }: Calculato
           </Text>
           <View style={styles.ctaContact}>
             <Text style={styles.ctaContactItem}>toptalentjobs.nl/contact</Text>
-            <Text style={styles.ctaContactItem}>+31 6 49 71 37 66</Text>
+            <Text style={styles.ctaContactItem}>+31 6 17 17 79 39</Text>
           </View>
         </View>
 

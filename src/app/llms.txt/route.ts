@@ -20,7 +20,7 @@ const LLMS_TXT = `# TopTalent Jobs
 
 ## Contact
 - Website: https://www.toptalentjobs.nl
-- Telefoon: +31649713766
+- Telefoon: +31617177939
 - Email: info@toptalentjobs.nl
 `;
 

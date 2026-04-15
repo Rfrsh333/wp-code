@@ -295,7 +295,7 @@ function PersoneelLandingVariantAContent() {
             </div>
             <div className="flex items-center gap-4">
               <Link
-                href="tel:+31649713766"
+                href="tel:+31617177939"
                 className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:text-[#EA580C] transition-colors"
               >
                 Bel direct voor spoed

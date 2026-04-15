@@ -11,7 +11,7 @@ const TOPTALENT = {
   name: "TopTalent Jobs",
   url: "https://toptalentjobs.nl",
   logo: "https://toptalentjobs.nl/images/logo.png",
-  telephone: "+31649713766",
+  telephone: "+31617177939",
   email: "info@toptalentjobs.nl",
   address: {
     streetAddress: "Kanaalstraat 15",

@@ -666,10 +666,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                     <p className="text-sm text-[var(--kp-text-secondary)]">Direct contact</p>
                     <p className="mt-2 text-base font-bold text-[var(--kp-text-primary)]">Hulp nodig?</p>
                     <div className="mt-4 space-y-3 text-sm text-[var(--kp-text-secondary)]">
-                      <a href="tel:+31649713766" className="block rounded-xl bg-[var(--kp-bg-page)] p-3 transition hover:bg-[var(--kp-border)]">
-                        Bel: +31 6 49 71 37 66
+                      <a href="tel:+31617177939" className="block rounded-xl bg-[var(--kp-bg-page)] p-3 transition hover:bg-[var(--kp-border)]">
+                        Bel: +31 6 17 17 79 39
                       </a>
-                      <a href="https://wa.me/31649713766" target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-[var(--kp-bg-page)] p-3 transition hover:bg-[var(--kp-border)]">
+                      <a href="https://wa.me/31617177939" target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-[var(--kp-bg-page)] p-3 transition hover:bg-[var(--kp-border)]">
                         WhatsApp
                       </a>
                     </div>

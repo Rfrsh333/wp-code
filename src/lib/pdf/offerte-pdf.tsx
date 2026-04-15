@@ -430,7 +430,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
             <Text style={styles.companyInfo}>Utrecht</Text>
             <Text style={styles.companyInfo}>KvK: 73401161</Text>
             <Text style={styles.companyInfo}>info@toptalentjobs.nl</Text>
-            <Text style={styles.companyInfo}>+31 6 49 71 37 66</Text>
+            <Text style={styles.companyInfo}>+31 6 17 17 79 39</Text>
           </View>
         </View>
 
@@ -589,7 +589,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
               <Text>Neem gerust contact met ons op. We helpen u graag!</Text>
             </View>
             <View style={styles.ctaPhone}>
-              <Text style={styles.ctaPhoneText}>+31 6 49 71 37 66</Text>
+              <Text style={styles.ctaPhoneText}>+31 6 17 17 79 39</Text>
             </View>
           </View>
         </View>

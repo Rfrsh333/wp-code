@@ -217,10 +217,10 @@ function PersoneelLandingPageContent() {
               </div>
               <div className="flex items-center gap-4">
                 <Link
-                  href="tel:+31649713766"
+                  href="tel:+31617177939"
                   className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:text-[#EA580C] transition-colors"
                 >
-                  Bel direct: +31 6 49 71 37 66
+                  Bel direct: +31 6 17 17 79 39
                 </Link>
               </div>
             </FadeIn>
@@ -385,7 +385,7 @@ function PersoneelLandingPageContent() {
                   <p className="text-sm text-neutral-600">
                     Direct contact via telefoon en{" "}
                     <a
-                      href="https://wa.me/31649713766"
+                      href="https://wa.me/31617177939"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-green-600 font-medium hover:text-green-700 transition-colors"

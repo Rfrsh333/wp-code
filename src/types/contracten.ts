@@ -9,6 +9,7 @@ export type ContractType =
   | 'uitzendovereenkomst'
   | 'oproepovereenkomst'
   | 'freelance'
+  | 'overeenkomst_van_opdracht'
   | 'stage'
   | 'custom'
 

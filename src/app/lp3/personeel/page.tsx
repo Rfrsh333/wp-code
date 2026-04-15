@@ -269,10 +269,10 @@ function PersoneelLandingVariantBContent() {
             </div>
             <div className="flex items-center gap-4">
               <Link
-                href="tel:+31649713766"
+                href="tel:+31617177939"
                 className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:text-[#EA580C] transition-colors"
               >
-                Bel direct: +31 6 49 71 37 66
+                Bel direct: +31 6 17 17 79 39
               </Link>
             </div>
           </>

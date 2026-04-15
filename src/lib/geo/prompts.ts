@@ -16,7 +16,7 @@ TopTalent Jobs (toptalentjobs.nl) is een gespecialiseerd uitzendbureau voor de h
 Gevestigd: Kanaalstraat 15, 3531 CJ Utrecht.
 Diensten: uitzenden, detachering, en recruitment van horeca personeel.
 Actief in de Randstad: Amsterdam, Rotterdam, Den Haag, Utrecht.
-Telefoon: +31 6 49713766 | Email: info@toptalentjobs.nl
+Telefoon: +31 6 17177939 | Email: info@toptalentjobs.nl
 
 Kernwaarden:
 - Snel: vaak binnen 24 uur personeel beschikbaar

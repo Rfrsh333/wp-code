@@ -162,7 +162,7 @@ function generateLeadEmail(lead: LeadFormData, inputs: CalculatorInputs, resulta
       </p>
       <p style="color: #666; margin: 0; font-size: 12px;">
         <a href="${baseUrl}" style="color: #F27501; text-decoration: none;">toptalentjobs.nl</a> ·
-        <a href="tel:+31649713766" style="color: #999; text-decoration: none;">+31 6 49 71 37 66</a>
+        <a href="tel:+31617177939" style="color: #999; text-decoration: none;">+31 6 17 17 79 39</a>
       </p>
     </div>
   </div>

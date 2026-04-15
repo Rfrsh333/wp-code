@@ -31,6 +31,7 @@ const typeLabels: Record<string, string> = {
   uitzendovereenkomst: 'Uitzendovereenkomst',
   oproepovereenkomst: 'Oproepovereenkomst',
   freelance: 'Freelance',
+  overeenkomst_van_opdracht: 'Overeenkomst van Opdracht (ZZP)',
   stage: 'Stage',
   custom: 'Overig',
 };

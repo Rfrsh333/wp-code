@@ -30,7 +30,7 @@ function emailWrapper(content: string): string {
       <p style="color: #999; font-size: 12px; margin: 0; line-height: 1.6;">
         TopTalent Jobs &mdash; Specialist in horeca personeel<br>
         <a href="https://www.toptalentjobs.nl" style="color: ${BRAND_COLOR}; text-decoration: none;">www.toptalentjobs.nl</a>
-        &nbsp;|&nbsp; +31 6 49 71 37 66
+        &nbsp;|&nbsp; +31 6 17 17 79 39
       </p>
     </div>
   </div>
@@ -393,7 +393,7 @@ function kandidaatEmailWrapper(content: string): string {
       <p style="color: #999; font-size: 12px; margin: 0; line-height: 1.6;">
         TopTalent Jobs &mdash; Specialist in horeca personeel<br>
         <a href="https://www.toptalentjobs.nl" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">www.toptalentjobs.nl</a>
-        &nbsp;|&nbsp; +31 6 49 71 37 66
+        &nbsp;|&nbsp; +31 6 17 17 79 39
       </p>
     </div>
   </div>
@@ -660,7 +660,7 @@ export function buildContractOndertekeningEmailHtml(params: {
     </p>
     ${bookingButton(params.ondertekeningUrl, "Contract bekijken & ondertekenen")}
     <p style="font-size: 13px; color: #999; margin-top: 20px;">
-      Vragen? Neem contact op via info@toptalentjobs.nl of +31 6 49 71 37 66.
+      Vragen? Neem contact op via info@toptalentjobs.nl of +31 6 17 17 79 39.
     </p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Met vriendelijke groet,<br>
