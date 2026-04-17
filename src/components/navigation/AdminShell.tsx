@@ -1,11 +1,12 @@
 "use client";
 
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import { Bell, ChevronRight, Menu, Search, X } from "lucide-react";
+import { ChevronRight, Menu, Search, X } from "lucide-react";
 import Image from "next/image";
 import Sidebar from "@/components/navigation/Sidebar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import CommandPalette from "@/components/navigation/CommandPalette";
+import NotificationDropdown from "@/components/navigation/NotificationDropdown";
 import { allSidebarItems, sidebarGroups } from "@/lib/navigation/sidebar-config";
 import type { AdminTab, SidebarBadgeMap, SidebarItemDefinition } from "@/lib/navigation/sidebar-types";
 
@@ -117,13 +118,13 @@ export default function AdminShell({
             />
           </div>
           <div className="flex items-center gap-1">
-            {totalBadges > 0 && (
-              <span className="relative rounded-xl p-2 text-neutral-400">
-                <Bell className="h-5 w-5" />
-                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                  {totalBadges > 99 ? "99+" : totalBadges}
-                </span>
-              </span>
+            {totalBadges > 0 && badges && (
+              <NotificationDropdown
+                badges={badges}
+                totalBadges={totalBadges}
+                onNavigate={handleTabSelect}
+                size="sm"
+              />
             )}
             <button
               onClick={() => setCommandOpen(true)}
@@ -152,13 +153,12 @@ export default function AdminShell({
             )}
           </div>
           <div className="flex items-center gap-3">
-            {totalBadges > 0 && (
-              <span className="relative text-neutral-400">
-                <Bell className="h-4.5 w-4.5" />
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                  {totalBadges > 99 ? "99+" : totalBadges}
-                </span>
-              </span>
+            {totalBadges > 0 && badges && (
+              <NotificationDropdown
+                badges={badges}
+                totalBadges={totalBadges}
+                onNavigate={onTabSelect}
+              />
             )}
           </div>
         </div>
