@@ -16,7 +16,7 @@ export default function StarRating({ value, onChange, readonly = false, size = "
   const sizeMap = {
     sm: { star: 18, gap: 2 },
     md: { star: 26, gap: 4 },
-    lg: { star: 34, gap: 6 },
+    lg: { star: 28, gap: 4 },
   };
   const { star: starSize, gap } = sizeMap[size];
 

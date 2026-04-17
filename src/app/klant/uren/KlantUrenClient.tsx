@@ -591,7 +591,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 />
 
                 {/* Horizontaal scrollbare stats */}
-                <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+                <div className="flex gap-3 overflow-x-auto pb-1 pr-4 scrollbar-hide">
                   {[
                     { label: "Uren wachten", value: String(dashboardStats?.pendingHoursCount ?? pending.length), targetTab: "uren", urgent: pending.length > 0 },
                     { label: "Goedgekeurd", value: `${dashboardStats?.approvedHoursThisMonth ?? 0}u`, targetTab: "uren", urgent: false },
@@ -1091,12 +1091,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setBeoordeelModal({ ...beoordeelModal, open: false })}>
           <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Header with gradient */}
-            <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] rounded-t-3xl px-6 py-5 text-white">
+            <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] rounded-t-3xl px-4 sm:px-6 py-5 text-white">
               <h3 className="text-lg font-bold">Beoordeling</h3>
               <p className="text-white/70 text-sm mt-0.5">{beoordeelModal.item.medewerker_naam} · {beoordeelModal.item.locatie}</p>
             </div>
 
-            <div className="px-6 py-5 space-y-5">
+            <div className="px-4 sm:px-6 py-5 space-y-5">
               {/* Algemene score — groot en centraal */}
               <div className="text-center">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">Algemene score</label>
@@ -1118,12 +1118,14 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                     { key: "score_vaardigheden" as const, label: "Vaardigheden", emoji: "🎯" },
                     { key: "score_communicatie" as const, label: "Communicatie", emoji: "💬" },
                   ]).map(({ key, label, emoji }) => (
-                    <div key={key} className="flex items-center justify-between bg-neutral-50 rounded-xl px-3 py-2.5">
-                      <span className="text-sm text-neutral-700 flex items-center gap-2">
+                    <div key={key} className="flex items-center justify-between gap-2 bg-neutral-50 rounded-xl px-3 py-2.5 overflow-hidden">
+                      <span className="text-sm text-neutral-700 flex items-center gap-2 flex-shrink-0">
                         <span className="text-base">{emoji}</span>
                         {label}
                       </span>
-                      <StarRating value={beoordeelModal[key]} onChange={(s) => setBeoordeelModal({ ...beoordeelModal, [key]: s })} size="sm" />
+                      <div className="flex-shrink-0">
+                        <StarRating value={beoordeelModal[key]} onChange={(s) => setBeoordeelModal({ ...beoordeelModal, [key]: s })} size="sm" />
+                      </div>
                     </div>
                   ))}
                 </div>
