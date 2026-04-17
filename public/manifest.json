@@ -1,4 +1,5 @@
 {
+  "id": "/medewerker/",
   "name": "TopTalent Hub",
   "short_name": "TopTalent",
   "description": "TopTalent Hub - Medewerker portaal voor diensten, uren en financieel overzicht",
@@ -36,7 +37,29 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "/screenshots/medewerker-dashboard-narrow.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard overzicht"
+    },
+    {
+      "src": "/screenshots/medewerker-diensten-narrow.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mijn diensten"
+    },
+    {
+      "src": "/screenshots/medewerker-dashboard-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard overzicht"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Dashboard",

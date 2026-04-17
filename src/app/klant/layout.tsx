@@ -1,5 +1,6 @@
 import { Metadata, Viewport } from "next";
 import RegisterSW from "./components/RegisterSW";
+import KlantPWAInstallPrompt from "./components/PWAInstallPrompt";
 import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidget";
 import QueryProvider from "@/components/QueryProvider";
 
@@ -21,10 +22,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1e3a5f",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1e3a5f" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1f33" },
+  ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
 };
 
@@ -43,6 +48,7 @@ export default function KlantLayout({
       </head>
       <QueryProvider>
         <RegisterSW />
+        <KlantPWAInstallPrompt />
         {children}
         <AIChatWidget userType="klant" />
       </QueryProvider>

@@ -114,6 +114,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Allow SW scope beyond file location
+        source: '/sw.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/medewerker/' },
+        ],
+      },
+      {
         // API responses: niet cachen
         source: '/api/:path*',
         headers: [

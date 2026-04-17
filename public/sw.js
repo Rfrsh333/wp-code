@@ -25,15 +25,10 @@ const CACHEABLE_API_ROUTES = [
 
 // Install event - cache static assets
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing service worker v5...");
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
-      .then((cache) => {
-        console.log("[SW] Caching static assets");
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => self.skipWaiting())
+      .then((cache) => cache.addAll(STATIC_ASSETS))
       .catch((error) => {
         console.error("[SW] Install failed:", error);
       })
@@ -42,7 +37,6 @@ self.addEventListener("install", (event) => {
 
 // Activate event - clean old caches
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating service worker v5...");
   const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE, API_CACHE];
   event.waitUntil(
     caches
@@ -51,10 +45,7 @@ self.addEventListener("activate", (event) => {
         return Promise.all(
           keys
             .filter((key) => !currentCaches.includes(key))
-            .map((key) => {
-              console.log("[SW] Deleting old cache:", key);
-              return caches.delete(key);
-            })
+            .map((key) => caches.delete(key))
         );
       })
       .then(() => self.clients.claim())
@@ -97,17 +88,20 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-// Luister naar logout berichten om user-specifieke caches te wissen
+// Luister naar berichten van client
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "LOGOUT") {
-    console.log("[SW] Logout ontvangen — API cache en dynamische cache wissen");
+  if (!event.data) return;
+
+  if (event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+
+  if (event.data.type === "LOGOUT") {
     event.waitUntil(
       Promise.all([
         caches.delete(API_CACHE),
         caches.delete(DYNAMIC_CACHE),
-      ]).then(() => {
-        console.log("[SW] User-specifieke caches gewist na logout");
-      })
+      ])
     );
   }
 });
