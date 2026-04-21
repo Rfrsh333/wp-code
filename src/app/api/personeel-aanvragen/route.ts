@@ -214,38 +214,7 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
-    // Send email via Resend
-    if (!process.env.RESEND_API_KEY) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[DEV] RESEND_API_KEY niet ingesteld — email overgeslagen");
-      }
-      return NextResponse.json({ success: true });
-    }
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { data: emailData, error } = await resend.emails.send({
-      from: "TopTalent Jobs <info@toptalentjobs.nl>",
-      to: ["info@toptalentjobs.nl"],
-      replyTo: data.email,
-      subject: `Nieuwe personeel aanvraag - ${data.bedrijfsnaam}`,
-      html: emailHtml,
-    });
-
-    if (error) {
-      console.error("Resend error details:", JSON.stringify(error, null, 2));
-
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[DEV] Email verzenden mislukt, maar we gaan door in development mode");
-      } else {
-        return NextResponse.json(
-          { error: "Fout bij verzenden e-mail. Probeer het later opnieuw." },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Opslaan in Supabase
+    // 1. DB insert EERST — dit is de primaire operatie
     const { data: savedAanvraag, error: dbError } = await supabase.from("personeel_aanvragen").insert({
       bedrijfsnaam: data.bedrijfsnaam,
       contactpersoon: data.contactpersoon,
@@ -281,29 +250,43 @@ export async function POST(request: NextRequest) {
 
       // Stuur Telegram alert met database error waarschuwing
       sendTelegramAlert(
-        `⚠️ <b>NIEUWE PERSONEEL AANVRAAG (DATABASE ERROR)</b>\n\n` +
+        `⚠️ <b>PERSONEEL AANVRAAG DATABASE ERROR</b>\n\n` +
         `🏢 ${data.bedrijfsnaam}\n` +
         `👤 ${data.contactpersoon}\n` +
         `📧 ${data.email}\n` +
         `📞 ${data.telefoon}\n\n` +
-        `💼 ${data.typePersoneel.join(', ')}\n` +
-        `📊 ${data.aantalPersonen} personen\n` +
-        `📍 ${data.locatie}\n` +
-        `📅 Start: ${data.startDatum}\n\n` +
-        `⚠️ <b>LET OP: Database opslag mislukt!</b>\n` +
-        `Email is verzonden maar data is niet opgeslagen in Supabase.\n` +
+        `⚠️ <b>Data is NIET opgeslagen in Supabase.</b>\n` +
         `Error: ${dbError.message || JSON.stringify(dbError)}`
       ).catch(console.error);
 
-      // We laten de request toch slagen want de email is al verstuurd
-      // Maar we geven wel een waarschuwing terug
-      return NextResponse.json({
-        success: true,
-        warning: "Email verzonden, maar opslag in database is mislukt. Neem contact op als dit probleem zich blijft voordoen."
-      });
+      return NextResponse.json(
+        { error: "Er is een fout opgetreden bij het opslaan. Probeer het later opnieuw." },
+        { status: 500 }
+      );
     }
 
-    // Achtergrondtaken: referral tracking, telegram, auto-reply, offerte generatie
+    // 2. Admin email — non-blocking (falen blokkeert aanvraag niet)
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const { error } = await resend.emails.send({
+          from: "TopTalent Jobs <info@toptalentjobs.nl>",
+          to: ["info@toptalentjobs.nl"],
+          replyTo: data.email,
+          subject: `Nieuwe personeel aanvraag - ${data.bedrijfsnaam}`,
+          html: emailHtml,
+        });
+        if (error) {
+          console.error("Resend admin email error:", JSON.stringify(error, null, 2));
+        }
+      } catch (emailErr) {
+        console.error("Admin email error:", emailErr);
+      }
+    } else if (process.env.NODE_ENV !== "development") {
+      console.warn("RESEND_API_KEY niet geconfigureerd — admin email overgeslagen");
+    }
+
+    // 3. Achtergrondtaken: referral tracking, telegram, auto-reply, offerte generatie
     // Deze draaien NA de response zodat de gebruiker niet hoeft te wachten
     after(async () => {
       try {

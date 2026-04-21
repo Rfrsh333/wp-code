@@ -1,16 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
+import { escapeHtml } from "@/lib/sanitize";
 import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
-}
-
-function formatList(values: string[]) {
-  return values.length > 0 ? values.join(", ") : "Niet opgegeven";
 }
 
 export async function POST(request: NextRequest) {
@@ -135,12 +132,12 @@ export async function POST(request: NextRequest) {
               Persoonlijke gegevens
             </h2>
             <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; color: #666; width: 40%;">Naam:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${volledigeNaam}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">E-mail:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${email}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Telefoon:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${telefoon}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Woonplaats:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${stad}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Geboortedatum:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${geboortedatum}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Geslacht:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${geslacht}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666; width: 40%;">Naam:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(volledigeNaam)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">E-mail:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(email)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Telefoon:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(telefoon)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Woonplaats:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(stad)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Geboortedatum:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(geboortedatum)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Geslacht:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(geslacht)}</td></tr>
             </table>
           </div>
 
@@ -149,9 +146,9 @@ export async function POST(request: NextRequest) {
               Werkprofiel
             </h2>
             <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; color: #666; width: 40%;">Ervaring:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${horecaErvaring}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Functies:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${formatList(functies)}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Talen:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${formatList(talen)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666; width: 40%;">Ervaring:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(horecaErvaring)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Functies:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${functies.map(f => escapeHtml(f)).join(", ") || "Niet opgegeven"}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Talen:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${talen.map(t => escapeHtml(t)).join(", ") || "Niet opgegeven"}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Eigen vervoer:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${formatBoolean(eigenVervoer)}</td></tr>
             </table>
           </div>
@@ -161,11 +158,11 @@ export async function POST(request: NextRequest) {
               Beschikbaarheid
             </h2>
             <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; color: #666; width: 40%;">Beschikbaarheid:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${beschikbaarheid}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Beschikbaar vanaf:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${beschikbaarVanaf}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Max uren per week:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${maxUrenPerWeek || "Niet opgegeven"}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666; width: 40%;">Beschikbaarheid:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(beschikbaarheid)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Beschikbaar vanaf:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(beschikbaarVanaf)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Max uren per week:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(maxUrenPerWeek) || "Niet opgegeven"}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Contractvorm:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${uitbetalingswijze === "zzp" ? "ZZP" : "Loondienst"}</td></tr>
-              ${kvkNummer ? `<tr><td style="padding: 8px 0; color: #666;">KVK nummer:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${kvkNummer}</td></tr>` : ""}
+              ${kvkNummer ? `<tr><td style="padding: 8px 0; color: #666;">KVK nummer:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(kvkNummer)}</td></tr>` : ""}
             </table>
           </div>
 
@@ -173,8 +170,8 @@ export async function POST(request: NextRequest) {
             <h2 style="color: #F27501; margin-top: 0; font-size: 18px; border-bottom: 2px solid #F27501; padding-bottom: 10px;">
               Extra context
             </h2>
-            <p style="margin: 0 0 15px; color: #666;"><strong>Hoe bij ons gekomen:</strong> ${hoeGekomen}</p>
-            <p style="margin: 0; color: #666;"><strong>Motivatie:</strong><br>${motivatie}</p>
+            <p style="margin: 0 0 15px; color: #666;"><strong>Hoe bij ons gekomen:</strong> ${escapeHtml(hoeGekomen)}</p>
+            <p style="margin: 0; color: #666;"><strong>Motivatie:</strong><br>${escapeHtml(motivatie)}</p>
             <p style="margin-top: 20px; font-size: 12px; color: #777;">
               Deze intake bevat bewust nog geen documenten. Die worden later in de onboarding apart opgevraagd.
             </p>
@@ -183,25 +180,7 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
-    if (process.env.RESEND_API_KEY) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const { error } = await resend.emails.send({
-        from: "TopTalent Jobs <info@toptalentjobs.nl>",
-        to: ["info@toptalentjobs.nl"],
-        replyTo: email,
-        subject: `Nieuwe kandidaat intake - ${volledigeNaam}`,
-        html: emailHtml,
-      });
-
-      if (error) {
-        console.error("Resend error:", error);
-        return NextResponse.json(
-          { error: "Fout bij verzenden e-mail" },
-          { status: 500 }
-        );
-      }
-    }
-
+    // 1. DB insert EERST — dit is de primaire operatie
     const parsedMaxUren = maxUrenPerWeek ? Number.parseInt(maxUrenPerWeek, 10) : null;
 
     const { data: insertedData, error: dbError } = await supabase.from("inschrijvingen").insert({
@@ -224,7 +203,7 @@ export async function POST(request: NextRequest) {
       beschikbaarheid,
       beschikbaar_vanaf: beschikbaarVanaf,
       max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
-      onboarding_status: "nieuw", // Explicitly set initial status
+      onboarding_status: "nieuw",
       referral_code: referralCode || null,
     }).select().single();
 
@@ -233,90 +212,76 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database fout" }, { status: 500 });
     }
 
-    // Referral tracking: koppel aan referrer
-    if (insertedData && referralCode) {
+    // 2. Admin email — non-blocking (falen blokkeert registratie niet)
+    if (process.env.RESEND_API_KEY) {
       try {
-        await supabase.from("referrals")
-          .update({
-            referred_id: insertedData.id,
-            referred_naam: volledigeNaam,
-            referred_email: email,
-          })
-          .eq("referral_code", referralCode)
-          .eq("status", "pending")
-          .is("referred_id", null);
-      } catch (refError) {
-        console.error("Referral tracking error:", refError);
-      }
-    }
-
-    // ✨ Send bevestigingsmail to kandidaat
-    if (insertedData) {
-      try {
-        const { sendIntakeBevestiging, logEmail } = await import("@/lib/candidate-onboarding");
-
-        const emailResult = await sendIntakeBevestiging({
-          id: insertedData.id,
-          voornaam,
-          achternaam,
-          email,
-          uitbetalingswijze,
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const { error } = await resend.emails.send({
+          from: "TopTalent Jobs <info@toptalentjobs.nl>",
+          to: ["info@toptalentjobs.nl"],
+          replyTo: email,
+          subject: `Nieuwe kandidaat intake - ${volledigeNaam}`,
+          html: emailHtml,
         });
-
-        await logEmail(
-          insertedData.id,
-          "bevestiging",
-          email,
-          `Hey ${voornaam}! 👋 Je inschrijving is binnen`,
-          emailResult.data?.id
-        );
-      } catch (emailError) {
-        console.error("Bevestigingsmail error:", emailError);
-        // Don't fail registration if email fails
-      }
-
-      // Auto AI screening (fire-and-forget)
-      try {
-        const { isOpenAIConfigured } = await import("@/lib/openai");
-        if (isOpenAIConfigured()) {
-          const { screenKandidaat } = await import("@/lib/agents/kandidaat-screening");
-          const { sendTelegramAlert } = await import("@/lib/telegram");
-
-          const screeningResult = await screenKandidaat({
-            voornaam,
-            achternaam,
-            stad,
-            geboortedatum,
-            horeca_ervaring: horecaErvaring,
-            gewenste_functies: functies,
-            talen,
-            eigen_vervoer: eigenVervoer,
-            beschikbaarheid: beschikbaarheid as string,
-            beschikbaar_vanaf: beschikbaarVanaf,
-            max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
-            uitbetalingswijze,
-            motivatie,
-          });
-
-          await supabase.from("inschrijvingen").update({
-            ai_screening_score: screeningResult.score,
-            ai_screening_notes: JSON.stringify(screeningResult),
-            ai_screening_date: new Date().toISOString(),
-          }).eq("id", insertedData.id);
-
-          await sendTelegramAlert(
-            `🤖 <b>AI Screening</b>\n` +
-            `Kandidaat: ${volledigeNaam}\n` +
-            `Score: ${screeningResult.score}/10\n` +
-            `${screeningResult.samenvatting}\n` +
-            `Aanbeveling: ${screeningResult.aanbeveling}`
-          );
+        if (error) {
+          console.error("Resend admin email error:", error);
         }
-      } catch (screeningError) {
-        console.error("Auto-screening error:", screeningError);
-        // Don't fail registration if screening fails
+      } catch (emailErr) {
+        console.error("Admin email error:", emailErr);
       }
+    } else if (process.env.NODE_ENV !== "development") {
+      console.warn("RESEND_API_KEY niet geconfigureerd — admin email overgeslagen");
     }
+
+    // 3. Achtergrondtaken: bevestigingsmail + referral tracking
+    // Draaien NA de response zodat de kandidaat niet hoeft te wachten
+    after(async () => {
+      try {
+        // Referral tracking
+        if (insertedData && referralCode) {
+          try {
+            await supabase.from("referrals")
+              .update({
+                referred_id: insertedData.id,
+                referred_naam: volledigeNaam,
+                referred_email: email,
+              })
+              .eq("referral_code", referralCode)
+              .eq("status", "pending")
+              .is("referred_id", null);
+          } catch (refError) {
+            console.error("Referral tracking error:", refError);
+          }
+        }
+
+        // Bevestigingsmail naar kandidaat
+        if (insertedData) {
+          try {
+            const { sendIntakeBevestiging, logEmail } = await import("@/lib/candidate-onboarding");
+
+            const emailResult = await sendIntakeBevestiging({
+              id: insertedData.id,
+              voornaam,
+              achternaam,
+              email,
+              uitbetalingswijze,
+            });
+
+            await logEmail(
+              insertedData.id,
+              "bevestiging",
+              email,
+              `Hey ${voornaam}! Je inschrijving is binnen`,
+              emailResult.data?.id
+            );
+          } catch (emailError) {
+            console.error("Bevestigingsmail error:", emailError);
+          }
+        }
+      } catch (bgErr) {
+        console.error("Background tasks error:", bgErr);
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
