@@ -21,6 +21,10 @@ const DOCUMENT_TYPES = [
   { value: "contract", label: "Contract" },
   { value: "kvk", label: "KVK-uittreksel" },
   { value: "vog", label: "VOG" },
+  { value: "verblijfsvergunning", label: "Verblijfsvergunning" },
+  { value: "werkvergunning", label: "Werkvergunning (TWV)" },
+  { value: "loonheffingsverklaring", label: "Loonheffingsverklaring" },
+  { value: "vsh", label: "Verklaring Sociale Hygiëne (VSH)" },
   { value: "overig", label: "Overig" },
 ];
 

@@ -152,6 +152,11 @@ function DocumentenUploadContent() {
     requiredDocs.push({ type: "kvk", label: "KVK uittreksel", icon: "🏢" });
   }
 
+  // C-20: Uitgebreide documenten per type
+  if (kandidaat.uitbetalingswijze === "loondienst") {
+    requiredDocs.push({ type: "loonheffingsverklaring", label: "Loonheffingsverklaring", icon: "📋" });
+  }
+
   const isDocUploaded = (type: string) => uploadedDocs.some(doc => doc.document_type === type);
   const allDocsUploaded = requiredDocs.every(doc => isDocUploaded(doc.type));
 

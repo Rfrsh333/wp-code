@@ -65,6 +65,9 @@ export interface ContractTemplate {
 
 // --- Contract Types ---
 
+// C-21: ABU Fase A/B/C systeem voor uitzendovereenkomsten
+export type UitzendFase = 'A' | 'B' | 'C'
+
 export interface Contract {
   id: string
   template_id: string | null
@@ -90,6 +93,12 @@ export interface Contract {
   ondertekend_medewerker_at: string | null
   ondertekend_admin_at: string | null
   opgezegd_at: string | null
+
+  // C-21: Fase A/B/C tracking
+  uitzend_fase: UitzendFase | null
+  fase_start_datum: string | null
+  aantal_contracten_in_fase: number | null
+  gewerkte_weken_in_fase: number | null
 
   notities: string | null
   created_at: string

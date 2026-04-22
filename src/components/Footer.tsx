@@ -171,9 +171,12 @@ export default function Footer() {
       <div className="border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-neutral-400 text-sm">
-              &copy; {new Date().getFullYear()} TopTalent Jobs. Alle rechten voorbehouden.
-            </p>
+            <div className="text-neutral-400 text-sm text-center md:text-left">
+              <p>&copy; {new Date().getFullYear()} TopTalent Jobs. Alle rechten voorbehouden.</p>
+              <p className="mt-1 text-neutral-500 text-xs">
+                KvK: 73401161 | BTW: NL002387654B82 | WAADI-geregistreerd
+              </p>
+            </div>
             <div className="flex items-center gap-6 text-sm">
               <Link href="/voorwaarden" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Algemene voorwaarden

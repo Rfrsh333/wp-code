@@ -104,13 +104,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       <strong>${factuurConfig.bedrijfsnaam}</strong><br>
       ${addressLines.length > 0 ? `${addressLines.join("<br>")}<br>` : ""}
       KVK: ${factuurConfig.kvk}<br>
-      BTW: ${factuurConfig.btw}
+      BTW: ${factuurConfig.btw}<br>
+      WAADI: ${factuurConfig.waadi}<br>
+      Loonheffingen: ${factuurConfig.loonbelastingnummer}
     </div>
     <div class="address">
       <div class="address-title">Aan</div>
       <strong>${factuur.klant?.bedrijfsnaam}</strong><br>
       ${factuur.klant?.contactpersoon}<br>
-      ${factuur.klant?.email}
+      ${factuur.klant?.adres ? `${factuur.klant.adres}<br>` : ""}${factuur.klant?.postcode ? `${factuur.klant.postcode} ` : ""}${factuur.klant?.stad || ""}<br>
+      ${factuur.klant?.kvk_nummer ? `KVK: ${factuur.klant.kvk_nummer}<br>` : ""}${factuur.klant?.btw_nummer ? `BTW: ${factuur.klant.btw_nummer}<br>` : ""}${factuur.klant?.email}
     </div>
   </div>
 
@@ -157,7 +160,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   </div>
 
   <div class="footer">
-    ${factuurConfig.bedrijfsnaam} • ${factuurConfig.email} • www.toptalentjobs.nl
+    ${factuurConfig.bedrijfsnaam} &bull; ${factuurConfig.adres}, ${factuurConfig.postcodeStad} &bull; ${factuurConfig.email} &bull; www.toptalentjobs.nl<br>
+    KVK: ${factuurConfig.kvk} &bull; BTW: ${factuurConfig.btw} &bull; WAADI: ${factuurConfig.waadi}
   </div>
 </body>
 </html>`;

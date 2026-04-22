@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { getFactuurConfig } from "@/lib/factuur-config";
 
 export async function GET() {
+  const config = getFactuurConfig();
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
   const formatCurrency = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
 
@@ -17,7 +19,12 @@ export async function GET() {
     klant: {
       bedrijfsnaam: "Horeca Groep Amsterdam B.V.",
       contactpersoon: "Jan de Vries",
-      email: "jan@horecagroep.nl"
+      email: "jan@horecagroep.nl",
+      adres: "Keizersgracht 200",
+      postcode: "1016 DZ",
+      stad: "Amsterdam",
+      kvk_nummer: "87654321",
+      btw_nummer: "NL987654321B01",
     },
     regels: [
       { datum: "2024-12-02", omschrijving: "Restaurant De Jordaan - Ahmed Yilmaz", uren: 8, uurtarief: 18.50, bedrag: 148.00 },
@@ -36,7 +43,7 @@ export async function GET() {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Factuur ${factuur.factuur_nummer} - TopTalent Jobs</title>
+  <title>Factuur ${factuur.factuur_nummer} - ${config.bedrijfsnaam}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 40px; max-width: 800px; margin: 0 auto; background: #f5f5f5; }
@@ -79,7 +86,7 @@ export async function GET() {
   <div class="page">
     <div class="header">
       <div>
-        <div class="logo">TopTalent Jobs</div>
+        <div class="logo">${config.bedrijfsnaam}</div>
         <div class="logo-sub">Professionele horeca uitzendkrachten</div>
       </div>
       <div class="factuur-info">
@@ -91,18 +98,24 @@ export async function GET() {
     <div class="addresses">
       <div class="address">
         <div class="address-title">Van</div>
-        <strong>TopTalent Jobs B.V.</strong><br>
-        Herengracht 100<br>
-        1015 BS Amsterdam<br>
+        <strong>${config.bedrijfsnaam}</strong><br>
+        ${config.adres}<br>
+        ${config.postcodeStad}<br>
         <br>
-        KVK: 12345678<br>
-        BTW: NL123456789B01
+        KVK: ${config.kvk}<br>
+        BTW: ${config.btw}<br>
+        WAADI: ${config.waadi}<br>
+        Loonheffingen: ${config.loonbelastingnummer}
       </div>
       <div class="address">
         <div class="address-title">Factuuradres</div>
         <strong>${factuur.klant.bedrijfsnaam}</strong><br>
         T.a.v. ${factuur.klant.contactpersoon}<br>
-        ${factuur.klant.email}
+        ${factuur.klant.adres}<br>
+        ${factuur.klant.postcode} ${factuur.klant.stad}<br>
+        <br>
+        KVK: ${factuur.klant.kvk_nummer}<br>
+        BTW: ${factuur.klant.btw_nummer}
       </div>
     </div>
 
@@ -153,11 +166,11 @@ export async function GET() {
       <div class="payment-details">
         <div class="payment-item">
           <div class="payment-label">IBAN</div>
-          <div class="payment-value">NL00 BANK 0000 0000 00</div>
+          <div class="payment-value">${config.iban}</div>
         </div>
         <div class="payment-item">
           <div class="payment-label">T.n.v.</div>
-          <div class="payment-value">TopTalent Jobs B.V.</div>
+          <div class="payment-value">${config.tenaamstelling}</div>
         </div>
         <div class="payment-item">
           <div class="payment-label">Referentie</div>
@@ -165,14 +178,14 @@ export async function GET() {
         </div>
         <div class="payment-item">
           <div class="payment-label">Betaaltermijn</div>
-          <div class="payment-value">14 dagen</div>
+          <div class="payment-value">${config.paymentTermDays} dagen</div>
         </div>
       </div>
     </div>
 
     <div class="footer">
-      TopTalent Jobs B.V. • Herengracht 100, 1015 BS Amsterdam • info@toptalentjobs.nl • www.toptalentjobs.nl<br>
-      KVK: 12345678 • BTW: NL123456789B01 • IBAN: NL00 BANK 0000 0000 00
+      ${config.bedrijfsnaam} &bull; ${config.adres}, ${config.postcodeStad} &bull; ${config.email} &bull; www.toptalentjobs.nl<br>
+      KVK: ${config.kvk} &bull; BTW: ${config.btw} &bull; WAADI: ${config.waadi} &bull; IBAN: ${config.iban}
     </div>
   </div>
 </body>

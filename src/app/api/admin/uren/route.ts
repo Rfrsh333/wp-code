@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { valideerPauze, valideerDienstDuur, berekenToeslag } from "@/lib/compliance/arbeidstijden";
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -131,6 +132,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Voor deze aanmelding zijn al uren geregistreerd" }, { status: 409 });
     }
 
+    // C-14: Valideer maximale dienstduur
+    const dienstDuurCheck = valideerDienstDuur(start_tijd, eind_tijd, pauze_minuten || 0);
+    if (!dienstDuurCheck.geldig) {
+      return NextResponse.json({ error: dienstDuurCheck.waarschuwing }, { status: 400 });
+    }
+
+    // C-15: Valideer pauze
+    const pauzeCheck = valideerPauze(start_tijd, eind_tijd, pauze_minuten || 0);
+    if (!pauzeCheck.geldig) {
+      return NextResponse.json({ error: pauzeCheck.waarschuwing }, { status: 400 });
+    }
+
     // Calculate hours
     const [sh, sm] = start_tijd.split(":").map(Number);
     const [eh, em] = eind_tijd.split(":").map(Number);
@@ -142,6 +155,18 @@ export async function POST(request: NextRequest) {
     const km = Math.max(0, Number(reiskosten_km) || 0);
     const reiskosten_bedrag = Math.round(km * 0.21 * 100) / 100;
 
+    // C-10: Toeslagberekening
+    const { data: dienstData } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("dienst:diensten(datum, start_tijd, eind_tijd)")
+      .eq("id", aanmelding_id)
+      .single();
+
+    const dienst = Array.isArray(dienstData?.dienst) ? dienstData?.dienst[0] : dienstData?.dienst;
+    const toeslag = dienst
+      ? berekenToeslag(dienst.datum, start_tijd, eind_tijd)
+      : { type: "geen" as const, percentage: 0, reden: "" };
+
     await supabaseAdmin.from("uren_registraties").insert({
       aanmelding_id,
       start_tijd,
@@ -151,6 +176,8 @@ export async function POST(request: NextRequest) {
       reiskosten_km: km,
       reiskosten_bedrag,
       status: "ingediend",
+      toeslag_type: toeslag.type !== "geen" ? toeslag.type : null,
+      toeslag_percentage: toeslag.percentage,
     });
 
   }

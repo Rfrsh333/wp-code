@@ -426,11 +426,11 @@ export function OffertePDF({ data }: { data: OfferteData }) {
             style={styles.logo}
           />
           <View style={styles.headerRight}>
-            <Text style={styles.companyInfo}>TopTalent Jobs</Text>
-            <Text style={styles.companyInfo}>Utrecht</Text>
-            <Text style={styles.companyInfo}>KvK: 73401161</Text>
-            <Text style={styles.companyInfo}>info@toptalentjobs.nl</Text>
-            <Text style={styles.companyInfo}>+31 6 17 17 79 39</Text>
+            <Text style={styles.companyInfo}>TopTalent Jobs B.V.</Text>
+            <Text style={styles.companyInfo}>Kanaalstraat 15, 3531 CJ Utrecht</Text>
+            <Text style={styles.companyInfo}>KvK: 73401161 | BTW: NL002387654B82</Text>
+            <Text style={styles.companyInfo}>WAADI-geregistreerd</Text>
+            <Text style={styles.companyInfo}>info@toptalentjobs.nl | +31 6 17 17 79 39</Text>
           </View>
         </View>
 
@@ -598,7 +598,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
         <View style={styles.footer}>
           <View style={styles.footerBar}>
             <Text style={styles.footerText}>
-              <Text style={styles.footerHighlight}>TopTalent Jobs</Text> | Utrecht | KvK: 73401161
+              <Text style={styles.footerHighlight}>TopTalent Jobs B.V.</Text> | KvK: 73401161 | BTW: NL002387654B82 | WAADI-geregistreerd
             </Text>
             <Text style={styles.footerText}>
               info@toptalentjobs.nl | www.toptalentjobs.nl

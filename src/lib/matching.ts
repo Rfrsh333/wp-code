@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { valideerLeeftijdVoorDienst, isIDBewilsVerlopen } from "@/lib/compliance/arbeidstijden";
 
 interface Medewerker {
   id: string;
@@ -13,6 +14,7 @@ interface Medewerker {
   profile_photo_url: string | null;
   badge: string | null;
   gemiddelde_score: number | null;
+  geboortedatum?: string | null;
 }
 
 interface Beschikbaarheid {
@@ -44,6 +46,7 @@ export interface MatchResult {
     badge_bonus: number;
   };
   beschikbaar: boolean;
+  compliance_blokkade?: string;
 }
 
 // Dag naam mapping (0=zondag in JS)
@@ -148,11 +151,27 @@ function calculateMatchScore(
     breakdown.locatie_score +
     breakdown.badge_bonus;
 
+  // C-11/C-12: Leeftijdsvalidatie (Alcoholwet + nachtwerk-verbod)
+  let compliance_blokkade: string | undefined;
+  if (medewerker.geboortedatum) {
+    const leeftijdsCheck = valideerLeeftijdVoorDienst(
+      medewerker.geboortedatum,
+      dienst.datum,
+      dienst.functie,
+      dienst.start_tijd,
+      dienst.eind_tijd,
+    );
+    if (!leeftijdsCheck.toegestaan) {
+      compliance_blokkade = leeftijdsCheck.reden;
+    }
+  }
+
   return {
     medewerker,
     score: totalScore,
     breakdown,
-    beschikbaar: isBeschikbaar && breakdown.functie_score > 0,
+    beschikbaar: isBeschikbaar && breakdown.functie_score > 0 && !compliance_blokkade,
+    compliance_blokkade,
   };
 }
 
@@ -174,10 +193,10 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
     throw new Error("Dienst niet gevonden");
   }
 
-  // Haal actieve medewerkers op
+  // Haal actieve medewerkers op (incl. geboortedatum voor compliance checks)
   const { data: medewerkers } = await supabaseAdmin
     .from("medewerkers")
-    .select("id, naam, email, telefoon, functie, status, stad, admin_score_aanwezigheid, admin_score_vaardigheden, profile_photo_url, badge, gemiddelde_score")
+    .select("id, naam, email, telefoon, functie, status, stad, admin_score_aanwezigheid, admin_score_vaardigheden, profile_photo_url, badge, gemiddelde_score, geboortedatum")
     .eq("status", "actief");
 
   if (!medewerkers || medewerkers.length === 0) {
@@ -204,9 +223,19 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
 
   const alAangemeldIds = new Set((bestaandeAanmeldingen || []).map((a) => a.medewerker_id));
 
-  // Bereken scores
+  // C-23: Haal verlopen ID-bewijzen op voor blokkering
+  const { data: verlopenDocs } = await supabaseAdmin
+    .from("medewerker_documenten")
+    .select("medewerker_id, expiry_date")
+    .eq("document_type", "id_bewijs")
+    .lt("expiry_date", new Date().toISOString().split("T")[0]);
+
+  const verlopenIDSet = new Set((verlopenDocs || []).map((d) => d.medewerker_id));
+
+  // Bereken scores (C-23: filter verlopen ID-bewijzen)
   const matches = medewerkers
     .filter((m) => !alAangemeldIds.has(m.id))
+    .filter((m) => !verlopenIDSet.has(m.id))
     .map((m) => calculateMatchScore(m, dienst, beschikbaarheidMap.get(m.email) || null))
     .filter((m) => m.score > 0)
     .sort((a, b) => {
