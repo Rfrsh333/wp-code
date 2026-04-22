@@ -1,5 +1,3 @@
-"use client";
-
 import { Suspense } from "react";
 import Section from "@/components/Section";
 import PersoneelAanvragenWizard from "@/components/forms/PersoneelAanvragenWizard";

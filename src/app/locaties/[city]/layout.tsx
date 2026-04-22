@@ -26,8 +26,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const cleanTitle = location.title.replace(/ \| TopTalent Jobs$/, "");
+
   return {
-    title: location.title,
+    title: cleanTitle,
     description: location.description,
     alternates: {
       canonical: `https://www.toptalentjobs.nl/locaties/${location.slug}`,

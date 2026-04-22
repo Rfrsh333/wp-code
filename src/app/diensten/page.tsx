@@ -91,6 +91,7 @@ export default function DienstenPage() {
                         alt="Horeca medewerker tijdens tijdelijke inzet via uitzendbureau"
                         width={380}
                         height={380}
+                        priority={true}
                       />
                     </div>
                   </Link>

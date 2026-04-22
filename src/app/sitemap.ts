@@ -7,7 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.toptalentjobs.nl'
 
   // Static pages - gebruik vaste datum voor stabiele crawl signalen
-  const contentDate = new Date('2024-12-19')
+  const contentDate = new Date()
 
   // ALLEEN indexeerbare pagina's (zie src/proxy.ts whitelist)
   const staticPages: MetadataRoute.Sitemap = [

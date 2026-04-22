@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef, useId } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { useToast } from "@/components/ui/Toast";
@@ -74,6 +74,7 @@ const AUTOSAVE_KEY = "toptalent_inschrijf_draft";
 
 function FormInput({
   label,
+  id,
   type = "text",
   value,
   onChange,
@@ -83,6 +84,7 @@ function FormInput({
   className = "",
 }: {
   label: string;
+  id: string;
   type?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -92,37 +94,42 @@ function FormInput({
   className?: string;
 }) {
   const [isFocused, setIsFocused] = useState(false);
+  const errorId = `${id}-error`;
 
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-neutral-700 mb-2">
-        {label} {required ? <span className="text-[#F27501]">*</span> : null}
+      <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-2">
+        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <div className="relative">
         <input
+          id={id}
           type={type}
           value={value}
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
+          aria-required={required || undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={`
             w-full px-4 py-3.5 rounded-xl border-2 bg-white
             text-neutral-900 placeholder:text-neutral-400
             transition-all duration-200 ease-out
             ${
               error
-                ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+                ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/30"
                 : isFocused
-                  ? "border-[#F27501] ring-4 ring-[#F27501]/10"
+                  ? "border-[#F27501] ring-4 ring-[#F27501]/30"
                   : "border-neutral-200 hover:border-neutral-300"
             }
-            focus:outline-none
+            focus:outline-2 focus:outline-[#F27501]
           `}
         />
       </div>
       {error ? (
-        <p className="text-red-500 text-sm mt-2">{error}</p>
+        <p id={errorId} className="text-red-500 text-sm mt-2" role="alert">{error}</p>
       ) : null}
     </div>
   );
@@ -130,6 +137,7 @@ function FormInput({
 
 function FormSelect({
   label,
+  id,
   value,
   onChange,
   options,
@@ -137,6 +145,7 @@ function FormSelect({
   required,
 }: {
   label: string;
+  id: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   options: { value: string; label: string }[];
@@ -144,30 +153,35 @@ function FormSelect({
   required?: boolean;
 }) {
   const [isFocused, setIsFocused] = useState(false);
+  const errorId = `${id}-error`;
 
   return (
     <div>
-      <label className="block text-sm font-medium text-neutral-700 mb-2">
-        {label} {required ? <span className="text-[#F27501]">*</span> : null}
+      <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-2">
+        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <div className="relative">
         <select
+          id={id}
           value={value}
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          aria-required={required || undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={`
             w-full px-4 py-3.5 rounded-xl border-2 bg-white appearance-none
             text-neutral-900 cursor-pointer
             transition-all duration-200 ease-out
             ${
               error
-                ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+                ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/30"
                 : isFocused
-                  ? "border-[#F27501] ring-4 ring-[#F27501]/10"
+                  ? "border-[#F27501] ring-4 ring-[#F27501]/30"
                   : "border-neutral-200 hover:border-neutral-300"
             }
-            focus:outline-none
+            focus:outline-2 focus:outline-[#F27501]
           `}
         >
           <option value="">Selecteer...</option>
@@ -183,13 +197,14 @@ function FormSelect({
           </svg>
         </div>
       </div>
-      {error ? <p className="text-red-500 text-sm mt-2">{error}</p> : null}
+      {error ? <p id={errorId} className="text-red-500 text-sm mt-2" role="alert">{error}</p> : null}
     </div>
   );
 }
 
 function FormTextarea({
   label,
+  id,
   value,
   onChange,
   placeholder,
@@ -198,6 +213,7 @@ function FormTextarea({
   rows = 4,
 }: {
   label: string;
+  id: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
@@ -206,40 +222,46 @@ function FormTextarea({
   rows?: number;
 }) {
   const [isFocused, setIsFocused] = useState(false);
+  const errorId = `${id}-error`;
 
   return (
     <div>
-      <label className="block text-sm font-medium text-neutral-700 mb-2">
-        {label} {required ? <span className="text-[#F27501]">*</span> : null}
+      <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-2">
+        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <textarea
+        id={id}
         value={value}
         onChange={onChange}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
         rows={rows}
+        aria-required={required || undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         className={`
           w-full px-4 py-3.5 rounded-xl border-2 bg-white resize-none
           text-neutral-900 placeholder:text-neutral-400
           transition-all duration-200 ease-out
           ${
             error
-              ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+              ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/30"
               : isFocused
-                ? "border-[#F27501] ring-4 ring-[#F27501]/10"
+                ? "border-[#F27501] ring-4 ring-[#F27501]/30"
                 : "border-neutral-200 hover:border-neutral-300"
           }
-          focus:outline-none
+          focus:outline-2 focus:outline-[#F27501]
         `}
       />
-      {error ? <p className="text-red-500 text-sm mt-2">{error}</p> : null}
+      {error ? <p id={errorId} className="text-red-500 text-sm mt-2" role="alert">{error}</p> : null}
     </div>
   );
 }
 
 function ToggleGroup({
   label,
+  id,
   options,
   values,
   onToggle,
@@ -247,16 +269,19 @@ function ToggleGroup({
   required,
 }: {
   label: string;
+  id: string;
   options: readonly string[];
   values: string[];
   onToggle: (value: string) => void;
   error?: string;
   required?: boolean;
 }) {
+  const errorId = `${id}-error`;
+
   return (
-    <div>
-      <label className="block text-sm font-medium text-neutral-700 mb-3">
-        {label} {required ? <span className="text-[#F27501]">*</span> : null}
+    <div role="group" aria-labelledby={`${id}-label`}>
+      <label id={`${id}-label`} className="block text-sm font-medium text-neutral-700 mb-3">
+        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <div className="flex flex-wrap gap-3">
         {options.map((option) => {
@@ -266,7 +291,8 @@ function ToggleGroup({
               key={option}
               type="button"
               onClick={() => onToggle(option)}
-              className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+              aria-pressed={active}
+              className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors focus:outline-2 focus:outline-[#F27501] focus:ring-4 focus:ring-[#F27501]/30 ${
                 active
                   ? "border-[#F27501] bg-[#F27501] text-white"
                   : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
@@ -277,7 +303,7 @@ function ToggleGroup({
           );
         })}
       </div>
-      {error ? <p className="text-red-500 text-sm mt-2">{error}</p> : null}
+      {error ? <p id={errorId} className="text-red-500 text-sm mt-2" role="alert">{error}</p> : null}
     </div>
   );
 }
@@ -310,6 +336,7 @@ export default function InschrijfFormulier() {
   const toast = useToast();
   const refCode = searchParams.get("ref") || "";
   const totalSteps = 4;
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
 
   // Restore draft from localStorage
   useEffect(() => {
@@ -432,12 +459,14 @@ export default function InschrijfFormulier() {
     if (validateStep(currentStep)) {
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
       window.scrollTo({ top: 0, behavior: "smooth" });
+      requestAnimationFrame(() => stepHeadingRef.current?.focus());
     }
   };
 
   const prevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
     window.scrollTo({ top: 0, behavior: "smooth" });
+    requestAnimationFrame(() => stepHeadingRef.current?.focus());
   };
 
   const handleSubmit = async () => {
@@ -539,6 +568,8 @@ export default function InschrijfFormulier() {
             <div key={index} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div
+                  role="img"
+                  aria-label={`Stap ${index + 1}: ${title}${index < currentStep ? " (voltooid)" : index === currentStep ? " (huidige stap)" : ""}`}
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
                     index <= currentStep
                       ? "bg-[#F27501] text-white"
@@ -581,7 +612,7 @@ export default function InschrijfFormulier() {
 
       {/* Step header */}
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-neutral-900">{stepTitles[currentStep]}</h3>
+        <h3 ref={stepHeadingRef} tabIndex={-1} className="text-xl font-bold text-neutral-900 outline-none">{stepTitles[currentStep]}</h3>
         <p className="text-sm text-neutral-500 mt-1">{stepDescriptions[currentStep]}</p>
       </div>
 
@@ -624,20 +655,20 @@ export default function InschrijfFormulier() {
                     Documenten zoals ID, cv of KvK vragen we later apart op wanneer je onboarding start.
                   </p>
                   {errors.toestemming ? (
-                    <p className="text-red-500 text-sm mt-2">{errors.toestemming}</p>
+                    <p className="text-red-500 text-sm mt-2" role="alert">{errors.toestemming}</p>
                   ) : null}
                 </div>
               </label>
             </div>
 
             <div className="grid md:grid-cols-2 gap-5">
-              <FormInput label="Voornaam" value={formData.voornaam} onChange={(e) => updateField("voornaam", e.target.value)} error={errors.voornaam} required />
-              <FormInput label="Tussenvoegsel" value={formData.tussenvoegsel} onChange={(e) => updateField("tussenvoegsel", e.target.value)} />
-              <FormInput label="Achternaam" value={formData.achternaam} onChange={(e) => updateField("achternaam", e.target.value)} error={errors.achternaam} required />
-              <FormInput label="E-mail" type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)} error={errors.email} required />
-              <FormInput label="Telefoon" type="tel" value={formData.telefoon} onChange={(e) => updateField("telefoon", e.target.value)} error={errors.telefoon} required />
-              <FormInput label="Woonplaats" value={formData.stad} onChange={(e) => updateField("stad", e.target.value)} error={errors.stad} required />
-              <FormInput label="Geboortedatum" type="date" value={formData.geboortedatum} onChange={(e) => updateField("geboortedatum", e.target.value)} error={errors.geboortedatum} required />
+              <FormInput id="voornaam" label="Voornaam" value={formData.voornaam} onChange={(e) => updateField("voornaam", e.target.value)} error={errors.voornaam} required />
+              <FormInput id="tussenvoegsel" label="Tussenvoegsel" value={formData.tussenvoegsel} onChange={(e) => updateField("tussenvoegsel", e.target.value)} />
+              <FormInput id="achternaam" label="Achternaam" value={formData.achternaam} onChange={(e) => updateField("achternaam", e.target.value)} error={errors.achternaam} required />
+              <FormInput id="email" label="E-mail" type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)} error={errors.email} required />
+              <FormInput id="telefoon" label="Telefoon" type="tel" value={formData.telefoon} onChange={(e) => updateField("telefoon", e.target.value)} error={errors.telefoon} required />
+              <FormInput id="stad" label="Woonplaats" value={formData.stad} onChange={(e) => updateField("stad", e.target.value)} error={errors.stad} required />
+              <FormInput id="geboortedatum" label="Geboortedatum" type="date" value={formData.geboortedatum} onChange={(e) => updateField("geboortedatum", e.target.value)} error={errors.geboortedatum} required />
             </div>
           </div>
         )}
@@ -646,6 +677,7 @@ export default function InschrijfFormulier() {
         {currentStep === 1 && (
           <div className="space-y-5">
             <FormSelect
+              id="geslacht"
               label="Geslacht"
               value={formData.geslacht}
               onChange={(e) => updateField("geslacht", e.target.value)}
@@ -658,6 +690,7 @@ export default function InschrijfFormulier() {
               ]}
             />
             <FormSelect
+              id="horeca-ervaring"
               label="Horeca-ervaring"
               value={formData.horecaErvaring}
               onChange={(e) => updateField("horecaErvaring", e.target.value)}
@@ -671,6 +704,7 @@ export default function InschrijfFormulier() {
               ]}
             />
             <ToggleGroup
+              id="functies"
               label="Welke functies kun je doen?"
               options={functieOpties}
               values={formData.functies}
@@ -679,6 +713,7 @@ export default function InschrijfFormulier() {
               required
             />
             <ToggleGroup
+              id="talen"
               label="Welke talen spreek je?"
               options={taalOpties}
               values={formData.talen}
@@ -707,6 +742,7 @@ export default function InschrijfFormulier() {
         {currentStep === 2 && (
           <div className="grid md:grid-cols-2 gap-5">
             <FormSelect
+              id="beschikbaarheid"
               label="Beschikbaarheid"
               value={formData.beschikbaarheid}
               onChange={(e) => updateField("beschikbaarheid", e.target.value)}
@@ -721,6 +757,7 @@ export default function InschrijfFormulier() {
               ]}
             />
             <FormInput
+              id="beschikbaar-vanaf"
               label="Beschikbaar vanaf"
               type="date"
               value={formData.beschikbaarVanaf}
@@ -729,6 +766,7 @@ export default function InschrijfFormulier() {
               required
             />
             <FormInput
+              id="max-uren"
               label="Max uren per week"
               type="number"
               value={formData.maxUrenPerWeek}
@@ -737,6 +775,7 @@ export default function InschrijfFormulier() {
               error={errors.maxUrenPerWeek}
             />
             <FormSelect
+              id="uitbetalingswijze"
               label="Voorkeur uitbetaling"
               value={formData.uitbetalingswijze}
               onChange={(e) => updateField("uitbetalingswijze", e.target.value)}
@@ -750,6 +789,7 @@ export default function InschrijfFormulier() {
             {formData.uitbetalingswijze === "zzp" ? (
               <div className="md:col-span-2">
                 <FormInput
+                  id="kvk-nummer"
                   label="KVK nummer"
                   value={formData.kvkNummer}
                   onChange={(e) => updateField("kvkNummer", e.target.value)}
@@ -766,6 +806,7 @@ export default function InschrijfFormulier() {
         {currentStep === 3 && (
           <div className="space-y-5">
             <FormTextarea
+              id="motivatie"
               label="Vertel kort iets over jezelf (optioneel)"
               value={formData.motivatie}
               onChange={(e) => updateField("motivatie", e.target.value)}
@@ -774,6 +815,7 @@ export default function InschrijfFormulier() {
               rows={5}
             />
             <FormInput
+              id="hoe-gekomen"
               label="Hoe ben je bij TopTalent terechtgekomen?"
               value={formData.hoeGekomen}
               onChange={(e) => updateField("hoeGekomen", e.target.value)}

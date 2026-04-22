@@ -91,6 +91,7 @@ export default function UitzendenPage() {
                   alt="Horecapersoneel in de bediening tijdens tijdelijke inzet"
                   width={480}
                   height={480}
+                  priority={true}
                 />
               </div>
             </ClientAnimationWrapper>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { basisTarieven } from "@/lib/calculator/tarieven";
@@ -131,6 +131,7 @@ export default function PersoneelAanvragenWizard() {
   const toast = useToast();
 
   const totalSteps = 4;
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
 
   // Read URL parameters for lead source tracking
   useEffect(() => {
@@ -205,11 +206,13 @@ export default function PersoneelAanvragenWizard() {
   const nextStep = () => {
     if (validateStep(currentStep)) {
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
+      requestAnimationFrame(() => stepHeadingRef.current?.focus());
     }
   };
 
   const prevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
+    requestAnimationFrame(() => stepHeadingRef.current?.focus());
   };
 
   const handleSubmit = async () => {
@@ -288,9 +291,13 @@ export default function PersoneelAanvragenWizard() {
       {/* Progress Bar */}
       <div className="bg-neutral-50 px-6 py-4">
         <div className="flex items-center justify-between mb-2">
-          {[1, 2, 3, 4].map((step, index) => (
+          {[1, 2, 3, 4].map((step, index) => {
+            const stepLabels = ["Bedrijf", "Personeel", "Planning", "Details"];
+            return (
             <div key={step} className="flex items-center">
               <div
+                role="img"
+                aria-label={`Stap ${step}: ${stepLabels[index]}${index < currentStep ? " (voltooid)" : index === currentStep ? " (huidige stap)" : ""}`}
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
                   index <= currentStep
                     ? "bg-[#F27501] text-white"
@@ -313,7 +320,7 @@ export default function PersoneelAanvragenWizard() {
                 />
               )}
             </div>
-          ))}
+          )})}
         </div>
         <div className="flex justify-between text-xs text-neutral-500">
           <span>Bedrijf</span>
@@ -329,80 +336,96 @@ export default function PersoneelAanvragenWizard() {
             {currentStep === 0 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-2">Bedrijfsgegevens</h2>
+                  <h2 ref={stepHeadingRef} tabIndex={-1} className="text-2xl font-bold text-neutral-900 mb-2 outline-none">Bedrijfsgegevens</h2>
                   <p className="text-neutral-500">Vertel ons meer over uw bedrijf</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Bedrijfsnaam *
+                    <label htmlFor="bedrijfsnaam" className="block text-sm font-medium text-neutral-700 mb-2">
+                      Bedrijfsnaam <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
+                      id="bedrijfsnaam"
                       type="text"
                       value={formData.bedrijfsnaam}
                       onChange={(e) => updateField("bedrijfsnaam", e.target.value)}
+                      aria-required="true"
+                      aria-invalid={errors.bedrijfsnaam ? true : undefined}
+                      aria-describedby={errors.bedrijfsnaam ? "bedrijfsnaam-error" : undefined}
                       className={`w-full px-4 py-3 rounded-lg border ${
                         errors.bedrijfsnaam ? "border-red-500" : "border-neutral-200"
-                      } focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors`}
+                      } focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors`}
                       placeholder="Uw bedrijfsnaam"
                     />
                     {errors.bedrijfsnaam && (
-                      <p className="text-red-500 text-sm mt-1">{errors.bedrijfsnaam}</p>
+                      <p id="bedrijfsnaam-error" className="text-red-500 text-sm mt-1" role="alert">{errors.bedrijfsnaam}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Contactpersoon *
+                    <label htmlFor="contactpersoon" className="block text-sm font-medium text-neutral-700 mb-2">
+                      Contactpersoon <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
+                      id="contactpersoon"
                       type="text"
                       value={formData.contactpersoon}
                       onChange={(e) => updateField("contactpersoon", e.target.value)}
+                      aria-required="true"
+                      aria-invalid={errors.contactpersoon ? true : undefined}
+                      aria-describedby={errors.contactpersoon ? "contactpersoon-error" : undefined}
                       className={`w-full px-4 py-3 rounded-lg border ${
                         errors.contactpersoon ? "border-red-500" : "border-neutral-200"
-                      } focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors`}
+                      } focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors`}
                       placeholder="Uw naam"
                     />
                     {errors.contactpersoon && (
-                      <p className="text-red-500 text-sm mt-1">{errors.contactpersoon}</p>
+                      <p id="contactpersoon-error" className="text-red-500 text-sm mt-1" role="alert">{errors.contactpersoon}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      E-mailadres *
+                    <label htmlFor="pa-email" className="block text-sm font-medium text-neutral-700 mb-2">
+                      E-mailadres <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
+                      id="pa-email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => updateField("email", e.target.value)}
+                      aria-required="true"
+                      aria-invalid={errors.email ? true : undefined}
+                      aria-describedby={errors.email ? "pa-email-error" : undefined}
                       className={`w-full px-4 py-3 rounded-lg border ${
                         errors.email ? "border-red-500" : "border-neutral-200"
-                      } focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors`}
+                      } focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors`}
                       placeholder="email@voorbeeld.nl"
                     />
                     {errors.email && (
-                      <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                      <p id="pa-email-error" className="text-red-500 text-sm mt-1" role="alert">{errors.email}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Telefoonnummer *
+                    <label htmlFor="pa-telefoon" className="block text-sm font-medium text-neutral-700 mb-2">
+                      Telefoonnummer <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
+                      id="pa-telefoon"
                       type="tel"
                       value={formData.telefoon}
                       onChange={(e) => updateField("telefoon", e.target.value)}
+                      aria-required="true"
+                      aria-invalid={errors.telefoon ? true : undefined}
+                      aria-describedby={errors.telefoon ? "pa-telefoon-error" : undefined}
                       className={`w-full px-4 py-3 rounded-lg border ${
                         errors.telefoon ? "border-red-500" : "border-neutral-200"
-                      } focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors`}
+                      } focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors`}
                       placeholder="06 12345678"
                     />
                     {errors.telefoon && (
-                      <p className="text-red-500 text-sm mt-1">{errors.telefoon}</p>
+                      <p id="pa-telefoon-error" className="text-red-500 text-sm mt-1" role="alert">{errors.telefoon}</p>
                     )}
                   </div>
                 </div>
@@ -412,13 +435,13 @@ export default function PersoneelAanvragenWizard() {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-2">Personeelsbehoefte</h2>
+                  <h2 ref={stepHeadingRef} tabIndex={-1} className="text-2xl font-bold text-neutral-900 mb-2 outline-none">Personeelsbehoefte</h2>
                   <p className="text-neutral-500">Welk type personeel zoekt u?</p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">
-                    Type personeel * <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
+                <div role="group" aria-labelledby="type-personeel-label">
+                  <label id="type-personeel-label" className="block text-sm font-medium text-neutral-700 mb-3">
+                    Type personeel <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {typePersoneelOptions.map((type) => (
@@ -426,7 +449,8 @@ export default function PersoneelAanvragenWizard() {
                         key={type}
                         type="button"
                         onClick={() => toggleArrayField("typePersoneel", type)}
-                        className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                        aria-pressed={formData.typePersoneel.includes(type)}
+                        className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.typePersoneel.includes(type)
                             ? "bg-[#F27501] border-[#F27501] text-white"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]"
@@ -438,23 +462,25 @@ export default function PersoneelAanvragenWizard() {
                   </div>
                   {formData.typePersoneel.includes("Anders") && (
                     <div className="mt-3">
+                      <label htmlFor="andere-type-personeel" className="sr-only">Beschrijf de gewenste functie</label>
                       <input
+                        id="andere-type-personeel"
                         type="text"
                         value={formData.andereTypePersoneel}
                         onChange={(e) => updateField("andereTypePersoneel", e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
+                        className="w-full px-4 py-3 rounded-lg border border-neutral-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors"
                         placeholder="Beschrijf de gewenste functie..."
                       />
                     </div>
                   )}
                   {errors.typePersoneel !== undefined && formData.typePersoneel.length === 0 && (
-                    <p className="text-red-500 text-sm mt-2">Selecteer minimaal één type personeel</p>
+                    <p className="text-red-500 text-sm mt-2" role="alert">Selecteer minimaal één type personeel</p>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">
-                    Aantal personen nodig *
+                <div role="group" aria-labelledby="aantal-personen-label">
+                  <label id="aantal-personen-label" className="block text-sm font-medium text-neutral-700 mb-3">
+                    Aantal personen nodig <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                   </label>
                   <div className="flex flex-wrap gap-3">
                     {aantalOptions.map((aantal) => (
@@ -462,7 +488,8 @@ export default function PersoneelAanvragenWizard() {
                         key={aantal}
                         type="button"
                         onClick={() => updateField("aantalPersonen", aantal)}
-                        className={`px-6 py-3 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                        aria-pressed={formData.aantalPersonen === aantal}
+                        className={`px-6 py-3 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.aantalPersonen === aantal
                             ? "bg-[#F27501] border-[#F27501] text-white"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]"
@@ -473,13 +500,13 @@ export default function PersoneelAanvragenWizard() {
                     ))}
                   </div>
                   {errors.aantalPersonen && (
-                    <p className="text-red-500 text-sm mt-2">{errors.aantalPersonen}</p>
+                    <p className="text-red-500 text-sm mt-2" role="alert">{errors.aantalPersonen}</p>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">
-                    Contractvorm * <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
+                <div role="group" aria-labelledby="contractvorm-label">
+                  <label id="contractvorm-label" className="block text-sm font-medium text-neutral-700 mb-3">
+                    Contractvorm <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {contractTypeOptions.map((option) => (
@@ -487,7 +514,8 @@ export default function PersoneelAanvragenWizard() {
                         key={option.value}
                         type="button"
                         onClick={() => toggleArrayField("contractType", option.value)}
-                        className={`px-4 py-4 rounded-lg border text-left transition-all duration-200 ${
+                        aria-pressed={formData.contractType.includes(option.value)}
+                        className={`px-4 py-4 rounded-lg border text-left transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.contractType.includes(option.value)
                             ? "bg-[#F27501] border-[#F27501] text-white"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501]"
@@ -505,26 +533,27 @@ export default function PersoneelAanvragenWizard() {
                     ))}
                   </div>
                   {errors.contractType !== undefined && formData.contractType.length === 0 && (
-                    <p className="text-red-500 text-sm mt-2">Selecteer minimaal één contractvorm</p>
+                    <p className="text-red-500 text-sm mt-2" role="alert">Selecteer minimaal één contractvorm</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label htmlFor="gewenst-uurtarief" className="block text-sm font-medium text-neutral-700 mb-2">
                     Gewenst uurtarief <span className="text-neutral-400 font-normal">(optioneel)</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">€</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden="true">€</span>
                     <input
+                      id="gewenst-uurtarief"
                       type="number"
                       step="0.50"
                       min="0"
                       value={formData.gewenstUurtarief}
                       onChange={(e) => updateField("gewenstUurtarief", e.target.value)}
-                      className="w-full pl-8 pr-16 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
+                      className="w-full pl-8 pr-16 py-3 rounded-lg border border-neutral-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors"
                       placeholder="Bijv. 25"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400">per uur (excl. btw)</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden="true">per uur (excl. btw)</span>
                   </div>
                 </div>
 
@@ -578,44 +607,49 @@ export default function PersoneelAanvragenWizard() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-2">Planning</h2>
+                  <h2 ref={stepHeadingRef} tabIndex={-1} className="text-2xl font-bold text-neutral-900 mb-2 outline-none">Planning</h2>
                   <p className="text-neutral-500">Wanneer heeft u personeel nodig?</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Startdatum *
+                    <label htmlFor="startdatum" className="block text-sm font-medium text-neutral-700 mb-2">
+                      Startdatum <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
+                      id="startdatum"
                       type="date"
                       value={formData.startDatum}
                       onChange={(e) => updateField("startDatum", e.target.value)}
+                      aria-required="true"
+                      aria-invalid={errors.startDatum ? true : undefined}
+                      aria-describedby={errors.startDatum ? "startdatum-error" : undefined}
                       className={`w-full px-4 py-3 rounded-lg border ${
                         errors.startDatum ? "border-red-500" : "border-neutral-200"
-                      } focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors`}
+                      } focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors`}
                     />
                     {errors.startDatum && (
-                      <p className="text-red-500 text-sm mt-1">{errors.startDatum}</p>
+                      <p id="startdatum-error" className="text-red-500 text-sm mt-1" role="alert">{errors.startDatum}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    <label htmlFor="einddatum" className="block text-sm font-medium text-neutral-700 mb-2">
                       Einddatum <span className="text-neutral-400 font-normal">(optioneel)</span>
                     </label>
                     <input
+                      id="einddatum"
                       type="date"
                       value={formData.eindDatum}
                       onChange={(e) => updateField("eindDatum", e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
+                      className="w-full px-4 py-3 rounded-lg border border-neutral-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">
-                    Werkdagen * <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
+                <div role="group" aria-labelledby="werkdagen-label">
+                  <label id="werkdagen-label" className="block text-sm font-medium text-neutral-700 mb-3">
+                    Werkdagen <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {werkdagenOptions.map((dag) => (
@@ -623,7 +657,8 @@ export default function PersoneelAanvragenWizard() {
                         key={dag}
                         type="button"
                         onClick={() => toggleArrayField("werkdagen", dag)}
-                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                        aria-pressed={formData.werkdagen.includes(dag)}
+                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.werkdagen.includes(dag)
                             ? "bg-[#F27501] border-[#F27501] text-white"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]"
@@ -634,25 +669,29 @@ export default function PersoneelAanvragenWizard() {
                     ))}
                   </div>
                   {errors.werkdagen !== undefined && formData.werkdagen.length === 0 && (
-                    <p className="text-red-500 text-sm mt-2">Selecteer minimaal één werkdag</p>
+                    <p className="text-red-500 text-sm mt-2" role="alert">Selecteer minimaal één werkdag</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Werktijden *
+                  <label htmlFor="werktijden" className="block text-sm font-medium text-neutral-700 mb-2">
+                    Werktijden <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                   </label>
                   <input
+                    id="werktijden"
                     type="text"
                     value={formData.werktijden}
                     onChange={(e) => updateField("werktijden", e.target.value)}
+                    aria-required="true"
+                    aria-invalid={errors.werktijden ? true : undefined}
+                    aria-describedby={errors.werktijden ? "werktijden-error" : undefined}
                     className={`w-full px-4 py-3 rounded-lg border ${
                       errors.werktijden ? "border-red-500" : "border-neutral-200"
-                    } focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors`}
+                    } focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors`}
                     placeholder="Bijv. 09:00 - 17:00 of avonddienst"
                   />
                   {errors.werktijden && (
-                    <p className="text-red-500 text-sm mt-1">{errors.werktijden}</p>
+                    <p id="werktijden-error" className="text-red-500 text-sm mt-1" role="alert">{errors.werktijden}</p>
                   )}
                 </div>
               </div>
@@ -661,37 +700,42 @@ export default function PersoneelAanvragenWizard() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-2">Extra informatie</h2>
+                  <h2 ref={stepHeadingRef} tabIndex={-1} className="text-2xl font-bold text-neutral-900 mb-2 outline-none">Extra informatie</h2>
                   <p className="text-neutral-500">Laatste details over uw aanvraag</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Werklocatie *
+                  <label htmlFor="locatie" className="block text-sm font-medium text-neutral-700 mb-2">
+                    Werklocatie <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                   </label>
                   <input
+                    id="locatie"
                     type="text"
                     value={formData.locatie}
                     onChange={(e) => updateField("locatie", e.target.value)}
+                    aria-required="true"
+                    aria-invalid={errors.locatie ? true : undefined}
+                    aria-describedby={errors.locatie ? "locatie-error" : undefined}
                     className={`w-full px-4 py-3 rounded-lg border ${
                       errors.locatie ? "border-red-500" : "border-neutral-200"
-                    } focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors`}
+                    } focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors`}
                     placeholder="Stad of volledig adres"
                   />
                   {errors.locatie && (
-                    <p className="text-red-500 text-sm mt-1">{errors.locatie}</p>
+                    <p id="locatie-error" className="text-red-500 text-sm mt-1" role="alert">{errors.locatie}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label htmlFor="opmerkingen" className="block text-sm font-medium text-neutral-700 mb-2">
                     Opmerkingen <span className="text-neutral-400 font-normal">(optioneel)</span>
                   </label>
                   <textarea
+                    id="opmerkingen"
                     value={formData.opmerkingen}
                     onChange={(e) => updateField("opmerkingen", e.target.value)}
                     rows={4}
-                    className="w-full px-4 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors resize-none"
+                    className="w-full px-4 py-3 rounded-lg border border-neutral-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 focus:border-[#F27501] transition-colors resize-none"
                     placeholder="Eventuele extra wensen of informatie..."
                   />
                 </div>

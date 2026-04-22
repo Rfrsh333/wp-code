@@ -61,6 +61,7 @@ export default function RecruitmentPage() {
                   alt="Recruitmentgesprek voor vaste horecakrachten in de horeca"
                   width={480}
                   height={480}
+                  priority={true}
                 />
               </div>
             </ClientAnimationWrapper>

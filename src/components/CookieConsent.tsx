@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 
 const CONSENT_KEY = "ttj_cookie_consent";
@@ -12,12 +12,20 @@ export default function CookieConsent() {
     if (typeof window === "undefined") return false;
     return !window.localStorage.getItem(CONSENT_KEY);
   });
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onOpen = () => setIsVisible(true);
     window.addEventListener("ttj-cookie-open", onOpen);
     return () => window.removeEventListener("ttj-cookie-open", onOpen);
   }, []);
+
+  // Focus the dialog when it becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      requestAnimationFrame(() => dialogRef.current?.focus());
+    }
+  }, [isVisible]);
 
   const handleConsent = (value: ConsentValue) => {
     window.localStorage.setItem(CONSENT_KEY, value);
@@ -33,7 +41,7 @@ export default function CookieConsent() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-[90] px-4 pb-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 72px)" }}>
-      <div className="max-w-4xl mx-auto bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-[#38383A] rounded-2xl shadow-2xl shadow-neutral-900/10 p-6">
+      <div ref={dialogRef} role="dialog" aria-label="Cookie-instellingen" tabIndex={-1} className="max-w-4xl mx-auto bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-[#38383A] rounded-2xl shadow-2xl shadow-neutral-900/10 p-6 outline-none">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="max-w-2xl">
             <h2 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">

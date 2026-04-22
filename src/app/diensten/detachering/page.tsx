@@ -61,6 +61,7 @@ export default function DetacheringPage() {
                   alt="Gedetacheerde horecakracht voor langdurige inzet"
                   width={480}
                   height={480}
+                  priority={true}
                 />
               </div>
             </ClientAnimationWrapper>

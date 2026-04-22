@@ -2,13 +2,34 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { socialLinks } from "@/lib/social-links";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileDienstenOpen, setIsMobileDienstenOpen] = useState(false);
+  const [isDienstenOpen, setIsDienstenOpen] = useState(false);
+  const dienstenRef = useRef<HTMLDivElement>(null);
+
+  const closeDiensten = useCallback(() => setIsDienstenOpen(false), []);
+
+  // Close desktop dropdown on Escape or outside click
+  useEffect(() => {
+    if (!isDienstenOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeDiensten();
+    };
+    const handleClick = (e: MouseEvent) => {
+      if (dienstenRef.current && !dienstenRef.current.contains(e.target as Node)) closeDiensten();
+    };
+    document.addEventListener("keydown", handleKey);
+    document.addEventListener("mousedown", handleClick);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [isDienstenOpen, closeDiensten]);
 
   useEffect(() => {
     let ticking = false;
@@ -116,36 +137,53 @@ export default function Header() {
                 Home
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
-              <div className="relative group">
-                <button className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1">
+              <div className="relative" ref={dienstenRef} onMouseEnter={() => setIsDienstenOpen(true)} onMouseLeave={() => setIsDienstenOpen(false)}>
+                <button
+                  onClick={() => setIsDienstenOpen(!isDienstenOpen)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsDienstenOpen(!isDienstenOpen); }
+                    if (e.key === "ArrowDown") { e.preventDefault(); setIsDienstenOpen(true); }
+                  }}
+                  aria-expanded={isDienstenOpen}
+                  aria-haspopup="true"
+                  className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1"
+                >
                   Diensten
-                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${isDienstenOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]">
+                <div className={`absolute left-0 top-full pt-2 transition-all duration-300 ${isDienstenOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]" role="menu">
                     <Link
                       href="/diensten"
+                      role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeDiensten}
                     >
                       Alle Diensten
                     </Link>
                     <Link
                       href="/diensten/uitzenden"
+                      role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeDiensten}
                     >
                       Uitzenden
                     </Link>
                     <Link
                       href="/diensten/detachering"
+                      role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeDiensten}
                     >
                       Detachering
                     </Link>
                     <Link
                       href="/diensten/recruitment"
+                      role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeDiensten}
                     >
                       Recruitment
                     </Link>
@@ -216,7 +254,8 @@ export default function Header() {
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-neutral-100 transition-colors duration-200"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Menu"
+              aria-label={isMenuOpen ? "Menu sluiten" : "Menu openen"}
+              aria-expanded={isMenuOpen}
             >
               <svg
                 className="w-6 h-6 text-neutral-700"
@@ -261,6 +300,7 @@ export default function Header() {
               <div>
                 <button
                   onClick={() => setIsMobileDienstenOpen(!isMobileDienstenOpen)}
+                  aria-expanded={isMobileDienstenOpen}
                   className="w-full px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200 flex items-center justify-between"
                 >
                   Diensten
