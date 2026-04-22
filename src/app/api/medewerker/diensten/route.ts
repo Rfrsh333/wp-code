@@ -335,6 +335,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Document-expiry check: blokkeer bij verlopen ID-bewijs of werkvergunning
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { data: verlopenDocs } = await supabaseAdmin
+      .from("medewerker_documenten")
+      .select("document_type, expiry_date")
+      .eq("medewerker_id", medewerker.id)
+      .in("document_type", ["id_bewijs", "werkvergunning", "verblijfsvergunning"])
+      .lt("expiry_date", todayStr);
+
+    if (verlopenDocs && verlopenDocs.length > 0) {
+      const typen = verlopenDocs.map((d) => d.document_type).join(", ");
+      return NextResponse.json(
+        { error: `Je kunt je niet aanmelden: de volgende documenten zijn verlopen: ${typen}. Upload een nieuw document via je profiel.` },
+        { status: 403 }
+      );
+    }
+
+    // Check werkvergunning_geldig_tot op medewerker-niveau
+    const { data: mwWerkvergunning } = await supabaseAdmin
+      .from("medewerkers")
+      .select("werkvergunning_geldig_tot")
+      .eq("id", medewerker.id)
+      .single();
+
+    if (mwWerkvergunning?.werkvergunning_geldig_tot && mwWerkvergunning.werkvergunning_geldig_tot < todayStr) {
+      return NextResponse.json(
+        { error: "Je werkvergunning is verlopen. Neem contact op met TopTalent om je werkvergunning te vernieuwen." },
+        { status: 403 }
+      );
+    }
+
     await supabaseAdmin.from("dienst_aanmeldingen").insert({
       dienst_id,
       medewerker_id: medewerker.id,

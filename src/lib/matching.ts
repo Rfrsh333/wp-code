@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { valideerLeeftijdVoorDienst, isIDBewilsVerlopen } from "@/lib/compliance/arbeidstijden";
+import { valideerLeeftijdVoorDienst, isIDBewilsVerlopen, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
 
 interface Medewerker {
   id: string;
@@ -74,7 +74,8 @@ function getTijdslot(tijd: string): string {
 function calculateMatchScore(
   medewerker: Medewerker,
   dienst: Dienst,
-  beschikbaarheid: Beschikbaarheid | null
+  beschikbaarheid: Beschikbaarheid | null,
+  heeftVSH: boolean = true
 ): MatchResult {
   const breakdown = {
     functie_score: 0,
@@ -166,6 +167,14 @@ function calculateMatchScore(
     }
   }
 
+  // C-13: VSH-certificering check bij bar-functies
+  if (!compliance_blokkade) {
+    const vshCheck = valideerVSHVoorFunctie(dienst.functie, heeftVSH);
+    if (!vshCheck.toegestaan) {
+      compliance_blokkade = vshCheck.reden;
+    }
+  }
+
   return {
     medewerker,
     score: totalScore,
@@ -223,20 +232,43 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
 
   const alAangemeldIds = new Set((bestaandeAanmeldingen || []).map((a) => a.medewerker_id));
 
-  // C-23: Haal verlopen ID-bewijzen op voor blokkering
+  // C-23: Haal verlopen ID-bewijzen, werkvergunningen en verblijfsvergunningen op voor blokkering
+  const today = new Date().toISOString().split("T")[0];
   const { data: verlopenDocs } = await supabaseAdmin
     .from("medewerker_documenten")
     .select("medewerker_id, expiry_date")
-    .eq("document_type", "id_bewijs")
-    .lt("expiry_date", new Date().toISOString().split("T")[0]);
+    .in("document_type", ["id_bewijs", "werkvergunning", "verblijfsvergunning"])
+    .lt("expiry_date", today);
 
   const verlopenIDSet = new Set((verlopenDocs || []).map((d) => d.medewerker_id));
+
+  // Check werkvergunning_geldig_tot op medewerker-niveau
+  const { data: verlopenWerkvergunning } = await supabaseAdmin
+    .from("medewerkers")
+    .select("id")
+    .lt("werkvergunning_geldig_tot", today)
+    .not("werkvergunning_geldig_tot", "is", null);
+
+  for (const mw of verlopenWerkvergunning || []) {
+    verlopenIDSet.add(mw.id);
+  }
+
+  // C-13: Haal geldige VSH-certificeringen op
+  const medewerkerIds = medewerkers.map((m) => m.id);
+  const { data: vshCerts } = await supabaseAdmin
+    .from("certificeringen")
+    .select("medewerker_id")
+    .in("medewerker_id", medewerkerIds)
+    .ilike("naam", "%sociale hygi%")
+    .or(`verloopt_op.is.null,verloopt_op.gte.${today}`);
+
+  const vshSet = new Set((vshCerts || []).map((c) => c.medewerker_id));
 
   // Bereken scores (C-23: filter verlopen ID-bewijzen)
   const matches = medewerkers
     .filter((m) => !alAangemeldIds.has(m.id))
     .filter((m) => !verlopenIDSet.has(m.id))
-    .map((m) => calculateMatchScore(m, dienst, beschikbaarheidMap.get(m.email) || null))
+    .map((m) => calculateMatchScore(m, dienst, beschikbaarheidMap.get(m.email) || null, vshSet.has(m.id)))
     .filter((m) => m.score > 0)
     .sort((a, b) => {
       // Beschikbare medewerkers eerst, dan op score

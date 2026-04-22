@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from("medewerker_documenten")
-      .select("id, medewerker_id, document_type, file_name, file_path, file_url, file_size, uploaded_at")
+      .select("id, medewerker_id, document_type, file_name, file_path, file_url, file_size, uploaded_at, expiry_date")
       .eq("medewerker_id", medewerker.id)
       .order("uploaded_at", { ascending: false })
       .limit(100);
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const documentType = formData.get("document_type") as string;
+    const expiryDate = formData.get("expiry_date") as string | null;
 
     if (!file) return NextResponse.json({ error: "Geen bestand geüpload" }, { status: 400 });
     if (!documentType) return NextResponse.json({ error: "Document type ontbreekt" }, { status: 400 });
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
         file_path: filePath,
         file_url: null,
         file_size: file.size,
+        expiry_date: expiryDate || null,
       });
 
     if (dbError) {

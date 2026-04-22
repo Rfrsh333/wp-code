@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
     const token = formData.get("token") as string;
     const file = formData.get("file") as File;
     const documentType = formData.get("document_type") as string || "overig";
+    const expiryDate = formData.get("expiry_date") as string | null;
 
     // Validate token
     if (!token) {
@@ -151,6 +152,7 @@ export async function POST(request: NextRequest) {
         file_url: null,
         review_status: "in_review",
         uploaded_at: new Date().toISOString(),
+        document_expires_at: expiryDate || null,
       });
 
     if (dbError) {
