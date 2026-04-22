@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { createHmac } from "crypto";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+function verifySentrySignature(body: string, signature: string): boolean {
+  const secret = process.env.SENTRY_WEBHOOK_SECRET;
+  if (!secret) return false;
+  const hmac = createHmac("sha256", secret);
+  const digest = hmac.update(body, "utf-8").digest("hex");
+  return digest === signature;
+}
+
 export async function POST(request: NextRequest) {
-  // Verifieer Sentry webhook secret
-  const sentrySecret = request.headers.get("sentry-hook-signature");
-  if (!process.env.SENTRY_WEBHOOK_SECRET || sentrySecret !== process.env.SENTRY_WEBHOOK_SECRET) {
+  const body = await request.text();
+  const signature = request.headers.get("sentry-hook-signature") || "";
+
+  if (!verifySentrySignature(body, signature)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -16,7 +26,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const payload = await request.json();
+    const payload = JSON.parse(body);
     const action = payload.action;
     const data = payload.data;
 
@@ -58,7 +68,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     captureRouteError(error, { route: "/api/webhooks/sentry", action: "POST" });
-    // console.error("Sentry webhook error:", error);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }
