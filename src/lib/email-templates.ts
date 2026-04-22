@@ -50,7 +50,7 @@ function bookingButton(url: string, text: string = "Plan een gesprek in"): strin
 function infoBlock(items: { label: string; value: string }[]): string {
   return `
     <div style="background: #FEF3E7; border-radius: 8px; padding: 20px; margin: 20px 0;">
-      ${items.map((item) => `<p style="margin: 0 0 6px 0; font-size: 14px;"><strong>${item.label}:</strong> ${item.value}</p>`).join("")}
+      ${items.map((item) => `<p style="margin: 0 0 6px 0; font-size: 14px;"><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.value)}</p>`).join("")}
     </div>`;
 }
 
@@ -92,8 +92,8 @@ export function buildBookingConfirmationHtml(params: {
   manageUrl?: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Je afspraak met ${params.senderName} is bevestigd!</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.clientName)},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Je afspraak met ${escapeHtml(params.senderName)} is bevestigd!</p>
     ${infoBlock([
       { label: "Datum", value: params.datumFormatted },
       { label: "Tijd", value: `${params.startTime} - ${params.endTime}` },
@@ -112,7 +112,7 @@ export function buildBookingConfirmationHtml(params: {
     `}
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Met vriendelijke groet,<br>
-      ${params.senderName}
+      ${escapeHtml(params.senderName)}
     </p>`;
 
   return emailWrapper(content);
@@ -147,7 +147,7 @@ export function buildBookingNotificationHtml(params: {
     <h2 style="color: #333; margin: 0 0 16px 0; font-size: 18px;">Nieuwe afspraak geboekt</h2>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Er is een nieuwe afspraak geboekt via het booking systeem.</p>
     ${infoBlock(items)}
-    ${params.inquiryId ? `<p style="font-size: 13px; color: #999;">Gekoppeld aan aanvraag: ${params.inquiryId}</p>` : ""}`;
+    ${params.inquiryId ? `<p style="font-size: 13px; color: #999;">Gekoppeld aan aanvraag: ${escapeHtml(params.inquiryId)}</p>` : ""}`;
 
   return emailWrapper(content);
 }
@@ -165,7 +165,7 @@ export function buildReminderEmailHtml(params: {
   meetLink?: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.clientName)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Graag herinneren we je aan je afspraak met TopTalent Jobs morgen.</p>
     ${infoBlock([
       { label: "Datum", value: params.datumFormatted },
@@ -205,7 +205,7 @@ export function buildMeetReminderEmailHtml(params: {
   manageUrl?: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.clientName)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Je afspraak met TopTalent Jobs begint over <strong>1 uur</strong>.
     </p>
@@ -247,7 +247,7 @@ export function buildCancellationEmailHtml(params: {
     ? `
     <h2 style="color: #333; margin: 0 0 16px 0; font-size: 18px;">Afspraak geannuleerd</h2>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      ${params.clientName} heeft de afspraak geannuleerd.
+      ${escapeHtml(params.clientName)} heeft de afspraak geannuleerd.
     </p>
     ${infoBlock([
       { label: "Klant", value: params.clientName },
@@ -257,9 +257,9 @@ export function buildCancellationEmailHtml(params: {
     ])}
     <p style="font-size: 13px; color: #999;">Het tijdslot is weer beschikbaar gemaakt.</p>`
     : `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.clientName)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      Je afspraak met ${params.senderName} is geannuleerd.
+      Je afspraak met ${escapeHtml(params.senderName)} is geannuleerd.
     </p>
     ${infoBlock([
       { label: "Datum", value: params.datumFormatted },
@@ -271,7 +271,7 @@ export function buildCancellationEmailHtml(params: {
     ${bookingButton("https://www.toptalentjobs.nl/afspraak-plannen", "Nieuwe afspraak plannen")}
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Met vriendelijke groet,<br>
-      ${params.senderName}
+      ${escapeHtml(params.senderName)}
     </p>`;
 
   return emailWrapper(content);
@@ -291,24 +291,24 @@ export function buildRescheduleEmailHtml(params: {
   manageUrl?: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.clientName)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      Je afspraak met ${params.senderName} is verplaatst.
+      Je afspraak met ${escapeHtml(params.senderName)} is verplaatst.
     </p>
     <div style="background: #fee2e2; border-radius: 8px; padding: 16px; margin: 16px 0;">
       <p style="margin: 0; font-size: 14px; color: #991b1b; text-decoration: line-through;">
-        <strong>Was:</strong> ${params.oldDatum} om ${params.oldTijd}
+        <strong>Was:</strong> ${escapeHtml(params.oldDatum)} om ${escapeHtml(params.oldTijd)}
       </p>
     </div>
     <div style="background: #dcfce7; border-radius: 8px; padding: 16px; margin: 16px 0;">
       <p style="margin: 0; font-size: 14px; color: #166534;">
-        <strong>Nieuw:</strong> ${params.newDatum} om ${params.newTijd}
+        <strong>Nieuw:</strong> ${escapeHtml(params.newDatum)} om ${escapeHtml(params.newTijd)}
       </p>
     </div>
     ${params.manageUrl ? bookingButton(params.manageUrl, "Afspraak beheren") : ""}
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Met vriendelijke groet,<br>
-      ${params.senderName}
+      ${escapeHtml(params.senderName)}
     </p>`;
 
   return emailWrapper(content);
@@ -323,7 +323,7 @@ export function buildFollowUpEmailHtml(params: {
   senderName: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.clientName},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.clientName)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Bedankt voor het prettige gesprek! We hopen dat het nuttig voor je was.
     </p>
@@ -335,7 +335,7 @@ export function buildFollowUpEmailHtml(params: {
     </p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Met vriendelijke groet,<br>
-      ${params.senderName}
+      ${escapeHtml(params.senderName)}
     </p>`;
 
   return emailWrapper(content);
@@ -413,7 +413,7 @@ function kandidaatButton(url: string, text: string): string {
 function kandidaatInfoBlock(items: { label: string; value: string }[]): string {
   return `
     <div style="background: #F3F0FF; border-radius: 8px; padding: 20px; margin: 20px 0;">
-      ${items.map((item) => `<p style="margin: 0 0 6px 0; font-size: 14px;"><strong>${item.label}:</strong> ${item.value}</p>`).join("")}
+      ${items.map((item) => `<p style="margin: 0 0 6px 0; font-size: 14px;"><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.value)}</p>`).join("")}
     </div>`;
 }
 
@@ -429,7 +429,7 @@ export function buildKandidaatBookingBevestiging(params: {
   annuleringsLink?: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.naam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.naam)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Bedankt voor je inschrijving! Je kennismakingsgesprek is bevestigd.
     </p>
@@ -488,7 +488,7 @@ export function buildKandidaatBookingNotificatie(params: {
     ${kandidaatInfoBlock(items)}
     ${params.cvUrl ? `<p style="font-size: 14px; margin: 12px 0;"><strong>CV:</strong> <a href="${params.cvUrl}" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">Download CV</a></p>` : ""}
     ${params.meetLink ? `<p style="font-size: 14px; margin: 12px 0;"><strong>Google Meet:</strong> <a href="${params.meetLink}" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">${params.meetLink}</a></p>` : ""}
-    ${params.inschrijvingId ? `<p style="font-size: 13px; color: #999;">Inschrijving ID: ${params.inschrijvingId}</p>` : ""}`;
+    ${params.inschrijvingId ? `<p style="font-size: 13px; color: #999;">Inschrijving ID: ${escapeHtml(params.inschrijvingId)}</p>` : ""}`;
 
   return kandidaatEmailWrapper(content);
 }
@@ -548,9 +548,9 @@ export function buildDocumentAfgewezen(params: {
   return emailWrapper(`
     <p style="font-size: 32px; margin: 0 0 16px;">📄</p>
     <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Document afgekeurd</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Hey ${firstName}, je document "${params.documentType}" is helaas afgekeurd.</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Hey ${escapeHtml(firstName)}, je document "${escapeHtml(params.documentType)}" is helaas afgekeurd.</p>
     ${params.opmerking ? `<div style="background: #fee2e2; border-radius: 8px; padding: 16px; margin: 16px 0;">
-      <p style="margin: 0; font-size: 14px; color: #991b1b;"><strong>Reden:</strong> ${params.opmerking}</p>
+      <p style="margin: 0; font-size: 14px; color: #991b1b;"><strong>Reden:</strong> ${escapeHtml(params.opmerking)}</p>
     </div>` : ""}
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Upload een nieuw document via je portaal.</p>
     ${bookingButton("https://www.toptalentjobs.nl/medewerker/dashboard", "Upload nieuw document")}
@@ -579,7 +579,7 @@ export function buildAanbiedingReactieHtml(params: {
   return emailWrapper(`
     <p style="font-size: 32px; margin: 0 0 16px;">${emoji}</p>
     <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Aanbieding ${params.actie}</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;"><strong>${params.medewerkerNaam}</strong> heeft de dienst bij ${params.klantNaam} op ${params.datum} <strong>${params.actie}</strong>.</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;"><strong>${escapeHtml(params.medewerkerNaam)}</strong> heeft de dienst bij ${escapeHtml(params.klantNaam)} op ${escapeHtml(params.datum)} <strong>${escapeHtml(params.actie)}</strong>.</p>
     ${bookingButton("https://www.toptalentjobs.nl/admin?tab=planning", "Bekijk planning")}
   `);
 }
@@ -591,7 +591,7 @@ export function buildUrenIngediendHtml(params: {
   return emailWrapper(`
     <p style="font-size: 32px; margin: 0 0 16px;">🕐</p>
     <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Nieuwe uren ter goedkeuring</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;"><strong>${params.medewerkerNaam}</strong> heeft ${params.uren} uur ingediend voor ${params.klantNaam} op ${params.datum}.</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;"><strong>${escapeHtml(params.medewerkerNaam)}</strong> heeft ${params.uren} uur ingediend voor ${escapeHtml(params.klantNaam)} op ${escapeHtml(params.datum)}.</p>
     ${bookingButton("https://www.toptalentjobs.nl/admin?tab=uren", "Uren beoordelen")}
   `);
 }
@@ -603,7 +603,7 @@ export function buildFactuurHerinneringHtml(params: {
   return emailWrapper(`
     <p style="font-size: 32px; margin: 0 0 16px;">💰</p>
     <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Betalingsherinnering</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.bedrijfsnaam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.bedrijfsnaam)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Wij hebben nog geen betaling ontvangen voor onderstaande factuur.</p>
     ${infoBlock([
       { label: "Factuurnummer", value: params.factuurNummer },
@@ -619,7 +619,7 @@ export function buildKandidaatBookingAnnulering(params: {
   herboekenLink?: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.naam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.naam)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Je kennismakingsgesprek is geannuleerd.
     </p>
@@ -646,7 +646,7 @@ export function buildContractOndertekeningEmailHtml(params: {
   ondertekeningUrl: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.medewerkerNaam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.medewerkerNaam)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Er staat een nieuw contract voor je klaar ter ondertekening.
     </p>
@@ -676,7 +676,7 @@ export function buildContractGetekendEmailHtml(params: {
   contractNummer: string;
 }): string {
   const content = `
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${params.medewerkerNaam},</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Beste ${escapeHtml(params.medewerkerNaam)},</p>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">
       Goed nieuws! Je contract is door beide partijen ondertekend en nu actief.
     </p>
@@ -696,61 +696,3 @@ export function buildContractGetekendEmailHtml(params: {
   return emailWrapper(content);
 }
 
-// ============================================================
-// LinkedIn gerelateerde email templates
-// ============================================================
-
-export function buildLinkedInConnectedEmail(params: {
-  profileName: string;
-  expiryDate: string;
-}): string {
-  const content = `
-    <h2 style="color: #F27501; font-size: 22px; margin-bottom: 15px;">LinkedIn Gekoppeld</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      LinkedIn is succesvol gekoppeld aan TopTalent Jobs.
-    </p>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      <strong>Profiel:</strong> ${params.profileName}<br>
-      <strong>Token geldig tot:</strong> ${params.expiryDate}
-    </p>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      Je kunt nu LinkedIn posts plannen en automatisch publiceren via het admin dashboard.
-    </p>`;
-
-  return emailWrapper(content);
-}
-
-export function buildLinkedInPostPublishedEmail(params: {
-  postPreview: string;
-  publishedAt: string;
-}): string {
-  const content = `
-    <h2 style="color: #F27501; font-size: 22px; margin-bottom: 15px;">LinkedIn Post Gepubliceerd</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      Een LinkedIn post is automatisch gepubliceerd op ${params.publishedAt}.
-    </p>
-    <div style="background: #f9f9f9; border-left: 3px solid #0077B5; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
-      <p style="font-size: 14px; line-height: 1.6; color: #555; white-space: pre-wrap;">${params.postPreview}</p>
-    </div>`;
-
-  return emailWrapper(content);
-}
-
-export function buildLinkedInTokenExpiringEmail(params: {
-  daysUntilExpiry: number;
-  profileName: string;
-}): string {
-  const content = `
-    <h2 style="color: #F27501; font-size: 22px; margin-bottom: 15px;">LinkedIn Token Verloopt</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      Het LinkedIn access token voor <strong>${params.profileName}</strong> verloopt over <strong>${params.daysUntilExpiry} dagen</strong>.
-    </p>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">
-      Ga naar het admin dashboard en koppel LinkedIn opnieuw om posts te blijven publiceren.
-    </p>
-    <a href="https://toptalentjobs.nl/admin?tab=linkedin" style="display: inline-block; background: #0077B5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 10px;">
-      LinkedIn opnieuw verbinden
-    </a>`;
-
-  return emailWrapper(content);
-}

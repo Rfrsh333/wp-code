@@ -4,7 +4,7 @@ import { Resend } from "resend";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
-import { sendTelegramAlert } from "@/lib/telegram";
+import { sendTelegramAlert, escapeTelegramHtml } from "@/lib/telegram";
 import { generateAutoReply, generateAutoReplySubject } from "@/lib/inquiry-auto-reply";
 import { buildAutoReplyEmailHtml } from "@/lib/email-templates";
 import { getOfferteAutoMode } from "@/lib/agents/offerte-generator";
@@ -69,18 +69,16 @@ export async function POST(request: NextRequest) {
     }
     const data: FormData = parsed.data as FormData;
 
-    // Verify reCAPTCHA - verplicht in productie, overgeslagen in development
-    if (process.env.NODE_ENV === "development") {
-      console.log("[DEV] reCAPTCHA check skipped in development mode");
-    } else {
-      if (!data.recaptchaToken) {
-        console.warn("[SECURITY] Personeel-aanvragen form submission without reCAPTCHA token");
-        return NextResponse.json(
-          { error: "reCAPTCHA verificatie vereist" },
-          { status: 400 }
-        );
-      }
+    // Verify reCAPTCHA (verifyRecaptcha handelt dev-mode skip intern af)
+    if (!data.recaptchaToken && process.env.NODE_ENV !== "development") {
+      console.warn("[SECURITY] Personeel-aanvragen form submission without reCAPTCHA token");
+      return NextResponse.json(
+        { error: "reCAPTCHA verificatie vereist" },
+        { status: 400 }
+      );
+    }
 
+    if (data.recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
       if (!recaptchaResult.success) {
         console.warn("[SECURITY] Personeel-aanvragen form reCAPTCHA verification failed");
@@ -251,12 +249,12 @@ export async function POST(request: NextRequest) {
       // Stuur Telegram alert met database error waarschuwing
       sendTelegramAlert(
         `⚠️ <b>PERSONEEL AANVRAAG DATABASE ERROR</b>\n\n` +
-        `🏢 ${data.bedrijfsnaam}\n` +
-        `👤 ${data.contactpersoon}\n` +
-        `📧 ${data.email}\n` +
-        `📞 ${data.telefoon}\n\n` +
+        `🏢 ${escapeTelegramHtml(data.bedrijfsnaam)}\n` +
+        `👤 ${escapeTelegramHtml(data.contactpersoon)}\n` +
+        `📧 ${escapeTelegramHtml(data.email)}\n` +
+        `📞 ${escapeTelegramHtml(data.telefoon)}\n\n` +
         `⚠️ <b>Data is NIET opgeslagen in Supabase.</b>\n` +
-        `Error: ${dbError.message || JSON.stringify(dbError)}`
+        `Error: ${escapeTelegramHtml(dbError.message || JSON.stringify(dbError))}`
       ).catch(console.error);
 
       return NextResponse.json(
@@ -309,14 +307,14 @@ export async function POST(request: NextRequest) {
         // Send Telegram alert
         sendTelegramAlert(
           `👥 <b>NIEUWE PERSONEEL AANVRAAG!</b>\n\n` +
-          `🏢 ${data.bedrijfsnaam}\n` +
-          `👤 ${data.contactpersoon}\n` +
-          `📧 ${data.email}\n` +
-          `📞 ${data.telefoon}\n\n` +
-          `💼 ${data.typePersoneel.join(', ')}\n` +
-          `📊 ${data.aantalPersonen} personen\n` +
-          `📍 ${data.locatie}\n` +
-          `📅 Start: ${data.startDatum}`
+          `🏢 ${escapeTelegramHtml(data.bedrijfsnaam)}\n` +
+          `👤 ${escapeTelegramHtml(data.contactpersoon)}\n` +
+          `📧 ${escapeTelegramHtml(data.email)}\n` +
+          `📞 ${escapeTelegramHtml(data.telefoon)}\n\n` +
+          `💼 ${escapeTelegramHtml(data.typePersoneel.join(', '))}\n` +
+          `📊 ${escapeTelegramHtml(data.aantalPersonen)} personen\n` +
+          `📍 ${escapeTelegramHtml(data.locatie)}\n` +
+          `📅 Start: ${escapeTelegramHtml(data.startDatum)}`
         ).catch(console.error);
 
         // Auto-reply: check of het is ingeschakeld en stuur automatisch een reactie
@@ -338,14 +336,7 @@ export async function POST(request: NextRequest) {
             const arSenderName = sMap.sender_name || "TopTalent Jobs";
 
             const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl";
-            const savedId = (await supabase
-              .from("personeel_aanvragen")
-              .select("id")
-              .eq("email", data.email)
-              .eq("bedrijfsnaam", data.bedrijfsnaam)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .single())?.data?.id;
+            const savedId = savedAanvraag?.id;
 
             const bookingUrl = `${baseUrl}/afspraak-plannen${savedId ? `?ref=${savedId}` : ""}`;
 

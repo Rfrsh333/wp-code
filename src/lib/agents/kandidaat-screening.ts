@@ -92,7 +92,13 @@ Motivatie: ${profiel.motivatie}`;
   try {
     // Parse JSON response, handle potential markdown code blocks
     const cleaned = response.replace(/```json\n?|\n?```/g, "").trim();
-    return JSON.parse(cleaned) as ScreeningResult;
+    const parsed = JSON.parse(cleaned) as ScreeningResult;
+    // Validate score range
+    if (typeof parsed.score !== "number" || parsed.score < 1 || parsed.score > 10) {
+      parsed.score = Math.max(1, Math.min(10, Math.round(Number(parsed.score) || 5)));
+      parsed.aandachtspunten = [...(parsed.aandachtspunten || []), "AI score was buiten bereik en is gecorrigeerd"];
+    }
+    return parsed;
   } catch {
     // Fallback if GPT doesn't return valid JSON
     return {

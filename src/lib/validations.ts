@@ -24,10 +24,22 @@ export const inschrijvenSchema = z.object({
   achternaam: z.string().min(1, "Achternaam is verplicht").max(100),
   email: z.string().email("Ongeldig e-mailadres").max(255),
   telefoon: z.string().min(1, "Telefoonnummer is verplicht").max(20),
-  geboortedatum: z.string().optional(),
+  geboortedatum: z.string().regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+    "Geboortedatum moet in YYYY-MM-DD formaat zijn"
+  ).refine((val) => {
+    const date = new Date(val);
+    return !isNaN(date.getTime()) && date < new Date();
+  }, "Geboortedatum mag niet in de toekomst liggen").refine((val) => {
+    const age = Math.floor((Date.now() - new Date(val).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+    return age >= 16;
+  }, "Je moet minimaal 16 jaar oud zijn").optional(),
   woonplaats: z.string().max(100).optional(),
   ervaring: z.string().max(5000).optional(),
-  beschikbaarheid: z.any().optional(),
+  beschikbaarheid: z.union([
+    z.string().max(500),
+    z.record(z.string(), z.array(z.string())),
+  ]).optional(),
   functie_voorkeur: z.array(z.string()).optional(),
   uitbetalingswijze: z.string().max(50).optional(),
   recaptchaToken: z.string().optional(),
@@ -76,95 +88,6 @@ export const kandidaatBookingSchema = z.object({
   recaptchaToken: z.string().optional(),
 });
 
-// ============================================================
-// LinkedIn Post + Template schemas
-// ============================================================
-
-const linkedInPostStatuses = ["draft", "approved", "scheduled", "publishing", "published", "failed"] as const;
-const linkedInPostTypes = ["text", "link", "image", "article"] as const;
-const linkedInTemplateCategories = ["mijlpaal", "tip", "case_study", "seizoen", "vacature", "nieuws", "engagement", "behind_the_scenes"] as const;
-
-export const linkedinPostActionSchema = z.discriminatedUnion("action", [
-  z.object({
-    action: z.literal("create"),
-    content: z.string().min(1).max(3000),
-    post_type: z.enum(linkedInPostTypes).optional().default("text"),
-    link_url: z.string().url().optional(),
-    image_url: z.string().url().optional(),
-    hashtags: z.array(z.string()).optional(),
-    scheduled_for: z.string().optional(),
-    template_id: z.string().uuid().optional(),
-    content_post_id: z.string().uuid().optional(),
-  }),
-  z.object({
-    action: z.literal("update"),
-    id: z.string().uuid(),
-    content: z.string().min(1).max(3000).optional(),
-    post_type: z.enum(linkedInPostTypes).optional(),
-    link_url: z.string().url().nullable().optional(),
-    image_url: z.string().url().nullable().optional(),
-    hashtags: z.array(z.string()).optional(),
-    scheduled_for: z.string().nullable().optional(),
-  }),
-  z.object({ action: z.literal("delete"), id: z.string().uuid() }),
-  z.object({ action: z.literal("approve"), id: z.string().uuid() }),
-  z.object({
-    action: z.literal("schedule"),
-    id: z.string().uuid(),
-    scheduled_for: z.string().min(1),
-  }),
-  z.object({ action: z.literal("publish_now"), id: z.string().uuid() }),
-  z.object({ action: z.literal("retry"), id: z.string().uuid() }),
-  z.object({
-    action: z.literal("generate"),
-    categorie: z.enum(linkedInTemplateCategories).optional(),
-    template_id: z.string().uuid().optional(),
-    context: z.string().max(2000).optional(),
-  }),
-  z.object({
-    action: z.literal("generate_from_blog"),
-    content_post_id: z.string().uuid(),
-  }),
-  z.object({
-    action: z.literal("generate_batch"),
-    count: z.number().int().min(1).max(10).default(5),
-    categorie: z.enum(linkedInTemplateCategories).optional(),
-  }),
-  z.object({
-    action: z.literal("bulk_approve"),
-    ids: z.array(z.string().uuid()).min(1).max(20),
-  }),
-  z.object({
-    action: z.literal("bulk_delete"),
-    ids: z.array(z.string().uuid()).min(1).max(20),
-  }),
-  z.object({
-    action: z.literal("generate_image"),
-    id: z.string().uuid(),
-  }),
-]);
-
-export const linkedinTemplateActionSchema = z.discriminatedUnion("action", [
-  z.object({
-    action: z.literal("create"),
-    naam: z.string().min(1).max(100),
-    categorie: z.enum(linkedInTemplateCategories),
-    template: z.string().min(1).max(5000),
-    variabelen: z.array(z.string()).optional().default([]),
-    voorbeeld: z.string().max(5000).nullable().optional(),
-  }),
-  z.object({
-    action: z.literal("update"),
-    id: z.string().uuid(),
-    naam: z.string().min(1).max(100).optional(),
-    categorie: z.enum(linkedInTemplateCategories).optional(),
-    template: z.string().min(1).max(5000).optional(),
-    variabelen: z.array(z.string()).optional(),
-    voorbeeld: z.string().max(5000).nullable().optional(),
-    is_active: z.boolean().optional(),
-  }),
-  z.object({ action: z.literal("delete"), id: z.string().uuid() }),
-]);
 
 export function formatZodErrors(error: z.ZodError): string {
   return error.issues.map((e: { message: string }) => e.message).join(", ");

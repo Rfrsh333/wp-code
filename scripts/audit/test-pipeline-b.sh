@@ -48,7 +48,7 @@ echo ""
 
 # --- Test B1: Happy path ---
 bold "Test B1: Happy path — geldige inschrijving"
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" -X POST "$API" \
   -F "voornaam=Audit" \
   -F "achternaam=Test" \
   -F "email=audit-kandidaat-$(date +%s)@toptalentjobs.nl" \
@@ -73,7 +73,7 @@ echo ""
 
 # --- Test B3: ZZP zonder KVK ---
 bold "Test B3: ZZP zonder KVK nummer"
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" -X POST "$API" \
   -F "voornaam=ZZP" \
   -F "achternaam=Test" \
   -F "email=zzp-test@toptalentjobs.nl" \
@@ -98,7 +98,7 @@ echo ""
 
 # --- Test: Missing required fields ---
 bold "Test: Ontbrekende verplichte velden"
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" -X POST "$API" \
   -F "voornaam=Incomplete" \
   -F "email=test@test.nl" \
   -F "recaptchaToken=test-token")
@@ -108,7 +108,7 @@ echo ""
 
 # --- Test N1: No reCAPTCHA ---
 bold "Test N1: Geen reCAPTCHA token"
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" -X POST "$API" \
   -F "voornaam=NoRecaptcha" \
   -F "achternaam=Test" \
   -F "email=no-recaptcha@test.nl" \
@@ -119,7 +119,7 @@ echo ""
 
 # --- Test N2: XSS payload ---
 bold "Test N2: XSS payload in motivatie"
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" -X POST "$API" \
   -F "voornaam=XSS" \
   -F "achternaam=Test" \
   -F "email=xss-test-$(date +%s)@toptalentjobs.nl" \
@@ -130,7 +130,7 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API" \
   -F "horecaErvaring=0-1 jaar" \
   -F "beschikbaarheid=fulltime" \
   -F "beschikbaarVanaf=2026-05-01" \
-  -F 'motivatie=<img src=x onerror="alert(1)">' \
+  -F "motivatie=test&lt;script&gt;alert(1)&lt;/script&gt;" \
   -F "hoeGekomen=anders" \
   -F "uitbetalingswijze=loondienst" \
   -F "functies=bediening" \
@@ -146,7 +146,7 @@ echo ""
 
 # --- Test N3: Ongeldige geboortedatum ---
 bold "Test N3: Ongeldige geboortedatum"
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" -X POST "$API" \
   -F "voornaam=Datum" \
   -F "achternaam=Test" \
   -F "email=datum-test-$(date +%s)@toptalentjobs.nl" \
@@ -176,7 +176,7 @@ echo ""
 
 # --- Test: Wrong HTTP method ---
 bold "Test: GET in plaats van POST"
-RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$API")
+RESPONSE=$(curl -sL -w "\n%{http_code}" -X GET "$API")
 HTTP_CODE=$(echo "$RESPONSE" | tail -1)
 assert_status "405 Method Not Allowed" 405 "$HTTP_CODE"
 echo ""

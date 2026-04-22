@@ -8,7 +8,12 @@ import {
 import type { AdminCandidateTemplateKey } from "@/content/adminCandidateEmailTemplates";
 import { adminCandidateEmailTemplates } from "@/content/adminCandidateEmailTemplates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is niet geconfigureerd");
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 // Base layout voor alle kandidaat emails - consistent oranje gradient design
 function getEmailLayout(content: string): string {
@@ -177,13 +182,17 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
     </p>
   `;
 
-  const result = await resend.emails.send({
+  const result = await getResend().emails.send({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
+
+  if (result.error) {
+    console.error("sendIntakeBevestiging email error:", result.error);
+  }
 
   return result;
 }
@@ -223,13 +232,17 @@ export async function sendDocumentenVerzoek(kandidaat: Kandidaat, portalToken?: 
     </p>
   `;
 
-  const result = await resend.emails.send({
+  const result = await getResend().emails.send({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
+
+  if (result.error) {
+    console.error("sendDocumentenVerzoek email error:", result.error);
+  }
 
   return result;
 }
@@ -262,13 +275,17 @@ export async function sendDocumentenReminder(kandidaat: Kandidaat, portalToken?:
     </p>
   `;
 
-  const result = await resend.emails.send({
+  const result = await getResend().emails.send({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
+
+  if (result.error) {
+    console.error("sendDocumentenReminder email error:", result.error);
+  }
 
   return result;
 }
@@ -292,7 +309,7 @@ export async function sendCandidateTemplateEmail(
     ${template.outro ? `<p style="margin-top: 30px; color: #666; font-size: 14px;">${template.outro}</p>` : ""}
   `;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
@@ -332,13 +349,17 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
     </p>
   `;
 
-  const result = await resend.emails.send({
+  const result = await getResend().emails.send({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
+
+  if (result.error) {
+    console.error("sendWelkomstmail email error:", result.error);
+  }
 
   return result;
 }
@@ -359,13 +380,17 @@ export async function sendAfwijzingsmail(kandidaat: Kandidaat) {
     </p>
   `;
 
-  const result = await resend.emails.send({
+  const result = await getResend().emails.send({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
   });
+
+  if (result.error) {
+    console.error("sendAfwijzingsmail email error:", result.error);
+  }
 
   return result;
 }
@@ -387,13 +412,18 @@ export async function generateAndSaveUploadToken(kandidaatId: string, expiryDays
   const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
 
   // Save to database
-  await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from("inschrijvingen")
     .update({
       onboarding_portal_token: token,
       onboarding_portal_token_expires_at: expiresAt.toISOString(),
     })
     .eq("id", kandidaatId);
+
+  if (error) {
+    console.error("Failed to save upload token:", error);
+    throw new Error("Kon upload token niet opslaan");
+  }
 
   return token;
 }
@@ -408,7 +438,7 @@ export async function logEmail(
 ) {
   const { supabaseAdmin } = await import("@/lib/supabase");
 
-  await supabaseAdmin.from("email_log").insert({
+  const { error } = await supabaseAdmin.from("email_log").insert({
     kandidaat_id: kandidaatId,
     email_type: emailType,
     recipient,
@@ -417,4 +447,8 @@ export async function logEmail(
     status: "sent",
     resend_email_id: resendEmailId || null,
   });
+
+  if (error) {
+    console.error("logEmail insert error:", error);
+  }
 }

@@ -53,7 +53,8 @@ function berekenUrenPerWeek(werkdagen: string[], werktijden: string): number {
 
 export async function generateOfferteVoorstel(input: AanvraagInput): Promise<OfferteVoorstel> {
   const urenPerWeek = berekenUrenPerWeek(input.werkdagen, input.werktijden);
-  const aantal = parseInt(input.aantalPersonen) || 1;
+  const parsed = parseInt(input.aantalPersonen, 10);
+  const aantal = Number.isNaN(parsed) || parsed < 1 ? 1 : Math.min(parsed, 100);
 
   // Bereken tarieven per functie
   const tarieven = input.typePersoneel.map(functie => {

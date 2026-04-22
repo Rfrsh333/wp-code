@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       achternaam: formData.get("achternaam") || "",
       email: formData.get("email") || "",
       telefoon: formData.get("telefoon") || "",
+      geboortedatum: formData.get("geboortedatum") || undefined,
       uitbetalingswijze: formData.get("uitbetalingswijze") || "",
     });
     if (!zodParsed.success) {
@@ -76,6 +77,10 @@ export async function POST(request: NextRequest) {
     const beschikbaarVanaf = (formData.get("beschikbaarVanaf") as string) || "";
     const maxUrenPerWeek = (formData.get("maxUrenPerWeek") as string) || "";
     const referralCode = (formData.get("referralCode") as string) || "";
+    const leadSource = (formData.get("leadSource") as string) || "";
+    const utmSource = (formData.get("utmSource") as string) || "";
+    const utmMedium = (formData.get("utmMedium") as string) || "";
+    const utmCampaign = (formData.get("utmCampaign") as string) || "";
     const eigenVervoer = formData.get("eigenVervoer") === "true";
     const functies = formData
       .getAll("functies")
@@ -113,6 +118,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "KVK nummer is verplicht voor ZZP inschrijvingen" },
         { status: 400 }
+      );
+    }
+
+    // H-2: Duplicate email check
+    const { data: existingKandidaat } = await supabase
+      .from("inschrijvingen")
+      .select("id")
+      .eq("email", email)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingKandidaat) {
+      return NextResponse.json(
+        { error: "Er bestaat al een inschrijving met dit e-mailadres" },
+        { status: 409 }
       );
     }
 
@@ -183,7 +203,7 @@ export async function POST(request: NextRequest) {
     // 1. DB insert EERST — dit is de primaire operatie
     const parsedMaxUren = maxUrenPerWeek ? Number.parseInt(maxUrenPerWeek, 10) : null;
 
-    const { data: insertedData, error: dbError } = await supabase.from("inschrijvingen").insert({
+    const insertPayload: Record<string, unknown> = {
       voornaam,
       tussenvoegsel: tussenvoegsel || null,
       achternaam,
@@ -205,7 +225,17 @@ export async function POST(request: NextRequest) {
       max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
       onboarding_status: "nieuw",
       referral_code: referralCode || null,
-    }).select().single();
+    };
+
+    // TODO M-12: UTM tracking kolommen (lead_source, utm_source, utm_medium, utm_campaign)
+    // moeten eerst aan de inschrijvingen tabel worden toegevoegd via een migratie.
+    // Zie personeel_aanvragen voor referentie-implementatie.
+
+    const { data: insertedData, error: dbError } = await supabase
+      .from("inschrijvingen")
+      .insert(insertPayload)
+      .select()
+      .single();
 
     if (dbError) {
       console.error("Supabase error:", dbError);
@@ -240,7 +270,7 @@ export async function POST(request: NextRequest) {
         // Referral tracking
         if (insertedData && referralCode) {
           try {
-            await supabase.from("referrals")
+            const { error: refDbError } = await supabase.from("referrals")
               .update({
                 referred_id: insertedData.id,
                 referred_naam: volledigeNaam,
@@ -249,6 +279,9 @@ export async function POST(request: NextRequest) {
               .eq("referral_code", referralCode)
               .eq("status", "pending")
               .is("referred_id", null);
+            if (refDbError) {
+              console.error("Referral tracking DB error:", refDbError);
+            }
           } catch (refError) {
             console.error("Referral tracking error:", refError);
           }
