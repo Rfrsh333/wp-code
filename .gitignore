@@ -43,6 +43,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Scraper data
-data/
+# Scraper data (except audits)
+data/*
+!data/audits/
 .gitnexus
