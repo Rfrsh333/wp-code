@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { verifyMedewerkerSession, verifyKlantSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * POST - Push subscription opslaan
@@ -56,13 +57,15 @@ export async function POST(request: NextRequest) {
       );
 
     if (error) {
-      console.error("[Push Sub] Opslaan mislukt:", error);
+      captureRouteError(error, { route: "/api/push-subscription", action: "POST" });
+      // console.error("[Push Sub] Opslaan mislukt:", error);
       return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("[Push Sub] POST error:", err);
+    captureRouteError(err, { route: "/api/push-subscription", action: "POST" });
+    // console.error("[Push Sub] POST error:", err);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -89,13 +92,15 @@ export async function DELETE(request: NextRequest) {
       .eq("endpoint", endpoint);
 
     if (error) {
-      console.error("[Push Sub] Verwijderen mislukt:", error);
+      captureRouteError(error, { route: "/api/push-subscription", action: "DELETE" });
+      // console.error("[Push Sub] Verwijderen mislukt:", error);
       return NextResponse.json({ error: "Verwijderen mislukt" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("[Push Sub] DELETE error:", err);
+    captureRouteError(err, { route: "/api/push-subscription", action: "DELETE" });
+    // console.error("[Push Sub] DELETE error:", err);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

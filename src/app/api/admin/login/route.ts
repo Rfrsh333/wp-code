@@ -4,6 +4,7 @@ import { isAdminEmail } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyTOTP, verifyBackupCode } from "@/lib/two-factor";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -156,7 +157,8 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("[ADMIN LOGIN] Error:", error);
+    captureRouteError(error, { route: "/api/admin/login", action: "POST" });
+    // console.error("[ADMIN LOGIN] Error:", error);
     return NextResponse.json(
       { error: "Er is een fout opgetreden" },
       { status: 500 }

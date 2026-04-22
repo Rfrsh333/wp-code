@@ -4,6 +4,7 @@ import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
 import { bulkEmailPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { checkRedisRateLimit, getClientIP, bulkEmailRateLimit } from "@/lib/rate-limit-redis";
 import { sendEmail } from "@/lib/email-service";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const MAX_EMAILS_PER_REQUEST = 50;
 const BATCH_SIZE = 10;
@@ -164,14 +165,16 @@ export async function POST(request: NextRequest) {
           if (error) {
             failed++;
             errors.push(`${kandidaat.email}: Verzenden mislukt`);
-            console.error(`Email error for ${kandidaat.email}:`, error);
+            captureRouteError(error, { route: "/api/admin/bulk-email", action: "POST" });
+            // console.error(`Email error for ${kandidaat.email}:`, error);
           } else {
             sent++;
           }
         } catch (error) {
           failed++;
           errors.push(`${kandidaat.email}: Verzenden mislukt`);
-          console.error(`Email error for ${kandidaat.email}:`, error);
+          captureRouteError(error, { route: "/api/admin/bulk-email", action: "POST" });
+          // console.error(`Email error for ${kandidaat.email}:`, error);
         }
       });
 
@@ -190,7 +193,8 @@ export async function POST(request: NextRequest) {
       errors: failed > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Bulk email error:", error);
+    captureRouteError(error, { route: "/api/admin/bulk-email", action: "POST" });
+    // console.error("Bulk email error:", error);
     return NextResponse.json(
       { error: "Fout bij verzenden bulk emails" },
       { status: 500 }

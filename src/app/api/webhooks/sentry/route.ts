@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -56,7 +57,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Sentry webhook error:", error);
+    captureRouteError(error, { route: "/api/webhooks/sentry", action: "POST" });
+    // console.error("Sentry webhook error:", error);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }

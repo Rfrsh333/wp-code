@@ -17,6 +17,7 @@ import { runDeduplicationPass } from "@/lib/content/services/deduplication-servi
 import { generateSocialSnippets } from "@/lib/content/services/social-snippets-service";
 import { OpenAIContentClient } from "@/lib/ai/openai-content-client";
 import { getErrorMessage } from "@/lib/content/errors";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const operationsSchema = z.object({
   action: z.enum([
@@ -127,7 +128,8 @@ export async function POST(request: NextRequest) {
 
       steps.push({ name: "seed_sources", result: r, error: null });
     } catch (e) {
-      console.error("[pipeline] seed_sources error:", e);
+      captureRouteError(e, { route: "/api/admin/news/operations", action: "POST" });
+      // console.error("[pipeline] seed_sources error:", e);
       steps.push({ name: "seed_sources", result: null, error: getErrorMessage(e) });
     }
 
@@ -137,7 +139,8 @@ export async function POST(request: NextRequest) {
 
       steps.push({ name: "run_ingestion", result: r, error: null });
     } catch (e) {
-      console.error("[pipeline] run_ingestion error:", e);
+      captureRouteError(e, { route: "/api/admin/news/operations", action: "POST" });
+      // console.error("[pipeline] run_ingestion error:", e);
       steps.push({ name: "run_ingestion", result: null, error: getErrorMessage(e) });
     }
 
@@ -147,7 +150,8 @@ export async function POST(request: NextRequest) {
 
       steps.push({ name: "run_extraction", result: r, error: null });
     } catch (e) {
-      console.error("[pipeline] run_extraction error:", e);
+      captureRouteError(e, { route: "/api/admin/news/operations", action: "POST" });
+      // console.error("[pipeline] run_extraction error:", e);
       steps.push({ name: "run_extraction", result: null, error: getErrorMessage(e) });
     }
 
@@ -157,7 +161,8 @@ export async function POST(request: NextRequest) {
 
       steps.push({ name: "run_deduplication", result: r, error: null });
     } catch (e) {
-      console.error("[pipeline] run_deduplication error:", e);
+      captureRouteError(e, { route: "/api/admin/news/operations", action: "POST" });
+      // console.error("[pipeline] run_deduplication error:", e);
       steps.push({ name: "run_deduplication", result: null, error: getErrorMessage(e) });
     }
 
@@ -167,7 +172,8 @@ export async function POST(request: NextRequest) {
 
       steps.push({ name: "run_analysis", result: r, error: null });
     } catch (e) {
-      console.error("[pipeline] run_analysis error:", e);
+      captureRouteError(e, { route: "/api/admin/news/operations", action: "POST" });
+      // console.error("[pipeline] run_analysis error:", e);
       steps.push({ name: "run_analysis", result: null, error: getErrorMessage(e) });
     }
 
@@ -177,7 +183,8 @@ export async function POST(request: NextRequest) {
 
       steps.push({ name: "run_clustering", result: r, error: null });
     } catch (e) {
-      console.error("[pipeline] run_clustering error:", e);
+      captureRouteError(e, { route: "/api/admin/news/operations", action: "POST" });
+      // console.error("[pipeline] run_clustering error:", e);
       steps.push({ name: "run_clustering", result: null, error: getErrorMessage(e) });
     }
 
@@ -187,7 +194,8 @@ export async function POST(request: NextRequest) {
 
       steps.push({ name: "generate_drafts", result: r, error: null });
     } catch (e) {
-      console.error("[pipeline] generate_drafts error:", e);
+      captureRouteError(e, { route: "/api/admin/news/operations", action: "POST" });
+      // console.error("[pipeline] generate_drafts error:", e);
       steps.push({ name: "generate_drafts", result: null, error: getErrorMessage(e) });
     }
 

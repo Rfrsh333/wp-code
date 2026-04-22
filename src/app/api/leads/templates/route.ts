@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin as supabase } from '@/lib/supabase'
 import { verifyAdmin } from '@/lib/admin-auth'
 import { z } from 'zod'
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const templateSchema = z.object({
   naam: z.string().min(1).max(100),
@@ -37,13 +38,15 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query
 
     if (error) {
-      console.error('Supabase error:', error)
+      captureRouteError(error, { route: "/api/leads/templates", action: "GET" });
+      // console.error('Supabase error:', error)
       return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
     }
 
     return NextResponse.json({ templates: data || [] })
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads/templates", action: "GET" });
+    // console.error('API error:', error)
     return NextResponse.json({ error: 'Er is een fout opgetreden' }, { status: 500 })
   }
 }
@@ -84,13 +87,15 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
+      captureRouteError(error, { route: "/api/leads/templates", action: "POST" });
+      // console.error('Supabase error:', error)
       return NextResponse.json({ error: 'Aanmaken mislukt' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, template }, { status: 201 })
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads/templates", action: "POST" });
+    // console.error('API error:', error)
     return NextResponse.json({ error: 'Er is een fout opgetreden' }, { status: 500 })
   }
 }

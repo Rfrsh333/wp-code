@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { kandidaatDocumentenPatchSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const DOCUMENT_BUCKET = process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten";
 
@@ -31,7 +32,8 @@ export async function GET(request: NextRequest) {
     .limit(100);
 
   if (error) {
-    console.error("Kandidaat documenten ophalen mislukt:", error);
+    captureRouteError(error, { route: "/api/admin/kandidaat-documenten", action: "GET" });
+    // console.error("Kandidaat documenten ophalen mislukt:", error);
     return NextResponse.json({ error: "Documenten konden niet worden opgehaald" }, { status: 500 });
   }
 
@@ -84,7 +86,8 @@ export async function POST(request: NextRequest) {
     });
 
   if (uploadError) {
-    console.error("Document upload mislukt:", uploadError);
+    captureRouteError(uploadError, { route: "/api/admin/kandidaat-documenten", action: "POST" });
+    // console.error("Document upload mislukt:", uploadError);
     return NextResponse.json(
       {
         error:
@@ -112,7 +115,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("Document metadata opslaan mislukt:", error);
+    captureRouteError(error, { route: "/api/admin/kandidaat-documenten", action: "POST" });
+    // console.error("Document metadata opslaan mislukt:", error);
     return NextResponse.json({ error: "Document metadata kon niet worden opgeslagen" }, { status: 500 });
   }
 
@@ -148,7 +152,8 @@ export async function PATCH(request: NextRequest) {
     .eq("id", id);
 
   if (error) {
-    console.error("Document update mislukt:", error);
+    captureRouteError(error, { route: "/api/admin/kandidaat-documenten", action: "PATCH" });
+    // console.error("Document update mislukt:", error);
     return NextResponse.json({ error: "Document kon niet worden bijgewerkt" }, { status: 500 });
   }
 

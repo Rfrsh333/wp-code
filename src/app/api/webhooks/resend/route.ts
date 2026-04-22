@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { createHmac } from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * Resend Webhook Handler
@@ -52,7 +53,7 @@ const ENGAGEMENT_POINTS: Record<string, number> = {
 function verifyWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) {
-    console.error("[WEBHOOK] RESEND_WEBHOOK_SECRET niet ingesteld — webhook geweigerd");
+    captureRouteError(new Error("RESEND_WEBHOOK_SECRET niet ingesteld"), { route: "/api/webhooks/resend", action: "VERIFY" });
     return false;
   }
   const hmac = createHmac("sha256", secret);
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     const payload = await request.text();
 
     if (!verifyWebhookSignature(payload, signature)) {
-      console.error("[WEBHOOK] Ongeldige signature");
+      captureRouteError(new Error("Ongeldige webhook signature"), { route: "/api/webhooks/resend", action: "POST" });
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
@@ -85,7 +86,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true, type: event.type });
   } catch (error) {
-    console.error("[WEBHOOK] Error:", error);
+    captureRouteError(error, { route: "/api/webhooks/resend", action: "POST" });
+    // console.error("[WEBHOOK] Error:", error);
     return NextResponse.json({ error: "Webhook verwerking mislukt" }, { status: 500 });
   }
 }
@@ -238,7 +240,8 @@ async function handleAcquisitieTracking(event: ResendWebhookEvent) {
 
       await sendTelegramAlert(
         `⚠️ <b>Email bounced</b>\n\n` +
-        `Email bounced voor lead — campagne gestopt`
+        `Email bounced voor lead — campagne gestopt`,
+        `bounce-${leadId}`
       );
       break;
     }
@@ -261,7 +264,8 @@ async function handleAcquisitieTracking(event: ResendWebhookEvent) {
 
       await sendTelegramAlert(
         `🚫 <b>Spam klacht!</b>\n\n` +
-        `Spam klacht ontvangen — lead afgewezen, emails gestopt`
+        `Spam klacht ontvangen — lead afgewezen, emails gestopt`,
+        `spam-${leadId}`
       );
       break;
     }
@@ -271,7 +275,8 @@ async function handleAcquisitieTracking(event: ResendWebhookEvent) {
   if (newEngagement >= 50 && currentEngagement < 50) {
     await sendTelegramAlert(
       `🔥 <b>Hot Lead!</b>\n\n` +
-      `Engagement: ${newEngagement} — direct opvolgen!`
+      `Engagement: ${newEngagement} — direct opvolgen!`,
+      `hotlead-${leadId}`
     );
   }
 }

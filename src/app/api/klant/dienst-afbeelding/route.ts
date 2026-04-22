@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { verifyKlantSession } from "@/lib/session";
 import crypto from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const MAX_FILE_SIZE = 500 * 1024; // 500KB (client comprimeert al tot ~200KB)
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -56,7 +57,8 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("[DIENST-AFBEELDING] Upload error:", uploadError);
+      captureRouteError(uploadError, { route: "/api/klant/dienst-afbeelding", action: "POST" });
+      // console.error("[DIENST-AFBEELDING] Upload error:", uploadError);
 
       // Als bucket niet bestaat, maak het aan
       if (uploadError.message?.includes("not found") || uploadError.message?.includes("Bucket")) {
@@ -76,7 +78,8 @@ export async function POST(request: NextRequest) {
           });
 
         if (retryError) {
-          console.error("[DIENST-AFBEELDING] Retry upload error:", retryError);
+          captureRouteError(retryError, { route: "/api/klant/dienst-afbeelding", action: "POST" });
+          // console.error("[DIENST-AFBEELDING] Retry upload error:", retryError);
           return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
         }
       } else {
@@ -94,7 +97,8 @@ export async function POST(request: NextRequest) {
       url: publicUrlData.publicUrl,
     });
   } catch (error) {
-    console.error("[DIENST-AFBEELDING] Error:", error);
+    captureRouteError(error, { route: "/api/klant/dienst-afbeelding", action: "POST" });
+    // console.error("[DIENST-AFBEELDING] Error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

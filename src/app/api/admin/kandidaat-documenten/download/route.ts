@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * GET: Generate signed URL for document download
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest) {
       .createSignedUrl(document.file_path, 3600); // 1 hour
 
     if (urlError || !signedUrlData) {
-      console.error("Signed URL error:", urlError);
+      captureRouteError(new Error("/api/admin/kandidaat-documenten/download GET error"), { route: "/api/admin/kandidaat-documenten/download", action: "GET" });
+      // console.error("Signed URL error:", urlError);
       return NextResponse.json({ error: "Kon signed URL niet genereren" }, { status: 500 });
     }
 
@@ -51,7 +53,8 @@ export async function GET(request: NextRequest) {
       expires_in: 3600, // seconds
     });
   } catch (error) {
-    console.error("Download URL error:", error);
+    captureRouteError(error, { route: "/api/admin/kandidaat-documenten/download", action: "GET" });
+    // console.error("Download URL error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest) {
       .limit(50);
 
     if (error) {
-      console.error("Uren lijst ophalen error:", error);
+      captureRouteError(error, { route: "/api/medewerker/uren/lijst", action: "GET" });
+      // console.error("Uren lijst ophalen error:", error);
       return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
     }
 
@@ -181,7 +183,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Uren lijst error:", error);
+    captureRouteError(error, { route: "/api/medewerker/uren/lijst", action: "GET" });
+    // console.error("Uren lijst error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { verifyTOTP } from "@/lib/two-factor";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * POST /api/admin/2fa/enable
@@ -71,7 +72,8 @@ export async function POST(request: NextRequest) {
       .eq("email", email);
 
     if (updateError) {
-      console.error("2FA enable error:", updateError);
+      captureRouteError(error, { route: "/api/admin/2fa/enable", action: "POST" });
+      // console.error("2FA enable error:", updateError);
       return NextResponse.json(
         { error: "Failed to enable 2FA" },
         { status: 500 }
@@ -85,7 +87,8 @@ export async function POST(request: NextRequest) {
       message: "2FA enabled successfully",
     });
   } catch (error) {
-    console.error("2FA enable error:", error);
+    captureRouteError(error, { route: "/api/admin/2fa/enable", action: "POST" });
+    // console.error("2FA enable error:", error);
     return NextResponse.json(
       { error: "Failed to enable 2FA" },
       { status: 500 }
@@ -155,7 +158,8 @@ export async function DELETE(request: NextRequest) {
       .eq("email", email);
 
     if (updateError) {
-      console.error("2FA disable error:", updateError);
+      captureRouteError(error, { route: "/api/admin/2fa/enable", action: "DELETE" });
+      // console.error("2FA disable error:", updateError);
       return NextResponse.json(
         { error: "Failed to disable 2FA" },
         { status: 500 }
@@ -169,7 +173,8 @@ export async function DELETE(request: NextRequest) {
       message: "2FA disabled successfully",
     });
   } catch (error) {
-    console.error("2FA disable error:", error);
+    captureRouteError(error, { route: "/api/admin/2fa/enable", action: "DELETE" });
+    // console.error("2FA disable error:", error);
     return NextResponse.json(
       { error: "Failed to disable 2FA" },
       { status: 500 }

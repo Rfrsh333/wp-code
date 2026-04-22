@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 // Cron: dagelijks review requests versturen
 // Zoekt diensten van gisteren waar uren goedgekeurd zijn en stuurt review email
@@ -8,6 +9,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-review-requests", async () => {
 
   try {
     // Zoek diensten van gisteren waar uren goedgekeurd zijn
@@ -91,7 +94,8 @@ export async function GET(request: NextRequest) {
 
         verzonden++;
       } catch (emailErr) {
-        console.error(`Review email fout voor dienst ${dienst.id}:`, emailErr);
+        captureRouteError(emailErr, { route: "/api/cron/review-requests", action: "GET" });
+        // console.error(`Review email fout voor dienst ${dienst.id}:`, emailErr);
       }
     }
 
@@ -100,7 +104,9 @@ export async function GET(request: NextRequest) {
       count: verzonden,
     });
   } catch (error) {
-    console.error("Review requests cron error:", error);
+    captureRouteError(error, { route: "/api/cron/review-requests", action: "GET" });
+    // console.error("Review requests cron error:", error);
     return NextResponse.json({ error: "Cron job failed" }, { status: 500 });
   }
+  });
 }

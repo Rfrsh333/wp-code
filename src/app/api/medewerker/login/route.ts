@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import bcrypt from "bcryptjs";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   // Rate limiting: 5 login attempts per 15 minutes per IP
@@ -81,7 +82,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Login error:", error);
+    captureRouteError(error, { route: "/api/medewerker/login", action: "POST" });
+    // console.error("Login error:", error);
     return NextResponse.json({ error: "Fout bij inloggen" }, { status: 500 });
   }
 }

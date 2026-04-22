@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ werkervaring: data });
   } catch (error) {
-    console.error("Werkervaring fetch error:", error);
+    captureRouteError(error, { route: "/api/medewerker/werkervaring", action: "GET" });
+    // console.error("Werkervaring fetch error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -57,7 +59,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Werkervaring create error:", error);
+    captureRouteError(error, { route: "/api/medewerker/werkervaring", action: "POST" });
+    // console.error("Werkervaring create error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -84,7 +87,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Werkervaring delete error:", error);
+    captureRouteError(error, { route: "/api/medewerker/werkervaring", action: "DELETE" });
+    // console.error("Werkervaring delete error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { runFeedIngestionPass, runPendingExtractionPass } from "@/lib/content/se
 import { runPendingAnalysisPass } from "@/lib/content/services/article-analysis-service";
 import { runClusteringPass } from "@/lib/content/services/clustering-orchestrator";
 import { generateDraftsFromTopClusters } from "@/lib/content/services/draft-orchestrator";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 // Cron: ma-vr om 10:00 — volledige editorial pipeline
 // 1. RSS feeds ophalen
@@ -17,6 +18,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-editorial-pipeline", async () => {
 
   const log: Record<string, unknown> = {};
 
@@ -90,7 +93,8 @@ export async function GET(request: NextRequest) {
       ...log,
     });
   } catch (error) {
-    console.error("Editorial pipeline cron error:", error);
+    captureRouteError(error, { route: "/api/cron/editorial-pipeline", action: "GET" });
+    // console.error("Editorial pipeline cron error:", error);
     return NextResponse.json(
       {
         error: "Pipeline failed",
@@ -100,4 +104,5 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
+  });
 }

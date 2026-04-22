@@ -4,6 +4,7 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { OffertePDF } from "@/lib/pdf/offerte-pdf";
 import { verifyAdmin } from "@/lib/admin-auth";
 import crypto from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // ============================================================================
 // Offerte PDF Generation API
@@ -119,7 +120,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Offerte generation error:", error);
+    captureRouteError(error, { route: "/api/offerte", action: "POST" });
+    // console.error("Offerte generation error:", error);
     return NextResponse.json(
       { error: "Fout bij genereren van offerte" },
       { status: 500 }
@@ -231,7 +233,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Offerte generation error:", error);
+    captureRouteError(error, { route: "/api/offerte", action: "GET" });
+    // console.error("Offerte generation error:", error);
     return NextResponse.json(
       { error: "Fout bij genereren van offerte" },
       { status: 500 }

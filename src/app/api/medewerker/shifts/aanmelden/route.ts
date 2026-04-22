@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,7 +79,8 @@ export async function POST(request: NextRequest) {
       });
 
     if (aanmeldError) {
-      console.error("[SHIFTS AANMELDEN] Insert error:", aanmeldError);
+      captureRouteError(aanmeldError, { route: "/api/medewerker/shifts/aanmelden", action: "POST" });
+      // console.error("[SHIFTS AANMELDEN] Insert error:", aanmeldError);
       return NextResponse.json({ error: "Aanmelden mislukt" }, { status: 500 });
     }
 
@@ -94,14 +96,16 @@ export async function POST(request: NextRequest) {
         .eq("id", dienst_id);
 
       if (updateError) {
-        console.error("[SHIFTS AANMELDEN] Update plekken error:", updateError);
+        captureRouteError(updateError, { route: "/api/medewerker/shifts/aanmelden", action: "POST" });
+        // console.error("[SHIFTS AANMELDEN] Update plekken error:", updateError);
         // Don't rollback - aanmelding is created, plekken update is best-effort
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[SHIFTS AANMELDEN] Error:", error);
+    captureRouteError(error, { route: "/api/medewerker/shifts/aanmelden", action: "POST" });
+    // console.error("[SHIFTS AANMELDEN] Error:", error);
     return NextResponse.json({ error: "Er ging iets mis bij het aanmelden" }, { status: 500 });
   }
 }

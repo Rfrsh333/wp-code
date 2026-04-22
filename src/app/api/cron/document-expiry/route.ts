@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { buildDocumentVerlooptHtml } from "@/lib/email-templates";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-document-expiry", async () => {
 
   try {
     const dertigDagenVoorruit = new Date();
@@ -53,7 +56,8 @@ export async function GET(request: NextRequest) {
         sent++;
         geemaildeMedewerkers.add(dedupeKey);
       } catch (err) {
-        console.error(`Failed to send expiry email for doc ${doc.id}:`, err);
+        captureRouteError(err, { route: "/api/cron/document-expiry", action: "GET" });
+        // console.error(`Failed to send expiry email for doc ${doc.id}:`, err);
       }
     }
 
@@ -88,7 +92,8 @@ export async function GET(request: NextRequest) {
         sent++;
         geemaildeMedewerkers.add(dedupeKey);
       } catch (err) {
-        console.error(`Failed to send expiry email for cert ${cert.id}:`, err);
+        captureRouteError(err, { route: "/api/cron/document-expiry", action: "GET" });
+        // console.error(`Failed to send expiry email for cert ${cert.id}:`, err);
       }
     }
 
@@ -122,7 +127,8 @@ export async function GET(request: NextRequest) {
         sent++;
         geemaildeMedewerkers.add(dedupeKey);
       } catch (err) {
-        console.error(`Failed to send werkvergunning expiry email for ${mw.id}:`, err);
+        captureRouteError(err, { route: "/api/cron/document-expiry", action: "GET" });
+        // console.error(`Failed to send werkvergunning expiry email for ${mw.id}:`, err);
       }
     }
 
@@ -132,7 +138,9 @@ export async function GET(request: NextRequest) {
       sent,
     });
   } catch (error) {
-    console.error("Document expiry cron error:", error);
+    captureRouteError(error, { route: "/api/cron/document-expiry", action: "GET" });
+    // console.error("Document expiry cron error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
+  });
 }

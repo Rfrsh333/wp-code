@@ -4,6 +4,7 @@ import {
   logEmail,
   sendDocumentenReminder,
 } from "@/lib/candidate-onboarding";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 import { logAuditEvent } from "@/lib/audit-log";
 
 const MAX_REMINDERS_PER_RUN = 10;
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  return withCronMonitor("cron-document-reminders", async () => {
+
   const nowIso = new Date().toISOString();
   const thresholdIso = getThresholdIso(REMINDER_INTERVAL_DAYS);
 
@@ -62,7 +65,8 @@ export async function GET(request: NextRequest) {
     .limit(MAX_REMINDERS_PER_RUN);
 
   if (error) {
-    console.error("[CRON] document-reminders query error:", error);
+    captureRouteError(error, { route: "/api/cron/document-reminders", action: "GET" });
+    // console.error("[CRON] document-reminders query error:", error);
     return NextResponse.json({ error: "Kandidaten ophalen mislukt" }, { status: 500 });
   }
 
@@ -132,7 +136,8 @@ export async function GET(request: NextRequest) {
       });
       sent += 1;
     } catch (sendError) {
-      console.error("[CRON] document-reminders send error:", sendError);
+      captureRouteError(sendError, { route: "/api/cron/document-reminders", action: "GET" });
+      // console.error("[CRON] document-reminders send error:", sendError);
       results.push({
         kandidaat_id: candidate.id,
         email: candidate.email,
@@ -151,5 +156,6 @@ export async function GET(request: NextRequest) {
     sent,
     failed,
     results,
+  });
   });
 }

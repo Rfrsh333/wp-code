@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -125,7 +126,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ shifts: beschikbareShifts });
   } catch (error) {
-    console.error("Beschikbare shifts error:", error);
+    captureRouteError(error, { route: "/api/medewerker/shifts/beschikbaar", action: "GET" });
+    // console.error("Beschikbare shifts error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

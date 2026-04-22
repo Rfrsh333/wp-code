@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { withCronMonitor } from "@/lib/sentry-utils";
 
 type ReminderResult = {
   factuur_nummer: string;
@@ -14,6 +15,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-herinneringen", async () => {
 
   const startTime = Date.now();
   let processed = 0;
@@ -81,4 +84,5 @@ export async function GET(request: NextRequest) {
   const duration = Date.now() - startTime;
 
   return NextResponse.json({ success: true, results, metrics: { processed, failed, duration_ms: duration } });
+  });
 }

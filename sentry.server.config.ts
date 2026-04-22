@@ -3,18 +3,30 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://f8b72e668665790291e578e574357a20@o4511040949387264.ingest.de.sentry.io/4511040950566992",
 
+  release: process.env.VERCEL_GIT_COMMIT_SHA || "dev",
+  environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
+
   sendDefaultPii: false,
 
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
 
   enableLogs: true,
 
+  ignoreErrors: [
+    "NEXT_NOT_FOUND",
+    "NEXT_REDIRECT",
+  ],
+
   beforeSend(event) {
     // Strip PII from request data
     if (event.request) {
       delete event.request.cookies;
-      delete event.request.headers;
       delete event.request.data;
+      // Keep useful headers, strip sensitive ones
+      if (event.request.headers) {
+        const { "user-agent": ua, "accept-language": lang, accept, referer } = event.request.headers;
+        event.request.headers = { ...(ua && { "user-agent": ua }), ...(lang && { "accept-language": lang }), ...(accept && { accept }), ...(referer && { referer }) };
+      }
     }
     // Strip user PII
     if (event.user) {

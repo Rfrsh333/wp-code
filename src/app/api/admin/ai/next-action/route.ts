@@ -4,6 +4,7 @@ import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-
 import { supabaseAdmin } from "@/lib/supabase";
 import { determineNextAction } from "@/lib/agents/smart-sequence";
 import { isOpenAIConfigured } from "@/lib/openai";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -99,7 +100,8 @@ export async function POST(request: NextRequest) {
           await calculateAndSaveNextAction(lead.id, false);
           processed++;
         } catch (err) {
-          console.error(`Next action failed for ${lead.id}:`, err);
+          captureRouteError(err, { route: "/api/admin/ai/next-action", action: "POST" });
+          // console.error(`Next action failed for ${lead.id}:`, err);
         }
       }
 
@@ -136,7 +138,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Next action error:", error);
+    captureRouteError(error, { route: "/api/admin/ai/next-action", action: "POST" });
+    // console.error("Next action error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

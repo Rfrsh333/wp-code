@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { buildReminderEmailHtml } from "@/lib/email-templates";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 // Dagelijkse cron: stuurt reminders 24u voor afspraken
 // Configureer via Vercel Cron of externe scheduler: GET /api/cron/afspraak-reminder
@@ -12,6 +13,8 @@ export async function GET(request: NextRequest) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-afspraak-reminder", async () => {
 
   try {
     // Zoek bookings die morgen plaatsvinden en nog geen reminder hebben gehad
@@ -28,7 +31,8 @@ export async function GET(request: NextRequest) {
       .eq("reminder_email_sent", false);
 
     if (dbError) {
-      console.error("Reminder DB error:", dbError);
+      captureRouteError(dbError, { route: "/api/cron/afspraak-reminder", action: "GET" });
+      // console.error("Reminder DB error:", dbError);
       return NextResponse.json({ error: "Database fout" }, { status: 500 });
     }
 
@@ -79,7 +83,8 @@ export async function GET(request: NextRequest) {
 
         sent++;
       } catch (emailError) {
-        console.error(`Reminder email fout voor ${booking.client_email}:`, emailError);
+        captureRouteError(emailError, { route: "/api/cron/afspraak-reminder", action: "GET" });
+        // console.error(`Reminder email fout voor ${booking.client_email}:`, emailError);
       }
     }
 
@@ -90,7 +95,9 @@ export async function GET(request: NextRequest) {
       datum: tomorrowStr,
     });
   } catch (error) {
-    console.error("Reminder cron error:", error);
+    captureRouteError(error, { route: "/api/cron/afspraak-reminder", action: "GET" });
+    // console.error("Reminder cron error:", error);
     return NextResponse.json({ error: "Cron job mislukt" }, { status: 500 });
   }
+  });
 }

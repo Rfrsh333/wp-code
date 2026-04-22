@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   // Verificeer cron secret
@@ -9,6 +10,8 @@ export async function POST(request: NextRequest) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-daily-cleanup", async () => {
 
   const results: Record<string, unknown> = {};
   const gisteren = new Date();
@@ -26,7 +29,8 @@ export async function POST(request: NextRequest) {
 
     results.verlopen_diensten_gesloten = verlopenDiensten?.length || 0;
     if (verlopenError) {
-      console.error("[CRON] Verlopen diensten error:", verlopenError);
+      captureRouteError(verlopenError, { route: "/api/cron/daily-cleanup", action: "POST" });
+      // console.error("[CRON] Verlopen diensten error:", verlopenError);
       results.verlopen_error = verlopenError.message;
     }
 
@@ -69,7 +73,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, results });
   } catch (error) {
-    console.error("[CRON] Daily cleanup error:", error);
+    captureRouteError(error, { route: "/api/cron/daily-cleanup", action: "POST" });
+    // console.error("[CRON] Daily cleanup error:", error);
     return NextResponse.json({ error: "Cleanup mislukt" }, { status: 500 });
   }
+  });
 }

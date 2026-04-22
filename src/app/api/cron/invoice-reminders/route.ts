@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { buildFactuurHerinneringHtml } from "@/lib/email-templates";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-invoice-reminders", async () => {
 
   try {
     // Find unpaid invoices older than 30 days
@@ -44,13 +47,16 @@ export async function GET(request: NextRequest) {
         });
         sent++;
       } catch (err) {
-        console.error(`Failed to send invoice reminder for ${factuur.factuur_nummer}:`, err);
+        captureRouteError(err, { route: "/api/cron/invoice-reminders", action: "GET" });
+        // console.error(`Failed to send invoice reminder for ${factuur.factuur_nummer}:`, err);
       }
     }
 
     return NextResponse.json({ success: true, checked: facturen?.length || 0, sent });
   } catch (error) {
-    console.error("Invoice reminder cron error:", error);
+    captureRouteError(error, { route: "/api/cron/invoice-reminders", action: "GET" });
+    // console.error("Invoice reminder cron error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
+  });
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 // Draait dagelijks om 09:00 - checkt per klant of 2 weken verstreken zijn sinds eerste goedkeuring of laatste factuur
 
@@ -9,6 +10,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-facturen", async () => {
 
   try {
     const now = new Date();
@@ -96,7 +99,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, results });
   } catch (error) {
-    console.error("Cron facturen error:", error);
+    captureRouteError(error, { route: "/api/cron/facturen", action: "GET" });
+    // console.error("Cron facturen error:", error);
     return NextResponse.json({ error: "Fout bij automatische facturatie" }, { status: 500 });
   }
+  });
 }

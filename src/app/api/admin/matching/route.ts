@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { findMatchesForDienst, inviteMedewerkersForDienst } from "@/lib/matching";
 import { matchingPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -19,7 +20,8 @@ export async function GET(request: NextRequest) {
     const result = await findMatchesForDienst(dienstId);
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Matching error:", error);
+    captureRouteError(error, { route: "/api/admin/matching", action: "GET" });
+    // console.error("Matching error:", error);
     return NextResponse.json(
       { error: "Matching mislukt" },
       { status: 500 }
@@ -45,7 +47,8 @@ export async function POST(request: NextRequest) {
     const result = await inviteMedewerkersForDienst(dienst_id, medewerker_ids);
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Invite error:", error);
+    captureRouteError(error, { route: "/api/admin/matching", action: "POST" });
+    // console.error("Invite error:", error);
     return NextResponse.json({ error: "Uitnodigen mislukt" }, { status: 500 });
   }
 }

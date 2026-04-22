@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { buildReminderEmailHtml } from "@/lib/email-templates";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-booking-reminders", async () => {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
 
@@ -75,7 +78,8 @@ export async function GET(request: NextRequest) {
 
       sent++;
     } catch (err) {
-      console.error(`Reminder email failed for booking ${booking.id}:`, err);
+      captureRouteError(err, { route: "/api/cron/booking-reminders", action: "GET" });
+      // console.error(`Reminder email failed for booking ${booking.id}:`, err);
       failed++;
     }
   }
@@ -86,5 +90,6 @@ export async function GET(request: NextRequest) {
     sent,
     failed,
     total: morgenBookings.length,
+  });
   });
 }

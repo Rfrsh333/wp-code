@@ -10,6 +10,7 @@ import { buildAutoReplyEmailHtml } from "@/lib/email-templates";
 import { getOfferteAutoMode } from "@/lib/agents/offerte-generator";
 import { escapeHtml } from "@/lib/sanitize";
 import { personeelAanvraagSchema, formatZodErrors } from "@/lib/validations";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface FormData {
   bedrijfsnaam: string;
@@ -239,12 +240,7 @@ export async function POST(request: NextRequest) {
     }).select().single();
 
     if (dbError) {
-      console.error("[DATABASE ERROR] Failed to save personeel aanvraag to Supabase:", dbError);
-      console.error("[DATABASE ERROR] Request data:", JSON.stringify({
-        bedrijfsnaam: data.bedrijfsnaam,
-        email: data.email,
-        timestamp: new Date().toISOString()
-      }));
+      captureRouteError(dbError, { route: "/api/personeel-aanvragen", action: "POST" });
 
       // Stuur Telegram alert met database error waarschuwing (geen PII — AVG compliance)
       sendTelegramAlert(
@@ -268,10 +264,12 @@ export async function POST(request: NextRequest) {
         html: emailHtml,
       });
       if (error) {
-        console.error("Resend admin email error:", JSON.stringify(error, null, 2));
+        captureRouteError(error, { route: "/api/personeel-aanvragen", action: "POST" });
+        // console.error("Resend admin email error:", JSON.stringify(error, null, 2));
       }
     } catch (emailErr) {
-      console.error("Admin email error:", emailErr);
+      captureRouteError(emailErr, { route: "/api/personeel-aanvragen", action: "POST" });
+      // console.error("Admin email error:", emailErr);
     }
 
     // 3. Achtergrondtaken: referral tracking, telegram, auto-reply, offerte generatie
@@ -290,7 +288,8 @@ export async function POST(request: NextRequest) {
               .eq("status", "pending")
               .is("referred_id", null);
           } catch (refError) {
-            console.error("Referral tracking error:", refError);
+            captureRouteError(refError, { route: "/api/personeel-aanvragen", action: "POST" });
+            // console.error("Referral tracking error:", refError);
           }
         }
 
@@ -359,7 +358,8 @@ export async function POST(request: NextRequest) {
             }
           }
         } catch (autoReplyErr) {
-          console.error("Auto-reply error:", autoReplyErr);
+          captureRouteError(autoReplyErr, { route: "/api/personeel-aanvragen", action: "POST" });
+          // console.error("Auto-reply error:", autoReplyErr);
         }
 
         // Auto offerte generatie
@@ -390,17 +390,20 @@ export async function POST(request: NextRequest) {
               }
             }
           } catch (offerteErr) {
-            console.error("Auto offerte generatie error:", offerteErr);
+            captureRouteError(offerteErr, { route: "/api/personeel-aanvragen", action: "POST" });
+            // console.error("Auto offerte generatie error:", offerteErr);
           }
         }
       } catch (bgErr) {
-        console.error("Background tasks error:", bgErr);
+        captureRouteError(bgErr, { route: "/api/personeel-aanvragen", action: "POST" });
+        // console.error("Background tasks error:", bgErr);
       }
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API error:", error);
+    captureRouteError(error, { route: "/api/personeel-aanvragen", action: "POST" });
+    // console.error("API error:", error);
     return NextResponse.json(
       { error: "Er is een fout opgetreden" },
       { status: 500 }

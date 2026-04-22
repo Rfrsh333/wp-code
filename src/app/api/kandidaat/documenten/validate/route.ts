@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest) {
       uploaded_documents: documents || [],
     });
   } catch (error) {
-    console.error("Validate token error:", error);
+    captureRouteError(error, { route: "/api/kandidaat/documenten/validate", action: "GET" });
+    // console.error("Validate token error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // Public GET — anyone can fetch the options (klant portal needs these)
 export async function GET(request: NextRequest) {
@@ -19,7 +20,8 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query;
   if (error) {
-    console.error("[PLATFORM OPTIONS] GET Error:", error.message);
+    captureRouteError(error, { route: "/api/platform-options", action: "GET" });
+    // console.error("[PLATFORM OPTIONS] GET Error:", error.message);
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 

@@ -8,6 +8,7 @@ import {
   sendWelkomstmail,
   logEmail,
 } from "@/lib/candidate-onboarding";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface OnboardingRequest {
   kandidaat_id: string;
@@ -100,7 +101,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (emailResult.error) {
-      console.error("Email send error:", emailResult.error);
+      captureRouteError(new Error("/api/admin/inschrijvingen/onboarding POST error"), { route: "/api/admin/inschrijvingen/onboarding", action: "POST" });
+      // console.error("Email send error:", emailResult.error);
       return NextResponse.json({ error: "Email verzenden mislukt" }, { status: 500 });
     }
 
@@ -127,7 +129,8 @@ export async function POST(request: NextRequest) {
       email_id: emailResult.data?.id,
     });
   } catch (error) {
-    console.error("Onboarding email error:", error);
+    captureRouteError(error, { route: "/api/admin/inschrijvingen/onboarding", action: "POST" });
+    // console.error("Onboarding email error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

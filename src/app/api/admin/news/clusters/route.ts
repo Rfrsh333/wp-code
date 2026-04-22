@@ -4,6 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { listRecentClusters } from "@/lib/content/repository";
 import { generateDraftFromCluster } from "@/lib/content/services/draft-orchestrator";
 import { logAuditEvent } from "@/lib/audit-log";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export const maxDuration = 60;
 
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
     const clusters = await listRecentClusters(25);
     return NextResponse.json({ clusters });
   } catch (error) {
-    console.error("[news/clusters] GET error:", error);
+    captureRouteError(error, { route: "/api/admin/news/clusters", action: "GET" });
+    // console.error("[news/clusters] GET error:", error);
     return NextResponse.json({ clusters: [], error: "Clusters konden niet geladen worden" }, { status: 500 });
   }
 }
@@ -64,7 +66,8 @@ export async function POST(request: NextRequest) {
       draftId: result.draftId,
     });
   } catch (error) {
-    console.error("[content] Failed to generate draft from cluster", error);
+    captureRouteError(error, { route: "/api/admin/news/clusters", action: "POST" });
+    // console.error("[content] Failed to generate draft from cluster", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Draft generatie mislukt" },
       { status: 500 },

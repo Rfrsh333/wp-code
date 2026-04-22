@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { notifyKlantReviewReminder } from "@/lib/klant-push-triggers";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 /**
  * Review Reminders Cron
@@ -16,6 +17,8 @@ export async function POST(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-review-reminders", async () => {
 
   const startTime = Date.now();
   let sent = 0;
@@ -99,7 +102,8 @@ export async function POST(request: NextRequest) {
       }
     }
   } catch (error) {
-    console.error("[CRON review-reminders] Onverwachte fout:", error);
+    captureRouteError(error, { route: "/api/cron/review-reminders", action: "POST" });
+    // console.error("[CRON review-reminders] Onverwachte fout:", error);
     return NextResponse.json({ error: "Onverwachte fout" }, { status: 500 });
   }
 
@@ -108,5 +112,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     success: true,
     metrics: { sent, skipped, duration_ms: duration },
+  });
   });
 }

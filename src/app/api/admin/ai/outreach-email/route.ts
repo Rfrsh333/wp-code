@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { generateOutreachEmail } from "@/lib/agents/outreach-email";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { sendEmail } from "@/lib/email-service";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -78,7 +79,8 @@ export async function POST(request: NextRequest) {
       });
 
       if (emailError) {
-        console.error("Email send error:", emailError);
+        captureRouteError(emailError, { route: "/api/admin/ai/outreach-email", action: "POST" });
+        // console.error("Email send error:", emailError);
         return NextResponse.json({ error: "Email versturen mislukt" }, { status: 500 });
       }
 
@@ -109,7 +111,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Ongeldige actie" }, { status: 400 });
   } catch (error) {
-    console.error("Outreach email error:", error);
+    captureRouteError(error, { route: "/api/admin/ai/outreach-email", action: "POST" });
+    // console.error("Outreach email error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/email-templates";
 import { randomBytes } from "crypto";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface EventType {
   id: string;
@@ -301,7 +302,8 @@ export async function GET(request: NextRequest) {
       sender_name: settingsMap.sender_name || "TopTalent Jobs",
     });
   } catch (error) {
-    console.error("Bookings GET error:", error);
+    captureRouteError(error, { route: "/api/bookings", action: "GET" });
+    // console.error("Bookings GET error:", error);
     return NextResponse.json({ error: "Kon slots niet ophalen" }, { status: 500 });
   }
 }
@@ -483,7 +485,8 @@ export async function POST(request: NextRequest) {
           .update({ is_booked: false, is_available: true })
           .eq("id", actualSlotId);
       }
-      console.error("Booking create error:", bookingError);
+      captureRouteError(bookingError, { route: "/api/bookings", action: "POST" });
+      // console.error("Booking create error:", bookingError);
       return NextResponse.json({ error: "Kon boeking niet aanmaken" }, { status: 500 });
     }
 
@@ -589,7 +592,8 @@ export async function POST(request: NextRequest) {
             .update({ confirmation_email_sent: true })
             .eq("id", booking.id);
         } catch (emailErr) {
-          console.error("Kandidaat booking confirmation email error:", emailErr);
+          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
+          // console.error("Kandidaat booking confirmation email error:", emailErr);
         }
 
         // Admin notificatie
@@ -610,7 +614,8 @@ export async function POST(request: NextRequest) {
             }),
           });
         } catch (emailErr) {
-          console.error("Kandidaat booking notification email error:", emailErr);
+          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
+          // console.error("Kandidaat booking notification email error:", emailErr);
         }
       } else {
         // Klant bevestigingsmail
@@ -635,7 +640,8 @@ export async function POST(request: NextRequest) {
             .update({ confirmation_email_sent: true })
             .eq("id", booking.id);
         } catch (emailErr) {
-          console.error("Booking confirmation email error:", emailErr);
+          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
+          // console.error("Booking confirmation email error:", emailErr);
         }
 
         try {
@@ -656,7 +662,8 @@ export async function POST(request: NextRequest) {
             }),
           });
         } catch (emailErr) {
-          console.error("Booking notification email error:", emailErr);
+          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
+          // console.error("Booking notification email error:", emailErr);
         }
       }
 
@@ -676,7 +683,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Booking POST error:", error);
+    captureRouteError(error, { route: "/api/bookings", action: "POST" });
+    // console.error("Booking POST error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

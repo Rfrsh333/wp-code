@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { createMollieClient } from "@mollie/api-client";
 import { logAuditEvent } from "@/lib/audit-log";
 import crypto from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 function getMollieClient() {
   if (!process.env.MOLLIE_API_KEY) {
@@ -21,19 +22,22 @@ function verifyMollieSignature(rawBody: string, signatureHeader: string | null):
 
   // Fail-closed: zonder secret wordt de webhook geweigerd
   if (!webhookSecret) {
-    console.error("[MOLLIE WEBHOOK] MOLLIE_WEBHOOK_SECRET niet geconfigureerd — webhook geweigerd");
+    captureRouteError(new Error("/api/webhooks/mollie UNKNOWN error"), { route: "/api/webhooks/mollie", action: "UNKNOWN" });
+    // console.error("[MOLLIE WEBHOOK] MOLLIE_WEBHOOK_SECRET niet geconfigureerd — webhook geweigerd");
     return false;
   }
 
   if (!signatureHeader) {
-    console.error("[MOLLIE WEBHOOK] Geen Mollie-Signature header ontvangen");
+    captureRouteError(new Error("/api/webhooks/mollie UNKNOWN error"), { route: "/api/webhooks/mollie", action: "UNKNOWN" });
+    // console.error("[MOLLIE WEBHOOK] Geen Mollie-Signature header ontvangen");
     return false;
   }
 
   // Mollie stuurt "v1=<hmac>"
   const parts = signatureHeader.split("=");
   if (parts.length < 2 || parts[0] !== "v1") {
-    console.error("[MOLLIE WEBHOOK] Ongeldig signature formaat:", signatureHeader);
+    captureRouteError(new Error("/api/webhooks/mollie UNKNOWN error"), { route: "/api/webhooks/mollie", action: "UNKNOWN" });
+    // console.error("[MOLLIE WEBHOOK] Ongeldig signature formaat:", signatureHeader);
     return false;
   }
 
@@ -62,7 +66,8 @@ export async function POST(request: NextRequest) {
 
     // Verifieer webhook signature
     if (!verifyMollieSignature(rawBody, signatureHeader)) {
-      console.error("[MOLLIE WEBHOOK] Ongeldige signature — mogelijke spoofing poging");
+      captureRouteError(new Error("/api/webhooks/mollie POST error"), { route: "/api/webhooks/mollie", action: "POST" });
+      // console.error("[MOLLIE WEBHOOK] Ongeldige signature — mogelijke spoofing poging");
       await logAuditEvent({
         action: "mollie_webhook_signature_invalid",
         targetTable: "boetes",
@@ -129,7 +134,8 @@ export async function POST(request: NextRequest) {
     // Mollie verwacht altijd 200 OK terug
     return new NextResponse("OK", { status: 200 });
   } catch (error) {
-    console.error("[MOLLIE WEBHOOK] Error:", error);
+    captureRouteError(error, { route: "/api/webhooks/mollie", action: "POST" });
+    // console.error("[MOLLIE WEBHOOK] Error:", error);
     // Return 200 om retries te voorkomen bij onverwachte fouten
     return new NextResponse("OK", { status: 200 });
   }

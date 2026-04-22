@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { sendShiftReactieEmail } from "@/lib/notifications";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -90,7 +91,8 @@ export async function PATCH(request: NextRequest) {
       });
     }
   } catch (emailError) {
-    console.error("Error sending shift reactie email:", emailError);
+    captureRouteError(emailError, { route: "/api/medewerker/aanbiedingen", action: "PATCH" });
+    // console.error("Error sending shift reactie email:", emailError);
   }
 
   return NextResponse.json({ success: true });

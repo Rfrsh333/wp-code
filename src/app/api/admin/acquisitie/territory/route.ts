@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -349,7 +350,8 @@ export async function POST(request: NextRequest) {
             }
           }
         } catch (err) {
-          console.error("Route optimization error:", err);
+          captureRouteError(err, { route: "/api/admin/acquisitie/territory", action: "POST" });
+          // console.error("Route optimization error:", err);
         }
       }
 
@@ -379,7 +381,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Territory error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/territory", action: "POST" });
+    // console.error("Territory error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

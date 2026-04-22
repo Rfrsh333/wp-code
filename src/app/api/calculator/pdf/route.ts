@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { CalculatorPDF } from "@/lib/pdf/calculator-pdf";
 import type { CalculatorInputs, Resultaten, VergelijkingType, FunctieType, ErvaringType, InzetType } from "@/lib/calculator/types";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // ============================================================================
 // PDF Generation API
@@ -115,7 +116,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("PDF generation error:", error);
+    captureRouteError(error, { route: "/api/calculator/pdf", action: "GET" });
+    // console.error("PDF generation error:", error);
     return NextResponse.json(
       { error: "Fout bij genereren van PDF" },
       { status: 500 }

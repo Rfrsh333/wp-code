@@ -5,6 +5,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 import bcrypt from "bcryptjs";
 import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { validatePasswordSecurity } from "@/lib/password-security";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -112,13 +113,15 @@ export async function POST(request: NextRequest) {
     if (action === "create") {
       const { error } = await supabaseAdmin.from("medewerkers").insert(payload);
       if (error) {
-        console.error("[MEDEWERKERS] Insert error:", error);
+        captureRouteError(error, { route: "/api/admin/medewerkers", action: "POST" });
+        // console.error("[MEDEWERKERS] Insert error:", error);
         return NextResponse.json({ error: error.message || "Er is een fout opgetreden" }, { status: 500 });
       }
     } else {
       const { error } = await supabaseAdmin.from("medewerkers").update(payload).eq("id", id);
       if (error) {
-        console.error("[MEDEWERKERS] Update error:", error);
+        captureRouteError(error, { route: "/api/admin/medewerkers", action: "POST" });
+        // console.error("[MEDEWERKERS] Update error:", error);
         return NextResponse.json({ error: error.message || "Er is een fout opgetreden" }, { status: 500 });
       }
     }

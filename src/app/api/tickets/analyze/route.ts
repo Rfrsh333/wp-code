@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { chatCompletion, isOpenAIConfigured } from "@/lib/openai";
 import { sendEmail } from "@/lib/email-service";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface TicketSubmission {
   question: string;
@@ -56,7 +57,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError || !ticket) {
-      console.error("Ticket insert error:", insertError);
+      captureRouteError(insertError, { route: "/api/tickets/analyze", action: "POST" });
+      // console.error("Ticket insert error:", insertError);
       return NextResponse.json(
         { error: "Kon vraag niet opslaan." },
         { status: 500 }
@@ -121,7 +123,8 @@ Antwoord ALLEEN in valid JSON format:
           analysis = JSON.parse(jsonMatch[0]) as AIAnalysis;
         }
       } catch (aiError) {
-        console.error("AI analysis error:", aiError);
+        captureRouteError(aiError, { route: "/api/tickets/analyze", action: "POST" });
+        // console.error("AI analysis error:", aiError);
         // Continue without AI analysis
       }
     }
@@ -176,7 +179,8 @@ Antwoord ALLEEN in valid JSON format:
           `,
         });
       } catch (emailError) {
-        console.error("Email notification error:", emailError);
+        captureRouteError(emailError, { route: "/api/tickets/analyze", action: "POST" });
+        // console.error("Email notification error:", emailError);
       }
     }
 
@@ -185,7 +189,8 @@ Antwoord ALLEEN in valid JSON format:
       message: "Bedankt! We beantwoorden je vraag zo snel mogelijk.",
     });
   } catch (error) {
-    console.error("Ticket analyze error:", error);
+    captureRouteError(error, { route: "/api/tickets/analyze", action: "POST" });
+    // console.error("Ticket analyze error:", error);
     return NextResponse.json(
       { error: "Er ging iets mis. Probeer het later opnieuw." },
       { status: 500 }

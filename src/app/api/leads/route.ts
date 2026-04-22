@@ -3,6 +3,7 @@ import { supabaseAdmin as supabase } from '@/lib/supabase'
 import { verifyAdmin } from '@/lib/admin-auth'
 import { checkRedisRateLimit, apiRateLimit, getClientIP } from '@/lib/rate-limit-redis'
 import { z } from 'zod'
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const VALID_PLATFORMS = ['facebook', 'linkedin', 'instagram', 'google', 'website', 'handmatig'] as const
 const VALID_STATUSES = ['nieuw', 'benaderd', 'in_gesprek', 'geplaatst', 'archief', 'niet_interested'] as const
@@ -102,7 +103,8 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
+      captureRouteError(error, { route: "/api/leads", action: "POST" });
+      // console.error('Supabase error:', error)
       return NextResponse.json(
         { error: 'Opslaan mislukt' },
         { status: 500, headers: corsHeaders(origin) }
@@ -114,7 +116,8 @@ export async function POST(request: NextRequest) {
       { status: 201, headers: corsHeaders(origin) }
     )
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads", action: "POST" });
+    // console.error('API error:', error)
     return NextResponse.json(
       { error: 'Er is een fout opgetreden' },
       { status: 500, headers: corsHeaders(origin) }
@@ -174,7 +177,8 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query
 
     if (error) {
-      console.error('Supabase error:', error)
+      captureRouteError(error, { route: "/api/leads", action: "GET" });
+      // console.error('Supabase error:', error)
       return NextResponse.json(
         { error: 'Ophalen mislukt' },
         { status: 500 }
@@ -188,7 +192,8 @@ export async function GET(request: NextRequest) {
       limit,
     })
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads", action: "GET" });
+    // console.error('API error:', error)
     return NextResponse.json(
       { error: 'Er is een fout opgetreden' },
       { status: 500 }

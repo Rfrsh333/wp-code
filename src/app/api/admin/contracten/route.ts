@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { hasRequiredAdminRole, verifyAdmin } from "@/lib/admin-auth";
 import { contractenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { createHash } from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // Contract nummer generator: TT-2026-0001
 async function generateContractNummer(): Promise<string> {
@@ -62,7 +63,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
 
   if (error) {
-    console.error("[CONTRACTEN] GET error:", error);
+    captureRouteError(error, { route: "/api/admin/contracten", action: "GET" });
+    // console.error("[CONTRACTEN] GET error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -103,7 +105,8 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error) {
-        console.error("[CONTRACTEN] Insert error:", error);
+        captureRouteError(error, { route: "/api/admin/contracten", action: "POST" });
+        // console.error("[CONTRACTEN] Insert error:", error);
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
 
@@ -137,7 +140,8 @@ export async function POST(request: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        console.error("[CONTRACTEN] Update error:", error);
+        captureRouteError(error, { route: "/api/admin/contracten", action: "POST" });
+        // console.error("[CONTRACTEN] Update error:", error);
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
 
@@ -165,7 +169,8 @@ export async function POST(request: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        console.error("[CONTRACTEN] Delete error:", error);
+        captureRouteError(error, { route: "/api/admin/contracten", action: "POST" });
+        // console.error("[CONTRACTEN] Delete error:", error);
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
       return NextResponse.json({ success: true });
@@ -188,7 +193,8 @@ export async function POST(request: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        console.error("[CONTRACTEN] Verzend error:", error);
+        captureRouteError(error, { route: "/api/admin/contracten", action: "POST" });
+        // console.error("[CONTRACTEN] Verzend error:", error);
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
 
@@ -227,7 +233,8 @@ export async function POST(request: NextRequest) {
             }),
           });
         } catch (emailErr) {
-          console.error("[CONTRACTEN] Email send failed:", emailErr);
+          captureRouteError(emailErr, { route: "/api/admin/contracten", action: "POST" });
+          // console.error("[CONTRACTEN] Email send failed:", emailErr);
           // Niet fataal - contract is al verzonden
         }
       }
@@ -257,7 +264,8 @@ export async function POST(request: NextRequest) {
         });
 
       if (signError) {
-        console.error("[CONTRACTEN] Admin sign error:", signError);
+        captureRouteError(signError, { route: "/api/admin/contracten", action: "POST" });
+        // console.error("[CONTRACTEN] Admin sign error:", signError);
         return NextResponse.json({ error: signError.message }, { status: 400 });
       }
 
@@ -285,7 +293,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);
-    console.error("[CONTRACTEN] POST error:", message);
+    captureRouteError(err, { route: "/api/admin/contracten", action: "POST" });
+    // console.error("[CONTRACTEN] POST error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

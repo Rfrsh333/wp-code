@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -133,7 +134,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: contactmoment }, { status: 201 });
   } catch (error) {
-    console.error("Contactmoment error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/contactmomenten", action: "POST" });
+    // console.error("Contactmoment error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

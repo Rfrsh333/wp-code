@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,13 +41,15 @@ export async function POST(request: NextRequest) {
       .eq("id", aanmelding.id);
 
     if (updateError) {
-      console.error("Decline dienst error:", updateError);
+      captureRouteError(updateError, { route: "/api/medewerker/diensten/decline", action: "POST" });
+      // console.error("Decline dienst error:", updateError);
       return NextResponse.json({ error: "Afwijzen mislukt" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Decline dienst error:", error);
+    captureRouteError(error, { route: "/api/medewerker/diensten/decline", action: "POST" });
+    // console.error("Decline dienst error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

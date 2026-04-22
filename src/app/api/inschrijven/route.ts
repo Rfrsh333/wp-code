@@ -5,6 +5,7 @@ import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limi
 import { verifyRecaptcha } from "@/lib/recaptcha";
 import { escapeHtml } from "@/lib/sanitize";
 import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -242,7 +243,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (dbError) {
-      console.error("Supabase error:", dbError);
+      captureRouteError(dbError, { route: "/api/inschrijven", action: "POST" });
+      // console.error("Supabase error:", dbError);
       return NextResponse.json({ error: "Database fout" }, { status: 500 });
     }
 
@@ -256,10 +258,12 @@ export async function POST(request: NextRequest) {
         html: emailHtml,
       });
       if (error) {
-        console.error("Resend admin email error:", error);
+        captureRouteError(error, { route: "/api/inschrijven", action: "POST" });
+        // console.error("Resend admin email error:", error);
       }
     } catch (emailErr) {
-      console.error("Admin email error:", emailErr);
+      captureRouteError(emailErr, { route: "/api/inschrijven", action: "POST" });
+      // console.error("Admin email error:", emailErr);
     }
 
     // 3. Achtergrondtaken: bevestigingsmail + referral tracking
@@ -279,10 +283,12 @@ export async function POST(request: NextRequest) {
               .eq("status", "pending")
               .is("referred_id", null);
             if (refDbError) {
-              console.error("Referral tracking DB error:", refDbError);
+              captureRouteError(refDbError, { route: "/api/inschrijven", action: "POST" });
+              // console.error("Referral tracking DB error:", refDbError);
             }
           } catch (refError) {
-            console.error("Referral tracking error:", refError);
+            captureRouteError(refError, { route: "/api/inschrijven", action: "POST" });
+            // console.error("Referral tracking error:", refError);
           }
         }
 
@@ -307,17 +313,20 @@ export async function POST(request: NextRequest) {
               emailResult.data?.id
             );
           } catch (emailError) {
-            console.error("Bevestigingsmail error:", emailError);
+            captureRouteError(emailError, { route: "/api/inschrijven", action: "POST" });
+            // console.error("Bevestigingsmail error:", emailError);
           }
         }
       } catch (bgErr) {
-        console.error("Background tasks error:", bgErr);
+        captureRouteError(bgErr, { route: "/api/inschrijven", action: "POST" });
+        // console.error("Background tasks error:", bgErr);
       }
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Inschrijven error:", error);
+    captureRouteError(error, { route: "/api/inschrijven", action: "POST" });
+    // console.error("Inschrijven error:", error);
     return NextResponse.json(
       { error: "Er is iets misgegaan bij het verwerken van de inschrijving" },
       { status: 500 }

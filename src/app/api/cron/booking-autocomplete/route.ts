@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { withCronMonitor } from "@/lib/sentry-utils";
 
 // Auto-complete: markeer afspraken in het verleden als "completed" of "no_show"
 export async function GET(request: NextRequest) {
@@ -7,6 +8,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-booking-autocomplete", async () => {
 
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0];
@@ -41,5 +44,6 @@ export async function GET(request: NextRequest) {
     success: true,
     completed,
     checked_at: now.toISOString(),
+  });
   });
 }

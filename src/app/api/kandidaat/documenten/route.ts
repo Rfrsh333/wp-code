@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // 🚀 Optimized: O(1) token validation via database lookup
 async function validateUploadToken(token: string): Promise<{ valid: boolean; kandidaatId?: string }> {
@@ -61,7 +62,8 @@ export async function GET(request: NextRequest) {
       uploaded_documents: documents || [],
     });
   } catch (error) {
-    console.error("Validate token error:", error);
+    captureRouteError(error, { route: "/api/kandidaat/documenten", action: "GET" });
+    // console.error("Validate token error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -110,7 +112,8 @@ export async function POST(request: NextRequest) {
       .eq("inschrijving_id", validation.kandidaatId);
 
     if (countError) {
-      console.error("Count error:", countError);
+      captureRouteError(countError, { route: "/api/kandidaat/documenten", action: "POST" });
+      // console.error("Count error:", countError);
     }
 
     if (existingDocs && existingDocs.length >= 20) {
@@ -136,7 +139,8 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
+      captureRouteError(uploadError, { route: "/api/kandidaat/documenten", action: "POST" });
+      // console.error("Upload error:", uploadError);
       return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
     }
 
@@ -156,7 +160,8 @@ export async function POST(request: NextRequest) {
       });
 
     if (dbError) {
-      console.error("Database error:", dbError);
+      captureRouteError(dbError, { route: "/api/kandidaat/documenten", action: "POST" });
+      // console.error("Database error:", dbError);
       // Try to cleanup uploaded file
       await supabaseAdmin.storage.from('kandidaat-documenten').remove([fileName]);
       return NextResponse.json({ error: "Database fout" }, { status: 500 });
@@ -202,7 +207,8 @@ export async function POST(request: NextRequest) {
           });
         }
       } catch (emailError) {
-        console.error("Failed to send document confirmation email:", emailError);
+        captureRouteError(emailError, { route: "/api/kandidaat/documenten", action: "POST" });
+        // console.error("Failed to send document confirmation email:", emailError);
       }
     }
 
@@ -213,7 +219,8 @@ export async function POST(request: NextRequest) {
       file_size: file.size,
     });
   } catch (error) {
-    console.error("Upload error:", error);
+    captureRouteError(error, { route: "/api/kandidaat/documenten", action: "POST" });
+    // console.error("Upload error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

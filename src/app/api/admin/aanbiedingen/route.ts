@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { sendShiftAanbiedingEmail } from "@/lib/notifications";
 import { aanbiedingenPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -57,7 +58,8 @@ export async function POST(request: NextRequest) {
   const { error } = await supabaseAdmin.from("dienst_aanbiedingen").insert(records);
 
   if (error) {
-    console.error("Error creating aanbiedingen:", error);
+    captureRouteError(error, { route: "/api/admin/aanbiedingen", action: "POST" });
+    // console.error("Error creating aanbiedingen:", error);
     return NextResponse.json({ error: "Kon aanbiedingen niet aanmaken" }, { status: 500 });
   }
 
@@ -87,12 +89,13 @@ export async function POST(request: NextRequest) {
             eindTijd: dienst.eind_tijd,
             locatie: dienst.locatie,
             notitie,
-          }).catch((e) => console.error(`Email to ${m.email} failed:`, e));
+          }).catch((e) => captureRouteError(e, { route: "/api/admin/aanbiedingen", action: "SEND_EMAIL" }));
         }
       }
     }
   } catch (emailError) {
-    console.error("Error sending aanbieding emails:", emailError);
+    captureRouteError(emailError, { route: "/api/admin/aanbiedingen", action: "POST" });
+    // console.error("Error sending aanbieding emails:", emailError);
   }
 
   return NextResponse.json({ success: true, count: records.length });

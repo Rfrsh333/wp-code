@@ -7,6 +7,7 @@ import { sendTelegramAlert } from "@/lib/telegram";
 import type { CalculatorInputs, Resultaten, LeadFormData } from "@/lib/calculator/types";
 import { berekenKosten, validateInputs } from "@/lib/calculator/calculate";
 import { functieLabels, ervaringLabels, dagen } from "@/lib/calculator/tarieven";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // ============================================================================
 // Types
@@ -335,7 +336,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (dbError) {
-      console.error("Database error:", dbError);
+      captureRouteError(dbError, { route: "/api/calculator/lead", action: "POST" });
+      // console.error("Database error:", dbError);
       // Continue anyway - email is more important
     }
 
@@ -373,7 +375,8 @@ export async function POST(request: NextRequest) {
       pdfToken,
     });
   } catch (error) {
-    console.error("API error:", error);
+    captureRouteError(error, { route: "/api/calculator/lead", action: "POST" });
+    // console.error("API error:", error);
     return NextResponse.json(
       { error: "Er is een fout opgetreden" },
       { status: 500 }

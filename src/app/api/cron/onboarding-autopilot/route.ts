@@ -5,6 +5,7 @@ import {
   sendDocumentenVerzoek,
   sendWelkomstmail,
 } from "@/lib/candidate-onboarding";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 import { logAuditEvent } from "@/lib/audit-log";
 
 const MAX_PER_RUN = 20;
@@ -44,6 +45,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  return withCronMonitor("cron-onboarding-autopilot", async () => {
+
   const results: string[] = [];
 
   try {
@@ -65,7 +68,8 @@ export async function GET(request: NextRequest) {
       .limit(MAX_PER_RUN);
 
     if (error) {
-      console.error("[ONBOARDING-AUTOPILOT] Query error:", error);
+      captureRouteError(error, { route: "/api/cron/onboarding-autopilot", action: "GET" });
+      // console.error("[ONBOARDING-AUTOPILOT] Query error:", error);
       return NextResponse.json({ error: "Database error" }, { status: 500 });
     }
 
@@ -204,7 +208,8 @@ export async function GET(request: NextRequest) {
           continue;
         }
       } catch (err) {
-        console.error(`[ONBOARDING-AUTOPILOT] Error for ${kandidaat.id}:`, err);
+        captureRouteError(err, { route: "/api/cron/onboarding-autopilot", action: "GET" });
+        // console.error(`[ONBOARDING-AUTOPILOT] Error for ${kandidaat.id}:`, err);
         results.push(`${kandidaat.voornaam} ${kandidaat.achternaam}: ERROR - ${err}`);
       }
 
@@ -224,9 +229,11 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (err) {
-    console.error("[ONBOARDING-AUTOPILOT] Fatal error:", err);
+    captureRouteError(err, { route: "/api/cron/onboarding-autopilot", action: "GET" });
+    // console.error("[ONBOARDING-AUTOPILOT] Fatal error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+  });
 }
 
 async function updateKandidaat(id: string, data: Record<string, unknown>) {
@@ -236,7 +243,8 @@ async function updateKandidaat(id: string, data: Record<string, unknown>) {
     .eq("id", id);
 
   if (error) {
-    console.error(`[ONBOARDING-AUTOPILOT] Update error for ${id}:`, error);
+    captureRouteError(error, { route: "/api/cron/onboarding-autopilot", action: "GET" });
+    // console.error(`[ONBOARDING-AUTOPILOT] Update error for ${id}:`, error);
     throw error;
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -66,7 +67,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    console.error("Error creating bericht:", error);
+    captureRouteError(error, { route: "/api/medewerker/berichten", action: "POST" });
+    // console.error("Error creating bericht:", error);
     return NextResponse.json({ error: "Kon bericht niet versturen" }, { status: 500 });
   }
 

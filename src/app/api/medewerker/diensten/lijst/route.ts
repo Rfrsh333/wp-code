@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,7 +38,8 @@ export async function GET(request: NextRequest) {
       .in("status", statusFilter);
 
     if (aanmeldingenError) {
-      console.error("[LIJST] Aanmeldingen ophalen error:", aanmeldingenError);
+      captureRouteError(aanmeldingenError, { route: "/api/medewerker/diensten/lijst", action: "GET" });
+      // console.error("[LIJST] Aanmeldingen ophalen error:", aanmeldingenError);
       return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
     }
 
@@ -54,7 +56,8 @@ export async function GET(request: NextRequest) {
       .in("id", dienstIds);
 
     if (dienstenError) {
-      console.error("[LIJST] Diensten ophalen error:", dienstenError);
+      captureRouteError(dienstenError, { route: "/api/medewerker/diensten/lijst", action: "GET" });
+      // console.error("[LIJST] Diensten ophalen error:", dienstenError);
       return NextResponse.json({ error: "Diensten ophalen mislukt" }, { status: 500 });
     }
 
@@ -157,7 +160,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ diensten: result, vervangingVerzoeken });
   } catch (error) {
-    console.error("[LIJST] Onverwachte error:", error);
+    captureRouteError(error, { route: "/api/medewerker/diensten/lijst", action: "GET" });
+    // console.error("[LIJST] Onverwachte error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

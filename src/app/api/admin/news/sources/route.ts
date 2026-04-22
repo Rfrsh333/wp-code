@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { listActiveSources } from "@/lib/content/repository";
 import { logAuditEvent } from "@/lib/audit-log";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const sourceInputSchema = z.object({
   name: z.string().min(2),
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
     const sources = await listActiveSources();
     return NextResponse.json({ sources });
   } catch (error) {
-    console.error("[news/sources] GET error:", error);
+    captureRouteError(error, { route: "/api/admin/news/sources", action: "GET" });
+    // console.error("[news/sources] GET error:", error);
     return NextResponse.json({ sources: [], error: "Bronnen konden niet geladen worden" }, { status: 500 });
   }
 }
@@ -56,7 +58,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    console.error("[content] Failed to create source", error);
+    captureRouteError(error, { route: "/api/admin/news/sources", action: "POST" });
+    // console.error("[content] Failed to create source", error);
     return NextResponse.json({ error: "Source could not be created" }, { status: 500 });
   }
 

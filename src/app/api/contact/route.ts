@@ -6,6 +6,7 @@ import { verifyRecaptcha } from "@/lib/recaptcha";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { contactSchema, formatZodErrors } from "@/lib/validations";
 import { escapeHtml } from "@/lib/sanitize";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface ContactFormData {
   naam: string;
@@ -139,7 +140,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Email service error details:", JSON.stringify(error, null, 2));
+      captureRouteError(error, { route: "/api/contact", action: "POST" });
+      // console.error("Email service error details:", JSON.stringify(error, null, 2));
 
       if (process.env.NODE_ENV !== "development") {
         return NextResponse.json(
@@ -165,7 +167,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (dbError) {
-      console.error("Supabase error:", dbError);
+      captureRouteError(error, { route: "/api/contact", action: "POST" });
+      // console.error("Supabase error:", dbError);
       return NextResponse.json(
         { error: "Fout bij opslaan bericht" },
         { status: 500 }
@@ -180,7 +183,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API error:", error);
+    captureRouteError(error, { route: "/api/contact", action: "POST" });
+    // console.error("API error:", error);
     return NextResponse.json(
       { error: "Er is een fout opgetreden" },
       { status: 500 }

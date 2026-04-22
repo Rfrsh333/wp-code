@@ -7,6 +7,7 @@ import {
   generateBackupCodes,
   hashBackupCodes,
 } from "@/lib/two-factor";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * GET /api/admin/2fa/setup
@@ -50,7 +51,8 @@ export async function GET(request: NextRequest) {
       });
 
     if (error) {
-      console.error("2FA setup database error:", error);
+      captureRouteError(error, { route: "/api/admin/2fa/setup", action: "GET" });
+      // console.error("2FA setup database error:", error);
       return NextResponse.json(
         { error: "Failed to setup 2FA" },
         { status: 500 }
@@ -64,7 +66,8 @@ export async function GET(request: NextRequest) {
       backupCodes, // Plain codes - gebruiker moet deze opslaan!
     });
   } catch (error) {
-    console.error("2FA setup error:", error);
+    captureRouteError(error, { route: "/api/admin/2fa/setup", action: "GET" });
+    // console.error("2FA setup error:", error);
     return NextResponse.json(
       { error: "Failed to setup 2FA" },
       { status: 500 }

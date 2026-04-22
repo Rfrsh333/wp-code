@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyKlantSession } from "@/lib/session";
 import { checkRedisRateLimit, apiRateLimit, getClientIP } from "@/lib/rate-limit-redis";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -91,7 +92,8 @@ Return format:
       },
     });
   } catch (error) {
-    console.error("AI offerte error:", error);
+    captureRouteError(error, { route: "/api/klant/ai-offerte", action: "POST" });
+    // console.error("AI offerte error:", error);
     return NextResponse.json({ error: "AI verwerking mislukt" }, { status: 500 });
   }
 }

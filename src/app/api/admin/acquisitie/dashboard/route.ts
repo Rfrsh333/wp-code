@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // Gemiddelde maandelijkse contractwaarde per branche (in euro's)
 const BRANCHE_WAARDEN: Record<string, number> = {
@@ -324,7 +325,8 @@ export async function GET(request: NextRequest) {
       campagnes: campagneStats,
     });
   } catch (error) {
-    console.error("Dashboard error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/dashboard", action: "GET" });
+    // console.error("Dashboard error:", error);
     return NextResponse.json({ error: "Dashboard data ophalen mislukt" }, { status: 500 });
   }
 }

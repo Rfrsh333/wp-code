@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { validatePasswordSecurity } from "@/lib/password-security";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function findValidMedewerkerResetToken(token: string) {
   const { data: medewerker } = await supabaseAdmin
@@ -84,7 +85,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Medewerker password reset error:", error);
+    captureRouteError(error, { route: "/api/medewerker/wachtwoord-reset", action: "POST" });
+    // console.error("Medewerker password reset error:", error);
     return NextResponse.json({ error: "Serverfout bij wachtwoord resetten" }, { status: 500 });
   }
 }

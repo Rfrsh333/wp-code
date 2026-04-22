@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { sendPushToUser } from "@/lib/push-notifications";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 type UrenRegistratie = { status: string };
 
@@ -409,7 +410,7 @@ export async function POST(request: NextRequest) {
         body: `${mwNaam?.voornaam || "Een medewerker"} heeft zich aangemeld voor ${dienstDetails.functie || "dienst"} op ${dienstDetails.datum}`,
         url: "/klant/uren/",
         tag: `aanmelding-${dienst_id}`,
-      }).catch((err) => console.error("Push naar klant mislukt:", err));
+      }).catch((e) => captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" }));
     }
   }
 

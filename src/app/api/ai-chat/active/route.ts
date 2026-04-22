@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession, verifyKlantSession } from "@/lib/session";
 import type { UserType } from "@/types/chatbot";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface SessionUser {
   id: string;
@@ -50,7 +51,8 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (convError) {
-      console.error("[AI-CHAT-ACTIVE] Conversation query error:", convError);
+      captureRouteError(convError, { route: "/api/ai-chat/active", action: "GET" });
+      // console.error("[AI-CHAT-ACTIVE] Conversation query error:", convError);
       return NextResponse.json({ error: "Fout bij ophalen gesprek" }, { status: 500 });
     }
 
@@ -66,7 +68,8 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: true });
 
     if (msgError) {
-      console.error("[AI-CHAT-ACTIVE] Messages query error:", msgError);
+      captureRouteError(msgError, { route: "/api/ai-chat/active", action: "GET" });
+      // console.error("[AI-CHAT-ACTIVE] Messages query error:", msgError);
       return NextResponse.json({ error: "Fout bij ophalen berichten" }, { status: 500 });
     }
 
@@ -75,7 +78,8 @@ export async function GET(request: NextRequest) {
       messages: messages || [],
     });
   } catch (error) {
-    console.error("[AI-CHAT-ACTIVE] Error:", error);
+    captureRouteError(error, { route: "/api/ai-chat/active", action: "GET" });
+    // console.error("[AI-CHAT-ACTIVE] Error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

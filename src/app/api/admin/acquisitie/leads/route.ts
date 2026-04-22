@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { scoreLead } from "@/lib/agents/lead-scoring";
 import { isOpenAIConfigured } from "@/lib/openai";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -52,7 +53,8 @@ export async function GET(request: NextRequest) {
   const { data, count, error } = await query;
 
   if (error) {
-    console.error("Acquisitie leads fetch error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/leads", action: "GET" });
+    // console.error("Acquisitie leads fetch error:", error);
     return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
   }
 
@@ -230,13 +232,15 @@ export async function POST(request: NextRequest) {
           );
         }
       } catch (scoreError) {
-        console.error("Auto-scoring failed:", scoreError);
+        captureRouteError(scoreError, { route: "/api/admin/acquisitie/leads", action: "POST" });
+        // console.error("Auto-scoring failed:", scoreError);
       }
     }
 
     return NextResponse.json({ data: newLead }, { status: 201 });
   } catch (error) {
-    console.error("Acquisitie lead error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/leads", action: "POST" });
+    // console.error("Acquisitie lead error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

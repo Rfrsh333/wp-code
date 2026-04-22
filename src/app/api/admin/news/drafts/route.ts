@@ -8,6 +8,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 import { queueDraftForPublish, publishApprovedDraft } from "@/lib/content/services/publish-service";
 import { generateHeroImageForDraft, findBestSourceImageUrl, downloadBrandAndUpload } from "@/lib/content/services/hero-image-orchestrator";
 import { regenerateBodyBlocks } from "@/lib/content/services/draft-generation-service";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const draftActionSchema = z.object({
   draftId: z.string().uuid(),
@@ -25,7 +26,8 @@ export async function GET(request: NextRequest) {
     const drafts = await listDraftsByStatus(undefined, 40);
     return NextResponse.json({ drafts });
   } catch (error) {
-    console.error("[news/drafts] GET error:", error);
+    captureRouteError(error, { route: "/api/admin/news/drafts", action: "GET" });
+    // console.error("[news/drafts] GET error:", error);
     return NextResponse.json({ drafts: [], error: "Drafts konden niet geladen worden" }, { status: 500 });
   }
 }
@@ -58,7 +60,8 @@ export async function POST(request: NextRequest) {
         .eq("id", parsed.data.draftId);
 
       if (error) {
-        console.error("[content] Failed to update draft status", error);
+        captureRouteError(error, { route: "/api/admin/news/drafts", action: "POST" });
+        // console.error("[content] Failed to update draft status", error);
         return NextResponse.json({ error: "Draft kon niet worden bijgewerkt" }, { status: 500 });
       }
 
@@ -87,7 +90,8 @@ export async function POST(request: NextRequest) {
         await generateHeroImageForDraft(parsed.data.draftId);
         nextStatus = "image_generated";
       } catch (imageError) {
-        console.error("[drafts] Hero image generation failed:", imageError);
+        captureRouteError(imageError, { route: "/api/admin/news/drafts", action: "POST" });
+        // console.error("[drafts] Hero image generation failed:", imageError);
         return NextResponse.json(
           {
             error: imageError instanceof Error
@@ -128,7 +132,8 @@ export async function POST(request: NextRequest) {
         const drafts = await listDraftsByStatus(undefined, 40);
         return NextResponse.json({ drafts, generatedImageId: result.generatedImageId });
       } catch (brandError) {
-        console.error("[drafts] Brand and upload failed:", brandError);
+        captureRouteError(brandError, { route: "/api/admin/news/drafts", action: "POST" });
+        // console.error("[drafts] Brand and upload failed:", brandError);
         return NextResponse.json(
           {
             error: brandError instanceof Error
@@ -164,7 +169,8 @@ export async function POST(request: NextRequest) {
     const drafts = await listDraftsByStatus(undefined, 40);
     return NextResponse.json({ drafts });
   } catch (error) {
-    console.error("[drafts] POST handler error:", error);
+    captureRouteError(error, { route: "/api/admin/news/drafts", action: "POST" });
+    // console.error("[drafts] POST handler error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Er is een fout opgetreden" },
       { status: 500 },

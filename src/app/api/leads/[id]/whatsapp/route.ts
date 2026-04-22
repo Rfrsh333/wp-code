@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin as supabase } from '@/lib/supabase'
 import { verifyAdmin } from '@/lib/admin-auth'
 import { z } from 'zod'
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const uuidSchema = z.string().uuid()
 
@@ -132,7 +133,8 @@ export async function POST(
       message: 'WhatsApp wordt geopend...',
     })
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads/[id]/whatsapp", action: "POST" });
+    // console.error('API error:', error)
     return NextResponse.json(
       { error: 'Er is een fout opgetreden' },
       { status: 500 }

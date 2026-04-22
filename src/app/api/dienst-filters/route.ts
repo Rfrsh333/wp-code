@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET() {
   try {
@@ -39,7 +40,8 @@ export async function GET() {
       tags: tags || [],
     });
   } catch (error) {
-    console.error('[DIENST-FILTERS] Error:', error);
+    captureRouteError(error, { route: "/api/dienst-filters", action: "GET" });
+    // console.error('[DIENST-FILTERS] Error:', error);
     return NextResponse.json({ error: 'Kon filters niet ophalen' }, { status: 500 });
   }
 }

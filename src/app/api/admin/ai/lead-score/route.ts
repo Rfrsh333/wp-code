@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { scoreLead, scoreLeadsBatch } from "@/lib/agents/lead-scoring";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -122,7 +123,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "lead_id of lead_ids is vereist" }, { status: 400 });
   } catch (error) {
-    console.error("AI lead score error:", error);
+    captureRouteError(error, { route: "/api/admin/ai/lead-score", action: "POST" });
+    // console.error("AI lead score error:", error);
     return NextResponse.json({ error: "Scoring mislukt" }, { status: 500 });
   }
 }

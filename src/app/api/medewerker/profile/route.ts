@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -83,7 +84,8 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
   } catch (error) {
-    console.error("Profile fetch error:", error);
+    captureRouteError(error, { route: "/api/medewerker/profile", action: "GET" });
+    // console.error("Profile fetch error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -121,7 +123,8 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Profile update error:", error);
+    captureRouteError(error, { route: "/api/medewerker/profile", action: "PUT" });
+    // console.error("Profile update error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -205,7 +208,8 @@ export async function POST(request: NextRequest) {
       profile_photo_url: publicUrlData.publicUrl,
     });
   } catch (error) {
-    console.error("Profile photo upload error:", error);
+    captureRouteError(error, { route: "/api/medewerker/profile", action: "POST" });
+    // console.error("Profile photo upload error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -250,7 +254,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Profile photo delete error:", error);
+    captureRouteError(error, { route: "/api/medewerker/profile", action: "DELETE" });
+    // console.error("Profile photo delete error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

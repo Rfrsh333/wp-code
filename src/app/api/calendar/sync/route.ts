@@ -6,6 +6,7 @@ import {
   isGoogleCalendarConfigured,
 } from "@/lib/google-calendar";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET: Sync Google Calendar + genereer slots (cron of handmatig)
 export async function GET(request: NextRequest) {
@@ -58,7 +59,8 @@ export async function GET(request: NextRequest) {
       period: { from: fromDate, to: toDate },
     });
   } catch (error) {
-    console.error("Calendar sync error:", error);
+    captureRouteError(error, { route: "/api/calendar/sync", action: "GET" });
+    // console.error("Calendar sync error:", error);
     return NextResponse.json({ error: "Sync mislukt" }, { status: 500 });
   }
 }

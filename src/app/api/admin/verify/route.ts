@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { verifyPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * Verifieert of de huidige gebruiker een admin is
@@ -27,7 +28,8 @@ export async function POST(request: NextRequest) {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error("[ADMIN VERIFY] Supabase configuratie ontbreekt");
+      captureRouteError(new Error("/api/admin/verify POST error"), { route: "/api/admin/verify", action: "POST" });
+      // console.error("[ADMIN VERIFY] Supabase configuratie ontbreekt");
       return NextResponse.json(
         { error: "Server configuratie fout" },
         { status: 500 }
@@ -60,7 +62,8 @@ export async function POST(request: NextRequest) {
       email: user.email,
     });
   } catch (error) {
-    console.error("[ADMIN VERIFY] Error:", error);
+    captureRouteError(error, { route: "/api/admin/verify", action: "POST" });
+    // console.error("[ADMIN VERIFY] Error:", error);
     return NextResponse.json(
       { error: "Verificatie fout" },
       { status: 500 }

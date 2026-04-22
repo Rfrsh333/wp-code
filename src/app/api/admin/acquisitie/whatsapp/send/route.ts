@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateWhatsAppMessage, recommendChannel } from "@/lib/agents/whatsapp-message";
 import { isOpenAIConfigured } from "@/lib/openai";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // WhatsApp Cloud API configuratie
 const WA_API_URL = process.env.WHATSAPP_API_URL; // https://graph.facebook.com/v18.0/{phone_number_id}/messages
@@ -125,11 +126,13 @@ export async function POST(request: NextRequest) {
             sentViaApi = true;
           } else {
             const errorData = await res.json();
-            console.error("[WhatsApp] API error:", errorData);
+            captureRouteError(new Error("/api/admin/acquisitie/whatsapp/send POST error"), { route: "/api/admin/acquisitie/whatsapp/send", action: "POST" });
+            // console.error("[WhatsApp] API error:", errorData);
             // Val terug op handmatig loggen
           }
         } catch (err) {
-          console.error("[WhatsApp] Send error:", err);
+          captureRouteError(err, { route: "/api/admin/acquisitie/whatsapp/send", action: "POST" });
+          // console.error("[WhatsApp] Send error:", err);
         }
       }
 
@@ -217,7 +220,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("WhatsApp error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/whatsapp/send", action: "POST" });
+    // console.error("WhatsApp error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

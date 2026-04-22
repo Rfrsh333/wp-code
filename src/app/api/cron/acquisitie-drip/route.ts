@@ -4,6 +4,7 @@ import { applyTemplate } from "@/lib/agents/outreach-email";
 import { determineNextAction } from "@/lib/agents/smart-sequence";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { sendEmail } from "@/lib/email-service";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 // Dagelijkse cron voor drip campagnes + smart sequences
 // Configureer via Vercel Cron of externe scheduler: GET /api/cron/acquisitie-drip
@@ -15,6 +16,8 @@ export async function GET(request: NextRequest) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-acquisitie-drip", async () => {
 
   try {
     const today = new Date().toISOString().split("T")[0];
@@ -135,7 +138,8 @@ export async function GET(request: NextRequest) {
 
         sent++;
       } catch (err) {
-        console.error(`Drip email naar ${lead.email} mislukt:`, err);
+        captureRouteError(err, { route: "/api/cron/acquisitie-drip", action: "GET" });
+        // console.error(`Drip email naar ${lead.email} mislukt:`, err);
       }
     }
 
@@ -203,17 +207,21 @@ export async function GET(request: NextRequest) {
             await supabaseAdmin.from("acquisitie_leads").update(updateData).eq("id", lead.id);
             sequencesProcessed++;
           } catch (err) {
-            console.error(`Sequence update failed for ${lead.id}:`, err);
+            captureRouteError(err, { route: "/api/cron/acquisitie-drip", action: "GET" });
+            // console.error(`Sequence update failed for ${lead.id}:`, err);
           }
         }
       } catch (err) {
-        console.error("Smart sequences cron error:", err);
+        captureRouteError(err, { route: "/api/cron/acquisitie-drip", action: "GET" });
+        // console.error("Smart sequences cron error:", err);
       }
     }
 
     return NextResponse.json({ success: true, sent, total_due: dueLeads.length, sequences_processed: sequencesProcessed });
   } catch (error) {
-    console.error("Drip cron error:", error);
+    captureRouteError(error, { route: "/api/cron/acquisitie-drip", action: "GET" });
+    // console.error("Drip cron error:", error);
     return NextResponse.json({ error: "Cron job mislukt" }, { status: 500 });
   }
+  });
 }

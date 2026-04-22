@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,7 +83,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Dashboard error:", error);
+    captureRouteError(error, { route: "/api/medewerker/dashboard", action: "GET" });
+    // console.error("Dashboard error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

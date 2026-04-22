@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { sendNieuwBerichtEmail } from "@/lib/notifications";
 import { berichtenPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -73,7 +74,8 @@ export async function POST(request: NextRequest) {
 
     const { error } = await supabaseAdmin.from("berichten").insert(berichten);
     if (error) {
-      console.error("Bulk send error:", error);
+      captureRouteError(error, { route: "/api/admin/berichten", action: "POST" });
+      // console.error("Bulk send error:", error);
       return NextResponse.json({ error: "Bulk versturen mislukt" }, { status: 500 });
     }
 
@@ -94,7 +96,8 @@ export async function POST(request: NextRequest) {
             inhoud: inhoud.trim(),
           });
         } catch (err) {
-          console.error(`Bulk email failed for ${m.id}:`, err);
+          captureRouteError(err, { route: "/api/admin/berichten", action: "POST" });
+          // console.error(`Bulk email failed for ${m.id}:`, err);
         }
       }
     }
@@ -118,7 +121,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    console.error("Error creating bericht:", error);
+    captureRouteError(error, { route: "/api/admin/berichten", action: "POST" });
+    // console.error("Error creating bericht:", error);
     return NextResponse.json({ error: "Kon bericht niet versturen" }, { status: 500 });
   }
 
@@ -140,7 +144,8 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (emailError) {
-    console.error("Error sending bericht notification:", emailError);
+    captureRouteError(emailError, { route: "/api/admin/berichten", action: "POST" });
+    // console.error("Error sending bericht notification:", emailError);
   }
 
   return NextResponse.json({ success: true });

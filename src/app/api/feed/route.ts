@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listPublishedDrafts } from "@/lib/content/repository";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const SITE_URL = "https://www.toptalentjobs.nl";
 const FEED_TITLE = "TopTalent Jobs - Nieuws & Insights";
@@ -53,7 +54,8 @@ ${items.join("\n")}
       },
     });
   } catch (error) {
-    console.error("[feed] Error generating RSS:", error);
+    captureRouteError(error, { route: "/api/feed", action: "GET" });
+    // console.error("[feed] Error generating RSS:", error);
     return NextResponse.json({ error: "Failed to generate feed" }, { status: 500 });
   }
 }

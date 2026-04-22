@@ -3,6 +3,7 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { calculateVat } from "@/lib/factuur-config";
 import { calculateKlantReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 type UrenRegistratie = {
   id: string;
@@ -156,7 +157,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, factuur });
   } catch (error) {
-    console.error("Factuur error:", error);
+    captureRouteError(error, { route: "/api/facturen/generate", action: "POST" });
+    // console.error("Factuur error:", error);
     return NextResponse.json({ error: "Fout bij genereren factuur" }, { status: 500 });
   }
 }

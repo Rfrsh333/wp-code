@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateContent } from "@/lib/agents/content-generator";
 import { contentPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET /api/admin/content - Alle content posts ophalen
 export async function GET(request: NextRequest) {
@@ -41,7 +42,8 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
   } catch (error) {
-    console.error("Content GET error:", error);
+    captureRouteError(error, { route: "/api/admin/content", action: "GET" });
+    // console.error("Content GET error:", error);
     return NextResponse.json({ error: "Fout bij ophalen content" }, { status: 500 });
   }
 }
@@ -134,7 +136,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Content POST error:", error);
+    captureRouteError(error, { route: "/api/admin/content", action: "POST" });
+    // console.error("Content POST error:", error);
     return NextResponse.json({ error: "Fout bij verwerken" }, { status: 500 });
   }
 }

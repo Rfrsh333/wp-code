@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession, verifyKlantSession } from "@/lib/session";
 import { z } from "zod";
 import type { UserType } from "@/types/chatbot";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const bodySchema = z.object({
   conversation_id: z.string().uuid(),
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[AI-CHAT] User message error:", error);
+    captureRouteError(error, { route: "/api/ai-chat/user-message", action: "POST" });
+    // console.error("[AI-CHAT] User message error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET() {
   try {
@@ -79,7 +80,8 @@ export async function GET() {
       totaalUren: Math.round(totaalUren * 10) / 10,
     });
   } catch (error) {
-    console.error("Dashboard summary error:", error);
+    captureRouteError(error, { route: "/api/medewerker/dashboard-summary", action: "GET" });
+    // console.error("Dashboard summary error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyKlantSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
   const { data: aanmeldingen, error: fetchError } = await query;
 
   if (fetchError) {
-    console.error("[CHECKIN] Supabase error:", fetchError);
+    captureRouteError(fetchError, { route: "/api/klant/checkin", action: "POST" });
+    // console.error("[CHECKIN] Supabase error:", fetchError);
     return NextResponse.json({ error: "Database fout" }, { status: 500 });
   }
 
@@ -134,7 +136,8 @@ export async function POST(request: NextRequest) {
     .eq("id", aanmelding.id);
 
   if (updateError) {
-    console.error("[CHECKIN] Update error:", updateError);
+    captureRouteError(updateError, { route: "/api/klant/checkin", action: "POST" });
+    // console.error("[CHECKIN] Update error:", updateError);
     return NextResponse.json({ error: "Check-in mislukt" }, { status: 500 });
   }
 
@@ -185,7 +188,8 @@ export async function GET() {
     .order("check_in_at", { ascending: false });
 
   if (error) {
-    console.error("[CHECKIN] GET error:", error);
+    captureRouteError(error, { route: "/api/klant/checkin", action: "GET" });
+    // console.error("[CHECKIN] GET error:", error);
     return NextResponse.json({ error: "Laden mislukt" }, { status: 500 });
   }
 

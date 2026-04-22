@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculatePrice } from "@/lib/pricing/smart-pricing";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET /api/pricing/calculate?functie=bediening&datum=2026-03-14&urenPerWeek=25
 // Publieke route - berekent dynamisch tarief
@@ -37,7 +38,8 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=120" },
     });
   } catch (error) {
-    console.error("Pricing calculate error:", error);
+    captureRouteError(error, { route: "/api/pricing/calculate", action: "GET" });
+    // console.error("Pricing calculate error:", error);
     return NextResponse.json({ error: "Fout bij berekenen tarief" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateContent } from "@/lib/agents/content-generator";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 // Cron: wekelijks op maandag 9:00
 // Genereert 1 blog suggestie + 2 LinkedIn post suggesties
@@ -9,6 +10,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-content-suggestion", async () => {
 
   try {
     const results: string[] = [];
@@ -64,7 +67,9 @@ export async function GET(request: NextRequest) {
       posts: results,
     });
   } catch (error) {
-    console.error("Content suggestion cron error:", error);
+    captureRouteError(error, { route: "/api/cron/content-suggestion", action: "GET" });
+    // console.error("Content suggestion cron error:", error);
     return NextResponse.json({ error: "Cron job failed" }, { status: 500 });
   }
+  });
 }

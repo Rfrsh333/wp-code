@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   // Auth check
@@ -7,6 +8,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-contract-expiry", async () => {
 
   try {
     const today = new Date().toISOString().split("T")[0];
@@ -20,7 +23,8 @@ export async function GET(request: NextRequest) {
       .select("id, contract_nummer");
 
     if (verlopenError) {
-      console.error("[CRON CONTRACT-EXPIRY] Error updating expired:", verlopenError);
+      captureRouteError(verlopenError, { route: "/api/cron/contract-expiry", action: "GET" });
+      // console.error("[CRON CONTRACT-EXPIRY] Error updating expired:", verlopenError);
     }
 
     // 2. Annuleer verzonden contracten waarvan het onderteken_token verlopen is
@@ -32,7 +36,8 @@ export async function GET(request: NextRequest) {
       .select("id, contract_nummer");
 
     if (annuleerError) {
-      console.error("[CRON CONTRACT-EXPIRY] Error cancelling expired tokens:", annuleerError);
+      captureRouteError(annuleerError, { route: "/api/cron/contract-expiry", action: "GET" });
+      // console.error("[CRON CONTRACT-EXPIRY] Error cancelling expired tokens:", annuleerError);
     }
 
     const result = {
@@ -48,7 +53,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[CRON CONTRACT-EXPIRY] Error:", error);
+    captureRouteError(error, { route: "/api/cron/contract-expiry", action: "GET" });
+    // console.error("[CRON CONTRACT-EXPIRY] Error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
+  });
 }

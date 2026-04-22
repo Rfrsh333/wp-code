@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { chatCompletion, isOpenAIConfigured, type ChatMessage } from "@/lib/openai";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface SegmentFilters {
   stages?: string[];
@@ -466,7 +467,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Segments error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/segments", action: "POST" });
+    // console.error("Segments error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

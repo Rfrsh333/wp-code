@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createHash } from "crypto";
 import { checkRedisRateLimit, getClientIP, contractSignRateLimit } from "@/lib/rate-limit-redis";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET: Haal contract op via token (publiek)
 export async function GET(request: NextRequest) {
@@ -184,7 +185,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, status: newStatus });
   } catch (err) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);
-    console.error("[CONTRACT] Sign error:", message);
+    captureRouteError(err, { route: "/api/contract/ondertekenen", action: "POST" });
+    // console.error("[CONTRACT] Sign error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

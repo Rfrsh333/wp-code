@@ -11,10 +11,33 @@ function escapeTelegramHtml(text: string): string {
 
 export { escapeTelegramHtml };
 
-export async function sendTelegramAlert(message: string): Promise<void> {
+// Rate-limit: max 1 alert per dedupeKey per cooldown period
+const alertCooldowns = new Map<string, number>();
+const COOLDOWN_MS = 5 * 60 * 1000; // 5 minuten
+
+// Auto-clean cooldown map every 10 minutes to prevent memory leak
+let lastCleanup = Date.now();
+function cleanupCooldowns() {
+  const now = Date.now();
+  if (now - lastCleanup < 10 * 60 * 1000) return;
+  lastCleanup = now;
+  for (const [key, timestamp] of alertCooldowns) {
+    if (now - timestamp > COOLDOWN_MS) alertCooldowns.delete(key);
+  }
+}
+
+export async function sendTelegramAlert(message: string, dedupeKey?: string): Promise<void> {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.warn("[TELEGRAM] Bot token or chat ID not configured, skipping alert");
     return;
+  }
+
+  // Rate-limit check
+  if (dedupeKey) {
+    cleanupCooldowns();
+    const lastSent = alertCooldowns.get(dedupeKey) || 0;
+    if (Date.now() - lastSent < COOLDOWN_MS) return;
+    alertCooldowns.set(dedupeKey, Date.now());
   }
 
   const controller = new AbortController();

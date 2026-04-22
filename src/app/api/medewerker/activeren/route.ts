@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { validatePasswordSecurity } from "@/lib/password-security";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function findValidMedewerkerByToken(token: string) {
   const { data: medewerker, error } = await supabaseAdmin
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Medewerker activation error:", error);
+    captureRouteError(error, { route: "/api/medewerker/activeren", action: "POST" });
+    // console.error("Medewerker activation error:", error);
     return NextResponse.json({ error: "Serverfout bij activeren" }, { status: 500 });
   }
 }

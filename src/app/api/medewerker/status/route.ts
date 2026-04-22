@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
       status: statusData?.status || "actief",
     });
   } catch (error) {
-    console.error("Status check error:", error);
+    captureRouteError(error, { route: "/api/medewerker/status", action: "GET" });
+    // console.error("Status check error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

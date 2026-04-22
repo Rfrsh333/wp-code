@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyKlantSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -25,7 +26,8 @@ export async function GET() {
     .limit(50);
 
   if (error) {
-    console.error("Facturen ophalen error:", error);
+    captureRouteError(error, { route: "/api/klant/facturen", action: "GET" });
+    // console.error("Facturen ophalen error:", error);
     return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
   }
 
@@ -143,7 +145,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (factuurError || !factuur) {
-    console.error("Factuur aanmaken error:", factuurError);
+    captureRouteError(factuurError, { route: "/api/klant/facturen", action: "POST" });
+    // console.error("Factuur aanmaken error:", factuurError);
     return NextResponse.json({ error: "Factuur aanmaken mislukt" }, { status: 500 });
   }
 
@@ -158,7 +161,8 @@ export async function POST(request: NextRequest) {
     .insert(factuurRegels);
 
   if (regelsError) {
-    console.error("Factuur regels error:", regelsError);
+    captureRouteError(regelsError, { route: "/api/klant/facturen", action: "POST" });
+    // console.error("Factuur regels error:", regelsError);
     // Rollback factuur
     await supabaseAdmin.from("facturen").delete().eq("id", factuur.id);
     return NextResponse.json({ error: "Factuur regels aanmaken mislukt" }, { status: 500 });

@@ -4,6 +4,7 @@ import { runFullMonitoring } from "@/lib/geo/monitor";
 import { runAutoOptimization } from "@/lib/geo/optimizer";
 import { runCompetitorAnalysis } from "@/lib/geo/competitor";
 import type { GeoStad } from "@/lib/geo/types";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 /**
  * Cron endpoint voor de volledige GEO Agent pipeline
@@ -23,6 +24,9 @@ export async function GET(request: NextRequest) {
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    return withCronMonitor("cron-geo-agent", async () => {
+
 
     const searchParams = request.nextUrl.searchParams;
     const mode = searchParams.get("mode") || "full";
@@ -64,8 +68,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, mode, results });
+    });
   } catch (error) {
-    console.error("[GEO CRON] Error:", error);
+    captureRouteError(error, { route: "/api/cron/geo-agent", action: "GET" });
+    // console.error("[GEO CRON] Error:", error);
     return NextResponse.json(
       { error: "GEO agent fout", details: (error as Error).message },
       { status: 500 }

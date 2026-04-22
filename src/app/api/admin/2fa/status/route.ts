@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * GET /api/admin/2fa/status
@@ -28,7 +29,8 @@ export async function GET(request: NextRequest) {
       enabledAt: twoFactor?.enabled_at || null,
     });
   } catch (error) {
-    console.error("2FA status check error:", error);
+    captureRouteError(error, { route: "/api/admin/2fa/status", action: "GET" });
+    // console.error("2FA status check error:", error);
     return NextResponse.json(
       { enabled: false, enabledAt: null }
     );

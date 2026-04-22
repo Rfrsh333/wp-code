@@ -4,6 +4,7 @@ import { verifyMedewerkerSession, verifyKlantSession } from "@/lib/session";
 import { getHandoffSystemMessage } from "@/lib/ai-chat/system-prompts";
 import { z } from "zod";
 import type { UserType } from "@/types/chatbot";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const bodySchema = z.object({
   conversation_id: z.string().uuid(),
@@ -69,7 +70,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[AI-CHAT] Handoff error:", error);
+    captureRouteError(error, { route: "/api/ai-chat/handoff", action: "POST" });
+    // console.error("[AI-CHAT] Handoff error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

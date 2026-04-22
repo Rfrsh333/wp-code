@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { buildMeetReminderEmailHtml } from "@/lib/email-templates";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-booking-reminder-30min", async () => {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
 
@@ -88,7 +91,8 @@ export async function GET(request: NextRequest) {
 
       sent++;
     } catch (err) {
-      console.error(`30min reminder email failed for booking ${booking.id}:`, err);
+      captureRouteError(err, { route: "/api/cron/booking-reminder-30min", action: "GET" });
+      // console.error(`30min reminder email failed for booking ${booking.id}:`, err);
       failed++;
     }
   }
@@ -99,5 +103,6 @@ export async function GET(request: NextRequest) {
     sent,
     failed,
     total: upcoming.length,
+  });
   });
 }

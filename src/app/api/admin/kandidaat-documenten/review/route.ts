@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface ReviewRequest {
   document_id: string;
@@ -51,7 +52,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error || !document) {
-      console.error("Document review error:", error);
+      captureRouteError(error, { route: "/api/admin/kandidaat-documenten/review", action: "POST" });
+      // console.error("Document review error:", error);
       return NextResponse.json({ error: "Document niet gevonden" }, { status: 404 });
     }
 
@@ -109,7 +111,8 @@ export async function POST(request: NextRequest) {
       document,
     });
   } catch (error) {
-    console.error("Document review error:", error);
+    captureRouteError(error, { route: "/api/admin/kandidaat-documenten/review", action: "POST" });
+    // console.error("Document review error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

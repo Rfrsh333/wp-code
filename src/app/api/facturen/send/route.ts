@@ -4,6 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { signFactuurToken } from "@/lib/session";
 import { getFactuurConfig } from "@/lib/factuur-config";
 import { sendEmail } from "@/lib/email-service";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen verzenden
@@ -85,7 +86,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Send factuur error:", error);
+    captureRouteError(error, { route: "/api/facturen/send", action: "POST" });
+    // console.error("Send factuur error:", error);
     return NextResponse.json({ error: "Fout bij verzenden" }, { status: 500 });
   }
 }

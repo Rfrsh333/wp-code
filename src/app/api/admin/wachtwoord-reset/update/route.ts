@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
     );
 
     if (updateError) {
-      console.error("[WACHTWOORD RESET] Password update failed:", updateError.message);
+      captureRouteError(updateError, { route: "/api/admin/wachtwoord-reset/update", action: "POST" });
+      // console.error("[WACHTWOORD RESET] Password update failed:", updateError.message);
       return NextResponse.json(
         { error: "Wachtwoord bijwerken mislukt. Probeer het opnieuw." },
         { status: 500 }
@@ -73,7 +75,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[WACHTWOORD RESET] Error:", error);
+    captureRouteError(error, { route: "/api/admin/wachtwoord-reset/update", action: "POST" });
+    // console.error("[WACHTWOORD RESET] Error:", error);
     return NextResponse.json(
       { error: "Er ging iets mis" },
       { status: 500 }

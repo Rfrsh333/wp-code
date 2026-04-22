@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateReviewResponse } from "@/lib/agents/review-response";
 import { reviewsPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET /api/admin/reviews - Alle reviews + stats
 export async function GET(request: NextRequest) {
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
       .limit(50);
 
     if (reviewsError) {
-      console.error("Reviews query error:", reviewsError);
+      captureRouteError(reviewsError, { route: "/api/admin/reviews", action: "GET" });
+      // console.error("Reviews query error:", reviewsError);
       return NextResponse.json({ error: reviewsError.message }, { status: 500 });
     }
 
@@ -67,7 +69,8 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
   } catch (error) {
-    console.error("Reviews GET error:", error);
+    captureRouteError(error, { route: "/api/admin/reviews", action: "GET" });
+    // console.error("Reviews GET error:", error);
     return NextResponse.json({ error: "Fout bij ophalen reviews" }, { status: 500 });
   }
 }
@@ -167,7 +170,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Reviews POST error:", error);
+    captureRouteError(error, { route: "/api/admin/reviews", action: "POST" });
+    // console.error("Reviews POST error:", error);
     return NextResponse.json({ error: "Fout bij verwerken" }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // POST /api/offerte/[token]/accept - Klant accepteert offerte (digitale ondertekening)
 export async function POST(
@@ -55,13 +56,15 @@ export async function POST(
       .eq("id", offerte.id);
 
     if (updateError) {
-      console.error("Accept offerte error:", updateError);
+      captureRouteError(error, { route: "/api/offerte/[token]/accept", action: "POST" });
+      // console.error("Accept offerte error:", updateError);
       return NextResponse.json({ error: "Fout bij accepteren" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, message: "Offerte succesvol geaccepteerd" });
   } catch (error) {
-    console.error("Offerte accept error:", error);
+    captureRouteError(error, { route: "/api/offerte/[token]/accept", action: "POST" });
+    // console.error("Offerte accept error:", error);
     return NextResponse.json({ error: "Fout bij accepteren offerte" }, { status: 500 });
   }
 }

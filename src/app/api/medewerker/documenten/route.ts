@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -23,7 +24,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ documenten: data });
   } catch (error) {
-    console.error("Documenten fetch error:", error);
+    captureRouteError(error, { route: "/api/medewerker/documenten", action: "GET" });
+    // console.error("Documenten fetch error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -80,7 +82,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Document upload error:", error);
+    captureRouteError(error, { route: "/api/medewerker/documenten", action: "POST" });
+    // console.error("Document upload error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -121,7 +124,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Document delete error:", error);
+    captureRouteError(error, { route: "/api/medewerker/documenten", action: "DELETE" });
+    // console.error("Document delete error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

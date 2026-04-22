@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyTOTP, verifyBackupCode } from "@/lib/two-factor";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * POST /api/admin/2fa/verify
@@ -97,7 +98,8 @@ export async function POST(request: NextRequest) {
       verified: true,
     });
   } catch (error) {
-    console.error("2FA verify error:", error);
+    captureRouteError(error, { route: "/api/admin/2fa/verify", action: "POST" });
+    // console.error("2FA verify error:", error);
     return NextResponse.json(
       { error: "Verification failed" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -89,7 +90,8 @@ export async function POST(request: NextRequest) {
         .insert(lead);
 
       if (error) {
-        console.error(`Import error for ${lead.bedrijfsnaam}:`, error.message);
+        captureRouteError(error, { route: "/api/admin/acquisitie/import", action: "POST" });
+        // console.error(`Import error for ${lead.bedrijfsnaam}:`, error.message);
         errors++;
       } else {
         imported++;
@@ -105,7 +107,8 @@ export async function POST(request: NextRequest) {
       total: rows.length,
     });
   } catch (error) {
-    console.error("CSV import error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/import", action: "POST" });
+    // console.error("CSV import error:", error);
     return NextResponse.json({ error: "Import mislukt" }, { status: 500 });
   }
 }

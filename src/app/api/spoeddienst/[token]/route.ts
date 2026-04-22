@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET: Publiek — Haal dienstdetails op via uniek token
 export async function GET(
@@ -138,7 +139,8 @@ export async function POST(
     });
 
   if (insertError) {
-    console.error("[SPOEDDIENST] Insert error:", insertError);
+    captureRouteError(insertError, { route: "/api/spoeddienst/[token]", action: "POST" });
+    // console.error("[SPOEDDIENST] Insert error:", insertError);
     return NextResponse.json(
       { error: "Er ging iets mis, probeer het opnieuw" },
       { status: 500 }

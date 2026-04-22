@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { createHmac, timingSafeEqual } from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const WA_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const WA_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
 
 function verifyWhatsAppSignature(rawBody: string, signatureHeader: string | null): boolean {
   if (!WA_APP_SECRET) {
-    console.error("[WhatsApp] WHATSAPP_APP_SECRET niet geconfigureerd — webhook geweigerd");
+    captureRouteError(new Error("/api/webhooks/whatsapp UNKNOWN error"), { route: "/api/webhooks/whatsapp", action: "UNKNOWN" });
+    // console.error("[WhatsApp] WHATSAPP_APP_SECRET niet geconfigureerd — webhook geweigerd");
     return false;
   }
   if (!signatureHeader) {
@@ -135,7 +137,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("[WhatsApp] Webhook error:", error);
+    captureRouteError(error, { route: "/api/webhooks/whatsapp", action: "POST" });
+    // console.error("[WhatsApp] Webhook error:", error);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }

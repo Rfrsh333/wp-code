@@ -5,6 +5,7 @@ import { ensureKlantForDienst } from "@/lib/klanten-sync";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { dienstenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { notifyKlantMedewerkerAssigned } from "@/lib/klant-push-triggers";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -73,7 +74,8 @@ export async function POST(request: NextRequest) {
     }
     const { error } = await supabaseAdmin.from("diensten").insert(payload);
     if (error) {
-      console.error("[DIENSTEN] Insert error:", error);
+      captureRouteError(error, { route: "/api/admin/diensten", action: "POST" });
+      // console.error("[DIENSTEN] Insert error:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
   }
@@ -242,7 +244,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);
-    console.error("[DIENSTEN] POST error:", message, err);
+    captureRouteError(err, { route: "/api/admin/diensten", action: "POST" });
+    // console.error("[DIENSTEN] POST error:", message, err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

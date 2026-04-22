@@ -4,6 +4,7 @@ import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-
 import { supabaseAdmin } from "@/lib/supabase";
 import { screenKandidaat } from "@/lib/agents/kandidaat-screening";
 import { isOpenAIConfigured } from "@/lib/openai";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -60,7 +61,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("AI screening error:", error);
+    captureRouteError(error, { route: "/api/admin/ai/screening", action: "POST" });
+    // console.error("AI screening error:", error);
     return NextResponse.json({ error: "Screening mislukt" }, { status: 500 });
   }
 }

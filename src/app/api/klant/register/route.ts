@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { signKlantSession } from "@/lib/session";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { validatePasswordSecurity } from "@/lib/password-security";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -65,7 +66,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error || !klant) {
-      console.error("Registratie error:", error);
+      captureRouteError(error, { route: "/api/klant/register", action: "POST" });
+      // console.error("Registratie error:", error);
       return NextResponse.json({ error: "Registratie mislukt. Probeer het opnieuw." }, { status: 500 });
     }
 
@@ -94,7 +96,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Register error:", error);
+    captureRouteError(error, { route: "/api/klant/register", action: "POST" });
+    // console.error("Register error:", error);
     return NextResponse.json({ error: "Fout bij registratie" }, { status: 500 });
   }
 }

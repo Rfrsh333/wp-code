@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { logAuditEvent } from "@/lib/audit-log";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-onboarding-cleanup", async () => {
 
   const nowIso = new Date().toISOString();
 
@@ -47,7 +50,9 @@ export async function GET(request: NextRequest) {
       cleanedAt: nowIso,
     });
   } catch (error) {
-    console.error("Onboarding cleanup cron error:", error);
+    captureRouteError(error, { route: "/api/cron/onboarding-cleanup", action: "GET" });
+    // console.error("Onboarding cleanup cron error:", error);
     return NextResponse.json({ error: "Cleanup mislukt" }, { status: 500 });
   }
+  });
 }

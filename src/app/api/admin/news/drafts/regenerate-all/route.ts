@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { regenerateBodyBlocks } from "@/lib/content/services/draft-generation-service";
 import { logAuditEvent } from "@/lib/audit-log";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email, role } = await verifyAdmin(request);
@@ -18,7 +19,8 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[regenerate-all] Failed to fetch drafts:", error);
+      captureRouteError(error, { route: "/api/admin/news/drafts/regenerate-all", action: "POST" });
+      // console.error("[regenerate-all] Failed to fetch drafts:", error);
       return NextResponse.json({ error: "Kon drafts niet ophalen" }, { status: 500 });
     }
 
@@ -43,7 +45,8 @@ export async function POST(request: NextRequest) {
           title: draft.title || "Untitled",
           error: errorMessage,
         });
-        console.error(`[regenerate-all] Failed for ${draft.title}:`, errorMessage);
+        captureRouteError(err, { route: "/api/admin/news/drafts/regenerate-all", action: "POST" });
+        // console.error(`[regenerate-all] Failed for ${draft.title}:`, errorMessage);
       }
     }
 
@@ -65,7 +68,8 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("[regenerate-all] Error:", error);
+    captureRouteError(error, { route: "/api/admin/news/drafts/regenerate-all", action: "POST" });
+    // console.error("[regenerate-all] Error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Er is een fout opgetreden" },
       { status: 500 }

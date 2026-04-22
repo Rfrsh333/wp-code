@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface SourceHealthItem {
   id: string;
@@ -138,7 +139,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("[health] Error:", error);
+    captureRouteError(error, { route: "/api/admin/news/health", action: "GET" });
+    // console.error("[health] Error:", error);
     return NextResponse.json({ error: "Failed to load health data" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { applyTemplate } from "@/lib/agents/outreach-email";
 import { sendEmail } from "@/lib/email-service";
 import { campagnesPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -121,7 +122,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: newCampagne }, { status: 201 });
   } catch (error) {
-    console.error("Campagne error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/campagnes", action: "POST" });
+    // console.error("Campagne error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
@@ -215,7 +217,8 @@ async function sendCampagne(campagneId: string) {
 
       sent++;
     } catch (err) {
-      console.error(`Email naar ${lead.email} mislukt:`, err);
+      captureRouteError(err, { route: "/api/admin/acquisitie/campagnes", action: "POST" });
+      // console.error(`Email naar ${lead.email} mislukt:`, err);
     }
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -24,7 +25,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
 
   if (error) {
-    console.error("[CONTRACT-TEMPLATES] GET error:", error);
+    captureRouteError(error, { route: "/api/admin/contract-templates", action: "GET" });
+    // console.error("[CONTRACT-TEMPLATES] GET error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

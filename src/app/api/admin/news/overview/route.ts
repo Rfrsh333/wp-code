@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { getContentOverview } from "@/lib/content/repository";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin } = await verifyAdmin(request);
@@ -12,7 +13,8 @@ export async function GET(request: NextRequest) {
     const overview = await getContentOverview();
     return NextResponse.json(overview);
   } catch (error) {
-    console.error("[overview] Error loading overview:", error);
+    captureRouteError(error, { route: "/api/admin/news/overview", action: "GET" });
+    // console.error("[overview] Error loading overview:", error);
     return NextResponse.json({ error: "Failed to load overview" }, { status: 500 });
   }
 }

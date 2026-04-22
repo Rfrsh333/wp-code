@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // Pad naar de werkende Python scraper
 const SCRAPER_DIR = path.join(os.homedir(), "Desktop", "scrappe");
@@ -31,7 +32,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Discovery error:", error);
+    captureRouteError(error, { route: "/api/admin/acquisitie/discover", action: "POST" });
+    // console.error("Discovery error:", error);
     return NextResponse.json({ error: "Discovery mislukt" }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { getDraftById, getGeneratedImageById } from "@/lib/content/repository";
 import { createEditorialImageSignedUrl } from "@/lib/images/storage";
 import { logAuditEvent } from "@/lib/audit-log";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(
   request: NextRequest,
@@ -82,7 +83,8 @@ export async function PATCH(
     .eq("id", id);
 
   if (updateError) {
-    console.error("[drafts] PATCH error:", updateError);
+    captureRouteError(updateError, { route: "/api/admin/news/drafts/[id]", action: "PATCH" });
+    // console.error("[drafts] PATCH error:", updateError);
     return NextResponse.json({ error: "Draft kon niet bijgewerkt worden" }, { status: 500 });
   }
 

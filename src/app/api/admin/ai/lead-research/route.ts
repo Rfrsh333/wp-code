@@ -4,6 +4,7 @@ import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-
 import { supabaseAdmin } from "@/lib/supabase";
 import { enrichLead, type EnrichmentData } from "@/lib/agents/lead-research";
 import { isOpenAIConfigured } from "@/lib/openai";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -186,7 +187,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Lead research error:", error);
+    captureRouteError(error, { route: "/api/admin/ai/lead-research", action: "POST" });
+    // console.error("Lead research error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

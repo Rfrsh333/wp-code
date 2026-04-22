@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { withCronMonitor } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-referral-check", async () => {
 
   // Haal pending referrals op die een referred persoon hebben
   const { data: pendingReferrals } = await supabaseAdmin
@@ -74,4 +77,5 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true, qualified, checked: pendingReferrals.length });
+  });
 }

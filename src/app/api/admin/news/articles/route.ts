@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const { isAdmin } = await verifyAdmin(request);
@@ -36,7 +37,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ articles: [] });
     }
 
-    console.error("[content] Failed to load article overview", error);
+    captureRouteError(error, { route: "/api/admin/news/articles", action: "GET" });
+    // console.error("[content] Failed to load article overview", error);
     return NextResponse.json({ error: "Articles konden niet geladen worden" }, { status: 500 });
   }
 

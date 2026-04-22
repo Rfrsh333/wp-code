@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyAdmin } from '@/lib/admin-auth';
 import { z } from 'zod';
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // Validation schemas
 const categorieSchema = z.object({
@@ -55,7 +56,8 @@ export async function GET(request: NextRequest) {
       tags: tags.data || [],
     });
   } catch (error) {
-    console.error('[ADMIN DIENST-FILTERS GET] Error:', error);
+    captureRouteError(error, { route: "/api/admin/dienst-filters", action: "GET" });
+    // console.error('[ADMIN DIENST-FILTERS GET] Error:', error);
     return NextResponse.json({ error: 'Kon filters niet ophalen' }, { status: 500 });
   }
 }
@@ -247,7 +249,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Onbekende actie' }, { status: 400 });
   } catch (error: unknown) {
-    console.error('[ADMIN DIENST-FILTERS POST] Error:', error);
+    captureRouteError(error, { route: "/api/admin/dienst-filters", action: "POST" });
+    // console.error('[ADMIN DIENST-FILTERS POST] Error:', error);
 
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({

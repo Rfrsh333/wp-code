@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET /api/offerte/[token] - Public: klant bekijkt offerte via token
 export async function GET(
@@ -43,7 +44,8 @@ export async function GET(
       created_at: offerte.created_at,
     });
   } catch (error) {
-    console.error("Offerte fetch error:", error);
+    captureRouteError(error, { route: "/api/offerte/[token]", action: "GET" });
+    // console.error("Offerte fetch error:", error);
     return NextResponse.json({ error: "Fout bij ophalen offerte" }, { status: 500 });
   }
 }

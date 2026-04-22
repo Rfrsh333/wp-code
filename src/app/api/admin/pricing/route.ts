@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getAllPricingOverview, invalidatePricingCache } from "@/lib/pricing/smart-pricing";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET /api/admin/pricing - Pricing overzicht + rules
 export async function GET(request: NextRequest) {
@@ -25,7 +26,8 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
   } catch (error) {
-    console.error("Admin pricing error:", error);
+    captureRouteError(error, { route: "/api/admin/pricing", action: "GET" });
+    // console.error("Admin pricing error:", error);
     return NextResponse.json({ error: "Fout bij ophalen pricing data" }, { status: 500 });
   }
 }
@@ -99,7 +101,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
   } catch (error) {
-    console.error("Admin pricing POST error:", error);
+    captureRouteError(error, { route: "/api/admin/pricing", action: "POST" });
+    // console.error("Admin pricing POST error:", error);
     return NextResponse.json({ error: "Fout bij updaten pricing" }, { status: 500 });
   }
 }

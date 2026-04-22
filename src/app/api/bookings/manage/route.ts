@@ -10,6 +10,7 @@ import {
   buildCancellationEmailHtml,
   buildRescheduleEmailHtml,
 } from "@/lib/email-templates";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // GET: Ophalen van booking details via token
 export async function GET(request: NextRequest) {
@@ -125,7 +126,8 @@ export async function POST(request: NextRequest) {
           }),
         });
       } catch (err) {
-        console.error("Cancellation email error:", err);
+        captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
+        // console.error("Cancellation email error:", err);
       }
 
       // Notificatie naar admin
@@ -145,7 +147,8 @@ export async function POST(request: NextRequest) {
           }),
         });
       } catch (err) {
-        console.error("Admin cancellation notification error:", err);
+        captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
+        // console.error("Admin cancellation notification error:", err);
       }
 
     return NextResponse.json({ success: true, action: "cancelled" });
@@ -244,7 +247,8 @@ export async function POST(request: NextRequest) {
           }),
         });
       } catch (err) {
-        console.error("Reschedule email error:", err);
+        captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
+        // console.error("Reschedule email error:", err);
       }
     }
 

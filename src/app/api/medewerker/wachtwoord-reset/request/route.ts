@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendMedewerkerPasswordResetEmail } from "@/lib/medewerker-password-reset";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest) {
       message: "Als dit e-mailadres bij een actief medewerkeraccount hoort, is er een resetmail verstuurd.",
     });
   } catch (error) {
-    console.error("Medewerker password reset request error:", error);
+    captureRouteError(error, { route: "/api/medewerker/wachtwoord-reset/request", action: "POST" });
+    // console.error("Medewerker password reset request error:", error);
     return NextResponse.json({ error: "Er ging iets mis bij het versturen van de resetmail" }, { status: 500 });
   }
 }

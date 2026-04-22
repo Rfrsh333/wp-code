@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -60,7 +61,8 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      console.error("CV upload error:", error);
+      captureRouteError(error, { route: "/api/cv-upload", action: "POST" });
+      // console.error("CV upload error:", error);
       return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
     }
 
@@ -74,7 +76,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: signedUrlData.signedUrl, path });
   } catch (error) {
-    console.error("CV upload error:", error);
+    captureRouteError(error, { route: "/api/cv-upload", action: "POST" });
+    // console.error("CV upload error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

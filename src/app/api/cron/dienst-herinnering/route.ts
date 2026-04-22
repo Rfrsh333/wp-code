@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
+import { withCronMonitor } from "@/lib/sentry-utils";
 
 type EmailResult = {
   medewerker: string;
@@ -17,6 +18,8 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return withCronMonitor("cron-dienst-herinnering", async () => {
 
   const morgen = new Date();
   morgen.setDate(morgen.getDate() + 1);
@@ -67,4 +70,5 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true, datum: morgenStr, results });
+  });
 }

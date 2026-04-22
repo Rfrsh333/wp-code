@@ -3,6 +3,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { buildAutoReplyEmailHtml } from "@/lib/email-templates";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // POST: Verstuur de (eventueel aangepaste) reply via Resend
 export async function POST(request: NextRequest) {
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (emailError) {
-      console.error("Send reply email error:", emailError);
+      captureRouteError(emailError, { route: "/api/inquiries/send-reply", action: "POST" });
+      // console.error("Send reply email error:", emailError);
       return NextResponse.json({ error: "Email versturen mislukt" }, { status: 500 });
     }
 
@@ -73,7 +75,8 @@ export async function POST(request: NextRequest) {
       email_id: emailData?.id,
     });
   } catch (error) {
-    console.error("Send reply error:", error);
+    captureRouteError(error, { route: "/api/inquiries/send-reply", action: "POST" });
+    // console.error("Send reply error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

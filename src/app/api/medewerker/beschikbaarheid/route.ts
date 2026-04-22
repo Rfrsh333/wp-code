@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function getMedewerker() {
   const cookieStore = await cookies();
@@ -26,13 +27,15 @@ export async function POST(request: NextRequest) {
       .eq("email", medewerker.email);
 
     if (error) {
-      console.error("DB error:", error);
+      captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "POST" });
+      // console.error("DB error:", error);
       return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API error:", error);
+    captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "POST" });
+    // console.error("API error:", error);
     return NextResponse.json({ error: "Fout opgetreden" }, { status: 500 });
   }
 }
@@ -54,7 +57,8 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      console.error("DB error:", error);
+      captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "GET" });
+      // console.error("DB error:", error);
       return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
     }
 
@@ -75,7 +79,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("API error:", error);
+    captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "GET" });
+    // console.error("API error:", error);
     return NextResponse.json({ error: "Fout opgetreden" }, { status: 500 });
   }
 }
@@ -105,13 +110,15 @@ export async function PUT(request: NextRequest) {
       );
 
     if (error) {
-      console.error("DB error:", error);
+      captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "PUT" });
+      // console.error("DB error:", error);
       return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API error:", error);
+    captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "PUT" });
+    // console.error("API error:", error);
     return NextResponse.json({ error: "Fout opgetreden" }, { status: 500 });
   }
 }
@@ -133,7 +140,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API error:", error);
+    captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "DELETE" });
+    // console.error("API error:", error);
     return NextResponse.json({ error: "Fout opgetreden" }, { status: 500 });
   }
 }

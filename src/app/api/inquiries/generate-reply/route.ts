@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateAutoReply, generateAutoReplySubject } from "@/lib/inquiry-auto-reply";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // POST: Genereer een auto-reply preview (stuurt nog niets)
 export async function POST(request: NextRequest) {
@@ -79,7 +80,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Generate reply error:", error);
+    captureRouteError(error, { route: "/api/inquiries/generate-reply", action: "POST" });
+    // console.error("Generate reply error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

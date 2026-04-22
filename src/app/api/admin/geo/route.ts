@@ -11,6 +11,7 @@ import { getPerformanceData, getCitationDetails, checkContentCitations } from "@
 import { analyseContent, optimizeContent, runAutoOptimization } from "@/lib/geo/optimizer";
 import { getConcurrentenOverzicht, getContentGaps, runCompetitorAnalysis } from "@/lib/geo/competitor";
 import type { GeoContentType, GeoStad, GeoContent } from "@/lib/geo/types";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
  * Admin API voor GEO Agent
@@ -92,7 +93,8 @@ export async function GET(request: NextRequest) {
       }
     }
   } catch (error) {
-    console.error("[GEO ADMIN] GET Error:", error);
+    captureRouteError(error, { route: "/api/admin/geo", action: "GET" });
+    // console.error("[GEO ADMIN] GET Error:", error);
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 }
@@ -227,7 +229,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: `Onbekende actie: ${action}` }, { status: 400 });
     }
   } catch (error) {
-    console.error("[GEO ADMIN] POST Error:", error);
+    captureRouteError(error, { route: "/api/admin/geo", action: "POST" });
+    // console.error("[GEO ADMIN] POST Error:", error);
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 }

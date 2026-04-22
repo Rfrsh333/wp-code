@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { createHash } from "crypto";
 import { sendEmail } from "@/lib/email-service";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
@@ -90,7 +91,8 @@ export async function GET(request: NextRequest) {
       })) || [],
     });
   } catch (error) {
-    console.error("Kandidaat status error:", error);
+    captureRouteError(error, { route: "/api/kandidaat/status", action: "GET" });
+    // console.error("Kandidaat status error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -165,7 +167,8 @@ export async function POST(request: NextRequest) {
           email_sent: true,
         });
       } catch (emailError) {
-        console.error("Email send error:", emailError);
+        captureRouteError(emailError, { route: "/api/kandidaat/status", action: "POST" });
+        // console.error("Email send error:", emailError);
         // Still return the link even if email fails
         return NextResponse.json({
           success: true,
@@ -185,7 +188,8 @@ export async function POST(request: NextRequest) {
       email_sent: false,
     });
   } catch (error) {
-    console.error("Generate status link error:", error);
+    captureRouteError(error, { route: "/api/kandidaat/status", action: "POST" });
+    // console.error("Generate status link error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

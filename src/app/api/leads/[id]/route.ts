@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin as supabase } from '@/lib/supabase'
 import { verifyAdmin } from '@/lib/admin-auth'
 import { z } from 'zod'
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const uuidSchema = z.string().uuid()
 
@@ -68,7 +69,8 @@ export async function GET(
       outreach: outreach || [],
     })
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads/[id]", action: "GET" });
+    // console.error('API error:', error)
     return NextResponse.json(
       { error: 'Er is een fout opgetreden' },
       { status: 500 }
@@ -116,7 +118,8 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
+      captureRouteError(error, { route: "/api/leads/[id]", action: "PATCH" });
+      // console.error('Supabase error:', error)
       return NextResponse.json(
         { error: 'Update mislukt' },
         { status: 500 }
@@ -125,7 +128,8 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, lead })
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads/[id]", action: "PATCH" });
+    // console.error('API error:', error)
     return NextResponse.json(
       { error: 'Er is een fout opgetreden' },
       { status: 500 }
@@ -161,7 +165,8 @@ export async function DELETE(
       .eq('id', id)
 
     if (error) {
-      console.error('Supabase error:', error)
+      captureRouteError(error, { route: "/api/leads/[id]", action: "DELETE" });
+      // console.error('Supabase error:', error)
       return NextResponse.json(
         { error: 'Verwijderen mislukt' },
         { status: 500 }
@@ -170,7 +175,8 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('API error:', error)
+    captureRouteError(error, { route: "/api/leads/[id]", action: "DELETE" });
+    // console.error('API error:', error)
     return NextResponse.json(
       { error: 'Er is een fout opgetreden' },
       { status: 500 }

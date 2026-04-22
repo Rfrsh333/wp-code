@@ -6,6 +6,7 @@ import { buildMessages } from "@/lib/ai-chat/context-builder";
 import { apiRateLimit, checkRedisRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { z } from "zod";
 import type { UserType, ChatbotMessage } from "@/types/chatbot";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 const bodySchema = z.object({
   message: z.string().min(1).max(2000),
@@ -89,7 +90,8 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error || !conv) {
-        console.error("[AI-CHAT] Create conversation error:", error);
+        captureRouteError(error, { route: "/api/ai-chat", action: "POST" });
+        // console.error("[AI-CHAT] Create conversation error:", error);
         return NextResponse.json({ error: "Gesprek aanmaken mislukt" }, { status: 500 });
       }
       convId = conv.id;
@@ -172,7 +174,8 @@ export async function POST(request: NextRequest) {
           );
           controller.close();
         } catch (err) {
-          console.error("[AI-CHAT] Stream error:", err);
+          captureRouteError(err, { route: "/api/ai-chat", action: "POST" });
+          // console.error("[AI-CHAT] Stream error:", err);
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ type: "error", content: "Er ging iets mis met het genereren van een antwoord." })}\n\n`)
           );
@@ -189,7 +192,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[AI-CHAT] Error:", error);
+    captureRouteError(error, { route: "/api/ai-chat", action: "POST" });
+    // console.error("[AI-CHAT] Error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

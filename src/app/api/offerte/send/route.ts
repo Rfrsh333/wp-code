@@ -5,6 +5,7 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { OffertePDF } from "@/lib/pdf/offerte-pdf";
 import { verifyAdmin } from "@/lib/admin-auth";
 import crypto from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // ============================================================================
 // Send Offerte via Email API
@@ -187,7 +188,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (emailError) {
-      console.error("Email error:", emailError);
+      captureRouteError(emailError, { route: "/api/offerte/send", action: "POST" });
+      // console.error("Email error:", emailError);
       return NextResponse.json(
         { error: "Fout bij verzenden email" },
         { status: 500 }
@@ -218,7 +220,8 @@ export async function POST(request: NextRequest) {
       message: "Offerte verzonden naar " + aanvraag.email,
     });
   } catch (error) {
-    console.error("Offerte send error:", error);
+    captureRouteError(error, { route: "/api/offerte/send", action: "POST" });
+    // console.error("Offerte send error:", error);
     return NextResponse.json(
       { error: "Fout bij genereren/verzenden van offerte" },
       { status: 500 }

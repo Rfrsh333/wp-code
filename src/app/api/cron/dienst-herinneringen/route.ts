@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 
 /**
  * Dienst Herinneringen Cron
@@ -25,6 +26,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  return withCronMonitor("cron-dienst-herinneringen", async () => {
+
   const startTime = Date.now();
   const results: ReminderResult[] = [];
   let sent = 0;
@@ -45,7 +48,8 @@ export async function POST(request: NextRequest) {
       .not("status", "in", '("geannuleerd","gesloten")');
 
     if (dienstenError) {
-      console.error("[CRON dienst-herinneringen] Diensten ophalen mislukt:", dienstenError);
+      captureRouteError(dienstenError, { route: "/api/cron/dienst-herinneringen", action: "POST" });
+      // console.error("[CRON dienst-herinneringen] Diensten ophalen mislukt:", dienstenError);
       return NextResponse.json({ error: "Diensten ophalen mislukt" }, { status: 500 });
     }
 
@@ -67,7 +71,8 @@ export async function POST(request: NextRequest) {
       .in("status", ["bevestigd", "geaccepteerd"]);
 
     if (aanmeldingenError) {
-      console.error("[CRON dienst-herinneringen] Aanmeldingen ophalen mislukt:", aanmeldingenError);
+      captureRouteError(aanmeldingenError, { route: "/api/cron/dienst-herinneringen", action: "POST" });
+      // console.error("[CRON dienst-herinneringen] Aanmeldingen ophalen mislukt:", aanmeldingenError);
       return NextResponse.json({ error: "Aanmeldingen ophalen mislukt" }, { status: 500 });
     }
 
@@ -87,7 +92,8 @@ export async function POST(request: NextRequest) {
       .in("id", medewerkerIds);
 
     if (medewerkersError) {
-      console.error("[CRON dienst-herinneringen] Medewerkers ophalen mislukt:", medewerkersError);
+      captureRouteError(medewerkersError, { route: "/api/cron/dienst-herinneringen", action: "POST" });
+      // console.error("[CRON dienst-herinneringen] Medewerkers ophalen mislukt:", medewerkersError);
     }
 
     // Maak lookup maps
@@ -199,7 +205,8 @@ export async function POST(request: NextRequest) {
       }
     }
   } catch (error) {
-    console.error("[CRON dienst-herinneringen] Onverwachte fout:", error);
+    captureRouteError(error, { route: "/api/cron/dienst-herinneringen", action: "POST" });
+    // console.error("[CRON dienst-herinneringen] Onverwachte fout:", error);
     return NextResponse.json({ error: "Onverwachte fout" }, { status: 500 });
   }
 
@@ -209,5 +216,6 @@ export async function POST(request: NextRequest) {
     success: true,
     results,
     metrics: { sent, skipped, failed, duration_ms: duration },
+  });
   });
 }

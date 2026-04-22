@@ -4,6 +4,7 @@ import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateOfferteVoorstel } from "@/lib/agents/offerte-generator";
 import crypto from "crypto";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // POST /api/admin/ai/offerte-generator
 // Generates AI offerte from personeel aanvraag
@@ -97,7 +98,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error("Insert offerte error:", insertError);
+      captureRouteError(insertError, { route: "/api/admin/ai/offerte-generator", action: "POST" });
+      // console.error("Insert offerte error:", insertError);
       return NextResponse.json({ error: "Fout bij opslaan offerte" }, { status: 500 });
     }
 
@@ -107,7 +109,8 @@ export async function POST(request: NextRequest) {
       publicUrl: `/offerte/${token}`,
     });
   } catch (error) {
-    console.error("AI offerte generator error:", error);
+    captureRouteError(error, { route: "/api/admin/ai/offerte-generator", action: "POST" });
+    // console.error("AI offerte generator error:", error);
     return NextResponse.json({ error: "Fout bij genereren offerte" }, { status: 500 });
   }
 }

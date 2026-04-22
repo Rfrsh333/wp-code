@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { verifyKlantSession } from "@/lib/session";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { sendPushToAllOfType } from "@/lib/push-notifications";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (klantError || !klantData) {
-      console.error("Klant not found in database:", klant.id, klantError);
+      captureRouteError(klantError, { route: "/api/klant/aanvraag", action: "POST" });
+      // console.error("Klant not found in database:", klant.id, klantError);
       return NextResponse.json({ error: "Klant account niet gevonden. Neem contact op met support." }, { status: 404 });
     }
 
@@ -140,8 +142,10 @@ export async function POST(request: NextRequest) {
       .select("id");
 
     if (error) {
-      console.error("Dienst aanmaken mislukt:", error);
-      console.error("Insert data was:", JSON.stringify(dienstenToCreate, null, 2));
+      captureRouteError(error, { route: "/api/klant/aanvraag", action: "POST" });
+      // console.error("Dienst aanmaken mislukt:", error);
+      captureRouteError(error, { route: "/api/klant/aanvraag", action: "POST" });
+      // console.error("Insert data was:", JSON.stringify(dienstenToCreate, null, 2));
       return NextResponse.json({
         error: `Aanvraag opslaan mislukt: ${error.message}`,
         code: error.code,
@@ -169,7 +173,7 @@ export async function POST(request: NextRequest) {
       `👥 ${totaalPersoneel} personen op ${datum}\n` +
       `🕐 ${start_tijd} - ${eind_tijd}\n` +
       `📋 ${diensten?.length || 1} diensten — bekijk in dashboard`
-    ).catch((err) => console.error("Telegram alert mislukt:", err));
+    ).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "TELEGRAM" }));
 
     // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar
     sendPushToAllOfType("medewerker", {
@@ -177,7 +181,7 @@ export async function POST(request: NextRequest) {
       body: `${functieSummary} op ${datum} (${start_tijd} - ${eind_tijd})${locatie ? ` in ${locatie}` : ""}`,
       url: "/medewerker/diensten/",
       tag: `nieuwe-dienst-${datum}`,
-    }).catch((err) => console.error("Push notificatie mislukt:", err));
+    }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" }));
 
     return NextResponse.json({
       success: true,
@@ -185,7 +189,8 @@ export async function POST(request: NextRequest) {
       count: diensten?.length || 0
     });
   } catch (err) {
-    console.error("Aanvraag POST error:", err);
+    captureRouteError(err, { route: "/api/klant/aanvraag", action: "POST" });
+    // console.error("Aanvraag POST error:", err);
     return NextResponse.json({ error: "Er ging iets mis bij het opslaan" }, { status: 500 });
   }
 }
@@ -209,7 +214,8 @@ export async function GET() {
       .limit(50);
 
     if (error) {
-      console.error("Locaties ophalen mislukt:", error);
+      captureRouteError(error, { route: "/api/klant/aanvraag", action: "GET" });
+      // console.error("Locaties ophalen mislukt:", error);
       return NextResponse.json({ locaties: [] });
     }
 
@@ -217,7 +223,8 @@ export async function GET() {
 
     return NextResponse.json({ locaties: uniqueLocaties });
   } catch (err) {
-    console.error("Aanvraag GET error:", err);
+    captureRouteError(err, { route: "/api/klant/aanvraag", action: "GET" });
+    // console.error("Aanvraag GET error:", err);
     return NextResponse.json({ locaties: [] });
   }
 }

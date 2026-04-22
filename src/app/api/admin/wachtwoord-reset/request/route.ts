@@ -3,6 +3,7 @@ import { sendEmail } from "@/lib/email-service";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
       });
 
       if (error) {
-        console.error("Admin password reset link generation error:", error);
+        captureRouteError(error, { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
+        // console.error("Admin password reset link generation error:", error);
       } else {
         const actionLink = data.properties?.action_link;
 
@@ -78,10 +80,12 @@ export async function POST(request: NextRequest) {
           });
 
           if (mailResult.error) {
-            console.error("Admin password reset email send error:", mailResult.error);
+            captureRouteError(error, { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
+            // console.error("Admin password reset email send error:", mailResult.error);
           }
         } else {
-          console.error("Admin password reset link missing action_link", data);
+          captureRouteError(error, { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
+          // console.error("Admin password reset link missing action_link", data);
         }
       }
     }
@@ -91,7 +95,8 @@ export async function POST(request: NextRequest) {
       message: "Als dit e-mailadres bij een adminaccount hoort, is er een resetmail verstuurd.",
     });
   } catch (error) {
-    console.error("Admin password reset request error:", error);
+    captureRouteError(error, { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
+    // console.error("Admin password reset request error:", error);
     return NextResponse.json({ error: "Er ging iets mis bij het versturen van de resetmail" }, { status: 500 });
   }
 }

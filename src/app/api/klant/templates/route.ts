@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { verifyKlantSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -23,7 +24,8 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching templates:", error);
+    captureRouteError(error, { route: "/api/klant/templates", action: "GET" });
+    // console.error("Error fetching templates:", error);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 
@@ -74,7 +76,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("Error creating template:", error);
+    captureRouteError(error, { route: "/api/klant/templates", action: "POST" });
+    // console.error("Error creating template:", error);
     return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
   }
 
@@ -105,7 +108,8 @@ export async function PATCH(request: NextRequest) {
       .eq("klant_id", klant.id);
 
     if (error) {
-      console.error("Error updating template usage:", error);
+      captureRouteError(error, { route: "/api/klant/templates", action: "PATCH" });
+      // console.error("Error updating template usage:", error);
       return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
     }
 
@@ -120,7 +124,8 @@ export async function PATCH(request: NextRequest) {
     .eq("klant_id", klant.id);
 
   if (error) {
-    console.error("Error updating template:", error);
+    captureRouteError(error, { route: "/api/klant/templates", action: "PATCH" });
+    // console.error("Error updating template:", error);
     return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
   }
 
@@ -145,7 +150,8 @@ export async function DELETE(request: NextRequest) {
     .eq("klant_id", klant.id);
 
   if (error) {
-    console.error("Error deleting template:", error);
+    captureRouteError(error, { route: "/api/klant/templates", action: "DELETE" });
+    // console.error("Error deleting template:", error);
     return NextResponse.json({ error: "Verwijderen mislukt" }, { status: 500 });
   }
 

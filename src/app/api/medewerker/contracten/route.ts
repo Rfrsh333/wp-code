@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,13 +25,15 @@ export async function GET(request: NextRequest) {
       .limit(50);
 
     if (error) {
-      console.error("[MEDEWERKER CONTRACTEN] Error:", error);
+      captureRouteError(error, { route: "/api/medewerker/contracten", action: "GET" });
+      // console.error("[MEDEWERKER CONTRACTEN] Error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ data });
   } catch (err) {
-    console.error("[MEDEWERKER CONTRACTEN] Error:", err);
+    captureRouteError(err, { route: "/api/medewerker/contracten", action: "GET" });
+    // console.error("[MEDEWERKER CONTRACTEN] Error:", err);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

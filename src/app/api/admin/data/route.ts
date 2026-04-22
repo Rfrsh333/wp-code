@@ -5,6 +5,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 import { ensureMedewerkerFromCandidate } from "@/lib/candidate-to-medewerker";
 import { sendMedewerkerActivationEmail } from "@/lib/medewerker-activation";
 import { dataPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 // KRITIEK: Whitelist van toegestane tables om SQL injection te voorkomen
 const ALLOWED_TABLES = [
@@ -82,7 +83,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query.limit(500);
 
   if (error) {
-    console.error(`[DATA] Error fetching ${table}:`, error.message);
+    captureRouteError(error, { route: "/api/admin/data", action: "GET" });
+    // console.error(`[DATA] Error fetching ${table}:`, error.message);
     return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
   }
 
@@ -124,7 +126,8 @@ export async function POST(request: NextRequest) {
   if (action === "update") {
     const { error: updateError } = await supabaseAdmin.from(table).update(data).eq("id", id);
     if (updateError) {
-      console.error(`[DATA] Update error on ${table}:`, updateError.message, { id, data });
+      captureRouteError(updateError, { route: "/api/admin/data", action: "POST" });
+      // console.error(`[DATA] Update error on ${table}:`, updateError.message, { id, data });
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
@@ -173,7 +176,8 @@ export async function POST(request: NextRequest) {
             await logEmail(kandidaat.id, "custom", kandidaat.email, `Afwijzingsmail`, emailResult.data.id);
           }
         } catch (emailError) {
-          console.error("Failed to send rejection email:", emailError);
+          captureRouteError(emailError, { route: "/api/admin/data", action: "POST" });
+          // console.error("Failed to send rejection email:", emailError);
         }
       }
     }
@@ -190,7 +194,8 @@ export async function POST(request: NextRequest) {
     }
     const { error: bulkError } = await supabaseAdmin.from(table).update(data).in("id", ids);
     if (bulkError) {
-      console.error(`[DATA] Bulk update error on ${table}:`, bulkError.message, { ids, data });
+      captureRouteError(bulkError, { route: "/api/admin/data", action: "POST" });
+      // console.error(`[DATA] Bulk update error on ${table}:`, bulkError.message, { ids, data });
       return NextResponse.json({ error: bulkError.message }, { status: 500 });
     }
 

@@ -3,6 +3,7 @@ import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
 import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-redis";
 import { generatePlanningSuggestie } from "@/lib/agents/dienst-planner";
 import { isOpenAIConfigured } from "@/lib/openai";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -46,7 +47,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(suggestie);
   } catch (error) {
-    console.error("AI planning error:", error);
+    captureRouteError(error, { route: "/api/admin/ai/planning", action: "POST" });
+    // console.error("AI planning error:", error);
     return NextResponse.json({ error: "Planning suggestie mislukt" }, { status: 500 });
   }
 }
