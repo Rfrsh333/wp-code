@@ -7,8 +7,7 @@ import GtmLoader from "@/components/GtmLoader";
 import CookieConsent from "@/components/CookieConsent";
 import { ToastProvider } from "@/components/Toast";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
+import ConsentAnalytics from "@/components/ConsentAnalytics";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -96,8 +95,7 @@ export default function RootLayout({
             <CookieConsent />
           </ConfirmProvider>
         </ToastProvider>
-        <SpeedInsights />
-        <Analytics />
+        <ConsentAnalytics />
       </body>
     </html>
   );

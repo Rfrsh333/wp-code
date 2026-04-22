@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
+import { verifyRecaptcha } from "@/lib/recaptcha";
 
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -20,6 +21,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const formData = await request.formData();
+
+    const recaptchaToken = formData.get("recaptchaToken") as string;
+    if (!recaptchaToken) {
+      return NextResponse.json({ error: "reCAPTCHA verificatie vereist" }, { status: 400 });
+    }
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+    if (!recaptchaResult.success) {
+      return NextResponse.json({ error: recaptchaResult.error || "Spam detectie mislukt" }, { status: 400 });
+    }
+
     const file = formData.get("file") as File | null;
 
     if (!file) {
@@ -53,11 +64,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
     }
 
-    const { data: urlData } = supabaseAdmin.storage
+    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
       .from("kandidaat-documenten")
-      .getPublicUrl(path);
+      .createSignedUrl(path, 300); // 5 min expiry
 
-    return NextResponse.json({ url: urlData.publicUrl });
+    if (signedUrlError) {
+      return NextResponse.json({ url: null, path });
+    }
+
+    return NextResponse.json({ url: signedUrlData.signedUrl, path });
   } catch (error) {
     console.error("CV upload error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });

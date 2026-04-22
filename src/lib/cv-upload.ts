@@ -39,9 +39,14 @@ export async function uploadCV(file: File, prefix?: string): Promise<string> {
     throw new Error(`CV upload mislukt: ${error.message}`);
   }
 
-  const { data: urlData } = supabaseAdmin.storage
+  const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
     .from("kandidaat-documenten")
-    .getPublicUrl(path);
+    .createSignedUrl(path, 300); // 5 min expiry
 
-  return urlData.publicUrl;
+  if (signedUrlError) {
+    // Return the path so it can be used to generate a signed URL later
+    return path;
+  }
+
+  return signedUrlData.signedUrl;
 }

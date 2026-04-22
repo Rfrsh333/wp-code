@@ -4,7 +4,7 @@ import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateOutreachEmail } from "@/lib/agents/outreach-email";
 import { isOpenAIConfigured } from "@/lib/openai";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -68,16 +68,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Lead heeft geen email adres" }, { status: 400 });
       }
 
-      if (!process.env.RESEND_API_KEY) {
-        return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
-      }
-
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const { data: emailResult, error: emailError } = await resend.emails.send({
+      const { data: emailResult, error: emailError } = await sendEmail({
         from: "TopTalent Jobs <info@toptalentjobs.nl>",
         to: [lead.email],
         subject: onderwerp || `TopTalent Jobs - Horeca personeel voor ${lead.bedrijfsnaam}`,
         html: (email_content || "").replace(/\n/g, "<br>"),
+        type: "marketing",
+        checkSuppression: true,
       });
 
       if (emailError) {

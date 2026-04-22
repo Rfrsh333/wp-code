@@ -5,7 +5,7 @@ import {
   isGoogleCalendarConfigured,
   createGoogleCalendarEvent,
 } from "@/lib/google-calendar";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import {
   buildCancellationEmailHtml,
   buildRescheduleEmailHtml,
@@ -107,14 +107,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Stuur annuleringsmail
-    if (process.env.RESEND_API_KEY) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const datumFormatted = slot ? new Date(slot.date).toLocaleDateString("nl-NL", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-      }) : "";
+    const datumFormatted = slot ? new Date(slot.date).toLocaleDateString("nl-NL", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+    }) : "";
 
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: `${senderName} <${senderEmail}>`,
           to: [booking.client_email],
           subject: `Afspraak geannuleerd — ${senderName}`,
@@ -132,7 +130,7 @@ export async function POST(request: NextRequest) {
 
       // Notificatie naar admin
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: `${senderName} <${senderEmail}>`,
           to: [senderEmail],
           subject: `Afspraak geannuleerd: ${booking.client_name}`,
@@ -149,7 +147,6 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error("Admin cancellation notification error:", err);
       }
-    }
 
     return NextResponse.json({ success: true, action: "cancelled" });
   }
@@ -228,10 +225,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Stuur reschedule bevestigingsmail
-    if (process.env.RESEND_API_KEY && bookData.booking) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
+    if (bookData.booking) {
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: `${senderName} <${senderEmail}>`,
           to: [booking.client_email],
           subject: `Afspraak verplaatst — ${senderName}`,

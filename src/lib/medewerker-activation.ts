@@ -1,8 +1,6 @@
 import crypto from "crypto";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin } from "@/lib/supabase";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface MedewerkerActivationTarget {
   id: string;
@@ -56,7 +54,7 @@ export async function sendMedewerkerActivationEmail(medewerker: MedewerkerActiva
   const activationUrl = `${getBaseUrl()}/medewerker/activeren?token=${token}`;
   const firstName = medewerker.naam.split(" ")[0] || medewerker.naam;
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [medewerker.email],
     replyTo: "info@toptalentjobs.nl",

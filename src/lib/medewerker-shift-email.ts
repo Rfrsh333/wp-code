@@ -1,7 +1,5 @@
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { escapeHtml } from "@/lib/sanitize";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface ShiftConfirmationInput {
   medewerkerNaam: string;
@@ -53,7 +51,7 @@ export async function sendMedewerkerShiftConfirmationEmail(input: ShiftConfirmat
     ? input.kledingvoorschrift.trim()
     : "Geen extra kledingvoorschriften meegegeven. Neem bij twijfel even contact op.";
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [input.medewerkerEmail],
     replyTo: "info@toptalentjobs.nl",

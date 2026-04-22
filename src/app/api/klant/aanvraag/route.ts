@@ -163,20 +163,12 @@ export async function POST(request: NextRequest) {
       ? functies_met_aantal.reduce((sum: number, f: { aantal: number }) => sum + f.aantal, 0)
       : parseInt(aantal) || 1;
 
-    // Telegram notification (don't let it block the response)
+    // Telegram notification (geen PII — AVG compliance)
     sendTelegramAlert(
       `<b>🆕 Nieuwe personeelsaanvraag</b>\n` +
-      `👤 Klant: ${klantData.bedrijfsnaam}\n` +
-      `💼 Functies: ${functieSummary}\n` +
-      `📅 Datum: ${datum}\n` +
-      `🕐 Tijd: ${start_tijd} - ${eind_tijd}\n` +
-      `👥 Totaal personen: ${totaalPersoneel}\n` +
-      `📋 Aantal diensten: ${diensten?.length || 1}\n` +
-      `${vereiste_taal ? `🗣️ Taal: ${vereiste_taal === 'nl' ? 'Nederlands' : vereiste_taal === 'en' ? 'Engels' : 'NL/EN'}\n` : ""}` +
-      `${vereiste_vaardigheden?.length ? `🎯 Vaardigheden: ${vereiste_vaardigheden.join(', ')}\n` : ""}` +
-      `${locatie ? `📍 Locatie: ${locatie}\n` : ""}` +
-      `${opmerkingen ? `💬 Opmerkingen: ${opmerkingen}\n` : ""}` +
-      `${favoriet_medewerker_ids?.length ? `⭐ Voorkeur medewerkers: ${favoriet_medewerker_ids.length}` : ""}`
+      `👥 ${totaalPersoneel} personen op ${datum}\n` +
+      `🕐 ${start_tijd} - ${eind_tijd}\n` +
+      `📋 ${diensten?.length || 1} diensten — bekijk in dashboard`
     ).catch((err) => console.error("Telegram alert mislukt:", err));
 
     // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar

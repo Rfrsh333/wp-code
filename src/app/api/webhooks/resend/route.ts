@@ -238,9 +238,7 @@ async function handleAcquisitieTracking(event: ResendWebhookEvent) {
 
       await sendTelegramAlert(
         `⚠️ <b>Email bounced</b>\n\n` +
-        `Bedrijf: ${lead.bedrijfsnaam}\n` +
-        `Email: ${lead.email}\n` +
-        `Email gemarkeerd als ongeldig, campagne emails gestopt.`
+        `Email bounced voor lead — campagne gestopt`
       );
       break;
     }
@@ -263,9 +261,7 @@ async function handleAcquisitieTracking(event: ResendWebhookEvent) {
 
       await sendTelegramAlert(
         `🚫 <b>Spam klacht!</b>\n\n` +
-        `Bedrijf: ${lead.bedrijfsnaam}\n` +
-        `Email: ${lead.email}\n` +
-        `Lead afgewezen, alle emails gestopt.`
+        `Spam klacht ontvangen — lead afgewezen, emails gestopt`
       );
       break;
     }
@@ -275,10 +271,7 @@ async function handleAcquisitieTracking(event: ResendWebhookEvent) {
   if (newEngagement >= 50 && currentEngagement < 50) {
     await sendTelegramAlert(
       `🔥 <b>Hot Lead!</b>\n\n` +
-      `Bedrijf: ${lead.bedrijfsnaam}\n` +
-      `Engagement: ${newEngagement}\n` +
-      `Stage: ${lead.pipeline_stage}\n\n` +
-      `Direct opvolgen!`
+      `Engagement: ${newEngagement} — direct opvolgen!`
     );
   }
 }

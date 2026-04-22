@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { buildFactuurHerinneringHtml } from "@/lib/email-templates";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -31,7 +29,7 @@ export async function GET(request: NextRequest) {
       vervalDatum.setDate(vervalDatum.getDate() + 30);
 
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: "TopTalent <info@toptalentjobs.nl>",
           to: [klant.email],
           subject: `Herinnering: Factuur ${factuur.factuur_nummer} nog niet betaald`,

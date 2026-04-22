@@ -65,8 +65,7 @@ export async function POST(request: NextRequest) {
       if (result.score > 70) {
         await sendTelegramAlert(
           `🎯 <b>High-score lead!</b>\n` +
-          `${lead.bedrijfsnaam}: ${result.score}/100\n` +
-          `${result.reasoning}`
+          `Score: ${result.score}/100 — bekijk in dashboard`
         );
       }
 

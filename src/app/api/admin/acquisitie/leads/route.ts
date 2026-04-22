@@ -222,15 +222,11 @@ export async function POST(request: NextRequest) {
 
         newLead.ai_score = scoreResult.score;
 
-        // Telegram alert voor high-score leads
+        // Telegram alert voor high-score leads (geen PII — AVG compliance)
         if (scoreResult.score > 70) {
           await sendTelegramAlert(
             `🎯 <b>Nieuwe high-score lead!</b>\n\n` +
-            `Bedrijf: ${newLead.bedrijfsnaam}\n` +
-            `Score: ${scoreResult.score}/100\n` +
-            `Stad: ${newLead.stad || "onbekend"}\n` +
-            `Branche: ${newLead.branche || "onbekend"}\n\n` +
-            `${scoreResult.reasoning}`
+            `Score: ${scoreResult.score}/100 — bekijk in dashboard`
           );
         }
       } catch (scoreError) {

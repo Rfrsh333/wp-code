@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-lg text-neutral-300">
-            TopTalent B.V. - Laatst bijgewerkt: december 2024
+            TopTalent B.V. - Laatst bijgewerkt: april 2026
           </p>
         </div>
       </section>
@@ -363,6 +363,12 @@ export default function PrivacyPolicyPage() {
               <li><strong>E-mailproviders:</strong> voor zakelijke communicatie</li>
               <li><strong>CRM-systemen:</strong> voor relatiebeheer</li>
             </ul>
+            <p>Daarnaast maken wij gebruik van de volgende specifieke verwerkers:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>OpenAI (VS):</strong> voor AI-ondersteunde screening van kandidaatprofielen (geanonimiseerd, zonder naam of geboortedatum)</li>
+              <li><strong>Sentry (VS):</strong> voor foutmonitoring en applicatiestabiliteit (geen persoonsgegevens)</li>
+              <li><strong>Vercel (VS):</strong> voor hosting, analytics en performance monitoring (alleen met uw toestemming voor analytics)</li>
+            </ul>
             <p>Met alle verwerkers hebben wij verwerkersovereenkomsten gesloten die voldoen aan de eisen van artikel 28 AVG.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">7.3 Overheidsinstanties</h3>
@@ -488,6 +494,25 @@ export default function PrivacyPolicyPage() {
             </div>
             <p>Met alle leveranciers die persoonsgegevens verwerken zijn verwerkersovereenkomsten gesloten.</p>
 
+            {/* 10b. Gebruik van AI */}
+            <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
+              10b. Gebruik van Artificiële Intelligentie (AI)
+            </h2>
+            <p>TopTalent maakt gebruik van AI-technologie ter ondersteuning van haar dienstverlening:</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Kandidaat-screening</h3>
+            <p>Wij gebruiken AI (via OpenAI) om kandidaatprofielen te evalueren op basis van werkervaring, beschikbaarheid, vaardigheden en motivatie. Hierbij worden geen identificerende persoonsgegevens (naam, geboortedatum) naar de AI gestuurd. De AI genereert een score en aanbeveling, maar een medewerker neemt altijd de eindbeslissing.</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Lead scoring</h3>
+            <p>Voor zakelijke leads (B2B) gebruiken wij AI om de kwaliteit van potentiële klanten te beoordelen op basis van bedrijfskenmerken. Dit betreft geen persoonsgegevens van natuurlijke personen.</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Uw rechten bij AI-verwerking</h3>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>U kunt altijd een menselijke herbeoordeling aanvragen</li>
+              <li>U heeft het recht op uitleg over hoe de AI-score tot stand is gekomen</li>
+              <li>U kunt bezwaar maken tegen AI-verwerking van uw gegevens</li>
+            </ul>
+
             {/* 11. Beveiliging */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
               11. Beveiliging van persoonsgegevens
@@ -556,7 +581,7 @@ export default function PrivacyPolicyPage() {
             </ul>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">12.7 Recht om niet onderworpen te worden aan geautomatiseerde besluitvorming (artikel 22 AVG)</h3>
-            <p>U heeft het recht om niet onderworpen te worden aan een uitsluitend op geautomatiseerde verwerking gebaseerd besluit dat voor u rechtsgevolgen heeft of u anderszins in aanmerkelijke mate treft. Wij maken geen gebruik van volledig geautomatiseerde besluitvorming.</p>
+            <p>U heeft het recht om niet onderworpen te worden aan een uitsluitend op geautomatiseerde verwerking gebaseerd besluit dat voor u rechtsgevolgen heeft of u anderszins in aanmerkelijke mate treft. Wij gebruiken AI-ondersteunde screening om kandidaatprofielen te evalueren. De AI genereert een score en aanbeveling, maar de eindbeslissing wordt altijd door een medewerker genomen. U kunt altijd een menselijke herbeoordeling aanvragen.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">12.8 Uitoefening van uw rechten</h3>
             <p>Om uw rechten uit te oefenen kunt u contact met ons opnemen via:</p>
@@ -617,10 +642,10 @@ export default function PrivacyPolicyPage() {
             {/* Footer */}
             <div className="mt-16 pt-8 border-t border-neutral-200">
               <p className="text-neutral-500 text-sm">
-                <strong>Utrecht, december 2024</strong>
+                <strong>Utrecht, april 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 1.0
+                TopTalent B.V. - Privacy Policy versie 2.0
               </p>
             </div>
           </div>

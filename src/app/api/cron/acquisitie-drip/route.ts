@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { applyTemplate } from "@/lib/agents/outreach-email";
 import { determineNextAction } from "@/lib/agents/smart-sequence";
 import { isOpenAIConfigured } from "@/lib/openai";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 
 // Dagelijkse cron voor drip campagnes + smart sequences
 // Configureer via Vercel Cron of externe scheduler: GET /api/cron/acquisitie-drip
@@ -14,10 +14,6 @@ export async function GET(request: NextRequest) {
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
   }
 
   try {
@@ -35,7 +31,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, sent: 0, message: "Geen emails te versturen" });
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
     let sent = 0;
 
     for (const cl of dueLeads) {
@@ -44,6 +39,9 @@ export async function GET(request: NextRequest) {
 
       if (!lead?.email || !campagne) continue;
       if (campagne.status !== "actief") continue;
+
+      // Skip bounced leads
+      if (Array.isArray(lead.tags) && lead.tags.includes("email-bounced")) continue;
 
       // Get current drip step template
       let onderwerp = campagne.onderwerp_template || "";
@@ -75,11 +73,13 @@ export async function GET(request: NextRequest) {
       inhoud = applyTemplate(inhoud, variables);
 
       try {
-        const { data: emailResult } = await resend.emails.send({
+        const { data: emailResult } = await sendEmail({
           from: "TopTalent Jobs <info@toptalentjobs.nl>",
           to: [lead.email],
           subject: onderwerp,
           html: inhoud.replace(/\n/g, "<br>"),
+          type: "marketing",
+          checkSuppression: true,
         });
 
         // Log contactmoment

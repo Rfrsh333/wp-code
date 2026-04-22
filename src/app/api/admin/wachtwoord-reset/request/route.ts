@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
@@ -71,7 +69,7 @@ export async function POST(request: NextRequest) {
         const actionLink = data.properties?.action_link;
 
         if (actionLink) {
-          const mailResult = await resend.emails.send({
+          const mailResult = await sendEmail({
             from: "TopTalent <info@toptalentjobs.nl>",
             to: [normalizedEmail],
             replyTo: "info@toptalentjobs.nl",

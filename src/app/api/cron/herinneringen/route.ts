@@ -48,11 +48,10 @@ export async function GET(request: NextRequest) {
     if (!isReminderWindow) continue;
 
     try {
-      const { Resend } = await import("resend");
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
+      const { sendEmail } = await import("@/lib/email-service");
+      await sendEmail({
         from: "TopTalent Jobs <facturen@toptalentjobs.nl>",
-        to: factuur.klant.email,
+        to: [factuur.klant.email],
         subject: `Herinnering: Factuur ${factuur.factuur_nummer} staat nog open`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

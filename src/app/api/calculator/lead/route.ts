@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import crypto from "crypto";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, getClientIP, calculatorLeadRateLimit } from "@/lib/rate-limit-redis";
@@ -339,47 +339,34 @@ export async function POST(request: NextRequest) {
       // Continue anyway - email is more important
     }
 
-    // Send Telegram alert
+    // Send Telegram alert (geen PII — AVG compliance)
     sendTelegramAlert(
       `🔥 <b>NIEUWE CALCULATOR LEAD!</b>\n\n` +
-      `👤 ${lead.naam}\n` +
-      `🏢 ${lead.bedrijfsnaam}\n` +
-      `📧 ${lead.email}\n` +
-      `💼 ${functieLabels[inputs.functie]}\n` +
-      `👥 ${inputs.aantalMedewerkers} medewerkers\n\n` +
-      `💰 ${resultaten.uitzend ? `€${resultaten.uitzend.perMaand.toLocaleString('nl-NL')}/mnd` : ''}`
+      `Nieuwe calculator lead ontvangen — bekijk in dashboard`
     ).catch(console.error);
 
-    // Send emails via Resend
-    if (process.env.RESEND_API_KEY) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
+    // Send emails
+    const leadEmailPromise = sendEmail({
+      from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
+      to: [lead.email],
+      subject: "Uw kostenoverzicht horecapersoneel - TopTalent Jobs",
+      html: generateLeadEmail(lead, inputs, resultaten, pdfToken),
+    });
 
-      // Email to lead
-      const leadEmailPromise = resend.emails.send({
-        from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
-        to: [lead.email],
-        subject: "Uw kostenoverzicht horecapersoneel - TopTalent Jobs",
-        html: generateLeadEmail(lead, inputs, resultaten, pdfToken),
-      });
+    const internalEmailPromise = sendEmail({
+      from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
+      to: ["info@toptalentjobs.nl"],
+      replyTo: lead.email,
+      subject: `Calculator Lead: ${lead.bedrijfsnaam} - ${lead.naam}`,
+      html: generateInternalEmail(lead, inputs, resultaten),
+    });
 
-      // Internal notification
-      const internalEmailPromise = resend.emails.send({
-        from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
-        to: ["info@toptalentjobs.nl"],
-        replyTo: lead.email,
-        subject: `Calculator Lead: ${lead.bedrijfsnaam} - ${lead.naam}`,
-        html: generateInternalEmail(lead, inputs, resultaten),
-      });
+    await Promise.all([leadEmailPromise, internalEmailPromise]);
 
-      // Send both emails in parallel
-      await Promise.all([leadEmailPromise, internalEmailPromise]);
-
-      // Update email_sent status
-      await supabase
-        .from("calculator_leads")
-        .update({ email_sent: true, email_sent_at: new Date().toISOString() })
-        .eq("pdf_token", pdfToken);
-    }
+    await supabase
+      .from("calculator_leads")
+      .update({ email_sent: true, email_sent_at: new Date().toISOString() })
+      .eq("pdf_token", pdfToken);
 
     return NextResponse.json({
       success: true,

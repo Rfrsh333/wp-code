@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { buildAutoReplyEmailHtml } from "@/lib/email-templates";
 
 // POST: Verstuur de (eventueel aangepaste) reply via Resend
@@ -10,10 +10,6 @@ export async function POST(request: NextRequest) {
   if (!isAdmin) {
     console.warn(`[SECURITY] Unauthorized send-reply attempt by: ${adminEmail || "unknown"}`);
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
-  if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
   }
 
   try {
@@ -49,9 +45,7 @@ export async function POST(request: NextRequest) {
     const bookingUrl = `${baseUrl}/afspraak-plannen?ref=${inquiry.id}`;
     const htmlContent = buildAutoReplyEmailHtml(email_body, bookingUrl);
 
-    // Verstuur via Resend
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { data: emailData, error: emailError } = await resend.emails.send({
+    const { data: emailData, error: emailError } = await sendEmail({
       from: `${senderName} <${senderEmail}>`,
       to: [inquiry.email],
       subject: subject || "Reactie op je aanvraag — TopTalent Jobs",

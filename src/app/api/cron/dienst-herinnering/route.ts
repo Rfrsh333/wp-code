@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email-service";
 
 type EmailResult = {
   medewerker: string;
@@ -42,9 +40,9 @@ export async function GET(request: NextRequest) {
     if (!m?.email || !d) continue;
 
     try {
-      await resend.emails.send({
+      await sendEmail({
         from: "TopTalent Jobs <info@toptalentjobs.nl>",
-        to: m.email,
+        to: [m.email],
         subject: `Herinnering: Morgen dienst bij ${d.klant_naam}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

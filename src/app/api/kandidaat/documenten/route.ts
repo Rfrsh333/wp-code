@@ -139,13 +139,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
     }
 
-    // Get public URL
-    const { data: urlData } = supabaseAdmin
-      .storage
-      .from('kandidaat-documenten')
-      .getPublicUrl(fileName);
-
-    // Save to database
+    // Save to database (file_path is used for signed URL generation on demand)
     const { error: dbError } = await supabaseAdmin
       .from("kandidaat_documenten")
       .insert({
@@ -154,7 +148,7 @@ export async function POST(request: NextRequest) {
         file_name: file.name,
         file_path: fileName,
         file_size: file.size,
-        file_url: urlData.publicUrl,
+        file_url: null,
         review_status: "in_review",
         uploaded_at: new Date().toISOString(),
       });
@@ -187,9 +181,8 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         if (kandidaatInfo?.email) {
-          const { Resend } = await import("resend");
-          const resendClient = new Resend(process.env.RESEND_API_KEY);
-          await resendClient.emails.send({
+          const { sendEmail } = await import("@/lib/email-service");
+          await sendEmail({
             from: "TopTalent <info@toptalentjobs.nl>",
             to: [kandidaatInfo.email],
             subject: "Documenten ontvangen - TopTalent Jobs",

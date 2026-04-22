@@ -3,9 +3,7 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { signFactuurToken } from "@/lib/session";
 import { getFactuurConfig } from "@/lib/factuur-config";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email-service";
 
 export async function POST(request: NextRequest) {
   // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen verzenden
@@ -39,9 +37,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Geen e-mailadres beschikbaar voor deze klant" }, { status: 400 });
     }
 
-    const resendResult = await resend.emails.send({
+    const resendResult = await sendEmail({
       from: `${factuurConfig.bedrijfsnaam} <${factuurConfig.email}>`,
-      to: recipient,
+      to: [recipient],
       subject: `Factuur ${factuur.factuur_nummer} - TopTalent Jobs`,
       html: `
         <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">

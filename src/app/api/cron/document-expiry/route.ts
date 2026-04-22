@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { buildDocumentVerlooptHtml } from "@/lib/email-templates";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -30,7 +28,7 @@ export async function GET(request: NextRequest) {
       if (!medewerker?.email) continue;
 
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: "TopTalent <info@toptalentjobs.nl>",
           to: [medewerker.email],
           subject: `Document verloopt binnenkort: ${doc.document_type}`,

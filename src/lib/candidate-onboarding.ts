@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import {
   applyCandidateEmailVars,
   candidateEmailCopy,
@@ -7,13 +7,6 @@ import {
 } from "@/content/candidateEmails";
 import type { AdminCandidateTemplateKey } from "@/content/adminCandidateEmailTemplates";
 import { adminCandidateEmailTemplates } from "@/content/adminCandidateEmailTemplates";
-
-function getResend() {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is niet geconfigureerd");
-  }
-  return new Resend(process.env.RESEND_API_KEY);
-}
 
 // Base layout voor alle kandidaat emails - consistent oranje gradient design
 function getEmailLayout(content: string): string {
@@ -182,12 +175,14 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
     </p>
   `;
 
-  const result = await getResend().emails.send({
+  const result = await sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
+    kandidaatId: kandidaat.id,
+    emailType: "bevestiging",
   });
 
   if (result.error) {
@@ -232,12 +227,14 @@ export async function sendDocumentenVerzoek(kandidaat: Kandidaat, portalToken?: 
     </p>
   `;
 
-  const result = await getResend().emails.send({
+  const result = await sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
+    kandidaatId: kandidaat.id,
+    emailType: "documenten_opvragen",
   });
 
   if (result.error) {
@@ -275,12 +272,14 @@ export async function sendDocumentenReminder(kandidaat: Kandidaat, portalToken?:
     </p>
   `;
 
-  const result = await getResend().emails.send({
+  const result = await sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
+    kandidaatId: kandidaat.id,
+    emailType: "documenten_reminder",
   });
 
   if (result.error) {
@@ -309,12 +308,14 @@ export async function sendCandidateTemplateEmail(
     ${template.outro ? `<p style="margin-top: 30px; color: #666; font-size: 14px;">${template.outro}</p>` : ""}
   `;
 
-  return getResend().emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(template.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
+    kandidaatId: kandidaat.id,
+    emailType: "custom",
   });
 }
 
@@ -349,12 +350,14 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
     </p>
   `;
 
-  const result = await getResend().emails.send({
+  const result = await sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
+    kandidaatId: kandidaat.id,
+    emailType: "inzetbaar",
   });
 
   if (result.error) {
@@ -380,12 +383,14 @@ export async function sendAfwijzingsmail(kandidaat: Kandidaat) {
     </p>
   `;
 
-  const result = await getResend().emails.send({
+  const result = await sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [kandidaat.email],
     replyTo: "info@toptalentjobs.nl",
     subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
     html: getEmailLayout(content),
+    kandidaatId: kandidaat.id,
+    emailType: "custom",
   });
 
   if (result.error) {

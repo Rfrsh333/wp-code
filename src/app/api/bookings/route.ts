@@ -4,7 +4,7 @@ import {
   createGoogleCalendarEvent,
   isGoogleCalendarConfigured,
 } from "@/lib/google-calendar";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import {
   buildBookingConfirmationHtml,
   buildBookingNotificationHtml,
@@ -566,15 +566,12 @@ export async function POST(request: NextRequest) {
     const manageUrl = `${baseUrl}/afspraak/${cancellationToken}`;
 
     // Verstuur bevestigingsmails
-    if (process.env.RESEND_API_KEY) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-
-      if (isKandidaat) {
+    if (isKandidaat) {
         // Kandidaat bevestigingsmail
         const kNaam = kandidaat_naam || client_name;
         const kEmail = kandidaat_email || client_email;
         try {
-          await resend.emails.send({
+          await sendEmail({
             from: `${senderName} <${senderEmail}>`,
             to: [kEmail],
             subject: `Je kennismakingsgesprek is bevestigd`,
@@ -597,7 +594,7 @@ export async function POST(request: NextRequest) {
 
         // Admin notificatie
         try {
-          await resend.emails.send({
+          await sendEmail({
             from: `${senderName} <${senderEmail}>`,
             to: [senderEmail],
             subject: `Nieuw kennismakingsgesprek: ${kNaam} op ${datumFormatted}`,
@@ -618,7 +615,7 @@ export async function POST(request: NextRequest) {
       } else {
         // Klant bevestigingsmail
         try {
-          await resend.emails.send({
+          await sendEmail({
             from: `${senderName} <${senderEmail}>`,
             to: [client_email],
             subject: `Je afspraak met ${senderName} is bevestigd`,
@@ -642,7 +639,7 @@ export async function POST(request: NextRequest) {
         }
 
         try {
-          await resend.emails.send({
+          await sendEmail({
             from: `${senderName} <${senderEmail}>`,
             to: [senderEmail],
             subject: `Nieuwe afspraak: ${client_name} op ${datumFormatted}`,
@@ -662,7 +659,6 @@ export async function POST(request: NextRequest) {
           console.error("Booking notification email error:", emailErr);
         }
       }
-    }
 
     return NextResponse.json({
       success: true,

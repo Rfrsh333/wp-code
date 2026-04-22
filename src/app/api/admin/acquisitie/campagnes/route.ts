@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { applyTemplate } from "@/lib/agents/outreach-email";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { campagnesPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
 export async function GET(request: NextRequest) {
@@ -127,10 +127,6 @@ export async function POST(request: NextRequest) {
 }
 
 async function sendCampagne(campagneId: string) {
-  if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
-  }
-
   const { data: campagne } = await supabaseAdmin
     .from("acquisitie_campagnes")
     .select("*")
@@ -141,7 +137,7 @@ async function sendCampagne(campagneId: string) {
     return NextResponse.json({ error: "Campagne niet gevonden" }, { status: 404 });
   }
 
-  // Get queued leads
+  // Get queued leads — exclude bounced leads
   const { data: queuedLeads } = await supabaseAdmin
     .from("acquisitie_campagne_leads")
     .select("*, acquisitie_leads(*)")
@@ -153,12 +149,14 @@ async function sendCampagne(campagneId: string) {
     return NextResponse.json({ error: "Geen leads in de wachtrij" }, { status: 400 });
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
   let sent = 0;
 
   for (const cl of queuedLeads) {
     const lead = cl.acquisitie_leads;
     if (!lead?.email) continue;
+
+    // Skip leads with bounced tag
+    if (Array.isArray(lead.tags) && lead.tags.includes("email-bounced")) continue;
 
     const variables: Record<string, string> = {
       bedrijfsnaam: lead.bedrijfsnaam || "",
@@ -171,11 +169,13 @@ async function sendCampagne(campagneId: string) {
     const inhoud = applyTemplate(campagne.inhoud_template || "", variables);
 
     try {
-      const { data: emailResult } = await resend.emails.send({
+      const { data: emailResult } = await sendEmail({
         from: "TopTalent Jobs <info@toptalentjobs.nl>",
         to: [lead.email],
         subject: onderwerp,
         html: inhoud.replace(/\n/g, "<br>"),
+        type: "marketing",
+        checkSuppression: true,
       });
 
       // Log contactmoment

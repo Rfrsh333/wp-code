@@ -4,7 +4,7 @@ import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateLeadResponse } from "@/lib/agents/lead-followup";
 import { isOpenAIConfigured } from "@/lib/openai";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -72,16 +72,12 @@ export async function POST(request: NextRequest) {
 
     // Action: send - Verstuur goedgekeurde email
     if (action === "send" && email_content) {
-      if (!process.env.RESEND_API_KEY) {
-        return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
-      }
-
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const { error: emailError } = await resend.emails.send({
+      const { error: emailError } = await sendEmail({
         from: "TopTalent Jobs <info@toptalentjobs.nl>",
         to: [aanvraag.email],
         subject: `Re: Personeel aanvraag - ${aanvraag.bedrijfsnaam}`,
         html: email_content.replace(/\n/g, "<br>"),
+        type: "marketing",
       });
 
       if (emailError) {

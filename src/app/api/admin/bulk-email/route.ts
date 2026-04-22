@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
 import { bulkEmailPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { checkRedisRateLimit, getClientIP, bulkEmailRateLimit } from "@/lib/rate-limit-redis";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email-service";
 
 const MAX_EMAILS_PER_REQUEST = 50;
 const BATCH_SIZE = 10;
@@ -59,7 +57,8 @@ export async function POST(request: NextRequest) {
     const { data: kandidaten, error: fetchError } = await supabaseAdmin
       .from("inschrijvingen")
       .select("id, voornaam, achternaam, email, onboarding_status")
-      .in("id", kandidaat_ids);
+      .in("id", kandidaat_ids)
+      .eq("email_bounced", false);
 
     if (fetchError || !kandidaten) {
       return NextResponse.json({ error: "Fout bij ophalen kandidaten" }, { status: 500 });
@@ -155,7 +154,7 @@ export async function POST(request: NextRequest) {
         try {
           const { subject, html } = getEmailContent(kandidaat);
 
-          const { error } = await resend.emails.send({
+          const { error } = await sendEmail({
             from: "TopTalent Jobs <info@toptalentjobs.nl>",
             to: [kandidaat.email],
             subject,

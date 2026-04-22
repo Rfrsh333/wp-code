@@ -86,12 +86,10 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    // Telegram notificatie
+    // Telegram notificatie (geen PII — AVG compliance)
     await sendTelegramAlert(
       `<b>Nieuwe klant geregistreerd</b>\n` +
-      `Bedrijf: ${klant.bedrijfsnaam}\n` +
-      `Contact: ${klant.contactpersoon}\n` +
-      `Email: ${klant.email}`
+      `Nieuwe klant geregistreerd — bekijk in dashboard`
     );
 
     return NextResponse.json({ success: true });

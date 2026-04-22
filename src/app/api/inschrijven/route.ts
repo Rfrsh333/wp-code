@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
@@ -225,6 +225,10 @@ export async function POST(request: NextRequest) {
       max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
       onboarding_status: "nieuw",
       referral_code: referralCode || null,
+      // AVG consent tracking
+      toestemming_verwerking: true,
+      toestemming_timestamp: new Date().toISOString(),
+      toestemming_ip: clientIP,
     };
 
     // TODO M-12: UTM tracking kolommen (lead_source, utm_source, utm_medium, utm_campaign)
@@ -243,24 +247,19 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Admin email — non-blocking (falen blokkeert registratie niet)
-    if (process.env.RESEND_API_KEY) {
-      try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const { error } = await resend.emails.send({
-          from: "TopTalent Jobs <info@toptalentjobs.nl>",
-          to: ["info@toptalentjobs.nl"],
-          replyTo: email,
-          subject: `Nieuwe kandidaat intake - ${volledigeNaam}`,
-          html: emailHtml,
-        });
-        if (error) {
-          console.error("Resend admin email error:", error);
-        }
-      } catch (emailErr) {
-        console.error("Admin email error:", emailErr);
+    try {
+      const { error } = await sendEmail({
+        from: "TopTalent Jobs <info@toptalentjobs.nl>",
+        to: ["info@toptalentjobs.nl"],
+        replyTo: email,
+        subject: `Nieuwe kandidaat intake - ${volledigeNaam}`,
+        html: emailHtml,
+      });
+      if (error) {
+        console.error("Resend admin email error:", error);
       }
-    } else if (process.env.NODE_ENV !== "development") {
-      console.warn("RESEND_API_KEY niet geconfigureerd — admin email overgeslagen");
+    } catch (emailErr) {
+      console.error("Admin email error:", emailErr);
     }
 
     // 3. Achtergrondtaken: bevestigingsmail + referral tracking

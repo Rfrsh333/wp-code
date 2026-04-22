@@ -1,12 +1,12 @@
 {
   "repoPath": "/Users/rachid/Desktop/2.0/TopTalent 2.0/toptalent-wordpress-html",
-  "lastCommit": "f7713d4b345414fd2d7cabc1c67de31422e1b89e",
-  "indexedAt": "2026-03-16T17:19:05.695Z",
+  "lastCommit": "22660dca3050e312a538461af822ca26f8871956",
+  "indexedAt": "2026-04-21T23:26:20.728Z",
   "stats": {
-    "files": 845,
-    "nodes": 4286,
-    "edges": 9641,
-    "communities": 237,
+    "files": 918,
+    "nodes": 4772,
+    "edges": 10879,
+    "communities": 270,
     "processes": 300
   }
 }

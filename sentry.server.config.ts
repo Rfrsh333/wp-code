@@ -3,11 +3,25 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://f8b72e668665790291e578e574357a20@o4511040949387264.ingest.de.sentry.io/4511040950566992",
 
-  sendDefaultPii: true,
+  sendDefaultPii: false,
 
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
 
-  includeLocalVariables: true,
-
   enableLogs: true,
+
+  beforeSend(event) {
+    // Strip PII from request data
+    if (event.request) {
+      delete event.request.cookies;
+      delete event.request.headers;
+      delete event.request.data;
+    }
+    // Strip user PII
+    if (event.user) {
+      delete event.user.email;
+      delete event.user.ip_address;
+      delete event.user.username;
+    }
+    return event;
+  },
 });

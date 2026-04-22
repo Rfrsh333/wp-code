@@ -1,8 +1,6 @@
 import crypto from "crypto";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin } from "@/lib/supabase";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
@@ -50,7 +48,7 @@ export async function sendMedewerkerPasswordResetEmail(medewerker: { id: string;
   const resetUrl = `${getBaseUrl()}/medewerker/wachtwoord-reset?token=${token}`;
   const firstName = medewerker.naam.split(" ")[0] || medewerker.naam;
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [medewerker.email],
     replyTo: "info@toptalentjobs.nl",

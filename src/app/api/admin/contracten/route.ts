@@ -209,14 +209,13 @@ export async function POST(request: NextRequest) {
       if (contract && medewerker?.email) {
         // Email verzenden via Resend
         try {
-          const { Resend } = await import("resend");
-          const resend = new Resend(process.env.RESEND_API_KEY);
+          const { sendEmail } = await import("@/lib/email-service");
           const { buildContractOndertekeningEmailHtml } = await import("@/lib/email-templates");
 
           const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
           const ondertekeningUrl = `${baseUrl}/contract/ondertekenen/${token}`;
 
-          await resend.emails.send({
+          await sendEmail({
             from: "TopTalent Jobs <info@toptalentjobs.nl>",
             to: [medewerker.email],
             subject: `Contract ter ondertekening: ${contract.titel}`,

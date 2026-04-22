@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { OffertePDF } from "@/lib/pdf/offerte-pdf";
 import { verifyAdmin } from "@/lib/admin-auth";
@@ -109,17 +109,6 @@ export async function POST(request: NextRequest) {
       year: "numeric",
     }).format(geldigTot);
 
-    // Send email with PDF attachment
-    if (!process.env.RESEND_API_KEY) {
-      return NextResponse.json({
-        success: true,
-        offerteNummer,
-        message: "Email not sent (no API key)",
-      });
-    }
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
     // Build email intro: use AI introductie if available, otherwise default
     const introText = aiIntroductie
       ? aiIntroductie.replace(/\n/g, "<br>")
@@ -184,7 +173,7 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
-    const { error: emailError } = await resend.emails.send({
+    const { error: emailError } = await sendEmail({
       from: "TopTalent Jobs <info@toptalentjobs.nl>",
       to: [aanvraag.email],
       subject: `Uw offerte van TopTalent Jobs - ${offerteNummer}`,

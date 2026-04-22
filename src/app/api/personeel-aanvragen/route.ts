@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
@@ -246,15 +246,10 @@ export async function POST(request: NextRequest) {
         timestamp: new Date().toISOString()
       }));
 
-      // Stuur Telegram alert met database error waarschuwing
+      // Stuur Telegram alert met database error waarschuwing (geen PII — AVG compliance)
       sendTelegramAlert(
         `⚠️ <b>PERSONEEL AANVRAAG DATABASE ERROR</b>\n\n` +
-        `🏢 ${escapeTelegramHtml(data.bedrijfsnaam)}\n` +
-        `👤 ${escapeTelegramHtml(data.contactpersoon)}\n` +
-        `📧 ${escapeTelegramHtml(data.email)}\n` +
-        `📞 ${escapeTelegramHtml(data.telefoon)}\n\n` +
-        `⚠️ <b>Data is NIET opgeslagen in Supabase.</b>\n` +
-        `Error: ${escapeTelegramHtml(dbError.message || JSON.stringify(dbError))}`
+        `Data is NIET opgeslagen in Supabase — check logs`
       ).catch(console.error);
 
       return NextResponse.json(
@@ -264,24 +259,19 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Admin email — non-blocking (falen blokkeert aanvraag niet)
-    if (process.env.RESEND_API_KEY) {
-      try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const { error } = await resend.emails.send({
-          from: "TopTalent Jobs <info@toptalentjobs.nl>",
-          to: ["info@toptalentjobs.nl"],
-          replyTo: data.email,
-          subject: `Nieuwe personeel aanvraag - ${data.bedrijfsnaam}`,
-          html: emailHtml,
-        });
-        if (error) {
-          console.error("Resend admin email error:", JSON.stringify(error, null, 2));
-        }
-      } catch (emailErr) {
-        console.error("Admin email error:", emailErr);
+    try {
+      const { error } = await sendEmail({
+        from: "TopTalent Jobs <info@toptalentjobs.nl>",
+        to: ["info@toptalentjobs.nl"],
+        replyTo: data.email,
+        subject: `Nieuwe personeel aanvraag - ${data.bedrijfsnaam}`,
+        html: emailHtml,
+      });
+      if (error) {
+        console.error("Resend admin email error:", JSON.stringify(error, null, 2));
       }
-    } else if (process.env.NODE_ENV !== "development") {
-      console.warn("RESEND_API_KEY niet geconfigureerd — admin email overgeslagen");
+    } catch (emailErr) {
+      console.error("Admin email error:", emailErr);
     }
 
     // 3. Achtergrondtaken: referral tracking, telegram, auto-reply, offerte generatie
@@ -304,17 +294,10 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Send Telegram alert
+        // Send Telegram alert (geen PII — AVG compliance)
         sendTelegramAlert(
           `👥 <b>NIEUWE PERSONEEL AANVRAAG!</b>\n\n` +
-          `🏢 ${escapeTelegramHtml(data.bedrijfsnaam)}\n` +
-          `👤 ${escapeTelegramHtml(data.contactpersoon)}\n` +
-          `📧 ${escapeTelegramHtml(data.email)}\n` +
-          `📞 ${escapeTelegramHtml(data.telefoon)}\n\n` +
-          `💼 ${escapeTelegramHtml(data.typePersoneel.join(', '))}\n` +
-          `📊 ${escapeTelegramHtml(data.aantalPersonen)} personen\n` +
-          `📍 ${escapeTelegramHtml(data.locatie)}\n` +
-          `📅 Start: ${escapeTelegramHtml(data.startDatum)}`
+          `Nieuwe personeel aanvraag: ${escapeTelegramHtml(data.aantalPersonen)} personen ${escapeTelegramHtml(data.typePersoneel.join(', '))} — bekijk in dashboard`
         ).catch(console.error);
 
         // Auto-reply: check of het is ingeschakeld en stuur automatisch een reactie
@@ -325,7 +308,7 @@ export async function POST(request: NextRequest) {
             .eq("key", "auto_reply_enabled")
             .single();
 
-          if (autoReplySetting?.value === "true" && process.env.RESEND_API_KEY) {
+          if (autoReplySetting?.value === "true") {
             const { data: senderSettings } = await supabase
               .from("admin_settings")
               .select("key, value")
@@ -358,8 +341,7 @@ export async function POST(request: NextRequest) {
 
             const htmlContent = buildAutoReplyEmailHtml(emailBody, bookingUrl);
 
-            const arResend = new Resend(process.env.RESEND_API_KEY);
-            const { data: arEmailData } = await arResend.emails.send({
+            const { data: arEmailData } = await sendEmail({
               from: `${arSenderName} <${arSenderEmail}>`,
               to: [data.email],
               subject: generateAutoReplySubject(),

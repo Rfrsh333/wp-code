@@ -67,11 +67,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Bericht versturen mislukt" }, { status: 500 });
   }
 
-  // Telegram notification
+  // Telegram notification (geen PII — AVG compliance)
   await sendTelegramAlert(
     `<b>Nieuw bericht van klant</b>\n` +
-    `Klant: ${klant.bedrijfsnaam}\n` +
-    `Bericht: ${bericht.trim().slice(0, 200)}`
+    `Nieuw bericht van klant — bekijk in dashboard`
   );
 
   return NextResponse.json({ success: true });

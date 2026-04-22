@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { chatCompletion, isOpenAIConfigured } from "@/lib/openai";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface TicketSubmission {
   question: string;
@@ -162,9 +160,9 @@ Antwoord ALLEEN in valid JSON format:
     // 5. Send email notification for high-priority tickets
     if (analysis?.priority === "high" && !analysis.is_spam) {
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: "TopTalent Jobs <noreply@toptalentjobs.nl>",
-          to: process.env.NOTIFICATION_EMAIL || "info@toptalentjobs.nl",
+          to: [process.env.NOTIFICATION_EMAIL || "info@toptalentjobs.nl"],
           subject: `🔴 High-priority FAQ ticket: ${body.question.slice(0, 60)}...`,
           html: `
             <h2>Nieuw high-priority ticket</h2>

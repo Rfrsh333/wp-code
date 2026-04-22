@@ -91,11 +91,10 @@ export async function POST(request: NextRequest) {
       }
 
       if (!lead) {
-        // Onbekend nummer — stuur Telegram alert
+        // Onbekend nummer — stuur Telegram alert (geen PII — AVG compliance)
         await sendTelegramAlert(
           `📱 <b>WhatsApp van onbekend nummer</b>\n\n` +
-          `Van: ${from}${contactName ? ` (${contactName})` : ""}\n` +
-          `Bericht: ${text.slice(0, 300)}`
+          `WhatsApp van onbekend nummer ontvangen — check dashboard`
         );
         continue;
       }
@@ -127,13 +126,10 @@ export async function POST(request: NextRequest) {
         .update(updateData)
         .eq("id", lead.id);
 
-      // Telegram alert
+      // Telegram alert (geen PII — AVG compliance)
       await sendTelegramAlert(
         `📱 <b>WhatsApp ontvangen!</b>\n\n` +
-        `Bedrijf: ${lead.bedrijfsnaam}\n` +
-        `Van: ${contactName || from}\n` +
-        `Stage: ${lead.pipeline_stage} → ${updateData.pipeline_stage || lead.pipeline_stage}\n\n` +
-        `${text.slice(0, 300)}`
+        `WhatsApp ontvangen van bekende lead — stage update`
       );
     }
 

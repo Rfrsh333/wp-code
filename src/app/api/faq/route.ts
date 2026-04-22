@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
+import { verifyRecaptcha } from "@/lib/recaptcha";
+
+// Escape PostgREST filter special characters to prevent filter injection
+function escapePostgrestFilter(input: string): string {
+  return input
+    .replace(/\\/g, "\\\\")
+    .replace(/,/g, "\\,")
+    .replace(/\./g, "\\.")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)")
+    .replace(/%/g, "\\%")
+    .replace(/\*/g, "\\*");
+}
 
 // GET: Publieke FAQ items ophalen (alleen gepubliceerde)
 export async function GET(request: NextRequest) {
@@ -21,7 +35,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    query = query.or(`question.ilike.%${search}%,answer.ilike.%${search}%`);
+    const sanitized = escapePostgrestFilter(search.slice(0, 200));
+    query = query.or(`question.ilike.%${sanitized}%,answer.ilike.%${sanitized}%`);
   }
 
   if (slug) {
@@ -51,8 +66,25 @@ export async function GET(request: NextRequest) {
 
 // POST: Bezoeker dient een vraag in
 export async function POST(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  const rateLimit = await checkRedisRateLimit(`faq:${clientIP}`, formRateLimit);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het zo opnieuw." },
+      { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))) } }
+    );
+  }
+
   const body = await request.json();
-  const { question, email, name } = body;
+  const { question, email, name, recaptchaToken } = body;
+
+  if (!recaptchaToken) {
+    return NextResponse.json({ error: "reCAPTCHA verificatie vereist" }, { status: 400 });
+  }
+  const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+  if (!recaptchaResult.success) {
+    return NextResponse.json({ error: recaptchaResult.error || "Spam detectie mislukt" }, { status: 400 });
+  }
 
   if (!question || typeof question !== "string" || question.trim().length < 10) {
     return NextResponse.json(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { buildReminderEmailHtml } from "@/lib/email-templates";
 
 // Dagelijkse cron: stuurt reminders 24u voor afspraken
@@ -11,10 +11,6 @@ export async function GET(request: NextRequest) {
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json({ error: "Email service niet geconfigureerd" }, { status: 503 });
   }
 
   try {
@@ -50,7 +46,6 @@ export async function GET(request: NextRequest) {
     const senderEmail = sMap.sender_email || "info@toptalentjobs.nl";
     const senderName = sMap.sender_name || "TopTalent Jobs";
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
     let sent = 0;
 
     for (const booking of bookings) {
@@ -65,7 +60,7 @@ export async function GET(request: NextRequest) {
       });
 
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: `${senderName} <${senderEmail}>`,
           to: [booking.client_email],
           subject: `Morgen: je gesprek met ${senderName} om ${slot.start_time.slice(0, 5)}`,

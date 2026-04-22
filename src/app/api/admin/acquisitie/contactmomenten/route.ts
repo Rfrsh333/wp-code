@@ -104,10 +104,7 @@ export async function POST(request: NextRequest) {
 
         await sendTelegramAlert(
           `💬 <b>Positieve reactie!</b>\n\n` +
-          `Bedrijf: ${lead.bedrijfsnaam}\n` +
-          `Type: ${body.type}\n` +
-          `Stage: ${lead.pipeline_stage} → interesse\n\n` +
-          `${body.inhoud ? body.inhoud.slice(0, 200) : ""}`
+          `Positieve reactie ontvangen — pipeline update`
         );
       }
     }

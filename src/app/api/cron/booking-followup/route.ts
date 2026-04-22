@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { buildFollowUpEmailHtml } from "@/lib/email-templates";
 
 // Follow-up: stuur follow-up email 1 dag na voltooide afspraak
@@ -9,12 +9,6 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 });
-  }
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
 
   // Zoek bookings die gisteren completed zijn en nog geen follow-up hebben gehad
   const yesterday = new Date();
@@ -46,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   for (const booking of completedBookings || []) {
     try {
-      await resend.emails.send({
+      await sendEmail({
         from: `${senderName} <${senderEmail}>`,
         to: [booking.client_email],
         subject: `Bedankt voor je gesprek — ${senderName}`,

@@ -60,10 +60,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Upload mislukt: " + uploadError.message }, { status: 500 });
     }
 
-    const { data: urlData } = supabaseAdmin.storage
-      .from("medewerker-documenten")
-      .getPublicUrl(filePath);
-
     const { error: dbError } = await supabaseAdmin
       .from("medewerker_documenten")
       .insert({
@@ -71,7 +67,7 @@ export async function POST(request: NextRequest) {
         document_type: documentType,
         file_name: file.name,
         file_path: filePath,
-        file_url: urlData.publicUrl,
+        file_url: null,
         file_size: file.size,
       });
 

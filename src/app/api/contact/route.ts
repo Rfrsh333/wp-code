@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { verifyRecaptcha } from "@/lib/recaptcha";
@@ -129,26 +129,23 @@ export async function POST(request: NextRequest) {
     const contactRecipients =
       process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim()).filter(Boolean) || ["info@toptalentjobs.nl"];
 
-    // Send email via Resend
-    if (process.env.RESEND_API_KEY) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const { error } = await resend.emails.send({
-        from: process.env.RESEND_FROM || "TopTalent Jobs <info@toptalentjobs.nl>",
-        to: contactRecipients,
-        replyTo: data.email,
-        subject: `Contact: ${data.onderwerp} - ${data.naam}`,
-        html: emailHtml,
-      });
+    // Send email via email service
+    const { error } = await sendEmail({
+      from: process.env.RESEND_FROM || "TopTalent Jobs <info@toptalentjobs.nl>",
+      to: contactRecipients,
+      replyTo: data.email,
+      subject: `Contact: ${data.onderwerp} - ${data.naam}`,
+      html: emailHtml,
+    });
 
-      if (error) {
-        console.error("Resend error details:", JSON.stringify(error, null, 2));
+    if (error) {
+      console.error("Email service error details:", JSON.stringify(error, null, 2));
 
-        if (process.env.NODE_ENV !== "development") {
-          return NextResponse.json(
-            { error: "Fout bij verzenden e-mail. Probeer het later opnieuw." },
-            { status: 500 }
-          );
-        }
+      if (process.env.NODE_ENV !== "development") {
+        return NextResponse.json(
+          { error: "Fout bij verzenden e-mail. Probeer het later opnieuw." },
+          { status: 500 }
+        );
       }
     }
 
@@ -175,14 +172,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send Telegram alert
+    // Send Telegram alert (geen PII — AVG compliance)
     sendTelegramAlert(
       `📧 <b>NIEUW CONTACTBERICHT!</b>\n\n` +
-      `👤 ${data.naam}\n` +
-      `📧 ${data.email}\n` +
-      `${data.telefoon ? `📞 ${data.telefoon}\n` : ''}` +
-      `💬 ${data.onderwerp}\n\n` +
-      `"${data.bericht.substring(0, 100)}${data.bericht.length > 100 ? '...' : ''}"`
+      `Nieuw contactbericht ontvangen — bekijk in dashboard`
     ).catch(console.error);
 
     return NextResponse.json({ success: true });

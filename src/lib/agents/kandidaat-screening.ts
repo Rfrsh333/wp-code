@@ -1,10 +1,7 @@
 import { chatCompletion, type ChatMessage } from "@/lib/openai";
 
 interface KandidaatProfiel {
-  voornaam: string;
-  achternaam: string;
   stad: string;
-  geboortedatum: string;
   horeca_ervaring: string | null;
   gewenste_functies: string[] | null;
   talen: string[] | null;
@@ -56,10 +53,6 @@ Antwoord ALTIJD in exact dit JSON format:
  * Screen een nieuwe kandidaat via GPT
  */
 export async function screenKandidaat(profiel: KandidaatProfiel): Promise<ScreeningResult> {
-  const leeftijd = profiel.geboortedatum
-    ? Math.floor((Date.now() - new Date(profiel.geboortedatum).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    : "onbekend";
-
   const beschikbaarheidTekst =
     typeof profiel.beschikbaarheid === "object" && profiel.beschikbaarheid !== null
       ? Object.entries(profiel.beschikbaarheid)
@@ -69,8 +62,6 @@ export async function screenKandidaat(profiel: KandidaatProfiel): Promise<Screen
 
   const userPrompt = `Beoordeel deze kandidaat:
 
-Naam: ${profiel.voornaam} ${profiel.achternaam}
-Leeftijd: ${leeftijd}
 Woonplaats: ${profiel.stad}
 Horeca ervaring: ${profiel.horeca_ervaring || "niet opgegeven"}
 Gewenste functies: ${profiel.gewenste_functies?.join(", ") || "niet opgegeven"}

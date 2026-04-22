@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/email-service";
 import { buildReminderEmailHtml } from "@/lib/email-templates";
 
 export async function GET(request: NextRequest) {
@@ -9,11 +9,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 });
-  }
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
 
   const tomorrow = new Date();
@@ -59,7 +54,7 @@ export async function GET(request: NextRequest) {
       : undefined;
 
     try {
-      await resend.emails.send({
+      await sendEmail({
         from: `${senderName} <${senderEmail}>`,
         to: [booking.client_email],
         subject: `Herinnering: je afspraak morgen met ${senderName}`,

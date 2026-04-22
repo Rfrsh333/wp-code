@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const { data: inschrijving, error: dbError } = await supabaseAdmin
       .from("inschrijvingen")
       .select(
-        "voornaam, achternaam, stad, geboortedatum, horeca_ervaring, gewenste_functies, talen, eigen_vervoer, beschikbaarheid, beschikbaar_vanaf, max_uren_per_week, uitbetalingswijze, motivatie"
+        "stad, horeca_ervaring, gewenste_functies, talen, eigen_vervoer, beschikbaarheid, beschikbaar_vanaf, max_uren_per_week, uitbetalingswijze, motivatie"
       )
       .eq("id", inschrijving_id)
       .single();

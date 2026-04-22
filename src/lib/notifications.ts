@@ -1,6 +1,4 @@
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email-service";
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
@@ -58,7 +56,7 @@ export async function sendNieuwBerichtEmail(input: {
 }) {
   const firstName = input.ontvangerNaam.split(" ")[0] || input.ontvangerNaam;
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [input.ontvangerEmail],
     replyTo: "info@toptalentjobs.nl",
@@ -90,7 +88,7 @@ export async function sendShiftAanbiedingEmail(input: {
 }) {
   const firstName = input.medewerkerNaam.split(" ")[0] || input.medewerkerNaam;
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [input.medewerkerEmail],
     replyTo: "info@toptalentjobs.nl",
@@ -136,7 +134,7 @@ export async function sendShiftReactieEmail(input: {
   const emoji = input.status === "geaccepteerd" ? "✅" : "❌";
   const statusLabel = input.status === "geaccepteerd" ? "Geaccepteerd" : "Afgewezen";
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: ["info@toptalentjobs.nl"],
     subject: `${emoji} Shift ${statusLabel}: ${input.medewerkerNaam} - ${input.klantNaam}`,
@@ -170,7 +168,7 @@ export async function sendDocumentReviewEmail(input: {
   const emoji = input.reviewStatus === "goedgekeurd" ? "✅" : "⚠️";
   const statusLabel = input.reviewStatus === "goedgekeurd" ? "goedgekeurd" : "afgekeurd";
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [input.medewerkerEmail],
     replyTo: "info@toptalentjobs.nl",
@@ -203,7 +201,7 @@ export async function sendUrenGoedgekeurdEmail(input: {
 }) {
   const firstName = input.medewerkerNaam.split(" ")[0] || input.medewerkerNaam;
 
-  return resend.emails.send({
+  return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [input.medewerkerEmail],
     replyTo: "info@toptalentjobs.nl",

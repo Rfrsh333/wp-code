@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { createHash } from "crypto";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email-service";
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
@@ -132,7 +130,7 @@ export async function POST(request: NextRequest) {
     // Send email if requested
     if (send_email) {
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: "TopTalent <info@toptalentjobs.nl>",
           to: [kandidaat.email],
           replyTo: "info@toptalentjobs.nl",
