@@ -25,15 +25,11 @@ export default function LiveChatTab() {
   const fetchConversations = useCallback(async () => {
     try {
       const headers = await getAuthHeader();
-      console.log("[LiveChat] Fetching conversations...", headers);
       const res = await fetch("/api/admin/livechat", { headers });
       if (!res.ok) {
-        const text = await res.text();
-        console.error("[LiveChat] Fetch error:", res.status, text);
         throw new Error();
       }
       const data = await res.json();
-      console.log("[LiveChat] Conversations:", data.conversations?.length);
       setConversations(data.conversations || []);
     } catch (err) {
       console.error("[LiveChat] Error:", err);

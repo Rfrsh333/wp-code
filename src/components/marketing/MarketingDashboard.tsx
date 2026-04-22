@@ -35,10 +35,6 @@ const BlogTab = dynamic(() => import("./tabs/BlogTab"), {
   loading: () => <TabSkeleton />,
   ssr: false,
 });
-const LinkedInTab = dynamic(() => import("../admin/LinkedInTab"), {
-  loading: () => <TabSkeleton />,
-  ssr: false,
-});
 const GeoTab = dynamic(() => import("../admin/GeoTab"), {
   loading: () => <TabSkeleton />,
   ssr: false,
@@ -78,8 +74,6 @@ export default function MarketingDashboard() {
         return <ContentTab />;
       case "blog":
         return <BlogTab />;
-      case "linkedin":
-        return <LinkedInTab />;
       case "geo":
         return <GeoTab />;
       case "leads":

@@ -38,16 +38,19 @@ const dienstData = z.object({
   notities: z.string().max(5000).optional().nullable(),
   spoeddienst_token: z.string().max(100).optional().nullable(),
   spoeddienst_whatsapp_tekst: z.string().max(2000).optional().nullable(),
-}).passthrough();
+  klant_email: z.string().email().max(255).optional().nullable(),
+  klant_telefoon: z.string().max(20).optional().nullable(),
+  afbeelding: z.string().max(500).optional().nullable(),
+});
 
 export const dienstenPostSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("create"), data: dienstData, id: optionalString, dienst_id: optionalString }),
   z.object({ action: z.literal("update"), id: uuid, data: dienstData, dienst_id: optionalString }),
   z.object({ action: z.literal("delete"), id: uuid, data: z.any().optional(), dienst_id: optionalString }),
   z.object({ action: z.literal("get_aanmeldingen"), dienst_id: uuid, id: optionalString, data: z.any().optional() }),
-  z.object({ action: z.literal("update_aanmelding"), id: uuid, data: z.object({ status: requiredString }).passthrough(), dienst_id: optionalString }),
+  z.object({ action: z.literal("update_aanmelding"), id: uuid, data: z.object({ status: requiredString }), dienst_id: optionalString }),
   z.object({ action: z.literal("get_spoeddienst_responses"), dienst_id: uuid, id: optionalString, data: z.any().optional() }),
-  z.object({ action: z.literal("update_spoeddienst_response"), id: uuid, data: z.object({ status: requiredString }).passthrough(), dienst_id: optionalString }),
+  z.object({ action: z.literal("update_spoeddienst_response"), id: uuid, data: z.object({ status: requiredString }), dienst_id: optionalString }),
   z.object({ action: z.literal("regenerate_whatsapp"), id: uuid, data: z.any().optional(), dienst_id: optionalString }),
 ]);
 
@@ -70,7 +73,17 @@ export const medewerkersPostSchema = z.discriminatedUnion("action", [
       wachtwoord: z.string().min(8).max(255).optional(),
       status: z.string().max(50).optional(),
       functie: z.array(z.string().max(100)).optional(),
-    }).passthrough(),
+      bsn: z.string().max(20).optional(),
+      adres: z.string().max(500).optional(),
+      postcode: z.string().max(10).optional(),
+      woonplaats: z.string().max(100).optional(),
+      geboortedatum: z.string().max(20).optional(),
+      iban: z.string().max(34).optional(),
+      noodcontact_naam: z.string().max(255).optional(),
+      noodcontact_telefoon: z.string().max(20).optional(),
+      profielfoto: z.string().max(500).optional().nullable(),
+      notities: z.string().max(5000).optional().nullable(),
+    }),
   }),
   z.object({
     action: z.literal("update"),
@@ -85,7 +98,17 @@ export const medewerkersPostSchema = z.discriminatedUnion("action", [
       wachtwoord: z.string().min(8).max(255).optional(),
       status: z.string().max(50).optional(),
       functie: z.array(z.string().max(100)).optional(),
-    }).passthrough(),
+      bsn: z.string().max(20).optional(),
+      adres: z.string().max(500).optional(),
+      postcode: z.string().max(10).optional(),
+      woonplaats: z.string().max(100).optional(),
+      geboortedatum: z.string().max(20).optional(),
+      iban: z.string().max(34).optional(),
+      noodcontact_naam: z.string().max(255).optional(),
+      noodcontact_telefoon: z.string().max(20).optional(),
+      profielfoto: z.string().max(500).optional().nullable(),
+      notities: z.string().max(5000).optional().nullable(),
+    }),
   }),
   z.object({
     action: z.literal("update_scores"),
@@ -285,8 +308,8 @@ const allowedTableEnum = z.enum(ALLOWED_TABLES);
 export const dataPostSchema = z.object({
   action: z.enum(["update", "delete", "delete_many", "bulk_update", "insert"]),
   table: allowedTableEnum,
-  id: z.string().optional(),
-  ids: z.array(z.string()).optional(),
+  id: z.string().uuid().optional(),
+  ids: z.array(z.string().uuid()).optional(),
   data: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -368,7 +391,16 @@ export const kandidaatDocumentenPatchSchema = z.object({
 // ============================================================
 
 export const campagnesPostSchema = z.union([
-  z.object({ action: z.literal("update"), id: uuid }).passthrough(),
+  z.object({
+    action: z.literal("update"),
+    id: uuid,
+    naam: z.string().max(500).optional(),
+    status: z.string().max(50).optional(),
+    type: z.string().max(100).optional(),
+    onderwerp: z.string().max(500).optional(),
+    inhoud: z.string().max(50000).optional(),
+    gepland_op: z.string().max(50).optional().nullable(),
+  }),
   z.object({ action: z.literal("delete"), id: uuid }),
   z.object({ action: z.literal("send"), id: uuid }),
   z.object({ action: z.literal("add_leads"), id: uuid, lead_ids: z.array(uuid).min(1).max(500) }),
@@ -378,7 +410,10 @@ export const campagnesPostSchema = z.union([
     naam: z.string().min(1).max(500),
     action: z.undefined().optional(),
     id: z.undefined().optional(),
-  }).passthrough(),
+    type: z.string().max(100).optional(),
+    onderwerp: z.string().max(500).optional(),
+    inhoud: z.string().max(50000).optional(),
+  }),
 ]);
 
 // ============================================================
@@ -406,7 +441,7 @@ const contractData = z.object({
   einddatum: z.string().max(20).optional(),
   notities: z.string().max(5000).optional(),
   status: z.enum(["concept", "verzonden", "bekeken", "ondertekend_medewerker", "ondertekend_admin", "actief", "verlopen", "opgezegd", "geannuleerd"]).optional(),
-}).passthrough();
+});
 
 export const contractenPostSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("create"), data: contractData }),

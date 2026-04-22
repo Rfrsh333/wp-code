@@ -167,13 +167,13 @@ export default function FacturenTab() {
                 <td className="px-6 py-4 text-right">
                   <div className="flex gap-2 justify-end">
                     <button
-                      onClick={() => openFactuurPdf(f.id)}
+                      onClick={(e) => { e.stopPropagation(); openFactuurPdf(f.id); }}
                       className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded text-sm hover:bg-neutral-200"
                     >
                       PDF
                     </button>
                     {f.status === "concept" && (
-                      <button onClick={() => sendFactuur(f.id, f.klant?.email)} className="px-3 py-1 bg-[#F27501] text-white rounded text-sm hover:bg-[#d96800]">Versturen</button>
+                      <button onClick={(e) => { e.stopPropagation(); sendFactuur(f.id, f.klant?.email); }} className="px-3 py-1 bg-[#F27501] text-white rounded text-sm hover:bg-[#d96800]">Versturen</button>
                     )}
                   </div>
                 </td>

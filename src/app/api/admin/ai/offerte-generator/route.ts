@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
+import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
 import { generateOfferteVoorstel } from "@/lib/agents/offerte-generator";
 import crypto from "crypto";
@@ -9,9 +10,25 @@ import crypto from "crypto";
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
-  const { isAdmin } = await verifyAdmin(request);
+  const { isAdmin, email, role } = await verifyAdmin(request);
   if (!isAdmin && !cronAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  if (isAdmin) {
+    if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
+      return NextResponse.json({ error: "Onvoldoende rechten" }, { status: 403 });
+    }
+
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimit = await checkRedisRateLimit(`ai-admin:${clientIP}`, aiRateLimit);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Te veel verzoeken. Probeer het later opnieuw." },
+        { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))) } }
+      );
+    }
   }
 
   try {

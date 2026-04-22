@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   Globe,
   Check,
@@ -116,11 +117,18 @@ const STATUS_COLORS: Record<string, string> = {
 
 type TabView = "content" | "monitoring" | "optimizer" | "concurrenten" | "gaps";
 
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }
+    : { "Content-Type": "application/json" };
+}
+
 async function apiFetch(url: string, options?: RequestInit) {
+  const authHeaders = await getAuthHeaders();
   const res = await fetch(url, {
     ...options,
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    credentials: "include",
+    headers: { ...authHeaders, ...options?.headers },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Onbekende fout" }));

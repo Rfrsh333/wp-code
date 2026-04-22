@@ -100,7 +100,6 @@ export default function NewsDashboard() {
       }
 
       const payload = (await response.json()) as DashboardPayload;
-      console.log("[dashboard] payload received:", JSON.stringify(payload.metrics), "sources:", payload.sources?.length, "clusters:", payload.clusters?.length, "drafts:", payload.drafts?.length);
       setData(payload);
     } catch (loadError) {
       console.error(loadError);
@@ -140,7 +139,6 @@ export default function NewsDashboard() {
           return `${s.name}: ✅${nums ? ` (${nums})` : ""}`;
         })
         .join("\n") ?? "";
-      console.log("[pipeline] Steps detail:\n" + stepDetails);
       setPipelineResult(
         summary
           ? `Klaar! ${summary.succeeded}/${summary.total} stappen succesvol.\n${stepDetails}`

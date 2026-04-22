@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
+import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
 import { analyzeKlantRetention } from "@/lib/agents/klant-retention";
 
 export async function POST(request: NextRequest) {
   const { isAdmin } = await verifyAdmin(request);
   if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Rate limiting
+  const clientIP = getClientIP(request);
+  const rateLimit = await checkRedisRateLimit(`ai-admin:${clientIP}`, aiRateLimit);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het later opnieuw." },
+      { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))) } }
+    );
+  }
 
   const { klant_id } = await request.json();
   if (!klant_id) return NextResponse.json({ error: "klant_id is verplicht" }, { status: 400 });

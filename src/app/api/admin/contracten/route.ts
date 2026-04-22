@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { hasRequiredAdminRole, verifyAdmin } from "@/lib/admin-auth";
 import { contractenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { createHash } from "crypto";
 
@@ -52,7 +52,11 @@ export async function GET(request: NextRequest) {
     query = query.eq("medewerker_id", medewerker_id);
   }
   if (zoekterm) {
-    query = query.or(`titel.ilike.%${zoekterm}%,contract_nummer.ilike.%${zoekterm}%`);
+    // Sanitize LIKE wildcards and PostgREST special chars to prevent filter injection
+    const sanitized = zoekterm.replace(/%/g, "").replace(/_/g, "").replace(/[(),."']/g, "");
+    if (sanitized.length >= 2) {
+      query = query.or(`titel.ilike.%${sanitized}%,contract_nummer.ilike.%${sanitized}%`);
+    }
   }
 
   const { data, error } = await query;
@@ -66,7 +70,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { isAdmin, email } = await verifyAdmin(request);
+  const { isAdmin, email, role } = await verifyAdmin(request);
   if (!isAdmin) {
     console.warn(`[SECURITY] Unauthorized contracten mutation by: ${email || "unknown"}`);
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -151,6 +155,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "delete") {
+      if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
+        return NextResponse.json({ error: "Onvoldoende rechten" }, { status: 403 });
+      }
       const { id } = rawBody;
       const { error } = await supabaseAdmin
         .from("contracten")
@@ -230,6 +237,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "teken_admin") {
+      if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
+        return NextResponse.json({ error: "Onvoldoende rechten voor ondertekening" }, { status: 403 });
+      }
       const { id, handtekening_data, ondertekenaar_naam } = rawBody;
 
       // Hash de handtekening voor integriteit

@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   FileText,
   Newspaper,
-  Linkedin,
   Share2,
   Globe,
   Users,
@@ -44,15 +43,6 @@ export const marketingSidebarItems: MarketingSidebarItemDefinition[] = [
     description: "Blog posts en nieuwsartikelen",
     tab: "blog",
     keywords: ["blog", "articles", "news", "editorial"],
-  },
-  {
-    id: "linkedin",
-    kind: "tab",
-    icon: Linkedin,
-    title: "LinkedIn",
-    description: "LinkedIn post generator",
-    tab: "linkedin",
-    keywords: ["linkedin", "social", "posts"],
   },
   {
     id: "social",
@@ -123,7 +113,7 @@ export const marketingSidebarGroups: MarketingSidebarGroup[] = [
   },
   {
     label: "Social Media",
-    itemIds: ["linkedin", "social"],
+    itemIds: ["social"],
   },
   {
     label: "Acquisitie",

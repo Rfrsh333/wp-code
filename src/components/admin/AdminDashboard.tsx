@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAdminOverzicht, useAdminDataAction } from "@/hooks/queries/useAdminQueries";
+import { useAdminOverzicht, useAdminDataAction, adminKeys } from "@/hooks/queries/useAdminQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminRealtime } from "@/hooks/queries/useAdminRealtime";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -69,7 +70,6 @@ const LiveChatTab = dynamic(() => import("./LiveChatTab"), { loading: () => <Tab
 const ContractenTab = dynamic(() => import("./ContractenTab"), { loading: () => <TabSkeleton />, ssr: false });
 const DienstFiltersTab = dynamic(() => import("./tabs/DienstFiltersTab"), { loading: () => <TabSkeleton />, ssr: false });
 const LiveChatNotification = dynamic(() => import("./LiveChatNotification"), { ssr: false });
-const LinkedInTab = dynamic(() => import("./LinkedInTab"), { loading: () => <TabSkeleton />, ssr: false });
 const PlatformOptionsTab = dynamic(() => import("./PlatformOptionsTab"), { loading: () => <TabSkeleton />, ssr: false });
 const GeoTab = dynamic(() => import("./GeoTab"), { loading: () => <TabSkeleton />, ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
@@ -338,6 +338,7 @@ export default function AdminDashboard() {
   const [inschrijvingStatusFilter, setInschrijvingStatusFilter] = useState<OnboardingStatus | "all">("all");
   const [inschrijvingView, setInschrijvingView] = useState<"tabel" | "pipeline">("tabel");
   // React Query for centralized data + Realtime
+  const queryClient = useQueryClient();
   const { data: overzichtData, isLoading } = useAdminOverzicht();
   const adminDataAction = useAdminDataAction();
   useAdminRealtime();
@@ -393,6 +394,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const nextTab = isAdminTab(urlTab) ? urlTab : "overzicht";
     setActiveTab((current) => (current === nextTab ? current : nextTab));
+    setSelectedIds(new Set());
   }, [urlTab]);
 
   // Helper to get auth headers for admin API calls
@@ -436,10 +438,10 @@ export default function AdminDashboard() {
     exportToCSV(toExport, filename);
   };
 
-  // fetchData kept as a no-op for backward compatibility with mutation callbacks
+  // Invalidate React Query cache to refresh data after direct API mutations
   const fetchData = useCallback(async () => {
-    // React Query handles refetching automatically via invalidation
-  }, []);
+    await queryClient.invalidateQueries({ queryKey: adminKeys.overzicht() });
+  }, [queryClient]);
 
   const handleTabChange = useCallback((tab: AdminTab) => {
     setActiveTab(tab);
@@ -525,8 +527,7 @@ export default function AdminDashboard() {
           }),
         });
       }
-    } catch (emailError) {
-      console.error("Auto-email trigger error:", emailError);
+    } catch {
       // Don't fail the status update if email fails
     }
 
@@ -1622,8 +1623,6 @@ export default function AdminDashboard() {
             {/* Dienst Filters Tab */}
             {activeTab === "filters" && <DienstFiltersTab />}
 
-            {/* LinkedIn Tab */}
-            {activeTab === "linkedin" && <LinkedInTab />}
 
             {activeTab === "platform-options" && <PlatformOptionsTab />}
 

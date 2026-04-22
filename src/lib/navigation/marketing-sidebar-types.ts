@@ -4,7 +4,6 @@ export const marketingTabs = [
   "dashboard",
   "content",
   "blog",
-  "linkedin",
   "social",
   "geo",
   "leads",

@@ -106,7 +106,7 @@ export default function PlanningTab() {
         d.datum >= startStr && d.datum <= endStr
       );
       setDiensten(weekDiensten);
-      setMedewerkers(medewerkersData.medewerkers || []);
+      setMedewerkers(medewerkersData.data || []);
     } catch {
       toast.error("Kon planningsdata niet laden");
     } finally {

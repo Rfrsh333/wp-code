@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 
 interface Bericht {
@@ -50,9 +51,11 @@ export default function BerichtenTab() {
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [templateForm, setTemplateForm] = useState({ naam: "", onderwerp: "", inhoud: "", categorie: "algemeen" });
 
-  const getAuthHeaders = useCallback(() => {
-    // Auth gaat via httpOnly cookies (verifyAdmin server-side) — geen token nodig in headers
-    return { "Content-Type": "application/json" };
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }
+      : { "Content-Type": "application/json" };
   }, []);
 
   useEffect(() => {
@@ -63,7 +66,7 @@ export default function BerichtenTab() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch("/api/admin/berichten?templates=true", { headers: getAuthHeaders() });
+      const res = await fetch("/api/admin/berichten?templates=true", { headers: await getAuthHeaders() });
       const data = await res.json();
       setTemplates(data.templates || []);
     } catch { /* non-critical */ }
@@ -74,7 +77,7 @@ export default function BerichtenTab() {
     try {
       await fetch("/api/admin/berichten", {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ action: "save_template", ...templateForm }),
       });
       toast.success("Template opgeslagen");
@@ -105,7 +108,7 @@ export default function BerichtenTab() {
     try {
       await fetch("/api/admin/berichten", {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "bulk_send",
           aan_ids: targets,
@@ -126,7 +129,7 @@ export default function BerichtenTab() {
 
   const fetchBerichten = async () => {
     try {
-      const res = await fetch("/api/admin/berichten", { headers: getAuthHeaders() });
+      const res = await fetch("/api/admin/berichten", { headers: await getAuthHeaders() });
       const data = await res.json();
       if (!res.ok) throw new Error();
       setBerichten(data.berichten || []);
@@ -139,9 +142,9 @@ export default function BerichtenTab() {
 
   const fetchMedewerkers = async () => {
     try {
-      const res = await fetch("/api/admin/medewerkers", { headers: getAuthHeaders() });
+      const res = await fetch("/api/admin/medewerkers", { headers: await getAuthHeaders() });
       const data = await res.json();
-      setMedewerkers(data.medewerkers || []);
+      setMedewerkers(data.data || []);
     } catch {
       // non-critical
     }
@@ -151,7 +154,7 @@ export default function BerichtenTab() {
     try {
       await fetch(`/api/admin/berichten/${id}`, {
         method: "PATCH",
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ gelezen: true }),
       });
       setBerichten((prev) =>
@@ -178,7 +181,7 @@ export default function BerichtenTab() {
     try {
       const res = await fetch("/api/admin/berichten", {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
         body: JSON.stringify(nieuwForm),
       });
       if (!res.ok) throw new Error();

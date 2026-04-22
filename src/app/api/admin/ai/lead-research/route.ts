@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
+import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
 import { enrichLead, type EnrichmentData } from "@/lib/agents/lead-research";
 import { isOpenAIConfigured } from "@/lib/openai";
@@ -9,6 +10,16 @@ export async function POST(request: NextRequest) {
   if (!isAdmin) {
     console.warn(`[SECURITY] Unauthorized lead-research access by: ${email || "unknown"}`);
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  // Rate limiting
+  const clientIP = getClientIP(request);
+  const rateLimit = await checkRedisRateLimit(`ai-admin:${clientIP}`, aiRateLimit);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het later opnieuw." },
+      { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))) } }
+    );
   }
 
   if (!isOpenAIConfigured()) {

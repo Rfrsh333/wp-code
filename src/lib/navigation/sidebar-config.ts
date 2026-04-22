@@ -14,7 +14,6 @@ import {
   Gauge,
   Globe,
   Inbox,
-  Linkedin,
   MessageCircle,
   Newspaper,
   PenLine,
@@ -238,15 +237,6 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["contract", "ondertekenen", "overeenkomst", "handtekening"],
   },
-  linkedin: {
-    id: "linkedin",
-    title: "LinkedIn",
-    icon: Linkedin,
-    kind: "tab",
-    tab: "linkedin",
-    pinnable: true,
-    keywords: ["social", "posts", "linkedin"],
-  },
   geo: {
     id: "geo",
     title: "GEO Agent",
@@ -319,7 +309,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "content",
     label: "Content",
-    itemIds: ["contentOverview", "contentSources", "contentClusters", "contentDrafts", "linkedin", "geo"],
+    itemIds: ["contentOverview", "contentSources", "contentClusters", "contentDrafts", "geo"],
     collapsible: true,
     dividerBefore: true,
   },

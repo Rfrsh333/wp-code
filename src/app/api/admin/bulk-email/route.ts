@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
 import { bulkEmailPostSchema, validateAdminBody } from "@/lib/validations-admin";
+import { checkRedisRateLimit, getClientIP, bulkEmailRateLimit } from "@/lib/rate-limit-redis";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Rate limiting: max 50 emails per request, max 3 requests per hour
 const MAX_EMAILS_PER_REQUEST = 50;
-const BATCH_SIZE = 10; // Send in batches of 10 to avoid overwhelming the email service
-const DELAY_BETWEEN_BATCHES_MS = 2000; // 2 seconds between batches
+const BATCH_SIZE = 10;
+const DELAY_BETWEEN_BATCHES_MS = 2000;
 
 interface BulkEmailRequest {
   kandidaat_ids: string[];
@@ -25,9 +25,23 @@ function delay(ms: number) {
 export async function POST(request: NextRequest) {
   try {
     // Verify admin
-    const { isAdmin, email: adminEmail } = await verifyAdmin(request);
+    const { isAdmin, email: adminEmail, role } = await verifyAdmin(request);
     if (!isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
+      return NextResponse.json({ error: "Onvoldoende rechten" }, { status: 403 });
+    }
+
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimit = await checkRedisRateLimit(`bulk-email:${clientIP}`, bulkEmailRateLimit);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Te veel verzoeken. Probeer het later opnieuw." },
+        { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))) } }
+      );
     }
 
     const rawBody = await request.json();
@@ -35,7 +49,11 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
-    const { kandidaat_ids, template, customSubject, customMessage } = validation.data;
+    const { kandidaat_ids, template, customSubject, customMessage: rawCustomMessage } = validation.data;
+    // Sanitize custom message to prevent XSS in email HTML
+    const customMessage = rawCustomMessage
+      ? rawCustomMessage.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+      : undefined;
 
     // Fetch kandidaten
     const { data: kandidaten, error: fetchError } = await supabaseAdmin

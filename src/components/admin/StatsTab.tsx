@@ -33,7 +33,9 @@ export default function StatsTab() {
       const res = await globalThis.fetch("/api/admin/stats", {
         headers: { Authorization: `Bearer ${session?.access_token}` }
       });
-      setStats(await res.json());
+      if (res.ok) {
+        setStats(await res.json());
+      }
       setIsLoading(false);
     };
     fetch();

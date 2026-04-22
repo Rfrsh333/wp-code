@@ -31,13 +31,19 @@ export async function GET(request: NextRequest) {
 
   if (stage) query = query.eq("pipeline_stage", stage);
   if (branche) query = query.eq("branche", branche);
-  if (stad) query = query.ilike("stad", `%${stad}%`);
+  if (stad) {
+    const sanitizedStad = stad.replace(/%/g, "").replace(/_/g, "").replace(/[(),."']/g, "");
+    if (sanitizedStad.length >= 2) query = query.ilike("stad", `%${sanitizedStad}%`);
+  }
   if (bron) query = query.eq("bron", bron);
   if (minScore) query = query.gte("ai_score", parseInt(minScore));
   if (search) {
-    query = query.or(
-      `bedrijfsnaam.ilike.%${search}%,contactpersoon.ilike.%${search}%,email.ilike.%${search}%,telefoon.ilike.%${search}%`
-    );
+    const sanitized = search.replace(/%/g, "").replace(/_/g, "").replace(/[(),."']/g, "");
+    if (sanitized.length >= 2) {
+      query = query.or(
+        `bedrijfsnaam.ilike.%${sanitized}%,contactpersoon.ilike.%${sanitized}%,email.ilike.%${sanitized}%,telefoon.ilike.%${sanitized}%`
+      );
+    }
   }
 
   const ascending = sortDir === "asc";

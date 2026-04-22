@@ -185,6 +185,9 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from(table).delete().in("id", data.ids);
   }
   if (action === "bulk_update") {
+    if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
+      return NextResponse.json({ error: "Onvoldoende rechten voor bulk update" }, { status: 403 });
+    }
     const { error: bulkError } = await supabaseAdmin.from(table).update(data).in("id", ids);
     if (bulkError) {
       console.error(`[DATA] Bulk update error on ${table}:`, bulkError.message, { ids, data });
@@ -224,6 +227,9 @@ export async function POST(request: NextRequest) {
     }
   }
   if (action === "insert") {
+    if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
+      return NextResponse.json({ error: "Onvoldoende rechten voor insert" }, { status: 403 });
+    }
     await supabaseAdmin.from(table).insert(data);
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { hasRequiredAdminRole, verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import bcrypt from "bcryptjs";
 import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admin";
@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
   const { action, id, data } = rawBody;
 
   if (action === "reset_password") {
+    if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
+      return NextResponse.json({ error: "Onvoldoende rechten voor wachtwoord reset" }, { status: 403 });
+    }
     if (!id) {
       return NextResponse.json({ error: "Medewerker id ontbreekt" }, { status: 400 });
     }
@@ -208,6 +211,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "delete") {
+    if (!hasRequiredAdminRole(role, ["owner"])) {
+      return NextResponse.json({ error: "Alleen de eigenaar kan medewerkers verwijderen" }, { status: 403 });
+    }
     const { error } = await supabaseAdmin.from("medewerkers").delete().eq("id", id);
     if (error) {
       return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });

@@ -217,7 +217,6 @@ export default function DienstenTab() {
       id: editingDienst?.id,
       data: payload,
     };
-    console.log("[DienstenTab] Sending:", JSON.stringify(body));
     const res = await fetch("/api/admin/diensten", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },

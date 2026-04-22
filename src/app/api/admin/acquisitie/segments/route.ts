@@ -35,7 +35,7 @@ function buildSegmentQuery(filters: SegmentFilters) {
   }
   if (filters.steden?.length) {
     // Case-insensitive stad matching via OR
-    const stadFilters = filters.steden.map((s) => `stad.ilike.%${s}%`).join(",");
+    const stadFilters = filters.steden.map((s: string) => `stad.ilike.%${s.replace(/%/g, "").replace(/_/g, "").replace(/[(),."']/g, "")}%`).join(",");
     query = query.or(stadFilters);
   }
   if (filters.tags?.length) {
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
     if (filters.stages?.length) filteredQuery = filteredQuery.in("pipeline_stage", filters.stages);
     if (filters.branches?.length) filteredQuery = filteredQuery.in("branche", filters.branches);
     if (filters.steden?.length) {
-      const stadFilters = filters.steden.map((s) => `stad.ilike.%${s}%`).join(",");
+      const stadFilters = filters.steden.map((s: string) => `stad.ilike.%${s.replace(/%/g, "").replace(/_/g, "").replace(/[(),."']/g, "")}%`).join(",");
       filteredQuery = filteredQuery.or(stadFilters);
     }
     if (filters.tags?.length) filteredQuery = filteredQuery.overlaps("tags", filters.tags);

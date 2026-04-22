@@ -83,6 +83,15 @@ export const aiRateLimit = redis
     })
   : null;
 
+export const bulkEmailRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(3, "1 h"), // 3 bulk email requests per hour
+      analytics: true,
+      prefix: "ratelimit:bulk-email",
+    })
+  : null;
+
 // Helper to get client IP from request
 export function getClientIP(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -144,8 +153,12 @@ function inferFallbackRateLimitOptions(identifier: string): FallbackRateLimitOpt
     return { windowMs: 60 * 60 * 1000, maxRequests: 10 };
   }
 
-  if (identifier.startsWith("ai-chat:")) {
+  if (identifier.startsWith("ai-chat:") || identifier.startsWith("ai-admin:")) {
     return { windowMs: 60 * 1000, maxRequests: 5 };
+  }
+
+  if (identifier.startsWith("bulk-email:")) {
+    return { windowMs: 60 * 60 * 1000, maxRequests: 3 };
   }
 
   if (

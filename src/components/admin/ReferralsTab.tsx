@@ -1,6 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }
+    : { "Content-Type": "application/json" };
+}
 
 interface ReferralStats {
   totaal_referrals: number;
@@ -44,7 +52,8 @@ export default function ReferralsTab() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/referrals");
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/referrals", { headers });
       const data = await res.json();
       if (res.ok) {
         setStats(data.stats);
@@ -61,9 +70,10 @@ export default function ReferralsTab() {
 
   const markRewarded = async (referralId: string) => {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/referrals", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ action: "mark_rewarded", referral_id: referralId }),
       });
       if (res.ok) fetchData();

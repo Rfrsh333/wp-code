@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "publish") {
-      const { id, generate_linkedin } = body;
+      const { id } = body;
       if (!id) return NextResponse.json({ error: "id verplicht" }, { status: 400 });
 
       // Get the post first to check type
@@ -121,28 +121,6 @@ export async function POST(request: NextRequest) {
         .from("content_posts")
         .update({ status: "published", gepubliceerd_op: new Date().toISOString() })
         .eq("id", id);
-
-      // Optionally generate LinkedIn post from published blog
-      if (generate_linkedin !== false && postToPublish?.type === "blog") {
-        try {
-          const { convertBlogToLinkedIn } = await import("@/lib/linkedin/content-generator");
-          const linkedinResult = await convertBlogToLinkedIn(id);
-          if (linkedinResult) {
-            await supabaseAdmin.from("linkedin_posts").insert({
-              content: linkedinResult.content,
-              hashtags: linkedinResult.hashtags,
-              link_url: linkedinResult.link_url,
-              content_post_id: id,
-              status: "draft",
-              post_type: "link",
-              created_by: "auto",
-            });
-          }
-        } catch (err) {
-          console.error("LinkedIn post generation bij publish:", err);
-          // Non-blocking: blog wordt alsnog gepubliceerd
-        }
-      }
 
       return NextResponse.json({ success: true });
     }

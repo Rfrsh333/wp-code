@@ -1,6 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }
+    : { "Content-Type": "application/json" };
+}
 
 let _recharts: typeof import("recharts") | null = null;
 
@@ -98,7 +106,8 @@ export default function KlantenTab() {
 
   const fetchKlanten = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/klanten/analytics");
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/klanten/analytics", { headers });
       const data = await res.json();
       if (res.ok) {
         setKlanten(data.klanten || []);
@@ -116,7 +125,8 @@ export default function KlantenTab() {
     setDetailLoading(true);
     setRetentionAnalysis(null);
     try {
-      const res = await fetch(`/api/admin/klanten/${klantId}/detail`);
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/admin/klanten/${klantId}/detail`, { headers });
       const data = await res.json();
       if (res.ok) setKlantDetail(data);
     } catch { /* ignore */ }
@@ -126,9 +136,10 @@ export default function KlantenTab() {
   const analyzeRetention = useCallback(async (klantId: string) => {
     setRetentionLoading(true);
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/ai/klant-retention", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ klant_id: klantId }),
       });
       const data = await res.json();
@@ -264,9 +275,10 @@ export default function KlantenTab() {
                 // Optimistic update
                 setKlantDetail(prev => prev ? { ...prev, klant: { ...prev.klant, qr_verplicht: newValue } } : prev);
                 setKlanten(prev => prev.map(kl => kl.id === k.id ? { ...kl, qr_verplicht: newValue } : kl));
+                const patchHeaders = await getAuthHeaders();
                 await fetch("/api/admin/klanten/analytics", {
                   method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
+                  headers: patchHeaders,
                   body: JSON.stringify({ klant_id: k.id, qr_verplicht: newValue }),
                 });
               }}

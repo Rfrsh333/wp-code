@@ -29,7 +29,6 @@ export const adminTabs = [
   "boetes",
   "livechat",
   "contracten",
-  "linkedin",
   "platform-options",
   "geo",
 ] as const;
