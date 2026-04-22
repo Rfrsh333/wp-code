@@ -426,7 +426,10 @@ export default function AdminDashboard() {
     if (confirm(`Weet je zeker dat je ${selectedIds.size} items wilt verwijderen?`)) {
       adminDataAction.mutate(
         { action: "delete_many", table, data: { ids: Array.from(selectedIds) } },
-        { onSuccess: () => setSelectedIds(new Set()) }
+        {
+          onSuccess: () => setSelectedIds(new Set()),
+          onError: (err: Error) => alert(err.message || "Verwijderen mislukt"),
+        }
       );
     }
   };
@@ -773,11 +776,16 @@ export default function AdminDashboard() {
 
   const deleteItem = async (table: string, id: string) => {
     if (confirm("Weet je zeker dat je dit item wilt verwijderen?")) {
-      await fetch("/api/admin/data", {
+      const res = await fetch("/api/admin/data", {
         method: "POST",
         headers: await getAuthHeaders(),
         body: JSON.stringify({ action: "delete", table, id }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Verwijderen mislukt" }));
+        alert(err.error || "Verwijderen mislukt");
+        return;
+      }
       fetchData();
       setSelectedItem(null);
     }
@@ -1073,6 +1081,15 @@ export default function AdminDashboard() {
                       ) : null;
                     })()}
 
+                    {selectedIds.size > 0 && (
+                      <button
+                        onClick={() => deleteSelected("personeel_aanvragen")}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Verwijder ({selectedIds.size})
+                      </button>
+                    )}
                     <button
                       onClick={() => exportToCSV(
                         aanvragen.filter(a =>
@@ -1095,6 +1112,14 @@ export default function AdminDashboard() {
                   <table className="w-full min-w-[600px]">
                     <thead className="bg-neutral-50 border-b border-neutral-100">
                       <tr>
+                        <th className="px-6 py-4 w-10">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.size > 0 && selectedIds.size === filteredAanvragen.length}
+                            onChange={() => selectAll(filteredAanvragen.map(a => a.id))}
+                            className="rounded border-neutral-300"
+                          />
+                        </th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Bedrijf</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Contact</th>
                         <th className="text-left px-6 py-4 text-sm font-semibold text-neutral-600">Type</th>
@@ -1111,6 +1136,14 @@ export default function AdminDashboard() {
                         ))
                         .map((item) => (
                         <tr key={item.id} className="hover:bg-neutral-50">
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(item.id)}
+                              onChange={() => toggleSelect(item.id)}
+                              className="rounded border-neutral-300"
+                            />
+                          </td>
                           <td className="px-6 py-4">
                             <p className="font-medium text-neutral-900">{item.bedrijfsnaam}</p>
                             <p className="text-sm text-neutral-500">{item.locatie}</p>

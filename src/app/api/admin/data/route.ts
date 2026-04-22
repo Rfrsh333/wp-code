@@ -114,9 +114,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Table not allowed" }, { status: 403 });
   }
 
-  if ((action === "delete" || action === "delete_many") && !hasRequiredAdminRole(role, ["owner"])) {
+  if ((action === "delete" || action === "delete_many") && !hasRequiredAdminRole(role, ["owner", "operations"])) {
     return NextResponse.json(
-      { error: "Alleen owners mogen records verwijderen" },
+      { error: "Onvoldoende rechten om records te verwijderen" },
       { status: 403 }
     );
   }
