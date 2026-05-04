@@ -5,3 +5,10 @@ ALTER TABLE offertes
     FOREIGN KEY (aanvraag_id)
     REFERENCES personeel_aanvragen(id)
     ON DELETE CASCADE;
+
+ALTER TABLE bookings
+  DROP CONSTRAINT IF EXISTS bookings_inschrijving_id_fkey,
+  ADD CONSTRAINT bookings_inschrijving_id_fkey
+    FOREIGN KEY (inschrijving_id)
+    REFERENCES inschrijvingen(id)
+    ON DELETE CASCADE;
