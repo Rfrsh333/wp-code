@@ -72,6 +72,7 @@ const DienstFiltersTab = dynamic(() => import("./tabs/DienstFiltersTab"), { load
 const LiveChatNotification = dynamic(() => import("./LiveChatNotification"), { ssr: false });
 const PlatformOptionsTab = dynamic(() => import("./PlatformOptionsTab"), { loading: () => <TabSkeleton />, ssr: false });
 const GeoTab = dynamic(() => import("./GeoTab"), { loading: () => <TabSkeleton />, ssr: false });
+const RestaurantCRMTab = dynamic(() => import("./RestaurantCRMTab"), { loading: () => <TabSkeleton />, ssr: false });
 type Status = "nieuw" | "in_behandeling" | "afgehandeld";
 type OnboardingStatus =
   | "nieuw"
@@ -427,8 +428,11 @@ export default function AdminDashboard() {
       adminDataAction.mutate(
         { action: "delete_many", table, data: { ids: Array.from(selectedIds) } },
         {
-          onSuccess: () => setSelectedIds(new Set()),
-          onError: (err: Error) => alert(err.message || "Verwijderen mislukt"),
+          onSuccess: () => {
+            toast.success(`${selectedIds.size} item(s) succesvol verwijderd`);
+            setSelectedIds(new Set());
+          },
+          onError: (err: Error) => toast.error(err.message || "Verwijderen mislukt"),
         }
       );
     }
@@ -783,9 +787,10 @@ export default function AdminDashboard() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Verwijderen mislukt" }));
-        alert(err.error || "Verwijderen mislukt");
+        toast.error(err.error || "Verwijderen mislukt");
         return;
       }
+      toast.success("Item verwijderd");
       fetchData();
       setSelectedItem(null);
     }
@@ -1661,6 +1666,9 @@ export default function AdminDashboard() {
 
             {/* GEO Agent Tab */}
             {activeTab === "geo" && <GeoTab />}
+
+            {/* Restaurant CRM Tab */}
+            {activeTab === "restaurant-crm" && <RestaurantCRMTab />}
 
             {/* Calculator Leads Tab */}
             {activeTab === "calculator" && (

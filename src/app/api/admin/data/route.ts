@@ -183,10 +183,18 @@ export async function POST(request: NextRequest) {
     }
   }
   if (action === "delete") {
-    await supabaseAdmin.from(table).delete().eq("id", id);
+    const { error: deleteError } = await supabaseAdmin.from(table).delete().eq("id", id);
+    if (deleteError) {
+      captureRouteError(deleteError, { route: "/api/admin/data", action: "POST" });
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    }
   }
   if (action === "delete_many") {
-    await supabaseAdmin.from(table).delete().in("id", data.ids);
+    const { error: deleteManyError } = await supabaseAdmin.from(table).delete().in("id", data.ids);
+    if (deleteManyError) {
+      captureRouteError(deleteManyError, { route: "/api/admin/data", action: "POST" });
+      return NextResponse.json({ error: deleteManyError.message }, { status: 500 });
+    }
   }
   if (action === "bulk_update") {
     if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
