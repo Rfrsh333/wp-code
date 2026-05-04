@@ -22,6 +22,7 @@ import {
   Sparkles,
   Target,
   Users,
+  UtensilsCrossed,
 } from "lucide-react";
 import type {
   AdminTab,
@@ -246,6 +247,15 @@ export const sidebarItems = {
     pinnable: true,
     keywords: ["geo", "ai search", "perplexity", "seo", "content", "generative"],
   },
+  restaurantCrm: {
+    id: "restaurantCrm",
+    title: "Restaurant CRM",
+    icon: UtensilsCrossed,
+    kind: "tab",
+    tab: "restaurant-crm",
+    pinnable: true,
+    keywords: ["restaurant", "horeca", "crm", "sales", "outreach", "calling"],
+  },
   platformOptions: {
     id: "platformOptions",
     title: "Platform opties",
@@ -302,7 +312,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "marketing",
     label: "Growth",
-    itemIds: ["calculator", "leads"],
+    itemIds: ["calculator", "leads", "restaurantCrm"],
     collapsible: true,
     dividerBefore: true,
   },
