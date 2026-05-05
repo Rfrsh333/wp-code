@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Search, Filter, FolderOpen, Archive, Trash2, Pencil, Users, MessageCircle, ThumbsUp, Crown, Plus } from "lucide-react";
+import { Search, Filter, FolderOpen, Archive, Trash2, Pencil, Users, MessageCircle, ThumbsUp, Crown, Plus, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import type { CRMLeadList, LeadListSource } from "./types";
@@ -42,6 +42,7 @@ export default function LeadListsView({ onSelectList, onViewAllLeads, onNavigate
   const [showFilters, setShowFilters] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [syncing, setSyncing] = useState(false);
   const toast = useToast();
 
   const fetchLists = useCallback(async () => {
@@ -118,6 +119,27 @@ export default function LeadListsView({ onSelectList, onViewAllLeads, onNavigate
     toast.success("Naam bijgewerkt");
   }
 
+  async function handleSyncSources() {
+    setSyncing(true);
+    try {
+      const token = await getToken();
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const [res1, res2] = await Promise.all([
+        fetch("/api/admin/crm/lead-lists/sync", { method: "POST", headers, body: JSON.stringify({ source: "personeel_aanvragen" }) }),
+        fetch("/api/admin/crm/lead-lists/sync", { method: "POST", headers, body: JSON.stringify({ source: "calculator" }) }),
+      ]);
+      const results = await Promise.all([res1.json(), res2.json()]);
+      const totalCreated = (results[0].created || 0) + (results[1].created || 0);
+      const totalUpdated = (results[0].updated || 0) + (results[1].updated || 0);
+      toast.success(`Sync klaar: ${totalCreated} nieuw, ${totalUpdated} bijgewerkt`);
+      fetchLists();
+    } catch {
+      toast.error("Sync mislukt");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const totalLeads = lists.reduce((sum, l) => sum + l.lead_count, 0);
 
   return (
@@ -129,6 +151,14 @@ export default function LeadListsView({ onSelectList, onViewAllLeads, onNavigate
           <p className="text-sm text-neutral-500">{lists.length} lijsten, {totalLeads} leads totaal</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleSyncSources}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing..." : "Sync bronnen"}
+          </button>
           <button
             onClick={onViewAllLeads}
             className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200"
