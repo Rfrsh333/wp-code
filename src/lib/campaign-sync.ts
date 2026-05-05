@@ -68,17 +68,19 @@ export async function syncCampaignLeads(
   let matched = 0;
   let unmatched = 0;
 
-  // Fetch all leads from Instantly (paginated)
+  // Fetch all leads from Instantly (cursor-based pagination)
   const allLeads: InstantlyLead[] = [];
-  let skip = 0;
-  const batchSize = 100;
+  let cursor: string | undefined = undefined;
   let hasMore = true;
 
   while (hasMore) {
-    const batch = await getCampaignLeads(instantlyCampaignId, batchSize, skip);
-    allLeads.push(...batch);
-    if (batch.length < batchSize) hasMore = false;
-    else skip += batchSize;
+    const result = await getCampaignLeads(instantlyCampaignId, 100, cursor);
+    allLeads.push(...result.items);
+    if (result.next_starting_after) {
+      cursor = result.next_starting_after;
+    } else {
+      hasMore = false;
+    }
   }
 
   for (const instantlyLead of allLeads) {

@@ -78,17 +78,34 @@ export interface InstantlyLead {
 }
 
 export async function getLeadsByEmail(email: string): Promise<InstantlyLead[]> {
-  const res = await fetch(`${BASE_URL}/leads?email=${encodeURIComponent(email)}&limit=10`, { headers: headers() });
+  const res = await fetch(`${BASE_URL}/leads/list`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ contacts: [email], limit: 10 }),
+  });
   if (!res.ok) throw new Error(`Lead ophalen mislukt: ${res.status}`);
   const data = await res.json();
-  return data.items || data || [];
+  return data.items || [];
 }
 
-export async function getCampaignLeads(campaignId: string, limit = 100, skip = 0): Promise<InstantlyLead[]> {
-  const res = await fetch(`${BASE_URL}/leads?campaign_id=${campaignId}&limit=${limit}&skip=${skip}`, { headers: headers() });
+export async function getCampaignLeads(campaignId: string, limit = 100, startingAfter?: string): Promise<{ items: InstantlyLead[]; next_starting_after?: string }> {
+  const body: Record<string, unknown> = {
+    campaign: campaignId,
+    limit: Math.min(limit, 100),
+  };
+  if (startingAfter) body.starting_after = startingAfter;
+
+  const res = await fetch(`${BASE_URL}/leads/list`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
   if (!res.ok) throw new Error(`Campaign leads ophalen mislukt: ${res.status}`);
   const data = await res.json();
-  return data.items || data || [];
+  return {
+    items: data.items || [],
+    next_starting_after: data.next_starting_after || undefined,
+  };
 }
 
 export async function addLeadsToCampaign(campaignId: string, leads: Array<{
@@ -128,13 +145,12 @@ export async function syncCampaignStatuses(campaignId: string): Promise<Map<stri
   clicks: number;
 }>> {
   const results = new Map<string, { status: string; opens: number; replies: number; clicks: number }>();
-  let skip = 0;
-  const batchSize = 100;
+  let cursor: string | undefined = undefined;
   let hasMore = true;
 
   while (hasMore) {
-    const leads = await getCampaignLeads(campaignId, batchSize, skip);
-    for (const lead of leads) {
+    const result = await getCampaignLeads(campaignId, 100, cursor);
+    for (const lead of result.items) {
       if (lead.email) {
         let status = "sent";
         if ((lead.email_reply_count || 0) > 0) status = "replied";
@@ -149,8 +165,11 @@ export async function syncCampaignStatuses(campaignId: string): Promise<Map<stri
         });
       }
     }
-    if (leads.length < batchSize) hasMore = false;
-    else skip += batchSize;
+    if (result.next_starting_after) {
+      cursor = result.next_starting_after;
+    } else {
+      hasMore = false;
+    }
   }
 
   return results;
