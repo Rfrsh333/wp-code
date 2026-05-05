@@ -4,18 +4,25 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 
 type ToastType = "success" | "error" | "info" | "warning";
 
+interface ToastAction {
+  action: () => void;
+  actionLabel: string;
+}
+
 interface ToastMessage {
   id: number;
   type: ToastType;
   message: string;
+  action?: () => void;
+  actionLabel?: string;
 }
 
 interface ToastContextType {
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
-  warning: (message: string) => void;
-  showToast: (type: ToastType, message: string) => void;
+  success: (message: string, options?: ToastAction) => void;
+  error: (message: string, options?: ToastAction) => void;
+  info: (message: string, options?: ToastAction) => void;
+  warning: (message: string, options?: ToastAction) => void;
+  showToast: (type: ToastType, message: string, options?: ToastAction) => void;
 }
 
 const ToastContext = createContext<ToastContextType | null>(null);
@@ -34,10 +41,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const counterRef = useRef(0);
 
-  const addToast = useCallback((type: ToastType, message: string) => {
+  const addToast = useCallback((type: ToastType, message: string, options?: ToastAction) => {
     const id = ++counterRef.current;
     setToasts((prev) => {
-      const next = [...prev, { id, type, message }];
+      const next = [...prev, { id, type, message, action: options?.action, actionLabel: options?.actionLabel }];
       if (next.length > MAX_TOASTS) return next.slice(next.length - MAX_TOASTS);
       return next;
     });
@@ -48,11 +55,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toast: ToastContextType = {
-    success: (message: string) => addToast("success", message),
-    error: (message: string) => addToast("error", message),
-    info: (message: string) => addToast("info", message),
-    warning: (message: string) => addToast("warning", message),
-    showToast: addToast,
+    success: (message: string, options?: ToastAction) => addToast("success", message, options),
+    error: (message: string, options?: ToastAction) => addToast("error", message, options),
+    info: (message: string, options?: ToastAction) => addToast("info", message, options),
+    warning: (message: string, options?: ToastAction) => addToast("warning", message, options),
+    showToast: (type: ToastType, message: string, options?: ToastAction) => addToast(type, message, options),
   };
 
   return (
@@ -70,17 +77,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: number) => void }) {
   const [isExiting, setIsExiting] = useState(false);
+  const hasAction = !!toast.action;
+  const timeoutMs = hasAction ? 8000 : 4000;
+  const exitMs = hasAction ? 7700 : 3700;
 
   useEffect(() => {
     const dismissTimer = setTimeout(() => {
       setIsExiting(true);
-    }, 3700);
-    const removeTimer = setTimeout(() => onDismiss(toast.id), 4000);
+    }, exitMs);
+    const removeTimer = setTimeout(() => onDismiss(toast.id), timeoutMs);
     return () => {
       clearTimeout(dismissTimer);
       clearTimeout(removeTimer);
     };
-  }, [toast.id, onDismiss]);
+  }, [toast.id, onDismiss, exitMs, timeoutMs]);
 
   const config: Record<ToastType, { bg: string; icon: string }> = {
     success: { bg: "bg-green-600", icon: "\u2713" },
@@ -100,6 +110,17 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
     >
       <span className="text-lg font-bold flex-shrink-0">{icon}</span>
       <span className="text-sm font-medium flex-1">{toast.message}</span>
+      {hasAction && (
+        <button
+          onClick={() => {
+            toast.action!();
+            onDismiss(toast.id);
+          }}
+          className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors flex-shrink-0"
+        >
+          {toast.actionLabel}
+        </button>
+      )}
       <button
         onClick={() => onDismiss(toast.id)}
         className="text-white/70 hover:text-white text-lg leading-none flex-shrink-0"

@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 import DailyTargets from "./DailyTargets";
 import HotLeads from "./HotLeads";
 import ActionLists from "./ActionLists";
-import type { CRMLead, CRMDashboardResponse } from "./types";
+import type { CRMLead, CRMLeadList, CRMDashboardResponse } from "./types";
 
 interface DashboardViewProps {
   onStartCallingSession?: () => void;
@@ -18,17 +18,34 @@ interface DashboardViewProps {
 export default function DashboardView({ onStartCallingSession, onSelectLead, onNavigateFilter }: DashboardViewProps) {
   const [data, setData] = useState<CRMDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [leadLists, setLeadLists] = useState<CRMLeadList[]>([]);
+  const [selectedListId, setSelectedListId] = useState("");
   const toast = useToast();
 
   useEffect(() => {
-    fetchDashboard();
+    fetchLeadLists();
   }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [selectedListId]);
+
+  async function fetchLeadLists() {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    const res = await fetch("/api/admin/crm/lead-lists", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setLeadLists(await res.json());
+  }
 
   async function fetchDashboard() {
     try {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
-      const res = await fetch("/api/admin/crm/dashboard/", {
+      const params = new URLSearchParams();
+      if (selectedListId) params.set("lead_list_id", selectedListId);
+      const res = await fetch(`/api/admin/crm/dashboard/?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
@@ -66,6 +83,23 @@ export default function DashboardView({ onStartCallingSession, onSelectLead, onN
 
   return (
     <div className="space-y-6">
+      {/* Lead list filter */}
+      {leadLists.length > 0 && (
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-neutral-500">Filter op lijst:</span>
+          <select
+            value={selectedListId}
+            onChange={e => { setSelectedListId(e.target.value); setLoading(true); }}
+            className="text-sm border border-neutral-200 rounded-lg px-3 py-2"
+          >
+            <option value="">Alle leads</option>
+            {leadLists.map(list => (
+              <option key={list.id} value={list.id}>{list.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* 1. Daily Targets + Start Belsessie */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
@@ -140,15 +174,37 @@ export default function DashboardView({ onStartCallingSession, onSelectLead, onN
         </div>
       </div>
 
-      {/* 5. Email Status (Instantly) */}
-      {(stats.instantly_sent > 0 || stats.instantly_opened > 0) && (
+      {/* 5. Instantly Campagnes */}
+      {(stats.instantly_sent > 0 || stats.instantly_opened > 0 || (stats.active_campaigns ?? 0) > 0) && (
         <div>
-          <h3 className="text-sm font-semibold text-neutral-900 mb-3">Email Status (Instantly)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <h3 className="text-sm font-semibold text-neutral-900 mb-3">Instantly Campagnes</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <StatCard icon={Mail} label="Actieve campagnes" value={stats.active_campaigns ?? 0} color="cyan" />
             <StatCard icon={Send} label="Verstuurd" value={stats.instantly_sent} color="cyan" />
             <StatCard icon={Eye} label="Geopend" value={stats.instantly_opened} color="blue" />
             <StatCard icon={Reply} label="Beantwoord" value={stats.instantly_replied} color="green" />
             <StatCard icon={AlertCircle} label="Bounced" value={stats.instantly_bounced} color="red" />
+          </div>
+        </div>
+      )}
+
+      {/* 5b. Actie nodig */}
+      {((stats.email_replies_today ?? 0) > 0 || (stats.opened_not_called ?? 0) > 0 || (stats.unmatched_instantly ?? 0) > 0 || (stats.possible_duplicates ?? 0) > 0) && (
+        <div>
+          <h3 className="text-sm font-semibold text-neutral-900 mb-3">Actie nodig</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(stats.email_replies_today ?? 0) > 0 && (
+              <StatCard icon={Reply} label="Replies vandaag" value={stats.email_replies_today ?? 0} color="green" />
+            )}
+            {(stats.opened_not_called ?? 0) > 0 && (
+              <StatCard icon={Phone} label="Geopend, niet gebeld" value={stats.opened_not_called ?? 0} color="blue" />
+            )}
+            {(stats.unmatched_instantly ?? 0) > 0 && (
+              <StatCard icon={AlertTriangle} label="Unmatched leads" value={stats.unmatched_instantly ?? 0} color="orange" />
+            )}
+            {(stats.possible_duplicates ?? 0) > 0 && (
+              <StatCard icon={AlertTriangle} label="Mogelijke duplicaten" value={stats.possible_duplicates ?? 0} color="purple" />
+            )}
           </div>
         </div>
       )}

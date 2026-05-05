@@ -6,6 +6,9 @@ export async function GET(request: NextRequest) {
   const { isAdmin } = await verifyAdmin(request);
   if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const url = request.nextUrl.searchParams;
+  const lead_list_id = url.get("lead_list_id") || "";
+
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayISO = todayStart.toISOString();
@@ -14,32 +17,51 @@ export async function GET(request: NextRequest) {
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // Get all non-archived leads
-  const { data: leads } = await supabaseAdmin
+  let leadsQuery = supabaseAdmin
     .from("crm_leads")
-    .select("status, outreach_status, next_best_channel, next_followup_at, instantly_email_status")
+    .select("id, status, outreach_status, next_best_channel, next_followup_at, instantly_email_status")
     .is("archived_at", null);
 
+  if (lead_list_id) leadsQuery = leadsQuery.eq("lead_list_id", lead_list_id);
+
+  const { data: leads } = await leadsQuery;
+
+  // Get lead IDs for filtering contact logs / followups when filtered by list
+  const leadIds = lead_list_id && leads ? leads.map(l => l.id) : null;
+
   // Get today's contact logs
-  const { data: todayLogs } = await supabaseAdmin
+  let todayLogsQuery = supabaseAdmin
     .from("crm_contact_logs")
     .select("type")
     .gte("created_at", todayISO);
 
+  if (leadIds) todayLogsQuery = todayLogsQuery.in("lead_id", leadIds);
+
+  const { data: todayLogs } = await todayLogsQuery;
+
   // Get overdue and upcoming followups
-  const { count: followupsDue } = await supabaseAdmin
+  let followupsDueQuery = supabaseAdmin
     .from("crm_followups")
     .select("*", { count: "exact", head: true })
     .eq("status", "gepland")
     .lte("scheduled_at", weekFromNow);
 
-  const { count: followupsOverdue } = await supabaseAdmin
+  if (leadIds) followupsDueQuery = followupsDueQuery.in("lead_id", leadIds);
+
+  const { count: followupsDue } = await followupsDueQuery;
+
+  let followupsOverdueQuery = supabaseAdmin
     .from("crm_followups")
     .select("*", { count: "exact", head: true })
     .eq("status", "gepland")
     .lt("scheduled_at", now);
 
+  if (leadIds) followupsOverdueQuery = followupsOverdueQuery.in("lead_id", leadIds);
+
+  const { count: followupsOverdue } = await followupsOverdueQuery;
+
   // Hot leads: replied or interested, with full lead data
-  const { data: hotLeads } = await supabaseAdmin
+  let hotLeadsQuery = supabaseAdmin
     .from("crm_leads")
     .select("*")
     .is("archived_at", null)
@@ -47,8 +69,12 @@ export async function GET(request: NextRequest) {
     .order("updated_at", { ascending: false })
     .limit(10);
 
+  if (lead_list_id) hotLeadsQuery = hotLeadsQuery.eq("lead_list_id", lead_list_id);
+
+  const { data: hotLeads } = await hotLeadsQuery;
+
   // Action: phone leads
-  const { data: actionPhone } = await supabaseAdmin
+  let actionPhoneQuery = supabaseAdmin
     .from("crm_leads")
     .select("*")
     .is("archived_at", null)
@@ -57,8 +83,12 @@ export async function GET(request: NextRequest) {
     .order("updated_at", { ascending: false })
     .limit(10);
 
+  if (lead_list_id) actionPhoneQuery = actionPhoneQuery.eq("lead_list_id", lead_list_id);
+
+  const { data: actionPhone } = await actionPhoneQuery;
+
   // Action: overdue followups with lead data
-  const { data: overdueFollowupLeads } = await supabaseAdmin
+  let overdueQuery = supabaseAdmin
     .from("crm_leads")
     .select("*")
     .is("archived_at", null)
@@ -66,6 +96,10 @@ export async function GET(request: NextRequest) {
     .not("next_followup_at", "is", null)
     .order("next_followup_at", { ascending: true })
     .limit(10);
+
+  if (lead_list_id) overdueQuery = overdueQuery.eq("lead_list_id", lead_list_id);
+
+  const { data: overdueFollowupLeads } = await overdueQuery;
 
   const allLeads = leads || [];
   const logs = todayLogs || [];
@@ -93,6 +127,29 @@ export async function GET(request: NextRequest) {
   const instantlyOpened = allLeads.filter(l => ["opened", "clicked", "replied"].includes(l.instantly_email_status || "")).length;
   const instantlyReplied = allLeads.filter(l => l.instantly_email_status === "replied").length;
   const instantlyBounced = allLeads.filter(l => l.instantly_email_status === "bounced").length;
+
+  // Campaign stats
+  const { count: activeCampaigns } = await supabaseAdmin
+    .from("crm_instantly_campaigns")
+    .select("*", { count: "exact", head: true })
+    .eq("status", 1);
+
+  const emailRepliesToday = logs.filter(l => l.type === "instantly_replied").length;
+
+  const openedNotCalled = allLeads.filter(l =>
+    l.instantly_email_status === "opened" && l.next_best_channel === "phone"
+  ).length;
+
+  const { count: unmatchedInstantly } = await supabaseAdmin
+    .from("crm_unmatched_instantly_leads")
+    .select("*", { count: "exact", head: true })
+    .eq("resolution", "pending");
+
+  const { count: possibleDuplicates } = await supabaseAdmin
+    .from("crm_leads")
+    .select("*", { count: "exact", head: true })
+    .eq("is_possible_duplicate", true)
+    .is("archived_at", null);
 
   // "Vandaag doen" items
   const todoPhone = allLeads.filter(l => l.next_best_channel === "phone").length;
@@ -127,6 +184,11 @@ export async function GET(request: NextRequest) {
       instantly_opened: instantlyOpened,
       instantly_replied: instantlyReplied,
       instantly_bounced: instantlyBounced,
+      active_campaigns: activeCampaigns || 0,
+      email_replies_today: emailRepliesToday,
+      opened_not_called: openedNotCalled,
+      unmatched_instantly: unmatchedInstantly || 0,
+      possible_duplicates: possibleDuplicates || 0,
     },
     todo: {
       phone: todoPhone,

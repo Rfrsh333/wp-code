@@ -13,7 +13,8 @@ import SalesScriptPanel from "./SalesScriptPanel";
 import ClosingPanel from "./ClosingPanel";
 import TestShiftPanel from "./TestShiftPanel";
 import { calculateNextBestChannel } from "./outreach-helpers";
-import type { CRMLead, CRMContactLog } from "./types";
+import DuplicatesView from "./DuplicatesView";
+import type { CRMLead, CRMContactLog, CRMLeadCampaign, CRMLeadList } from "./types";
 
 interface LeadDetailPanelProps {
   lead: CRMLead;
@@ -21,7 +22,7 @@ interface LeadDetailPanelProps {
   onUpdate: (lead: CRMLead) => void;
 }
 
-type AccordionSection = "actions" | "script" | "dm" | "closing" | "testshifts" | "timeline" | "notes";
+type AccordionSection = "actions" | "script" | "dm" | "closing" | "testshifts" | "campaigns" | "leadlists" | "duplicates" | "timeline" | "notes";
 
 export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProps) {
   const [logs, setLogs] = useState<CRMContactLog[]>([]);
@@ -30,9 +31,11 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
   const [showFollowup, setShowFollowup] = useState(false);
   const [openSections, setOpenSections] = useState<Set<AccordionSection>>(new Set(["actions", "script"]));
   const [showReplyModal, setShowReplyModal] = useState(false);
+  const [leadCampaigns, setLeadCampaigns] = useState<CRMLeadCampaign[]>([]);
+  const [leadList, setLeadList] = useState<CRMLeadList | null>(null);
   const toast = useToast();
 
-  useEffect(() => { fetchLogs(); }, [lead.id]);
+  useEffect(() => { fetchLogs(); fetchCampaigns(); fetchLeadList(); }, [lead.id]);
 
   function toggleSection(s: AccordionSection) {
     setOpenSections(prev => {
@@ -55,8 +58,33 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
     if (res.ok) setLogs(await res.json());
   }
 
-  async function handleQuickAction(_action: string, updates: Record<string, unknown>, logType: string, logNotes?: string) {
+  async function fetchCampaigns() {
     const token = await getToken();
+    const res = await fetch(`/api/admin/crm/leads/${lead.id}/campaigns`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setLeadCampaigns(await res.json());
+  }
+
+  async function fetchLeadList() {
+    if (!lead.lead_list_id) { setLeadList(null); return; }
+    const token = await getToken();
+    const res = await fetch(`/api/admin/crm/lead-lists/${lead.lead_list_id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setLeadList(await res.json());
+  }
+
+  async function handleQuickAction(action: string, updates: Record<string, unknown>, logType: string, logNotes?: string) {
+    const token = await getToken();
+
+    // Capture previous state for undo
+    const previousState: Record<string, unknown> = {};
+    for (const key of Object.keys(updates)) {
+      if (key in lead) {
+        previousState[key] = (lead as unknown as Record<string, unknown>)[key];
+      }
+    }
 
     const res = await fetch(`/api/admin/crm/leads/${lead.id}`, {
       method: "PATCH",
@@ -67,10 +95,18 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
     if (!res.ok) { toast.error("Actie mislukt"); return; }
     const updatedLead = await res.json();
 
-    await fetch("/api/admin/crm/contact-logs/", {
+    // Create contact log with snapshot for undo
+    const logRes = await fetch("/api/admin/crm/contact-logs/", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ lead_id: lead.id, type: logType, notes: logNotes || null }),
+      body: JSON.stringify({
+        lead_id: lead.id,
+        type: logType,
+        notes: logNotes || null,
+        action_key: `${logType}_${Date.now()}`,
+        previous_state: previousState,
+        new_state: updates,
+      }),
     });
 
     if (updates.next_followup_at) {
@@ -83,7 +119,36 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
 
     onUpdate({ ...lead, ...updatedLead });
     fetchLogs();
-    toast.success(`Actie geregistreerd`);
+
+    // Toast with undo option
+    let logId: string | null = null;
+    if (logRes.ok) {
+      const logData = await logRes.json();
+      logId = logData.id;
+    }
+
+    if (logId) {
+      toast.success(`Actie geregistreerd`, {
+        action: async () => {
+          const t = await getToken();
+          const revertRes = await fetch(`/api/admin/crm/contact-logs/${logId}/revert`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${t}` },
+          });
+          if (revertRes.ok) {
+            const revertedLead = await revertRes.json();
+            onUpdate({ ...lead, ...revertedLead });
+            fetchLogs();
+            toast.success("Actie teruggedraaid");
+          } else {
+            toast.error("Terugdraaien mislukt");
+          }
+        },
+        actionLabel: "Ongedaan maken",
+      });
+    } else {
+      toast.success(`Actie geregistreerd`);
+    }
   }
 
   async function handleDMSent(channel: "instagram" | "facebook") {
@@ -235,6 +300,17 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
             )}
           </div>
 
+          {/* Source info */}
+          {(lead.source_type || lead.lead_list_id) && (
+            <div className="bg-neutral-50 border border-neutral-100 rounded-xl p-3">
+              <p className="text-xs font-semibold text-neutral-500 uppercase mb-1">Bron</p>
+              <div className="text-sm text-neutral-700 space-y-0.5">
+                {lead.source_type && <p>Type: {lead.source_type}</p>}
+                {lead.source_reference_id && <p>Referentie: {lead.source_reference_id}</p>}
+              </div>
+            </div>
+          )}
+
           {/* 2. Stats bar */}
           <div className="grid grid-cols-4 gap-2">
             <div className="text-center p-2 bg-neutral-50 rounded-lg">
@@ -309,14 +385,67 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
             <TestShiftPanel lead={lead} onUpdate={onUpdate} />
           </SectionAccordion>
 
-          {/* 6. Instantly info */}
-          {lead.instantly_campaign_name && (
-            <div className="bg-cyan-50 border border-cyan-100 rounded-xl p-3">
-              <p className="text-xs font-semibold text-cyan-600 uppercase mb-1">Instantly Campagne</p>
-              <p className="text-sm text-cyan-900">{lead.instantly_campaign_name}</p>
-              {lead.instantly_email_status && <InstantlyBadge status={lead.instantly_email_status} />}
-            </div>
-          )}
+          {/* 6. Campagnes */}
+          <SectionAccordion title={`Campagnes${leadCampaigns.length > 0 ? ` (${leadCampaigns.length})` : ""}`} section="campaigns" open={openSections.has("campaigns")} onToggle={toggleSection}>
+            {leadCampaigns.length === 0 ? (
+              <p className="text-sm text-neutral-500">Geen campagnes gekoppeld</p>
+            ) : (
+              <div className="space-y-2">
+                {leadCampaigns.map(lc => (
+                  <div key={lc.id} className="bg-cyan-50 border border-cyan-100 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium text-cyan-900">{(lc.campaign as unknown as { name: string })?.name || "Campagne"}</p>
+                      <InstantlyBadge status={lc.email_status} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs text-cyan-700 mt-2">
+                      <div>
+                        <span className="text-cyan-500">Opens:</span> {lc.open_count}
+                      </div>
+                      <div>
+                        <span className="text-cyan-500">Replies:</span> {lc.reply_count}
+                      </div>
+                      <div>
+                        <span className="text-cyan-500">Clicks:</span> {lc.click_count}
+                      </div>
+                    </div>
+                    {lc.last_event_at && (
+                      <p className="text-[10px] text-cyan-500 mt-1">
+                        Laatste event: {new Date(lc.last_event_at).toLocaleDateString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionAccordion>
+
+          {/* 6b. Leadlijsten */}
+          <SectionAccordion title="Leadlijsten" section="leadlists" open={openSections.has("leadlists")} onToggle={toggleSection}>
+            {leadList ? (
+              <div className="bg-neutral-50 border border-neutral-100 rounded-lg p-3">
+                <p className="text-sm font-medium text-neutral-900">{leadList.name}</p>
+                {leadList.description && <p className="text-xs text-neutral-500 mt-0.5">{leadList.description}</p>}
+                <div className="flex gap-3 mt-2 text-xs text-neutral-500">
+                  <span>{leadList.lead_count} leads</span>
+                  <span>{leadList.source}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-500">Niet in een leadlijst</p>
+            )}
+          </SectionAccordion>
+
+          {/* 6c. Duplicate detectie */}
+          <SectionAccordion title="Duplicaat detectie" section="duplicates" open={openSections.has("duplicates")} onToggle={toggleSection}>
+            <DuplicatesView
+              leadId={lead.id}
+              leadName={lead.company_name}
+              onMergeComplete={() => {
+                fetchLogs();
+                fetchCampaigns();
+              }}
+            />
+          </SectionAccordion>
 
           {/* 7. Notes */}
           <SectionAccordion title="Notities" section="notes" open={openSections.has("notes")} onToggle={toggleSection}>
@@ -337,7 +466,18 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
 
           {/* 8. Timeline */}
           <SectionAccordion title="Contactgeschiedenis" section="timeline" open={openSections.has("timeline")} onToggle={toggleSection}>
-            <ContactTimeline logs={logs} />
+            <ContactTimeline logs={logs} onRevert={async () => {
+              fetchLogs();
+              // Re-fetch the lead to get updated state
+              const token = await getToken();
+              const res = await fetch(`/api/admin/crm/leads/${lead.id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (res.ok) {
+                const updatedLead = await res.json();
+                onUpdate({ ...lead, ...updatedLead });
+              }
+            }} />
           </SectionAccordion>
         </div>
       </div>

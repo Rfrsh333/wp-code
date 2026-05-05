@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { csv_content, preview_only, skip_duplicates, import_type } = body;
+  const { csv_content, preview_only, skip_duplicates, import_type, lead_list_id, duplicate_scope } = body;
 
   if (!csv_content) {
     return NextResponse.json({ error: "csv_content is verplicht" }, { status: 400 });
@@ -119,9 +119,16 @@ export async function POST(request: NextRequest) {
   let toInsert = rows;
 
   if (skip_duplicates !== false) {
-    const { data: existing } = await supabaseAdmin
+    let existingQuery = supabaseAdmin
       .from("crm_leads")
       .select("company_name, city");
+
+    // Scope duplicate check to list or global
+    if (duplicate_scope === "list" && lead_list_id) {
+      existingQuery = existingQuery.eq("lead_list_id", lead_list_id);
+    }
+
+    const { data: existing } = await existingQuery;
 
     if (existing) {
       const existingSet = new Set(
@@ -148,6 +155,13 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // Add lead_list_id to all rows if provided
+  if (lead_list_id) {
+    for (const row of toInsert) {
+      row.lead_list_id = lead_list_id;
+    }
+  }
+
   // Insert in batches
   let imported = 0;
   const batchSize = 100;
@@ -155,6 +169,19 @@ export async function POST(request: NextRequest) {
     const batch = toInsert.slice(i, i + batchSize);
     const { error } = await supabaseAdmin.from("crm_leads").insert(batch);
     if (!error) imported += batch.length;
+  }
+
+  // Update lead list counts
+  if (lead_list_id && imported > 0) {
+    const { count } = await supabaseAdmin
+      .from("crm_leads")
+      .select("*", { count: "exact", head: true })
+      .eq("lead_list_id", lead_list_id);
+
+    await supabaseAdmin
+      .from("crm_lead_lists")
+      .update({ lead_count: count || 0, updated_at: new Date().toISOString() })
+      .eq("id", lead_list_id);
   }
 
   return NextResponse.json({

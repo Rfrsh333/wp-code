@@ -33,15 +33,20 @@ export async function POST(request: NextRequest) {
   if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { lead_id, type, notes } = body;
+  const { lead_id, type, notes, action_key, previous_state, new_state } = body;
 
   if (!lead_id || !type) {
     return NextResponse.json({ error: "lead_id en type zijn verplicht" }, { status: 400 });
   }
 
+  const insertData: Record<string, unknown> = { lead_id, type, notes };
+  if (action_key) insertData.action_key = action_key;
+  if (previous_state) insertData.previous_state = previous_state;
+  if (new_state) insertData.new_state = new_state;
+
   const { data, error } = await supabaseAdmin
     .from("crm_contact_logs")
-    .insert({ lead_id, type, notes })
+    .insert(insertData)
     .select()
     .single();
 

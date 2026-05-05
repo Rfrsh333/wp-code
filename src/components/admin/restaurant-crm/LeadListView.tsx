@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Search, Filter, ChevronLeft, ChevronRight, Phone, Mail, Instagram, Facebook } from "lucide-react";
+import { Search, Filter, ChevronLeft, ChevronRight, Phone, Mail, Instagram, Facebook, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabase";
 import { StatusBadge, OutreachBadge, ChannelBadge, InstantlyBadge } from "./StatusBadge";
@@ -10,7 +10,13 @@ import LeadDetailPanel from "./LeadDetailPanel";
 import BulkActionsBar from "./BulkActionsBar";
 import type { CRMLead, CRMLeadListResponse } from "./types";
 
-export default function LeadListView() {
+interface LeadListViewProps {
+  leadListId?: string;
+  leadListName?: string;
+  onBackToLists?: () => void;
+}
+
+export default function LeadListView({ leadListId, leadListName, onBackToLists }: LeadListViewProps) {
   const [leads, setLeads] = useState<CRMLead[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -40,6 +46,7 @@ export default function LeadListView() {
       if (statusFilter) params.set("status", statusFilter);
       if (outreachFilter) params.set("outreach_status", outreachFilter);
       if (channelFilter) params.set("next_best_channel", channelFilter);
+      if (leadListId) params.set("lead_list_id", leadListId);
 
       const res = await fetch(`/api/admin/crm/leads?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -53,7 +60,7 @@ export default function LeadListView() {
     } finally {
       setLoading(false);
     }
-  }, [page, perPage, search, statusFilter, outreachFilter, channelFilter, toast]);
+  }, [page, perPage, search, statusFilter, outreachFilter, channelFilter, leadListId, toast]);
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
@@ -96,6 +103,25 @@ export default function LeadListView() {
 
   return (
     <div className="space-y-4">
+      {/* Breadcrumb / back button */}
+      {onBackToLists && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onBackToLists}
+            className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Terug naar lijsten
+          </button>
+          {leadListName && (
+            <>
+              <span className="text-neutral-300">/</span>
+              <span className="text-sm font-medium text-neutral-900">{leadListName}</span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Search + Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">

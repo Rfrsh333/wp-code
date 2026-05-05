@@ -1,3 +1,30 @@
+export type LeadListSource =
+  | "restaurant_import"
+  | "google_maps"
+  | "personeel_aanvragen"
+  | "calculator"
+  | "manual"
+  | "instantly"
+  | "other";
+
+export interface CRMLeadList {
+  id: string;
+  name: string;
+  description: string | null;
+  source: LeadListSource;
+  city: string | null;
+  imported_file_name: string | null;
+  lead_count: number;
+  contacted_count: number;
+  replied_count: number;
+  interested_count: number;
+  customer_count: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+}
+
 export interface CRMLead {
   id: string;
   company_name: string;
@@ -20,6 +47,10 @@ export interface CRMLead {
   last_contacted_at: string | null;
   next_followup_at: string | null;
   archived_at: string | null;
+  // Lead list / source tracking
+  lead_list_id: string | null;
+  source_type: string | null;
+  source_reference_id: string | null;
   // Channel availability
   phone_available: boolean;
   email_available: boolean;
@@ -130,6 +161,12 @@ export interface CRMContactLog {
   lead_id: string;
   type: ContactLogType;
   notes: string | null;
+  action_key: string | null;
+  previous_state: Record<string, unknown> | null;
+  new_state: Record<string, unknown> | null;
+  is_reverted: boolean;
+  reverted_at: string | null;
+  revert_reason: string | null;
   created_at: string;
 }
 
@@ -216,6 +253,11 @@ export interface CRMDashboardStats {
   instantly_opened: number;
   instantly_replied: number;
   instantly_bounced: number;
+  active_campaigns: number;
+  email_replies_today: number;
+  opened_not_called: number;
+  unmatched_instantly: number;
+  possible_duplicates: number;
 }
 
 export interface CRMDashboardResponse {
@@ -252,4 +294,73 @@ export interface CRMLeadListResponse {
   total: number;
   page: number;
   per_page: number;
+}
+
+// --- Instantly Campaigns ---
+
+export interface CRMInstantlyCampaign {
+  id: string;
+  instantly_campaign_id: string;
+  name: string;
+  status: number;
+  total_leads: number;
+  leads_sent: number;
+  leads_opened: number;
+  leads_replied: number;
+  leads_bounced: number;
+  leads_unsubscribed: number;
+  leads_clicked: number;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CRMLeadCampaign {
+  id: string;
+  lead_id: string;
+  campaign_id: string;
+  instantly_lead_email: string;
+  email_status: InstantlyStatus;
+  open_count: number;
+  reply_count: number;
+  click_count: number;
+  added_at: string;
+  last_event_at: string | null;
+  created_at: string;
+  updated_at: string;
+  lead?: CRMLead;
+  campaign?: CRMInstantlyCampaign;
+}
+
+export type UnmatchedResolution = "pending" | "matched" | "created" | "ignored";
+
+export interface CRMUnmatchedInstantlyLead {
+  id: string;
+  campaign_id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  company_name: string | null;
+  phone: string | null;
+  website: string | null;
+  email_status: InstantlyStatus;
+  open_count: number;
+  reply_count: number;
+  click_count: number;
+  resolution: UnmatchedResolution;
+  matched_lead_id: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+  campaign?: CRMInstantlyCampaign;
+}
+
+export interface DuplicateMatch {
+  lead_id: string;
+  company_name: string;
+  city: string | null;
+  email: string | null;
+  phone: string | null;
+  match_reasons: string[];
+  confidence: "high" | "medium" | "low";
 }

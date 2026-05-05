@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, Download, FileText, AlertCircle, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Upload, Download, FileText, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+import type { CRMLeadList } from "./types";
 
 type ImportType = "leads" | "instantly";
 
@@ -13,7 +14,24 @@ export default function ImportView() {
   const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
+  const [leadLists, setLeadLists] = useState<CRMLeadList[]>([]);
+  const [selectedListId, setSelectedListId] = useState<string>("");
+  const [newListName, setNewListName] = useState("");
+  const [newListSource, setNewListSource] = useState("restaurant_import");
+  const [showNewList, setShowNewList] = useState(false);
+  const [duplicateScope, setDuplicateScope] = useState<"global" | "list">("global");
   const toast = useToast();
+
+  useEffect(() => { fetchLeadLists(); }, []);
+
+  async function fetchLeadLists() {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    const res = await fetch("/api/admin/crm/lead-lists", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setLeadLists(await res.json());
+  }
 
   async function getToken() {
     const session = await supabase.auth.getSession();
@@ -30,6 +48,23 @@ export default function ImportView() {
       setResult(null);
     };
     reader.readAsText(file);
+  }
+
+  async function handleCreateList(): Promise<string | null> {
+    if (!newListName.trim()) return null;
+    const token = await getToken();
+    const res = await fetch("/api/admin/crm/lead-lists", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newListName, source: newListSource }),
+    });
+    if (!res.ok) { toast.error("Lijst aanmaken mislukt"); return null; }
+    const data = await res.json();
+    await fetchLeadLists();
+    setSelectedListId(data.id);
+    setShowNewList(false);
+    setNewListName("");
+    return data.id;
   }
 
   async function handlePreview() {
@@ -53,13 +88,28 @@ export default function ImportView() {
 
   async function handleImport() {
     if (!csvContent) return;
+
+    // If creating a new list, do that first
+    let listId = selectedListId;
+    if (showNewList && newListName.trim()) {
+      const created = await handleCreateList();
+      if (!created) return;
+      listId = created;
+    }
+
     setLoading(true);
     try {
       const token = await getToken();
       const res = await fetch("/api/admin/crm/import/", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ csv_content: csvContent, preview_only: false, import_type: importType }),
+        body: JSON.stringify({
+          csv_content: csvContent,
+          preview_only: false,
+          import_type: importType,
+          lead_list_id: listId || undefined,
+          duplicate_scope: duplicateScope,
+        }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -119,6 +169,86 @@ export default function ImportView() {
             <p className="font-medium">Instantly CSV import</p>
             <p>Verwachte kolommen: email, campaign_id, campaign_name, status, last_event_at</p>
             <p>Matching gebeurt op email adres.</p>
+          </div>
+        )}
+
+        {/* Lead list selection (only for standard leads import) */}
+        {importType === "leads" && (
+          <div className="mb-4 space-y-3">
+            <label className="text-sm font-medium text-neutral-700">Leadlijst</label>
+            {!showNewList ? (
+              <div className="flex gap-2">
+                <select
+                  value={selectedListId}
+                  onChange={e => setSelectedListId(e.target.value)}
+                  className="flex-1 text-sm border border-neutral-200 rounded-lg px-3 py-2"
+                >
+                  <option value="">Geen lijst (losse import)</option>
+                  {leadLists.map(list => (
+                    <option key={list.id} value={list.id}>{list.name} ({list.lead_count} leads)</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowNewList(true)}
+                  className="px-3 py-2 text-sm text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50"
+                >
+                  Nieuwe lijst
+                </button>
+              </div>
+            ) : (
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg space-y-2">
+                <input
+                  type="text"
+                  placeholder="Naam van nieuwe lijst..."
+                  value={newListName}
+                  onChange={e => setNewListName(e.target.value)}
+                  className="w-full text-sm border border-neutral-200 rounded-lg px-3 py-2"
+                />
+                <div className="flex gap-2">
+                  <select
+                    value={newListSource}
+                    onChange={e => setNewListSource(e.target.value)}
+                    className="flex-1 text-sm border border-neutral-200 rounded-lg px-3 py-2"
+                  >
+                    <option value="restaurant_import">Restaurant import</option>
+                    <option value="google_maps">Google Maps</option>
+                    <option value="manual">Handmatig</option>
+                    <option value="other">Overig</option>
+                  </select>
+                  <button
+                    onClick={() => setShowNewList(false)}
+                    className="px-3 py-2 text-sm text-neutral-500 hover:text-neutral-700"
+                  >
+                    Annuleer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Duplicate scope */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-neutral-600">Duplicate check:</span>
+              <label className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="radio"
+                  name="dup_scope"
+                  checked={duplicateScope === "global"}
+                  onChange={() => setDuplicateScope("global")}
+                  className="rounded"
+                />
+                Globaal
+              </label>
+              <label className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="radio"
+                  name="dup_scope"
+                  checked={duplicateScope === "list"}
+                  onChange={() => setDuplicateScope("list")}
+                  className="rounded"
+                />
+                Binnen lijst
+              </label>
+            </div>
           </div>
         )}
 
@@ -207,6 +337,9 @@ export default function ImportView() {
 
       {/* Instantly Sync Section */}
       <InstantlySection />
+
+      {/* Bronnen Synchroniseren */}
+      <SyncSourcesSection />
 
       {/* Meta Instagram Section */}
       <MetaSection />
@@ -442,6 +575,78 @@ function MetaSection() {
           Configureer Webhook (coming soon)
         </button>
       </div>
+    </div>
+  );
+}
+
+function SyncSourcesSection() {
+  const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<Record<string, unknown> | null>(null);
+  const toast = useToast();
+
+  async function getToken() {
+    const session = await supabase.auth.getSession();
+    return session.data.session?.access_token || "";
+  }
+
+  async function handleSync(source: "personeel_aanvragen" | "calculator") {
+    setSyncing(source);
+    setSyncResult(null);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/crm/lead-lists/sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ source }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setSyncResult(data);
+      toast.success(`Sync voltooid: ${data.created} nieuw, ${data.updated} bijgewerkt`);
+    } catch {
+      toast.error("Sync mislukt");
+    } finally {
+      setSyncing(null);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-purple-200 p-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-neutral-900">Bronnen synchroniseren</h3>
+        <p className="text-sm text-neutral-500">Sync leads vanuit andere bronnen naar het CRM</p>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => handleSync("personeel_aanvragen")}
+          disabled={syncing !== null}
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${syncing === "personeel_aanvragen" ? "animate-spin" : ""}`} />
+          Sync Personeel aanvragen naar CRM
+        </button>
+        <button
+          onClick={() => handleSync("calculator")}
+          disabled={syncing !== null}
+          className="flex items-center gap-2 px-4 py-2.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${syncing === "calculator" ? "animate-spin" : ""}`} />
+          Sync Calculator leads naar CRM
+        </button>
+      </div>
+
+      {syncResult && (
+        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+          <p className="font-medium">Sync resultaat:</p>
+          <ul className="mt-1 space-y-0.5">
+            <li>Nieuw aangemaakt: {syncResult.created as number}</li>
+            <li>Bijgewerkt: {syncResult.updated as number}</li>
+            <li>Overgeslagen: {syncResult.skipped as number}</li>
+            <li>Totaal verwerkt: {syncResult.total as number}</li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

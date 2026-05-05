@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
   const facebook_available = url.get("facebook_available");
   const not_contacted = url.get("not_contacted") === "true";
   const followup_today = url.get("followup_today") === "true";
+  const lead_list_id = url.get("lead_list_id") || "";
 
   const from = (page - 1) * per_page;
   const to = from + per_page - 1;
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  if (lead_list_id) query = query.eq("lead_list_id", lead_list_id);
   if (priority) query = query.eq("priority", priority);
   if (city) query = query.ilike("city", `%${city}%`);
 
