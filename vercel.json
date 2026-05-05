@@ -3,6 +3,12 @@
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 10
+    },
+    "src/app/api/admin/crm/campaigns/**/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/instantly-sync/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [

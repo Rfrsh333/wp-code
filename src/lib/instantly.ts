@@ -100,7 +100,10 @@ export async function getCampaignLeads(campaignId: string, limit = 100, starting
     headers: headers(),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Campaign leads ophalen mislukt: ${res.status}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Campaign leads ophalen mislukt: ${res.status} ${text}`);
+  }
   const data = await res.json();
   return {
     items: data.items || [],

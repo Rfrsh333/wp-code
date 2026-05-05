@@ -22,23 +22,20 @@ export async function syncCampaigns(): Promise<{ synced: number; errors: string[
   const errors: string[] = [];
   const campaigns = await listCampaigns();
 
-  for (const campaign of campaigns) {
-    try {
-      await supabaseAdmin
-        .from("crm_instantly_campaigns")
-        .upsert(
-          {
-            instantly_campaign_id: campaign.id,
-            name: campaign.name,
-            status: campaign.status ?? 0,
-            last_synced_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "instantly_campaign_id" }
-        );
-    } catch (err) {
-      errors.push(`Campaign ${campaign.id}: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
+  if (campaigns.length > 0) {
+    const rows = campaigns.map(c => ({
+      instantly_campaign_id: c.id,
+      name: c.name,
+      status: c.status ?? 0,
+      last_synced_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabaseAdmin
+      .from("crm_instantly_campaigns")
+      .upsert(rows, { onConflict: "instantly_campaign_id" });
+
+    if (error) errors.push(`Campaign upsert: ${error.message}`);
   }
 
   return { synced: campaigns.length, errors };
@@ -57,7 +54,7 @@ function determineEmailStatus(lead: InstantlyLead): string {
 }
 
 /**
- * Sync leads van een specifieke campagne.
+ * Sync leads van een specifieke campagne (batch-optimized).
  * Matched leads -> crm_lead_campaigns, unmatched -> crm_unmatched_instantly_leads
  */
 export async function syncCampaignLeads(
@@ -65,10 +62,8 @@ export async function syncCampaignLeads(
   instantlyCampaignId: string
 ): Promise<{ matched: number; unmatched: number; errors: string[] }> {
   const errors: string[] = [];
-  let matched = 0;
-  let unmatched = 0;
 
-  // Fetch all leads from Instantly (cursor-based pagination)
+  // Step 1: Fetch all leads from Instantly (cursor-based pagination)
   const allLeads: InstantlyLead[] = [];
   let cursor: string | undefined = undefined;
   let hasMore = true;
@@ -76,92 +71,127 @@ export async function syncCampaignLeads(
   while (hasMore) {
     const result = await getCampaignLeads(instantlyCampaignId, 100, cursor);
     allLeads.push(...result.items);
-    if (result.next_starting_after) {
+    if (result.next_starting_after && result.items.length > 0) {
       cursor = result.next_starting_after;
     } else {
       hasMore = false;
     }
   }
 
+  if (allLeads.length === 0) {
+    await recalculateCampaignStats(campaignDbId);
+    return { matched: 0, unmatched: 0, errors };
+  }
+
+  // Step 2: Collect all emails and batch-lookup CRM leads
+  const emailsSet = new Set<string>();
+  for (const lead of allLeads) {
+    if (lead.email) emailsSet.add(lead.email.toLowerCase().trim());
+  }
+  const allEmails = Array.from(emailsSet);
+
+  // Batch fetch matching CRM leads (chunks of 500 to stay within Supabase limits)
+  const emailToLeadId = new Map<string, string>();
+  for (let i = 0; i < allEmails.length; i += 500) {
+    const chunk = allEmails.slice(i, i + 500);
+    const { data: crmLeads } = await supabaseAdmin
+      .from("crm_leads")
+      .select("id, email")
+      .in("email", chunk)
+      .is("archived_at", null)
+      .is("merged_into", null);
+
+    if (crmLeads) {
+      for (const cl of crmLeads) {
+        if (cl.email) emailToLeadId.set(cl.email.toLowerCase().trim(), cl.id);
+      }
+    }
+  }
+
+  // Step 3: Split into matched and unmatched, build batch rows
+  const now = new Date().toISOString();
+  const matchedRows: Record<string, unknown>[] = [];
+  const unmatchedRows: Record<string, unknown>[] = [];
+  const seenMatched = new Set<string>();
+  const seenUnmatched = new Set<string>();
+
   for (const instantlyLead of allLeads) {
     if (!instantlyLead.email) continue;
     const email = instantlyLead.email.toLowerCase().trim();
     const emailStatus = determineEmailStatus(instantlyLead);
+    const crmLeadId = emailToLeadId.get(email);
 
-    try {
-      // Try to match against crm_leads by email
-      const { data: crmLead } = await supabaseAdmin
-        .from("crm_leads")
-        .select("id")
-        .eq("email", email)
-        .is("archived_at", null)
-        .is("merged_into", null)
-        .maybeSingle();
+    if (crmLeadId) {
+      const key = `${crmLeadId}_${campaignDbId}`;
+      if (seenMatched.has(key)) continue;
+      seenMatched.add(key);
 
-      if (crmLead) {
-        // Matched: upsert into crm_lead_campaigns
-        await supabaseAdmin
-          .from("crm_lead_campaigns")
-          .upsert(
-            {
-              lead_id: crmLead.id,
-              campaign_id: campaignDbId,
-              instantly_lead_email: email,
-              email_status: emailStatus,
-              open_count: instantlyLead.email_open_count || 0,
-              reply_count: instantlyLead.email_reply_count || 0,
-              click_count: instantlyLead.email_click_count || 0,
-              last_event_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "lead_id,campaign_id" }
-          );
-        matched++;
-      } else {
-        // Unmatched: upsert into crm_unmatched_instantly_leads
-        await supabaseAdmin
-          .from("crm_unmatched_instantly_leads")
-          .upsert(
-            {
-              campaign_id: campaignDbId,
-              email,
-              first_name: instantlyLead.first_name || null,
-              last_name: instantlyLead.last_name || null,
-              company_name: instantlyLead.company_name || null,
-              phone: instantlyLead.phone || null,
-              website: instantlyLead.website || null,
-              email_status: emailStatus,
-              open_count: instantlyLead.email_open_count || 0,
-              reply_count: instantlyLead.email_reply_count || 0,
-              click_count: instantlyLead.email_click_count || 0,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "campaign_id,email" }
-          );
-        unmatched++;
-      }
-    } catch (err) {
-      errors.push(`Lead ${email}: ${err instanceof Error ? err.message : "Unknown error"}`);
+      matchedRows.push({
+        lead_id: crmLeadId,
+        campaign_id: campaignDbId,
+        instantly_lead_email: email,
+        email_status: emailStatus,
+        open_count: instantlyLead.email_open_count || 0,
+        reply_count: instantlyLead.email_reply_count || 0,
+        click_count: instantlyLead.email_click_count || 0,
+        last_event_at: now,
+        updated_at: now,
+      });
+    } else {
+      const key = `${campaignDbId}_${email}`;
+      if (seenUnmatched.has(key)) continue;
+      seenUnmatched.add(key);
+
+      unmatchedRows.push({
+        campaign_id: campaignDbId,
+        email,
+        first_name: instantlyLead.first_name || null,
+        last_name: instantlyLead.last_name || null,
+        company_name: instantlyLead.company_name || null,
+        phone: instantlyLead.phone || null,
+        website: instantlyLead.website || null,
+        email_status: emailStatus,
+        open_count: instantlyLead.email_open_count || 0,
+        reply_count: instantlyLead.email_reply_count || 0,
+        click_count: instantlyLead.email_click_count || 0,
+        updated_at: now,
+      });
     }
   }
 
-  // Recalculate aggregate stats on campaign
+  // Step 4: Batch upsert matched leads (chunks of 500)
+  for (let i = 0; i < matchedRows.length; i += 500) {
+    const chunk = matchedRows.slice(i, i + 500);
+    const { error } = await supabaseAdmin
+      .from("crm_lead_campaigns")
+      .upsert(chunk, { onConflict: "lead_id,campaign_id" });
+    if (error) errors.push(`Matched upsert batch ${i}: ${error.message}`);
+  }
+
+  // Step 5: Batch upsert unmatched leads (chunks of 500)
+  for (let i = 0; i < unmatchedRows.length; i += 500) {
+    const chunk = unmatchedRows.slice(i, i + 500);
+    const { error } = await supabaseAdmin
+      .from("crm_unmatched_instantly_leads")
+      .upsert(chunk, { onConflict: "campaign_id,email" });
+    if (error) errors.push(`Unmatched upsert batch ${i}: ${error.message}`);
+  }
+
+  // Step 6: Recalculate aggregate stats
   await recalculateCampaignStats(campaignDbId);
 
-  return { matched, unmatched, errors };
+  return { matched: matchedRows.length, unmatched: unmatchedRows.length, errors };
 }
 
 /**
  * Herbereken de aggregate stats op een campaign op basis van crm_lead_campaigns + crm_unmatched_instantly_leads
  */
 async function recalculateCampaignStats(campaignDbId: string): Promise<void> {
-  // Count from crm_lead_campaigns
   const { data: lcStats } = await supabaseAdmin
     .from("crm_lead_campaigns")
     .select("email_status")
     .eq("campaign_id", campaignDbId);
 
-  // Count from crm_unmatched_instantly_leads (pending only)
   const { data: umStats } = await supabaseAdmin
     .from("crm_unmatched_instantly_leads")
     .select("email_status")
