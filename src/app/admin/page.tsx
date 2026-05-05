@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import QueryProvider from "@/components/QueryProvider";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const AdminDashboard = dynamic(() => import("@/components/admin/AdminDashboard"), {
   loading: () => (
@@ -16,59 +14,7 @@ const AdminDashboard = dynamic(() => import("@/components/admin/AdminDashboard")
 });
 
 export default function AdminPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push("/admin/login");
-        setIsLoading(false);
-        return;
-      }
-
-      // Extra check: verifieer dat de gebruiker een admin is via de API
-      try {
-        const response = await fetch("/api/admin/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session }),
-        });
-
-        if (!response.ok) {
-          // Niet geautoriseerd als admin
-          console.error("Admin verificatie mislukt");
-          await supabase.auth.signOut();
-          await fetch("/api/admin/logout", { method: "POST" });
-          router.push("/admin/login");
-          setIsLoading(false);
-          return;
-        }
-
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Admin verificatie error:", error);
-        await supabase.auth.signOut();
-        router.push("/admin/login");
-      }
-
-      setIsLoading(false);
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        setIsAuthenticated(false);
-        router.push("/admin/login");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router]);
+  const { isLoading, isAuthenticated } = useAdminAuth();
 
   if (isLoading) {
     return (

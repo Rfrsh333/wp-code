@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 
 interface UrenRegistratie {
   id: string;
@@ -28,6 +29,7 @@ interface AanmeldingZonderUren {
 }
 
 export default function UrenTab() {
+  const toast = useToast();
   const [uren, setUren] = useState<UrenRegistratie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"goedgekeurd" | "klant_goedgekeurd" | "ingediend" | "alle">("ingediend");
@@ -82,7 +84,7 @@ export default function UrenTab() {
     });
     if (!res.ok) {
       const error = await res.json();
-      alert(error.error || "Status aanpassen mislukt");
+      toast.error(error.error || "Status aanpassen mislukt");
       return;
     }
     fetchUren();
@@ -129,7 +131,7 @@ export default function UrenTab() {
 
     if (!res.ok) {
       const error = await res.json();
-      alert(error.error || "Correctie versturen mislukt");
+      toast.error(error.error || "Correctie versturen mislukt");
       return;
     }
 
@@ -189,7 +191,7 @@ export default function UrenTab() {
 
     if (!res.ok) {
       const error = await res.json();
-      alert(error.error || "Uren registreren mislukt");
+      toast.error(error.error || "Uren registreren mislukt");
       return;
     }
 

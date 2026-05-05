@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface IDCardFullscreenProps {
   qrDataUrl: string;
@@ -25,7 +26,7 @@ export default function IDCardFullscreen({ qrDataUrl, naam, id, onClose }: IDCar
         className="bg-white rounded-3xl p-8 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <img src={qrDataUrl} alt="QR Code" className="w-56 h-56" />
+        <Image src={qrDataUrl} alt="QR Code" width={224} height={224} className="w-56 h-56" unoptimized />
       </motion.div>
 
       <motion.div

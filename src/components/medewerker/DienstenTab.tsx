@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface Dienst {
@@ -245,7 +246,7 @@ export default function DienstenTab({ diensten, onAanmelden, onAfmelden, onUrenI
                   )}
                   <div className="flex items-center gap-3">
                     {v.profile_photo_url ? (
-                      <img src={v.profile_photo_url} alt={v.naam} className="w-10 h-10 rounded-full object-cover" />
+                      <Image src={v.profile_photo_url} alt={v.naam} width={40} height={40} className="w-10 h-10 rounded-full object-cover" unoptimized />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-[#0B2447] text-white flex items-center justify-center text-sm font-bold">
                         {initialen}

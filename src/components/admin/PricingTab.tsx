@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 
 interface PricingRule {
   id: string;
@@ -22,6 +23,7 @@ interface TariefOverview {
 }
 
 export default function PricingTab() {
+  const toast = useToast();
   const [rules, setRules] = useState<PricingRule[]>([]);
   const [tarieven, setTarieven] = useState<TariefOverview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,7 @@ export default function PricingTab() {
       setShowForm(false);
       setNewRule({ naam: "", type: "multiplier", waarde: "1.10", conditie: "{}", prioriteit: "0" });
     } catch {
-      alert("Ongeldige JSON in conditie veld");
+      toast.error("Ongeldige JSON in conditie veld");
     }
   };
 

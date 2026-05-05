@@ -2,10 +2,23 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { useToast } from "@/components/ui/Toast";
+
+const contactSchema = z.object({
+  naam: z.string().min(1, "Naam is verplicht"),
+  email: z.string().min(1, "E-mail is verplicht").email("Vul een geldig emailadres in"),
+  telefoon: z.string().optional(),
+  onderwerp: z.string().min(1, "Selecteer een onderwerp"),
+  bericht: z.string().min(10, "Bericht moet minimaal 10 tekens bevatten"),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
 
 interface FAQItem {
   question: string;
@@ -107,6 +120,9 @@ const faqData: FAQItem[] = [
 const categories = ["Alle", "Voor Opdrachtgevers", "Voor Werkzoekenden", "Over TopTalent"];
 
 function ContactPageContent() {
+  const { register, handleSubmit, formState: { errors } } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(0);
   const [activeCategory, setActiveCategory] = useState("Alle");
@@ -147,12 +163,8 @@ function ContactPageContent() {
     setActiveIndex(activeIndex === index ? null : index);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
 
     try {
       // Get reCAPTCHA token
@@ -162,11 +174,11 @@ function ContactPageContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          naam: formData.get("naam"),
-          email: formData.get("email"),
-          telefoon: formData.get("telefoon"),
-          onderwerp: formData.get("onderwerp"),
-          bericht: formData.get("bericht"),
+          naam: data.naam,
+          email: data.email,
+          telefoon: data.telefoon,
+          onderwerp: data.onderwerp,
+          bericht: data.bericht,
           recaptchaToken,
           // Lead tracking
           leadSource: trackingData.leadSource,
@@ -180,8 +192,8 @@ function ContactPageContent() {
       if (response.ok) {
         router.push("/bedankt/contact");
       } else {
-        const data = await response.json();
-        toast.error(data.error || "Er is iets misgegaan. Probeer het opnieuw.");
+        const resData = await response.json();
+        toast.error(resData.error || "Er is iets misgegaan. Probeer het opnieuw.");
       }
     } catch {
       toast.error("Er is iets misgegaan. Probeer het opnieuw.");
@@ -228,7 +240,7 @@ function ContactPageContent() {
                 <p className="text-neutral-600 mb-8">
                   Vul het formulier in en wij nemen binnen 24 uur contact met u op.
                 </p>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="naam" className="block text-sm font-medium text-neutral-700 mb-2">
@@ -237,13 +249,13 @@ function ContactPageContent() {
                       <input
                         type="text"
                         id="naam"
-                        name="naam"
-                        required
+                        {...register("naam")}
                         className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
                         focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                         placeholder="Uw naam"
                       />
+                      {errors.naam && <p className="text-red-500 text-sm mt-1">{errors.naam.message}</p>}
                     </div>
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
@@ -252,13 +264,13 @@ function ContactPageContent() {
                       <input
                         type="email"
                         id="email"
-                        name="email"
-                        required
+                        {...register("email")}
                         className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
                         focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                         placeholder="uw@email.nl"
                       />
+                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                     </div>
                   </div>
 
@@ -269,7 +281,7 @@ function ContactPageContent() {
                     <input
                       type="tel"
                       id="telefoon"
-                      name="telefoon"
+                      {...register("telefoon")}
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
                       focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                       outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
@@ -283,8 +295,8 @@ function ContactPageContent() {
                     </label>
                     <select
                       id="onderwerp"
-                      name="onderwerp"
-                      required
+                      {...register("onderwerp")}
+                      defaultValue=""
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
                       focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                       outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
@@ -297,6 +309,7 @@ function ContactPageContent() {
                       <option value="recruitment">Vraag over recruitment</option>
                       <option value="anders">Anders</option>
                     </select>
+                    {errors.onderwerp && <p className="text-red-500 text-sm mt-1">{errors.onderwerp.message}</p>}
                   </div>
 
                   <div>
@@ -305,14 +318,14 @@ function ContactPageContent() {
                     </label>
                     <textarea
                       id="bericht"
-                      name="bericht"
+                      {...register("bericht")}
                       rows={5}
-                      required
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
                       focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                       outline-none transition-all duration-300 bg-neutral-50 focus:bg-white resize-none"
                       placeholder="Uw bericht..."
                     ></textarea>
+                    {errors.bericht && <p className="text-red-500 text-sm mt-1">{errors.bericht.message}</p>}
                   </div>
 
                   <button
@@ -324,6 +337,20 @@ function ContactPageContent() {
                   >
                     {isSubmitting ? "Verzenden..." : "Verstuur bericht"}
                   </button>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-4 text-sm text-neutral-500">
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Reactie binnen 24 uur
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Geen spam, geen verplichtingen
+                    </span>
+                  </div>
                 </form>
               </div>
             </FadeIn>

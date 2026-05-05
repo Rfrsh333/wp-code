@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, MessageCircle, Mail } from 'lucide-react'
 import type { OutreachTemplate } from '@/types/leads'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/components/ui/Toast'
 
 async function getAuthHeaders() {
   const { data: { session } } = await supabase.auth.getSession()
@@ -11,6 +12,7 @@ async function getAuthHeaders() {
 }
 
 export default function LeadsTemplates() {
+  const toast = useToast()
   const [templates, setTemplates] = useState<OutreachTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -55,15 +57,16 @@ export default function LeadsTemplates() {
       })
 
       if (res.ok) {
+        toast.success('Template opgeslagen')
         fetchTemplates()
         resetForm()
       } else {
         const data = await res.json()
-        alert(data.error || 'Er is een fout opgetreden')
+        toast.error(data.error || 'Er is een fout opgetreden')
       }
     } catch (error) {
       console.error('Error saving template:', error)
-      alert('Er is een fout opgetreden')
+      toast.error('Er is een fout opgetreden')
     }
   }
 

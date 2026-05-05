@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import KlantPortalLayout, { KlantTab } from "@/components/klant/KlantPortalLayout";
 import KlantMobileHeader from "@/components/klant/KlantMobileHeader";
 import EmptyState from "@/components/ui/EmptyState";
@@ -880,7 +881,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                     <div key={a.id} className="rounded-xl bg-white p-3 border border-neutral-200">
                                       <div className="flex items-center gap-3">
                                         {mw?.profile_photo_url ? (
-                                          <img src={mw.profile_photo_url} alt={naam} className="w-10 h-10 rounded-full object-cover" />
+                                          <Image src={mw.profile_photo_url} alt={naam} width={40} height={40} className="w-10 h-10 rounded-full object-cover" unoptimized />
                                         ) : (
                                           <div className="w-10 h-10 rounded-full bg-[#0B2447] text-white flex items-center justify-center text-sm font-bold">
                                             {initialen}
@@ -1374,7 +1375,7 @@ function FavorietenTab() {
   const renderAvatar = (naam: string, photo: string | null) => {
     const initials = naam.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
     return photo ? (
-      <img src={photo} alt={naam} className="w-10 h-10 rounded-full object-cover" />
+      <Image src={photo} alt={naam} width={40} height={40} className="w-10 h-10 rounded-full object-cover" unoptimized />
     ) : (
       <div className="w-10 h-10 rounded-full bg-[#F27501]/10 flex items-center justify-center text-sm font-bold text-[#F27501]">{initials}</div>
     );
@@ -1410,7 +1411,7 @@ function FavorietenTab() {
                 {/* Avatar met favoriet ster */}
                 <div className="relative flex-shrink-0">
                   {f.profile_photo_url ? (
-                    <img src={f.profile_photo_url} alt={f.naam} className="w-12 h-12 rounded-full object-cover" />
+                    <Image src={f.profile_photo_url} alt={f.naam} width={48} height={48} className="w-12 h-12 rounded-full object-cover" unoptimized />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-[#1e3a5f] flex items-center justify-center text-white font-bold text-lg">
                       {f.naam.charAt(0)}
@@ -2075,7 +2076,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
               <p className="text-xs text-neutral-500 mb-2">Voeg een foto toe zodat medewerkers de locatie herkennen. Max 5MB, wordt automatisch gecomprimeerd.</p>
               {dienstImagePreview ? (
                 <div className="relative w-full aspect-[2/1] rounded-xl overflow-hidden border border-neutral-200 mb-2">
-                  <img src={dienstImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <Image src={dienstImagePreview} alt="Preview" width={200} height={200} className="w-full h-full object-cover" unoptimized />
                   <button
                     type="button"
                     onClick={() => {
@@ -2430,7 +2431,7 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
                             {item.medewerkers.map((mw) => (
                               <span key={mw.id} className="inline-flex items-center gap-1 rounded-full bg-white border border-neutral-200 px-2 py-0.5 text-[10px] font-medium text-neutral-700">
                                 {mw.profile_photo_url ? (
-                                  <img src={mw.profile_photo_url} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                                  <Image src={mw.profile_photo_url} alt="" width={14} height={14} className="w-3.5 h-3.5 rounded-full object-cover" unoptimized />
                                 ) : (
                                   <span className="w-3.5 h-3.5 rounded-full bg-[#F27501]/10 text-[#F27501] text-[8px] font-bold flex items-center justify-center">
                                     {mw.naam.charAt(0)}
@@ -3121,7 +3122,7 @@ function QRScannerTab() {
           {result.data?.medewerker && (
             <div className="flex items-center gap-3 mb-3">
               {result.data.medewerker.profile_photo_url ? (
-                <img src={result.data.medewerker.profile_photo_url} alt={result.data.medewerker.naam} className="h-12 w-12 rounded-full object-cover" />
+                <Image src={result.data.medewerker.profile_photo_url} alt={result.data.medewerker.naam} width={48} height={48} className="h-12 w-12 rounded-full object-cover" unoptimized />
               ) : (
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-bold text-[#F27501]">
                   {result.data.medewerker.naam.charAt(0)}
@@ -3178,7 +3179,7 @@ function QRScannerTab() {
             {checkins.map((c) => (
               <div key={c.id} className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3">
                 {c.medewerker_foto ? (
-                  <img src={c.medewerker_foto} alt={c.medewerker_naam} className="h-10 w-10 rounded-full object-cover" />
+                  <Image src={c.medewerker_foto} alt={c.medewerker_naam} width={40} height={40} className="h-10 w-10 rounded-full object-cover" unoptimized />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F27501]/10 text-sm font-bold text-[#F27501]">
                     {c.medewerker_naam.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}

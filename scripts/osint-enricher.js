@@ -537,6 +537,29 @@ function normalizeUrl(url, domain) {
   } catch { return null; }
 }
 
+// Domeinen die we altijd skippen (social media, franchises, platforms)
+const SKIP_DOMAINS = [
+  // Social media
+  "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com",
+  "tiktok.com", "youtube.com", "pinterest.com", "snapchat.com",
+  // Grote franchises (geen persoonlijke emails te vinden)
+  "mcdonalds.nl", "mcdonaldsrestaurant.nl", "kfc.nl", "subway.nl",
+  "burgerking.nl", "dominos.nl", "dominos.com", "pizzahut.nl",
+  "starbucks.nl", "starbucks.com", "dunkindonuts.nl",
+  // Platforms / directories
+  "thuisbezorgd.nl", "ubereats.com", "deliveroo.nl", "tripadvisor.nl",
+  "tripadvisor.com", "iens.nl", "yelp.com", "booking.com",
+  "google.com", "google.nl", "maps.google.com",
+  // Hosting / generiek
+  "wixsite.com", "wix.com", "squarespace.com", "wordpress.com",
+  "blogspot.com", "weebly.com", "jimdo.com", "site123.com",
+  "klepierre.nl", "nlcompanies.org",
+];
+
+function isSkipDomain(domain) {
+  return SKIP_DOMAINS.some((s) => domain === s || domain.endsWith("." + s));
+}
+
 function extractDomain(website) {
   if (!website) return "";
   try {
@@ -866,14 +889,17 @@ async function main() {
   const progress = loadProgress();
   console.log(`♻️  ${progress.completed.length} domeinen al afgerond (worden overgeslagen)\n`);
 
-  // Deduplicate domains
+  // Deduplicate domains + filter skip-list
   const domainMap = new Map(); // domain → [lead indices]
+  let skippedDomains = 0;
   for (let i = 0; i < leads.length; i++) {
     const domain = extractDomain(leads[i].website);
     if (!domain) continue;
+    if (isSkipDomain(domain)) { skippedDomains++; continue; }
     if (!domainMap.has(domain)) domainMap.set(domain, []);
     domainMap.get(domain).push(i);
   }
+  if (skippedDomains > 0) console.log(`⏭️  ${skippedDomains} leads overgeslagen (social media, franchises, platforms)`);
 
   const allDomains = [...domainMap.keys()].filter((d) => !progress.completed.includes(d));
   const domainsToProcess = allDomains.slice(0, MAX_DOMAINS);

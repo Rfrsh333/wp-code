@@ -4,36 +4,36 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/Toast";
 
+const registerSchema = z.object({
+  bedrijfsnaam: z.string().min(2, "Bedrijfsnaam is verplicht"),
+  contactpersoon: z.string().min(2, "Contactpersoon is verplicht"),
+  email: z.string().min(1, "Vul een geldig emailadres in").email("Vul een geldig emailadres in"),
+  telefoon: z.string().optional(),
+  wachtwoord: z.string().min(8, "Wachtwoord moet minimaal 8 tekens bevatten"),
+  wachtwoordBevestig: z.string().min(1, "Bevestig uw wachtwoord"),
+}).refine((data) => data.wachtwoord === data.wachtwoordBevestig, {
+  message: "Wachtwoorden komen niet overeen",
+  path: ["wachtwoordBevestig"],
+});
+
+type RegisterFormData = z.infer<typeof registerSchema>;
+
 export default function KlantRegistreren() {
-  const [form, setForm] = useState({
-    bedrijfsnaam: "",
-    contactpersoon: "",
-    email: "",
-    telefoon: "",
-    wachtwoord: "",
-    wachtwoordBevestig: "",
+  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const toast = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (formData: RegisterFormData) => {
     setError("");
-
-    if (form.wachtwoord !== form.wachtwoordBevestig) {
-      setError("Wachtwoorden komen niet overeen");
-      return;
-    }
-
-    if (form.wachtwoord.length < 8) {
-      setError("Wachtwoord moet minimaal 8 tekens bevatten");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -41,11 +41,11 @@ export default function KlantRegistreren() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          bedrijfsnaam: form.bedrijfsnaam,
-          contactpersoon: form.contactpersoon,
-          email: form.email,
-          telefoon: form.telefoon,
-          wachtwoord: form.wachtwoord,
+          bedrijfsnaam: formData.bedrijfsnaam,
+          contactpersoon: formData.contactpersoon,
+          email: formData.email,
+          telefoon: formData.telefoon,
+          wachtwoord: formData.wachtwoord,
         }),
       });
 
@@ -116,51 +116,47 @@ export default function KlantRegistreren() {
               <p className="text-neutral-500 mt-2">Registreer uw bedrijf bij TopTalent</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Bedrijfsnaam *</label>
                 <input
                   type="text"
-                  required
-                  value={form.bedrijfsnaam}
-                  onChange={(e) => setForm({ ...form, bedrijfsnaam: e.target.value })}
+                  {...register("bedrijfsnaam")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Uw bedrijfsnaam"
                 />
+                {errors.bedrijfsnaam && <p className="text-red-500 text-sm mt-1">{errors.bedrijfsnaam.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Contactpersoon *</label>
                 <input
                   type="text"
-                  required
-                  value={form.contactpersoon}
-                  onChange={(e) => setForm({ ...form, contactpersoon: e.target.value })}
+                  {...register("contactpersoon")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Uw volledige naam"
                 />
+                {errors.contactpersoon && <p className="text-red-500 text-sm mt-1">{errors.contactpersoon.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Email *</label>
                 <input
                   type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  {...register("email")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="jouw@bedrijf.nl"
                 />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Telefoonnummer</label>
                 <input
                   type="tel"
-                  value={form.telefoon}
-                  onChange={(e) => setForm({ ...form, telefoon: e.target.value })}
+                  {...register("telefoon")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="06 12345678"
                 />
@@ -170,26 +166,22 @@ export default function KlantRegistreren() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Wachtwoord *</label>
                 <input
                   type="password"
-                  required
-                  minLength={8}
-                  value={form.wachtwoord}
-                  onChange={(e) => setForm({ ...form, wachtwoord: e.target.value })}
+                  {...register("wachtwoord")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Minimaal 8 tekens"
                 />
+                {errors.wachtwoord && <p className="text-red-500 text-sm mt-1">{errors.wachtwoord.message}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Wachtwoord bevestigen *</label>
                 <input
                   type="password"
-                  required
-                  minLength={8}
-                  value={form.wachtwoordBevestig}
-                  onChange={(e) => setForm({ ...form, wachtwoordBevestig: e.target.value })}
+                  {...register("wachtwoordBevestig")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Herhaal wachtwoord"
                 />
+                {errors.wachtwoordBevestig && <p className="text-red-500 text-sm mt-1">{errors.wachtwoordBevestig.message}</p>}
               </div>
 
               <button

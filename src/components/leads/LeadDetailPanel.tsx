@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useToast } from '@/components/ui/Toast'
 import {
   X,
   Phone,
@@ -37,6 +38,7 @@ export default function LeadDetailPanel({
   onUpdate,
   onDelete,
 }: LeadDetailPanelProps) {
+  const toast = useToast()
   const [outreach, setOutreach] = useState<LeadOutreach[]>([])
   const [templates, setTemplates] = useState<OutreachTemplate[]>([])
   const [editMode, setEditMode] = useState(false)
@@ -101,18 +103,18 @@ export default function LeadDetailPanel({
       }
     } catch (error) {
       console.error('Error updating lead:', error)
-      alert('Er is een fout opgetreden bij het opslaan')
+      toast.error('Er is een fout opgetreden bij het opslaan')
     }
   }
 
   async function sendWhatsApp() {
     if (!editedLead.telefoon) {
-      alert('Deze lead heeft geen telefoonnummer')
+      toast.warning('Deze lead heeft geen telefoonnummer')
       return
     }
 
     if (!whatsappMessage.trim()) {
-      alert('Vul een bericht in')
+      toast.warning('Vul een bericht in')
       return
     }
 
@@ -137,11 +139,11 @@ export default function LeadDetailPanel({
         setWhatsappMessage('')
         fetchOutreachHistory() // Refresh history
       } else {
-        alert(data.error || 'Er is een fout opgetreden')
+        toast.error(data.error || 'Er is een fout opgetreden')
       }
     } catch (error) {
       console.error('Error sending WhatsApp:', error)
-      alert('Er is een fout opgetreden')
+      toast.error('Er is een fout opgetreden')
     }
   }
 

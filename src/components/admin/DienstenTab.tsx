@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/Toast";
 import ShiftAanbiedingenPanel from "./ShiftAanbiedingenPanelV2";
 
 interface Dienst {
@@ -77,6 +78,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function DienstenTab() {
+  const toast = useToast();
   const [diensten, setDiensten] = useState<Dienst[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -228,9 +230,9 @@ export default function DienstenTab() {
       console.error("Dienst opslaan mislukt:", res.status, text);
       try {
         const err = JSON.parse(text);
-        alert(`Fout bij opslaan: ${err.error || text}`);
+        toast.error(`Fout bij opslaan: ${err.error || text}`);
       } catch {
-        alert(`Fout bij opslaan (${res.status}): ${text.substring(0, 200)}`);
+        toast.error(`Fout bij opslaan (${res.status}): ${text.substring(0, 200)}`);
       }
       setIsSaving(false);
       return;

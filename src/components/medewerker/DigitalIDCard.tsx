@@ -117,7 +117,7 @@ export default function DigitalIDCard({ medewerker, profilePhoto }: DigitalIDCar
                   }}
                   className="p-2 bg-white dark:bg-[#3A3A3C] rounded-xl shadow-sm"
                 >
-                  <img src={qrDataUrl} alt="QR Code" className="w-24 h-24" />
+                  <Image src={qrDataUrl} alt="QR Code" width={96} height={96} className="w-24 h-24" unoptimized />
                 </button>
               ) : (
                 <div className="w-28 h-28 bg-neutral-200 dark:bg-neutral-700 rounded-xl animate-pulse" />

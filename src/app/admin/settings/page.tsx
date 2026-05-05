@@ -1,16 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import type { Session } from "@supabase/supabase-js";
 import AdminShell from "@/components/navigation/AdminShell";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 export default function AdminSettingsPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<Session | null>(null);
+  const { isLoading: authLoading, isAuthenticated, session } = useAdminAuth();
 
   // 2FA state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -21,28 +20,13 @@ export default function AdminSettingsPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const checkAuth = useCallback(async () => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      router.push("/admin");
-      return;
-    }
-
-    setSession(session);
-    await check2FAStatus(session);
-    setLoading(false);
-  }, [router]);
+  const [twoFALoading, setTwoFALoading] = useState(true);
 
   useEffect(() => {
-    void checkAuth();
-  }, [checkAuth]);
+    if (session) {
+      check2FAStatus(session).then(() => setTwoFALoading(false));
+    }
+  }, [session]);
 
   async function check2FAStatus(session: Session) {
     try {
@@ -163,7 +147,9 @@ export default function AdminSettingsPage() {
     }
   }
 
-  if (loading) {
+  const loading = authLoading || twoFALoading;
+
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-neutral-600">Laden...</div>

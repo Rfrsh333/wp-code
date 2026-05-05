@@ -4,25 +4,35 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/Toast";
 
+const loginSchema = z.object({
+  email: z.string().min(1, "Vul een geldig emailadres in").email("Vul een geldig emailadres in"),
+  wachtwoord: z.string().min(1, "Wachtwoord is verplicht"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
 export default function KlantLogin() {
-  const [email, setEmail] = useState("");
-  const [wachtwoord, setWachtwoord] = useState("");
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const toast = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (formData: LoginFormData) => {
     setIsLoading(true);
     setError("");
 
     const res = await fetch("/api/klant/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, wachtwoord }),
+      body: JSON.stringify({ email: formData.email, wachtwoord: formData.wachtwoord }),
     });
 
     const data = await res.json();
@@ -50,7 +60,7 @@ export default function KlantLogin() {
         </div>
         <div className="relative z-10 text-center max-w-md">
           <div className="w-20 h-20 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-8">
-            <img src="/favicon-icon.png" alt="TopTalent" width={36} height={36} className="w-9 h-9" />
+            <Image src="/favicon-icon.png" alt="TopTalent" width={36} height={36} className="w-9 h-9" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">TopTalent Business</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
@@ -91,7 +101,7 @@ export default function KlantLogin() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 bg-[#F27501] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <img src="/favicon-icon.png" alt="TopTalent" width={28} height={28} className="w-7 h-7" />
+              <Image src="/favicon-icon.png" alt="TopTalent" width={28} height={28} className="w-7 h-7" />
             </div>
           </div>
 
@@ -101,18 +111,17 @@ export default function KlantLogin() {
               <p className="text-neutral-500 mt-2">Beheer uw personeel en diensten</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
                 <input
                   type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("email")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="jouw@bedrijf.nl"
                 />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -127,12 +136,11 @@ export default function KlantLogin() {
                 </div>
                 <input
                   type="password"
-                  required
-                  value={wachtwoord}
-                  onChange={(e) => setWachtwoord(e.target.value)}
+                  {...register("wachtwoord")}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="••••••••"
                 />
+                {errors.wachtwoord && <p className="text-red-500 text-sm mt-1">{errors.wachtwoord.message}</p>}
               </div>
               <button
                 type="submit"
