@@ -47,13 +47,14 @@ export function useAdminOverzicht() {
     queryFn: async () => {
       const headers = await getAuthHeaders();
 
+      const noCacheHeaders = { ...headers, 'Cache-Control': 'no-cache' };
       const [aanvragenRes, inschrijvingenRes, contactRes, calculatorRes, opsRes, offertesRes] = await Promise.all([
-        fetch('/api/admin/data?table=personeel_aanvragen', { headers }).then(r => r.json()),
-        fetch('/api/admin/data?table=inschrijvingen', { headers }).then(r => r.json()),
-        fetch('/api/admin/data?table=contact_berichten', { headers }).then(r => r.json()),
-        fetch('/api/admin/data?table=calculator_leads', { headers }).then(r => r.json()),
-        fetch('/api/admin/ops', { headers }).then(r => r.json()),
-        fetch('/api/admin/data?table=offertes&orderBy=created_at&order=desc', { headers }).then(r => r.json()),
+        fetch('/api/admin/data?table=personeel_aanvragen', { headers: noCacheHeaders, cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/admin/data?table=inschrijvingen', { headers: noCacheHeaders, cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/admin/data?table=contact_berichten', { headers: noCacheHeaders, cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/admin/data?table=calculator_leads', { headers: noCacheHeaders, cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/admin/ops', { headers: noCacheHeaders, cache: 'no-store' }).then(r => r.json()),
+        fetch('/api/admin/data?table=offertes&orderBy=created_at&order=desc', { headers: noCacheHeaders, cache: 'no-store' }).then(r => r.json()),
       ]);
 
       return {
