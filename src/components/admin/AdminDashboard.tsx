@@ -424,17 +424,17 @@ export default function AdminDashboard() {
 
   const deleteSelected = async (table: string) => {
     if (selectedIds.size === 0) return;
-    if (confirm(`Weet je zeker dat je ${selectedIds.size} items wilt verwijderen?`)) {
-      adminDataAction.mutate(
-        { action: "delete_many", table, data: { ids: Array.from(selectedIds) } },
-        {
-          onSuccess: () => {
-            toast.success(`${selectedIds.size} item(s) succesvol verwijderd`);
-            setSelectedIds(new Set());
-          },
-          onError: (err: Error) => toast.error(err.message || "Verwijderen mislukt"),
-        }
+    if (!confirm(`Weet je zeker dat je ${selectedIds.size} items wilt verwijderen?`)) return;
+    const count = selectedIds.size;
+    try {
+      await adminDataAction.mutateAsync(
+        { action: "delete_many", table, data: { ids: Array.from(selectedIds) } }
       );
+      setSelectedIds(new Set());
+      await queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      toast.success(`${count} item(s) succesvol verwijderd`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Verwijderen mislukt");
     }
   };
 
