@@ -205,6 +205,12 @@ export default function ImportView() {
         )}
       </div>
 
+      {/* Instantly Sync Section */}
+      <InstantlySection />
+
+      {/* Meta Instagram Section */}
+      <MetaSection />
+
       {/* Export Section */}
       <div className="bg-white rounded-xl border border-neutral-100 p-6">
         <h3 className="text-lg font-semibold text-neutral-900 mb-4">Exporteren</h3>
@@ -228,6 +234,223 @@ export default function ImportView() {
           Instantly export bevat: company_name, email, phone, city, website, instagram_url, facebook_url
         </p>
       </div>
+    </div>
+  );
+}
+
+function InstantlySection() {
+  const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string; status: number }>>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<Record<string, unknown> | null>(null);
+  const toast = useToast();
+
+  async function getToken() {
+    const session = await supabase.auth.getSession();
+    return session.data.session?.access_token || "";
+  }
+
+  async function fetchCampaigns() {
+    setLoadingCampaigns(true);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/crm/instantly", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Fout");
+      }
+      const data = await res.json();
+      setCampaigns(data.campaigns || []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Campagnes laden mislukt");
+    } finally {
+      setLoadingCampaigns(false);
+    }
+  }
+
+  async function syncCampaign(campaignId: string) {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/crm/instantly", {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: campaignId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Sync mislukt");
+      }
+      const data = await res.json();
+      setSyncResult(data);
+      toast.success(`Sync voltooid: ${data.synced} leads bijgewerkt`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sync mislukt");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-cyan-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-neutral-900">Instantly.ai Sync</h3>
+          <p className="text-sm text-neutral-500">Sync campagne statuses automatisch naar CRM</p>
+        </div>
+        <button
+          onClick={fetchCampaigns}
+          disabled={loadingCampaigns}
+          className="px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium hover:bg-cyan-700 disabled:opacity-50"
+        >
+          {loadingCampaigns ? "Laden..." : campaigns.length > 0 ? "Vernieuwen" : "Campagnes laden"}
+        </button>
+      </div>
+
+      {campaigns.length > 0 && (
+        <div className="space-y-2">
+          {campaigns.map(c => (
+            <div key={c.id} className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-neutral-900">{c.name}</p>
+                <p className="text-xs text-neutral-500">ID: {c.id}</p>
+              </div>
+              <button
+                onClick={() => syncCampaign(c.id)}
+                disabled={syncing}
+                className="px-3 py-1.5 bg-cyan-600 text-white rounded-lg text-xs font-medium hover:bg-cyan-700 disabled:opacity-50"
+              >
+                {syncing ? "Syncing..." : "Sync statuses"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {syncResult && (
+        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+          <p className="font-medium">Sync resultaat:</p>
+          <ul className="mt-1 space-y-0.5">
+            <li>Gesynct: {syncResult.synced as number}</li>
+            <li>In campagne: {syncResult.total_in_campaign as number}</li>
+            <li>Matched in CRM: {syncResult.matched_in_crm as number}</li>
+            {(syncResult.new_replies as number) > 0 && <li className="text-green-700 font-medium">Nieuwe replies: {syncResult.new_replies as number}</li>}
+            {(syncResult.new_opens as number) > 0 && <li>Nieuwe opens: {syncResult.new_opens as number}</li>}
+            {(syncResult.new_bounces as number) > 0 && <li className="text-red-600">Bounces: {syncResult.new_bounces as number}</li>}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetaSection() {
+  const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const toast = useToast();
+
+  async function getToken() {
+    const session = await supabase.auth.getSession();
+    return session.data.session?.access_token || "";
+  }
+
+  async function testConnection() {
+    setTesting(true);
+    setResult(null);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/crm/meta/test", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setResult(data);
+      if (data.ok) {
+        toast.success("Meta verbinding werkt");
+      } else {
+        toast.error(data.error || "Test mislukt");
+      }
+    } catch {
+      toast.error("Verbinding mislukt");
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const config = result?.config as Record<string, boolean> | undefined;
+
+  return (
+    <div className="bg-white rounded-xl border border-purple-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-neutral-900">Meta Instagram Inbox Sync</h3>
+          <p className="text-sm text-neutral-500">Configuratie voor toekomstige Instagram inbox koppeling</p>
+        </div>
+        <button
+          onClick={testConnection}
+          disabled={testing}
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+        >
+          {testing ? "Testen..." : "Test Meta verbinding"}
+        </button>
+      </div>
+
+      {/* Config status */}
+      {config ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+          <ConfigItem label="App ID" present={config.hasAppId} />
+          <ConfigItem label="App Secret" present={config.hasAppSecret} />
+          <ConfigItem label="Page ID" present={config.hasPageId} />
+          <ConfigItem label="Page Access Token" present={config.hasPageAccessToken} />
+          <ConfigItem label="IG Account ID" present={config.hasIgAccountId} />
+          <ConfigItem label="Webhook Token" present={config.hasWebhookVerifyToken} />
+        </div>
+      ) : null}
+
+      {/* Test result */}
+      {result?.ok ? (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 text-green-700 mb-1">
+            <CheckCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">Verbinding succesvol</span>
+          </div>
+          <div className="text-sm text-green-800 space-y-0.5">
+            {(result.page as Record<string, unknown>)?.name ? (
+              <p>Page: {String((result.page as Record<string, unknown>).name)}</p>
+            ) : null}
+            {(result.page as Record<string, unknown>)?.instagram_business_account ? (
+              <p>IG Account: {((result.page as Record<string, unknown>).instagram_business_account as Record<string, string>)?.id}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {result && !result.ok ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-red-700">{String(result.error)}</p>
+        </div>
+      ) : null}
+
+      {/* Future features */}
+      <div className="flex gap-2 mt-3">
+        <button disabled className="px-3 py-1.5 text-xs bg-neutral-100 text-neutral-400 rounded-lg cursor-not-allowed">
+          Sync Instagram Inbox (coming soon)
+        </button>
+        <button disabled className="px-3 py-1.5 text-xs bg-neutral-100 text-neutral-400 rounded-lg cursor-not-allowed">
+          Configureer Webhook (coming soon)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ConfigItem({ label, present }: { label: string; present: boolean }) {
+  return (
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${present ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+      <span className={`w-2 h-2 rounded-full ${present ? "bg-green-500" : "bg-red-400"}`} />
+      {label}
     </div>
   );
 }

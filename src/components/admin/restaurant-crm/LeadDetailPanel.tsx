@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Phone, Globe, MapPin, Star, ExternalLink, Copy } from "lucide-react";
+import { X, Phone, Globe, MapPin, Star, ExternalLink, Instagram, Facebook, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { StatusBadge, OutreachBadge, ChannelBadge, InstantlyBadge } from "./StatusBadge";
 import QuickActions from "./QuickActions";
 import ContactTimeline from "./ContactTimeline";
-import { CALL_SCRIPT, DM_TEMPLATE } from "./constants";
+import DMTemplatePanel from "./DMTemplatePanel";
+import SalesScriptPanel from "./SalesScriptPanel";
+import { calculateNextBestChannel } from "./outreach-helpers";
 import type { CRMLead, CRMContactLog } from "./types";
 
 interface LeadDetailPanelProps {
@@ -16,16 +18,26 @@ interface LeadDetailPanelProps {
   onUpdate: (lead: CRMLead) => void;
 }
 
+type AccordionSection = "actions" | "script" | "dm" | "closing" | "timeline" | "notes";
+
 export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProps) {
   const [logs, setLogs] = useState<CRMContactLog[]>([]);
-  const [showScript, setShowScript] = useState(false);
-  const [showDMTemplate, setShowDMTemplate] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [followupDate, setFollowupDate] = useState("");
+  const [showFollowup, setShowFollowup] = useState(false);
+  const [openSections, setOpenSections] = useState<Set<AccordionSection>>(new Set(["actions", "script"]));
+  const [showReplyModal, setShowReplyModal] = useState(false);
   const toast = useToast();
 
-  useEffect(() => {
-    fetchLogs();
-  }, [lead.id]);
+  useEffect(() => { fetchLogs(); }, [lead.id]);
+
+  function toggleSection(s: AccordionSection) {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s); else next.add(s);
+      return next;
+    });
+  }
 
   async function getToken() {
     const session = await supabase.auth.getSession();
@@ -40,31 +52,24 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
     if (res.ok) setLogs(await res.json());
   }
 
-  async function handleQuickAction(action: string, updates: Record<string, unknown>, logType: string, logNotes?: string) {
+  async function handleQuickAction(_action: string, updates: Record<string, unknown>, logType: string, logNotes?: string) {
     const token = await getToken();
 
-    // Update lead
     const res = await fetch(`/api/admin/crm/leads/${lead.id}`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
 
-    if (!res.ok) {
-      toast.error("Actie mislukt");
-      return;
-    }
-
+    if (!res.ok) { toast.error("Actie mislukt"); return; }
     const updatedLead = await res.json();
 
-    // Create contact log
     await fetch("/api/admin/crm/contact-logs", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: lead.id, type: logType, notes: logNotes || null }),
     });
 
-    // Create followup if next_followup_at was set
     if (updates.next_followup_at) {
       await fetch("/api/admin/crm/followups", {
         method: "POST",
@@ -75,7 +80,59 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
 
     onUpdate({ ...lead, ...updatedLead });
     fetchLogs();
-    toast.success(`${action} geregistreerd`);
+    toast.success(`Actie geregistreerd`);
+  }
+
+  async function handleDMSent(channel: "instagram" | "facebook") {
+    const now = new Date().toISOString();
+    const isInstagram = channel === "instagram";
+    const updates: Record<string, unknown> = {
+      status: "dm_gestuurd",
+      last_contacted_at: now,
+      outreach_status: lead.outreach_status === "not_started" ? "contacted" : lead.outreach_status,
+      ...(isInstagram
+        ? { last_instagram_dm_at: now, instagram_dm_count: lead.instagram_dm_count + 1 }
+        : { last_facebook_dm_at: now, facebook_dm_count: lead.facebook_dm_count + 1 }
+      ),
+    };
+    const updatedLead = { ...lead, ...updates } as CRMLead;
+    updates.next_best_channel = calculateNextBestChannel(updatedLead);
+
+    await handleQuickAction(
+      isInstagram ? "Instagram DM gestuurd" : "Facebook bericht gestuurd",
+      updates,
+      isInstagram ? "dm_instagram" : "dm_facebook"
+    );
+  }
+
+  async function handleReply(newStatus: "in_gesprek" | "gewonnen") {
+    const updates: Record<string, unknown> = {
+      outreach_status: newStatus === "gewonnen" ? "interested" : "replied",
+      status: newStatus === "gewonnen" ? "in_gesprek" : "in_gesprek",
+      last_contacted_at: new Date().toISOString(),
+      next_best_channel: "phone",
+    };
+    await handleQuickAction("Reply ontvangen", updates, "notitie", `Reply ontvangen - ${newStatus === "gewonnen" ? "geïnteresseerd" : "in gesprek"}`);
+    setShowReplyModal(false);
+  }
+
+  async function planFollowup() {
+    if (!followupDate) return;
+    const token = await getToken();
+    await fetch("/api/admin/crm/followups", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ lead_id: lead.id, scheduled_at: followupDate, type: "bellen" }),
+    });
+    await fetch(`/api/admin/crm/leads/${lead.id}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ next_followup_at: followupDate }),
+    });
+    onUpdate({ ...lead, next_followup_at: followupDate });
+    setFollowupDate("");
+    setShowFollowup(false);
+    toast.success("Follow-up gepland");
   }
 
   async function addNote() {
@@ -86,7 +143,6 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: lead.id, content: noteText }),
     });
-    // Also log as contact log
     await fetch("/api/admin/crm/contact-logs", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -95,11 +151,6 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
     setNoteText("");
     fetchLogs();
     toast.success("Notitie opgeslagen");
-  }
-
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
-    toast.success("Gekopieerd");
   }
 
   return (
@@ -111,7 +162,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-neutral-900">{lead.company_name}</h2>
-              <p className="text-sm text-neutral-500">{lead.city} {lead.address && `• ${lead.address}`}</p>
+              <p className="text-sm text-neutral-500">{lead.city}{lead.address ? ` • ${lead.address}` : ""}</p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-lg">
               <X className="w-5 h-5" />
@@ -127,26 +178,40 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
           </div>
         </div>
 
-        <div className="px-6 py-5 space-y-6">
-          {/* Contact info */}
-          <div className="grid grid-cols-2 gap-3">
+        <div className="px-6 py-5 space-y-4">
+          {/* 1. Contact info + social links */}
+          <div className="grid grid-cols-2 gap-2">
             {lead.phone && (
               <a href={`tel:${lead.phone}`} className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-blue-700 hover:bg-blue-100 transition-colors">
                 <Phone className="w-4 h-4" />
                 <span className="text-sm font-medium">{lead.phone}</span>
               </a>
             )}
+            {lead.instagram_url && (
+              <a href={lead.instagram_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl text-pink-700 hover:from-purple-100 hover:to-pink-100 transition-colors">
+                <Instagram className="w-4 h-4" />
+                <span className="text-sm font-medium truncate">Instagram</span>
+                <ExternalLink className="w-3 h-3 ml-auto" />
+              </a>
+            )}
+            {lead.facebook_url && (
+              <a href={lead.facebook_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-indigo-50 rounded-xl text-indigo-700 hover:bg-indigo-100 transition-colors">
+                <Facebook className="w-4 h-4" />
+                <span className="text-sm font-medium truncate">Facebook</span>
+                <ExternalLink className="w-3 h-3 ml-auto" />
+              </a>
+            )}
             {lead.website && (
               <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-neutral-50 rounded-xl text-neutral-700 hover:bg-neutral-100 transition-colors">
                 <Globe className="w-4 h-4" />
-                <span className="text-sm truncate">{lead.website.replace(/https?:\/\//, "")}</span>
+                <span className="text-sm truncate">{lead.website.replace(/https?:\/\/(www\.)?/, "")}</span>
               </a>
             )}
             {lead.google_maps_url && (
               <a href={lead.google_maps_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-neutral-50 rounded-xl text-neutral-700 hover:bg-neutral-100 transition-colors">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">Google Maps</span>
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-3 h-3 ml-auto" />
               </a>
             )}
             {lead.rating && (
@@ -157,88 +222,71 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
             )}
           </div>
 
-          {/* Quick Actions */}
-          <div>
-            <h3 className="text-sm font-semibold text-neutral-700 mb-2">Acties</h3>
-            <QuickActions lead={lead} onAction={handleQuickAction} />
-          </div>
-
-          {/* Call Script */}
-          <div>
-            <button
-              onClick={() => setShowScript(!showScript)}
-              className="text-sm font-semibold text-blue-700 hover:text-blue-800 mb-2"
-            >
-              {showScript ? "Verberg" : "Toon"} belscript
-            </button>
-            {showScript && (
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-blue-600 uppercase">Opening</span>
-                    <button onClick={() => copyToClipboard(CALL_SCRIPT.opening)} className="text-xs text-blue-500 hover:text-blue-700">
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-sm text-blue-900 whitespace-pre-line">{CALL_SCRIPT.opening}</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-blue-600 uppercase">Bij interesse</span>
-                    <button onClick={() => copyToClipboard(CALL_SCRIPT.interest)} className="text-xs text-blue-500 hover:text-blue-700">
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-sm text-blue-900 whitespace-pre-line">{CALL_SCRIPT.interest}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* DM Template */}
-          {(lead.instagram_available || lead.facebook_available) && (
-            <div>
-              <button
-                onClick={() => setShowDMTemplate(!showDMTemplate)}
-                className="text-sm font-semibold text-pink-700 hover:text-pink-800 mb-2"
-              >
-                {showDMTemplate ? "Verberg" : "Toon"} DM template
-              </button>
-              {showDMTemplate && (
-                <div className="bg-pink-50 border border-pink-100 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-pink-600 uppercase">Template</span>
-                    <button onClick={() => copyToClipboard(DM_TEMPLATE)} className="text-xs text-pink-500 hover:text-pink-700">
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-sm text-pink-900 whitespace-pre-line">{DM_TEMPLATE}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Stats */}
+          {/* 2. Stats bar */}
           <div className="grid grid-cols-4 gap-2">
             <div className="text-center p-2 bg-neutral-50 rounded-lg">
               <p className="text-lg font-bold text-neutral-900">{lead.call_count}</p>
-              <p className="text-xs text-neutral-500">Calls</p>
+              <p className="text-[10px] text-neutral-500">Calls</p>
             </div>
             <div className="text-center p-2 bg-neutral-50 rounded-lg">
               <p className="text-lg font-bold text-neutral-900">{lead.email_count}</p>
-              <p className="text-xs text-neutral-500">Emails</p>
+              <p className="text-[10px] text-neutral-500">Emails</p>
             </div>
             <div className="text-center p-2 bg-neutral-50 rounded-lg">
               <p className="text-lg font-bold text-neutral-900">{lead.instagram_dm_count}</p>
-              <p className="text-xs text-neutral-500">IG DMs</p>
+              <p className="text-[10px] text-neutral-500">IG DMs</p>
             </div>
             <div className="text-center p-2 bg-neutral-50 rounded-lg">
               <p className="text-lg font-bold text-neutral-900">{lead.facebook_dm_count}</p>
-              <p className="text-xs text-neutral-500">FB</p>
+              <p className="text-[10px] text-neutral-500">FB</p>
             </div>
           </div>
 
-          {/* Instantly info */}
+          {/* 3. Quick Actions */}
+          <SectionAccordion title="Quick Actions" section="actions" open={openSections.has("actions")} onToggle={toggleSection}>
+            <QuickActions lead={lead} onAction={handleQuickAction} />
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => setShowReplyModal(true)}
+                className="px-3 py-1.5 text-sm bg-purple-50 text-purple-700 rounded-lg font-medium hover:bg-purple-100"
+              >
+                Reply ontvangen
+              </button>
+              <button
+                onClick={() => setShowFollowup(!showFollowup)}
+                className="px-3 py-1.5 text-sm bg-orange-50 text-orange-700 rounded-lg font-medium hover:bg-orange-100"
+              >
+                Plan follow-up
+              </button>
+            </div>
+            {showFollowup && (
+              <div className="mt-2 flex gap-2 items-center">
+                <input
+                  type="datetime-local"
+                  value={followupDate}
+                  onChange={e => setFollowupDate(e.target.value)}
+                  className="flex-1 border border-neutral-200 rounded-lg px-3 py-2 text-sm"
+                />
+                <button onClick={planFollowup} disabled={!followupDate} className="px-3 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium disabled:opacity-50">
+                  Plannen
+                </button>
+              </div>
+            )}
+          </SectionAccordion>
+
+          {/* 4. Call Script & Closing */}
+          <SectionAccordion title="Belscript & Closing" section="script" open={openSections.has("script")} onToggle={toggleSection}>
+            <SalesScriptPanel />
+          </SectionAccordion>
+
+          {/* 5. DM Templates */}
+          {(lead.instagram_available || lead.facebook_available) && (
+            <SectionAccordion title="DM Templates" section="dm" open={openSections.has("dm")} onToggle={toggleSection}>
+              <DMTemplatePanel lead={lead} onMarkSent={handleDMSent} />
+            </SectionAccordion>
+          )}
+
+          {/* 6. Instantly info */}
           {lead.instantly_campaign_name && (
             <div className="bg-cyan-50 border border-cyan-100 rounded-xl p-3">
               <p className="text-xs font-semibold text-cyan-600 uppercase mb-1">Instantly Campagne</p>
@@ -247,9 +295,8 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
             </div>
           )}
 
-          {/* Add Note */}
-          <div>
-            <h3 className="text-sm font-semibold text-neutral-700 mb-2">Notitie toevoegen</h3>
+          {/* 7. Notes */}
+          <SectionAccordion title="Notities" section="notes" open={openSections.has("notes")} onToggle={toggleSection}>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -263,15 +310,64 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
                 Opslaan
               </button>
             </div>
-          </div>
+          </SectionAccordion>
 
-          {/* Contact Timeline */}
-          <div>
-            <h3 className="text-sm font-semibold text-neutral-700 mb-3">Contactgeschiedenis</h3>
+          {/* 8. Timeline */}
+          <SectionAccordion title="Contactgeschiedenis" section="timeline" open={openSections.has("timeline")} onToggle={toggleSection}>
             <ContactTimeline logs={logs} />
-          </div>
+          </SectionAccordion>
         </div>
       </div>
+
+      {/* Reply modal */}
+      {showReplyModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h3 className="text-lg font-semibold mb-3">Reply ontvangen</h3>
+            <p className="text-sm text-neutral-600 mb-4">Wat is de status na de reply?</p>
+            <div className="space-y-2">
+              <button
+                onClick={() => handleReply("in_gesprek")}
+                className="w-full p-3 text-left rounded-lg border border-neutral-200 hover:bg-purple-50 hover:border-purple-200"
+              >
+                <span className="font-medium text-sm">In gesprek</span>
+                <p className="text-xs text-neutral-500">Lead heeft gereageerd, nog geen concrete interesse</p>
+              </button>
+              <button
+                onClick={() => handleReply("gewonnen")}
+                className="w-full p-3 text-left rounded-lg border border-neutral-200 hover:bg-green-50 hover:border-green-200"
+              >
+                <span className="font-medium text-sm">Geïnteresseerd</span>
+                <p className="text-xs text-neutral-500">Lead toont concrete interesse, bellen voor follow-up</p>
+              </button>
+            </div>
+            <button onClick={() => setShowReplyModal(false)} className="mt-3 w-full py-2 text-sm text-neutral-500 hover:text-neutral-700">
+              Annuleren
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionAccordion({ title, section, open, onToggle, children }: {
+  title: string;
+  section: AccordionSection;
+  open: boolean;
+  onToggle: (s: AccordionSection) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-neutral-100 rounded-xl overflow-hidden">
+      <button
+        onClick={() => onToggle(section)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-neutral-50 hover:bg-neutral-100 transition-colors"
+      >
+        <span className="text-sm font-semibold text-neutral-700">{title}</span>
+        {open ? <ChevronDown className="w-4 h-4 text-neutral-400" /> : <ChevronRight className="w-4 h-4 text-neutral-400" />}
+      </button>
+      {open && <div className="px-4 py-3">{children}</div>}
     </div>
   );
 }

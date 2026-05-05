@@ -149,6 +149,14 @@ export default function LeadListView() {
             <option value="facebook">Facebook</option>
             <option value="none">Geen</option>
           </select>
+          <div className="w-full flex flex-wrap gap-1.5 pt-2 border-t border-neutral-200">
+            <QuickFilter label="Heeft Instagram" active={channelFilter === "instagram"} onClick={() => { setChannelFilter(channelFilter === "instagram" ? "" : "instagram"); setPage(1); }} />
+            <QuickFilter label="Heeft Facebook" active={channelFilter === "facebook"} onClick={() => { setChannelFilter(channelFilter === "facebook" ? "" : "facebook"); setPage(1); }} />
+            <QuickFilter label="DM gestuurd" active={statusFilter === "dm_gestuurd"} onClick={() => { setStatusFilter(statusFilter === "dm_gestuurd" ? "" : "dm_gestuurd"); setPage(1); }} />
+            <QuickFilter label="Replied" active={outreachFilter === "replied"} onClick={() => { setOutreachFilter(outreachFilter === "replied" ? "" : "replied"); setPage(1); }} />
+            <QuickFilter label="Geen gehoor" active={statusFilter === "gebeld_geen_gehoor"} onClick={() => { setStatusFilter(statusFilter === "gebeld_geen_gehoor" ? "" : "gebeld_geen_gehoor"); setPage(1); }} />
+            <QuickFilter label="Niet gestart" active={outreachFilter === "not_started"} onClick={() => { setOutreachFilter(outreachFilter === "not_started" ? "" : "not_started"); setPage(1); }} />
+          </div>
           {(statusFilter || outreachFilter || channelFilter) && (
             <button onClick={() => { setStatusFilter(""); setOutreachFilter(""); setChannelFilter(""); setPage(1); }} className="text-sm text-orange-600 hover:text-orange-700 font-medium">
               Reset filters
@@ -281,5 +289,18 @@ export default function LeadListView() {
         />
       )}
     </div>
+  );
+}
+
+function QuickFilter({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+        active ? "bg-orange-100 text-orange-700 border border-orange-200" : "bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

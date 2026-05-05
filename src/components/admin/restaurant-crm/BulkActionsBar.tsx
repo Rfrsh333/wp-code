@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, Tag, Clock, Download } from "lucide-react";
+import { Archive, Tag, Clock, Download, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { STATUS_CONFIG } from "./constants";
@@ -14,6 +14,8 @@ interface BulkActionsBarProps {
 
 export default function BulkActionsBar({ selectedIds, onComplete }: BulkActionsBarProps) {
   const [loading, setLoading] = useState(false);
+  const [showInstantly, setShowInstantly] = useState(false);
+  const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string }>>([]);
   const toast = useToast();
 
   async function getToken() {
@@ -35,6 +37,39 @@ export default function BulkActionsBar({ selectedIds, onComplete }: BulkActionsB
       onComplete();
     } catch {
       toast.error("Bulk actie mislukt");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadCampaigns() {
+    const token = await getToken();
+    const res = await fetch("/api/admin/crm/instantly", { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const data = await res.json();
+      setCampaigns(data.campaigns || []);
+      setShowInstantly(true);
+    } else {
+      toast.error("Campagnes laden mislukt");
+    }
+  }
+
+  async function pushToInstantly(campaignId: string) {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/admin/crm/instantly", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: campaignId, lead_ids: selectedIds }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      const data = await res.json();
+      toast.success(`${data.added} leads naar Instantly gestuurd`);
+      setShowInstantly(false);
+      onComplete();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Push mislukt");
     } finally {
       setLoading(false);
     }
@@ -78,6 +113,13 @@ export default function BulkActionsBar({ selectedIds, onComplete }: BulkActionsB
           <Archive className="w-3.5 h-3.5" />Archiveren
         </button>
         <button
+          onClick={loadCampaigns}
+          disabled={loading}
+          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-cyan-50 text-cyan-700 border border-cyan-200 rounded-lg hover:bg-cyan-100"
+        >
+          <Send className="w-3.5 h-3.5" />Instantly
+        </button>
+        <button
           onClick={exportSelected}
           disabled={loading}
           className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-white border border-orange-200 rounded-lg hover:bg-orange-100"
@@ -85,6 +127,27 @@ export default function BulkActionsBar({ selectedIds, onComplete }: BulkActionsB
           <Download className="w-3.5 h-3.5" />Export CSV
         </button>
       </div>
+      {/* Instantly campaign picker */}
+      {showInstantly && campaigns.length > 0 && (
+        <div className="mt-2 p-3 bg-cyan-50 border border-cyan-200 rounded-lg">
+          <p className="text-xs font-medium text-cyan-800 mb-2">Kies campagne:</p>
+          <div className="flex flex-wrap gap-2">
+            {campaigns.map(c => (
+              <button
+                key={c.id}
+                onClick={() => pushToInstantly(c.id)}
+                disabled={loading}
+                className="px-3 py-1.5 text-xs bg-white border border-cyan-200 rounded-lg hover:bg-cyan-100 disabled:opacity-50"
+              >
+                {c.name}
+              </button>
+            ))}
+            <button onClick={() => setShowInstantly(false)} className="px-3 py-1.5 text-xs text-neutral-500 hover:text-neutral-700">
+              Annuleren
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
