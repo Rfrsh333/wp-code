@@ -38,6 +38,9 @@ export interface CRMLead {
   instantly_campaign_name: string | null;
   instantly_email_status: InstantlyStatus | null;
   instantly_last_event_at: string | null;
+  instantly_lead_id: string | null;
+  instantly_last_reply_at: string | null;
+  instantly_last_reply_text: string | null;
   // Counters
   call_count: number;
   email_count: number;
@@ -96,7 +99,7 @@ export type OutreachStatus =
 
 export type OutreachChannel = "phone" | "email" | "instagram" | "facebook" | "none";
 
-export type InstantlyStatus = "not_sent" | "sent" | "opened" | "replied" | "bounced" | "unsubscribed";
+export type InstantlyStatus = "not_sent" | "sent" | "opened" | "replied" | "bounced" | "unsubscribed" | "clicked" | "auto_reply";
 
 export type ContactLogType =
   | "gebeld"
@@ -113,7 +116,11 @@ export type ContactLogType =
   | "instantly_sent"
   | "instantly_opened"
   | "instantly_replied"
-  | "instantly_bounced";
+  | "instantly_bounced"
+  | "instantly_clicked"
+  | "instantly_auto_reply"
+  | "instantly_unsubscribed"
+  | "instantly_link_clicked";
 
 export type FollowupType = "bellen" | "email" | "dm" | "bezoek" | "offerte" | "anders";
 export type FollowupStatus = "gepland" | "voltooid" | "overgeslagen" | "verzet";
@@ -173,6 +180,18 @@ export interface CRMObjection {
   created_at: string;
 }
 
+export interface CRMInstantlyEvent {
+  id: string;
+  event_id: string;
+  event_type: string;
+  lead_id: string | null;
+  email: string;
+  campaign_id: string | null;
+  payload: Record<string, unknown> | null;
+  processed: boolean;
+  created_at: string;
+}
+
 export interface CRMDashboardStats {
   total: number;
   nieuw: number;
@@ -193,6 +212,10 @@ export interface CRMDashboardStats {
   gesprekken_today: number;
   interest_today: number;
   appointments_today: number;
+  instantly_sent: number;
+  instantly_opened: number;
+  instantly_replied: number;
+  instantly_bounced: number;
 }
 
 export interface CRMDashboardResponse {

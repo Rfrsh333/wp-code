@@ -32,7 +32,12 @@ export default function HotLeads({ leads, onSelectLead, onQuickAction }: HotLead
                 <span className="font-semibold text-sm text-neutral-900 truncate">{lead.company_name}</span>
                 {lead.city && <span className="text-xs text-neutral-500">{lead.city}</span>}
               </div>
-              {lead.last_contacted_at && (
+              {lead.instantly_last_reply_text && (
+                <p className="text-[11px] text-purple-600 mt-0.5 truncate max-w-[280px]" title={lead.instantly_last_reply_text}>
+                  Reply: {lead.instantly_last_reply_text.substring(0, 80)}{lead.instantly_last_reply_text.length > 80 ? "..." : ""}
+                </p>
+              )}
+              {lead.last_contacted_at && !lead.instantly_last_reply_text && (
                 <p className="text-[11px] text-neutral-400 mt-0.5">
                   Laatste: {new Date(lead.last_contacted_at).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
                 </p>

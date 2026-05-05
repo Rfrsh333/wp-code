@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Phone, Mail, Instagram, MessageCircle, Users, Target, Clock, TrendingUp, AlertTriangle, Zap } from "lucide-react";
+import { Phone, Mail, Instagram, MessageCircle, Users, Target, Clock, TrendingUp, AlertTriangle, Zap, Send, Eye, Reply, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import DailyTargets from "./DailyTargets";
@@ -140,7 +140,20 @@ export default function DashboardView({ onStartCallingSession, onSelectLead, onN
         </div>
       </div>
 
-      {/* 5. Pipeline Stats */}
+      {/* 5. Email Status (Instantly) */}
+      {(stats.instantly_sent > 0 || stats.instantly_opened > 0) && (
+        <div>
+          <h3 className="text-sm font-semibold text-neutral-900 mb-3">Email Status (Instantly)</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard icon={Send} label="Verstuurd" value={stats.instantly_sent} color="cyan" />
+            <StatCard icon={Eye} label="Geopend" value={stats.instantly_opened} color="blue" />
+            <StatCard icon={Reply} label="Beantwoord" value={stats.instantly_replied} color="green" />
+            <StatCard icon={AlertCircle} label="Bounced" value={stats.instantly_bounced} color="red" />
+          </div>
+        </div>
+      )}
+
+      {/* 6. Pipeline Stats */}
       <div>
         <h3 className="text-sm font-semibold text-neutral-900 mb-3">Pipeline</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

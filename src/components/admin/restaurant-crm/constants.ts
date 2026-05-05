@@ -55,6 +55,8 @@ export const INSTANTLY_STATUS_CONFIG: Record<InstantlyStatus, { label: string; c
   replied: { label: "Gereageerd", color: "text-green-600", bgColor: "bg-green-50" },
   bounced: { label: "Bounced", color: "text-red-600", bgColor: "bg-red-50" },
   unsubscribed: { label: "Unsubscribed", color: "text-orange-600", bgColor: "bg-orange-50" },
+  clicked: { label: "Geklikt", color: "text-purple-600", bgColor: "bg-purple-50" },
+  auto_reply: { label: "Auto-reply", color: "text-amber-600", bgColor: "bg-amber-50" },
 };
 
 export const CONTACT_LOG_CONFIG: Record<ContactLogType, { label: string; icon: string }> = {
@@ -73,6 +75,10 @@ export const CONTACT_LOG_CONFIG: Record<ContactLogType, { label: string; icon: s
   instantly_opened: { label: "Email geopend", icon: "MailOpen" },
   instantly_replied: { label: "Email beantwoord", icon: "Reply" },
   instantly_bounced: { label: "Email bounced", icon: "AlertTriangle" },
+  instantly_clicked: { label: "Link geklikt", icon: "MousePointer" },
+  instantly_auto_reply: { label: "Auto-reply", icon: "BotMessageSquare" },
+  instantly_unsubscribed: { label: "Uitgeschreven", icon: "UserMinus" },
+  instantly_link_clicked: { label: "Link geklikt", icon: "ExternalLink" },
 };
 
 export const FOLLOWUP_TYPE_CONFIG: Record<FollowupType, { label: string }> = {

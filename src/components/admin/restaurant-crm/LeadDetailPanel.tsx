@@ -175,6 +175,12 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
           <div className="mt-2 mb-1">
             <NextActionBadge lead={lead} size="lg" />
           </div>
+          {lead.instantly_last_reply_text && (
+            <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+              <p className="text-xs font-semibold text-amber-700 mb-0.5">Laatste reply</p>
+              <p className="text-sm text-amber-900">{lead.instantly_last_reply_text.substring(0, 200)}{lead.instantly_last_reply_text.length > 200 ? "..." : ""}</p>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <StatusBadge status={lead.status} />
             <OutreachBadge status={lead.outreach_status} />

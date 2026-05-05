@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   // Get all non-archived leads
   const { data: leads } = await supabaseAdmin
     .from("crm_leads")
-    .select("status, outreach_status, next_best_channel, next_followup_at")
+    .select("status, outreach_status, next_best_channel, next_followup_at, instantly_email_status")
     .is("archived_at", null);
 
   // Get today's contact logs
@@ -88,6 +88,12 @@ export async function GET(request: NextRequest) {
 
   const conversionRate = total > 0 ? Math.round((gewonnen / total) * 100) : 0;
 
+  // Instantly email stats
+  const instantlySent = allLeads.filter(l => l.instantly_email_status && l.instantly_email_status !== "not_sent").length;
+  const instantlyOpened = allLeads.filter(l => ["opened", "clicked", "replied"].includes(l.instantly_email_status || "")).length;
+  const instantlyReplied = allLeads.filter(l => l.instantly_email_status === "replied").length;
+  const instantlyBounced = allLeads.filter(l => l.instantly_email_status === "bounced").length;
+
   // "Vandaag doen" items
   const todoPhone = allLeads.filter(l => l.next_best_channel === "phone").length;
   const todoFollowup = allLeads.filter(l => {
@@ -117,6 +123,10 @@ export async function GET(request: NextRequest) {
       converted_total: gewonnen,
       interest_today: interestToday,
       appointments_today: appointmentsToday,
+      instantly_sent: instantlySent,
+      instantly_opened: instantlyOpened,
+      instantly_replied: instantlyReplied,
+      instantly_bounced: instantlyBounced,
     },
     todo: {
       phone: todoPhone,
