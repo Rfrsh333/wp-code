@@ -38,6 +38,35 @@ export async function GET(request: NextRequest) {
     .eq("status", "gepland")
     .lt("scheduled_at", now);
 
+  // Hot leads: replied or interested, with full lead data
+  const { data: hotLeads } = await supabaseAdmin
+    .from("crm_leads")
+    .select("*")
+    .is("archived_at", null)
+    .in("outreach_status", ["replied", "interested"])
+    .order("updated_at", { ascending: false })
+    .limit(10);
+
+  // Action: phone leads
+  const { data: actionPhone } = await supabaseAdmin
+    .from("crm_leads")
+    .select("*")
+    .is("archived_at", null)
+    .eq("next_best_channel", "phone")
+    .not("outreach_status", "in", "(not_interested,converted)")
+    .order("updated_at", { ascending: false })
+    .limit(10);
+
+  // Action: overdue followups with lead data
+  const { data: overdueFollowupLeads } = await supabaseAdmin
+    .from("crm_leads")
+    .select("*")
+    .is("archived_at", null)
+    .lt("next_followup_at", now)
+    .not("next_followup_at", "is", null)
+    .order("next_followup_at", { ascending: true })
+    .limit(10);
+
   const allLeads = leads || [];
   const logs = todayLogs || [];
 
@@ -54,6 +83,8 @@ export async function GET(request: NextRequest) {
   const instagramToday = logs.filter(l => l.type === "dm_instagram").length;
   const facebookToday = logs.filter(l => l.type === "dm_facebook").length;
   const gesprekkenToday = logs.filter(l => l.type === "gesproken").length;
+  const interestToday = logs.filter(l => l.type === "geïnteresseerd").length;
+  const appointmentsToday = logs.filter(l => l.type === "afspraak_gepland").length;
 
   const conversionRate = total > 0 ? Math.round((gewonnen / total) * 100) : 0;
 
@@ -84,11 +115,16 @@ export async function GET(request: NextRequest) {
       replies_total: replied,
       interested_total: interested,
       converted_total: gewonnen,
+      interest_today: interestToday,
+      appointments_today: appointmentsToday,
     },
     todo: {
       phone: todoPhone,
       followup_overdue: todoFollowup,
       replied: todoReplied,
     },
+    hot_leads: hotLeads || [],
+    action_phone: actionPhone || [],
+    action_followup_overdue: overdueFollowupLeads || [],
   });
 }

@@ -1,39 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Phone, Mail, Instagram, MessageCircle, Users, Target, Clock, TrendingUp, AlertTriangle } from "lucide-react";
+import { Phone, Mail, Instagram, MessageCircle, Users, Target, Clock, TrendingUp, AlertTriangle, Zap } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+import DailyTargets from "./DailyTargets";
+import HotLeads from "./HotLeads";
+import ActionLists from "./ActionLists";
+import type { CRMLead, CRMDashboardResponse } from "./types";
 
-interface DashboardData {
-  stats: {
-    total: number;
-    nieuw: number;
-    in_gesprek: number;
-    gewonnen: number;
-    verloren: number;
-    followups_due: number;
-    followups_overdue: number;
-    contacted_today: number;
-    conversion_rate: number;
-    calls_today: number;
-    emails_today: number;
-    instagram_dms_today: number;
-    facebook_dms_today: number;
-    gesprekken_today: number;
-    replies_total: number;
-    interested_total: number;
-    converted_total: number;
-  };
-  todo: {
-    phone: number;
-    followup_overdue: number;
-    replied: number;
-  };
+interface DashboardViewProps {
+  onStartCallingSession?: () => void;
+  onSelectLead?: (lead: CRMLead) => void;
+  onNavigateFilter?: (filter: string) => void;
 }
 
-export default function DashboardView() {
-  const [data, setData] = useState<DashboardData | null>(null);
+export default function DashboardView({ onStartCallingSession, onSelectLead, onNavigateFilter }: DashboardViewProps) {
+  const [data, setData] = useState<CRMDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
@@ -68,47 +51,86 @@ export default function DashboardView() {
   }
 
   if (!data) return null;
-  const { stats, todo } = data;
+  const { stats, todo, hot_leads = [], action_phone = [], action_followup_overdue = [] } = data;
+
+  function handleQuickAction(lead: CRMLead, action: string) {
+    if (onSelectLead) onSelectLead(lead);
+  }
+
+  function handleNavigate(filter: string) {
+    if (onNavigateFilter) onNavigateFilter(filter);
+  }
+
+  // Count closing stage leads from stats
+  const closingCount = 0; // Will be populated from API when available
 
   return (
     <div className="space-y-6">
-      {/* Vandaag Doen */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-5">
-        <h3 className="text-lg font-semibold text-orange-900 mb-3">Vandaag doen</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Phone className="w-5 h-5 text-blue-700" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{todo.phone}</p>
-              <p className="text-sm text-neutral-600">Te bellen</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-700" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{todo.followup_overdue}</p>
-              <p className="text-sm text-neutral-600">Verlopen follow-ups</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <MessageCircle className="w-5 h-5 text-purple-700" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{todo.replied}</p>
-              <p className="text-sm text-neutral-600">Wachten op opvolging</p>
+      {/* 1. Daily Targets + Start Belsessie */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <DailyTargets
+            callsToday={stats.calls_today}
+            dmsToday={stats.instagram_dms_today + stats.facebook_dms_today}
+            gesprekkenToday={stats.gesprekken_today}
+            interestToday={stats.interest_today || 0}
+            appointmentsToday={stats.appointments_today || 0}
+          />
+        </div>
+        <div className="flex flex-col gap-3">
+          {onStartCallingSession && (
+            <button
+              onClick={onStartCallingSession}
+              className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-6 hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-200 group"
+            >
+              <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-lg">Start Belsessie</p>
+                <p className="text-blue-200 text-sm">{todo.phone} leads te bellen</p>
+              </div>
+            </button>
+          )}
+          <div className="bg-white border border-neutral-100 rounded-2xl p-4 flex-1">
+            <h4 className="text-xs font-semibold text-neutral-500 uppercase mb-3">Vandaag doen</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-600">Te bellen</span>
+                <span className="text-sm font-bold text-blue-700">{todo.phone}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-600">Follow-ups verlopen</span>
+                <span className={`text-sm font-bold ${todo.followup_overdue > 0 ? "text-red-600" : "text-neutral-400"}`}>{todo.followup_overdue}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-600">Replies opvolgen</span>
+                <span className="text-sm font-bold text-purple-700">{todo.replied}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Activity Stats Vandaag */}
+      {/* 2. Hot Leads */}
+      <HotLeads
+        leads={hot_leads}
+        onSelectLead={lead => onSelectLead?.(lead)}
+        onQuickAction={handleQuickAction}
+      />
+
+      {/* 3. Action Lists */}
+      <ActionLists
+        phoneTodo={todo.phone}
+        repliedCount={todo.replied}
+        closingCount={closingCount}
+        overdueCount={todo.followup_overdue}
+        onNavigate={handleNavigate}
+      />
+
+      {/* 4. Activity Stats Vandaag */}
       <div>
-        <h3 className="text-lg font-semibold text-neutral-900 mb-3">Activiteit vandaag</h3>
+        <h3 className="text-sm font-semibold text-neutral-900 mb-3">Activiteit vandaag</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <StatCard icon={Phone} label="Calls" value={stats.calls_today} color="blue" />
           <StatCard icon={Mail} label="Emails" value={stats.emails_today} color="cyan" />
@@ -118,9 +140,9 @@ export default function DashboardView() {
         </div>
       </div>
 
-      {/* Pipeline Stats */}
+      {/* 5. Pipeline Stats */}
       <div>
-        <h3 className="text-lg font-semibold text-neutral-900 mb-3">Pipeline</h3>
+        <h3 className="text-sm font-semibold text-neutral-900 mb-3">Pipeline</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard icon={Target} label="Totaal leads" value={stats.total} color="gray" />
           <StatCard icon={Users} label="Nieuw" value={stats.nieuw} color="blue" />
@@ -129,9 +151,9 @@ export default function DashboardView() {
         </div>
       </div>
 
-      {/* Outreach Funnel */}
+      {/* 6. Outreach Funnel */}
       <div>
-        <h3 className="text-lg font-semibold text-neutral-900 mb-3">Outreach funnel</h3>
+        <h3 className="text-sm font-semibold text-neutral-900 mb-3">Outreach funnel</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard icon={Target} label="Gereageerd" value={stats.replies_total} color="purple" />
           <StatCard icon={TrendingUp} label="Geïnteresseerd" value={stats.interested_total} color="green" />

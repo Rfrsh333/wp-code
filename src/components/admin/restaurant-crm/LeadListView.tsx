@@ -5,6 +5,7 @@ import { Search, Filter, ChevronLeft, ChevronRight, Phone, Mail, Instagram, Face
 import { useToast } from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabase";
 import { StatusBadge, OutreachBadge, ChannelBadge, InstantlyBadge } from "./StatusBadge";
+import NextActionBadge, { getContactAttemptBadge } from "./NextActionBadge";
 import LeadDetailPanel from "./LeadDetailPanel";
 import BulkActionsBar from "./BulkActionsBar";
 import type { CRMLead, CRMLeadListResponse } from "./types";
@@ -192,7 +193,7 @@ export default function LeadListView() {
                 <th className="text-left px-3 py-3 font-medium text-neutral-600">Kanalen</th>
                 <th className="text-left px-3 py-3 font-medium text-neutral-600">Status</th>
                 <th className="text-left px-3 py-3 font-medium text-neutral-600">Outreach</th>
-                <th className="text-left px-3 py-3 font-medium text-neutral-600">Volgend</th>
+                <th className="text-left px-3 py-3 font-medium text-neutral-600">Actie</th>
                 <th className="text-left px-3 py-3 font-medium text-neutral-600">Laatste contact</th>
                 <th className="text-left px-3 py-3 font-medium text-neutral-600">Pogingen</th>
               </tr>
@@ -240,10 +241,17 @@ export default function LeadListView() {
                   </td>
                   <td className="px-3 py-3"><StatusBadge status={lead.status} /></td>
                   <td className="px-3 py-3"><OutreachBadge status={lead.outreach_status} /></td>
-                  <td className="px-3 py-3"><ChannelBadge channel={lead.next_best_channel} /></td>
+                  <td className="px-3 py-3"><NextActionBadge lead={lead} size="sm" /></td>
                   <td className="px-3 py-3 text-neutral-500 text-xs">{formatRelative(lead.last_contacted_at)}</td>
-                  <td className="px-3 py-3 text-neutral-500 text-xs">
-                    {lead.call_count + lead.email_count + lead.instagram_dm_count + lead.facebook_dm_count}
+                  <td className="px-3 py-3">
+                    {(() => {
+                      const badge = getContactAttemptBadge(lead);
+                      return (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${badge.color} ${badge.bgColor}`}>
+                          {badge.label} ({lead.call_count + lead.email_count + lead.instagram_dm_count + lead.facebook_dm_count})
+                        </span>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}

@@ -5,10 +5,13 @@ import { X, Phone, Globe, MapPin, Star, ExternalLink, Instagram, Facebook, Chevr
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { StatusBadge, OutreachBadge, ChannelBadge, InstantlyBadge } from "./StatusBadge";
+import NextActionBadge from "./NextActionBadge";
 import QuickActions from "./QuickActions";
 import ContactTimeline from "./ContactTimeline";
 import DMTemplatePanel from "./DMTemplatePanel";
 import SalesScriptPanel from "./SalesScriptPanel";
+import ClosingPanel from "./ClosingPanel";
+import TestShiftPanel from "./TestShiftPanel";
 import { calculateNextBestChannel } from "./outreach-helpers";
 import type { CRMLead, CRMContactLog } from "./types";
 
@@ -18,7 +21,7 @@ interface LeadDetailPanelProps {
   onUpdate: (lead: CRMLead) => void;
 }
 
-type AccordionSection = "actions" | "script" | "dm" | "closing" | "timeline" | "notes";
+type AccordionSection = "actions" | "script" | "dm" | "closing" | "testshifts" | "timeline" | "notes";
 
 export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProps) {
   const [logs, setLogs] = useState<CRMContactLog[]>([]);
@@ -168,7 +171,11 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
+          {/* Big NextActionBadge */}
+          <div className="mt-2 mb-1">
+            <NextActionBadge lead={lead} size="lg" />
+          </div>
+          <div className="flex flex-wrap gap-2">
             <StatusBadge status={lead.status} />
             <OutreachBadge status={lead.outreach_status} />
             <ChannelBadge channel={lead.next_best_channel} />
@@ -285,6 +292,16 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
               <DMTemplatePanel lead={lead} onMarkSent={handleDMSent} />
             </SectionAccordion>
           )}
+
+          {/* 5b. Closing Panel */}
+          <SectionAccordion title="Closing & Deal Info" section="closing" open={openSections.has("closing")} onToggle={toggleSection}>
+            <ClosingPanel lead={lead} onUpdate={onUpdate} />
+          </SectionAccordion>
+
+          {/* 5c. Test Shifts */}
+          <SectionAccordion title="Testdiensten" section="testshifts" open={openSections.has("testshifts")} onToggle={toggleSection}>
+            <TestShiftPanel lead={lead} onUpdate={onUpdate} />
+          </SectionAccordion>
 
           {/* 6. Instantly info */}
           {lead.instantly_campaign_name && (

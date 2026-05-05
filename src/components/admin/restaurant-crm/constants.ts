@@ -16,6 +16,11 @@ export const STATUS_CONFIG: Record<CRMStatus, { label: string; color: string; bg
   geen_interesse: { label: "Geen interesse", color: "text-slate-700", bgColor: "bg-slate-50" },
   al_klant: { label: "Al klant", color: "text-emerald-700", bgColor: "bg-emerald-50" },
   geparkeerd: { label: "Geparkeerd", color: "text-stone-700", bgColor: "bg-stone-50" },
+  afspraak_gepland: { label: "Afspraak gepland", color: "text-teal-700", bgColor: "bg-teal-50" },
+  testdienst_ingepland: { label: "Testdienst ingepland", color: "text-sky-700", bgColor: "bg-sky-50" },
+  testdienst_afgerond: { label: "Testdienst afgerond", color: "text-lime-700", bgColor: "bg-lime-50" },
+  in_onderhandeling: { label: "In onderhandeling", color: "text-fuchsia-700", bgColor: "bg-fuchsia-50" },
+  klant_geworden: { label: "Klant geworden", color: "text-emerald-700", bgColor: "bg-emerald-50" },
 };
 
 export const PRIORITY_CONFIG: Record<CRMPriority, { label: string; color: string; bgColor: string }> = {
@@ -85,3 +90,38 @@ export const CALL_SCRIPT = {
 };
 
 export const DM_TEMPLATE = `Hey, ik probeerde jullie net kort te bellen.\nWij helpen restaurants in Utrecht met ervaren horecapersoneel, ook last-minute.\nHoe lossen jullie het nu op als iemand uitvalt?`;
+
+export const URGENTIE_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+  laag: { label: "Laag", color: "text-gray-600", bgColor: "bg-gray-50" },
+  normaal: { label: "Normaal", color: "text-blue-600", bgColor: "bg-blue-50" },
+  hoog: { label: "Hoog", color: "text-orange-600", bgColor: "bg-orange-50" },
+  urgent: { label: "Urgent!", color: "text-red-600", bgColor: "bg-red-50" },
+};
+
+export const PERSONEELSBEHOEFTE_OPTIONS = [
+  "Bediening",
+  "Keuken",
+  "Afwas",
+  "Bar",
+  "Gastvrouw/heer",
+  "Events",
+  "Catering",
+  "Management",
+];
+
+export const TYPE_BEHOEFTE_OPTIONS = [
+  { value: "structureel", label: "Structureel (vast)" },
+  { value: "flexibel", label: "Flexibel (oproep)" },
+  { value: "seizoen", label: "Seizoensgebonden" },
+  { value: "eenmalig", label: "Eenmalig / event" },
+  { value: "noodgeval", label: "Noodgeval / last-minute" },
+];
+
+export const TESTSHIFT_STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+  gepland: { label: "Gepland", color: "text-blue-700", bgColor: "bg-blue-50" },
+  bevestigd: { label: "Bevestigd", color: "text-indigo-700", bgColor: "bg-indigo-50" },
+  uitgevoerd: { label: "Uitgevoerd", color: "text-purple-700", bgColor: "bg-purple-50" },
+  geslaagd: { label: "Geslaagd", color: "text-green-700", bgColor: "bg-green-50" },
+  mislukt: { label: "Mislukt", color: "text-red-700", bgColor: "bg-red-50" },
+  geannuleerd: { label: "Geannuleerd", color: "text-gray-700", bgColor: "bg-gray-50" },
+};

@@ -43,6 +43,18 @@ export interface CRMLead {
   email_count: number;
   instagram_dm_count: number;
   facebook_dm_count: number;
+  // Closing funnel
+  beslisser: string | null;
+  beslisser_functie: string | null;
+  beslisser_mobiel: string | null;
+  personeelsbehoefte: string[] | null;
+  urgentie: string | null;
+  gewenste_startdatum: string | null;
+  aantal_mensen: number | null;
+  type_behoefte: string | null;
+  bezwaren: string[] | null;
+  afspraak_datum: string | null;
+  afspraak_notities: string | null;
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -64,7 +76,12 @@ export type CRMStatus =
   | "niet_bereikbaar"
   | "geen_interesse"
   | "al_klant"
-  | "geparkeerd";
+  | "geparkeerd"
+  | "afspraak_gepland"
+  | "testdienst_ingepland"
+  | "testdienst_afgerond"
+  | "in_onderhandeling"
+  | "klant_geworden";
 
 export type CRMPriority = "laag" | "normaal" | "hoog" | "urgent";
 
@@ -134,6 +151,28 @@ export interface CRMTag {
   created_at: string;
 }
 
+export interface CRMTestShift {
+  id: string;
+  lead_id: string;
+  shift_date: string;
+  shift_time: string | null;
+  shift_role: string;
+  people_count: number;
+  location: string | null;
+  status: "gepland" | "bevestigd" | "uitgevoerd" | "geslaagd" | "mislukt" | "geannuleerd";
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CRMObjection {
+  id: string;
+  objection: string;
+  suggested_response: string;
+  category: string;
+  created_at: string;
+}
+
 export interface CRMDashboardStats {
   total: number;
   nieuw: number;
@@ -151,6 +190,21 @@ export interface CRMDashboardStats {
   replies_total: number;
   interested_total: number;
   converted_total: number;
+  gesprekken_today: number;
+  interest_today: number;
+  appointments_today: number;
+}
+
+export interface CRMDashboardResponse {
+  stats: CRMDashboardStats;
+  todo: {
+    phone: number;
+    followup_overdue: number;
+    replied: number;
+  };
+  hot_leads: CRMLead[];
+  action_phone: CRMLead[];
+  action_followup_overdue: CRMLead[];
 }
 
 export interface CRMFilters {

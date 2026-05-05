@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, PhoneMissed, PhoneCall, Mail, Instagram, Facebook, MessageCircle, Star, Clock } from "lucide-react";
+import { Phone, PhoneMissed, PhoneCall, Mail, Instagram, Facebook, MessageCircle, Star, Clock, Calendar, ClipboardCheck, Trophy, XCircle } from "lucide-react";
 import type { CRMLead } from "./types";
 import { calculateNextBestChannel } from "./outreach-helpers";
 
@@ -174,8 +174,51 @@ export default function QuickActions({ lead, onAction, compact }: QuickActionsPr
         </button>
       </div>
 
+      {/* Closing actions - visible when replied/interested or further */}
+      {(lead.outreach_status === "replied" || lead.outreach_status === "interested" ||
+        ["in_gesprek", "afspraak_gepland", "testdienst_ingepland", "testdienst_afgerond", "in_onderhandeling"].includes(lead.status)) && (
+        <div className={`${compact ? "flex flex-wrap gap-1 mt-1" : "flex flex-wrap gap-2 mt-2"} pt-2 border-t border-neutral-100`}>
+          <button
+            onClick={() => setShowNoteModal("afspraak")}
+            className={`${btnBase} bg-teal-50 text-teal-700 hover:bg-teal-100`}
+          >
+            <Calendar className="w-3.5 h-3.5 inline mr-1" />Afspraak plannen
+          </button>
+          <button
+            onClick={() => {
+              onAction("testdienst_inplannen", {
+                status: "testdienst_ingepland",
+                outreach_status: "interested",
+                next_best_channel: "phone",
+              }, "notitie", "Testdienst ingepland");
+            }}
+            className={`${btnBase} bg-sky-50 text-sky-700 hover:bg-sky-100`}
+          >
+            <ClipboardCheck className="w-3.5 h-3.5 inline mr-1" />Testdienst inplannen
+          </button>
+          <button
+            onClick={() => {
+              onAction("klant_gewonnen", {
+                status: "klant_geworden",
+                outreach_status: "converted",
+                next_best_channel: "none",
+              }, "notitie", "Klant gewonnen!");
+            }}
+            className={`${btnBase} bg-emerald-50 text-emerald-700 hover:bg-emerald-100`}
+          >
+            <Trophy className="w-3.5 h-3.5 inline mr-1" />Klant gewonnen!
+          </button>
+          <button
+            onClick={() => setShowNoteModal("verloren")}
+            className={`${btnBase} bg-red-50 text-red-700 hover:bg-red-100`}
+          >
+            <XCircle className="w-3.5 h-3.5 inline mr-1" />Verloren
+          </button>
+        </div>
+      )}
+
       {/* Note modal for "Gesproken" */}
-      {showNoteModal && (
+      {showNoteModal === "gesproken" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold mb-4">Gesproken - notitie toevoegen</h3>
@@ -200,6 +243,88 @@ export default function QuickActions({ lead, onAction, compact }: QuickActionsPr
               </button>
               <button onClick={submitSpoken} className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
                 Opslaan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Afspraak modal */}
+      {showNoteModal === "afspraak" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Afspraak plannen</h3>
+            <div className="mb-3">
+              <label className="text-sm text-neutral-600 mb-1 block">Datum & tijd</label>
+              <input
+                type="datetime-local"
+                value={followupDate}
+                onChange={e => setFollowupDate(e.target.value)}
+                className="w-full border border-neutral-200 rounded-lg p-2 text-sm"
+              />
+            </div>
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="Notities bij afspraak..."
+              className="w-full border border-neutral-200 rounded-lg p-3 text-sm min-h-[80px] mb-3"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setShowNoteModal(null); setNote(""); setFollowupDate(""); }} className="px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-100 rounded-lg">
+                Annuleren
+              </button>
+              <button
+                onClick={async () => {
+                  await onAction("afspraak_gepland", {
+                    status: "afspraak_gepland",
+                    afspraak_datum: followupDate || null,
+                    afspraak_notities: note || null,
+                    outreach_status: "interested",
+                    next_best_channel: "phone",
+                    next_followup_at: followupDate || null,
+                  }, "notitie", `Afspraak gepland${followupDate ? ` op ${new Date(followupDate).toLocaleDateString("nl-NL")}` : ""}`);
+                  setShowNoteModal(null);
+                  setNote("");
+                  setFollowupDate("");
+                }}
+                disabled={!followupDate}
+                className="px-4 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+              >
+                Plannen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verloren modal */}
+      {showNoteModal === "verloren" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Lead verloren</h3>
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="Reden waarom verloren..."
+              className="w-full border border-neutral-200 rounded-lg p-3 text-sm min-h-[80px] mb-3"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setShowNoteModal(null); setNote(""); }} className="px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-100 rounded-lg">
+                Annuleren
+              </button>
+              <button
+                onClick={async () => {
+                  await onAction("verloren", {
+                    status: "verloren",
+                    outreach_status: "not_interested",
+                    next_best_channel: "none",
+                  }, "notitie", `Verloren: ${note || "geen reden opgegeven"}`);
+                  setShowNoteModal(null);
+                  setNote("");
+                }}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Markeer als verloren
               </button>
             </div>
           </div>
