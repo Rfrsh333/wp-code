@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, GitMerge, ArrowRight, Loader2 } from "lucide-react";
+import { X, GitMerge, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import type { CRMLead } from "./types";
 
 interface LeadMergeModalProps {
   primaryId: string;
-  primaryName: string;
+  primaryName?: string;
   duplicateId: string;
-  duplicateName: string;
+  duplicateName?: string;
   onClose: () => void;
   onMergeComplete: () => void;
 }
@@ -32,9 +32,7 @@ const COMPARE_FIELDS: { key: keyof CRMLead; label: string }[] = [
 
 export default function LeadMergeModal({
   primaryId,
-  primaryName,
   duplicateId,
-  duplicateName,
   onClose,
   onMergeComplete,
 }: LeadMergeModalProps) {

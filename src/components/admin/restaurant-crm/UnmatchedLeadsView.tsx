@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Search, Link2, UserPlus, XCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Link2, UserPlus, XCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { InstantlyBadge } from "./StatusBadge";
@@ -20,7 +20,6 @@ export default function UnmatchedLeadsView({ campaignId, onResolved }: Unmatched
   const [loading, setLoading] = useState(true);
   const [matchingId, setMatchingId] = useState<string | null>(null);
   const [matchSuggestions, setMatchSuggestions] = useState<DuplicateMatch[]>([]);
-  const [searchMatch, setSearchMatch] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const toast = useToast();
 
@@ -61,7 +60,6 @@ export default function UnmatchedLeadsView({ campaignId, onResolved }: Unmatched
     // Open matching modal - search for duplicates
     setMatchingId(unmatchedId);
     setMatchSuggestions([]);
-    setSearchMatch("");
 
     const unmatched = leads.find(l => l.id === unmatchedId);
     if (!unmatched) return;

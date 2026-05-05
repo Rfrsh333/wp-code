@@ -35,8 +35,6 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
   const [leadList, setLeadList] = useState<CRMLeadList | null>(null);
   const toast = useToast();
 
-  useEffect(() => { fetchLogs(); fetchCampaigns(); fetchLeadList(); }, [lead.id]);
-
   function toggleSection(s: AccordionSection) {
     setOpenSections(prev => {
       const next = new Set(prev);
@@ -74,6 +72,9 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
     });
     if (res.ok) setLeadList(await res.json());
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchLogs(); fetchCampaigns(); fetchLeadList(); }, [lead.id]);
 
   async function handleQuickAction(action: string, updates: Record<string, unknown>, logType: string, logNotes?: string) {
     const token = await getToken();

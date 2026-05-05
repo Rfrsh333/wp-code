@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Search, RefreshCw, Mail, Send, Eye, Reply, AlertCircle, XCircle, MousePointer } from "lucide-react";
+import { Search, RefreshCw, Mail, Send, Eye, Reply, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import type { CRMInstantlyCampaign } from "./types";
