@@ -61,12 +61,12 @@ export default function CampaignView({ onSelectCampaign }: CampaignViewProps) {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error();
       const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Sync mislukt");
       toast.success(`Sync voltooid: ${result.campaigns_synced} campagnes, ${result.leads_matched} matched, ${result.leads_unmatched} unmatched`);
       fetchCampaigns();
-    } catch {
-      toast.error("Sync mislukt");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sync mislukt");
     } finally {
       setSyncing(false);
     }

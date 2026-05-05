@@ -28,8 +28,9 @@ export async function POST(
     const result = await syncCampaignLeads(campaign.id, campaign.instantly_campaign_id);
     return NextResponse.json(result);
   } catch (err) {
+    console.error("Campaign sync error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Sync failed" },
+      { error: err instanceof Error ? err.message : "Sync failed", details: String(err) },
       { status: 500 }
     );
   }

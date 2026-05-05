@@ -82,12 +82,12 @@ export default function CampaignDetailView({ campaignId, campaignName, onBack }:
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error();
       const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Sync mislukt");
       toast.success(`Sync: ${result.matched} matched, ${result.unmatched} unmatched`);
       fetchData();
-    } catch {
-      toast.error("Sync mislukt");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sync mislukt");
     } finally {
       setSyncing(false);
     }
