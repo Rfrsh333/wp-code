@@ -27,7 +27,7 @@ export default function BulkActionsBar({ selectedIds, onComplete }: BulkActionsB
     setLoading(true);
     try {
       const token = await getToken();
-      const res = await fetch("/api/admin/crm/leads", {
+      const res = await fetch("/api/admin/crm/leads/", {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ ids: selectedIds, updates }),
@@ -44,7 +44,7 @@ export default function BulkActionsBar({ selectedIds, onComplete }: BulkActionsB
 
   async function loadCampaigns() {
     const token = await getToken();
-    const res = await fetch("/api/admin/crm/instantly", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/admin/crm/instantly/", { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
       const data = await res.json();
       setCampaigns(data.campaigns || []);
@@ -58,7 +58,7 @@ export default function BulkActionsBar({ selectedIds, onComplete }: BulkActionsB
     setLoading(true);
     try {
       const token = await getToken();
-      const res = await fetch("/api/admin/crm/instantly", {
+      const res = await fetch("/api/admin/crm/instantly/", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ campaign_id: campaignId, lead_ids: selectedIds }),

@@ -40,7 +40,7 @@ export default function FollowupView() {
 
   async function markComplete(id: string) {
     const token = await getToken();
-    const res = await fetch("/api/admin/crm/followups", {
+    const res = await fetch("/api/admin/crm/followups/", {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ id, status: "voltooid" }),

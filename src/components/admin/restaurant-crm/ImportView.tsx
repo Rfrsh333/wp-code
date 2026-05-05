@@ -37,7 +37,7 @@ export default function ImportView() {
     setLoading(true);
     try {
       const token = await getToken();
-      const res = await fetch("/api/admin/crm/import", {
+      const res = await fetch("/api/admin/crm/import/", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ csv_content: csvContent, preview_only: true, import_type: importType }),
@@ -56,7 +56,7 @@ export default function ImportView() {
     setLoading(true);
     try {
       const token = await getToken();
-      const res = await fetch("/api/admin/crm/import", {
+      const res = await fetch("/api/admin/crm/import/", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ csv_content: csvContent, preview_only: false, import_type: importType }),
@@ -254,7 +254,7 @@ function InstantlySection() {
     setLoadingCampaigns(true);
     try {
       const token = await getToken();
-      const res = await fetch("/api/admin/crm/instantly", {
+      const res = await fetch("/api/admin/crm/instantly/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -275,7 +275,7 @@ function InstantlySection() {
     setSyncResult(null);
     try {
       const token = await getToken();
-      const res = await fetch("/api/admin/crm/instantly", {
+      const res = await fetch("/api/admin/crm/instantly/", {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ campaign_id: campaignId }),
@@ -362,7 +362,7 @@ function MetaSection() {
     setResult(null);
     try {
       const token = await getToken();
-      const res = await fetch("/api/admin/crm/meta/test", {
+      const res = await fetch("/api/admin/crm/meta/test/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

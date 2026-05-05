@@ -64,14 +64,14 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
     if (!res.ok) { toast.error("Actie mislukt"); return; }
     const updatedLead = await res.json();
 
-    await fetch("/api/admin/crm/contact-logs", {
+    await fetch("/api/admin/crm/contact-logs/", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: lead.id, type: logType, notes: logNotes || null }),
     });
 
     if (updates.next_followup_at) {
-      await fetch("/api/admin/crm/followups", {
+      await fetch("/api/admin/crm/followups/", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ lead_id: lead.id, scheduled_at: updates.next_followup_at, type: "bellen" }),
@@ -119,7 +119,7 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
   async function planFollowup() {
     if (!followupDate) return;
     const token = await getToken();
-    await fetch("/api/admin/crm/followups", {
+    await fetch("/api/admin/crm/followups/", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: lead.id, scheduled_at: followupDate, type: "bellen" }),
@@ -138,12 +138,12 @@ export default function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailP
   async function addNote() {
     if (!noteText.trim()) return;
     const token = await getToken();
-    await fetch("/api/admin/crm/notes", {
+    await fetch("/api/admin/crm/notes/", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: lead.id, content: noteText }),
     });
-    await fetch("/api/admin/crm/contact-logs", {
+    await fetch("/api/admin/crm/contact-logs/", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: lead.id, type: "notitie", notes: noteText }),
