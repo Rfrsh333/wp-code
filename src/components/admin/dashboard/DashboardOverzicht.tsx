@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useAdminDashboardExtended } from "@/hooks/queries/useAdminQueries";
 import StatCard from "./StatCard";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
+import BusinessMetricsDashboard from "@/components/admin/BusinessMetricsDashboard";
 
 // ─── Types ───
 interface OnboardingMetrics {
@@ -261,6 +262,11 @@ export default function DashboardOverzicht({
 
   return (
     <div>
+      {/* ─── Business Metrics Dashboard ─── */}
+      <div className="mb-8">
+        <BusinessMetricsDashboard />
+      </div>
+
       {/* ─── ROW 1: Vandaag + Actie Vereist ─── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5">
         {/* Vandaag */}
