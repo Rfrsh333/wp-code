@@ -73,7 +73,6 @@ async function findExistingLead(leadData: Record<string, unknown>): Promise<{ ex
 
   return { existing: null, reason: null };
 }
->>>>>>> dd77744 (feat: acquisitie upgrade - nieuwe contactkanalen, duplicate detectie en follow-up systeem)
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
