@@ -10,16 +10,39 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Parse filters
+    const { searchParams } = new URL(request.url);
+    const range = searchParams.get("range") || "30d";
+    const branche = searchParams.get("branche");
+    const stad = searchParams.get("stad");
+
+    // Calculate date range
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Pipeline Metrics
-    const { data: leads } = await supabaseAdmin
+    let daysAgo = 30;
+    if (range === "7d") daysAgo = 7;
+    else if (range === "90d") daysAgo = 90;
+    else if (range === "6m") daysAgo = 180;
+    else if (range === "1y") daysAgo = 365;
+
+    const filterStartDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+
+    // Pipeline Metrics with filters
+    let leadsQuery = supabaseAdmin
       .from("acquisitie_leads")
-      .select("id, pipeline_stage, created_at, geconverteerd_op, engagement_score");
+      .select("id, pipeline_stage, created_at, geconverteerd_op, engagement_score, branche, stad");
+
+    if (branche) {
+      leadsQuery = leadsQuery.eq("branche", branche);
+    }
+    if (stad) {
+      leadsQuery = leadsQuery.eq("stad", stad);
+    }
+
+    const { data: leads } = await leadsQuery;
 
     const totalLeads = leads?.length || 0;
     const leadsByStage = {
@@ -39,7 +62,7 @@ export async function GET(request: NextRequest) {
       : 0;
 
     const recentLeads = leads?.filter(l =>
-      new Date(l.created_at) >= thirtyDaysAgo
+      new Date(l.created_at) >= filterStartDate
     ).length || 0;
 
     // Revenue Metrics (from factuur_regels)
@@ -107,7 +130,7 @@ export async function GET(request: NextRequest) {
     const { data: contactmomenten } = await supabaseAdmin
       .from("acquisitie_contactmomenten")
       .select("type, richting, resultaat, created_at")
-      .gte("created_at", thirtyDaysAgo.toISOString());
+      .gte("created_at", filterStartDate.toISOString());
 
     const totalContacts = contactmomenten?.length || 0;
     const positiveContacts = contactmomenten?.filter(c => c.resultaat === "positief").length || 0;
@@ -126,7 +149,7 @@ export async function GET(request: NextRequest) {
     const { data: emailLog } = await supabaseAdmin
       .from("email_log")
       .select("status, opened_at")
-      .gte("created_at", thirtyDaysAgo.toISOString());
+      .gte("created_at", filterStartDate.toISOString());
 
     const emailsSent = emailLog?.length || 0;
     const emailsOpened = emailLog?.filter(e => e.opened_at).length || 0;
@@ -156,6 +179,34 @@ export async function GET(request: NextRequest) {
     const avgResponseTime = validResponseTimes.length
       ? validResponseTimes.reduce((sum, t) => sum + t, 0) / validResponseTimes.length
       : 0;
+
+    // Chart Data: Revenue Trend (6 months)
+    const revenueTrendData = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const monthRevenue = factuurRegels
+        ?.filter(f => {
+          const date = new Date(f.created_at);
+          return date >= monthStart && date <= monthEnd;
+        })
+        .reduce((sum, f) => sum + (f.bedrag || 0), 0) || 0;
+
+      revenueTrendData.push({
+        month: monthStart.toLocaleDateString("nl-NL", { month: "short", year: "numeric" }),
+        revenue: Math.round(monthRevenue),
+      });
+    }
+
+    // Chart Data: Channel Performance
+    const channelPerformanceData = Object.entries(contactsByChannel || {})
+      .map(([channel, count]) => ({
+        channel,
+        contacts: count,
+        positive: contactmomenten?.filter(c => c.type === channel && c.resultaat === "positief").length || 0,
+      }))
+      .sort((a, b) => b.contacts - a.contacts)
+      .slice(0, 6);
 
     const metrics = {
       pipeline: {
@@ -190,8 +241,24 @@ export async function GET(request: NextRequest) {
         emailOpenRate: Math.round(emailOpenRate * 10) / 10,
       },
       period: {
-        from: thirtyDaysAgo.toISOString(),
+        from: filterStartDate.toISOString(),
         to: now.toISOString(),
+        range,
+      },
+      filters: {
+        branche: branche || null,
+        stad: stad || null,
+      },
+      charts: {
+        revenueTrend: revenueTrendData,
+        channelPerformance: channelPerformanceData,
+        pipelineFunnel: [
+          { stage: "Nieuw", count: leadsByStage.nieuw },
+          { stage: "Benaderd", count: leadsByStage.benaderd },
+          { stage: "Interesse", count: leadsByStage.interesse },
+          { stage: "Offerte", count: leadsByStage.offerte },
+          { stage: "Klant", count: leadsByStage.klant },
+        ],
       },
     };
 
