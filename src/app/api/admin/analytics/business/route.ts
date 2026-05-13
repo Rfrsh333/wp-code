@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
       .select("id, status, created_at");
 
     const newApplications = inschrijvingen?.filter(i =>
-      new Date(i.created_at) >= thirtyDaysAgo
+      new Date(i.created_at) >= filterStartDate
     ).length || 0;
 
     const pendingReview = inschrijvingen?.filter(i =>
