@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { generateWhatsAppMessage, recommendChannel } from "@/lib/agents/whatsapp-message";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { determineFollowUpPlan } from "@/lib/acquisitie/follow-up";
 
 // WhatsApp Cloud API configuratie
 const WA_API_URL = process.env.WHATSAPP_API_URL; // https://graph.facebook.com/v18.0/{phone_number_id}/messages
@@ -101,6 +102,11 @@ export async function POST(request: NextRequest) {
 
       let sentViaApi = false;
       let whatsappMessageId: string | null = null;
+      const followUp = determineFollowUpPlan({
+        type: "whatsapp",
+        richting: "uitgaand",
+        lead,
+      });
 
       // Probeer te versturen via WhatsApp Cloud API als geconfigureerd
       if (isWhatsAppConfigured()) {
@@ -144,13 +150,21 @@ export async function POST(request: NextRequest) {
         onderwerp: sentViaApi ? "WhatsApp (automatisch)" : "WhatsApp (handmatig)",
         inhoud: bericht,
         email_id: whatsappMessageId, // Hergebruik email_id veld voor message tracking
+        externe_message_id: whatsappMessageId,
+        follow_up_due_at: followUp?.nextDate || null,
+        follow_up_reason: followUp?.reason || null,
       });
 
       // Update lead
       const updateData: Record<string, unknown> = {
         laatste_contact_datum: new Date().toISOString(),
         laatste_contact_type: "whatsapp",
+        laatste_uitgaande_contact_datum: new Date().toISOString(),
         engagement_score: Math.max(0, (lead.engagement_score || 0) + 2),
+        auto_sequence_next_action: followUp?.nextAction || null,
+        auto_sequence_next_date: followUp?.nextDate || null,
+        volgende_actie_datum: followUp?.nextDate ? followUp.nextDate.split("T")[0] : null,
+        volgende_actie_notitie: followUp?.reason || null,
       };
       if (lead.pipeline_stage === "nieuw") {
         updateData.pipeline_stage = "benaderd";

@@ -6,13 +6,23 @@ import { supabase } from "@/lib/supabase";
 interface Lead {
   id: string;
   bedrijfsnaam: string;
+  normalized_bedrijfsnaam?: string | null;
   contactpersoon: string | null;
   email: string | null;
+  normalized_email?: string | null;
   telefoon: string | null;
+  normalized_phone?: string | null;
   website: string | null;
+  website_domain?: string | null;
   adres: string | null;
   stad: string | null;
   branche: string | null;
+  instagram_handle?: string | null;
+  linkedin_url?: string | null;
+  facebook_url?: string | null;
+  duplicate_of_lead_id?: string | null;
+  duplicate_confidence?: number | null;
+  duplicate_reason?: string | null;
   tags: string[];
   pipeline_stage: string;
   ai_score: number | null;
@@ -22,6 +32,8 @@ interface Lead {
   laatste_email_verzonden_op: string | null;
   laatste_contact_datum: string | null;
   laatste_contact_type: string | null;
+  laatste_uitgaande_contact_datum?: string | null;
+  laatste_inkomende_contact_datum?: string | null;
   volgende_actie_datum: string | null;
   volgende_actie_notitie: string | null;
   pain_points: string[] | null;
@@ -74,6 +86,9 @@ interface Contactmoment {
   onderwerp: string | null;
   inhoud: string | null;
   resultaat: string | null;
+  follow_up_due_at?: string | null;
+  follow_up_reason?: string | null;
+  metadata?: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -84,6 +99,43 @@ interface Props {
 }
 
 const STAGES = ["nieuw", "benaderd", "interesse", "offerte", "klant", "afgewezen"];
+const CONTACT_TYPE_OPTIONS = [
+  { value: "telefoon", label: "Telefoon" },
+  { value: "email", label: "Email" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "instagram_dm", label: "Instagram DM" },
+  { value: "linkedin_dm", label: "LinkedIn DM" },
+  { value: "facebook_dm", label: "Facebook DM" },
+  { value: "meeting", label: "Meeting" },
+  { value: "bezoek", label: "Bezoek" },
+];
+
+function getContactTypeLabel(type: string): string {
+  return CONTACT_TYPE_OPTIONS.find((option) => option.value === type)?.label || type;
+}
+
+function getContactTypeColor(type: string): string {
+  switch (type) {
+    case "whatsapp":
+      return "border-green-400";
+    case "telefoon":
+      return "border-blue-400";
+    case "email":
+      return "border-orange-300";
+    case "instagram_dm":
+      return "border-pink-400";
+    case "linkedin_dm":
+      return "border-cyan-500";
+    case "facebook_dm":
+      return "border-indigo-400";
+    case "meeting":
+      return "border-emerald-500";
+    case "bezoek":
+      return "border-purple-400";
+    default:
+      return "border-neutral-300";
+  }
+}
 
 export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
   const [lead, setLead] = useState<Lead | null>(null);
@@ -544,7 +596,22 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
                 <InfoField label="Branche" value={lead.branche} />
                 <InfoField label="Adres" value={lead.adres} />
                 <InfoField label="Bron" value={lead.bron} />
+                <InfoField label="Instagram" value={lead.instagram_handle || null} />
+                <InfoField label="LinkedIn" value={lead.linkedin_url || null} link />
               </div>
+
+              {(lead.facebook_url || lead.website_domain || lead.duplicate_of_lead_id) && (
+                <div className="bg-neutral-50 p-3 rounded-xl space-y-1">
+                  {lead.website_domain && <p className="text-xs text-neutral-600">Domein: <span className="font-medium text-neutral-800">{lead.website_domain}</span></p>}
+                  {lead.facebook_url && <p className="text-xs text-neutral-600">Facebook: <span className="font-medium text-neutral-800">{lead.facebook_url}</span></p>}
+                  {lead.duplicate_of_lead_id && (
+                    <p className="text-xs text-amber-700">
+                      Mogelijk duplicaat gedetecteerd
+                      {lead.duplicate_reason ? ` via ${lead.duplicate_reason}` : ""}.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Sales Rep Toewijzing */}
               {salesReps.length > 0 && (
@@ -721,10 +788,9 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
                       onChange={(e) => setContactType(e.target.value)}
                       className="px-2 py-1.5 border border-neutral-300 rounded-lg text-sm"
                     >
-                      <option value="telefoon">Telefoon</option>
-                      <option value="email">Email</option>
-                      <option value="whatsapp">WhatsApp</option>
-                      <option value="bezoek">Bezoek</option>
+                      {CONTACT_TYPE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
                     </select>
                     <select
                       value={contactRichting}
@@ -764,15 +830,9 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
 
               <div className="space-y-3">
                 {contactmomenten.map((cm) => (
-                  <div key={cm.id} className={`border-l-2 pl-4 py-2 ${
-                    cm.type === "whatsapp" ? "border-green-400" :
-                    cm.type === "telefoon" ? "border-blue-400" :
-                    cm.type === "email" ? "border-orange-300" :
-                    cm.type === "bezoek" ? "border-purple-400" :
-                    "border-neutral-300"
-                  }`}>
+                  <div key={cm.id} className={`border-l-2 pl-4 py-2 ${getContactTypeColor(cm.type)}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-neutral-800 capitalize">{cm.type}</span>
+                      <span className="text-xs font-medium text-neutral-800">{getContactTypeLabel(cm.type)}</span>
                       <span className="text-xs text-neutral-400">{cm.richting}</span>
                       {cm.resultaat && (
                         <span className={`text-xs px-1.5 py-0.5 rounded ${
@@ -789,6 +849,12 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
                     </div>
                     {cm.onderwerp && <p className="text-sm font-medium text-neutral-700 mt-1">{cm.onderwerp}</p>}
                     {cm.inhoud && <p className="text-sm text-neutral-600 mt-1 whitespace-pre-wrap">{cm.inhoud}</p>}
+                    {cm.follow_up_due_at && (
+                      <p className="text-xs text-[#F27501] mt-2">
+                        Follow-up: {new Date(cm.follow_up_due_at).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
+                        {cm.follow_up_reason ? ` • ${cm.follow_up_reason}` : ""}
+                      </p>
+                    )}
                   </div>
                 ))}
                 {contactmomenten.length === 0 && (

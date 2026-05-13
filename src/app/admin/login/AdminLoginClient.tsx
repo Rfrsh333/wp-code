@@ -35,7 +35,21 @@ export default function AdminLoginClient() {
       }
 
       if (data.session) {
-        await supabase.auth.setSession(data.session);
+        const { error: sessionError } = await supabase.auth.setSession(data.session);
+        if (sessionError) {
+          console.error("setSession error:", sessionError);
+          setError(`Sessie opslaan mislukt: ${sessionError.message}`);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: sessionData, error: getSessionError } = await supabase.auth.getSession();
+        if (getSessionError || !sessionData.session) {
+          console.error("getSession after login failed:", getSessionError);
+          setError("Login gelukt, maar browser-sessie kon niet worden hersteld.");
+          setIsLoading(false);
+          return;
+        }
       }
 
       router.push("/admin");

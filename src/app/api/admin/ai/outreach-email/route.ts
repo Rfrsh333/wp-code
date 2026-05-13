@@ -6,6 +6,7 @@ import { generateOutreachEmail } from "@/lib/agents/outreach-email";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { sendEmail } from "@/lib/email-service";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { determineFollowUpPlan } from "@/lib/acquisitie/follow-up";
 
 export async function POST(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -69,6 +70,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Lead heeft geen email adres" }, { status: 400 });
       }
 
+      const followUp = determineFollowUpPlan({
+        type: "email",
+        richting: "uitgaand",
+        lead,
+      });
+
       const { data: emailResult, error: emailError } = await sendEmail({
         from: "TopTalent Jobs <info@toptalentjobs.nl>",
         to: [lead.email],
@@ -92,6 +99,8 @@ export async function POST(request: NextRequest) {
         onderwerp: onderwerp || `Outreach email`,
         inhoud: email_content,
         email_id: emailResult?.id || null,
+        follow_up_due_at: followUp?.nextDate || null,
+        follow_up_reason: followUp?.reason || null,
       });
 
       // Update lead
@@ -102,7 +111,12 @@ export async function POST(request: NextRequest) {
           laatste_email_verzonden_op: new Date().toISOString(),
           laatste_contact_datum: new Date().toISOString(),
           laatste_contact_type: "email",
+          laatste_uitgaande_contact_datum: new Date().toISOString(),
           pipeline_stage: lead.pipeline_stage === "nieuw" ? "benaderd" : lead.pipeline_stage,
+          auto_sequence_next_action: followUp?.nextAction || null,
+          auto_sequence_next_date: followUp?.nextDate || null,
+          volgende_actie_datum: followUp?.nextDate ? followUp.nextDate.split("T")[0] : null,
+          volgende_actie_notitie: followUp?.reason || null,
         })
         .eq("id", lead.id);
 

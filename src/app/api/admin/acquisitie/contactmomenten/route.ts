@@ -3,6 +3,11 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { determineFollowUpPlan } from "@/lib/acquisitie/follow-up";
+
+const ALLOWED_TYPES = ["email", "telefoon", "whatsapp", "bezoek", "instagram_dm", "linkedin_dm", "facebook_dm", "meeting"] as const;
+const ALLOWED_RICHTINGEN = ["uitgaand", "inkomend"] as const;
+const ALLOWED_RESULTATEN = ["positief", "neutraal", "negatief", "geen_antwoord", "voicemail"] as const;
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -49,6 +54,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!ALLOWED_TYPES.includes(body.type)) {
+      return NextResponse.json({ error: "Ongeldig contacttype" }, { status: 400 });
+    }
+
+    if (!ALLOWED_RICHTINGEN.includes(body.richting)) {
+      return NextResponse.json({ error: "Ongeldige richting" }, { status: 400 });
+    }
+
+    if (body.resultaat && !ALLOWED_RESULTATEN.includes(body.resultaat)) {
+      return NextResponse.json({ error: "Ongeldig resultaat" }, { status: 400 });
+    }
+
+    const { data: lead } = await supabaseAdmin
+      .from("acquisitie_leads")
+      .select("id, bedrijfsnaam, telefoon, email, instagram_handle, linkedin_url, facebook_url, pipeline_stage, engagement_score, emails_verzonden_count")
+      .eq("id", body.lead_id)
+      .single();
+
+    if (!lead) {
+      return NextResponse.json({ error: "Lead niet gevonden" }, { status: 404 });
+    }
+
+    const followUp = determineFollowUpPlan({
+      type: body.type,
+      richting: body.richting,
+      resultaat: body.resultaat || null,
+      lead,
+    });
+
     // Insert contactmoment
     const { data: contactmoment, error } = await supabaseAdmin
       .from("acquisitie_contactmomenten")
@@ -60,6 +94,10 @@ export async function POST(request: NextRequest) {
         inhoud: body.inhoud || null,
         resultaat: body.resultaat || null,
         email_id: body.email_id || null,
+        externe_message_id: body.externe_message_id || null,
+        metadata: body.metadata || {},
+        follow_up_due_at: followUp?.nextDate || null,
+        follow_up_reason: followUp?.reason || null,
       })
       .select()
       .single();
@@ -69,12 +107,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Engagement score bijwerken
-    const { data: currentLead } = await supabaseAdmin
-      .from("acquisitie_leads")
-      .select("engagement_score")
-      .eq("id", body.lead_id)
-      .single();
-
     const engagementDelta =
       body.resultaat === "positief" ? 40 :
       body.resultaat === "neutraal" ? 10 :
@@ -88,8 +120,22 @@ export async function POST(request: NextRequest) {
     const updateData: Record<string, unknown> = {
       laatste_contact_datum: new Date().toISOString(),
       laatste_contact_type: body.type,
-      engagement_score: Math.max(0, (currentLead?.engagement_score || 0) + engagementDelta),
+      engagement_score: Math.max(0, (lead.engagement_score || 0) + engagementDelta),
     };
+
+    if (body.richting === "uitgaand") {
+      updateData.laatste_uitgaande_contact_datum = new Date().toISOString();
+    }
+    if (body.richting === "inkomend") {
+      updateData.laatste_inkomende_contact_datum = new Date().toISOString();
+    }
+
+    if (followUp) {
+      updateData.auto_sequence_next_action = followUp.nextAction;
+      updateData.auto_sequence_next_date = followUp.nextDate;
+      updateData.volgende_actie_datum = followUp.nextDate.split("T")[0];
+      updateData.volgende_actie_notitie = followUp.reason;
+    }
 
     // Auto-stage progressie
     if (body.resultaat === "positief" && body.richting === "inkomend") {
@@ -111,13 +157,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.type === "email" && body.richting === "uitgaand") {
-      // Increment emails count
-      const { data: lead } = await supabaseAdmin
-        .from("acquisitie_leads")
-        .select("emails_verzonden_count, pipeline_stage")
-        .eq("id", body.lead_id)
-        .single();
-
       if (lead) {
         updateData.emails_verzonden_count = (lead.emails_verzonden_count || 0) + 1;
         updateData.laatste_email_verzonden_op = new Date().toISOString();
@@ -131,6 +170,17 @@ export async function POST(request: NextRequest) {
       .from("acquisitie_leads")
       .update(updateData)
       .eq("id", body.lead_id);
+
+    if (followUp) {
+      await sendTelegramAlert(
+        `🗓️ <b>Follow-up ingepland</b>\n\n` +
+        `Bedrijf: ${lead.bedrijfsnaam}\n` +
+        `Kanaal: ${body.type}\n` +
+        `Volgende stap: ${followUp.nextAction}\n` +
+        `Wanneer: ${new Date(followUp.nextDate).toLocaleDateString("nl-NL")}\n\n` +
+        `${followUp.reason}`
+      );
+    }
 
     return NextResponse.json({ data: contactmoment }, { status: 201 });
   } catch (error) {

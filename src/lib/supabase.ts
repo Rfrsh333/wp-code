@@ -51,6 +51,14 @@ function getSupabaseAdminClient(): SupabaseClient {
   return _supabaseAdmin;
 }
 
+function createServerOnlyStub(prop: PropertyKey) {
+  return () => {
+    throw new Error(
+      `[SECURITY] supabaseAdmin is server-only. Attempted to access "${String(prop)}" in a client context.`
+    );
+  };
+}
+
 // Public client (beperkte toegang)
 export const supabase = new Proxy({} as SupabaseClient, {
   get(target, prop) {
@@ -63,6 +71,14 @@ export const supabase = new Proxy({} as SupabaseClient, {
 // Admin client (volledige toegang - alleen server-side)
 export const supabaseAdmin = new Proxy({} as SupabaseClient, {
   get(target, prop) {
+    if (typeof window !== "undefined") {
+      // Turbopack/React can touch exports during client module evaluation.
+      // Return a stub so we don't try to resolve the service role key in the browser.
+      if (prop === "__esModule" || prop === "$$typeof" || prop === Symbol.toStringTag) {
+        return undefined;
+      }
+      return createServerOnlyStub(prop);
+    }
     const client = getSupabaseAdminClient();
     const value = client[prop as keyof SupabaseClient];
     return typeof value === 'function' ? value.bind(client) : value;

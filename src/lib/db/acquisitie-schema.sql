@@ -7,13 +7,23 @@
 CREATE TABLE IF NOT EXISTS acquisitie_leads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bedrijfsnaam VARCHAR(255) NOT NULL,
+  normalized_bedrijfsnaam VARCHAR(255),
   contactpersoon VARCHAR(255),
   email VARCHAR(255),
+  normalized_email VARCHAR(255),
   telefoon VARCHAR(50),
+  normalized_phone VARCHAR(50),
   website VARCHAR(500),
+  website_domain VARCHAR(255),
   adres TEXT,
   stad VARCHAR(100),
   branche VARCHAR(100),
+  instagram_handle VARCHAR(255),
+  linkedin_url VARCHAR(500),
+  facebook_url VARCHAR(500),
+  duplicate_of_lead_id UUID REFERENCES acquisitie_leads(id) ON DELETE SET NULL,
+  duplicate_confidence INTEGER,
+  duplicate_reason TEXT,
   tags TEXT[] DEFAULT '{}',
   pipeline_stage VARCHAR(50) DEFAULT 'nieuw',
   ai_score INTEGER,
@@ -24,6 +34,9 @@ CREATE TABLE IF NOT EXISTS acquisitie_leads (
   laatste_email_geopend_op TIMESTAMPTZ,
   laatste_contact_datum TIMESTAMPTZ,
   laatste_contact_type VARCHAR(50),
+  laatste_uitgaande_contact_datum TIMESTAMPTZ,
+  laatste_inkomende_contact_datum TIMESTAMPTZ,
+  last_follow_up_reminder_at TIMESTAMPTZ,
   volgende_actie_datum DATE,
   volgende_actie_notitie TEXT,
   pain_points JSONB DEFAULT '{}',
@@ -34,7 +47,7 @@ CREATE TABLE IF NOT EXISTS acquisitie_leads (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
 
-  CONSTRAINT acquisitie_leads_email_unique UNIQUE (email),
+  CONSTRAINT acquisitie_leads_email_unique UNIQUE (normalized_email),
   CONSTRAINT acquisitie_leads_pipeline_stage_check CHECK (
     pipeline_stage IN ('nieuw', 'benaderd', 'interesse', 'offerte', 'klant', 'afgewezen')
   ),
@@ -55,6 +68,10 @@ CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_volgende_actie ON acquisitie_lea
 CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_bron ON acquisitie_leads(bron);
 CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_created ON acquisitie_leads(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_bedrijfsnaam ON acquisitie_leads(bedrijfsnaam);
+CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_normalized_phone ON acquisitie_leads(normalized_phone) WHERE normalized_phone IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_domain ON acquisitie_leads(website_domain) WHERE website_domain IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_instagram ON acquisitie_leads(instagram_handle) WHERE instagram_handle IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_acquisitie_leads_linkedin ON acquisitie_leads(linkedin_url) WHERE linkedin_url IS NOT NULL;
 
 -- Updated_at trigger
 CREATE OR REPLACE FUNCTION update_acquisitie_updated_at()
@@ -82,10 +99,15 @@ CREATE TABLE IF NOT EXISTS acquisitie_contactmomenten (
   inhoud TEXT,
   resultaat VARCHAR(50),
   email_id VARCHAR(255),
+  externe_message_id VARCHAR(255),
+  metadata JSONB DEFAULT '{}'::jsonb,
+  follow_up_due_at TIMESTAMPTZ,
+  follow_up_reason TEXT,
+  follow_up_completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT now(),
 
   CONSTRAINT contactmomenten_type_check CHECK (
-    type IN ('email', 'telefoon', 'whatsapp', 'bezoek')
+    type IN ('email', 'telefoon', 'whatsapp', 'bezoek', 'instagram_dm', 'linkedin_dm', 'facebook_dm', 'meeting')
   ),
   CONSTRAINT contactmomenten_richting_check CHECK (
     richting IN ('uitgaand', 'inkomend')
@@ -98,6 +120,7 @@ CREATE TABLE IF NOT EXISTS acquisitie_contactmomenten (
 CREATE INDEX IF NOT EXISTS idx_contactmomenten_lead ON acquisitie_contactmomenten(lead_id);
 CREATE INDEX IF NOT EXISTS idx_contactmomenten_created ON acquisitie_contactmomenten(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_contactmomenten_type ON acquisitie_contactmomenten(type);
+CREATE INDEX IF NOT EXISTS idx_contactmomenten_follow_up_due ON acquisitie_contactmomenten(follow_up_due_at) WHERE follow_up_due_at IS NOT NULL;
 
 -- ============================================
 -- 3. ACQUISITIE CAMPAGNES

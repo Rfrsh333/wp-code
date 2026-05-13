@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 async function calculateAndSaveNextAction(leadId: string, returnResponse = true) {
   // Haal lead + contactmomenten op
   const [leadRes, contactRes] = await Promise.all([
-    supabaseAdmin.from("acquisitie_leads").select("bedrijfsnaam, contactpersoon, branche, stad, email, telefoon, pipeline_stage, ai_score, engagement_score, emails_verzonden_count, laatste_contact_datum, laatste_contact_type, created_at, auto_sequence_paused_until, auto_sequence_history").eq("id", leadId).single(),
+    supabaseAdmin.from("acquisitie_leads").select("bedrijfsnaam, contactpersoon, branche, stad, email, telefoon, instagram_handle, linkedin_url, pipeline_stage, ai_score, engagement_score, emails_verzonden_count, laatste_contact_datum, laatste_contact_type, created_at, auto_sequence_paused_until, auto_sequence_history").eq("id", leadId).single(),
     supabaseAdmin
       .from("acquisitie_contactmomenten")
       .select("type, richting, resultaat, created_at")
@@ -200,6 +200,8 @@ async function calculateAndSaveNextAction(leadId: string, returnResponse = true)
     stad: lead.stad,
     email: lead.email,
     telefoon: lead.telefoon,
+    instagram_handle: lead.instagram_handle,
+    linkedin_url: lead.linkedin_url,
     pipeline_stage: lead.pipeline_stage,
     ai_score: lead.ai_score,
     engagement_score: lead.engagement_score || 0,
@@ -228,6 +230,9 @@ async function calculateAndSaveNextAction(leadId: string, returnResponse = true)
     email: `Email sturen (${result.email_type || "follow-up"})`,
     bel: "Bellen",
     whatsapp: "WhatsApp sturen",
+    linkedin_dm: "LinkedIn DM sturen",
+    instagram_dm: "Instagram DM sturen",
+    meeting: "Meeting inplannen",
     wacht: `Wachten (${result.wacht_dagen || 3} dagen)`,
     parkeer: `Geparkeerd (${result.wacht_dagen || 30} dagen)`,
   }[result.action];

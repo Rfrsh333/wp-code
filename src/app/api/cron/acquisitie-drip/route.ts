@@ -188,6 +188,9 @@ export async function GET(request: NextRequest) {
               email: `Email sturen (${result.email_type || "follow-up"})`,
               bel: "Bellen",
               whatsapp: "WhatsApp sturen",
+              linkedin_dm: "LinkedIn DM sturen",
+              instagram_dm: "Instagram DM sturen",
+              meeting: "Meeting inplannen",
               wacht: `Wachten (${result.wacht_dagen || 3} dagen)`,
               parkeer: `Geparkeerd (${result.wacht_dagen || 30} dagen)`,
             }[result.action];

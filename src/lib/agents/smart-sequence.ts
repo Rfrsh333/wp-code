@@ -1,7 +1,7 @@
 import { chatCompletion, type ChatMessage } from "@/lib/openai";
 
 export interface NextActionResult {
-  action: "email" | "bel" | "whatsapp" | "wacht" | "parkeer";
+  action: "email" | "bel" | "whatsapp" | "linkedin_dm" | "instagram_dm" | "meeting" | "wacht" | "parkeer";
   reden: string;
   template_suggestie?: string;
   wacht_dagen?: number;
@@ -16,6 +16,8 @@ interface LeadContext {
   stad: string | null;
   email: string | null;
   telefoon: string | null;
+  instagram_handle?: string | null;
+  linkedin_url?: string | null;
   pipeline_stage: string;
   ai_score: number | null;
   engagement_score: number;
@@ -40,12 +42,14 @@ Regels:
 2. Na een geopende email: bel binnen 24 uur (als telefoon beschikbaar)
 3. Na positief telefoongesprek: stuur offerte-email
 4. Na voicemail: wacht 1 dag, stuur dan WhatsApp (of email als geen telefoon)
+4b. Als er geen telefoon is maar wel Instagram/LinkedIn, gebruik DM als follow-up kanaal
 5. Na 3x geen reactie op email: parkeer lead voor 30 dagen
 6. Na 2x geen antwoord telefoon: probeer WhatsApp of email met andere insteek
 7. Nieuwe lead met hoge score (>70): direct bellen is prioriteit
 8. Nieuwe lead met lagere score: start met email
 9. Als lead al in "interesse" of "offerte": focus op bellen en persoonlijk contact
 10. Houd rekening met het seizoen (maart-september = terrasseizoen = urgenter)
+11. Na een positieve inkomende reactie is een meeting of belafspraak vaak beter dan nog een extra bericht
 
 Kanaal voorkeur per branche:
 - Restaurants/cafes: telefoon overdag (10-11u of 14-15u, buiten lunch/diner)
@@ -55,7 +59,7 @@ Kanaal voorkeur per branche:
 
 Antwoord ALTIJD in exact dit JSON format:
 {
-  "action": "email" | "bel" | "whatsapp" | "wacht" | "parkeer",
+  "action": "email" | "bel" | "whatsapp" | "linkedin_dm" | "instagram_dm" | "meeting" | "wacht" | "parkeer",
   "reden": "<korte uitleg waarom deze actie>",
   "template_suggestie": "<optioneel: korte suggestie voor de boodschap>",
   "wacht_dagen": <optioneel: aantal dagen wachten>,
@@ -96,6 +100,8 @@ Lead profiel:
 - Stad: ${context.stad || "onbekend"}
 - Email: ${context.email ? "beschikbaar" : "NIET beschikbaar"}
 - Telefoon: ${context.telefoon ? "beschikbaar" : "NIET beschikbaar"}
+- Instagram: ${context.instagram_handle ? "beschikbaar" : "niet beschikbaar"}
+- LinkedIn: ${context.linkedin_url ? "beschikbaar" : "niet beschikbaar"}
 - Pipeline stage: ${context.pipeline_stage}
 - AI Score: ${context.ai_score || "niet gescoord"}
 - Engagement Score: ${context.engagement_score}
@@ -130,7 +136,7 @@ Bepaal de beste volgende actie.`;
     const result = JSON.parse(cleaned) as NextActionResult;
 
     // Validatie
-    if (!["email", "bel", "whatsapp", "wacht", "parkeer"].includes(result.action)) {
+    if (!["email", "bel", "whatsapp", "linkedin_dm", "instagram_dm", "meeting", "wacht", "parkeer"].includes(result.action)) {
       result.action = "email";
     }
     if (!["hoog", "normaal", "laag"].includes(result.prioriteit)) {
@@ -162,6 +168,12 @@ function fallbackNextAction(
     if (context.telefoon) {
       return { action: "bel", reden: "Geen email beschikbaar, bellen is enige optie.", prioriteit: "normaal" };
     }
+    if (context.instagram_handle) {
+      return { action: "instagram_dm", reden: "Geen email of telefoon beschikbaar, start met Instagram DM.", prioriteit: "normaal" };
+    }
+    if (context.linkedin_url) {
+      return { action: "linkedin_dm", reden: "Geen email of telefoon beschikbaar, start met LinkedIn DM.", prioriteit: "normaal" };
+    }
     return { action: "parkeer", reden: "Geen contactgegevens beschikbaar.", wacht_dagen: 30, prioriteit: "laag" };
   }
 
@@ -183,6 +195,14 @@ function fallbackNextAction(
   // Probeer te bellen
   if (context.telefoon && belPogingen < 2) {
     return { action: "bel", reden: "Probeer telefonisch contact.", prioriteit: "normaal" };
+  }
+
+  if (context.instagram_handle) {
+    return { action: "instagram_dm", reden: "Wissel naar Instagram voor een persoonlijkere follow-up.", prioriteit: "normaal" };
+  }
+
+  if (context.linkedin_url) {
+    return { action: "linkedin_dm", reden: "Wissel naar LinkedIn voor een zakelijke follow-up.", prioriteit: "normaal" };
   }
 
   return { action: "email", reden: "Standaard follow-up.", email_type: "follow_up", prioriteit: "normaal" };
