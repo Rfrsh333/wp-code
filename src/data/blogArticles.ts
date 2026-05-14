@@ -4525,6 +4525,709 @@ export const blogArticles: Record<string, BlogArticle> = {
         variant: "dark"
       }
     ]
+  },
+
+  // ============================================================
+  // ARTICLE 21: Kok inhuren tips
+  // ============================================================
+  "kok-inhuren-tips": {
+    title: "Kok inhuren: waar let u op bij tijdelijk keukenpersoneel?",
+    metaTitle: "Kok inhuren | Tips voor tijdelijk keukenpersoneel",
+    excerpt: "Tijdelijk een kok inhuren voor uw restaurant, evenement of catering? Waar let u op bij selectie, briefing en samenwerking? Praktische tips.",
+    category: "Functies",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-horecapersoneel-inhuren.jpg",
+    relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "horecapersoneel-kosten-per-uur"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Een kok inhuren is niet hetzelfde als een bedieningsmedewerker inhuren. De keuken is het hart van uw zaak en een mismatch is direct voelbaar: in de kwaliteit van de gerechten, het tempo van de service en de sfeer in het team."
+      },
+      {
+        type: "paragraph",
+        content: "Toch zijn er veel situaties waarin tijdelijk keukenpersoneel de beste oplossing is. In dit artikel bespreken wij waar u op moet letten bij het inhuren van een kok — van selectie tot samenwerking op de werkvloer."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wanneer huurt u een kok in?"
+      },
+      {
+        type: "paragraph",
+        content: "De meest voorkomende situaties waarin horecaondernemers tijdelijk keukenpersoneel zoeken:"
+      },
+      {
+        type: "checklist",
+        title: "Typische scenario's",
+        variant: "checklist",
+        items: [
+          { text: "Uw vaste kok is ziek of op vakantie en u heeft een vervanging nodig", checked: true },
+          { text: "U heeft een groot evenement, catering of banquet waarvoor extra keukencapaciteit nodig is", checked: true },
+          { text: "Uw zaak is in een opstartfase en u wilt eerst flexibel keukenpersoneel testen", checked: true },
+          { text: "U zoekt een specifiek profiel (patissier, wok-kok, sushi) dat u niet in huis heeft", checked: true },
+          { text: "Seizoensdrukte: terrasperiode, feestdagen of zomerseizoen vragen om extra capaciteit", checked: true }
+        ]
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Waar let u op bij de selectie?"
+      },
+      {
+        type: "paragraph",
+        content: "Niet elke kok past in elke keuken. De selectie van tijdelijk keukenpersoneel vraagt om specifieke aandacht voor de volgende punten:"
+      },
+      {
+        type: "heading3",
+        content: "Niveau en ervaring"
+      },
+      {
+        type: "paragraph",
+        content: "Wees helder over het niveau dat u zoekt. Een zelfstandig werkend kok die een keuken kan aansturen is een ander profiel dan een commis die ondersteunt. Geef bij uw aanvraag aan welk niveau u nodig heeft en welk type gerechten bereid moet worden."
+      },
+      {
+        type: "heading3",
+        content: "Type keuken"
+      },
+      {
+        type: "paragraph",
+        content: "Een kok met ervaring in een bistro werkt anders dan een kok uit een fine dining keuken of een cateringomgeving. Hoe beter het profiel aansluit bij uw keukenstijl, hoe sneller de kok productief is."
+      },
+      {
+        type: "heading3",
+        content: "Zelfstandigheid"
+      },
+      {
+        type: "paragraph",
+        content: "Een tijdelijke kok heeft minder tijd om ingewerkt te worden. Zoek iemand die zelfstandig kan werken, initiatief neemt en snel kan schakelen. Ervaren uitzendkrachten in de keuken zijn hier doorgaans goed in: zij zijn gewend om in wisselende omgevingen te functioneren."
+      },
+      {
+        type: "heading3",
+        content: "Hygiëne en certificeringen"
+      },
+      {
+        type: "paragraph",
+        content: "Controleer of de kok beschikt over actuele kennis van voedselveiligheid. Veel uitzendbureaus screenen hier standaard op. Bij specifieke eisen — zoals allergenenbeheer of HACCP-kennis — geeft u dit bij uw aanvraag aan."
+      },
+      {
+        type: "relatedLink",
+        href: "/functies/kok-inhuren",
+        text: "Bekijk ons aanbod koks en keukenpersoneel"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "De briefing: cruciaal voor een goede start"
+      },
+      {
+        type: "paragraph",
+        content: "Een goede briefing maakt het verschil tussen een stressvolle en een soepele dienst. Neem bij aankomst van de tijdelijke kok de tijd voor het volgende:"
+      },
+      {
+        type: "checklist",
+        title: "Briefing-checklist keukenpersoneel",
+        variant: "steps",
+        items: [
+          { text: "**Menukaart en mise en place** — Loop de kaart door, wijs de mise en place aan en bespreek eventuele dagspecials" },
+          { text: "**Werkplekindeling** — Waar staat wat? Welke apparatuur wordt gebruikt? Waar zijn de voorraadruimtes?" },
+          { text: "**Allergenen en dieetwensen** — Hoe gaat uw keuken om met allergenen? Zijn er vaste protocollen?" },
+          { text: "**Teamrollen** — Stel de kok voor aan het keukenteam en bespreek wie welke sectie doet" },
+          { text: "**Huisregels** — Dresscode, pauzetijden, rookbeleid, telefoongebruik" },
+          { text: "**Verwachtingen** — Tempo, kwaliteitsstandaard, presentatie van gerechten" }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Bereid een briefingsheet voor",
+        content: "Maak een beknopt A4-document met uw menukaart, werkplekindeling, huisregels en contactpersonen. Dit bespaart tijd bij elke nieuwe inval-kok en voorkomt herhaalde vragen."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Kosten van een tijdelijke kok"
+      },
+      {
+        type: "paragraph",
+        content: "De kosten variëren sterk per niveau en ervaringsjaren:"
+      },
+      {
+        type: "priceTable",
+        title: "Indicatie uurtarieven keukenpersoneel · uitzendkrachten 2025",
+        rows: [
+          { item: "Afwasser / keukenhulp", price: "€22 – €28", note: "per uur" },
+          { item: "Commis / hulpkok", price: "€24 – €32", note: "per uur" },
+          { item: "Zelfstandig werkend kok", price: "€30 – €42", note: "per uur" },
+          { item: "Sous-chef", price: "€35 – €48", note: "per uur" },
+          { item: "Chef-kok (interim)", price: "€40 – €55", note: "per uur" }
+        ],
+        footer: "All-in tarieven via uitzendbureau, inclusief loon, premies en administratie. Toeslagen voor avond/weekend komen hier bovenop."
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken de kosten voor keukenpersoneel in uw situatie"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Uitzendbureau vs. zelf zoeken"
+      },
+      {
+        type: "paragraph",
+        content: "U kunt zelf een kok zoeken via uw netwerk of via vacatureplatforms. Het voordeel: u kiest zelf. Het nadeel: het kost tijd, de screening ligt bij u, en bij een mismatch of no-show staat u er alleen voor."
+      },
+      {
+        type: "paragraph",
+        content: "Een gespecialiseerd horeca-uitzendbureau heeft een pool van gescreende koks die direct inzetbaar zijn. Bij een mismatch of uitval regelt het bureau vervanging. U betaalt een hoger uurtarief, maar de risico's en administratie liggen bij het bureau."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Hoe uitzenden van keukenpersoneel werkt"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Hoe snel kan ik een kok inhuren?"
+      },
+      {
+        type: "paragraph",
+        content: "Via een uitzendbureau met een actieve keukenpool vaak binnen 24 uur. Voor gespecialiseerde functies zoals een sous-chef of patissier kan het iets langer duren, afhankelijk van beschikbaarheid."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik een kok eerst een proefdraaien laten doen?"
+      },
+      {
+        type: "paragraph",
+        content: "Bij uitzenden is de eerste dienst in feite al een proef. Voldoet de kok niet, dan regelt het bureau een vervanging. U zit nergens aan vast. Bij detachering wordt doorgaans een evaluatieperiode afgesproken."
+      },
+      {
+        type: "heading3",
+        content: "Wat als de kok mijn keuken niet kent?"
+      },
+      {
+        type: "paragraph",
+        content: "Ervaren uitzendkoks zijn gewend snel mee te draaien in nieuwe keukens. Een goede briefing is essentieel — maar een kok met horecaervaring via een uitzendbureau heeft doorgaans maar 15–30 minuten nodig om productief te zijn."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik ook een kok inhuren voor een eenmalig evenement?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Veel koks via een uitzendbureau zijn beschikbaar voor eenmalige inzet: catering, bedrijfsevenementen, bruiloften of pop-up diners. Geef bij uw aanvraag het type evenement en het verwachte aantal gasten aan."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Een kok inhuren vraagt om specifieke aandacht voor niveau, keukenstijl en zelfstandigheid",
+          "Een goede briefing bij aankomst voorkomt fouten en versnelt de productiviteit",
+          "Tarieven variëren van €22 (keukenhulp) tot €55 (interim chef-kok) per uur all-in",
+          "Via een uitzendbureau is vervanging bij mismatch of uitval geregeld",
+          "Maak een briefingsheet voor uw keuken — het bespaart tijd bij elke nieuwe kok"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Kok nodig voor uw keuken?",
+        description: "Van keukenhulp tot interim chef-kok. Wij leveren gescreend keukenpersoneel dat snel meedraait in uw keuken.",
+        primaryLink: { href: "/functies/kok-inhuren", text: "Kok inhuren" },
+        secondaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 22: Horecapersoneel Rotterdam
+  // ============================================================
+  "horecapersoneel-rotterdam": {
+    title: "Horecapersoneel Rotterdam: markt, piekmomenten en beschikbaarheid",
+    metaTitle: "Horecapersoneel Rotterdam | Markt & tips",
+    excerpt: "Horecapersoneel zoeken in Rotterdam? Overzicht van de lokale arbeidsmarkt, piekmomenten, tarieven en tips voor ondernemers in de Maasstad.",
+    category: "Lokaal",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelstekort.jpg",
+    relatedSlugs: ["horecapersoneel-amsterdam", "personeelstekort-horeca-oplossen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Rotterdam heeft zich de afgelopen jaren ontwikkeld tot een van de meest dynamische horecalandschappen van Nederland. Van de Markthal tot de Witte de Withstraat, van Katendrecht tot de Kop van Zuid — de Rotterdamse horeca groeit, en daarmee de vraag naar personeel."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel geven wij een overzicht van de horecaarbeidsmarkt in Rotterdam: welke trends spelen er, wanneer zijn de piekmomenten, en hoe vindt u betrouwbaar personeel?"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "De Rotterdamse horecamarkt"
+      },
+      {
+        type: "paragraph",
+        content: "Rotterdam verschilt op een aantal punten van Amsterdam en andere grote steden:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Groeiende markt** — Nieuwe horecaconcepten openen regelmatig, met name in opkomende wijken als Katendrecht, M4H-gebied en Kralingen",
+          "**Havenstad-dynamiek** — De haven en zakelijke evenementen (Ahoy, World Trade Center) creëren specifieke vraag naar catering- en evenementenpersoneel",
+          "**Betaalbaarder dan Amsterdam** — De lagere levenskosten trekken horecamedewerkers die in Amsterdam niet meer willen of kunnen wonen",
+          "**Diverse keukens** — Rotterdam staat bekend om culinaire diversiteit: Surinaams, Turks, Aziatisch, fusion — dit vraagt om koks met specifieke keukenvaardigheid",
+          "**Sterke evenementenkalender** — North Sea Jazz, Wereldhavendagen, Rotterdam Unlimited en IFFR creëren seizoenspieken"
+        ]
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Piekmomenten in Rotterdam"
+      },
+      {
+        type: "paragraph",
+        content: "De vraag naar horecapersoneel fluctueert door het jaar. Kennis van de Rotterdamse piekmomenten helpt u vooruit te plannen:"
+      },
+      {
+        type: "timeline",
+        title: "Seizoenspatroon Rotterdam",
+        steps: [
+          { title: "Januari – maart", description: "Relatief rustig na de feestdagen. Goed moment om een vaste samenwerking met een uitzendbureau op te bouwen en uw flexpool samen te stellen." },
+          { title: "April – mei", description: "Terrasdrukte neemt toe. Koningsdag (27 april) is een eerste piek. Bediening en bar zijn het meest gevraagd." },
+          { title: "Juni – juli", description: "North Sea Jazz (juli) en zomerdrukte zorgen voor hoge vraag. Evenementenpersoneel en koks zijn schaars. Vroegtijdig boeken is essentieel." },
+          { title: "Augustus – september", description: "Wereldhavendagen en terugkeer uit vakantieperiode. De markt trekt weer aan na een korte zomerdip in reguliere horeca." },
+          { title: "Oktober – december", description: "Congresperiode, bedrijfsfeesten en kerstdiners. Ahoy-evenementen creëren grote vraag naar catering- en bedienpersoneel." }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Plan per kwartaal",
+        content: "Rotterdamse horecaondernemers die per kwartaal hun personeelsbehoefte in kaart brengen, ervaren minder stress bij piekdrukte. Combineer uw eigen reserveringsdata met het lokale evenementenkalender."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tarieven in Rotterdam"
+      },
+      {
+        type: "paragraph",
+        content: "De tarieven in Rotterdam liggen iets onder het Amsterdamse niveau, maar boven het landelijk gemiddelde. De Maasstad trekt steeds meer horecatalent, wat de markt competitiever maakt."
+      },
+      {
+        type: "priceTable",
+        title: "Indicatie uurtarieven Rotterdam · uitzendkrachten 2025",
+        rows: [
+          { item: "Bedieningsmedewerker", price: "€25 – €33", note: "per uur" },
+          { item: "Bartender", price: "€26 – €35", note: "per uur" },
+          { item: "Zelfstandig werkend kok", price: "€30 – €43", note: "per uur" },
+          { item: "Afwasser / keukenhulp", price: "€22 – €28", note: "per uur" },
+          { item: "Evenementenmedewerker", price: "€26 – €36", note: "per uur" }
+        ],
+        footer: "All-in tarieven via uitzendbureau. Toeslagen voor avond, weekend en feestdagen conform CAO Horeca."
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken de kosten voor uw situatie in Rotterdam"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Hoe vindt u horecapersoneel in Rotterdam?"
+      },
+      {
+        type: "paragraph",
+        content: "De Rotterdamse markt heeft eigen kenmerken die uw wervingsstrategie beïnvloeden:"
+      },
+      {
+        type: "checklist",
+        title: "Effectieve aanpakken",
+        variant: "steps",
+        items: [
+          { text: "**Horeca-uitzendbureau met lokale pool** — Een bureau dat Rotterdam kent en medewerkers heeft die de stad en de typen zaak kennen" },
+          { text: "**ROC en hotelscholen** — Rotterdam heeft sterke horecaopleidingen. Stages en bijbanen zijn een goede pipeline voor jong talent" },
+          { text: "**Netwerk in de wijk** — Rotterdamse horeca is wijkgebonden. Katendrecht-ondernemers delen soms personeel; de Witte de Withstraat heeft een eigen dynamiek" },
+          { text: "**Meertalig werven** — Net als Amsterdam heeft Rotterdam een internationaal personeelsbestand. Engelstalige en meertalige wervingskanalen verbreden uw bereik" }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/locaties/rotterdam",
+        text: "Horecapersoneel in Rotterdam via TopTalent Jobs"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tips voor Rotterdamse horecaondernemers"
+      },
+      {
+        type: "list",
+        items: [
+          "**Bied reiskostenvergoeding** — Veel horecamedewerkers wonen buiten Rotterdam-centrum. Een reiskostenvergoeding of OV-vergoeding maakt uw zaak aantrekkelijker",
+          "**Benadruk uw concept** — Rotterdam staat bekend om vernieuwende concepten. Medewerkers kiezen bewust voor zaken met een duidelijke identiteit",
+          "**Investeer in uw team** — Rotterdamse horecamedewerkers waarderen werkgevers die investeren in ontwikkeling: trainingen, barista-cursussen, wijncertificaten",
+          "**Maak gebruik van evenementen** — Grote evenementen als North Sea Jazz trekken tijdelijk extra horecatalent naar de stad. Benader deze medewerkers voor structurele inzet"
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/personeelstekort-horeca-oplossen",
+        text: "Meer strategieën tegen personeelstekort"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Is het makkelijker om personeel te vinden in Rotterdam dan in Amsterdam?"
+      },
+      {
+        type: "paragraph",
+        content: "Over het algemeen is het aanbod in Rotterdam iets ruimer dan in Amsterdam, maar het tekort is ook hier structureel. Het voordeel van Rotterdam: de lagere levenskosten trekken medewerkers die in Amsterdam niet meer willen wonen."
+      },
+      {
+        type: "heading3",
+        content: "Levert TopTalent Jobs ook personeel voor Ahoy-evenementen?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Wij leveren evenementenpersoneel voor locaties in heel Rotterdam, inclusief Ahoy, de Kuip, Depot Boijmans, en kleinere eventlocaties. Geef bij uw aanvraag het type evenement en het verwachte aantal gasten aan."
+      },
+      {
+        type: "heading3",
+        content: "Zijn er veel internationale koks beschikbaar in Rotterdam?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Rotterdam heeft een sterk internationaal horecabestand, met name in de keuken. Turkse, Surinaamse, Aziatische en Zuid-Europese koks zijn goed vertegenwoordigd. Geef bij uw aanvraag aan welke keukenstijl u zoekt."
+      },
+      {
+        type: "heading3",
+        content: "Hoe ver vooruit moet ik personeel reserveren voor North Sea Jazz?"
+      },
+      {
+        type: "paragraph",
+        content: "Minimaal 4–6 weken vooraf. North Sea Jazz is een van de grootste evenementen van het jaar en de vraag naar horecapersoneel is dan extreem hoog. Vroegtijdig contact met een uitzendbureau geeft u de beste kans op voldoende bezetting."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Rotterdam is een groeiende horecamarkt met sterke evenementenpieken",
+          "Tarieven liggen iets onder Amsterdam maar boven het landelijk gemiddelde",
+          "North Sea Jazz, Wereldhavendagen en de decemberperiode zijn de grootste pieken",
+          "Bied reiskostenvergoeding en benadruk uw concept om talent aan te trekken",
+          "Plan per kwartaal en bouw vroegtijdig een flexpool op voor piekdrukte"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Horecapersoneel nodig in Rotterdam?",
+        description: "Wij kennen de Rotterdamse horecamarkt en hebben een lokale pool van gescreende medewerkers. Van Markthal tot Ahoy — wij leveren.",
+        primaryLink: { href: "/locaties/rotterdam", text: "Rotterdam bekijken" },
+        secondaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 23: Horecapersoneel behouden retentie
+  // ============================================================
+  "horecapersoneel-behouden-retentie": {
+    title: "Horecapersoneel behouden: retentietips voor werkgevers",
+    metaTitle: "Horecapersoneel behouden | Retentietips",
+    excerpt: "Hoog verloop in de horeca? Praktische retentietips voor werkgevers om goed personeel te behouden, van onboarding tot waardering.",
+    category: "Management",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelsplanning.jpg",
+    relatedSlugs: ["personeelstekort-horeca-oplossen", "no-shows-horeca-voorkomen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Het personeelstekort in de horeca is een veelbesproken probleem. Maar minstens zo belangrijk als het vinden van personeel is het behouden ervan. Hoog verloop kost geld, energie en kwaliteit — en het versterkt het tekort."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel delen wij concrete retentietips die u als horecaondernemer direct kunt toepassen. Geen theoretische HR-modellen, maar praktische aanpakken die in de dagelijkse horecapraktijk werken."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Waarom verloop in de horeca zo hoog is"
+      },
+      {
+        type: "paragraph",
+        content: "De horeca staat bekend om bovengemiddeld verloop. De oorzaken zijn structureel:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Onregelmatige werktijden** — Avonden, weekenden en feestdagen werken weegt zwaar, zeker bij jonge medewerkers",
+          "**Hoge werkdruk** — Piekmomenten vragen veel van lichaam en geest",
+          "**Beperkte doorgroeimogelijkheden** — Veel medewerkers zien geen pad naar een hogere functie",
+          "**Arbeidsvoorwaarden** — De horeca concurreert met andere sectoren die betere voorwaarden bieden",
+          "**Gebrek aan waardering** — Medewerkers die zich niet gezien voelen, vertrekken sneller"
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "De kosten van verloop",
+        content: "Het vervangen van een horecamedewerker kost naar schatting 50 tot 200% van het maandsalaris aan werving, selectie, inwerken en productiviteitsverlies. Bij een kok of bedrijfsleider kan dit oplopen tot duizenden euro's per vertrek."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tip 1: Investeer in onboarding"
+      },
+      {
+        type: "paragraph",
+        content: "De eerste weken bepalen of een medewerker blijft of vertrekt. Een slechte start is moeilijk te herstellen."
+      },
+      {
+        type: "checklist",
+        title: "Onboarding-checklist",
+        variant: "steps",
+        items: [
+          { text: "**Welkom op de eerste dag** — Stel de medewerker persoonlijk voor aan het team. Geen koude start." },
+          { text: "**Buddy-systeem** — Koppel nieuwe medewerkers aan een ervaren collega die hen begeleidt" },
+          { text: "**Duidelijke verwachtingen** — Bespreek in de eerste week wat u verwacht en wat de medewerker van u kan verwachten" },
+          { text: "**Evalueer na 2 weken** — Een kort gesprek na de inwerkperiode laat zien dat u betrokken bent" }
+        ]
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tip 2: Bied perspectief"
+      },
+      {
+        type: "paragraph",
+        content: "Medewerkers die een toekomst zien in uw zaak, blijven langer. Dat hoeft geen ingewikkeld carrièrepad te zijn:"
+      },
+      {
+        type: "list",
+        items: [
+          "Laat een barmedewerker doorgroeien naar hoofdbar of cocktailspecialist",
+          "Bied een commis de kans om zelfstandig werkend kok te worden",
+          "Geef verantwoordelijkheid: voorraad, sluiting, inwerkbuddy, sociale media",
+          "Investeer in trainingen: barista-cursus, wijncertificaat, leiderschapstraining",
+          "Bespreek ambities — niet iedereen wil doorgroeien, maar iedereen wil gehoord worden"
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/recruitment",
+        text: "Structureel de juiste mensen aantrekken via recruitment"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tip 3: Waardeer actief"
+      },
+      {
+        type: "paragraph",
+        content: "Waardering is de meest onderschatte retentiefactor in de horeca. Het kost niets en levert veel op."
+      },
+      {
+        type: "checklist",
+        title: "Vormen van waardering",
+        variant: "benefits",
+        items: [
+          { text: "Zeg regelmatig dank voor goed werk — specifiek, niet generiek" },
+          { text: "Vier successen: een goed draaiende avond, een compliment van een gast, een persoonlijk record" },
+          { text: "Geef een goede personeelsmaaltijd — het is een klein gebaar met grote impact" },
+          { text: "Organiseer af en toe iets buiten werktijd: borrel, uitje, teamdiner" },
+          { text: "Behandel uitzendkrachten hetzelfde als vaste medewerkers — wie zich buitengesloten voelt, komt niet terug" }
+        ]
+      },
+      {
+        type: "quote",
+        quote: "Medewerkers vergeten wat u zegt. Ze onthouden hoe u hen behandelt.",
+        variant: "highlight"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tip 4: Zorg voor een gezond rooster"
+      },
+      {
+        type: "paragraph",
+        content: "Het rooster is de grootste bron van ontevredenheid in de horeca. Een eerlijk, voorspelbaar rooster verlaagt verloop:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Publiceer op tijd** — Minstens 1 week vooraf, liefst 2 weken",
+          "**Verdeel eerlijk** — Niet altijd dezelfde mensen op de onpopulaire diensten",
+          "**Respecteer vrije dagen** — Als iemand vrij is, is die vrij. Bel niet om te vragen of ze toch kunnen",
+          "**Bied ruilmogelijkheid** — Laat medewerkers onderling diensten ruilen, met goedkeuring",
+          "**Plan pauzes** — Een keuken zonder pauzes is een keuken met hoog verloop"
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/personeelsplanning-horeca-tips",
+        text: "Praktische tips voor een betere personeelsplanning"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tip 5: Luister en reageer"
+      },
+      {
+        type: "paragraph",
+        content: "De meeste vertrekredenen zijn vooraf kenbaar als u de signalen herkent en ernaar vraagt."
+      },
+      {
+        type: "checklist",
+        title: "Luisteren in de praktijk",
+        variant: "steps",
+        items: [
+          { text: "**Periodieke 1-op-1 gesprekken** — Niet alleen bij problemen, maar ook als het goed gaat. Vraag hoe het gaat, wat beter kan, wat zij nodig hebben." },
+          { text: "**Signalen herkennen** — Minder motivatie, vaker te laat, minder initiatief: dit zijn vroege vertrekindicatoren" },
+          { text: "**Actie ondernemen** — Luisteren zonder actie is erger dan niet luisteren. Als iemand aangeeft dat het rooster een probleem is, los het op." },
+          { text: "**Exitgesprekken** — Als iemand toch vertrekt: vraag waarom. Niet om te overtuigen, maar om te leren." }
+        ]
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Retentie van uitzendkrachten"
+      },
+      {
+        type: "paragraph",
+        content: "Ook uitzendkrachten kunt u behouden. Medewerkers die via een uitzendbureau bij u werken en zich gewaardeerd voelen, vragen zelf om teruggeplaatst te worden. Zo bouwt u een vaste flexpool op van mensen die uw zaak kennen."
+      },
+      {
+        type: "paragraph",
+        content: "De beste retentiestrategie voor uitzendkrachten: behandel ze als teamleden, niet als nummers. Geef ze dezelfde briefing, dezelfde personeelsmaaltijd en dezelfde bedanking als uw vaste medewerkers."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Een vaste flexpool opbouwen via uitzenden"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Wat is de gemiddelde verblijfsduur in de horeca?"
+      },
+      {
+        type: "paragraph",
+        content: "Dit verschilt sterk per functie en type zaak. Bediening en barwerk kennen het hoogste verloop — gemiddeld 6 tot 12 maanden. Keukenpersoneel en leidinggevenden blijven doorgaans langer, vooral bij zaken die investeren in ontwikkeling."
+      },
+      {
+        type: "heading3",
+        content: "Helpt een hoger salaris om personeel te behouden?"
+      },
+      {
+        type: "paragraph",
+        content: "Een eerlijk salaris is een basisvoorwaarde, maar geen garantie voor retentie. Onderzoek laat consistent zien dat waardering, werksfeer, doorgroeimogelijkheden en roosterkwaliteit minstens zo belangrijk zijn als beloning."
+      },
+      {
+        type: "heading3",
+        content: "Hoe behoud ik jonge medewerkers?"
+      },
+      {
+        type: "paragraph",
+        content: "Jonge medewerkers hechten veel waarde aan sfeer, flexibiliteit en leermogelijkheden. Bied ze verantwoordelijkheid, luister naar hun ideeën en geef regelmatig feedback. Rigide hiërarchieën werken bij deze groep averechts."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik een uitzendkracht in vaste dienst nemen?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Bij de meeste uitzendbureaus is het mogelijk om een uitzendkracht na een afgesproken periode in vaste dienst te nemen. De voorwaarden worden vooraf vastgelegd. Dit is een veelgebruikte route om een bewezen match vast te leggen."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Verloop in de horeca is hoog, maar grotendeels te beïnvloeden door de werkgever",
+          "Investeer in onboarding: de eerste weken bepalen of een medewerker blijft",
+          "Bied perspectief en doorgroeimogelijkheden, ook in kleine stappen",
+          "Actieve waardering kost niets en is de meest onderschatte retentiefactor",
+          "Een eerlijk rooster, luisteren en actie ondernemen verlagen het verloop structureel"
+        ]
+      },
+      {
+        type: "cta",
+        title: "De juiste mensen vinden én behouden",
+        description: "Recruitment is stap één. Retentie is stap twee. Wij helpen u bij beide: van werving en selectie tot een vaste flexpool die bij uw team past.",
+        primaryLink: { href: "/diensten/recruitment", text: "Recruitment bekijken" },
+        secondaryLink: { href: "/contact", text: "Neem contact op" },
+        variant: "dark"
+      }
+    ]
   }
 };
 

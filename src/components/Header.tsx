@@ -133,9 +133,9 @@ export default function Header() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-[76px] xl:h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center shrink-0">
               <Image
                 src="/logo.png"
                 alt="TopTalent Jobs"
@@ -147,14 +147,17 @@ export default function Header() {
               />
             </Link>
 
+            {/* Divider: logo | nav */}
+            <div className="hidden lg:block w-px h-8 bg-neutral-200 mx-3 xl:mx-5 shrink-0" />
+
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-0 xl:gap-0.5 flex-1 min-w-0">
               <Link
                 href="/"
-                className="px-4 py-2 text-neutral-900 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Home
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <div className="relative" ref={dienstenRef} onMouseEnter={() => setIsDienstenOpen(true)} onMouseLeave={() => setIsDienstenOpen(false)}>
                 <button
@@ -165,10 +168,10 @@ export default function Header() {
                   }}
                   aria-expanded={isDienstenOpen}
                   aria-haspopup="true"
-                  className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1"
+                  className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1"
                 >
                   Diensten
-                  <svg className={`w-4 h-4 transition-transform duration-300 ${isDienstenOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${isDienstenOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -220,128 +223,61 @@ export default function Header() {
               </div>
               <Link
                 href="/over-ons/"
-                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
               >
-                Over Ons
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                Over ons
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
-              <div className="relative" ref={locatiesRef} onMouseEnter={() => setIsLocatiesOpen(true)} onMouseLeave={() => setIsLocatiesOpen(false)}>
-                <button
-                  onClick={() => setIsLocatiesOpen(!isLocatiesOpen)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsLocatiesOpen(!isLocatiesOpen); }
-                    if (e.key === "ArrowDown") { e.preventDefault(); setIsLocatiesOpen(true); }
-                  }}
-                  aria-expanded={isLocatiesOpen}
-                  aria-haspopup="true"
-                  className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1"
-                >
-                  Locaties
-                  <svg className={`w-4 h-4 transition-transform duration-300 ${isLocatiesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className={`absolute left-0 top-full pt-2 transition-all duration-300 ${isLocatiesOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}>
-                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]" role="menu">
-                    <Link
-                      href="/locaties/"
-                      role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                      onClick={closeLocaties}
-                    >
-                      Alle Locaties
-                    </Link>
-                    <div className="border-t border-neutral-100 my-1" />
-                    <Link
-                      href="/locaties/utrecht/"
-                      role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                      onClick={closeLocaties}
-                    >
-                      Utrecht
-                    </Link>
-                    <Link
-                      href="/locaties/amsterdam/"
-                      role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                      onClick={closeLocaties}
-                    >
-                      Amsterdam
-                    </Link>
-                    <Link
-                      href="/locaties/rotterdam/"
-                      role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                      onClick={closeLocaties}
-                    >
-                      Rotterdam
-                    </Link>
-                    <Link
-                      href="/locaties/den-haag/"
-                      role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                      onClick={closeLocaties}
-                    >
-                      Den Haag
-                    </Link>
-                    <Link
-                      href="/locaties/eindhoven/"
-                      role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
-                      onClick={closeLocaties}
-                    >
-                      Eindhoven
-                    </Link>
-                  </div>
-                </div>
-              </div>
               <Link
                 href="/blog/"
-                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Nieuws
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/kosten-calculator/"
-                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Kosten calculator
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/veelgestelde-vragen/"
-                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 FAQ
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/contact/"
-                className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Contact
-                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
             </nav>
 
+            {/* Divider: nav | buttons */}
+            <div className="hidden lg:block w-px h-8 bg-neutral-200 mx-3 xl:mx-5 shrink-0" />
+
             {/* CTA Buttons */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2.5 shrink-0">
               <Link
                 href="/medewerker/login/"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm
-                border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]
+                className="whitespace-nowrap flex items-center gap-2 h-11 px-4 rounded-lg font-medium text-sm
+                border border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]
                 transition-all duration-300"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 Login
               </Link>
               <Link
                 href="/contact/"
-                className="bg-[#F27501] text-white px-6 py-2.5 rounded-lg font-semibold text-sm
-                shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
+                className="whitespace-nowrap h-11 inline-flex items-center bg-[#F27501] text-white px-5 rounded-lg font-semibold text-sm
+                shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30
                 hover:bg-[#d96800] transition-all duration-300"
               >
                 Neem contact op
