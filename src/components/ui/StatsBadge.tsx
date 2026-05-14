@@ -1,5 +1,3 @@
-"use client";
-
 interface StatsBadgeProps {
   label: string;
   value: string;

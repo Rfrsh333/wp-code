@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Users, LayoutGrid, BarChart3, MessageSquare, Bookmark } from 'lucide-react'
-import LeadsTable from '@/components/leads/LeadsTable'
-import LeadsKanban from '@/components/leads/LeadsKanban'
-import LeadsAnalytics from '@/components/leads/LeadsAnalytics'
-import LeadsTemplates from '@/components/leads/LeadsTemplates'
+
+const LeadsTable = dynamic(() => import('@/components/leads/LeadsTable'), { ssr: false })
+const LeadsKanban = dynamic(() => import('@/components/leads/LeadsKanban'), { ssr: false })
+const LeadsAnalytics = dynamic(() => import('@/components/leads/LeadsAnalytics'), { ssr: false })
+const LeadsTemplates = dynamic(() => import('@/components/leads/LeadsTemplates'), { ssr: false })
 
 type TabId = 'table' | 'kanban' | 'analytics' | 'templates' | 'bookmarklet'
 

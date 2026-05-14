@@ -39,7 +39,7 @@ export default function FadeIn({
 }: FadeInProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(prefersReducedMotion);
 
   useEffect(() => {
     if (prefersReducedMotion) return;
@@ -84,8 +84,10 @@ export default function FadeIn({
       style={{
         opacity: isVisible ? 1 : 0,
         transform: getTransform(),
-        transition: `opacity ${duration}s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s, transform ${duration}s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s`,
-        willChange: "opacity, transform",
+        transition: prefersReducedMotion
+          ? "none"
+          : `opacity ${duration}s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s, transform ${duration}s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s`,
+        willChange: isVisible ? "auto" : "opacity, transform",
       }}
     >
       {children}

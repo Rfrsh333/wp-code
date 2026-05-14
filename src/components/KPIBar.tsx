@@ -1,5 +1,3 @@
-"use client";
-
 import FadeIn from "@/components/animations/FadeIn";
 
 const StarIcon = () => (

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import KlantBottomNav, { KlantTab } from "./KlantBottomNav";
 
 interface KlantPortalLayoutProps {
@@ -26,6 +26,7 @@ export default function KlantPortalLayout({
   onLogout,
 }: KlantPortalLayoutProps) {
   return (
+    <LazyMotion features={domAnimation} strict>
     <div className="klant-portal min-h-screen bg-[var(--kp-bg-page)] flex overflow-x-hidden w-full max-w-full">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-[260px] min-h-screen bg-[#1e3a5f] fixed left-0 top-0 bottom-0 z-30">
@@ -47,7 +48,7 @@ export default function KlantPortalLayout({
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
-              <motion.button
+              <m.button
                 key={tab.id}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onTabChange(tab.id)}
@@ -64,7 +65,7 @@ export default function KlantPortalLayout({
                     {tab.badge > 99 ? "99+" : tab.badge}
                   </span>
                 )}
-              </motion.button>
+              </m.button>
             );
           })}
         </nav>
@@ -84,7 +85,7 @@ export default function KlantPortalLayout({
       {/* Hoofdcontent */}
       <main className="flex-1 md:ml-[260px] pb-20 md:pb-0 overflow-x-hidden min-w-0">
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key={activeTab}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
@@ -93,7 +94,7 @@ export default function KlantPortalLayout({
             className="p-4 md:p-6 max-w-6xl mx-auto"
           >
             {children}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </main>
 
@@ -104,5 +105,6 @@ export default function KlantPortalLayout({
         onTabChange={onTabChange}
       />
     </div>
+    </LazyMotion>
   );
 }

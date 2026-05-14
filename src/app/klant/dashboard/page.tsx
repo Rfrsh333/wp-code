@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import KlantUrenClient from "../uren/KlantUrenClient";
+import dynamic from "next/dynamic";
 import { verifyKlantSession } from "@/lib/session";
+
+const KlantUrenClient = dynamic(() => import("../uren/KlantUrenClient"));
 
 export default async function KlantDashboard() {
   const cookieStore = await cookies();

@@ -1,10 +1,6 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./Hero.module.css";
-import { useInView } from "./hooks";
 
 /**
  * Arrow Icon Component
@@ -27,82 +23,51 @@ const ArrowIcon = () => (
   </svg>
 );
 
+const trustItems = [
+  "Binnen 24 uur inzetbaar",
+  "Gescreend op horeca-ervaring",
+  "Snelle vervanging bij uitval",
+  "Actief in meerdere regio's",
+];
+
 /**
  * Hero Section Component
- * Premium, production-ready hero with advanced animations
+ * Server Component with CSS-only animations (zero client JS)
  */
 export default function Hero() {
-  // Intersection observer for scroll reveals
-  const [heroRef, isHeroInView] = useInView({ threshold: 0.1 });
-  const trustItems = [
-    "Binnen 24 uur inzetbaar",
-    "Gescreend op horeca-ervaring",
-    "Snelle vervanging bij uitval",
-    "Actief in meerdere regio's",
-  ];
-
-  // Track if highlight animation has played
-  const [highlightAnimated, setHighlightAnimated] = useState(false);
-
-  // Trigger highlight animation after H1 becomes visible
-  useEffect(() => {
-    if (isHeroInView && !highlightAnimated) {
-      // Small delay to let the H1 fade in first
-      const timer = setTimeout(() => {
-        setHighlightAnimated(true);
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [isHeroInView, highlightAnimated]);
-
   return (
-    <section
-      className={styles.hero}
-      ref={heroRef as React.RefObject<HTMLElement>}
-    >
+    <section className={styles.hero}>
       <div className={styles.container}>
         <div className={styles.grid}>
           {/* Left Content */}
           <div className={styles.content}>
             {/* Eyebrow */}
             <span
-              className={`${styles.eyebrow} ${styles.revealItem} ${
-                isHeroInView ? styles.visible : ""
-              } ${styles.delay1}`}
+              className={`${styles.eyebrow} ${styles.revealItem} ${styles.delay1}`}
             >
               Stop omzetverlies
             </span>
 
             {/* Headline */}
             <h1
-              className={`${styles.headline} ${styles.revealItem} ${
-                isHeroInView ? styles.visible : ""
-              } ${styles.delay2}`}
+              className={`${styles.headline} ${styles.revealItem} ${styles.delay2}`}
             >
               Extra horecapersoneel{" "}
-              <span
-                className={`${styles.highlight} ${
-                  highlightAnimated ? styles.highlightAnimated : ""
-                }`}
-              >
+              <span className={styles.highlight}>
                 binnen 24 u
               </span>
             </h1>
 
             {/* Subtext */}
             <p
-              className={`${styles.subtext} ${styles.revealItem} ${
-                isHeroInView ? styles.visible : ""
-              } ${styles.delay3}`}
+              className={`${styles.subtext} ${styles.revealItem} ${styles.delay3}`}
             >
               Geen paniek meer bij ziekte of last-minute uitval. Wij hebben gescreend personeel klaarstaan.
             </p>
 
             {/* CTA Buttons */}
             <div
-              className={`${styles.ctaGroup} ${styles.revealItem} ${
-                isHeroInView ? styles.visible : ""
-              } ${styles.delay4}`}
+              className={`${styles.ctaGroup} ${styles.revealItem} ${styles.delay4}`}
             >
               <Link href="/personeel-aanvragen/" className={styles.ctaPrimary}>
                 Vraag personeel aan
@@ -145,9 +110,7 @@ export default function Hero() {
 
           {/* Right Image Section */}
           <div
-            className={`${styles.imageSection} ${styles.revealItem} ${
-              isHeroInView ? styles.visible : ""
-            } ${styles.delay6}`}
+            className={`${styles.imageSection} ${styles.revealItem} ${styles.delay6}`}
           >
             {/* Powder splash background */}
             <div className={styles.powderSplash}>

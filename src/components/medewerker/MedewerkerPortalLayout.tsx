@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import MedewerkerBottomNav from "./MedewerkerBottomNav";
 import ThemeToggle from "./ThemeToggle";
@@ -45,6 +45,7 @@ export default function MedewerkerPortalLayout({
   const urenBadge = tabs.find((t) => t.id === "uren")?.badge;
 
   return (
+    <LazyMotion features={domAnimation} strict>
     <div className="min-h-screen bg-[var(--mp-bg)] transition-colors duration-300">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 flex-col w-60 glass border-r border-[var(--mp-separator)]">
@@ -146,7 +147,7 @@ export default function MedewerkerPortalLayout({
       <main className="md:ml-60 md:pt-0 md:pb-0 min-h-screen" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3rem)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}>
         <div className="p-4 md:p-8 max-w-5xl">
           <AnimatePresence mode="wait">
-            <motion.div
+            <m.div
               key={activeTab}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -154,7 +155,7 @@ export default function MedewerkerPortalLayout({
               transition={{ duration: 0.2 }}
             >
               {children}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         </div>
       </main>
@@ -169,5 +170,6 @@ export default function MedewerkerPortalLayout({
         }}
       />
     </div>
+    </LazyMotion>
   );
 }

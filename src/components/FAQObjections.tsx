@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import FadeIn from "@/components/animations/FadeIn";
 import { Section, Container } from "@/components/Section";
