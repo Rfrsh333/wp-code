@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { LineChart, Line, BarChart, Bar, FunnelChart, Funnel, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { downloadCSV, metricsToCSV } from "@/lib/export-utils";
+import { Euro, Target, Calendar, Sparkles, TrendingUp, Users, CheckCircle, BarChart3, MessageCircle, Zap, Mail, Trophy, Phone, FileText, Download, RefreshCw, Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface BusinessMetrics {
   pipeline: {
@@ -53,6 +55,59 @@ interface BusinessMetrics {
     channelPerformance: Array<{ channel: string; contacts: number; positive: number }>;
     pipelineFunnel: Array<{ stage: string; count: number }>;
   };
+}
+
+// ─── Helper components (defined before usage for Turbopack compat) ───
+
+interface MetricCardInternalProps {
+  title: string;
+  value: string;
+  subtitle: string;
+  icon: React.ComponentType<{ className?: string }>;
+  trend: number | null;
+}
+
+function MetricCardInternal({ title, value, subtitle, icon: Icon, trend }: MetricCardInternalProps) {
+  return (
+    <div className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition-colors">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100">
+          <Icon className="w-4 h-4 text-slate-600" />
+        </div>
+        {trend !== null && (
+          <span className={cn(
+            "text-xs font-semibold px-2 py-0.5 rounded-full",
+            trend >= 0
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-red-100 text-red-700"
+          )}>
+            {trend >= 0 ? "+" : ""}{trend}%
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-slate-600 mb-1">{title}</p>
+      <p className="text-2xl font-bold text-slate-900 mb-1 tabular-nums">{value}</p>
+      <p className="text-xs text-slate-500">{subtitle}</p>
+    </div>
+  );
+}
+
+interface StatRowProps {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+function StatRow({ label, value, icon: Icon }: StatRowProps) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-slate-600 flex items-center gap-2">
+        <Icon className="w-3.5 h-3.5 text-slate-400" />
+        {label}
+      </span>
+      <span className="text-xs font-semibold text-slate-900 tabular-nums">{value}</span>
+    </div>
+  );
 }
 
 export default function BusinessMetricsDashboard() {
@@ -152,7 +207,7 @@ export default function BusinessMetricsDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center justify-center">
+      <div className="bg-white rounded-lg border border-slate-200 p-6 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-[#F27501] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -160,8 +215,8 @@ export default function BusinessMetricsDashboard() {
 
   if (error || !metrics) {
     return (
-      <div className="p-8">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+      <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
           {error || "Geen data beschikbaar"}
         </div>
       </div>
@@ -184,12 +239,15 @@ export default function BusinessMetricsDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-neutral-900">Business Metrics</h2>
-          <p className="text-sm text-neutral-500 mt-1">
+          <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+            <BarChart3 className="w-[18px] h-[18px] text-[#F27501]" />
+            Business Analytics
+          </h2>
+          <p className="text-[10px] text-slate-500 mt-0.5">
             {dateRange === "7d" && "Laatste 7 dagen"}
             {dateRange === "30d" && "Laatste 30 dagen"}
             {dateRange === "90d" && "Laatste 90 dagen"}
@@ -205,12 +263,12 @@ export default function BusinessMetricsDashboard() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
           {/* Date Range */}
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as any)}
-            className="px-3 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
+            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
           >
             <option value="7d">7 dagen</option>
             <option value="30d">30 dagen</option>
@@ -223,7 +281,7 @@ export default function BusinessMetricsDashboard() {
           <select
             value={selectedBranche}
             onChange={(e) => setSelectedBranche(e.target.value)}
-            className="px-3 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
+            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
           >
             <option value="all">Alle branches</option>
             {branches.map(b => (
@@ -235,7 +293,7 @@ export default function BusinessMetricsDashboard() {
           <select
             value={selectedStad}
             onChange={(e) => setSelectedStad(e.target.value)}
-            className="px-3 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
+            className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
           >
             <option value="all">Alle steden</option>
             {steden.map(s => (
@@ -247,25 +305,28 @@ export default function BusinessMetricsDashboard() {
           <button
             onClick={handleCSVExport}
             disabled={!metrics}
-            className="px-4 py-2 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg text-sm font-medium text-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-medium text-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
-            📄 CSV
+            <FileText className="w-3.5 h-3.5" />
+            CSV
           </button>
 
           <button
             onClick={handlePDFExport}
             disabled={!metrics}
-            className="px-4 py-2 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg text-sm font-medium text-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-medium text-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
-            📕 PDF
+            <Download className="w-3.5 h-3.5" />
+            PDF
           </button>
 
           {/* Refresh Button */}
           <button
             onClick={fetchMetrics}
-            className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-sm font-medium text-neutral-700 transition-colors"
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors flex items-center gap-1.5"
           >
-            🔄 Ververs
+            <RefreshCw className="w-3.5 h-3.5" />
+            Ververs
           </button>
         </div>
       </div>
@@ -273,48 +334,48 @@ export default function BusinessMetricsDashboard() {
       {/* Key Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Revenue */}
-        <MetricCard
+        <MetricCardInternal
           title="Omzet Deze Maand"
           value={formatCurrency(metrics.revenue.thisMonth)}
           trend={metrics.revenue.trend}
-          icon="💰"
+          icon={Euro}
           subtitle={`Vorige maand: ${formatCurrency(metrics.revenue.lastMonth)}`}
         />
 
         {/* Pipeline */}
-        <MetricCard
+        <MetricCardInternal
           title="Leads in Pipeline"
           value={metrics.pipeline.total.toString()}
           subtitle={`${metrics.pipeline.recentLeads} nieuwe (30d)`}
-          icon="🎯"
+          icon={Target}
           trend={null}
         />
 
         {/* Active Diensten */}
-        <MetricCard
+        <MetricCardInternal
           title="Actieve Diensten"
           value={metrics.operations.activeDiensten.toString()}
           subtitle={`${metrics.operations.fillRate}% bezetting`}
-          icon="📅"
+          icon={Calendar}
           trend={null}
         />
 
         {/* Conversion Rate */}
-        <MetricCard
+        <MetricCardInternal
           title="Conversie Rate"
           value={`${metrics.pipeline.conversionRate}%`}
           subtitle={`${metrics.pipeline.byStage.klant} klanten`}
-          icon="✨"
+          icon={Sparkles}
           trend={null}
         />
       </div>
 
       {/* Detailed Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pipeline Breakdown */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <span>📊</span>
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-slate-600" />
             Pipeline Overzicht
           </h3>
           <div className="space-y-3">
@@ -326,16 +387,16 @@ export default function BusinessMetricsDashboard() {
               return (
                 <div key={stage}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-neutral-700 capitalize">
+                    <span className="text-xs font-medium text-slate-700 capitalize">
                       {stage}
                     </span>
-                    <span className="text-sm text-neutral-500">
+                    <span className="text-xs text-slate-500 tabular-nums">
                       {count} ({Math.round(percentage)}%)
                     </span>
                   </div>
-                  <div className="w-full bg-neutral-100 rounded-full h-2">
+                  <div className="w-full bg-slate-200 rounded-full h-1.5">
                     <div
-                      className="bg-[#F27501] h-2 rounded-full transition-all"
+                      className="bg-[#F27501] h-1.5 rounded-full transition-all"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -343,123 +404,124 @@ export default function BusinessMetricsDashboard() {
               );
             })}
           </div>
-          <div className="mt-4 pt-4 border-t border-neutral-200">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-neutral-600">Gemiddelde Engagement</span>
-              <span className="font-semibold text-neutral-900">{metrics.pipeline.avgEngagement}/100</span>
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-600">Gemiddelde Engagement</span>
+              <span className="font-semibold text-slate-900 tabular-nums">{metrics.pipeline.avgEngagement}/100</span>
             </div>
           </div>
         </div>
 
         {/* Operations Stats */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <span>⚙️</span>
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-slate-600" />
             Operationeel
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <StatRow
               label="Actieve Medewerkers"
               value={metrics.operations.activeMedewerkers.toString()}
-              icon="👥"
+              icon={Users}
             />
             <StatRow
               label="Diensten Voltooid"
               value={metrics.operations.completedDiensten.toString()}
-              icon="✅"
+              icon={CheckCircle}
             />
             <StatRow
               label="Bezettingsgraad"
               value={`${metrics.operations.fillRate}%`}
-              icon="📈"
+              icon={TrendingUp}
             />
             <StatRow
               label="Nieuwe Aanmeldingen"
               value={metrics.candidates.newApplications.toString()}
-              icon="📝"
+              icon={FileText}
             />
             <StatRow
               label="In Beoordeling"
               value={metrics.candidates.pendingReview.toString()}
-              icon="⏳"
+              icon={Filter}
             />
             <StatRow
               label="Goedgekeurd (Maand)"
               value={metrics.candidates.approvedThisMonth.toString()}
-              icon="🎉"
+              icon={Sparkles}
             />
           </div>
         </div>
 
         {/* Engagement Stats */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <span>💬</span>
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <MessageCircle className="w-4 h-4 text-slate-600" />
             Engagement
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <StatRow
               label="Totaal Contactmomenten"
               value={metrics.engagement.totalContacts.toString()}
-              icon="📞"
+              icon={Phone}
             />
             <StatRow
               label="Positieve Reacties"
               value={`${metrics.engagement.positiveRate}%`}
-              icon="😊"
+              icon={Sparkles}
             />
             <StatRow
               label="Top Kanaal"
               value={metrics.engagement.topChannel || "N/A"}
-              icon="🏆"
+              icon={Trophy}
             />
             <StatRow
               label="Gemiddelde Reactietijd"
               value={formatHours(metrics.engagement.avgResponseTime)}
-              icon="⚡"
+              icon={Zap}
             />
             <StatRow
               label="Email Open Rate"
               value={`${metrics.engagement.emailOpenRate}%`}
-              icon="📧"
+              icon={Mail}
             />
           </div>
         </div>
 
         {/* Revenue Details */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
-          <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center gap-2">
-            <span>💵</span>
+        <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border border-emerald-200 p-5">
+          <h3 className="text-sm font-semibold text-emerald-900 mb-4 flex items-center gap-2">
+            <Euro className="w-4 h-4 text-emerald-700" />
             Financieel Overzicht
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <p className="text-sm text-green-700 mb-1">Deze Maand</p>
-              <p className="text-3xl font-bold text-green-900">
+              <p className="text-xs text-emerald-700 mb-1">Deze Maand</p>
+              <p className="text-2xl font-bold text-emerald-900 tabular-nums">
                 {formatCurrency(metrics.revenue.thisMonth)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-green-700 mb-1">Vorige Maand</p>
-              <p className="text-xl font-semibold text-green-800">
+              <p className="text-xs text-emerald-700 mb-1">Vorige Maand</p>
+              <p className="text-lg font-semibold text-emerald-800 tabular-nums">
                 {formatCurrency(metrics.revenue.lastMonth)}
               </p>
             </div>
-            <div className="pt-4 border-t border-green-200">
+            <div className="pt-3 border-t border-emerald-200">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-green-700">Trend</span>
-                <span className={`text-lg font-bold ${
-                  metrics.revenue.trend >= 0 ? "text-green-600" : "text-red-600"
-                }`}>
+                <span className="text-xs text-emerald-700">Trend</span>
+                <span className={cn(
+                  "text-base font-bold tabular-nums",
+                  metrics.revenue.trend >= 0 ? "text-emerald-600" : "text-red-600"
+                )}>
                   {metrics.revenue.trend >= 0 ? "+" : ""}
                   {metrics.revenue.trend}%
                 </span>
               </div>
             </div>
-            <div className="pt-4 border-t border-green-200">
+            <div className="pt-3 border-t border-emerald-200">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-green-700">Totaal Omzet</span>
-                <span className="text-lg font-bold text-green-900">
+                <span className="text-xs text-emerald-700">Totaal Omzet</span>
+                <span className="text-base font-bold text-emerald-900 tabular-nums">
                   {formatCurrency(metrics.revenue.total)}
                 </span>
               </div>
@@ -469,72 +531,74 @@ export default function BusinessMetricsDashboard() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Revenue Trend Chart */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6 lg:col-span-2">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <span>📈</span>
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 lg:col-span-2">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-slate-600" />
             Omzet Trend (6 Maanden)
           </h3>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={metrics.charts.revenueTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 12 }}
-                stroke="#999"
+                tick={{ fontSize: 11 }}
+                stroke="#94a3b8"
               />
               <YAxis
-                tick={{ fontSize: 12 }}
-                stroke="#999"
+                tick={{ fontSize: 11 }}
+                stroke="#94a3b8"
                 tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
               />
               <Tooltip
-                formatter={(value: number) => [`€${value.toLocaleString("nl-NL")}`, "Omzet"]}
+                formatter={(value) => [`€${Number(value).toLocaleString("nl-NL")}`, "Omzet"]}
                 contentStyle={{
                   backgroundColor: "white",
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "8px"
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  fontSize: "12px"
                 }}
               />
               <Line
                 type="monotone"
                 dataKey="revenue"
                 stroke="#F27501"
-                strokeWidth={3}
-                dot={{ fill: "#F27501", r: 5 }}
-                activeDot={{ r: 7 }}
+                strokeWidth={2.5}
+                dot={{ fill: "#F27501", r: 4 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Pipeline Funnel */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <span>🎯</span>
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <Target className="w-4 h-4 text-slate-600" />
             Pipeline Funnel
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <BarChart data={metrics.charts.pipelineFunnel} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis type="number" tick={{ fontSize: 12 }} stroke="#999" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" />
               <YAxis
                 dataKey="stage"
                 type="category"
-                tick={{ fontSize: 12 }}
-                stroke="#999"
+                tick={{ fontSize: 11 }}
+                stroke="#94a3b8"
                 width={80}
               />
               <Tooltip
-                formatter={(value: number) => [`${value} leads`, "Aantal"]}
+                formatter={(value) => [`${Number(value)} leads`, "Aantal"]}
                 contentStyle={{
                   backgroundColor: "white",
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "8px"
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  fontSize: "12px"
                 }}
               />
-              <Bar dataKey="count" radius={[0, 8, 8, 0]}>
+              <Bar dataKey="count" radius={[0, 6, 6, 0]}>
                 {metrics.charts.pipelineFunnel.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={[
                     "#93c5fd", // blue-300
@@ -550,85 +614,38 @@ export default function BusinessMetricsDashboard() {
         </div>
 
         {/* Channel Performance */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <span>💬</span>
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <MessageCircle className="w-4 h-4 text-slate-600" />
             Kanaal Performance
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <BarChart data={metrics.charts.channelPerformance}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="channel"
-                tick={{ fontSize: 11 }}
-                stroke="#999"
+                tick={{ fontSize: 10 }}
+                stroke="#94a3b8"
                 angle={-45}
                 textAnchor="end"
                 height={80}
               />
-              <YAxis tick={{ fontSize: 12 }} stroke="#999" />
+              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "white",
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "8px"
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  fontSize: "12px"
                 }}
               />
-              <Legend />
-              <Bar dataKey="contacts" fill="#94a3b8" name="Totaal" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="positive" fill="#22c55e" name="Positief" radius={[8, 8, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: "11px" }} />
+              <Bar dataKey="contacts" fill="#94a3b8" name="Totaal" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="positive" fill="#22c55e" name="Positief" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
-    </div>
-  );
-}
-
-interface MetricCardProps {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: string;
-  trend: number | null;
-}
-
-function MetricCard({ title, value, subtitle, icon, trend }: MetricCardProps) {
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200 p-6 hover:shadow-lg transition-shadow">
-      <div className="flex items-start justify-between mb-2">
-        <span className="text-2xl">{icon}</span>
-        {trend !== null && (
-          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-            trend >= 0
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}>
-            {trend >= 0 ? "+" : ""}{trend}%
-          </span>
-        )}
-      </div>
-      <p className="text-sm text-neutral-600 mb-1">{title}</p>
-      <p className="text-3xl font-bold text-neutral-900 mb-2">{value}</p>
-      <p className="text-xs text-neutral-500">{subtitle}</p>
-    </div>
-  );
-}
-
-interface StatRowProps {
-  label: string;
-  value: string;
-  icon: string;
-}
-
-function StatRow({ label, value, icon }: StatRowProps) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-neutral-600 flex items-center gap-2">
-        <span>{icon}</span>
-        {label}
-      </span>
-      <span className="text-sm font-semibold text-neutral-900">{value}</span>
     </div>
   );
 }
