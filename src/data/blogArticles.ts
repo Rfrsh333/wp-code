@@ -5,6 +5,7 @@ import { ContentBlock } from "@/components/blog/BlogContentRenderer";
 // ============================================================
 export interface BlogArticle {
   title: string;
+  metaTitle?: string; // Override for <title> tag (max 60 chars). Falls back to title.
   excerpt: string;
   category: string;
   author: string;
@@ -2399,6 +2400,2129 @@ export const blogArticles: Record<string, BlogArticle> = {
         primaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
         secondaryLink: { href: "/contact", text: "Contact opnemen" },
         variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 12: Horecapersoneel kosten 2025
+  // ============================================================
+  "horecapersoneel-kosten-per-uur": {
+    title: "Horecapersoneel kosten 2025: wat betaalt u écht per uur?",
+    metaTitle: "Horecapersoneel kosten per uur 2025 | Tarieven",
+    excerpt: "Wat kost horecapersoneel inhuren via een uitzendbureau, als zzp'er of in vaste dienst? Wij vergelijken de werkelijke kosten per uur inclusief bijkomende lasten.",
+    category: "Kosten",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-horecapersoneel-inhuren.jpg",
+    relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "cao-horeca-2025-wijzigingen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Een van de meest gestelde vragen die wij krijgen: wat kost horecapersoneel inhuren? Het antwoord is niet één getal. De kosten hangen af van de functie, de contractvorm, de ervaring en het moment van inzet."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel zetten wij de werkelijke kosten per uur uiteen — inclusief bijkomende lasten die vaak worden vergeten. Zo kunt u een eerlijke vergelijking maken tussen uitzendkrachten, zzp'ers en vast personeel."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tarieven per functie in 2025"
+      },
+      {
+        type: "paragraph",
+        content: "Onderstaande tarieven zijn gebaseerd op marktgemiddelden voor uitzendkrachten in de horeca. De tarieven zijn all-in: loon, vakantiegeld, pensioen, verzekeringen en administratie zijn inbegrepen."
+      },
+      {
+        type: "priceTable",
+        title: "Indicatie uurtarieven horecapersoneel · 2025",
+        rows: [
+          { item: "Bedieningsmedewerker", price: "€25 – €32", note: "per uur" },
+          { item: "Bartender", price: "€26 – €34", note: "per uur" },
+          { item: "Zelfstandig werkend kok", price: "€30 – €42", note: "per uur" },
+          { item: "Sous-chef", price: "€35 – €48", note: "per uur" },
+          { item: "Afwasser / keukenhulp", price: "€22 – €28", note: "per uur" },
+          { item: "Barista", price: "€24 – €30", note: "per uur" },
+          { item: "Gastheer/gastvrouw", price: "€25 – €32", note: "per uur" },
+          { item: "Evenementenmedewerker", price: "€25 – €35", note: "per uur" }
+        ],
+        footer: "Tarieven zijn indicatief en variëren per regio, ervaring en inzetmoment (avond/weekend toeslagen)."
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "All-in tarief",
+        content: "Bij een uitzendbureau zijn de tarieven all-in. Dat betekent: brutoloon, vakantiegeld (8%), pensioen, sociale premies, verzekeringen en administratie zijn inbegrepen. U betaalt één transparant uurtarief."
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken direct wat horecapersoneel kost voor uw situatie"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Vergelijking: uitzendkracht vs. vast personeel vs. zzp'er"
+      },
+      {
+        type: "paragraph",
+        content: "Het uurtarief van een uitzendkracht lijkt hoger dan het brutoloon van een vaste medewerker. Maar als u alle werkgeverskosten meetelt, valt het verschil kleiner uit dan verwacht."
+      },
+      {
+        type: "heading3",
+        content: "Werkelijke kosten vast personeel"
+      },
+      {
+        type: "paragraph",
+        content: "Naast het brutoloon betaalt u als werkgever circa 25-35% aan aanvullende kosten:"
+      },
+      {
+        type: "checklist",
+        title: "Bijkomende werkgeverskosten",
+        variant: "checklist",
+        items: [
+          { text: "Vakantiegeld (8%)", checked: true },
+          { text: "Pensioenpremie (circa 6-8%)", checked: true },
+          { text: "Sociale premies en werkgeversheffingen (circa 15-20%)", checked: true },
+          { text: "Doorbetaling bij ziekte (tot 2 jaar)", checked: true },
+          { text: "Vakantiedagen en feestdagen", checked: true },
+          { text: "Werving, inwerken en verloop", checked: true }
+        ]
+      },
+      {
+        type: "comparison",
+        title: "Kostenvergelijking per uur · Bedieningsmedewerker",
+        headers: ["Kostenpost", "Uitzendkracht", "Vast personeel"],
+        rows: [
+          { feature: "Brutoloon", optionA: "Inbegrepen", optionB: "€14 – €17" },
+          { feature: "Vakantiegeld (8%)", optionA: "Inbegrepen", optionB: "+ €1,10 – €1,35" },
+          { feature: "Sociale premies", optionA: "Inbegrepen", optionB: "+ €2,50 – €3,50" },
+          { feature: "Pensioen", optionA: "Inbegrepen", optionB: "+ €0,85 – €1,35" },
+          { feature: "Ziekteverzuim risico", optionA: "Inbegrepen", optionB: "Eigen risico" },
+          { feature: "Werving en administratie", optionA: "Inbegrepen", optionB: "Eigen kosten" },
+          { feature: "Totaal per uur", optionA: "€25 – €32", optionB: "€19 – €24 + risico's" }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Wanneer is vast personeel goedkoper?",
+        content: "Bij structurele inzet van meer dan 32 uur per week, minimaal 6 maanden. Hoe hoger het aantal vaste uren, hoe voordeliger vast personeel. Voor piekdrukte, seizoenswerk en flexibele inzet is uitzenden vrijwel altijd kostenefficiënter."
+      },
+      {
+        type: "heading3",
+        content: "Zzp'er in de horeca"
+      },
+      {
+        type: "paragraph",
+        content: "Zzp-tarieven liggen doorgaans tussen €20 en €35 per uur voor horecafuncties. Dat lijkt scherp, maar let op:"
+      },
+      {
+        type: "checklist",
+        title: "Aandachtspunten zzp'ers",
+        variant: "checklist",
+        items: [
+          { text: "Geen verzekering bij uitval — u staat met lege handen", checked: true },
+          { text: "Risico op schijnzelfstandigheid (Wet DBA)", checked: true },
+          { text: "Geen vervanging bij ziekte of no-show", checked: true },
+          { text: "Administratieve verplichtingen voor u als opdrachtgever", checked: true }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/cao-horeca-2025-wijzigingen",
+        text: "Lees ook: CAO Horeca 2025 wijzigingen en tariefimpact"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Factoren die het tarief beïnvloeden"
+      },
+      {
+        type: "paragraph",
+        content: "Het exacte tarief hangt af van meerdere variabelen:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Functie en ervaring** — Een zelfstandig werkend kok kost meer dan een afwasser",
+          "**Inzetmoment** — Avond-, weekend- en feestdagtoeslagen verhogen het tarief",
+          "**Regio** — Tarieven in Amsterdam liggen gemiddeld 5-10% hoger dan in andere steden",
+          "**Duur van de inzet** — Langdurige plaatsingen zijn per uur voordeliger",
+          "**Seizoen** — In het hoogseizoen kan de vraag de tarieven opdrijven"
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/locaties",
+        text: "Bekijk tarieven en beschikbaarheid per regio"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen over kosten"
+      },
+      {
+        type: "heading3",
+        content: "Zijn er opstartkosten of inschrijfkosten?"
+      },
+      {
+        type: "paragraph",
+        content: "Nee. Bij TopTalent Jobs betaalt u alleen voor daadwerkelijk gewerkte uren. Er zijn geen inschrijfkosten, opstartkosten of verborgen fees."
+      },
+      {
+        type: "heading3",
+        content: "Wat als de uitzendkracht niet voldoet?"
+      },
+      {
+        type: "paragraph",
+        content: "Wij regelen kosteloos een vervanging. Dit is een van de voordelen ten opzichte van een vaste medewerker of zzp'er, waar u zelf verantwoordelijk bent voor het vinden van een alternatief."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik een indicatie krijgen voor mijn situatie?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Via onze kosten calculator kunt u zelf een indicatie berekenen. Voor een offerte op maat nemen wij graag persoonlijk contact met u op."
+      },
+      {
+        type: "heading3",
+        content: "Zijn de tarieven inclusief toeslagen?"
+      },
+      {
+        type: "paragraph",
+        content: "De genoemde tarieven zijn basistarieven. Voor avond-, weekend- en feestdagdiensten gelden toeslagen conform de CAO Horeca. Deze worden transparant meegerekend in uw factuur."
+      },
+      {
+        type: "relatedLink",
+        href: "/veelgestelde-vragen",
+        text: "Meer veelgestelde vragen over tarieven en werkwijze"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Uurtarieven voor horecapersoneel via een uitzendbureau liggen tussen €22 en €48, afhankelijk van functie en ervaring",
+          "All-in tarieven van uitzendbureaus bevatten loon, premies, verzekeringen en administratie",
+          "Vast personeel is goedkoper bij structurele, langdurige inzet — maar duurder bij ziekte, verloop en flexibele uren",
+          "Zzp'ers lijken scherp geprijsd, maar brengen risico's mee rond verzekering, vervanging en wet- en regelgeving",
+          "Het juiste model hangt af van uw personeelsbehoefte: vast, flex of een combinatie"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Bereken wat horecapersoneel kost",
+        description: "Gebruik onze gratis calculator en ontvang binnen 2 minuten een helder kostenoverzicht voor uw situatie. Vergelijk vast, flex en zzp.",
+        primaryLink: { href: "/kosten-calculator", text: "Kosten berekenen" },
+        secondaryLink: { href: "/contact", text: "Offerte op maat" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 13: Last-minute horecapersoneel
+  // ============================================================
+  "last-minute-horecapersoneel": {
+    title: "Last-minute horecapersoneel nodig? Zo regelt u het snel",
+    excerpt: "Ziekmelding, no-show of onverwachte drukte? Zo regelt u op korte termijn betrouwbaar horecapersoneel zonder concessies aan kwaliteit.",
+    category: "Uitzenden",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelstekort.jpg",
+    relatedSlugs: ["horecapersoneel-inhuren-gids-2025", "personeelstekort-horeca-oplossen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Het is vrijdagochtend, 10 uur. Uw chef-kok belt zich ziek. De reserveringslijst voor vanavond staat vol. U heeft binnen een paar uur een oplossing nodig."
+      },
+      {
+        type: "paragraph",
+        content: "Dit scenario is in de horeca eerder regel dan uitzondering. Wij zien het dagelijks: ziekmeldingen, no-shows, onverwachte drukte of een last-minute evenement dat erbij komt. De vraag is niet óf het gebeurt, maar hoe snel u kunt schakelen."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wanneer heeft u last-minute personeel nodig?"
+      },
+      {
+        type: "paragraph",
+        content: "De meest voorkomende situaties waarin horecaondernemers op korte termijn personeel zoeken:"
+      },
+      {
+        type: "checklist",
+        title: "Typische spoedscenario's",
+        variant: "checklist",
+        items: [
+          { text: "Ziekmelding van een sleutelmedewerker (kok, bediening)", checked: true },
+          { text: "No-show van een uitzendkracht of zzp'er", checked: true },
+          { text: "Onverwacht grote reservering of groep", checked: true },
+          { text: "Last-minute catering of evenement opdracht", checked: true },
+          { text: "Uitval door persoonlijke omstandigheden", checked: true }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "warning",
+        title: "De kosten van leegstand",
+        content: "Een dienst met te weinig personeel leidt niet alleen tot stress, maar ook tot lagere gasttevredenheid, langere wachttijden en in het ergste geval: omzetverlies. Het alternatief — een dienst sluiten — kost gemiddeld honderden tot duizenden euro's aan gederfde inkomsten."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Hoe regelt u snel horecapersoneel?"
+      },
+      {
+        type: "heading3",
+        content: "Stap 1: Neem direct contact op met een uitzendbureau"
+      },
+      {
+        type: "paragraph",
+        content: "Een gespecialiseerd horeca-uitzendbureau heeft een pool van gescreende medewerkers die direct beschikbaar zijn. Anders dan bij eigen werving of vacaturesites, hoeft u niet zelf te selecteren, contracten op te stellen of referenties te checken."
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Hoe wij het aanpakken",
+        content: "Bij TopTalent Jobs reageren wij binnen 15 minuten op spoedaanvragen. Wij matchen op functie, ervaring en locatie en bevestigen de inzet zo snel mogelijk. In veel gevallen is uw vervanging dezelfde dag nog op de werkvloer."
+      },
+      {
+        type: "heading3",
+        content: "Stap 2: Wees helder over uw behoefte"
+      },
+      {
+        type: "paragraph",
+        content: "Hoe duidelijker u communiceert, hoe sneller wij de juiste match vinden. Geef aan:"
+      },
+      {
+        type: "list",
+        items: [
+          "Welke functie u nodig heeft (kok, bediening, afwas, bar)",
+          "Wanneer de dienst begint en hoe lang deze duurt",
+          "Locatie en eventuele parkeergelegenheid",
+          "Dresscode of specifieke eisen (allergenen, talen)",
+          "Of het een eenmalige of terugkerende inzet betreft"
+        ]
+      },
+      {
+        type: "heading3",
+        content: "Stap 3: Briefing en ontvangst"
+      },
+      {
+        type: "paragraph",
+        content: "Een korte briefing bij aankomst maakt een groot verschil. Wijs de medewerker de werkplek, leg de huisregels uit en stel hem of haar voor aan het team. Ervaren uitzendkrachten zijn gewend snel mee te draaien, maar een warm welkom helpt altijd."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Meer over onze uitzendservice en snelle beschikbaarheid"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Hoe voorkomt u spoedaanvragen?"
+      },
+      {
+        type: "paragraph",
+        content: "Last-minute situaties zijn niet altijd te voorkomen, maar u kunt de frequentie en impact beperken:"
+      },
+      {
+        type: "timeline",
+        title: "Preventieve maatregelen",
+        steps: [
+          { title: "Bouw een vaste flexpool", description: "Werk structureel samen met een uitzendbureau zodat er altijd medewerkers beschikbaar zijn die uw zaak al kennen." },
+          { title: "Plan een buffer in uw rooster", description: "Reken bij drukke diensten altijd 1 medewerker extra mee. Dit voorkomt dat 1 ziekmelding de hele avond ontregelt." },
+          { title: "Bespreek beschikbaarheid vooraf", description: "Vraag uw team wekelijks naar hun beschikbaarheid en anticipeer op uitval." },
+          { title: "Gebruik vaste afspraken", description: "Een raamovereenkomst met een uitzendbureau zorgt voor prioriteit bij spoedaanvragen en mogelijk gunstiger tarieven." }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/horeca-personeelsplanning-rooster-tips",
+        text: "Tips voor een efficiënte personeelsplanning"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Waar let u op bij spoedpersoneel?"
+      },
+      {
+        type: "checklist",
+        title: "Kwaliteitschecklist last-minute inzet",
+        variant: "steps",
+        items: [
+          { text: "**Ervaring** — Vraag om medewerkers met relevante ervaring voor uw type zaak" },
+          { text: "**Screening** — Controleer of het uitzendbureau vooraf screent (ID, referenties, werkvergunning)" },
+          { text: "**Vervanging** — Vraag of er een vervanging mogelijk is als de medewerker niet past" },
+          { text: "**Tarieftransparantie** — Spoedtarieven kunnen hoger liggen; vraag hier vooraf naar" }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken wat last-minute personeel kost"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Hoe snel kan ik horecapersoneel krijgen?"
+      },
+      {
+        type: "paragraph",
+        content: "Bij een gespecialiseerd uitzendbureau vaak dezelfde dag nog. Wij streven ernaar om spoedaanvragen binnen enkele uren in te vullen, afhankelijk van functie en locatie."
+      },
+      {
+        type: "heading3",
+        content: "Kost last-minute personeel meer?"
+      },
+      {
+        type: "paragraph",
+        content: "Dat hangt af van het uitzendbureau en het moment. Bij TopTalent Jobs werken wij met transparante tarieven. Avond- en weekendtoeslagen gelden conform de CAO, maar er zijn geen spoedtoeslagen."
+      },
+      {
+        type: "heading3",
+        content: "Wat als de medewerker niet past bij mijn zaak?"
+      },
+      {
+        type: "paragraph",
+        content: "Wij regelen kosteloos een vervanging. Dat is een van de voordelen van werken met een uitzendbureau: u draagt het risico niet zelf."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik ook 's avonds of in het weekend een aanvraag doen?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Wij zijn telefonisch en via WhatsApp bereikbaar, ook buiten kantooruren. Spoedaanvragen worden met voorrang behandeld."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Last-minute personeelsvragen zijn in de horeca onvermijdelijk",
+          "Een gespecialiseerd uitzendbureau kan vaak dezelfde dag nog personeel leveren",
+          "Wees helder over functie, tijdstip en locatie voor de snelste match",
+          "Voorkom spoedaanvragen door een flexpool op te bouwen en buffers in te plannen",
+          "Vraag altijd naar vervanging bij mismatch en transparante tarieven"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Direct personeel nodig?",
+        description: "Vraag nu horecapersoneel aan. Wij reageren binnen 15 minuten en leveren vaak dezelfde dag.",
+        primaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
+        secondaryLink: { href: "/contact", text: "Bel of WhatsApp ons" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 14: No-shows in de horeca voorkomen
+  // ============================================================
+  "no-shows-horeca-voorkomen": {
+    title: "No-shows in de horeca voorkomen: 4 bewezen methoden",
+    excerpt: "No-shows van personeel kosten horecaondernemers geld en stress. Wij delen 4 methoden die aantoonbaar werken om uitval te voorkomen.",
+    category: "Management",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelsplanning.jpg",
+    relatedSlugs: ["horeca-personeelsplanning-rooster-tips", "personeelstekort-horeca-oplossen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Een no-show is een van de meest frustrerende situaties voor een horecaondernemer. U heeft een dienst gepland, het rooster staat vast, maar de medewerker verschijnt niet. Het gevolg: stress op de werkvloer, overbelaste collega's en in het ergste geval een mindere gastervaring."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel bespreken wij vier methoden die in de praktijk werken om no-shows te voorkomen of de impact ervan te beperken."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Waarom verschijnen medewerkers niet?"
+      },
+      {
+        type: "paragraph",
+        content: "Voordat we naar oplossingen kijken, is het nuttig om de meest voorkomende oorzaken te begrijpen:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Lage betrokkenheid** — Medewerkers die zich niet verbonden voelen met de zaak of het team stappen sneller af",
+          "**Slechte communicatie** — Onduidelijkheid over roosters, werktijden of verwachtingen leidt tot misverstanden",
+          "**Privéomstandigheden** — Ziekte, vervoersproblemen of persoonlijke situaties zijn niet altijd te voorkomen",
+          "**Onregelmatige roosters** — Te late roosterbekendmaking of frequente wijzigingen zorgen voor frustratie",
+          "**Geen consequenties** — Als een no-show geen gevolgen heeft, herhaalt het zich"
+        ]
+      },
+      {
+        type: "quote",
+        quote: "De meeste no-shows zijn geen kwaadwillendheid. Ze zijn het resultaat van gebrekkige communicatie, lage betrokkenheid of organisatorische onduidelijkheid.",
+        variant: "insight"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Methode 1: Bouw een vaste flexpool"
+      },
+      {
+        type: "paragraph",
+        content: "De meest effectieve manier om no-shows op te vangen is het hebben van een groep bekende, betrouwbare medewerkers die op korte termijn inzetbaar zijn."
+      },
+      {
+        type: "checklist",
+        title: "Hoe een flexpool werkt",
+        variant: "benefits",
+        items: [
+          { text: "Een vaste groep uitzendkrachten die uw zaak al kennen" },
+          { text: "Bij uitval belt u één nummer en de vervanging wordt direct geregeld" },
+          { text: "De poolmedewerkers zijn al ingewerkt en vertrouwd met uw werkwijze" },
+          { text: "Minder afhankelijkheid van onbekende invallers" }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Hoe u dit opzet",
+        content: "Vraag uw uitzendbureau om een vaste pool samen te stellen voor uw zaak. Bij TopTalent Jobs doen wij dit standaard voor klanten met regelmatige inzet. De poolmedewerkers draaien mee in uw team en zijn bij spoed direct beschikbaar."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Meer over uitzenden met een vaste flexpool"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Methode 2: Verbeter roostering en communicatie"
+      },
+      {
+        type: "paragraph",
+        content: "Veel no-shows zijn te voorkomen met betere planning en heldere communicatie."
+      },
+      {
+        type: "checklist",
+        title: "Concrete verbeteringen",
+        variant: "steps",
+        items: [
+          { text: "**Publiceer roosters minstens 1 week vooraf** — Hoe eerder medewerkers weten wanneer ze werken, hoe minder last-minute uitval" },
+          { text: "**Bevestig diensten 24 uur van tevoren** — Een kort berichtje of appje verlaagt de kans op vergeten of miscommunicatie" },
+          { text: "**Gebruik één centraal kanaal** — Voorkom verwarring door roosters, wijzigingen en communicatie via één systeem te laten lopen" },
+          { text: "**Maak beschikbaarheid bespreekbaar** — Geef medewerkers de ruimte om tijdig aan te geven als ze niet kunnen, in plaats van simpelweg niet te verschijnen" }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/horeca-personeelsplanning-rooster-tips",
+        text: "Meer tips voor een efficiënt rooster"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Methode 3: Vergroot betrokkenheid"
+      },
+      {
+        type: "paragraph",
+        content: "Medewerkers die zich gewaardeerd en onderdeel van het team voelen, verschijnen betrouwbaarder. Dit geldt voor zowel vaste medewerkers als uitzendkrachten."
+      },
+      {
+        type: "list",
+        items: [
+          "Stel nieuwe medewerkers persoonlijk voor aan het team",
+          "Geef na een dienst kort feedback — ook als het goed ging",
+          "Behandel uitzendkrachten hetzelfde als vast personeel",
+          "Zorg voor goede werkomstandigheden: pauzes, maaltijden, een prettige sfeer"
+        ]
+      },
+      {
+        type: "quote",
+        quote: "Medewerkers die zich welkom voelen, komen terug. Zo simpel is het.",
+        variant: "highlight"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Methode 4: Werk met een betrouwbare partner"
+      },
+      {
+        type: "paragraph",
+        content: "Niet elk uitzendbureau werkt op dezelfde manier. De mate van screening, begeleiding en vervanging verschilt sterk."
+      },
+      {
+        type: "checklist",
+        title: "Waar u op moet letten bij een uitzendbureau",
+        variant: "steps",
+        items: [
+          { text: "**Screening vooraf** — Worden medewerkers gescreend op identiteit, werkervaring en referenties?" },
+          { text: "**Vervangingsgarantie** — Hoe snel wordt een no-show vervangen?" },
+          { text: "**Persoonlijke begeleiding** — Heeft de medewerker een vast aanspreekpunt?" },
+          { text: "**WAADI-registratie** — Is het uitzendbureau wettelijk geregistreerd?" }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "Onze aanpak",
+        content: "Bij TopTalent Jobs screenen wij alle medewerkers persoonlijk vóór de eerste inzet. Bij een no-show regelen wij vervanging. En elke medewerker heeft een vast aanspreekpunt bij ons."
+      },
+      {
+        type: "relatedLink",
+        href: "/over-ons",
+        text: "Meer over onze werkwijze en screening"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wat doet u als het toch gebeurt?"
+      },
+      {
+        type: "paragraph",
+        content: "Ondanks alle preventie kan een no-show voorkomen. Zo beperkt u de schade:"
+      },
+      {
+        type: "timeline",
+        title: "Actieplan bij een no-show",
+        steps: [
+          { title: "Bel direct uw uitzendbureau", description: "Hoe sneller u belt, hoe sneller de vervanging geregeld is." },
+          { title: "Herverdeel taken in uw team", description: "Prioriteer de kritieke functies en vereenvoudig waar mogelijk het menu of de service." },
+          { title: "Informeer uw team", description: "Communiceer open dat er iemand minder is en verdeel taken eerlijk." },
+          { title: "Evalueer achteraf", description: "Bespreek de situatie met uw uitzendbureau om herhaling te voorkomen." }
+        ]
+      },
+      {
+        type: "cta",
+        title: "Minder no-shows, meer rust",
+        description: "Met een vaste flexpool en persoonlijke screening verlaagt u het risico op no-shows. Wij vertellen u graag hoe.",
+        primaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
+        secondaryLink: { href: "/diensten/uitzenden", text: "Meer over uitzenden" },
+        variant: "dark"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Hoe vaak komen no-shows voor in de horeca?"
+      },
+      {
+        type: "paragraph",
+        content: "Dit varieert sterk per bedrijf en per type medewerker. Bij goed gescreende uitzendkrachten via een gespecialiseerd bureau is het percentage aanzienlijk lager dan bij zzp'ers of eigen werving via sociale media."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik een uitzendkracht aansprakelijk stellen voor een no-show?"
+      },
+      {
+        type: "paragraph",
+        content: "Nee, de uitzendkracht is in dienst bij het uitzendbureau. Uw overeenkomst is met het bureau. Een goed uitzendbureau neemt verantwoordelijkheid en regelt een vervanging."
+      },
+      {
+        type: "heading3",
+        content: "Helpt een hogere vergoeding tegen no-shows?"
+      },
+      {
+        type: "paragraph",
+        content: "Een eerlijke vergoeding is belangrijk, maar betrokkenheid, goede communicatie en screening zijn effectiever dan alleen een hoger tarief. Medewerkers die zich gewaardeerd voelen en weten wat er verwacht wordt, verschijnen betrouwbaarder."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "No-shows zijn een veelvoorkomend probleem in de horeca, maar grotendeels te voorkomen",
+          "Een vaste flexpool geeft u altijd een betrouwbare backup",
+          "Betere roostering en communicatie verlagen het risico op miscommunicatie",
+          "Betrokkenheid en waardering maken medewerkers betrouwbaarder",
+          "Werk met een uitzendbureau dat screent, begeleidt en vervanging garandeert"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Betrouwbaar personeel, elke dienst",
+        description: "Wij leveren gescreend horecapersoneel met persoonlijke begeleiding. Geen verrassingen, wél betrouwbaarheid.",
+        primaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
+        secondaryLink: { href: "/contact", text: "Neem contact op" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 15: Inlenersbeloning horeca
+  // ============================================================
+  "inlenersbeloning-horeca": {
+    title: "Inlenersbeloning horeca: wat werkgevers moeten weten",
+    metaTitle: "Inlenersbeloning horeca — wat u moet weten",
+    excerpt: "Wat is de inlenersbeloning en hoe werkt het in de horeca? Praktische uitleg over regels, uitzonderingen en wat het voor uw kosten betekent.",
+    category: "Wetgeving",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-horecapersoneel-inhuren.jpg",
+    relatedSlugs: ["horecapersoneel-kosten-per-uur", "cao-horeca-2025-wijzigingen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Als u horecapersoneel inhuurt via een uitzendbureau, krijgt u te maken met de inlenersbeloning. Dit is een wettelijke regeling die bepaalt dat uitzendkrachten recht hebben op dezelfde arbeidsvoorwaarden als uw eigen medewerkers in vergelijkbare functies."
+      },
+      {
+        type: "paragraph",
+        content: "In de praktijk roept dit veel vragen op. Wat valt er precies onder? Hoe werkt het in combinatie met de CAO Horeca? En wat betekent het voor uw uurtarieven? In dit artikel leggen wij het praktisch uit."
+      },
+      {
+        type: "highlight",
+        variant: "warning",
+        title: "Disclaimer",
+        content: "Dit artikel is bedoeld als praktische toelichting en is geen juridisch advies. Wet- en regelgeving kan wijzigen. Raadpleeg bij specifieke vragen altijd een juridisch adviseur of uw branchevereniging."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wat is de inlenersbeloning?"
+      },
+      {
+        type: "paragraph",
+        content: "De inlenersbeloning is vastgelegd in de Wet allocatie arbeidskrachten door intermediairs (Waadi) en uitgewerkt in de ABU- en NBBU-cao's. Het principe: een uitzendkracht die bij u werkt, heeft recht op hetzelfde loon en dezelfde vergoedingen als een vergelijkbare werknemer in uw bedrijf."
+      },
+      {
+        type: "heading3",
+        content: "Welke elementen vallen eronder?"
+      },
+      {
+        type: "paragraph",
+        content: "De inlenersbeloning omvat zes onderdelen:"
+      },
+      {
+        type: "checklist",
+        title: "De zes elementen",
+        variant: "checklist",
+        items: [
+          { text: "Het geldende periodeloon (functieloon conform uw cao of bedrijfsregeling)", checked: true },
+          { text: "Arbeidsduurverkorting (ADV) of de compensatie daarvan", checked: true },
+          { text: "Toeslagen voor overwerk, onregelmatige uren, ploegendienst en fysieke arbeidsomstandigheden", checked: true },
+          { text: "Initiële loonsverhoging (periodieken bij de inlener)", checked: true },
+          { text: "Kostenvergoedingen (reiskosten, maaltijdvergoedingen)", checked: true },
+          { text: "Eenmalige uitkeringen die voor uw personeel gelden", checked: true }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "Vanaf dag 1",
+        content: "De inlenersbeloning geldt vanaf de eerste werkdag van de uitzendkracht bij uw bedrijf. Er is geen wachtperiode."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Hoe werkt het in de horeca?"
+      },
+      {
+        type: "paragraph",
+        content: "In de horeca is de CAO Horeca de leidende cao. Dit betekent dat uitzendkrachten in uw zaak dezelfde loonschalen, toeslagen en vergoedingen krijgen als uw eigen horecamedewerkers."
+      },
+      {
+        type: "heading3",
+        content: "Toeslagen in de horeca"
+      },
+      {
+        type: "paragraph",
+        content: "De CAO Horeca kent specifieke toeslagen die onderdeel zijn van de inlenersbeloning:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Avondtoeslag** — Voor uren na 20:00 uur",
+          "**Weekendtoeslag** — Voor werk op zaterdag en zondag",
+          "**Feestdagentoeslag** — Voor werk op erkende feestdagen",
+          "**Overwerkvergoeding** — Voor uren boven de contractuele arbeidsduur"
+        ]
+      },
+      {
+        type: "paragraph",
+        content: "Een uitzendkracht die op zaterdagavond achter de bar staat, heeft dus recht op dezelfde toeslagen als uw eigen bartender op dat moment."
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/cao-horeca-2025-wijzigingen",
+        text: "CAO Horeca 2025: alle actuele wijzigingen op een rij"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wat betekent dit voor uw kosten?"
+      },
+      {
+        type: "paragraph",
+        content: "De inlenersbeloning verhoogt niet automatisch uw kosten ten opzichte van eigen personeel. Het zorgt ervoor dat de loonkosten van uitzendkrachten in lijn liggen met die van uw eigen team."
+      },
+      {
+        type: "paragraph",
+        content: "Het uurtarief dat u betaalt aan het uitzendbureau is hoger dan het brutoloon, maar dat verschil is de marge van het bureau. Daarin zitten: werkgeverslasten, verzekeringen, pensioen, administratie en wervingskosten."
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Transparantie vragen",
+        content: "Vraag uw uitzendbureau altijd om een tariefopbouw. Een goed bureau kan precies uitleggen waaruit het uurtarief is opgebouwd: brutoloon, toeslagen, reserveringen, werkgeverskosten en marge."
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken wat horecapersoneel kost voor uw situatie"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgemaakte fouten"
+      },
+      {
+        type: "paragraph",
+        content: "In de praktijk zien wij dat inleners en bureaus niet altijd correct omgaan met de inlenersbeloning. De meest voorkomende fouten:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Verkeerde functie-inschaling** — De uitzendkracht wordt in een lagere loonschaal ingedeeld dan het werk rechtvaardigt",
+          "**Ontbrekende toeslagen** — Avond- en weekendtoeslagen worden niet doorberekend",
+          "**Geen periodieken** — De uitzendkracht krijgt geen loonsverhoging terwijl vergelijkbare eigen medewerkers die wel krijgen",
+          "**Oude cao-tabellen** — Het bureau werkt met verouderde loontabellen na een cao-verhoging"
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "warning",
+        title: "Risico voor de inlener",
+        content: "Als de inlenersbeloning niet correct wordt toegepast, kan de uitzendkracht een loonvordering indienen. Hoewel de claim primair bij het uitzendbureau ligt, kan dit ook voor u als inlener tot complicaties leiden — bijvoorbeeld bij ketenaansprakelijkheid."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Hoe controleert u of het correct wordt toegepast?"
+      },
+      {
+        type: "checklist",
+        title: "Controlestappen",
+        variant: "steps",
+        items: [
+          { text: "Controleer of het uitzendbureau NEN 4400-1 gecertificeerd is (SNA-keurmerk)" },
+          { text: "Vraag om een tariefopbouw en vergelijk het brutoloon met uw eigen loontabellen" },
+          { text: "Check of toeslagen correct worden doorberekend bij avond- en weekenddiensten" },
+          { text: "Verifieer dat het bureau werkt met de actuele CAO Horeca-tabellen" },
+          { text: "Controleer WAADI-registratie via het register van de KvK" }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Hoe TopTalent Jobs de inlenersbeloning toepast"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Geldt de inlenersbeloning ook voor oproepkrachten?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. De inlenersbeloning geldt voor alle uitzendkrachten, ongeacht hun contractvorm bij het uitzendbureau. Of het nu gaat om een oproepcontract, fase A of fase B: het recht op gelijke beloning bij de inlener blijft bestaan."
+      },
+      {
+        type: "heading3",
+        content: "Wat als ik geen cao heb?"
+      },
+      {
+        type: "paragraph",
+        content: "Als er geen cao van toepassing is op uw bedrijf, geldt de inlenersbeloning op basis van uw eigen loongebouw. De uitzendkracht krijgt dan hetzelfde loon als een vergelijkbare eigen medewerker. In de horeca is de CAO Horeca vrijwel altijd van toepassing."
+      },
+      {
+        type: "heading3",
+        content: "Is het uitzendbureau of de inlener verantwoordelijk?"
+      },
+      {
+        type: "paragraph",
+        content: "Het uitzendbureau is de formele werkgever en daarmee primair verantwoordelijk voor correcte toepassing. Maar als inlener bent u verplicht om de juiste informatie aan te leveren over uw loongebouw, toeslagen en arbeidsvoorwaarden."
+      },
+      {
+        type: "heading3",
+        content: "Verandert de inlenersbeloning bij langere inzet?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Bij langdurige inzet kan de uitzendkracht recht krijgen op periodieken (loonsverhogingen) die ook voor uw eigen medewerkers gelden. Na 78 weken (fase C bij ABU) gaan aanvullende rechten gelden."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "De inlenersbeloning geeft uitzendkrachten recht op hetzelfde loon en dezelfde toeslagen als vergelijkbare eigen medewerkers",
+          "Dit geldt vanaf dag 1 en omvat loon, toeslagen, ADV, periodieken, kostenvergoedingen en eenmalige uitkeringen",
+          "In de horeca is de CAO Horeca de basis voor de inlenersbeloning",
+          "Controleer of uw uitzendbureau NEN 4400-1 gecertificeerd is en actuele cao-tabellen gebruikt",
+          "Lever als inlener correcte informatie aan over uw eigen arbeidsvoorwaarden"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Transparant en correct inhuren",
+        description: "Bij TopTalent Jobs passen wij de inlenersbeloning correct toe, inclusief alle toeslagen conform de CAO Horeca. Vraag een transparante tariefopbouw aan.",
+        primaryLink: { href: "/diensten/uitzenden", text: "Bekijk onze uitzendservice" },
+        secondaryLink: { href: "/kosten-calculator", text: "Kosten berekenen" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 16: Wet DBA en horeca
+  // ============================================================
+  "wet-dba-horeca-zzp-inhuren": {
+    title: "Wet DBA en horeca: zzp'er inhuren in 2025",
+    metaTitle: "Wet DBA horeca: zzp'er inhuren in 2025",
+    excerpt: "Wat betekent de Wet DBA voor horecaondernemers die zzp'ers inhuren? Praktische uitleg over schijnzelfstandigheid, risico's en alternatieven.",
+    category: "Wetgeving",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelstekort.jpg",
+    relatedSlugs: ["inlenersbeloning-horeca", "horecapersoneel-kosten-per-uur"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Veel horecaondernemers werken met zzp'ers: een kok voor het weekend, een barman voor een evenement, een gastvrouw voor het seizoen. Dat lijkt praktisch en flexibel, maar de Wet DBA (Deregulering Beoordeling Arbeidsrelaties) brengt risico's mee die u moet kennen."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel leggen wij uit wat de Wet DBA inhoudt, waarom de horeca extra kwetsbaar is voor handhaving, en welke alternatieven er zijn."
+      },
+      {
+        type: "highlight",
+        variant: "warning",
+        title: "Disclaimer",
+        content: "Dit artikel biedt een praktische toelichting op de Wet DBA en is geen juridisch advies. De handhaving en interpretatie van de wet ontwikkelen zich. Raadpleeg bij twijfel een fiscalist of arbeidsrechtjurist."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wat is de Wet DBA?"
+      },
+      {
+        type: "paragraph",
+        content: "De Wet DBA vervangt sinds 2016 de oude VAR-verklaring. Het doel: duidelijk maken wanneer iemand als zelfstandige werkt en wanneer er feitelijk sprake is van een dienstverband. De Belastingdienst beoordeelt de arbeidsrelatie op basis van drie criteria:"
+      },
+      {
+        type: "checklist",
+        title: "Beoordelingscriteria",
+        variant: "checklist",
+        items: [
+          { text: "**Gezagsverhouding** — Geeft u instructies over hoe het werk moet worden uitgevoerd?", checked: true },
+          { text: "**Inbedding in de organisatie** — Doet de zzp'er hetzelfde werk als uw vaste medewerkers, op dezelfde manier?", checked: true },
+          { text: "**Ondernemerschap** — Draagt de zzp'er ondernemersrisico, heeft hij meerdere opdrachtgevers, investeert hij in zijn bedrijf?", checked: true }
+        ]
+      },
+      {
+        type: "paragraph",
+        content: "Als de Belastingdienst oordeelt dat er feitelijk een dienstverband is, heet dat schijnzelfstandigheid. De gevolgen kunnen aanzienlijk zijn."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Waarom is de horeca extra kwetsbaar?"
+      },
+      {
+        type: "paragraph",
+        content: "De horecasector heeft kenmerken die het risico op schijnzelfstandigheid vergroten:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Vast rooster** — Zzp'ers die wekelijks op vaste tijden werken, lijken op reguliere werknemers",
+          "**Instructies op de werkvloer** — In een keuken of bediening geeft u instructies over werkwijze, presentatie en tempo",
+          "**Geen eigen klantenkring** — De zzp-kok werkt niet voor eigen klanten maar draait mee in uw team",
+          "**Langdurige inzet** — Een zzp'er die maandenlang bij dezelfde zaak werkt, verliest het karakter van zelfstandige",
+          "**Zelfde werk als vast personeel** — Als de zzp-bediening exact hetzelfde doet als uw vaste bediening, is inbedding moeilijk te weerleggen"
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "Handhaving sinds 2025",
+        content: "Na jaren van een handhavingsmoratorium is de Belastingdienst begonnen met actief controleren. Horecabedrijven behoren tot de sectoren die prioriteit krijgen vanwege het hoge percentage zzp-inzet."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wat zijn de risico's?"
+      },
+      {
+        type: "paragraph",
+        content: "Bij geconstateerde schijnzelfstandigheid kunnen de gevolgen ingrijpend zijn:"
+      },
+      {
+        type: "checklist",
+        title: "Mogelijke gevolgen",
+        variant: "checklist",
+        items: [
+          { text: "Naheffing loonbelasting en premies volksverzekeringen over de gehele inzetperiode", checked: true },
+          { text: "Boetes van de Belastingdienst (tot 100% van de naheffing bij opzet)", checked: true },
+          { text: "Werkgeverspremies sociale verzekeringen met terugwerkende kracht", checked: true },
+          { text: "De zzp'er kan een dienstverband claimen met bijbehorende rechten (ontslagbescherming, ziektegeld)", checked: true }
+        ]
+      },
+      {
+        type: "paragraph",
+        content: "De kosten van een naheffing lopen snel op. Bij een zzp-kok die een jaar lang structureel ingehuurd is, kan de naheffing tienduizenden euro's bedragen."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wanneer mag u wél een zzp'er inhuren?"
+      },
+      {
+        type: "paragraph",
+        content: "Een zzp-constructie kan in de horeca verdedigbaar zijn wanneer:"
+      },
+      {
+        type: "list",
+        items: [
+          "De zzp'er een specifieke expertise brengt die u niet in huis heeft (bijv. een gespecialiseerde patissier voor een event)",
+          "Het gaat om een eenmalige of incidentele opdracht met een duidelijk eindresultaat",
+          "De zzp'er zelf bepaalt hoe het werk wordt uitgevoerd, zonder uw instructies",
+          "De zzp'er meerdere opdrachtgevers heeft en aantoonbaar ondernemersrisico loopt",
+          "Er een modelovereenkomst is die door de Belastingdienst is goedgekeurd"
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Vuistregel",
+        content: "Hoe meer de zzp'er lijkt op uw eigen personeel — qua werk, rooster, aansturing en duur — hoe groter het risico op schijnzelfstandigheid. Bij twijfel: kies voor uitzenden."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Alternatieven voor zzp-inhuur"
+      },
+      {
+        type: "paragraph",
+        content: "Als u flexibel personeel nodig heeft maar het risico van zzp-inhuur wilt vermijden, zijn er concrete alternatieven:"
+      },
+      {
+        type: "heading3",
+        content: "Uitzendkrachten"
+      },
+      {
+        type: "paragraph",
+        content: "Bij uitzenden is de medewerker in dienst bij het uitzendbureau. Er is geen risico op schijnzelfstandigheid voor u als inlener. Het bureau regelt loonheffingen, premies, contracten en administratie."
+      },
+      {
+        type: "heading3",
+        content: "Payrolling"
+      },
+      {
+        type: "paragraph",
+        content: "Bij payrolling werft u zelf de medewerker, maar komt hij of zij in dienst bij de payrollpartij. Dit elimineert het zzp-risico terwijl u de keuze houdt over wie u inzet."
+      },
+      {
+        type: "heading3",
+        content: "Tijdelijk contract"
+      },
+      {
+        type: "paragraph",
+        content: "Voor langdurige, regelmatige inzet kan een tijdelijk contract de eenvoudigste en veiligste optie zijn. U heeft dan volledige duidelijkheid over de arbeidsrelatie."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten",
+        text: "Bekijk alle personeelsdiensten van TopTalent Jobs"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Mag een kok als zzp'er werken in mijn restaurant?"
+      },
+      {
+        type: "paragraph",
+        content: "Dat hangt af van de feitelijke situatie. Een zzp-kok die wekelijks op vaste tijden bij u werkt, uw recepten volgt en meedraait in uw keukenbrigade, loopt een hoog risico op schijnzelfstandigheid. Een zzp-kok die eenmalig een cateringklus doet met eigen receptuur en materiaal is beter verdedigbaar."
+      },
+      {
+        type: "heading3",
+        content: "Wat is een modelovereenkomst?"
+      },
+      {
+        type: "paragraph",
+        content: "Een modelovereenkomst is een door de Belastingdienst beoordeeld contract dat de arbeidsrelatie beschrijft. Het gebruik ervan biedt enige zekerheid, maar alleen als de praktijk overeenkomt met wat in het contract staat. Een modelovereenkomst beschermt niet als de feitelijke situatie afwijkt."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik aansprakelijk worden gesteld als opdrachtgever?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Als de Belastingdienst schijnzelfstandigheid constateert, bent u als opdrachtgever aansprakelijk voor de naheffing van loonbelasting en premies. De zzp'er kan daarnaast een dienstverband claimen."
+      },
+      {
+        type: "heading3",
+        content: "Geldt de Wet DBA ook voor incidentele inhuur?"
+      },
+      {
+        type: "paragraph",
+        content: "Formeel geldt de Wet DBA voor elke arbeidsrelatie. Bij incidentele, kortdurende opdrachten met een duidelijk resultaat en eigen werkwijze is het risico echter beduidend lager dan bij structurele inzet."
+      },
+      {
+        type: "heading3",
+        content: "Is uitzenden altijd veiliger dan zzp?"
+      },
+      {
+        type: "paragraph",
+        content: "Vanuit het perspectief van schijnzelfstandigheid: ja. Bij uitzenden is er een duidelijke arbeidsrelatie tussen de medewerker en het uitzendbureau. U loopt als inlener geen risico op naheffingen voor schijnzelfstandigheid."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "De Wet DBA bepaalt wanneer iemand zzp'er is en wanneer er sprake is van een verkapt dienstverband",
+          "De horeca is extra kwetsbaar door vaste roosters, instructies op de werkvloer en langdurige inzet",
+          "Bij schijnzelfstandigheid riskeert u naheffingen, boetes en claims van de zzp'er",
+          "Alternatieven als uitzenden en payrolling bieden flexibiliteit zonder zzp-risico",
+          "Raadpleeg bij twijfel een fiscalist — de Belastingdienst handhaaft actief sinds 2025"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Flexibel personeel zonder zzp-risico",
+        description: "Via uitzenden heeft u dezelfde flexibiliteit als zzp-inhuur, maar zonder het risico op schijnzelfstandigheid. Wij regelen alles.",
+        primaryLink: { href: "/diensten", text: "Bekijk onze diensten" },
+        secondaryLink: { href: "/contact", text: "Neem contact op" },
+        variant: "dark"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 17: VOG voor horecapersoneel
+  // ============================================================
+  "vog-horecapersoneel": {
+    title: "VOG voor horecapersoneel: wanneer is het verplicht?",
+    metaTitle: "VOG horecapersoneel: wanneer verplicht?",
+    excerpt: "Wanneer is een VOG verplicht voor horecapersoneel? Uitleg over regels, aanvraagproces, kosten en wat u als werkgever moet weten.",
+    category: "Wetgeving",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelsplanning.jpg",
+    relatedSlugs: ["inlenersbeloning-horeca", "horecapersoneel-inhuren-gids-2025"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Een Verklaring Omtrent het Gedrag (VOG) is een veelbesproken onderwerp in de horeca. Sommige werkgevers vragen het standaard, anderen weten niet dat het bestaat. Maar wanneer is een VOG eigenlijk verplicht? En wanneer is het verstandig om er wél om te vragen, ook als het niet wettelijk moet?"
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel leggen wij uit hoe de VOG werkt, wanneer u er in de horeca mee te maken krijgt, en hoe het aanvraagproces verloopt."
+      },
+      {
+        type: "highlight",
+        variant: "warning",
+        title: "Disclaimer",
+        content: "Dit artikel biedt een praktische toelichting op de VOG en is geen juridisch advies. Regels kunnen per gemeente of sector verschillen. Raadpleeg bij specifieke situaties Justis.nl of een juridisch adviseur."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wat is een VOG?"
+      },
+      {
+        type: "paragraph",
+        content: "Een Verklaring Omtrent het Gedrag is een officieel document van het Ministerie van Justitie en Veiligheid. Het toont aan dat het gedrag van een persoon in het verleden geen bezwaar oplevert voor het uitoefenen van een specifieke functie."
+      },
+      {
+        type: "paragraph",
+        content: "De VOG is functie-specifiek. Een VOG voor horecawerk wordt getoetst op andere aspecten dan een VOG voor de kinderopvang. De screeningsautoriteit Justis beoordeelt of er strafbare feiten in het Justitieel Documentatie Systeem staan die relevant zijn voor de beoogde functie."
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "Geen strafblad-check",
+        content: "Een veel voorkomend misverstand: de VOG is geen strafblad-check. Iemand met een strafblad kan alsnog een VOG krijgen als de delicten niet relevant zijn voor de specifieke functie. Andersom is een schoon strafblad geen garantie — het hangt af van de toetsing."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wanneer is een VOG verplicht in de horeca?"
+      },
+      {
+        type: "paragraph",
+        content: "In de reguliere horeca is een VOG niet wettelijk verplicht voor alle functies. Maar er zijn situaties waarin het wél verplicht is of sterk wordt aangeraden:"
+      },
+      {
+        type: "heading3",
+        content: "Wettelijk verplicht"
+      },
+      {
+        type: "checklist",
+        title: "VOG is verplicht bij",
+        variant: "checklist",
+        items: [
+          { text: "Drank- en Horecawetvergunning: leidinggevenden die op de vergunning staan, hebben een VOG nodig", checked: true },
+          { text: "Werken met minderjarigen: bij jeugdevenementen of horeca gericht op jongeren", checked: true },
+          { text: "Gemeentelijke eisen: sommige gemeenten stellen een VOG-eis als voorwaarde voor een exploitatievergunning", checked: true }
+        ]
+      },
+      {
+        type: "heading3",
+        content: "Sterk aangeraden"
+      },
+      {
+        type: "checklist",
+        title: "VOG is verstandig bij",
+        variant: "checklist",
+        items: [
+          { text: "Medewerkers met kassaverantwoordelijkheid of toegang tot kluizen", checked: true },
+          { text: "Personeel in nachthoreca (extra risicoprofiel qua veiligheid)", checked: true },
+          { text: "Functies met sleutelverantwoordelijkheid of alleenwerk", checked: true },
+          { text: "Cateringpersoneel dat werkt bij bedrijven met beveiligingseisen", checked: true }
+        ]
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Hoe vraagt u een VOG aan?"
+      },
+      {
+        type: "paragraph",
+        content: "Het aanvraagproces verloopt in een aantal stappen:"
+      },
+      {
+        type: "timeline",
+        title: "Aanvraagproces VOG",
+        steps: [
+          { title: "Werkgever start de aanvraag", description: "U als werkgever vult het aanvraagformulier in via Justis.nl of op papier. U geeft aan voor welke functie de VOG nodig is." },
+          { title: "Medewerker ontvangt uitnodiging", description: "De medewerker ontvangt een link (digitaal) of het formulier (papier) en vult zijn of haar gegevens in." },
+          { title: "Justis beoordeelt", description: "Screeningsautoriteit Justis toetst het Justitieel Documentatie Systeem op relevante antecedenten voor de opgegeven functie." },
+          { title: "VOG wordt afgegeven of geweigerd", description: "Bij goedkeuring ontvangt de medewerker de VOG. Bij twijfel volgt een extra beoordeling. Bij weigering kan bezwaar worden gemaakt." }
+        ]
+      },
+      {
+        type: "heading3",
+        content: "Kosten en doorlooptijd"
+      },
+      {
+        type: "list",
+        items: [
+          "**Digitale aanvraag:** circa €41,35 (tarief 2025)",
+          "**Papieren aanvraag:** circa €41,35 plus gemeenteleges",
+          "**Doorlooptijd digitaal:** gemiddeld 1 tot 4 weken",
+          "**Doorlooptijd papier:** gemiddeld 4 tot 8 weken"
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Wie betaalt?",
+        content: "Er is geen wettelijke regel over wie betaalt. In de praktijk betaalt de werkgever de VOG-kosten vaak als onderdeel van het onboardingproces. Dit is een klein bedrag dat veel vertrouwen oplevert."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "VOG bij uitzendkrachten"
+      },
+      {
+        type: "paragraph",
+        content: "Als u horecapersoneel inhuurt via een uitzendbureau, is de vraag: wie is verantwoordelijk voor de VOG?"
+      },
+      {
+        type: "paragraph",
+        content: "Het uitzendbureau is de formele werkgever. Als u als inlener een VOG-eis stelt, dient u dit vooraf aan te geven. Een gespecialiseerd horeca-uitzendbureau heeft vaak al medewerkers met een geldige VOG in de pool, of kan de aanvraag snel regelen."
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "Geldigheid",
+        content: "Een VOG heeft geen officiële vervaldatum, maar veel werkgevers en uitzendbureaus hanteren een gangbare richtlijn van maximaal 3 tot 6 maanden oud bij indiensttreding. Dit is geen wettelijke eis maar een praktijkstandaard."
+      },
+      {
+        type: "relatedLink",
+        href: "/personeel-aanvragen",
+        text: "Vraag personeel aan met eventueel VOG-vereiste"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Kan een medewerker zonder VOG beginnen?"
+      },
+      {
+        type: "paragraph",
+        content: "Als de VOG wettelijk verplicht is (bijvoorbeeld voor de Drank- en Horecawetvergunning), mag de medewerker niet starten zonder VOG. Bij niet-verplichte functies is het uw eigen afweging: u kunt ervoor kiezen om de medewerker te laten starten terwijl de VOG-aanvraag loopt."
+      },
+      {
+        type: "heading3",
+        content: "Wat als de VOG wordt geweigerd?"
+      },
+      {
+        type: "paragraph",
+        content: "Bij weigering kan de medewerker bezwaar maken bij Justis. Als werkgever kunt u de medewerker niet verplichten om de reden van weigering te delen. Bij een verplichte VOG-functie kunt u de medewerker niet in die functie inzetten."
+      },
+      {
+        type: "heading3",
+        content: "Moet ik voor alle horecamedewerkers een VOG vragen?"
+      },
+      {
+        type: "paragraph",
+        content: "Niet wettelijk verplicht voor alle functies. Het is een keuze die u als werkgever maakt. Veel horecaondernemers kiezen ervoor om het standaard te doen voor functies met kassa- of sleutelverantwoordelijkheid, of bij nachthoreca."
+      },
+      {
+        type: "heading3",
+        content: "Hoe zit het met buitenlandse medewerkers?"
+      },
+      {
+        type: "paragraph",
+        content: "Een medewerker die korter dan 5 jaar in Nederland woont, kan mogelijk geen VOG krijgen omdat Justis onvoldoende gegevens heeft. In dat geval kan een vergelijkbaar document uit het land van herkomst worden gevraagd. Bespreek dit vooraf met het uitzendbureau."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Een VOG is verplicht voor leidinggevenden op de Drank- en Horecawetvergunning en bij werk met minderjarigen",
+          "Voor reguliere horecafuncties is het niet wettelijk verplicht, maar wel verstandig bij kassaverantwoordelijkheid of nachthoreca",
+          "De aanvraag verloopt via Justis.nl, kost circa €41 en duurt 1–4 weken digitaal",
+          "Bij uitzendkrachten geeft u de VOG-eis vooraf aan bij het uitzendbureau",
+          "Een VOG heeft geen officiële vervaldatum maar wordt in de praktijk maximaal 3–6 maanden oud gehanteerd"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Personeel met de juiste screening",
+        description: "Wij screenen al ons horecapersoneel persoonlijk. Heeft u specifieke eisen zoals een VOG? Geef het aan bij uw aanvraag.",
+        primaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
+        secondaryLink: { href: "/contact", text: "Neem contact op" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 18: Uitzenden vs detachering horeca
+  // ============================================================
+  "uitzenden-vs-detachering-horeca": {
+    title: "Uitzenden vs detachering in de horeca: wat past bij u?",
+    metaTitle: "Uitzenden vs detachering horeca | Vergelijking",
+    excerpt: "Wat is het verschil tussen uitzenden en detachering in de horeca? Vergelijk contractvormen, kosten, flexibiliteit en ontdek welke oplossing bij uw situatie past.",
+    category: "Diensten",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-horecapersoneel-inhuren.jpg",
+    relatedSlugs: ["detachering-vs-uitzenden-verschil", "horecapersoneel-kosten-per-uur"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "U heeft personeel nodig voor uw horecazaak, maar twijfelt: kiest u voor uitzenden of voor detachering? Beide vormen bieden flexibiliteit, maar de voorwaarden, kosten en contractduur verschillen wezenlijk."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel vergelijken wij de twee constructies specifiek voor de horeca. Zodat u een keuze kunt maken die past bij uw personeelsbehoefte, planning en budget."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "De kern van het verschil"
+      },
+      {
+        type: "paragraph",
+        content: "Bij zowel uitzenden als detachering is de medewerker in dienst bij het bureau — niet bij u. Maar de manier waarop de samenwerking is ingericht verschilt."
+      },
+      {
+        type: "heading3",
+        content: "Uitzenden in het kort"
+      },
+      {
+        type: "paragraph",
+        content: "Bij uitzenden plaatst het uitzendbureau een medewerker bij u voor een bepaalde periode of opdracht. De focus ligt op flexibiliteit: u kunt de inzet per week of per dienst aanpassen, opschalen bij drukte en afschalen bij rust. Het uitzendbureau selecteert de medewerker, maar u kunt de inzet op korte termijn beëindigen."
+      },
+      {
+        type: "heading3",
+        content: "Detachering in het kort"
+      },
+      {
+        type: "paragraph",
+        content: "Bij detachering wordt een medewerker voor langere tijd exclusief bij u geplaatst. De medewerker functioneert als onderdeel van uw team en groeit mee met uw organisatie. De contractduur is doorgaans minimaal 3 tot 6 maanden. Detachering is geschikt wanneer u structureel personeel nodig heeft maar niet direct een vast dienstverband wilt aangaan."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Vergelijking op de belangrijkste punten"
+      },
+      {
+        type: "comparison",
+        title: "Uitzenden vs detachering in de horeca",
+        headers: ["Kenmerk", "Uitzenden", "Detachering"],
+        rows: [
+          { feature: "Contractduur", optionA: "Flexibel, per dienst/week", optionB: "Minimaal 3–6 maanden" },
+          { feature: "Opzegtermijn", optionA: "Kort (vaak per dag/week)", optionB: "Langer (conform afspraak)" },
+          { feature: "Binding met uw team", optionA: "Wisselend, pool-basis", optionB: "Vast, groeit mee" },
+          { feature: "Uurtarief", optionA: "Hoger per uur", optionB: "Lager per uur bij langere inzet" },
+          { feature: "Selectieproces", optionA: "Bureau selecteert", optionB: "U bent nauw betrokken" },
+          { feature: "Geschikt voor", optionA: "Piekdrukte, seizoen, vervanging", optionB: "Structurele bezetting, groei" },
+          { feature: "Overname mogelijk", optionA: "Ja, na afgesproken periode", optionB: "Ja, vaak na 6–12 maanden" }
+        ]
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wanneer kiest u voor uitzenden?"
+      },
+      {
+        type: "paragraph",
+        content: "Uitzenden is de juiste keuze wanneer u flexibiliteit nodig heeft en uw personeelsbehoefte schommelt."
+      },
+      {
+        type: "checklist",
+        title: "Uitzenden past bij u als",
+        variant: "benefits",
+        items: [
+          { text: "U wisselende drukte heeft door seizoenen, evenementen of weekendpieken" },
+          { text: "U snel personeel nodig heeft bij ziekte of uitval" },
+          { text: "U nog niet weet hoeveel personeel u structureel nodig heeft" },
+          { text: "U een nieuwe zaak opent en eerst flexibel wilt opschalen" },
+          { text: "U extra handen nodig heeft voor een specifieke periode (terras, feestdagen)" }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Flexpool opbouwen",
+        content: "Bij regelmatig uitzenden is het verstandig om een vaste flexpool op te bouwen: een groep medewerkers die uw zaak al kennen en op afroep beschikbaar zijn. Dat combineert de flexibiliteit van uitzenden met de vertrouwdheid van vast personeel."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Meer over uitzenden bij TopTalent Jobs"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Wanneer kiest u voor detachering?"
+      },
+      {
+        type: "paragraph",
+        content: "Detachering is de betere optie wanneer u een stabiel team wilt opbouwen zonder direct de verantwoordelijkheid van een vast dienstverband."
+      },
+      {
+        type: "checklist",
+        title: "Detachering past bij u als",
+        variant: "benefits",
+        items: [
+          { text: "U een vaste functie wilt invullen maar eerst de match wilt testen" },
+          { text: "U een ervaren kok, sous-chef of bedrijfsleider zoekt voor langere tijd" },
+          { text: "U het werkgeverschap (administratie, verzuim, contracten) wilt uitbesteden" },
+          { text: "U een medewerker wilt die volledig integreert in uw team en cultuur" },
+          { text: "U op termijn de mogelijkheid wilt om de medewerker in vaste dienst te nemen" }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "Overnameregeling",
+        content: "Bij detachering is het gebruikelijk dat u de medewerker na een afgesproken periode in vaste dienst kunt nemen. De voorwaarden hiervoor worden vooraf vastgelegd. Bij TopTalent Jobs bespreken wij dit transparant bij aanvang van de samenwerking."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/detachering",
+        text: "Meer over detachering bij TopTalent Jobs"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "De kosten vergeleken"
+      },
+      {
+        type: "paragraph",
+        content: "Het uurtarief bij uitzenden is doorgaans hoger dan bij detachering. Dat komt doordat bij uitzenden meer flexibiliteit is ingeprijsd: kortere opzegtermijnen, wisselende inzet en hogere administratieve kosten per uur."
+      },
+      {
+        type: "paragraph",
+        content: "Bij detachering zijn de kosten per uur lager, maar u committeert zich voor een langere periode. De totale kosten hangen af van uw specifieke situatie: het aantal uren, de duur, de functie en het ervaringsniveau."
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken de kosten voor uw specifieke situatie"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Combineren kan ook"
+      },
+      {
+        type: "paragraph",
+        content: "Veel horecaondernemers combineren uitzenden en detachering. De kern van uw team — koks, vaste bediening, bedrijfsleiding — plaatst u via detachering. Voor piekdrukte, weekenden en evenementen schakelt u uitzendkrachten in."
+      },
+      {
+        type: "paragraph",
+        content: "Deze hybride aanpak geeft u het beste van twee werelden: stabiliteit in de basis en flexibiliteit voor schommelingen."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten",
+        text: "Bekijk al onze personeelsdiensten"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Kan ik van uitzenden overstappen naar detachering?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Als een uitzendkracht goed functioneert en u hem of haar structureel wilt inzetten, kan de constructie omgezet worden naar detachering. De medewerker blijft in dienst bij het bureau, maar de contractvorm verandert."
+      },
+      {
+        type: "heading3",
+        content: "Wat als de gedetacheerde medewerker niet past?"
+      },
+      {
+        type: "paragraph",
+        content: "Bij detachering is er doorgaans een proefperiode of evaluatiemoment ingebouwd. Voldoet de medewerker niet, dan zoekt het bureau een vervanging. De exacte voorwaarden worden vooraf vastgelegd in de overeenkomst."
+      },
+      {
+        type: "heading3",
+        content: "Is detachering duurder dan zelf werven?"
+      },
+      {
+        type: "paragraph",
+        content: "Op het eerste gezicht betaalt u meer per uur. Maar zelf werven brengt kosten mee die vaak worden onderschat: vacatureplaatsing, gesprekken, inwerken, administratie, en het risico van een mismatch. Bij detachering zijn deze kosten inbegrepen."
+      },
+      {
+        type: "heading3",
+        content: "Hoe lang duurt het om een gedetacheerde te plaatsen?"
+      },
+      {
+        type: "paragraph",
+        content: "Dat hangt af van de functie en het ervaringsniveau. Voor bediening en barwerk is plaatsing vaak binnen een week mogelijk. Voor gespecialiseerde functies zoals een sous-chef of bedrijfsleider kan het langer duren omdat de selectie zorgvuldiger is."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Uitzenden biedt maximale flexibiliteit en is geschikt voor piekdrukte, seizoen en vervanging",
+          "Detachering biedt stabiliteit en is geschikt voor structurele functies en teamopbouw",
+          "Het uurtarief bij uitzenden is hoger, maar u kunt per dienst opschalen en afschalen",
+          "Bij detachering zijn de kosten per uur lager bij langere inzet",
+          "Combineren van beide vormen geeft de meeste flexibiliteit voor horecaondernemers"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Welke vorm past bij uw zaak?",
+        description: "Wij adviseren u graag over de juiste personeelsoplossing. Of het nu uitzenden, detachering of een combinatie is — wij denken mee.",
+        primaryLink: { href: "/diensten/uitzenden", text: "Uitzenden bekijken" },
+        secondaryLink: { href: "/diensten/detachering", text: "Detachering bekijken" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 19: Horecapersoneel Amsterdam
+  // ============================================================
+  "horecapersoneel-amsterdam": {
+    title: "Horecapersoneel Amsterdam: markt, tarieven en beschikbaarheid",
+    metaTitle: "Horecapersoneel Amsterdam | Markt & tarieven",
+    excerpt: "Hoe vindt u horecapersoneel in Amsterdam? Overzicht van de arbeidsmarkt, gangbare tarieven, beschikbaarheid per seizoen en praktische tips.",
+    category: "Lokaal",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelstekort.jpg",
+    relatedSlugs: ["horecapersoneel-kosten-per-uur", "personeelstekort-horeca-oplossen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Amsterdam is de grootste horecastad van Nederland. Met ruim 4.000 horecagelegenheden, een continue stroom toeristen en een bruisend evenementenleven is de vraag naar horecapersoneel hier het hoogst — en het aanbod het krapst."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel geven wij een overzicht van de Amsterdamse horecaarbeidsmarkt: wat u kunt verwachten qua beschikbaarheid, welke tarieven gangbaar zijn, en hoe u in deze competitieve markt toch aan goed personeel komt."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "De Amsterdamse horecaarbeidsmarkt"
+      },
+      {
+        type: "paragraph",
+        content: "Amsterdam kent een unieke dynamiek die de personeelsmarkt beïnvloedt:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Hoge vraag** — Restaurants, hotels, bars, clubs, cateraars en evenementenlocaties concurreren om dezelfde pool medewerkers",
+          "**Hoge kosten van levensonderhoud** — Wonen in Amsterdam is duur, waardoor potentiële medewerkers uitwijken naar randgemeenten of andere steden",
+          "**Internationaal personeelsbestand** — Een groot deel van het Amsterdamse horecapersoneel is internationaal, met name in de keuken en achter de bar",
+          "**Seizoenspieken** — De zomermaanden, Koningsdag, Pride, ADE en de decemberperiode zorgen voor extreme vraagpieken",
+          "**Hoog verloop** — De combinatie van hoge druk en veel alternatieven leidt tot bovengemiddeld verloop"
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "info",
+        title: "Krapte in perspectief",
+        content: "Het personeelstekort in de Amsterdamse horeca is structureel. Veel ondernemers geven aan dat zij vacatures maanden openstaan hebben. Een gespecialiseerd uitzendbureau met een lokale pool biedt vaak de snelste oplossing."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tarieven in Amsterdam"
+      },
+      {
+        type: "paragraph",
+        content: "De tarieven voor horecapersoneel liggen in Amsterdam gemiddeld 5 tot 15% hoger dan in andere Nederlandse steden. Dit komt door de hogere vraag, het beperkte aanbod en de hogere levenskosten."
+      },
+      {
+        type: "priceTable",
+        title: "Indicatie uurtarieven Amsterdam · uitzendkrachten 2025",
+        rows: [
+          { item: "Bedieningsmedewerker", price: "€27 – €35", note: "per uur" },
+          { item: "Bartender", price: "€28 – €37", note: "per uur" },
+          { item: "Zelfstandig werkend kok", price: "€32 – €45", note: "per uur" },
+          { item: "Afwasser / keukenhulp", price: "€24 – €30", note: "per uur" },
+          { item: "Gastheer/gastvrouw", price: "€27 – €34", note: "per uur" },
+          { item: "Evenementenmedewerker", price: "€27 – €38", note: "per uur" }
+        ],
+        footer: "All-in tarieven, inclusief loon, premies, verzekeringen en administratie. Avond-, weekend- en feestdagtoeslagen komen hier bovenop."
+      },
+      {
+        type: "paragraph",
+        content: "De variatie hangt af van ervaring, taalvaardigheid, functie en het type zaak. Fine dining hanteert hogere tarieven dan een lunchzaak."
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken de kosten voor uw situatie in Amsterdam"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Beschikbaarheid per seizoen"
+      },
+      {
+        type: "paragraph",
+        content: "De beschikbaarheid van horecapersoneel in Amsterdam fluctueert sterk door het jaar:"
+      },
+      {
+        type: "timeline",
+        title: "Seizoenspatroon Amsterdam",
+        steps: [
+          { title: "Januari – maart (rustig)", description: "Na de feestdagen is de beschikbaarheid relatief goed. Dit is het beste moment om een vaste flexpool op te bouwen of gedetacheerd personeel te zoeken." },
+          { title: "April – juni (opbouw)", description: "Vanaf Koningsdag neemt de drukte toe. Terrassen openen, festivals starten. Vraag stijgt snel, tijdig reserveren van personeel is verstandig." },
+          { title: "Juli – augustus (piek)", description: "Zomerterras, toeristendrukte, festivals. De beschikbaarheid is het laagst. Last-minute aanvragen zijn moeilijker in te vullen." },
+          { title: "September – oktober (herfstpiek)", description: "ADE, congresperiode en zakelijke evenementen. Tweede piek in het jaar, met name voor evenementenpersoneel." },
+          { title: "November – december (feestmaand)", description: "Kerstdiners, bedrijfsfeesten, oud-en-nieuw. De derde piek, waarbij vooral koks en bediening schaars zijn." }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Vroeg plannen loont",
+        content: "Horecaondernemers die hun personeelsbehoefte per kwartaal vooruit plannen en een samenwerking met een uitzendbureau onderhouden, hebben bij piekdrukte voorrang op beschikbare medewerkers."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Hoe vindt u horecapersoneel in Amsterdam?"
+      },
+      {
+        type: "paragraph",
+        content: "De meest effectieve aanpakken in de Amsterdamse markt:"
+      },
+      {
+        type: "checklist",
+        title: "Effectieve wervingskanalen",
+        variant: "steps",
+        items: [
+          { text: "**Gespecialiseerd horeca-uitzendbureau** — Met een lokale pool van gescreende medewerkers die Amsterdam kennen. De snelste optie." },
+          { text: "**Eigen netwerk en team** — Vraag uw huidige medewerkers om referenties. In de horeca werkt mond-tot-mondreclame sterk." },
+          { text: "**Horecaplatforms** — Platforms als Hospitality.nl en horecavacaturebanken bereiken actief zoekende kandidaten." },
+          { text: "**Social media** — Instagram en Facebook werken goed voor het bereiken van jong horecatalent in Amsterdam." },
+          { text: "**Internationaal werven** — Veel Amsterdamse horecazaken werken succesvol met Engelstalig personeel, met name in de keuken en achter de bar." }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/locaties/amsterdam",
+        text: "Horecapersoneel in Amsterdam via TopTalent Jobs"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Tips voor Amsterdamse horecaondernemers"
+      },
+      {
+        type: "list",
+        items: [
+          "**Bied een competitief tarief** — In een krappe markt maken enkele euro's per uur het verschil bij het aantrekken van goede medewerkers",
+          "**Zorg voor goede bereikbaarheid** — Medewerkers vanuit randgemeenten willen weten hoe ze uw zaak bereiken, zeker bij late diensten",
+          "**Maaltijden en sfeer** — Kleine extra's als een goede personeelsmaaltijd en een prettige sfeer verlagen het verloop aanzienlijk",
+          "**Bouw relaties** — Behandel uitzendkrachten als teamleden. Wie zich welkom voelt, komt terug",
+          "**Combineer vast en flex** — Een kern van vaste medewerkers aangevuld met een flexibele schil is het meest robuuste model voor Amsterdam"
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/personeelstekort-horeca-oplossen",
+        text: "Meer strategieën tegen personeelstekort in de horeca"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Waarom zijn de tarieven in Amsterdam hoger?"
+      },
+      {
+        type: "paragraph",
+        content: "De combinatie van hoge vraag, beperkt aanbod en hogere levenskosten drijft de tarieven op. Medewerkers hebben in Amsterdam meer keuze en verwachten een tarief dat de hogere kosten van wonen en reizen compenseert."
+      },
+      {
+        type: "heading3",
+        content: "Kan ik ook Engelstalig personeel inhuren?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Een groot deel van het Amsterdamse horecapersoneel is internationaal. Veel zaken in het centrum, de Zuidas en rond hotels werken standaard met Engelstalig personeel. Geef bij uw aanvraag aan welke taalvereisten u heeft."
+      },
+      {
+        type: "heading3",
+        content: "Hoe snel kan ik personeel krijgen in Amsterdam?"
+      },
+      {
+        type: "paragraph",
+        content: "Via een gespecialiseerd uitzendbureau met een Amsterdamse pool vaak dezelfde dag of de volgende dag. In de piekperiodes (zomer, ADE, december) is vroegtijdig plannen aan te raden."
+      },
+      {
+        type: "heading3",
+        content: "Levert TopTalent Jobs ook personeel voor de Zuidas?"
+      },
+      {
+        type: "paragraph",
+        content: "Ja. Wij leveren horecapersoneel in heel Amsterdam, inclusief Zuidas, centrum, de Pijp, Oud-Zuid, Noord en Oost. Wij kennen de specifieke eisen van zakelijke locaties, hotels en restaurants in elk stadsdeel."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Amsterdam is de krapste horecaarbeidsmarkt van Nederland met de hoogste tarieven",
+          "Uurtarieven liggen 5–15% hoger dan in andere steden",
+          "Beschikbaarheid fluctueert sterk per seizoen, met pieken in zomer, ADE-periode en december",
+          "Een samenwerking met een gespecialiseerd uitzendbureau geeft voorrang bij piekdrukte",
+          "Combineer vast en flex personeel voor het meest robuuste model"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Horecapersoneel nodig in Amsterdam?",
+        description: "Wij hebben een vaste pool van gescreende horecamedewerkers in Amsterdam en omgeving. Vraag personeel aan of bekijk de mogelijkheden.",
+        primaryLink: { href: "/locaties/amsterdam", text: "Amsterdam bekijken" },
+        secondaryLink: { href: "/personeel-aanvragen", text: "Personeel aanvragen" },
+        variant: "orange"
+      }
+    ]
+  },
+
+  // ============================================================
+  // ARTICLE 20: Personeelsplanning horeca tips
+  // ============================================================
+  "personeelsplanning-horeca-tips": {
+    title: "Personeelsplanning horeca: tips voor minder stress en betere bezetting",
+    metaTitle: "Personeelsplanning horeca | Praktische tips",
+    excerpt: "Praktische tips voor een betere personeelsplanning in de horeca. Voorkom onderbezetting, verlaag stress en optimaliseer uw roostering.",
+    category: "Management",
+    author: "TopTalent Team",
+    date: "14 mei 2025",
+    datePublished: "2025-05-14",
+    image: "/images/blog-personeelsplanning.jpg",
+    relatedSlugs: ["horeca-personeelsplanning-rooster-tips", "no-shows-horeca-voorkomen"],
+    blocks: [
+      {
+        type: "paragraph",
+        content: "Een goede personeelsplanning is het fundament van een draaiende horecazaak. Toch is het een van de grootste stressfactoren voor ondernemers: te weinig mensen op drukke momenten, te veel personeel op rustige dagen, en het eeuwige puzzelen met beschikbaarheid."
+      },
+      {
+        type: "paragraph",
+        content: "In dit artikel delen wij praktische tips die u direct kunt toepassen om uw planning te verbeteren. Geen theoretische modellen, maar aanpakken die werken in de dagelijkse horecapraktijk."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Begin bij de basis: ken uw patronen"
+      },
+      {
+        type: "paragraph",
+        content: "Voordat u aan een rooster begint, heeft u inzicht nodig in uw eigen bedrijfspatronen. Veel horecaondernemers plannen op gevoel, terwijl hun kassasysteem al de data bevat die zij nodig hebben."
+      },
+      {
+        type: "checklist",
+        title: "Analyseer uw bedrijfspatronen",
+        variant: "steps",
+        items: [
+          { text: "**Omzet per dagdeel** — Op welke dagdelen draait u de meeste omzet? Stem uw bezetting hierop af" },
+          { text: "**Drukte per dag van de week** — Maandag is geen zaterdag. Differentieer uw bezetting per dag" },
+          { text: "**Seizoenspatronen** — Terrasseizoen, feestdagen, zomervakantie: ken uw pieken en dalen" },
+          { text: "**Reserveringsdata** — Gebruik uw reserveringssysteem als voorspeller voor de bezettingsbehoefte" },
+          { text: "**Historische uitval** — Hoeveel ziekmeldingen of no-shows heeft u gemiddeld per maand?" }
+        ]
+      },
+      {
+        type: "highlight",
+        variant: "tip",
+        title: "Data gebruiken",
+        content: "De meeste kassasystemen bieden rapporten per uur, per dag en per maand. Exporteer deze data en leg ze naast uw rooster. U zult patronen ontdekken die uw planning direct verbeteren."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Bouw uw rooster in lagen"
+      },
+      {
+        type: "paragraph",
+        content: "Een effectief horecatrooster bestaat uit drie lagen:"
+      },
+      {
+        type: "heading3",
+        content: "Laag 1: De vaste kern"
+      },
+      {
+        type: "paragraph",
+        content: "Uw vaste medewerkers vormen de basis. Zij kennen de zaak, het menu, de werkwijze. Plan hen in op de diensten die structureel bezet moeten zijn. De vaste kern moet uw minimumdraai kunnen garanderen."
+      },
+      {
+        type: "heading3",
+        content: "Laag 2: De flexibele schil"
+      },
+      {
+        type: "paragraph",
+        content: "Boven de vaste kern komt de flexibele schil: uitzendkrachten, oproepkrachten of parttimers die op drukke momenten bijspringen. Deze groep schakelt u in op basis van verwachte drukte."
+      },
+      {
+        type: "heading3",
+        content: "Laag 3: De noodreserve"
+      },
+      {
+        type: "paragraph",
+        content: "De derde laag is uw vangnet bij onverwachte uitval: een samenwerking met een uitzendbureau dat op korte termijn kan leveren, of collega-ondernemers met wie u personeel kunt delen."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Een flexibele schil opbouwen met uitzendpersoneel"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Praktische tips voor de dagelijkse planning"
+      },
+      {
+        type: "heading3",
+        content: "1. Publiceer het rooster minstens 1 week vooraf"
+      },
+      {
+        type: "paragraph",
+        content: "Hoe eerder medewerkers hun rooster kennen, hoe minder last-minute wijzigingen en uitval. Streef naar 2 weken vooruit, met 1 week als absoluut minimum."
+      },
+      {
+        type: "heading3",
+        content: "2. Plan een buffer op drukke diensten"
+      },
+      {
+        type: "paragraph",
+        content: "Reken bij verwachte drukte altijd 1 persoon extra mee. De kosten van een extra medewerker op een drukke avond zijn lager dan de kosten van onderbezetting: langere wachttijden, lagere gasttevredenheid en overbelaste medewerkers."
+      },
+      {
+        type: "heading3",
+        content: "3. Gebruik een digitaal planningssysteem"
+      },
+      {
+        type: "paragraph",
+        content: "Papieren roosters en WhatsApp-groepen zijn foutgevoelig. Een planningsapp geeft overzicht, laat medewerkers zelf beschikbaarheid opgeven en stuurt automatische herinneringen."
+      },
+      {
+        type: "heading3",
+        content: "4. Maak beschikbaarheid bespreekbaar"
+      },
+      {
+        type: "paragraph",
+        content: "Vraag uw team wekelijks naar hun beschikbaarheid. Medewerkers die voelen dat er ruimte is voor persoonlijke wensen, zijn betrouwbaarder in hun aanwezigheid."
+      },
+      {
+        type: "heading3",
+        content: "5. Evalueer maandelijks"
+      },
+      {
+        type: "paragraph",
+        content: "Vergelijk maandelijks uw geplande bezetting met de werkelijke drukte. Waar was u overbezet? Waar onderbezet? Pas uw basisplanning aan op basis van deze evaluatie."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Kosten van slechte planning"
+      },
+      {
+        type: "paragraph",
+        content: "Slechte personeelsplanning kost meer dan alleen stress. De financiële impact is meetbaar:"
+      },
+      {
+        type: "list",
+        items: [
+          "**Onderbezetting** — Langere wachttijden leiden tot lagere gasttevredenheid en minder herhalingsbezoek",
+          "**Overbezetting** — Onnodige loonkosten op rustige momenten drukken uw marge",
+          "**Hoog verloop** — Medewerkers die structureel overbelast zijn of onregelmatig worden ingeroosterd, vertrekken sneller",
+          "**Last-minute oplossingen** — Spoedaanvragen bij een uitzendbureau zijn duurder dan structurele afspraken",
+          "**Uitval** — Overwerkte medewerkers worden vaker ziek, wat de planning verder verstoort"
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken wat een optimale personeelsmix kost"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Flexibele schil organiseren"
+      },
+      {
+        type: "paragraph",
+        content: "De flexibele schil is het verschil tussen stress en rust in uw planning. Zo organiseert u het:"
+      },
+      {
+        type: "checklist",
+        title: "Opbouw flexibele schil",
+        variant: "benefits",
+        items: [
+          { text: "Sluit een raamovereenkomst met een horeca-uitzendbureau voor vaste tarieven en prioriteit" },
+          { text: "Bouw een pool van 3–5 vertrouwde uitzendkrachten die uw zaak kennen" },
+          { text: "Plan de flexibele schil standaard in voor weekenden en bekende piekdagen" },
+          { text: "Gebruik de flexpool ook als vangnet bij ziekmeldingen en onverwachte drukte" }
+        ]
+      },
+      {
+        type: "relatedLink",
+        href: "/blog/no-shows-horeca-voorkomen",
+        text: "Zo voorkomt u no-shows en uitval"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading2",
+        content: "Veelgestelde vragen"
+      },
+      {
+        type: "heading3",
+        content: "Hoe ver vooruit moet ik plannen?"
+      },
+      {
+        type: "paragraph",
+        content: "Publiceer uw basisrooster minstens 1 week vooraf, liefst 2 weken. Voor grote evenementen of seizoenspieken is 4–6 weken vooruit verstandig. Dit geeft u én uw medewerkers rust."
+      },
+      {
+        type: "heading3",
+        content: "Hoeveel extra personeel moet ik inplannen als buffer?"
+      },
+      {
+        type: "paragraph",
+        content: "Een vuistregel is 1 extra medewerker per 4–5 geplande medewerkers op drukke diensten. Dus bij een team van 8 op een zaterdagavond: plan 9–10 in. De kosten van die extra uren zijn lager dan de impact van onderbezetting."
+      },
+      {
+        type: "heading3",
+        content: "Welke planningssoftware is geschikt voor horeca?"
+      },
+      {
+        type: "paragraph",
+        content: "Er zijn diverse tools op de markt, van eenvoudig tot uitgebreid. Kies een systeem dat past bij uw teamgrootte en budget. De belangrijkste functies: beschikbaarheidsregistratie, automatische herinneringen en een mobiele app voor medewerkers."
+      },
+      {
+        type: "heading3",
+        content: "Hoe ga ik om met medewerkers die altijd dezelfde dagen willen?"
+      },
+      {
+        type: "paragraph",
+        content: "Maak afspraken over een eerlijke verdeling van populaire en minder populaire diensten. Communiceer dit helder en pas het consequent toe. Medewerkers accepteren wisselende diensten beter als de verdeling transparant en eerlijk is."
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "summary",
+        title: "Samenvatting",
+        points: [
+          "Analyseer uw bedrijfspatronen op basis van data, niet op gevoel",
+          "Bouw uw rooster in drie lagen: vaste kern, flexibele schil en noodreserve",
+          "Publiceer roosters minstens 1 week vooraf en plan een buffer op drukke diensten",
+          "Gebruik een digitaal planningssysteem voor overzicht en herinneringen",
+          "Organiseer een flexibele schil via een uitzendbureau voor betrouwbare opschaling"
+        ]
+      },
+      {
+        type: "cta",
+        title: "Hulp bij uw personeelsplanning?",
+        description: "Wij denken mee over de juiste mix van vast en flex personeel. Bereken direct uw kosten of vraag personeel aan.",
+        primaryLink: { href: "/kosten-calculator", text: "Kosten berekenen" },
+        secondaryLink: { href: "/diensten/uitzenden", text: "Flexibele schil opbouwen" },
+        variant: "dark"
       }
     ]
   }
