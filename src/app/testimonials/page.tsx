@@ -31,83 +31,83 @@ interface ShortQuote {
 
 const featuredCases: FeaturedCase[] = [
   {
-    name: "Martijn de Vries",
-    role: "Eigenaar",
-    company: "Restaurant De Smaak",
+    name: "M. de Vries",
+    role: "Restaurant eigenaar",
+    company: "Utrecht",
     segment: "restaurant",
-    challenge: "Acute personeelstekort tijdens hoogseizoen. Restaurant moest tijdelijk minder tafels aannemen.",
-    solution: "TopTalent leverde binnen 18 uur 3 ervaren bedieners die direct inzetbaar waren.",
-    outcome: "Volledig capaciteit hersteld zonder kwaliteitsverlies. Geen gemiste omzet meer.",
-    stats: "Binnen 18 uur opgelost",
+    challenge: "Tijdens een druk weekend vielen twee medewerkers uit door ziekte.",
+    solution: "We kregen binnen een dag vervanging die de kneepjes van het vak kende.",
+    outcome: "Het weekend verliep soepel en onze gasten merkten er niets van.",
+    stats: "Snel geregeld",
   },
   {
-    name: "Sophie Jansen",
-    role: "HR Manager",
-    company: "Grand Hotel Amsterdam",
+    name: "S. Jansen",
+    role: "Hospitality manager",
+    company: "Amsterdam",
     segment: "hotel",
-    challenge: "Wisselende bezetting door vakantieperiodes en pieken. Interne planning was een maandelijkse hoofdpijn.",
-    solution: "Vaste samenwerking met flexpool van 12 getrainde medewerkers die het hotel kennen.",
-    outcome: "95% minder planningsstress. Altijd passend personeel beschikbaar zonder lange doorlooptijd.",
-    stats: "12 vaste flexkrachten",
+    challenge: "Door vakantie en wisselende bezetting liep onze planning regelmatig vast.",
+    solution: "De flexpool heeft ons geholpen met continuïteit zonder constant te moeten bellen.",
+    outcome: "We hebben nu meer rust in de planning en kunnen beter vooruit kijken.",
+    stats: "Minder planningsstress",
   },
   {
-    name: "Rick van den Berg",
-    role: "Operations Manager",
-    company: "Catering Company",
+    name: "R. van den Berg",
+    role: "Operationeel manager",
+    company: "Rotterdam",
     segment: "event",
-    challenge: "Events vragen telkens ander aantal medewerkers. Last-minute wijzigingen zijn normaal.",
-    solution: "On-demand schaalbaar team. Van 5 tot 50 medewerkers binnen 48 uur regelbaar.",
-    outcome: "Geen enkel event meer afgezegd door personeelstekort. Volledige flexibiliteit zonder risico.",
-    stats: "Tot 50 medewerkers binnen 48u",
+    challenge: "Voor evenementen moeten we snel kunnen opschalen met ervaren mensen.",
+    solution: "Het team was professioneel en kende de horeca goed.",
+    outcome: "De events verlopen soepeler en we hebben meer flexibiliteit.",
+    stats: "Betrouwbaar team",
   },
 ];
 
 const shortQuotes: ShortQuote[] = [
   {
-    name: "Emma Bakker",
+    name: "E. Bakker",
     role: "Bedrijfsleider",
-    company: "Brasserie Het Plein",
-    quote: "Ze voelen niet als uitzendkrachten, maar als échte teamleden die het concept snappen.",
+    company: "Restaurant — Utrecht",
+    quote: "De mensen die we krijgen kennen de horeca en draaien snel mee met het team.",
     segment: "restaurant",
     rating: 5,
   },
   {
-    name: "Thomas Vermeer",
-    role: "F&B Director",
-    company: "Hotel Group Nederland",
-    quote: "Recruitment én flexkrachten via één partner. Dat scheelt enorm veel tijd en gedoe.",
+    name: "T. Vermeer",
+    role: "F&B Manager",
+    company: "Hotel — Amsterdam",
+    quote: "Het scheelt veel tijd om flexkrachten en recruitment via één partner te regelen.",
     segment: "hotel",
     rating: 5,
   },
   {
-    name: "Lisa de Groot",
+    name: "L. de Groot",
     role: "Eventmanager",
-    company: "Premium Events",
-    quote: "Representatief, ervaren, en altijd op tijd. Precies wat je nodig hebt bij high-end events.",
+    company: "Evenementenbedrijf — Den Haag",
+    quote: "Professioneel, representatief en op tijd. Dat is belangrijk bij onze events.",
     segment: "event",
     rating: 5,
   },
   {
-    name: "Peter Claassen",
+    name: "P. Claassen",
     role: "Eigenaar",
-    company: "Grand Café Utrecht",
-    quote: "Binnen 24 uur vervanging bij ziekmelding. Dat is pas service die werkt.",
+    company: "Café — Utrecht",
+    quote: "Als iemand uitvalt krijgen we snel vervanging. Dat werkt goed voor ons.",
     segment: "restaurant",
     rating: 5,
   },
   {
-    name: "Maria Koopman",
+    name: "M. Koopman",
     role: "Hospitality Manager",
-    company: "Boutique Hotel Rotterdam",
-    quote: "De kwaliteit van screening is merkbaar. Geen verrassingen, alleen goede mensen.",
+    company: "Hotel — Rotterdam",
+    quote: "De screening is zorgvuldig. We krijgen mensen die passen bij onze standaard.",
     segment: "hotel",
     rating: 5,
   },
   {
-    name: "Jasper Mulder",
+    name: "J. Mulder",
     role: "Projectleider",
-    company: "Festival Productions",
-    quote: "Ook bij grote volumes blijft de kwaliteit consistent. Dat is zeldzaam in deze branche.",
+    company: "Festival organisatie — Utrecht",
+    quote: "Ook bij grotere aantallen blijft de kwaliteit goed. Dat is prettig werken.",
     segment: "event",
     rating: 5,
   },
@@ -120,12 +120,6 @@ const shortQuotes: ShortQuote[] = [
 const StarIcon = ({ filled = true }: { filled?: boolean }) => (
   <svg className={`w-5 h-5 ${filled ? "text-amber-400 fill-current" : "text-neutral-300"}`} viewBox="0 0 20 20">
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-  </svg>
-);
-
-const PlayIcon = () => (
-  <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M8 5v14l11-7z"/>
   </svg>
 );
 
@@ -169,7 +163,7 @@ export default function TestimonialsPage() {
               {/* Trust badge */}
               <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-6 border border-green-200">
                 <CheckCircleIcon />
-                <span>Vertrouwd door 100+ horecabedrijven</span>
+                <span>Ervaren in de horeca</span>
               </div>
 
               {/* Headline - Positioning as proven solution */}
@@ -184,24 +178,19 @@ export default function TestimonialsPage() {
 
               {/* Social proof summary */}
               <div className="flex flex-wrap items-center justify-center gap-8 mb-10">
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon key={i} />
-                    ))}
-                  </div>
-                  <span className="font-semibold text-neutral-900">4.9/5</span>
-                  <span className="text-neutral-500 text-sm">(120+ reviews)</span>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-neutral-900">24/7</div>
+                  <div className="text-sm text-neutral-600">Bereikbaar</div>
                 </div>
                 <div className="h-8 w-px bg-neutral-300"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-neutral-900">18u</div>
-                  <div className="text-sm text-neutral-600">Gemiddelde reactietijd</div>
+                  <div className="text-2xl font-bold text-neutral-900">24u</div>
+                  <div className="text-sm text-neutral-600">Vaak al personeel beschikbaar</div>
                 </div>
                 <div className="h-8 w-px bg-neutral-300"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-neutral-900">95%</div>
-                  <div className="text-sm text-neutral-600">Herhaalbeslissing</div>
+                  <div className="text-2xl font-bold text-neutral-900">Utrecht</div>
+                  <div className="text-sm text-neutral-600">Centraal in Nederland</div>
                 </div>
               </div>
 
@@ -372,53 +361,6 @@ export default function TestimonialsPage() {
                 </div>
               </FadeIn>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ================================================================
-          5. VIDEO TESTIMONIAL PLACEHOLDER
-          ================================================================ */}
-      <section className="py-20 bg-gradient-to-b from-neutral-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeIn>
-            <div className="text-center mb-12">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
-                Video testimonials
-              </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Zie het zelf
-              </h2>
-              <p className="text-neutral-600 max-w-2xl mx-auto">
-                Horecabedrijven vertellen hun verhaal: van stress naar zekerheid.
-              </p>
-            </div>
-          </FadeIn>
-
-          <div className="max-w-4xl mx-auto">
-            <FadeIn delay={0.2}>
-              <div className="relative aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-2xl overflow-hidden group cursor-pointer border-2 border-neutral-300 hover:border-[#F97316] transition-all duration-300">
-                {/* Placeholder background */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-[#F97316] shadow-xl group-hover:scale-110 transition-transform duration-300">
-                      <PlayIcon />
-                    </div>
-                    <p className="text-neutral-600 font-medium">
-                      Video testimonial: Restaurant De Smaak
-                    </p>
-                    <p className="text-sm text-neutral-500 mt-2">
-                      &ldquo;Hoe we ons personeelsprobleem in 24 uur oplosten&rdquo;
-                    </p>
-                  </div>
-                </div>
-
-                {/* Coming soon badge */}
-                <div className="absolute top-4 right-4 bg-[#F97316] text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                  Binnenkort beschikbaar
-                </div>
-              </div>
-            </FadeIn>
           </div>
         </div>
       </section>

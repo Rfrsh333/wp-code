@@ -18,25 +18,25 @@ const DynamicCTA = dynamic(() => import("@/components/DynamicCTA"));
    ========================================================================== */
 const testimonials = [
   {
-    context: "Zomerdrukte in het restaurant",
-    result: "Binnen 24 uur extra bediening op de vloer.",
-    name: "Martijn de Vries",
-    role: "Eigenaar",
-    company: "Restaurant De Smaak",
+    context: "Tijdens een druk weekend hadden we snel extra bediening nodig.",
+    result: "Binnen een dag stonden er ervaren krachten klaar die direct meedraaiden met het team.",
+    name: "M. de Vries",
+    role: "Restaurant eigenaar",
+    company: "Utrecht",
   },
   {
-    context: "Hotel met wisselende roosters",
-    result: "Altijd passend personeel zonder gedoe.",
-    name: "Sophie Jansen",
-    role: "HR Manager",
-    company: "Grand Hotel Amsterdam",
+    context: "Onze planning liep vast door ziekte en vakantie.",
+    result: "De flexpool zorgde voor continuïteit zonder dat wij constant hoefden te bellen.",
+    name: "S. Jansen",
+    role: "Hospitality manager",
+    company: "Amsterdam",
   },
   {
-    context: "Events met piekbelasting",
-    result: "Betrouwbare teams die meteen meedraaien.",
-    name: "Rick van den Berg",
-    role: "Operations Manager",
-    company: "Catering Company",
+    context: "Voor een groot event moesten we snel opschalen.",
+    result: "Het team was professioneel en kende de horeca. Precies wat we nodig hadden.",
+    name: "R. van den Berg",
+    role: "Operationeel manager",
+    company: "Rotterdam",
   },
 ];
 
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Extra horecapersoneel binnen 24 u | TopTalent",
-    description: "Stop omzetverlies door personeelsuitval. Gescreend horecapersoneel binnen 24 uur. 95% van onze klanten heeft direct personeel.",
+    description: "Stop omzetverlies door personeelsuitval. Gescreend horecapersoneel vaak binnen 24 uur beschikbaar.",
     type: "website",
     url: "https://www.toptalentjobs.nl/",
   },
@@ -117,7 +117,7 @@ export default function Home() {
           actief in Utrecht, Amsterdam, Rotterdam, Den Haag en Eindhoven. Het bedrijf
           biedt drie diensten: uitzenden (tijdelijk personeel), detachering (langdurige
           plaatsing) en recruitment (werving en selectie van vast personeel). TopTalent
-          Jobs is WAADI-geregistreerd en 24/7 bereikbaar. Meer dan 500 horecabedrijven
+          Jobs is WAADI-geregistreerd en 24/7 bereikbaar. Honderden horecabedrijven
           maken gebruik van de diensten van TopTalent Jobs.
         </p>
       </section>
@@ -266,7 +266,7 @@ export default function Home() {
                   <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  500+ tevreden klanten
+                  Honderden horecabedrijven geholpen
                 </span>
                 <span className="flex items-center gap-1.5">
                   <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -454,7 +454,7 @@ export default function Home() {
                 {/* Trust indicator */}
                 <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  95% van klanten heeft binnen 24 u personeel
+                  Vaak binnen 24 uur personeel beschikbaar
                 </div>
 
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">

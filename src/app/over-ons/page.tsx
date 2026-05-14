@@ -52,7 +52,22 @@ export default function OverOnsPage() {
               <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Diensten</dt><dd>Uitzenden, detachering, recruitment</dd></div>
               <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Levertijd</dt><dd>Binnen 24 uur (vaak dezelfde dag)</dd></div>
               <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Bereikbaarheid</dt><dd>24/7 via telefoon, e-mail en WhatsApp</dd></div>
-              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">KvK-nummer</dt><dd>73401161</dd></div>
+              <div className="flex justify-between sm:block">
+                <dt className="font-medium text-neutral-500">KvK-nummer</dt>
+                <dd>
+                  <a
+                    href="https://www.kvk.nl/orderstraat/product-kiezen/?kvknummer=73401161"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#F97316] hover:underline inline-flex items-center gap-1"
+                  >
+                    73401161
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </dd>
+              </div>
               <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Registratie</dt><dd>WAADI-geregistreerd</dd></div>
             </dl>
           </div>
@@ -120,18 +135,17 @@ export default function OverOnsPage() {
                   Wij geloven in mensen
                 </h2>
                 <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
-                  TopTalent Jobs is opgericht met een duidelijke missie: het verbinden van gemotiveerd talent
-                  met bedrijven in de horeca en evenementensector die flexibel en kwalitatief
-                  personeel nodig hebben.
+                  Als horeca uitzendbureau weten we wat het is om last-minute in de problemen te zitten.
+                  Een ziekmelding, onverwachte drukte, of personeel dat niet komt opdagen. Dat frustreert en kost omzet.
                 </p>
                 <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
-                  Wij geloven dat werk meer is dan alleen een baan. Het gaat om plezier,
-                  ontwikkeling en het maken van impact. Daarom investeren wij in onze mensen
-                  met trainingen, een sterke community en eerlijke arbeidsvoorwaarden.
+                  Daarom werken we met een flexpool van mensen die de horeca kennen.
+                  Ze weten hoe een drukke dienst werkt, kennen het verschil tussen à la carte en banket,
+                  en draaien snel mee met uw team.
                 </p>
                 <p className="text-lg text-neutral-600 leading-relaxed">
-                  Of u nu een restaurant, hotel, cateringbedrijf of evenementenorganisatie bent -
-                  wij leveren het personeel dat bij u past.
+                  Of u nu een restaurant, hotel, cateringbedrijf of evenementenorganisatie bent:
+                  wij helpen u met betrouwbaar personeel zonder gedoe.
                 </p>
               </div>
             </FadeIn>
@@ -239,16 +253,16 @@ export default function OverOnsPage() {
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16" staggerDelay={0.15}>
               {[
                 {
-                  quote: "Binnen 18 uur volledige bezetting tijdens hoogseizoen",
-                  company: "Restaurant De Smaak"
+                  quote: "We hadden snel personeel nodig tijdens een drukke periode. Het verliep soepel en professioneel.",
+                  company: "Restaurant eigenaar — Utrecht"
                 },
                 {
-                  quote: "40 diensten ingevuld in één week zonder gedoe",
-                  company: "Grand Hotel Amsterdam"
+                  quote: "De flexpool heeft ons enorm geholpen met piekmomenten opvangen zonder gedoe.",
+                  company: "Hospitality manager — Amsterdam"
                 },
                 {
-                  quote: "100% beschikbaarheid tijdens piekweekend",
-                  company: "Evenementenlocatie"
+                  quote: "Betrouwbare mensen die de horeca kennen. Dat maakt het verschil.",
+                  company: "Evenementenlocatie — Rotterdam"
                 },
               ].map((item, i) => (
                 <StaggerItem key={i}>
@@ -264,9 +278,9 @@ export default function OverOnsPage() {
 
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8" staggerDelay={0.15}>
               {[
-                { value: "95%", label: "Klanten heeft binnen 24u personeel" },
-                { value: "200+", label: "Horeca locaties geholpen in 2025" },
+                { value: "24 uur", label: "Vaak al personeel beschikbaar" },
                 { value: "24/7", label: "Bereikbaar voor spoedvragen" },
+                { value: "Utrecht", label: "Centraal gevestigd in Nederland" },
               ].map((stat, i) => (
                 <StaggerItem key={i}>
                   <div className="text-center p-8">
