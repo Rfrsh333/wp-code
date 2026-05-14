@@ -190,6 +190,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
               src={dienst.klant.bedrijf_foto_url}
               alt={dienst.klant.bedrijfsnaam}
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover"
             />
           ) : (
@@ -330,6 +331,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
                   src={dienst.klant.bedrijf_foto_url}
                   alt={dienst.klant.bedrijfsnaam}
                   fill
+                  sizes="(max-width: 640px) 100vw, 672px"
                   className="object-cover rounded-t-2xl"
                 />
               ) : (

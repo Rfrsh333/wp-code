@@ -136,7 +136,9 @@ export default function Header() {
                 alt="TopTalent Jobs"
                 width={288}
                 height={144}
+                sizes="(max-width: 640px) 200px, (max-width: 1024px) 250px, 288px"
                 className="h-34 w-auto"
+                priority
               />
             </Link>
 

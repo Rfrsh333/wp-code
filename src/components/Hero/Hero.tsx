@@ -152,10 +152,11 @@ export default function Hero() {
             {/* Powder splash background */}
             <div className={styles.powderSplash}>
               <Image
-                src="/images/powder-splash.png"
+                src="/images/powder-splash.webp"
                 alt=""
                 width={500}
                 height={500}
+                sizes="(max-width: 1024px) 300px, 500px"
                 className={styles.powderSplashImage}
                 aria-hidden="true"
               />
@@ -167,6 +168,7 @@ export default function Hero() {
               alt="Barista aan het werk met inzetbaar horecapersoneel via ons uitzendbureau"
               width={240}
               height={320}
+              sizes="(max-width: 640px) 180px, (max-width: 1024px) 220px, 240px"
               className={styles.heroImage}
               priority
             />

@@ -46,7 +46,7 @@ export default async function EditorialBlogIndexPage() {
           {draftCards.map((draft) => (
             <article key={draft.id} className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
               {draft.heroImageUrl ? (
-                <Image src={draft.heroImageUrl} alt={draft.title} width={800} height={500} className="aspect-[16/10] w-full object-cover" unoptimized />
+                <Image src={draft.heroImageUrl} alt={draft.title} width={800} height={500} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px" className="aspect-[16/10] w-full object-cover" unoptimized />
               ) : (
                 <div className="aspect-[16/10] w-full bg-gradient-to-br from-orange-100 via-amber-50 to-white" />
               )}

@@ -56,6 +56,7 @@ export default function MedewerkerPortalLayout({
               alt="TopTalent"
               width={32}
               height={32}
+              sizes="32px"
               className="shrink-0"
             />
             <div>
