@@ -2,23 +2,19 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import Section from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { useToast } from "@/components/ui/Toast";
 
-const contactSchema = z.object({
-  naam: z.string().min(1, "Naam is verplicht"),
-  email: z.string().min(1, "E-mail is verplicht").email("Vul een geldig emailadres in"),
-  telefoon: z.string().optional(),
-  onderwerp: z.string().min(1, "Selecteer een onderwerp"),
-  bericht: z.string().min(10, "Bericht moet minimaal 10 tekens bevatten"),
-});
-
-type ContactFormData = z.infer<typeof contactSchema>;
+interface ContactFormData {
+  naam: string;
+  email: string;
+  telefoon?: string;
+  onderwerp: string;
+  bericht: string;
+}
 
 interface FAQItem {
   question: string;
@@ -120,9 +116,7 @@ const faqData: FAQItem[] = [
 const categories = ["Alle", "Voor Opdrachtgevers", "Voor Werkzoekenden", "Over TopTalent"];
 
 function ContactPageContent() {
-  const { register, handleSubmit, formState: { errors } } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
-  });
+  const { register, handleSubmit, formState: { errors } } = useForm<ContactFormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(0);
   const [activeCategory, setActiveCategory] = useState("Alle");
@@ -249,7 +243,7 @@ function ContactPageContent() {
                       <input
                         type="text"
                         id="naam"
-                        {...register("naam")}
+                        {...register("naam", { required: "Naam is verplicht" })}
                         className="w-full px-4 py-3 md:py-3.5 border border-neutral-200 rounded-xl
                         focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
@@ -264,7 +258,7 @@ function ContactPageContent() {
                       <input
                         type="email"
                         id="email"
-                        {...register("email")}
+                        {...register("email", { required: "E-mail is verplicht", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Vul een geldig emailadres in" } })}
                         className="w-full px-4 py-3 md:py-3.5 border border-neutral-200 rounded-xl
                         focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
@@ -295,7 +289,7 @@ function ContactPageContent() {
                     </label>
                     <select
                       id="onderwerp"
-                      {...register("onderwerp")}
+                      {...register("onderwerp", { required: "Selecteer een onderwerp" })}
                       defaultValue=""
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
                       focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
@@ -318,7 +312,7 @@ function ContactPageContent() {
                     </label>
                     <textarea
                       id="bericht"
-                      {...register("bericht")}
+                      {...register("bericht", { required: "Bericht is verplicht", minLength: { value: 10, message: "Bericht moet minimaal 10 tekens bevatten" } })}
                       rows={5}
                       className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
                       focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]

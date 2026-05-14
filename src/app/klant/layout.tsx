@@ -1,7 +1,7 @@
 import { Metadata, Viewport } from "next";
 import RegisterSW from "./components/RegisterSW";
 import KlantPWAInstallPrompt from "./components/PWAInstallPrompt";
-import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidget";
+import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidgetLazy";
 import QueryProvider from "@/components/QueryProvider";
 
 export const metadata: Metadata = {

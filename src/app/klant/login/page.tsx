@@ -4,22 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/Toast";
 
-const loginSchema = z.object({
-  email: z.string().min(1, "Vul een geldig emailadres in").email("Vul een geldig emailadres in"),
-  wachtwoord: z.string().min(1, "Wachtwoord is verplicht"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+interface LoginFormData {
+  email: string;
+  wachtwoord: string;
+}
 
 export default function KlantLogin() {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  });
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -117,7 +111,7 @@ export default function KlantLogin() {
                 <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
                 <input
                   type="email"
-                  {...register("email")}
+                  {...register("email", { required: "Vul een geldig emailadres in", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Vul een geldig emailadres in" } })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="jouw@bedrijf.nl"
                 />
@@ -136,7 +130,7 @@ export default function KlantLogin() {
                 </div>
                 <input
                   type="password"
-                  {...register("wachtwoord")}
+                  {...register("wachtwoord", { required: "Wachtwoord is verplicht" })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="••••••••"
                 />

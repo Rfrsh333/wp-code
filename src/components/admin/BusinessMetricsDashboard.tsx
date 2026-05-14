@@ -1,11 +1,100 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
-import { LineChart, Line, BarChart, Bar, FunnelChart, Funnel, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { downloadCSV, metricsToCSV } from "@/lib/export-utils";
 import { Euro, Target, Calendar, Sparkles, TrendingUp, Users, CheckCircle, BarChart3, MessageCircle, Zap, Mail, Trophy, Phone, FileText, Download, RefreshCw, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Lazy-load recharts (admin-only, ~200KB)
+const RechartsCharts = dynamic(
+  () => import("recharts").then((mod) => {
+    // Return a component that renders the charts
+    const { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } = mod;
+
+    function Charts({ charts }: { charts: BusinessMetrics["charts"] }) {
+      return (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Revenue Trend Chart */}
+          <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 lg:col-span-2">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-slate-600" />
+              Omzet Trend (6 Maanden)
+            </h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={charts.revenueTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  formatter={(value) => [`€${Number(value).toLocaleString("nl-NL")}`, "Omzet"]}
+                  contentStyle={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                />
+                <Line type="monotone" dataKey="revenue" stroke="#F27501" strokeWidth={2.5} dot={{ fill: "#F27501", r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pipeline Funnel */}
+          <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <Target className="w-4 h-4 text-slate-600" />
+              Pipeline Funnel
+            </h3>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={charts.pipelineFunnel} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                <YAxis dataKey="stage" type="category" tick={{ fontSize: 11 }} stroke="#94a3b8" width={80} />
+                <Tooltip
+                  formatter={(value) => [`${Number(value)} leads`, "Aantal"]}
+                  contentStyle={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                />
+                <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                  {charts.pipelineFunnel.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={["#93c5fd", "#60a5fa", "#3b82f6", "#F27501", "#16a34a"][index] || "#F27501"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Channel Performance */}
+          <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-slate-600" />
+              Kanaal Performance
+            </h3>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={charts.channelPerformance}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="channel" tick={{ fontSize: 10 }} stroke="#94a3b8" angle={-45} textAnchor="end" height={80} />
+                <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                <Tooltip contentStyle={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }} />
+                <Legend wrapperStyle={{ fontSize: "11px" }} />
+                <Bar dataKey="contacts" fill="#94a3b8" name="Totaal" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="positive" fill="#22c55e" name="Positief" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      );
+    }
+
+    return Charts;
+  }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 lg:col-span-2 h-[300px] animate-pulse" />
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 h-[340px] animate-pulse" />
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 h-[340px] animate-pulse" />
+      </div>
+    ),
+  }
+);
 
 interface BusinessMetrics {
   pipeline: {
@@ -530,122 +619,8 @@ export default function BusinessMetricsDashboard() {
         </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Revenue Trend Chart */}
-        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-slate-600" />
-            Omzet Trend (6 Maanden)
-          </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={metrics.charts.revenueTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 11 }}
-                stroke="#94a3b8"
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                stroke="#94a3b8"
-                tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
-              />
-              <Tooltip
-                formatter={(value) => [`€${Number(value).toLocaleString("nl-NL")}`, "Omzet"]}
-                contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "6px",
-                  fontSize: "12px"
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#F27501"
-                strokeWidth={2.5}
-                dot={{ fill: "#F27501", r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Pipeline Funnel */}
-        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Target className="w-4 h-4 text-slate-600" />
-            Pipeline Funnel
-          </h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={metrics.charts.pipelineFunnel} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <YAxis
-                dataKey="stage"
-                type="category"
-                tick={{ fontSize: 11 }}
-                stroke="#94a3b8"
-                width={80}
-              />
-              <Tooltip
-                formatter={(value) => [`${Number(value)} leads`, "Aantal"]}
-                contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "6px",
-                  fontSize: "12px"
-                }}
-              />
-              <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                {metrics.charts.pipelineFunnel.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={[
-                    "#93c5fd", // blue-300
-                    "#60a5fa", // blue-400
-                    "#3b82f6", // blue-500
-                    "#F27501", // orange
-                    "#16a34a", // green-600
-                  ][index] || "#F27501"} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Channel Performance */}
-        <div className="bg-slate-50 rounded-lg border border-slate-200 p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <MessageCircle className="w-4 h-4 text-slate-600" />
-            Kanaal Performance
-          </h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={metrics.charts.channelPerformance}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis
-                dataKey="channel"
-                tick={{ fontSize: 10 }}
-                stroke="#94a3b8"
-                angle={-45}
-                textAnchor="end"
-                height={80}
-              />
-              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "6px",
-                  fontSize: "12px"
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: "11px" }} />
-              <Bar dataKey="contacts" fill="#94a3b8" name="Totaal" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="positive" fill="#22c55e" name="Positief" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      {/* Charts Section (lazy-loaded) */}
+      <RechartsCharts charts={metrics.charts} />
     </div>
   );
 }

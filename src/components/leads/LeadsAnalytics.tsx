@@ -1,20 +1,100 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts'
+import dynamic from 'next/dynamic'
 import type { Lead } from '@/types/leads'
 import { supabase } from '@/lib/supabase'
+
+// Lazy-load recharts (admin-only, ~200KB)
+const LeadsCharts = dynamic(
+  () => import('recharts').then((mod) => {
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = mod;
+
+    function Charts({
+      leadsByPlatform,
+      leadsByStatus,
+      monthlyData,
+    }: {
+      leadsByPlatform: Array<{ name: string; value: number; fill: string }>;
+      leadsByStatus: Array<{ name: string; value: number; fill: string }>;
+      monthlyData: Array<{ month: string; count: number }>;
+    }) {
+      return (
+        <>
+          {/* Charts Row 1 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Leads per Platform */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Leads per Platform</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={leadsByPlatform}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
+                    }
+                    outerRadius={100}
+                    dataKey="value"
+                  >
+                    {leadsByPlatform.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Leads per Status */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Leads per Status</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={leadsByStatus}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#f97316" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Leads per Maand */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Leads per Maand</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#f97316" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      );
+    }
+
+    return Charts;
+  }),
+  {
+    ssr: false,
+    loading: () => (
+      <>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow p-6 h-[392px] animate-pulse" />
+          <div className="bg-white rounded-lg shadow p-6 h-[392px] animate-pulse" />
+        </div>
+        <div className="bg-white rounded-lg shadow p-6 h-[392px] animate-pulse" />
+      </>
+    ),
+  }
+);
 
 async function getAuthHeaders() {
   const { data: { session } } = await supabase.auth.getSession()
@@ -161,51 +241,15 @@ export default function LeadsAnalytics() {
         </div>
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Leads per Platform */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Leads per Platform</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={leadsByPlatform}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
-                }
-                outerRadius={100}
-                dataKey="value"
-              >
-                {leadsByPlatform.map((entry) => (
-                  <Cell key={entry.name} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Charts (lazy-loaded) */}
+      <LeadsCharts
+        leadsByPlatform={leadsByPlatform}
+        leadsByStatus={leadsByStatus}
+        monthlyData={monthlyData}
+      />
 
-        {/* Leads per Status */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Leads per Status</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={leadsByStatus}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#f97316" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Charts Row 2 */}
+      {/* Conversietrechter (no recharts needed) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Conversietrechter */}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Conversietrechter</h3>
           <div className="space-y-3">
@@ -235,20 +279,6 @@ export default function LeadsAnalytics() {
               )
             })}
           </div>
-        </div>
-
-        {/* Leads per Maand */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Leads per Maand</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#f97316" />
-            </BarChart>
-          </ResponsiveContainer>
         </div>
       </div>
 

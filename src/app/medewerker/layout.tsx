@@ -2,7 +2,7 @@ import { Metadata, Viewport } from "next";
 import ThemeProvider from "@/components/medewerker/ThemeProvider";
 import ServiceWorkerRegister from "@/components/medewerker/ServiceWorkerRegister";
 import PWAInstallPrompt from "@/components/medewerker/PWAInstallPrompt";
-import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidget";
+import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidgetLazy";
 import QueryProvider from "@/components/QueryProvider";
 
 export const metadata: Metadata = {

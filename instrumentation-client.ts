@@ -11,14 +11,15 @@ Sentry.init({
   // Performance: 10% in prod, 100% in dev
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
 
-  // Session Replay
+  // Session Replay — sample rates are picked up when replay integration loads
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
 
   // Structured logs
   enableLogs: true,
 
-  integrations: [Sentry.replayIntegration()],
+  // Replay integration is lazy-loaded below to reduce initial bundle (~80KB saving)
+  integrations: [],
 
   // Filter ruis
   ignoreErrors: [
@@ -38,5 +39,22 @@ Sentry.init({
     return event;
   },
 });
+
+// Lazy-load Session Replay after page is interactive to avoid blocking initial load
+if (typeof window !== "undefined") {
+  const loadReplay = () => {
+    setTimeout(() => {
+      import("@sentry/nextjs").then(({ replayIntegration, addIntegration }) => {
+        addIntegration(replayIntegration());
+      });
+    }, 3000);
+  };
+
+  if (document.readyState === "complete") {
+    loadReplay();
+  } else {
+    window.addEventListener("load", loadReplay, { once: true });
+  }
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

@@ -4,29 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/Toast";
 
-const registerSchema = z.object({
-  bedrijfsnaam: z.string().min(2, "Bedrijfsnaam is verplicht"),
-  contactpersoon: z.string().min(2, "Contactpersoon is verplicht"),
-  email: z.string().min(1, "Vul een geldig emailadres in").email("Vul een geldig emailadres in"),
-  telefoon: z.string().optional(),
-  wachtwoord: z.string().min(8, "Wachtwoord moet minimaal 8 tekens bevatten"),
-  wachtwoordBevestig: z.string().min(1, "Bevestig uw wachtwoord"),
-}).refine((data) => data.wachtwoord === data.wachtwoordBevestig, {
-  message: "Wachtwoorden komen niet overeen",
-  path: ["wachtwoordBevestig"],
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+interface RegisterFormData {
+  bedrijfsnaam: string;
+  contactpersoon: string;
+  email: string;
+  telefoon?: string;
+  wachtwoord: string;
+  wachtwoordBevestig: string;
+}
 
 export default function KlantRegistreren() {
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-  });
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<RegisterFormData>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -123,7 +114,7 @@ export default function KlantRegistreren() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Bedrijfsnaam *</label>
                 <input
                   type="text"
-                  {...register("bedrijfsnaam")}
+                  {...register("bedrijfsnaam", { required: "Bedrijfsnaam is verplicht", minLength: { value: 2, message: "Bedrijfsnaam is verplicht" } })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Uw bedrijfsnaam"
                 />
@@ -134,7 +125,7 @@ export default function KlantRegistreren() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Contactpersoon *</label>
                 <input
                   type="text"
-                  {...register("contactpersoon")}
+                  {...register("contactpersoon", { required: "Contactpersoon is verplicht", minLength: { value: 2, message: "Contactpersoon is verplicht" } })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Uw volledige naam"
                 />
@@ -145,7 +136,7 @@ export default function KlantRegistreren() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Email *</label>
                 <input
                   type="email"
-                  {...register("email")}
+                  {...register("email", { required: "Vul een geldig emailadres in", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Vul een geldig emailadres in" } })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="jouw@bedrijf.nl"
                 />
@@ -166,7 +157,7 @@ export default function KlantRegistreren() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Wachtwoord *</label>
                 <input
                   type="password"
-                  {...register("wachtwoord")}
+                  {...register("wachtwoord", { required: "Wachtwoord is verplicht", minLength: { value: 8, message: "Wachtwoord moet minimaal 8 tekens bevatten" } })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Minimaal 8 tekens"
                 />
@@ -177,7 +168,7 @@ export default function KlantRegistreren() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Wachtwoord bevestigen *</label>
                 <input
                   type="password"
-                  {...register("wachtwoordBevestig")}
+                  {...register("wachtwoordBevestig", { required: "Bevestig uw wachtwoord", validate: (value) => value === watch("wachtwoord") || "Wachtwoorden komen niet overeen" })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="Herhaal wachtwoord"
                 />

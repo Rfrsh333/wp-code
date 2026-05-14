@@ -10,6 +10,26 @@ interface FadeInProps {
   className?: string;
 }
 
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+
+  useEffect(() => {
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mql.matches);
+
+    const handler = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
+    };
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
 export default function FadeIn({
   children,
   delay = 0,
@@ -17,10 +37,13 @@ export default function FadeIn({
   direction = "up",
   className = "",
 }: FadeInProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (prefersReducedMotion) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -36,7 +59,12 @@ export default function FadeIn({
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [prefersReducedMotion]);
+
+  // Reduced motion: render children directly without animation
+  if (prefersReducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
 
   const getTransform = () => {
     if (isVisible) return "translate3d(0, 0, 0)";

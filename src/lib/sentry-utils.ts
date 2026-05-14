@@ -1,5 +1,30 @@
 import * as Sentry from "@sentry/nextjs";
 
+// ─── Client-side lazy wrappers (dynamic import to avoid bundling ~80KB) ───
+
+/**
+ * Lazily capture an exception on the client.
+ * Uses dynamic import so @sentry/nextjs is only loaded when an error actually occurs.
+ */
+export async function captureClientException(error: unknown): Promise<void> {
+  const { captureException } = await import("@sentry/nextjs");
+  captureException(error);
+}
+
+/**
+ * Lazily capture a message on the client.
+ * Uses dynamic import so @sentry/nextjs is only loaded when needed.
+ */
+export async function captureClientMessage(
+  message: string,
+  level?: "fatal" | "error" | "warning" | "log" | "info" | "debug"
+): Promise<void> {
+  const { captureMessage } = await import("@sentry/nextjs");
+  captureMessage(message, level);
+}
+
+// ─── Server-side utilities (eager import is fine for API routes) ───
+
 /**
  * Capture an error in a route handler with route/action context tags.
  * Also logs to console.error for Vercel request logs.
