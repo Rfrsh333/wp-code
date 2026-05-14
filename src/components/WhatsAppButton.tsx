@@ -18,7 +18,7 @@ export default function WhatsAppButton() {
       onMouseLeave={() => setIsHovered(false)}
       className={`
         fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-50
-        flex items-center gap-3
+        hidden md:flex items-center gap-3
         bg-[#25D366] text-white
         rounded-full shadow-lg shadow-green-500/30
         transition-all duration-300 ease-out

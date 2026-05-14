@@ -8,6 +8,7 @@ import ClickSparkWrapper from "@/components/ClickSparkWrapper";
 
 const GradientBackground = dynamic(() => import("@/components/animations/GradientBackground"), { ssr: false });
 const WhatsAppButton = dynamic(() => import("@/components/WhatsAppButton"), { ssr: false });
+const StickyMobileCTA = dynamic(() => import("@/components/StickyMobileCTA"), { ssr: false });
 
 const PORTAL_PREFIXES = ["/admin", "/klant", "/medewerker", "/kandidaat", "/spoeddienst"];
 
@@ -34,6 +35,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
         <Footer />
       </ClickSparkWrapper>
       <WhatsAppButton />
+      <StickyMobileCTA />
     </>
   );
 }
