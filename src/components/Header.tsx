@@ -91,7 +91,7 @@ export default function Header() {
             </div>
             <div className="flex items-center gap-4">
               <span className="hidden md:inline text-neutral-300 text-xs tracking-wide">
-                24/7 beschikbaar voor uw vragen
+                Snel bereikbaar voor uw vragen
               </span>
               <div className="flex items-center gap-1">
                 {socialLinks.instagram && (

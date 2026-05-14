@@ -56,7 +56,7 @@ const testimonials = [
     name: "Rick van den Berg",
     company: "Catering Company",
     content:
-      "TopTalent begrijpt de dynamiek van de eventbranche en levert altijd betrouwbare, professionele medewerkers.",
+      "TopTalent begrijpt de dynamiek van de eventbranche en levert betrouwbare, professionele medewerkers.",
   },
 ];
 
@@ -68,7 +68,7 @@ const benefitItems = [
 ];
 
 const trustItems = [
-  "100+ klanten",
+  "Actief in de Randstad",
   "Reactie binnen 24 uur",
   "Actief in Utrecht, Amsterdam en Rotterdam",
   "Persoonlijke matching",
@@ -94,7 +94,7 @@ const miniCases = [
   {
     title: "Betrouwbare teams voor events",
     context: "Snel schakelen voor wisselende eventlocaties.",
-    result: "Altijd professionele medewerkers op de vloer.",
+    result: "Professionele medewerkers op de vloer.",
     quote: testimonials[2].content,
     name: testimonials[2].name,
     company: testimonials[2].company,
@@ -126,7 +126,7 @@ const steps = [
 
 const highlights = [
   {
-    title: "24/7 bereikbaar",
+    title: "Snel bereikbaar",
     text: "Direct contact via telefoon of WhatsApp.",
   },
   {
@@ -261,8 +261,8 @@ function PersoneelLandingVariantAContent() {
               Binnen 24 uur personeel
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
-              Geen stress door personeelstekort - ervaren{" "}
-              <span className="text-[#F97316]">horecapersoneel</span> binnen 24 uur.
+              Ervaren{" "}
+              <span className="text-[#F97316]">horecapersoneel</span> - vaak binnen 24 uur op de vloer.
             </h1>
             <p className="text-neutral-600 text-lg leading-relaxed mb-8">
               Ziekmelding, piekdrukte of uitval op het laatste moment? Wij regelen gescreend

@@ -137,7 +137,7 @@ export default function BedanktZakelijkPage() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
-          Wij zijn 7 dagen per week bereikbaar en staan bekend om snelle schakeling.
+          Wij reageren snel en schakelen persoonlijk met u door.
         </p>
 
         {/* CTAs */}

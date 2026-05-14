@@ -86,7 +86,7 @@ const steps = [
     text: "Je ontvangt snel bevestiging met de juiste match en planning.",
   },
   {
-    title: "Start zonder gedoe",
+    title: "Soepele start",
     text: "Wij regelen administratie en blijven bereikbaar tijdens de inzet.",
   },
 ];
@@ -235,21 +235,20 @@ function PersoneelLandingVariantBContent() {
               Spoed inzet mogelijk
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
-              Vandaag nog personeel nodig? Wij fixen ervaren{" "}
+              Snel ervaren horecakrachten nodig? Wij regelen het vaak{" "}
               <span className="text-[#F97316]">horecakrachten</span> binnen 24 uur.
             </h1>
             <p className="text-neutral-600 text-lg leading-relaxed mb-4">
-              Geen gedoe met ongeschikte krachten. Jij geeft door wat je nodig hebt - wij regelen de
+              Jij geeft door wat je nodig hebt - wij regelen de
               match en bevestigen snel.
             </p>
             <p className="text-sm text-neutral-500 mb-6">{urgencyLine}</p>
             <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-5 mb-6">
               <h2 className="text-lg font-semibold text-neutral-900 mb-2">
-                Personeel valt uit? Tafels leeg? Reviews op het spel?
+                Snel schakelen bij uitval of drukte?
               </h2>
               <p className="text-sm text-neutral-600">
-                Wij nemen de stress over en zetten binnen 24 uur iemand op de vloer die wel kan
-                draaien.
+                Wij helpen u snel verder en zetten vaak binnen 24 uur iemand op de vloer die direct kan meedraaien.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

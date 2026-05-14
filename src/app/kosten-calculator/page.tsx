@@ -70,7 +70,7 @@ export default function KostenCalculatorPage() {
                   </svg>
                 ),
                 title: "Transparante opbouw",
-                desc: "Geen verborgen kosten. Wat u ziet is wat u betaalt.",
+                desc: "Geen verborgen kosten. Heldere tariefopbouw, vooraf besproken.",
               },
             ].map((item, index) => (
               <div

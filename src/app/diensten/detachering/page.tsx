@@ -100,9 +100,9 @@ export default function DetacheringPage() {
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { value: "3-12", label: "maanden gemiddelde duur" },
-                  { value: "100%", label: "geïntegreerd in uw team" },
-                  { value: "0", label: "werkgeversrisico voor u" },
-                  { value: "24/7", label: "ondersteuning door ons" },
+                  { value: "Volledig", label: "geïntegreerd in uw team" },
+                  { value: "Minimaal", label: "werkgeversrisico voor u" },
+                  { value: "Snel", label: "bereikbaar voor ondersteuning" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white rounded-2xl p-6 text-center border border-neutral-100">
                     <div className="text-3xl font-bold text-[#F97316] mb-1">{stat.value}</div>

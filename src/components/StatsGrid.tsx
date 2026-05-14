@@ -10,10 +10,10 @@ interface Stat {
 }
 
 const stats: Stat[] = [
-  { value: 620, suffix: "+", label: "Tevreden klanten" },
-  { value: 98, suffix: "%", label: "Klanttevredenheid" },
-  { value: 1500, suffix: "+", label: "Plaatsingen per jaar" },
-  { value: 24, suffix: "u", label: "Gemiddelde responstijd" },
+  { value: 24, suffix: "u", label: "Vaak al personeel beschikbaar" },
+  { value: 6, suffix: "+", label: "Jaar horeca-ervaring" },
+  { value: 5, suffix: "", label: "Steden in Nederland" },
+  { value: 1, suffix: "", label: "Vast aanspreekpunt per klant" },
 ];
 
 /* ==========================================================================

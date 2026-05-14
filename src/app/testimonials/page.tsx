@@ -168,7 +168,7 @@ export default function TestimonialsPage() {
 
               {/* Headline - Positioning as proven solution */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
-                Horeca-ondernemers die <span className="text-[#F97316]">nooit meer</span> vastlopen op personeel
+                Horeca-ondernemers die <span className="text-[#F97316]">meer grip</span> hebben op hun personeel
               </h1>
 
               {/* Subheadline with credibility */}
@@ -179,7 +179,7 @@ export default function TestimonialsPage() {
               {/* Social proof summary */}
               <div className="flex flex-wrap items-center justify-center gap-8 mb-10">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-neutral-900">24/7</div>
+                  <div className="text-2xl font-bold text-neutral-900">Snel</div>
                   <div className="text-sm text-neutral-600">Bereikbaar</div>
                 </div>
                 <div className="h-8 w-px bg-neutral-300"></div>
@@ -386,11 +386,11 @@ export default function TestimonialsPage() {
                 </div>
 
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                  Klaar om <span className="underline decoration-white/40">nooit meer</span> vast te lopen op personeel?
+                  Klaar om <span className="underline decoration-white/40">meer grip</span> te krijgen op uw personeel?
                 </h2>
 
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  Of het nu gaat om acute ziekmelding, seizoensdrukte of structurele versterking: wij zorgen dat je altijd de juiste mensen hebt. Binnen 24 uur opgestart, zonder gedoe.
+                  Of het nu gaat om acute ziekmelding, seizoensdrukte of structurele versterking: wij denken mee en schakelen snel. Vaak binnen 24 uur opgestart, met heldere afspraken.
                 </p>
 
                 {/* CTAs */}

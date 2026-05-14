@@ -52,7 +52,7 @@ export default function UitzendenPage() {
                   Uitzenden met direct inzetbaar horecapersoneel
                 </h1>
                 <p className="text-xl text-neutral-600 mb-8 leading-relaxed max-w-xl">
-                  Piekmomenten, events of onverwachte uitval? Wij leveren binnen 24 uur
+                  Piekmomenten, events of onverwachte uitval? Wij leveren vaak binnen 24 uur
                   passend horecapersoneel. Heldere afspraken en snelle inzet.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -353,7 +353,7 @@ export default function UitzendenPage() {
               <div className="relative z-10 max-w-2xl mx-auto">
                 <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  Binnen 24 uur horecapersoneel beschikbaar
+                  Vaak binnen 24 uur horecapersoneel beschikbaar
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-6">
                   Klaar om in te plannen?

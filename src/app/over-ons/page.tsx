@@ -29,11 +29,10 @@ export default function OverOnsPage() {
                 Over Ons
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
-                Geen personeelsstress meer. Gewoon goed personeel, op tijd.
+                Goed horecapersoneel, op het juiste moment.
               </h1>
               <p className="text-neutral-600 text-lg leading-relaxed">
-                U kent het: last-minute uitval, ziekte, onverwachte drukte. Elke keer weer die onzekerheid of u voldoende mensen heeft staan.
-                Wij zorgen dat u die stress niet meer hoeft te voelen.
+                Last-minute uitval, ziekte of onverwachte drukte komen in de horeca voor. Wij zorgen dat u daar niet alleen voor staat en snel kunt schakelen.
               </p>
             </div>
           </FadeIn>
@@ -51,7 +50,7 @@ export default function OverOnsPage() {
               <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Werkgebied</dt><dd>Utrecht, Amsterdam, Rotterdam, Den Haag, Eindhoven</dd></div>
               <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Diensten</dt><dd>Uitzenden, detachering, recruitment</dd></div>
               <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Levertijd</dt><dd>Binnen 24 uur (vaak dezelfde dag)</dd></div>
-              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Bereikbaarheid</dt><dd>24/7 via telefoon, e-mail en WhatsApp</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Bereikbaarheid</dt><dd>Snel bereikbaar via telefoon, e-mail en WhatsApp</dd></div>
               <div className="flex justify-between sm:block">
                 <dt className="font-medium text-neutral-500">KvK-nummer</dt>
                 <dd>
@@ -92,14 +91,13 @@ export default function OverOnsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <FadeIn direction="left">
                 <div className="bg-white rounded-2xl p-8 border border-neutral-200">
-                  <h3 className="text-xl font-bold text-neutral-900 mb-4">Het probleem</h3>
+                  <h3 className="text-xl font-bold text-neutral-900 mb-4">De uitdaging</h3>
                   <p className="text-neutral-600 leading-relaxed mb-4">
                     Horeca draait op mensen. Maar wat als iemand zich ziek meldt? Of als het onverwacht druk wordt?
-                    Dan staat u er. Met lege diensten, overbelast personeel, en klanten die wachten.
+                    Op dat moment wilt u snel kunnen schakelen met iemand die uw zaak begrijpt.
                   </p>
                   <p className="text-neutral-600 leading-relaxed">
-                    Traditionele uitzendbureaus zijn traag, onpersoonlijk, en leveren vaak mensen die de horeca niet kennen.
-                    Dat levert stress op, niet oplossingen.
+                    Veel horecaondernemers missen een persoonlijke uitzendpartner die de branche kent en snel handelt. Dat wilden wij veranderen.
                   </p>
                 </div>
               </FadeIn>
@@ -108,11 +106,11 @@ export default function OverOnsPage() {
                 <div className="bg-white rounded-2xl p-8 border border-neutral-200">
                   <h3 className="text-xl font-bold text-neutral-900 mb-4">Onze oplossing</h3>
                   <p className="text-neutral-600 leading-relaxed mb-4">
-                    TopTalent Jobs is anders. Wij zijn zelf vanuit de horeca gekomen en weten hoe frustrerend personeelstekort is.
+                    Wij komen zelf uit de horeca en begrijpen hoe belangrijk het is om snel te kunnen schakelen.
                     Daarom hebben we een flexpool opgebouwd van mensen die de horeca écht kennen.
                   </p>
                   <p className="text-neutral-600 leading-relaxed">
-                    Snel, betrouwbaar, en persoonlijk. Zodat u zich kunt focussen op uw gasten, niet op roosters die niet kloppen.
+                    Snel, betrouwbaar, en persoonlijk. Zodat u zich kunt focussen op uw gasten, niet op de planning.
                   </p>
                 </div>
               </FadeIn>
@@ -135,8 +133,7 @@ export default function OverOnsPage() {
                   Wij geloven in mensen
                 </h2>
                 <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
-                  Als horeca uitzendbureau weten we wat het is om last-minute in de problemen te zitten.
-                  Een ziekmelding, onverwachte drukte, of personeel dat niet komt opdagen. Dat frustreert en kost omzet.
+                  Als horeca uitzendbureau begrijpen we hoe belangrijk het is om snel te kunnen schakelen. Een ziekmelding of onverwachte drukte? Dat hoort erbij in de horeca.
                 </p>
                 <p className="text-lg text-neutral-600 mb-6 leading-relaxed">
                   Daarom werken we met een flexpool van mensen die de horeca kennen.
@@ -145,7 +142,7 @@ export default function OverOnsPage() {
                 </p>
                 <p className="text-lg text-neutral-600 leading-relaxed">
                   Of u nu een restaurant, hotel, cateringbedrijf of evenementenorganisatie bent:
-                  wij helpen u met betrouwbaar personeel zonder gedoe.
+                  wij helpen u met betrouwbaar personeel en persoonlijke service.
                 </p>
               </div>
             </FadeIn>
@@ -191,7 +188,7 @@ export default function OverOnsPage() {
                   </svg>
                 ),
                 title: "Betrouwbaarheid",
-                desc: "Eén vast aanspreekpunt die uw zaak kent. Duidelijke planning met bevestiging vooraf. Als er onverhoopt iets misgaat, krijgt u binnen 2 uur vervanging.",
+                desc: "Eén vast aanspreekpunt die uw zaak kent. Duidelijke planning met bevestiging vooraf. Als er onverhoopt iets misgaat, schakelen we snel voor vervanging.",
               },
               {
                 icon: (
@@ -209,7 +206,7 @@ export default function OverOnsPage() {
                   </svg>
                 ),
                 title: "Snelheid",
-                desc: "Binnen 15 minuten antwoord op uw aanvraag. Bij beschikbaarheid vaak binnen 24 uur personeel op de vloer. Ook last-minute? We doen ons best.",
+                desc: "We streven naar een snelle reactie op uw aanvraag. Bij beschikbaarheid vaak binnen 24 uur personeel op de vloer. Ook last-minute? We doen ons best.",
               },
               {
                 icon: (
@@ -257,7 +254,7 @@ export default function OverOnsPage() {
                   company: "Restaurant eigenaar — Utrecht"
                 },
                 {
-                  quote: "De flexpool heeft ons enorm geholpen met piekmomenten opvangen zonder gedoe.",
+                  quote: "De flexpool heeft ons enorm geholpen met piekmomenten opvangen met persoonlijke service.",
                   company: "Hospitality manager — Amsterdam"
                 },
                 {
@@ -279,7 +276,7 @@ export default function OverOnsPage() {
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8" staggerDelay={0.15}>
               {[
                 { value: "24 uur", label: "Vaak al personeel beschikbaar" },
-                { value: "24/7", label: "Bereikbaar voor spoedvragen" },
+                { value: "Snel", label: "Bereikbaar bij spoedvragen" },
                 { value: "Utrecht", label: "Centraal gevestigd in Nederland" },
               ].map((stat, i) => (
                 <StaggerItem key={i}>
@@ -310,7 +307,7 @@ export default function OverOnsPage() {
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
                   Vertel ons wat u nodig heeft. Geen verplichtingen, gewoon een eerlijk gesprek over hoe wij kunnen helpen.
-                  We bellen binnen 15 minuten terug.
+                  We nemen snel contact met u op.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
@@ -329,7 +326,7 @@ export default function OverOnsPage() {
                   </Link>
                 </div>
                 <p className="text-white/70 text-sm mt-6">
-                  ✓ Geen inschrijfkosten  ✓ Reactie binnen 15 min  ✓ Vaak morgen al personeel
+                  ✓ Geen inschrijfkosten  ✓ Snelle reactie  ✓ Vaak morgen al personeel
                 </p>
               </div>
             </div>

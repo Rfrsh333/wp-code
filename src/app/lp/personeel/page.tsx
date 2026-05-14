@@ -206,7 +206,7 @@ function PersoneelLandingPageContent() {
               </div>
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 <div className="px-4 py-2 rounded-full bg-neutral-900 text-white text-xs font-semibold tracking-wide">
-                  100+ klanten
+                  Actief in de Randstad
                 </div>
                 <div className="px-4 py-2 rounded-full bg-[#FFF7F1] text-[#F97316] text-xs font-semibold tracking-wide">
                   Reactie binnen 24 uur
@@ -362,7 +362,7 @@ function PersoneelLandingPageContent() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                title: "24/7 bereikbaar",
+                title: "Snel bereikbaar",
                 text: "Direct contact via telefoon en WhatsApp.",
               },
               {
@@ -381,7 +381,7 @@ function PersoneelLandingPageContent() {
                 <h3 className="text-lg font-semibold text-neutral-900 mb-2">
                   {item.title}
                 </h3>
-                {item.title === "24/7 bereikbaar" ? (
+                {item.title === "Snel bereikbaar" ? (
                   <p className="text-sm text-neutral-600">
                     Direct contact via telefoon en{" "}
                     <a

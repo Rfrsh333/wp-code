@@ -370,8 +370,8 @@ export default async function FunctiePage({ params }: PageProps) {
             {/* Trust signals */}
             <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-white/20 text-sm text-orange-100 flex-wrap">
               <span>WAADI-geregistreerd</span>
-              <span>500+ tevreden klanten</span>
-              <span>Vervanging binnen 2 uur</span>
+              <span>Vertrouwd door horecaondernemers</span>
+              <span>We denken snel mee over passende vervanging</span>
             </div>
           </div>
         </section>

@@ -27,7 +27,7 @@ const faqData: FAQItem[] = [
   {
     category: "Voor Opdrachtgevers",
     question: "Hoe snel kan ik horecapersoneel inhuren?",
-    answer: "Bij TopTalent Jobs kunt u binnen 24 uur gekwalificeerd horecapersoneel inhuren. Of u nu een bartender, kok, of bedienend personeel nodig heeft - wij leveren snel en betrouwbaar. Voor grotere aanvragen of gespecialiseerde functies plannen we graag een kort gesprek om uw wensen te bespreken."
+    answer: "Bij TopTalent Jobs kunt u vaak binnen 24 uur gekwalificeerd horecapersoneel inhuren. Of u nu een bartender, kok, of bedienend personeel nodig heeft - wij leveren snel en betrouwbaar. Voor grotere aanvragen of gespecialiseerde functies plannen we graag een kort gesprek om uw wensen te bespreken."
   },
   {
     category: "Voor Opdrachtgevers",
@@ -37,12 +37,12 @@ const faqData: FAQItem[] = [
   {
     category: "Voor Opdrachtgevers",
     question: "Hoe selecteert TopTalent Jobs horecamedewerkers?",
-    answer: "Alle kandidaten doorlopen een uitgebreid selectieproces: cv-screening, persoonlijke gesprekken en referentiechecks. We beoordelen niet alleen vakkennis en ervaring, maar ook persoonlijkheid, betrouwbaarheid en gastvrijheid. Zo garanderen we dat u personeel krijgt dat past bij uw bedrijf."
+    answer: "Alle kandidaten doorlopen een uitgebreid selectieproces: cv-screening, persoonlijke gesprekken en referentiechecks. We beoordelen niet alleen vakkennis en ervaring, maar ook persoonlijkheid, betrouwbaarheid en gastvrijheid. Zo streven we ernaar dat u personeel krijgt dat past bij uw bedrijf."
   },
   {
     category: "Voor Opdrachtgevers",
     question: "Wat als de ingehuurde medewerker niet voldoet?",
-    answer: "Klanttevredenheid staat voorop bij TopTalent Jobs. Voldoet een medewerker niet aan uw verwachtingen? Wij regelen kosteloos vervanging. Bij werving en selectie bieden we een plaatsingsgarantie gedurende de proefperiode."
+    answer: "Klanttevredenheid staat voorop bij TopTalent Jobs. Voldoet een medewerker niet aan uw verwachtingen? Wij zoeken snel een passend alternatief. Bij werving en selectie bieden we nazorg gedurende de proefperiode."
   },
   {
     category: "Voor Opdrachtgevers",
@@ -52,12 +52,12 @@ const faqData: FAQItem[] = [
   {
     category: "Voor Opdrachtgevers",
     question: "Kan ik personeel inhuren voor een evenement of festival?",
-    answer: "Ja, TopTalent Jobs is gespecialiseerd in het leveren van evenementenpersoneel. Van kleine bedrijfsfeesten tot grote festivals - wij leveren ervaren horecamedewerkers die gewend zijn aan drukte en piekmoment. Neem minimaal 1 week van tevoren contact op voor de beste beschikbaarheid."
+    answer: "Ja, TopTalent Jobs is gespecialiseerd in het leveren van evenementenpersoneel. Van kleine bedrijfsfeesten tot grote festivals - wij leveren ervaren horecamedewerkers die gewend zijn aan drukte en piekmoment. Neem minimaal 1 week van tevoren contact op voor de ruimste beschikbaarheid."
   },
   {
     category: "Voor Opdrachtgevers",
     question: "Wat is het verschil tussen uitzenden en detacheren?",
-    answer: "Bij uitzenden werkt het personeel op basis van een uitzendovereenkomst en betaalt u per gewerkt uur. Ideaal voor tijdelijke inzet of piekperiodes. Bij detachering wordt een medewerker voor langere tijd exclusief bij u geplaatst, met meer binding aan uw organisatie. Wij adviseren graag welke vorm het beste bij uw situatie past."
+    answer: "Bij uitzenden werkt het personeel op basis van een uitzendovereenkomst en betaalt u per gewerkt uur. Ideaal voor tijdelijke inzet of piekperiodes. Bij detachering wordt een medewerker voor langere tijd exclusief bij u geplaatst, met meer binding aan uw organisatie. Wij adviseren graag welke vorm het best bij uw situatie past."
   },
   // Voor Werkzoekenden
   {
@@ -99,7 +99,7 @@ const faqData: FAQItem[] = [
   {
     category: "Over TopTalent",
     question: "Waarom kiezen voor TopTalent Jobs als horeca uitzendbureau?",
-    answer: "TopTalent Jobs is 100% gespecialiseerd in de horeca. Wij kennen de branche, begrijpen de uitdagingen en weten welk type personeel bij welke gelegenheid past. Onze persoonlijke aanpak, snelle service (24/7 bereikbaar) en focus op kwaliteit maken ons de ideale partner voor horecabedrijven."
+    answer: "TopTalent Jobs is volledig gespecialiseerd in de horeca. Wij kennen de branche, begrijpen de uitdagingen en weten welk type personeel bij welke gelegenheid past. Onze persoonlijke aanpak, snelle bereikbaarheid en focus op kwaliteit maken ons een sterke partner voor horecabedrijven."
   },
   {
     category: "Over TopTalent",
@@ -109,7 +109,7 @@ const faqData: FAQItem[] = [
   {
     category: "Over TopTalent",
     question: "Hoe neem ik contact op met TopTalent Jobs?",
-    answer: "U kunt TopTalent Jobs bereiken via telefoon (+31 6 17 17 79 39), e-mail (info@toptalentjobs.nl) of WhatsApp. Wij zijn 7 dagen per week bereikbaar en reageren doorgaans binnen enkele uren. U kunt ook het contactformulier op deze pagina invullen."
+    answer: "U kunt TopTalent Jobs bereiken via telefoon (+31 6 17 17 79 39), e-mail (info@toptalentjobs.nl) of WhatsApp. Wij streven ernaar snel te reageren, doorgaans binnen enkele uren. U kunt ook het contactformulier op deze pagina invullen."
   },
 ];
 
@@ -216,7 +216,7 @@ function ContactPageContent() {
               </h1>
               <p className="text-neutral-600 text-lg leading-relaxed">
                 Vragen over horecapersoneel inhuren, tarieven of beschikbaarheid?
-                Wij zijn 24/7 bereikbaar via telefoon, e-mail en WhatsApp.
+                Wij reageren snel via telefoon, e-mail en WhatsApp.
               </p>
             </div>
           </FadeIn>
@@ -232,7 +232,7 @@ function ContactPageContent() {
               <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm border border-neutral-100">
                 <h2 className="text-2xl font-bold text-neutral-900 mb-2">Stuur ons een bericht</h2>
                 <p className="text-neutral-600 mb-8">
-                  Vul het formulier in en wij nemen binnen 24 uur contact met u op.
+                  Vul het formulier in en wij reageren zo snel mogelijk, vaak binnen 24 uur.
                 </p>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -380,7 +380,7 @@ function ContactPageContent() {
                         <a href="tel:+31617177939" className="text-[#F97316] hover:text-[#EA580C] transition-colors duration-300">
                           +31 6 17 17 79 39
                         </a>
-                        <p className="text-neutral-500 text-sm mt-1">24/7 bereikbaar</p>
+                        <p className="text-neutral-500 text-sm mt-1">Snel bereikbaar</p>
                       </div>
                     </div>
 

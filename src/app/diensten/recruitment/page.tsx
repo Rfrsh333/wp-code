@@ -181,9 +181,9 @@ export default function RecruitmentPage() {
             <FadeIn direction="right" delay={0.2}>
               <div className="bg-gradient-to-br from-[#F97316]/5 to-orange-100/30 rounded-3xl p-10 lg:p-12">
                 <div className="text-center">
-                  <div className="text-6xl font-bold text-[#F97316] mb-4">95%</div>
+                  <div className="text-6xl font-bold text-[#F97316] mb-4">Hoog</div>
                   <p className="text-xl text-neutral-700 font-medium mb-6">
-                    van onze plaatsingen is na 1 jaar nog werkzaam
+                    retentiepercentage na plaatsing
                   </p>
                   <div className="h-px bg-neutral-200 my-6"></div>
                   <div className="grid grid-cols-2 gap-8">
@@ -192,8 +192,8 @@ export default function RecruitmentPage() {
                       <p className="text-neutral-600 text-sm">dagen gemiddelde doorlooptijd</p>
                     </div>
                     <div>
-                      <div className="text-3xl font-bold text-neutral-900">100%</div>
-                      <p className="text-neutral-600 text-sm">plaatsingsgarantie</p>
+                      <div className="text-3xl font-bold text-neutral-900">Nazorg</div>
+                      <p className="text-neutral-600 text-sm">gedurende proefperiode</p>
                     </div>
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function RecruitmentPage() {
       {/* LOCATIES - TINTED */}
       <Section variant="tinted" spacing="default">
         <Section.Container>
-          <ClientAnimationWrapper>
+          <FadeIn>
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
                 Recruitment in <span className="text-[#F97316]">uw regio</span>
@@ -360,7 +360,7 @@ export default function RecruitmentPage() {
                 </svg>
               </Link>
             </div>
-          </ClientAnimationWrapper>
+          </FadeIn>
         </Section.Container>
       </Section>
 

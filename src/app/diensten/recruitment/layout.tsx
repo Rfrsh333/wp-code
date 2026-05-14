@@ -19,7 +19,7 @@ export default function RecruitmentLayout({
     "@id": "https://www.toptalentjobs.nl/diensten/recruitment/#service",
     "name": "Horeca Recruitment",
     "serviceType": "Recruitment vast horecapersoneel",
-    "description": "Werving en selectie van vast horecapersoneel. Van intake tot plaatsing in gemiddeld 14 dagen, met 95% retentie na 1 jaar en volledige plaatsingsgarantie.",
+    "description": "Werving en selectie van vast horecapersoneel. Van intake tot plaatsing in gemiddeld 14 dagen, met nazorg gedurende de proefperiode.",
     "provider": {
       "@id": "https://www.toptalentjobs.nl/#organization"
     },

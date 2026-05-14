@@ -951,7 +951,7 @@ export default function CalculatorClient() {
             </form>
 
             <p className="text-center text-sm text-neutral-500 mt-6">
-              Wij delen uw gegevens nooit met derden.{" "}
+              Wij delen uw gegevens niet met derden.{" "}
               <Link href="/privacy/" className="text-[#F97316] hover:underline">
                 Privacybeleid
               </Link>

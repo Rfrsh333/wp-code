@@ -287,7 +287,7 @@ export default function DienstenPage() {
                   Wilt u de juiste dienst kiezen?
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  We denken graag mee over de beste inzet voor uw locatie
+                  We denken graag mee over de juiste inzet voor uw locatie
                   en maken een duidelijke planningsofferte.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

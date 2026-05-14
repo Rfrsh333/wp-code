@@ -2,13 +2,13 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Over Ons - Horeca Uitzendbureau met Persoonlijke Aanpak",
-  description: "Leer TopTalent Jobs kennen: een horeca uitzendbureau in Utrecht met passie voor gastvrijheid. 24/7 bereikbaar, persoonlijke service, gescreend personeel binnen 24 uur.",
+  description: "Leer TopTalent Jobs kennen: een horeca uitzendbureau in Utrecht met passie voor gastvrijheid. Persoonlijke service, snel bereikbaar en zorgvuldig gescreend personeel. Vaak binnen 24 uur inzetbaar.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/over-ons",
   },
   openGraph: {
     title: "Over TopTalent Jobs - Uw Horeca Uitzendbureau",
-    description: "TopTalent Jobs is 100% gespecialiseerd in horecapersoneel. Ontdek wie wij zijn en waarom klanten voor ons kiezen.",
+    description: "TopTalent Jobs is volledig gespecialiseerd in horecapersoneel. Ontdek wie wij zijn en waarom klanten voor ons kiezen.",
     url: "https://www.toptalentjobs.nl/over-ons",
     siteName: "TopTalent Jobs",
     locale: "nl_NL",

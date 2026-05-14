@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Horecapersoneel Uitzenden — Binnen 24 Uur",
+  title: "Horecapersoneel Uitzenden — Vaak Binnen 24 Uur",
   description: "Uitzenden van horecapersoneel voor restaurants, hotels en events. Snel tijdelijke inzet bij piekdrukte of uitval, met één contactpunt en duidelijke tarieven.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/diensten/uitzenden",
@@ -19,7 +19,7 @@ export default function UitzendenLayout({
     "@id": "https://www.toptalentjobs.nl/diensten/uitzenden/#service",
     "name": "Horeca Uitzenden",
     "serviceType": "Uitzenden horecapersoneel",
-    "description": "Tijdelijke inzet van gescreend horecapersoneel (koks, bediening, bar, afwas) binnen 24 uur. Flexibel inzetbaar bij piekdrukte, seizoensdrukte of personeelsuitval.",
+    "description": "Tijdelijke inzet van gescreend horecapersoneel (koks, bediening, bar, afwas) vaak binnen 24 uur. Flexibel inzetbaar bij piekdrukte, seizoensdrukte of personeelsuitval.",
     "provider": {
       "@id": "https://www.toptalentjobs.nl/#organization"
     },

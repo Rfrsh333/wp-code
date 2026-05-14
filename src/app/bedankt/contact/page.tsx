@@ -96,7 +96,7 @@ export default function BedanktContactPage() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
-          Wij zijn 7 dagen per week bereikbaar.
+          Wij doen ons best om snel te reageren, ook in het weekend.
         </p>
 
         {/* CTAs */}
