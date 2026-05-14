@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Marketing Dashboard - TopTalent",
   robots: {
     index: false,
     follow: false,
   },
 };
 
-export default function MarketingLayout({
+export default function ContractLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return children;
 }
