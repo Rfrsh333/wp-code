@@ -280,6 +280,90 @@ export default function RecruitmentPage() {
         </Section.Container>
       </Section>
 
+      {/* LOCATIES - TINTED */}
+      <Section variant="tinted" spacing="default">
+        <Section.Container>
+          <ClientAnimationWrapper>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+                Recruitment in <span className="text-[#F97316]">uw regio</span>
+              </h2>
+              <p className="text-neutral-600 max-w-2xl mx-auto">
+                TopTalent Jobs werft vast horecapersoneel in heel Nederland. Bekijk de mogelijkheden in uw regio.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <Link
+                href="/locaties/utrecht/"
+                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
+              >
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                  Utrecht
+                </h3>
+                <p className="text-sm text-neutral-600 mb-3">
+                  Horeca recruitment in Utrecht en omstreken
+                </p>
+                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                  Meer informatie
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </Link>
+
+              <Link
+                href="/locaties/amsterdam/"
+                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
+              >
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                  Amsterdam
+                </h3>
+                <p className="text-sm text-neutral-600 mb-3">
+                  Horeca recruitment in Amsterdam en regio
+                </p>
+                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                  Meer informatie
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </Link>
+
+              <Link
+                href="/locaties/rotterdam/"
+                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
+              >
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                  Rotterdam
+                </h3>
+                <p className="text-sm text-neutral-600 mb-3">
+                  Horeca recruitment in Rotterdam en Zuid-Holland
+                </p>
+                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                  Meer informatie
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </Link>
+            </div>
+
+            <div className="text-center mt-8">
+              <Link
+                href="/locaties/"
+                className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all duration-300"
+              >
+                Bekijk alle locaties
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+          </ClientAnimationWrapper>
+        </Section.Container>
+      </Section>
+
       {/* CTA - WIT */}
       <Section variant="white" spacing="large">
         <Section.Container>

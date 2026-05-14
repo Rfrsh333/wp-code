@@ -219,8 +219,61 @@ export default function DienstenPage() {
         </Section.Container>
       </Section>
 
-      {/* CTA Section - WHITE */}
-      <Section variant="white" spacing="large">
+      {/* Locaties Section - WHITE */}
+      <Section variant="white" spacing="default">
+        <Section.Container>
+          <FadeIn>
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">
+                Actief in heel Nederland
+              </h2>
+              <p className="text-neutral-600 text-lg leading-relaxed">
+                Wij leveren horecapersoneel in de grote steden en omstreken.
+                Bekijk onze locatiepagina&apos;s voor meer informatie over uw regio.
+              </p>
+            </div>
+          </FadeIn>
+          <FadeIn delay={0.1}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { name: "Utrecht", href: "/locaties/utrecht/" },
+                { name: "Amsterdam", href: "/locaties/amsterdam/" },
+                { name: "Rotterdam", href: "/locaties/rotterdam/" },
+                { name: "Den Haag", href: "/locaties/den-haag/" },
+                { name: "Eindhoven", href: "/locaties/eindhoven/" },
+              ].map((loc) => (
+                <Link
+                  key={loc.name}
+                  href={loc.href}
+                  className="flex items-center justify-center gap-2 p-4 rounded-xl border border-neutral-200 hover:border-[#F97316] hover:text-[#F97316] text-neutral-700 font-medium transition-all duration-200"
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {loc.name}
+                </Link>
+              ))}
+            </div>
+          </FadeIn>
+          <FadeIn delay={0.15}>
+            <div className="text-center mt-6">
+              <Link
+                href="/locaties/"
+                className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+              >
+                Alle locaties bekijken
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </FadeIn>
+        </Section.Container>
+      </Section>
+
+      {/* CTA Section - TINTED */}
+      <Section variant="tinted" spacing="large">
         <Section.Container>
           <FadeIn>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
@@ -237,13 +290,22 @@ export default function DienstenPage() {
                   We denken graag mee over de beste inzet voor uw locatie
                   en maken een duidelijke planningsofferte.
                 </p>
-                <Link
-                  href="/contact"
-                  className="inline-block bg-white text-[#F97316] px-8 py-4 rounded-lg text-base font-semibold
-                  hover:bg-neutral-100 transition-all duration-300"
-                >
-                  Neem contact op
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    href="/contact"
+                    className="inline-block bg-white text-[#F97316] px-8 py-4 rounded-lg text-base font-semibold
+                    hover:bg-neutral-100 transition-all duration-300"
+                  >
+                    Neem contact op
+                  </Link>
+                  <Link
+                    href="/kosten-calculator"
+                    className="inline-block border-2 border-white/80 text-white px-8 py-4 rounded-lg text-base font-semibold
+                    hover:bg-white/10 transition-all duration-300"
+                  >
+                    Kosten berekenen
+                  </Link>
+                </div>
               </div>
             </div>
           </FadeIn>

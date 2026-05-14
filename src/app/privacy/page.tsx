@@ -3,6 +3,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy | TopTalent Jobs",
   description: "Lees hoe TopTalent B.V. omgaat met uw persoonsgegevens conform de AVG (GDPR). Informatie over gegevensverwerking, bewaartermijnen en uw rechten.",
+  alternates: {
+    canonical: "https://www.toptalentjobs.nl/privacy/",
+  },
 };
 
 export default function PrivacyPolicyPage() {

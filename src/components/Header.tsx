@@ -9,19 +9,24 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileDienstenOpen, setIsMobileDienstenOpen] = useState(false);
+  const [isMobileLocatiesOpen, setIsMobileLocatiesOpen] = useState(false);
   const [isDienstenOpen, setIsDienstenOpen] = useState(false);
+  const [isLocatiesOpen, setIsLocatiesOpen] = useState(false);
   const dienstenRef = useRef<HTMLDivElement>(null);
+  const locatiesRef = useRef<HTMLDivElement>(null);
 
   const closeDiensten = useCallback(() => setIsDienstenOpen(false), []);
+  const closeLocaties = useCallback(() => setIsLocatiesOpen(false), []);
 
-  // Close desktop dropdown on Escape or outside click
+  // Close desktop dropdowns on Escape or outside click
   useEffect(() => {
-    if (!isDienstenOpen) return;
+    if (!isDienstenOpen && !isLocatiesOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeDiensten();
+      if (e.key === "Escape") { closeDiensten(); closeLocaties(); }
     };
     const handleClick = (e: MouseEvent) => {
-      if (dienstenRef.current && !dienstenRef.current.contains(e.target as Node)) closeDiensten();
+      if (isDienstenOpen && dienstenRef.current && !dienstenRef.current.contains(e.target as Node)) closeDiensten();
+      if (isLocatiesOpen && locatiesRef.current && !locatiesRef.current.contains(e.target as Node)) closeLocaties();
     };
     document.addEventListener("keydown", handleKey);
     document.addEventListener("mousedown", handleClick);
@@ -29,7 +34,7 @@ export default function Header() {
       document.removeEventListener("keydown", handleKey);
       document.removeEventListener("mousedown", handleClick);
     };
-  }, [isDienstenOpen, closeDiensten]);
+  }, [isDienstenOpen, isLocatiesOpen, closeDiensten, closeLocaties]);
 
   useEffect(() => {
     let ticking = false;
@@ -220,6 +225,76 @@ export default function Header() {
                 Over Ons
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
+              <div className="relative" ref={locatiesRef} onMouseEnter={() => setIsLocatiesOpen(true)} onMouseLeave={() => setIsLocatiesOpen(false)}>
+                <button
+                  onClick={() => setIsLocatiesOpen(!isLocatiesOpen)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsLocatiesOpen(!isLocatiesOpen); }
+                    if (e.key === "ArrowDown") { e.preventDefault(); setIsLocatiesOpen(true); }
+                  }}
+                  aria-expanded={isLocatiesOpen}
+                  aria-haspopup="true"
+                  className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1"
+                >
+                  Locaties
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${isLocatiesOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className={`absolute left-0 top-full pt-2 transition-all duration-300 ${isLocatiesOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]" role="menu">
+                    <Link
+                      href="/locaties/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLocaties}
+                    >
+                      Alle Locaties
+                    </Link>
+                    <div className="border-t border-neutral-100 my-1" />
+                    <Link
+                      href="/locaties/utrecht/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLocaties}
+                    >
+                      Utrecht
+                    </Link>
+                    <Link
+                      href="/locaties/amsterdam/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLocaties}
+                    >
+                      Amsterdam
+                    </Link>
+                    <Link
+                      href="/locaties/rotterdam/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLocaties}
+                    >
+                      Rotterdam
+                    </Link>
+                    <Link
+                      href="/locaties/den-haag/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLocaties}
+                    >
+                      Den Haag
+                    </Link>
+                    <Link
+                      href="/locaties/eindhoven/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLocaties}
+                    >
+                      Eindhoven
+                    </Link>
+                  </div>
+                </div>
+              </div>
               <Link
                 href="/blog/"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
@@ -406,6 +481,72 @@ export default function Header() {
                 >
                   Over Ons
                 </Link>
+
+                {/* Locaties met dropdown */}
+                <div>
+                  <button
+                    onClick={() => setIsMobileLocatiesOpen(!isMobileLocatiesOpen)}
+                    aria-expanded={isMobileLocatiesOpen}
+                    className="w-full px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200 flex items-center justify-between"
+                  >
+                    Locaties
+                    <svg
+                      className={`w-5 h-5 transition-transform duration-300 ${isMobileLocatiesOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-300 ${isMobileLocatiesOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="pl-4 pt-2 space-y-1.5">
+                      <Link
+                        href="/locaties/"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Alle Locaties
+                      </Link>
+                      <Link
+                        href="/locaties/utrecht/"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Utrecht
+                      </Link>
+                      <Link
+                        href="/locaties/amsterdam/"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Amsterdam
+                      </Link>
+                      <Link
+                        href="/locaties/rotterdam/"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Rotterdam
+                      </Link>
+                      <Link
+                        href="/locaties/den-haag/"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Den Haag
+                      </Link>
+                      <Link
+                        href="/locaties/eindhoven/"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Eindhoven
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
                 <Link
                   href="/blog/"
                   className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200"

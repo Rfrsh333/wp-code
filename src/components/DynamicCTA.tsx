@@ -36,7 +36,7 @@ export default function DynamicCTA() {
 
   const variants = {
     hero: {
-      text: "Geen personeel deze week?",
+      text: "Personeel nodig deze week?",
       cta: "Check beschikbare teams nu",
       href: "/personeel-aanvragen",
     },

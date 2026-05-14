@@ -31,13 +31,7 @@ export default function StructuredData() {
         "email": "info@toptalentjobs.nl",
         "contactType": "customer service",
         "availableLanguage": ["Dutch", "English"],
-        "areaServed": "NL",
-        "hoursAvailable": {
-          "@type": "OpeningHoursSpecification",
-          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-          "opens": "00:00",
-          "closes": "23:59"
-        }
+        "areaServed": "NL"
       }
     ],
     "areaServed": [
@@ -49,16 +43,10 @@ export default function StructuredData() {
       { "@type": "City", "name": "Eindhoven" }
     ],
     "knowsAbout": [
-      "horeca personeel",
-      "uitzendwerk horeca",
-      "horecapersoneel inhuren",
-      "tijdelijk personeel horeca",
-      "recruitment horeca",
-      "horeca uitzendbureau",
-      "detachering horeca",
-      "evenementenpersoneel",
-      "horecamedewerkers",
-      "uitzendkrachten horeca"
+      "Horeca personeel",
+      "Uitzenden",
+      "Recruitment",
+      "Flexibele personeelsoplossingen"
     ],
     "hasOfferCatalog": {
       "@type": "OfferCatalog",

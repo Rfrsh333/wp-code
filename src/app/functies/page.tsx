@@ -64,7 +64,7 @@ export default function FunctiesOverzichtPage() {
         <nav className="max-w-4xl mx-auto px-4 pt-6 pb-2" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-sm text-neutral-500">
             <li>
-              <Link href="/" className="hover:text-blue-600">Home</Link>
+              <Link href="/" className="hover:text-[#F97316]">Home</Link>
             </li>
             <li>/</li>
             <li className="text-neutral-900 font-medium">Functies</li>
@@ -89,9 +89,9 @@ export default function FunctiesOverzichtPage() {
               <Link
                 key={functie.slug}
                 href={`/functies/${functie.slug}/`}
-                className="p-6 bg-white rounded-2xl border border-neutral-200 hover:border-blue-300 hover:shadow-md transition-all group"
+                className="p-6 bg-white rounded-2xl border border-neutral-200 hover:border-orange-300 hover:shadow-md transition-all group"
               >
-                <h2 className="text-lg font-bold text-neutral-900 group-hover:text-blue-600 transition-colors mb-2">
+                <h2 className="text-lg font-bold text-neutral-900 group-hover:text-[#F97316] transition-colors mb-2">
                   {functie.title.split(" — ")[0]}
                 </h2>
                 <p className="text-sm text-neutral-600 leading-relaxed mb-3 line-clamp-2">
@@ -117,18 +117,18 @@ export default function FunctiesOverzichtPage() {
 
         {/* CTA */}
         <section className="max-w-4xl mx-auto px-4 pb-16">
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 md:p-12 text-white text-center">
+          <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl p-8 md:p-12 text-white text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">
               Staat uw functie er niet bij?
             </h2>
-            <p className="text-blue-100 mb-6 max-w-xl mx-auto">
+            <p className="text-orange-100 mb-6 max-w-xl mx-auto">
               TopTalent Jobs levert ook personeel voor andere horecafuncties.
               Neem contact op en we zoeken de juiste match voor u.
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link
                 href="/personeel-aanvragen/"
-                className="px-6 py-3 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+                className="px-6 py-3 bg-white text-[#EA580C] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
               >
                 Personeel aanvragen
               </Link>

@@ -145,6 +145,22 @@ export const blogArticles: Record<string, BlogArticle> = {
       },
       {
         type: "heading3",
+        content: "Detachering in de horeca"
+      },
+      {
+        type: "paragraph",
+        content: "Voor langdurige bezetting zonder direct een vast contract aan te bieden is detachering een sterke optie. De medewerker werkt volledig bij u, maar staat op de loonlijst van het detacheringsbureau."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/detachering",
+        text: "Meer over detachering in de horeca"
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "heading3",
         content: "Vaste horecamedewerkers aannemen"
       },
       {
@@ -191,6 +207,11 @@ export const blogArticles: Record<string, BlogArticle> = {
           { item: "ZZP'er in de horeca", price: "Variabel", note: "afhankelijk van afspraken" }
         ],
         footer: "Bij uitzendkrachten zijn alle kosten inbegrepen: loon, premies, verzekeringen en administratie."
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken direct wat horecapersoneel inhuren kost"
       },
       {
         type: "divider"
@@ -377,6 +398,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         content: "Wij merken dat vooral restaurants en evenementenlocaties hiermee veel rust creëren in hun planning."
       },
       {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Bekijk onze uitzendservice voor de horeca"
+      },
+      {
         type: "divider"
       },
       {
@@ -550,6 +576,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         type: "quote",
         quote: "Zo kunt u zich focussen op uw zaak en uw gasten.",
         variant: "highlight"
+      },
+      {
+        type: "relatedLink",
+        href: "/locaties",
+        text: "Bekijk in welke regio's wij horecapersoneel leveren"
       },
       {
         type: "divider"
@@ -896,6 +927,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         content: "Bij twijfel adviseren wij graag over de juiste bezetting."
       },
       {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken de kosten voor evenementenpersoneel"
+      },
+      {
         type: "divider"
       },
       {
@@ -982,6 +1018,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         content: "Wij zien dat uitzenden vooral populair is in de horeca, evenementenbranche en seizoensgebonden sectoren."
       },
       {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Meer over onze uitzendservice"
+      },
+      {
         type: "divider"
       },
       {
@@ -1007,6 +1048,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         type: "highlight",
         variant: "tip",
         content: "Detachering wordt vaak gebruikt wanneer u tijdelijk extra capaciteit nodig heeft, maar geen vaste medewerker wilt aannemen."
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/detachering",
+        text: "Meer over onze detacheringsservice"
       },
       {
         type: "divider"
@@ -1468,6 +1514,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         variant: "highlight"
       },
       {
+        type: "relatedLink",
+        href: "/locaties",
+        text: "Bekijk waar wij horecapersoneel leveren"
+      },
+      {
         type: "divider"
       },
       {
@@ -1624,6 +1675,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         text: "Bekijk alle populaire horecafuncties"
       },
       {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken wat horecapersoneel kost voor uw restaurant"
+      },
+      {
         type: "divider"
       },
       {
@@ -1740,6 +1796,11 @@ export const blogArticles: Record<string, BlogArticle> = {
           { text: "**Snel beschikbaar** — Uitzendkrachten kunnen vaak op korte termijn starten" },
           { text: "**Minder administratie** — Het uitzendbureau regelt contracten, loon en verzekeringen" }
         ]
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Meer over uitzenden in de horeca"
       },
       {
         type: "divider"
@@ -1985,6 +2046,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         type: "quote",
         quote: "Bij samenwerking met een gespecialiseerd horeca-uitzendbureau hoeft u zich hier geen zorgen over te maken — wij zorgen dat alle cao-bepalingen correct worden toegepast.",
         variant: "insight"
+      },
+      {
+        type: "relatedLink",
+        href: "/kosten-calculator",
+        text: "Bereken wat horecapersoneel kost inclusief CAO-tarieven"
       },
       {
         type: "divider"
@@ -2299,6 +2365,11 @@ export const blogArticles: Record<string, BlogArticle> = {
         type: "quote",
         quote: "Flexibiliteit zonder de lasten van vast personeel.",
         variant: "highlight"
+      },
+      {
+        type: "relatedLink",
+        href: "/diensten/uitzenden",
+        text: "Bekijk onze uitzendservice voor flexibele inzet"
       },
       {
         type: "divider"

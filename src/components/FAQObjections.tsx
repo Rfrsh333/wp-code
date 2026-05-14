@@ -6,15 +6,27 @@ export default function FAQObjections() {
   const faqs = [
     {
       question: "Wat als het personeel niet past?",
-      answer: "We bieden directe vervanging binnen 24 uur. Geen gedoe, geen extra kosten. Je betaalt alleen voor personeel dat werkt.",
+      answer: "We bieden directe vervanging binnen 24 uur. Uw contactpersoon regelt dit voor u, zonder extra kosten. U betaalt alleen voor personeel dat werkt.",
     },
     {
       question: "Hoe zit het met last-minute shifts?",
-      answer: "Onze flexpool staat klaar voor acute uitval. Vaak kunnen we nog dezelfde dag personeel leveren als je belt voor 12:00 uur.",
+      answer: "Onze flexpool staat klaar voor acute uitval. Vaak kunnen we nog dezelfde dag personeel leveren als u belt voor 12:00 uur.",
     },
     {
       question: "Hoe snel kan het écht geregeld zijn?",
-      answer: "Na intake krijg je binnen 15 minuten een matchscore. Bij beschikbaarheid start het personeel binnen 24 uur — vaak zelfs sneller.",
+      answer: "Na intake krijgt u binnen 15 minuten een matchscore. Bij beschikbaarheid start het personeel binnen 24 uur — vaak zelfs sneller.",
+    },
+    {
+      question: "Hoe verloopt de communicatie na de plaatsing?",
+      answer: "U krijgt een vast aanspreekpunt dat uw zaak kent. Korte lijnen, snel schakelen — wij zijn bereikbaar wanneer u ons nodig heeft.",
+    },
+    {
+      question: "Hoe werken jullie tarieven en facturatie?",
+      answer: "Onze tarieven worden vooraf besproken en vastgelegd. Geen verborgen kosten, geen verrassingen achteraf. U ontvangt overzichtelijke facturen die kloppen.",
+    },
+    {
+      question: "Hoe zorgen jullie voor betrouwbaar personeel?",
+      answer: "Elk teamlid doorloopt een zorgvuldig screeningsproces: horeca-ervaring, referentiechecks en een persoonlijk gesprek. Zo weet u zeker dat er betrouwbare mensen op uw vloer staan.",
     },
   ];
 

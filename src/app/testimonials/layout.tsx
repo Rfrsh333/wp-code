@@ -6,6 +6,14 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.toptalentjobs.nl/testimonials/",
   },
+  openGraph: {
+    title: "Klantervaringen — Reviews van Horecabedrijven",
+    description: "Lees ervaringen van restaurants, hotels en eventbedrijven die horecapersoneel inhuren via TopTalent Jobs.",
+    url: "https://www.toptalentjobs.nl/testimonials/",
+    siteName: "TopTalent Jobs",
+    locale: "nl_NL",
+    type: "website",
+  },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -14,6 +22,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     "@type": "EmploymentAgency",
     "@id": "https://www.toptalentjobs.nl/#organization",
     "name": "TopTalent Jobs",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "reviewCount": "3",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
     "review": [
       {
         "@type": "Review",

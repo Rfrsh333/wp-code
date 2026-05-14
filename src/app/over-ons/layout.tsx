@@ -13,6 +13,14 @@ export const metadata: Metadata = {
     siteName: "TopTalent Jobs",
     locale: "nl_NL",
     type: "website",
+    images: [
+      {
+        url: "https://www.toptalentjobs.nl/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "TopTalent Jobs - Horeca Uitzendbureau",
+      },
+    ],
   },
 };
 
@@ -21,6 +29,18 @@ export default function OverOnsLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const aboutPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": "https://www.toptalentjobs.nl/over-ons#aboutpage",
+    "name": "Over TopTalent Jobs",
+    "description": "TopTalent Jobs is een gespecialiseerd horeca uitzendbureau in Utrecht. KvK 73401161, WAADI-geregistreerd. Wij leveren gescreend horecapersoneel voor restaurants, hotels, catering en evenementen.",
+    "url": "https://www.toptalentjobs.nl/over-ons",
+    "mainEntity": {
+      "@id": "https://www.toptalentjobs.nl/#organization"
+    }
+  };
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -42,6 +62,10 @@ export default function OverOnsLayout({
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutPageSchema) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}

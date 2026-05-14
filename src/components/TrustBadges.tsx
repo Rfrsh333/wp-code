@@ -3,16 +3,16 @@ import FadeIn from "@/components/animations/FadeIn";
 export default function TrustBadges() {
   const badges = [
     {
-      icon: "🏆",
-      text: "Snelste horeca staffing Utrecht",
+      icon: "🤝",
+      text: "Persoonlijke begeleiding met vast aanspreekpunt",
     },
     {
       icon: "🔎",
-      text: "Gescreend personeel gegarandeerd",
+      text: "Zorgvuldig gescreend op horeca-ervaring",
     },
     {
-      icon: "📍",
-      text: "Actief in 5 grote regio's",
+      icon: "📋",
+      text: "Transparante tarieven en duidelijke afspraken",
     },
   ];
 

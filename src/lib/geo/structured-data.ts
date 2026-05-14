@@ -9,8 +9,8 @@ import type { GeoContent, FaqItem } from "./types";
 
 const TOPTALENT = {
   name: "TopTalent Jobs",
-  url: "https://toptalentjobs.nl",
-  logo: "https://toptalentjobs.nl/images/logo.png",
+  url: "https://www.toptalentjobs.nl",
+  logo: "https://www.toptalentjobs.nl/logo.png",
   telephone: "+31617177939",
   email: "info@toptalentjobs.nl",
   address: {

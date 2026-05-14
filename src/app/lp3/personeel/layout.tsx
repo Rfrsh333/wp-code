@@ -7,13 +7,17 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
+  robots: {
+    index: false,
+    follow: true,
+  },
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/lp3/personeel",
+    canonical: "https://www.toptalentjobs.nl/lp/personeel",
   },
   openGraph: {
     title,
     description,
-    url: "https://www.toptalentjobs.nl/lp3/personeel",
+    url: "https://www.toptalentjobs.nl/lp/personeel",
     siteName: "TopTalent Jobs",
     locale: "nl_NL",
     type: "website",

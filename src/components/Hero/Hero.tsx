@@ -45,7 +45,7 @@ export default function Hero() {
             <span
               className={`${styles.eyebrow} ${styles.revealItem} ${styles.delay1}`}
             >
-              Stop omzetverlies
+              Persoonlijke horeca staffing
             </span>
 
             {/* Headline */}
@@ -62,7 +62,7 @@ export default function Hero() {
             <p
               className={`${styles.subtext} ${styles.revealItem} ${styles.delay3}`}
             >
-              Geen paniek meer bij ziekte of last-minute uitval. Wij hebben gescreend personeel klaarstaan.
+              Zorgvuldig gescreend personeel met een vast aanspreekpunt. Vaak al binnen 24 uur inzetbaar bij ziekte of uitval.
             </p>
 
             {/* CTA Buttons */}

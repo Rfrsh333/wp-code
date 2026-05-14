@@ -11,20 +11,6 @@ export function generateLocalBusinessSchema(location: LocationData) {
     "telephone": "+31617177939",
     "email": "info@toptalentjobs.nl",
     "priceRange": "$$",
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ],
-      "opens": "00:00",
-      "closes": "23:59",
-    },
     "areaServed": {
       "@type": "City",
       "name": location.name,

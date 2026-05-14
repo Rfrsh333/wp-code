@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Contact TopTalent Jobs — Horeca Personeel Aanvragen",
-  description: "Neem contact op met TopTalent Jobs. Horeca personeel binnen 24 uur. Bel +31 6 17 17 79 39, mail of WhatsApp. 24/7 bereikbaar.",
+  description: "Neem contact op met TopTalent Jobs. Horeca personeel binnen 24 uur. Bel +31 6 17 17 79 39, mail of WhatsApp. Wij reageren snel.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/contact/",
   },
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const localBusinessSchema = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": ["LocalBusiness", "ContactPage"],
     "@id": "https://www.toptalentjobs.nl/#localbusiness",
     "name": "TopTalent Jobs",
     "image": "https://www.toptalentjobs.nl/logo.png",
@@ -25,12 +25,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       "addressLocality": "Utrecht",
       "addressRegion": "Utrecht",
       "addressCountry": "NL"
-    },
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      "opens": "00:00",
-      "closes": "23:59"
     },
     "priceRange": "$$"
   };

@@ -18,22 +18,22 @@ const DynamicCTA = dynamic(() => import("@/components/DynamicCTA"));
    ========================================================================== */
 const testimonials = [
   {
-    context: "Tijdens een druk weekend hadden we snel extra bediening nodig.",
-    result: "Binnen een dag stonden er ervaren krachten klaar die direct meedraaiden met het team.",
+    context: "We zochten een bureau dat echt meedenkt en bereikbaar is wanneer het nodig is.",
+    result: "Vanaf dag één een vast contactpersoon. Het personeel paste direct bij ons team en de communicatie loopt soepel.",
     name: "M. de Vries",
     role: "Restaurant eigenaar",
     company: "Utrecht",
   },
   {
-    context: "Onze planning liep vast door ziekte en vakantie.",
-    result: "De flexpool zorgde voor continuïteit zonder dat wij constant hoefden te bellen.",
+    context: "Transparantie was het belangrijkst voor ons — we wilden weten waar we aan toe zijn.",
+    result: "Tarieven vooraf besproken, facturen klopten en we krijgen direct antwoord bij vragen.",
     name: "S. Jansen",
     role: "Hospitality manager",
     company: "Amsterdam",
   },
   {
-    context: "Voor een groot event moesten we snel opschalen.",
-    result: "Het team was professioneel en kende de horeca. Precies wat we nodig hadden.",
+    context: "Bij eerdere bureaus hadden we regelmatig no-shows en onervaren krachten.",
+    result: "Via TopTalent verscheen iedereen op tijd en kende de horeca. Dat merken onze gasten.",
     name: "R. van den Berg",
     role: "Operationeel manager",
     company: "Rotterdam",
@@ -55,15 +55,15 @@ const industries = [
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Extra horecapersoneel binnen 24 u | Stop omzetverlies | TopTalent",
+  title: "Horecapersoneel met Persoonlijke Aanpak | Binnen 24 uur | TopTalent",
   description:
-    "Geen paniek meer bij ziekte of last-minute uitval. TopTalent levert gescreend horecapersoneel binnen 24 uur voor restaurants, hotels en events in Utrecht en omstreken.",
+    "TopTalent levert zorgvuldig gescreend horecapersoneel met persoonlijke matching en duidelijke afspraken. Vaak binnen 24 uur inzetbaar voor restaurants, hotels en events.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/",
   },
   openGraph: {
-    title: "Extra horecapersoneel binnen 24 u | TopTalent",
-    description: "Stop omzetverlies door personeelsuitval. Gescreend horecapersoneel vaak binnen 24 uur beschikbaar.",
+    title: "Horecapersoneel met Persoonlijke Aanpak | TopTalent",
+    description: "Zorgvuldig gescreend horecapersoneel met een vast aanspreekpunt en duidelijke afspraken. Vaak binnen 24 uur inzetbaar.",
     type: "website",
     url: "https://www.toptalentjobs.nl/",
   },
@@ -78,7 +78,7 @@ const homeFaqSchema = {
       "name": "Wat als het horecapersoneel niet past?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "TopTalent Jobs biedt directe vervanging binnen 24 uur. Geen gedoe, geen extra kosten. Je betaalt alleen voor personeel dat werkt."
+        "text": "Uw contactpersoon regelt directe vervanging binnen 24 uur, zonder extra kosten. U betaalt alleen voor personeel dat werkt."
       }
     },
     {
@@ -86,7 +86,7 @@ const homeFaqSchema = {
       "name": "Hoe zit het met last-minute horecapersoneel?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Onze flexpool staat klaar voor acute uitval. Vaak kunnen we nog dezelfde dag personeel leveren als je belt voor 12:00 uur."
+        "text": "Onze flexpool staat klaar voor acute uitval. Vaak kunnen we nog dezelfde dag personeel leveren als u belt voor 12:00 uur."
       }
     },
     {
@@ -94,7 +94,31 @@ const homeFaqSchema = {
       "name": "Hoe snel kan ik horecapersoneel krijgen?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Na intake krijg je binnen 15 minuten een matchscore. Bij beschikbaarheid start het personeel binnen 24 uur — vaak zelfs sneller."
+        "text": "Na intake krijgt u binnen 15 minuten een matchscore. Bij beschikbaarheid start het personeel binnen 24 uur — vaak zelfs sneller."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Hoe verloopt de communicatie na de plaatsing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "U krijgt een vast aanspreekpunt dat uw zaak kent. Korte lijnen, snel schakelen — wij zijn bereikbaar wanneer u ons nodig heeft."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Hoe werken jullie tarieven en facturatie?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Onze tarieven worden vooraf besproken en vastgelegd. Geen verborgen kosten, geen verrassingen achteraf. U ontvangt overzichtelijke facturen die kloppen."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Hoe zorgen jullie voor betrouwbaar personeel?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Elk teamlid doorloopt een zorgvuldig screeningsproces: horeca-ervaring, referentiechecks en een persoonlijk gesprek. Zo weet u zeker dat er betrouwbare mensen op uw vloer staan."
       }
     }
   ]
@@ -117,7 +141,7 @@ export default function Home() {
           actief in Utrecht, Amsterdam, Rotterdam, Den Haag en Eindhoven. Het bedrijf
           biedt drie diensten: uitzenden (tijdelijk personeel), detachering (langdurige
           plaatsing) en recruitment (werving en selectie van vast personeel). TopTalent
-          Jobs is WAADI-geregistreerd en 24/7 bereikbaar. Honderden horecabedrijven
+          Jobs is WAADI-geregistreerd en snel bereikbaar. Honderden horecabedrijven
           maken gebruik van de diensten van TopTalent Jobs.
         </p>
       </section>
@@ -458,10 +482,10 @@ export default function Home() {
                 </div>
 
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                  Klaar om nooit meer omzet te verliezen door personeelstekort?
+                  Klaar voor horecapersoneel waar u op kunt bouwen?
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed mb-10">
-                  Stop met hopen dat het goedkomt. Krijg binnen 15 minuten een realtime matchscore en weet zeker dat je morgen personeel hebt.
+                  Vraag vrijblijvend een matchscore aan en ontdek hoe wij u kunnen helpen met betrouwbaar, gescreend horecapersoneel en een persoonlijke aanpak.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link

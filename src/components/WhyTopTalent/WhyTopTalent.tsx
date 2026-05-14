@@ -48,20 +48,20 @@ const ArrowIcon = () => (
  */
 const bulletPoints = [
   {
-    title: "Snel schakelen",
-    description: "Binnen 24 uur een passend voorstel",
-  },
-  {
-    title: "Geselecteerde kandidaten",
-    description: "Ervaring in keuken, bediening en events",
-  },
-  {
-    title: "Flexibele inzet",
-    description: "Losse diensten of langere trajecten",
-  },
-  {
     title: "Vaste contactpersoon",
-    description: "Eén aanspreekpunt voor planning en kwaliteit",
+    description: "Eén aanspreekpunt dat uw zaak kent",
+  },
+  {
+    title: "Zorgvuldige screening",
+    description: "Alleen personeel met horeca-ervaring en gecontroleerde referenties",
+  },
+  {
+    title: "Duidelijke afspraken",
+    description: "Transparante tarieven en heldere contracten, vooraf besproken",
+  },
+  {
+    title: "Snel schakelen",
+    description: "Vaak binnen 24 uur een passend voorstel",
   },
 ];
 
@@ -69,11 +69,11 @@ const bulletPoints = [
  * Benefits data with icons
  */
 const benefits = [
-  { icon: "€", text: "Transparante tarieven zonder verrassingen" },
+  { icon: "€", text: "Transparante tarieven, vooraf besproken" },
   { icon: "⚡", text: "Beschikbaar voor piekuren en last-minute diensten" },
-  { icon: "📱", text: "Snelle planning en heldere communicatie" },
-  { icon: "🎓", text: "Screening op ervaring en referenties" },
-  { icon: "👥", text: "Snelle vervanging bij uitval" },
+  { icon: "📱", text: "Korte lijnen en heldere communicatie" },
+  { icon: "🎓", text: "Screening op ervaring, referenties en betrouwbaarheid" },
+  { icon: "📋", text: "Duidelijke contracten en overzichtelijke facturatie" },
   { icon: "📍", text: "Lokale pool in Utrecht en omgeving" },
 ];
 
@@ -142,8 +142,8 @@ export default function WhyTopTalent() {
               }`}
             >
               Wij kennen de horeca en begrijpen de druk op planning en service.
-              Daarom leveren we snel inzetbaar horecapersoneel en een vast
-              aanspreekpunt voor uw locatie.
+              Daarom staan betrouwbaarheid en persoonlijk contact bij ons
+              centraal — met een vast aanspreekpunt voor uw locatie.
             </p>
 
             {/* Bullet Points */}

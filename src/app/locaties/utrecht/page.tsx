@@ -117,12 +117,20 @@ export default function UtrechtPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/diensten/"
-                  className="inline-block mt-4 text-[#F97316] font-semibold hover:underline"
-                >
-                  Bekijk alle diensten →
-                </Link>
+                <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4">
+                  <Link
+                    href="/diensten/"
+                    className="text-[#F97316] font-semibold hover:underline"
+                  >
+                    Bekijk alle diensten →
+                  </Link>
+                  <Link
+                    href="/kosten-calculator/"
+                    className="text-[#F97316] font-semibold hover:underline"
+                  >
+                    Kosten berekenen →
+                  </Link>
+                </div>
               </div>
 
               <div className="bg-white rounded-xl p-6 border border-neutral-200">
