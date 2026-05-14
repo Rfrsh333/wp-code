@@ -63,7 +63,7 @@ export default function BookmarkletPage() {
             Je moet ingelogd zijn als admin om de bookmarklet te kunnen installeren.
           </p>
           <a
-            href="/admin"
+            href="/admin/"
             className="inline-block px-6 py-2.5 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600"
           >
             Ga naar login

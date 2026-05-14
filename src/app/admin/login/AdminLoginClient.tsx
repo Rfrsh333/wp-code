@@ -105,7 +105,7 @@ export default function AdminLoginClient() {
               required
             />
             <div className="mt-2 text-right">
-              <Link href="/admin/wachtwoord-vergeten" className="text-sm text-[#F27501] hover:text-[#d96800]">
+              <Link href="/admin/wachtwoord-vergeten/" className="text-sm text-[#F27501] hover:text-[#d96800]">
                 Wachtwoord vergeten?
               </Link>
             </div>

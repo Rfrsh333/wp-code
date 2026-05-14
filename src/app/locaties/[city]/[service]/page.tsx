@@ -304,7 +304,7 @@ export default async function CityServicePage({ params }: PageProps) {
             <ClientAnimationWrapper direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                  <Link href="/locaties">Locaties</Link> › <Link href={`/locaties/${city}`}>{location.name}</Link> › {serviceLabels[service as keyof typeof serviceLabels]}
+                  <Link href="/locaties/">Locaties</Link> › <Link href={`/locaties/${city}`}>{location.name}</Link> › {serviceLabels[service as keyof typeof serviceLabels]}
                 </span>
 
                 {/* Sub-navigatie */}
@@ -318,7 +318,7 @@ export default async function CityServicePage({ params }: PageProps) {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/personeel-aanvragen"
+                    href="/personeel-aanvragen/"
                     className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                     hover:bg-[#EA580C] transition-all duration-300"
@@ -506,14 +506,14 @@ export default async function CityServicePage({ params }: PageProps) {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
-                    href="/personeel-aanvragen"
+                    href="/personeel-aanvragen/"
                     className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >
                     Personeel aanvragen
                   </Link>
                   <Link
-                    href="/contact"
+                    href="/contact/"
                     className="border-2 border-white/30 text-white px-8 py-4 rounded-xl text-base font-semibold
                     hover:bg-white/10 transition-all duration-300"
                   >
@@ -561,7 +561,7 @@ export default async function CityServicePage({ params }: PageProps) {
               </div>
               <div className="text-center">
                 <Link
-                  href="/locaties"
+                  href="/locaties/"
                   className="inline-block text-[#F97316] font-semibold hover:underline"
                 >
                   Bekijk alle locaties →

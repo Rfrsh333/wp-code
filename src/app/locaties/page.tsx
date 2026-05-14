@@ -5,7 +5,7 @@ import { getAllLocations } from "@/data/locations";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: "Locaties - Horeca Uitzendbureau | TopTalent Jobs",
+  title: "Locaties — Horecapersoneel in Uw Regio",
   description:
     "Bekijk in welke regio's TopTalent Jobs actief is. Lokale horecapersoneel oplossingen in Utrecht, Amsterdam en Rotterdam.",
   alternates: {
@@ -119,6 +119,33 @@ export default function LocatiesPage() {
           </div>
         </div>
 
+        {/* Populaire functies */}
+        <div className="mt-12 bg-white rounded-2xl p-8 border border-neutral-200">
+          <h2 className="text-2xl font-bold text-neutral-900 mb-6 text-center">
+            Populaire functies per regio
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { href: "/functies/kok-inhuren/", label: "Kok inhuren" },
+              { href: "/functies/bediening-inhuren/", label: "Bediening inhuren" },
+              { href: "/functies/barista-inhuren/", label: "Barista inhuren" },
+              { href: "/functies/barman-inhuren/", label: "Barman inhuren" },
+              { href: "/functies/catering-medewerker-inhuren/", label: "Catering medewerker" },
+              { href: "/functies/afwasser-inhuren/", label: "Afwasser inhuren" },
+              { href: "/functies/event-manager-inhuren/", label: "Event manager" },
+              { href: "/functies/", label: "Alle functies →" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-orange-50 text-neutral-700 hover:text-[#F97316] font-medium text-sm text-center transition-all duration-200"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* CTA */}
         <div className="mt-12 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl p-8 text-white text-center">
           <h2 className="text-2xl font-bold mb-4">
@@ -129,7 +156,7 @@ export default function LocatiesPage() {
             kijken of wij ook in uw regio kunnen leveren.
           </p>
           <Link
-            href="/contact"
+            href="/contact/"
             className="inline-block bg-white text-[#F97316] px-8 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-colors"
           >
             Neem contact op

@@ -62,7 +62,7 @@ export default function CookiesPage() {
           </div>
         </div>
 
-        <Link href="/privacy" className="text-[#F27501] hover:underline">
+        <Link href="/privacy/" className="text-[#F27501] hover:underline">
           Lees ons privacybeleid
         </Link>
       </div>

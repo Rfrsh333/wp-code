@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Personeel Aanvragen",
+  title: "Horecapersoneel Aanvragen — Binnen 24 uur",
   description: "Bestel snel en eenvoudig horecapersoneel via TopTalent Jobs. Vul het formulier in en ontvang binnen 24 uur een voorstel op maat voor uw restaurant of evenement.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/personeel-aanvragen",

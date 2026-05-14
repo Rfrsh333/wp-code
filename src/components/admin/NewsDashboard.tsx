@@ -172,10 +172,10 @@ export default function NewsDashboard() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/admin/news/drafts" className="rounded-xl bg-[#F27501] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#d96800]">
+            <Link href="/admin/news/drafts/" className="rounded-xl bg-[#F27501] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#d96800]">
               Drafts bekijken
             </Link>
-            <Link href="/admin/news/clusters" className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501]">
+            <Link href="/admin/news/clusters/" className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-[#F27501] hover:text-[#F27501]">
               Clusters bekijken
             </Link>
           </div>
@@ -262,7 +262,7 @@ export default function NewsDashboard() {
           <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 xl:col-span-1">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-neutral-900">Bronnen</h2>
-              <Link href="/admin/news/sources" className="text-sm font-medium text-[#F27501]">Beheer</Link>
+              <Link href="/admin/news/sources/" className="text-sm font-medium text-[#F27501]">Beheer</Link>
             </div>
             <div className="space-y-3">
               {data.sources.slice(0, 5).map((source) => (
@@ -280,7 +280,7 @@ export default function NewsDashboard() {
           <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 xl:col-span-1">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-neutral-900">Clusters</h2>
-              <Link href="/admin/news/clusters" className="text-sm font-medium text-[#F27501]">Openen</Link>
+              <Link href="/admin/news/clusters/" className="text-sm font-medium text-[#F27501]">Openen</Link>
             </div>
             <div className="space-y-3">
               {data.clusters.slice(0, 5).map((cluster) => (
@@ -298,7 +298,7 @@ export default function NewsDashboard() {
           <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 xl:col-span-1">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-neutral-900">Drafts</h2>
-              <Link href="/admin/news/drafts" className="text-sm font-medium text-[#F27501]">Review</Link>
+              <Link href="/admin/news/drafts/" className="text-sm font-medium text-[#F27501]">Review</Link>
             </div>
             <div className="space-y-3">
               {data.drafts.slice(0, 5).map((draft) => (

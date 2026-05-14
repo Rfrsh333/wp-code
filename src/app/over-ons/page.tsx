@@ -8,7 +8,7 @@ import PremiumImage from "@/components/PremiumImage";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Over Ons",
+  title: "Over TopTalent Jobs — Horeca Uitzendbureau Utrecht",
   description: "Leer het team achter TopTalent Jobs kennen. Wij zijn gespecialiseerd in horeca uitzendwerk en helpen restaurants, hotels en evenementen met betrouwbaar personeel.",
 };
 
@@ -37,6 +37,25 @@ export default function OverOnsPage() {
               </p>
             </div>
           </FadeIn>
+        </Section.Container>
+      </Section>
+
+      {/* Kernfeiten — AI-citeerbaar blok */}
+      <Section variant="white" spacing="small">
+        <Section.Container>
+          <div className="max-w-3xl mx-auto bg-neutral-50 rounded-2xl p-6 md:p-8 border border-neutral-200">
+            <h2 className="text-lg font-bold text-neutral-900 mb-3">TopTalent Jobs in het kort</h2>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-neutral-700">
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Type bedrijf</dt><dd>Horeca uitzendbureau</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Gevestigd in</dt><dd>Utrecht, Nederland</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Werkgebied</dt><dd>Utrecht, Amsterdam, Rotterdam, Den Haag, Eindhoven</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Diensten</dt><dd>Uitzenden, detachering, recruitment</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Levertijd</dt><dd>Binnen 24 uur (vaak dezelfde dag)</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Bereikbaarheid</dt><dd>24/7 via telefoon, e-mail en WhatsApp</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">KvK-nummer</dt><dd>73401161</dd></div>
+              <div className="flex justify-between sm:block"><dt className="font-medium text-neutral-500">Registratie</dt><dd>WAADI-geregistreerd</dd></div>
+            </dl>
+          </div>
         </Section.Container>
       </Section>
 
@@ -281,14 +300,14 @@ export default function OverOnsPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
-                    href="/personeel-aanvragen"
+                    href="/personeel-aanvragen/"
                     className="bg-white text-[#F97316] px-8 py-4 rounded-lg text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >
                     Bekijk beschikbaarheid
                   </Link>
                   <Link
-                    href="/contact"
+                    href="/contact/"
                     className="border-2 border-white/30 text-white px-8 py-4 rounded-lg text-base font-semibold
                     hover:bg-white/10 transition-all duration-300"
                   >

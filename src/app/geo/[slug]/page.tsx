@@ -27,13 +27,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: content.meta_description || content.excerpt || undefined,
     keywords: [...(content.primary_keywords || []), ...(content.secondary_keywords || [])],
     alternates: {
-      canonical: `https://toptalentjobs.nl/geo/${content.slug}`,
+      canonical: `https://www.toptalentjobs.nl/geo/${content.slug}/`,
     },
     openGraph: {
       title: content.title,
       description: content.meta_description || content.excerpt || undefined,
       type: "article",
-      url: `https://toptalentjobs.nl/geo/${content.slug}`,
+      url: `https://www.toptalentjobs.nl/geo/${content.slug}/`,
       siteName: "TopTalent Jobs",
       locale: "nl_NL",
     },
@@ -180,18 +180,85 @@ export default async function GeoPage({ params }: PageProps) {
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link
-                href="/personeel-aanvragen"
+                href="/personeel-aanvragen/"
                 className="px-6 py-3 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-colors"
               >
                 Personeel aanvragen
               </Link>
               <Link
-                href="/contact"
+                href="/contact/"
                 className="px-6 py-3 border-2 border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors"
               >
                 Contact opnemen
               </Link>
             </div>
+          </div>
+        </section>
+
+        {/* Populaire horecafuncties in [stad] */}
+        <section className="max-w-4xl mx-auto px-4 pb-12">
+          <h2 className="text-xl font-bold text-neutral-900 mb-3">
+            Populaire horecafuncties in {stadNaam}
+          </h2>
+          <p className="text-neutral-600 text-sm mb-5">
+            TopTalent Jobs levert in {stadNaam} flexibel horecapersoneel voor functies
+            zoals kok, bediening, barista, barman en catering medewerker.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+            {[
+              { href: "/functies/kok-inhuren/", label: `Kok inhuren in ${stadNaam}` },
+              { href: "/functies/bediening-inhuren/", label: `Bediening inhuren in ${stadNaam}` },
+              { href: "/functies/barista-inhuren/", label: `Barista inhuren in ${stadNaam}` },
+              { href: "/functies/barman-inhuren/", label: `Barman inhuren in ${stadNaam}` },
+              { href: "/functies/catering-medewerker-inhuren/", label: `Catering medewerker inhuren` },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="p-3 rounded-xl border border-neutral-200 bg-neutral-50 hover:border-blue-300 hover:bg-blue-50 transition-colors text-sm font-medium text-neutral-700 hover:text-blue-600"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/functies/"
+              className="p-3 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-sm font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Bekijk alle horecafuncties →
+            </Link>
+          </div>
+        </section>
+
+        {/* Gerelateerde diensten & locatie links */}
+        <section className="max-w-4xl mx-auto px-4 pb-12">
+          <h2 className="text-xl font-bold text-neutral-900 mb-4">
+            Meer over horecapersoneel in {stadNaam}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link
+              href={`/locaties/${content.stad}/`}
+              className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+            >
+              <span className="text-blue-600 font-semibold text-sm">Horecapersoneel in {stadNaam}</span>
+            </Link>
+            <Link
+              href={`/locaties/${content.stad}/uitzenden/`}
+              className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+            >
+              <span className="text-blue-600 font-semibold text-sm">Uitzenden in {stadNaam}</span>
+            </Link>
+            <Link
+              href="/diensten/uitzenden/"
+              className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+            >
+              <span className="text-blue-600 font-semibold text-sm">Horecapersoneel uitzenden</span>
+            </Link>
+            <Link
+              href="/diensten/detachering/"
+              className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+            >
+              <span className="text-blue-600 font-semibold text-sm">Horeca detachering</span>
+            </Link>
           </div>
         </section>
 

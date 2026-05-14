@@ -67,7 +67,7 @@ export default function ResultStories() {
         <FadeIn delay={0.3}>
           <div className="text-center mt-10">
             <Link
-              href="/testimonials"
+              href="/testimonials/"
               className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#F97316] transition-colors font-medium group"
             >
               Bekijk alle succesverhalen

@@ -38,7 +38,7 @@ export default function Error({
             Probeer opnieuw
           </button>
           <Link
-            href="/locaties"
+            href="/locaties/"
             className="border-2 border-neutral-300 text-neutral-700 px-8 py-3 rounded-xl font-semibold hover:bg-neutral-50 transition-colors"
           >
             Terug naar locaties

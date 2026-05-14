@@ -76,16 +76,16 @@ export default function Footer() {
               <Link href="/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Home
               </Link>
-              <Link href="/diensten" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Diensten
               </Link>
-              <Link href="/over-ons" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/over-ons/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Over Ons
               </Link>
-              <Link href="/veelgestelde-vragen" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/veelgestelde-vragen/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Veelgestelde Vragen
               </Link>
-              <Link href="/contact" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/contact/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Contact
               </Link>
             </nav>
@@ -97,14 +97,31 @@ export default function Footer() {
               Diensten
             </h2>
             <nav className="space-y-4">
-              <Link href="/diensten/uitzenden" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/uitzenden/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Uitzenden
               </Link>
-              <Link href="/diensten/detachering" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/detachering/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Detachering
               </Link>
-              <Link href="/diensten/recruitment" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/recruitment/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Recruitment
+              </Link>
+            </nav>
+            <h2 className="text-white font-semibold text-sm uppercase tracking-wider mt-8 mb-6">
+              Functies
+            </h2>
+            <nav className="space-y-4">
+              <Link href="/functies/kok-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Kok inhuren
+              </Link>
+              <Link href="/functies/bediening-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Bediening inhuren
+              </Link>
+              <Link href="/functies/barista-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Barista inhuren
+              </Link>
+              <Link href="/functies/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+                Alle functies →
               </Link>
             </nav>
           </div>
@@ -115,19 +132,19 @@ export default function Footer() {
               Regio&apos;s
             </h2>
             <nav className="space-y-4">
-              <Link href="/locaties/utrecht" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/utrecht/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Utrecht
               </Link>
-              <Link href="/locaties/amsterdam" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/amsterdam/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Amsterdam
               </Link>
-              <Link href="/locaties/rotterdam" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/rotterdam/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Rotterdam
               </Link>
-              <Link href="/locaties/den-haag" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/den-haag/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Den Haag
               </Link>
-              <Link href="/locaties/eindhoven" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/eindhoven/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
                 Eindhoven
               </Link>
             </nav>
@@ -178,13 +195,13 @@ export default function Footer() {
               </p>
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <Link href="/voorwaarden" className="text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/voorwaarden/" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Algemene voorwaarden
               </Link>
-              <Link href="/cookies" className="text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/cookies/" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Cookie-instellingen
               </Link>
-              <Link href="/privacy" className="text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/privacy/" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Privacy Policy
               </Link>
             </div>

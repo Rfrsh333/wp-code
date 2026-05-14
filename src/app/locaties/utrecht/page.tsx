@@ -20,7 +20,7 @@ export default function UtrechtPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                <Link href="/locaties">Locaties</Link> › Utrecht
+                <Link href="/locaties/">Locaties</Link> › Utrecht
               </span>
 
               {/* Sub-navigatie */}
@@ -35,7 +35,7 @@ export default function UtrechtPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  href="/personeel-aanvragen"
+                  href="/personeel-aanvragen/"
                   className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                   hover:bg-[#EA580C] transition-all duration-300"
@@ -46,7 +46,7 @@ export default function UtrechtPage() {
                   </svg>
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/contact/"
                   className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
                   hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
                 >
@@ -116,7 +116,7 @@ export default function UtrechtPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/diensten"
+                  href="/diensten/"
                   className="inline-block mt-4 text-[#F97316] font-semibold hover:underline"
                 >
                   Bekijk alle diensten →
@@ -199,14 +199,14 @@ export default function UtrechtPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/personeel-aanvragen"
+                  href="/personeel-aanvragen/"
                   className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
                   hover:bg-neutral-100 transition-all duration-300"
                 >
                   Personeel aanvragen
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/contact/"
                   className="border-2 border-white/30 text-white px-8 py-4 rounded-xl text-base font-semibold
                   hover:bg-white/10 transition-all duration-300"
                 >

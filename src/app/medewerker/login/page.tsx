@@ -155,7 +155,7 @@ export default function MedewerkerLogin() {
             <div className="mt-6 text-center space-y-3">
               <p className="text-neutral-600 text-sm">
                 Nog geen account?{" "}
-                <Link href="/inschrijven" className="text-[#F27501] font-semibold hover:text-[#d96800] transition-colors">
+                <Link href="/inschrijven/" className="text-[#F27501] font-semibold hover:text-[#d96800] transition-colors">
                   Registreer hier!
                 </Link>
               </p>

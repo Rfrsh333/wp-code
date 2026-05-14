@@ -159,7 +159,7 @@ export default async function FAQDetailPage({
           <nav className="flex items-center gap-2 text-sm text-neutral-500">
             <Link href="/" className="hover:text-[#F97316]">Home</Link>
             <span>/</span>
-            <Link href="/veelgestelde-vragen" className="hover:text-[#F97316]">
+            <Link href="/veelgestelde-vragen/" className="hover:text-[#F97316]">
               Veelgestelde vragen
             </Link>
             <span>/</span>
@@ -201,11 +201,19 @@ export default async function FAQDetailPage({
                 </p>
               </div>
               <Link
-                href="/personeel-aanvragen"
+                href="/personeel-aanvragen/"
                 className="bg-[#F27501] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors whitespace-nowrap"
               >
                 Personeel aanvragen
               </Link>
+            </div>
+
+            {/* Contextual service links */}
+            <div className="mt-8 flex flex-wrap gap-2">
+              <Link href="/diensten/uitzenden/" className="text-sm text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Horecapersoneel uitzenden</Link>
+              <Link href="/diensten/detachering/" className="text-sm text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Horeca detachering</Link>
+              <Link href="/diensten/recruitment/" className="text-sm text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Horeca recruitment</Link>
+              <Link href="/kosten-calculator/" className="text-sm text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">Kosten berekenen</Link>
             </div>
           </div>
         </Container>
@@ -235,7 +243,7 @@ export default async function FAQDetailPage({
               </div>
               <div className="mt-8 text-center">
                 <Link
-                  href="/veelgestelde-vragen"
+                  href="/veelgestelde-vragen/"
                   className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all"
                 >
                   &larr; Terug naar alle vragen

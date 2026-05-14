@@ -435,7 +435,7 @@ export default function ProfielClient() {
 
               {/* Info link */}
               <Link
-                href="/medewerker/kor-info"
+                href="/medewerker/kor-info/"
                 className="inline-flex items-center gap-1 text-sm font-medium text-[var(--mp-accent)] hover:text-[var(--mp-accent-dark)] transition-colors mt-3"
               >
                 Lees meer over de KOR

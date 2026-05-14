@@ -141,9 +141,9 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
           <nav className="mb-6 flex items-center gap-2 text-sm text-neutral-500">
             <Link href="/" className="transition-colors hover:text-[#F97316]">Home</Link>
             <span>/</span>
-            <Link href="/blog" className="transition-colors hover:text-[#F97316]">Blog</Link>
+            <Link href="/blog/" className="transition-colors hover:text-[#F97316]">Blog</Link>
             <span>/</span>
-            <Link href="/blog/editorial" className="transition-colors hover:text-[#F97316]">Editorial</Link>
+            <Link href="/blog/editorial/" className="transition-colors hover:text-[#F97316]">Editorial</Link>
           </nav>
 
           <span className="mb-4 inline-block rounded-full bg-[#F97316] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">

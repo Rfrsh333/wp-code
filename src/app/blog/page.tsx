@@ -10,8 +10,8 @@ import { createEditorialImageSignedUrl } from "@/lib/images/storage";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: "Nieuws",
-  description: "Lees de nieuwste artikelen over horeca personeel, uitzendwerk en recruitment. Tips, trends en inzichten voor horecaondernemers en werkzoekenden.",
+  title: "Horeca Blog — Tips over Personeel & Recruitment",
+  description: "Praktische tips over horecapersoneel inhuren, personeelstekorten oplossen en recruitment trends. Lees de nieuwste inzichten voor horeca-ondernemers.",
 };
 
 interface UnifiedPost {
@@ -213,7 +213,7 @@ export default async function BlogPage() {
               Nieuws & Inzichten
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
-              Nieuws
+              Horeca Blog
             </h1>
             <nav className="flex justify-center items-center gap-3 text-sm text-neutral-500">
               <Link href="/" className="hover:text-[#F97316] transition-colors">Home</Link>

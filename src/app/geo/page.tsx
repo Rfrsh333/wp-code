@@ -126,7 +126,7 @@ export default async function GeoIndexPage() {
             Neem contact op met TopTalent Jobs voor betrouwbaar horeca personeel in de Randstad.
           </p>
           <Link
-            href="/personeel-aanvragen"
+            href="/personeel-aanvragen/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
           >
             Personeel aanvragen

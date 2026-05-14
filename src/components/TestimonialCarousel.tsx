@@ -82,7 +82,7 @@ export default memo(function TestimonialCarousel({ testimonials }: TestimonialCa
         <FadeIn delay={0.3}>
           <div className="text-center mt-12 lg:mt-16">
             <Link
-              href="/testimonials"
+              href="/testimonials/"
               className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#F97316] transition-colors font-medium group"
             >
               Bekijk alle ervaringen

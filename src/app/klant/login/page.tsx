@@ -154,7 +154,7 @@ export default function KlantLogin() {
             <div className="mt-6 text-center space-y-3">
               <p className="text-sm text-neutral-500">
                 Nog geen account?{" "}
-                <Link href="/klant/registreren" className="text-[#F27501] hover:text-[#d96800] font-medium transition-colors">
+                <Link href="/klant/registreren/" className="text-[#F27501] hover:text-[#d96800] font-medium transition-colors">
                   Registreer hier
                 </Link>
               </p>

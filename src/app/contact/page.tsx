@@ -218,11 +218,11 @@ function ContactPageContent() {
                 Contact
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
-                Neem contact met ons op
+                Neem contact op met TopTalent Jobs
               </h1>
               <p className="text-neutral-600 text-lg leading-relaxed">
-                Heeft u vragen over onze diensten of wilt u direct personeel aanvragen?
-                Wij staan 24/7 voor u klaar.
+                Vragen over horecapersoneel inhuren, tarieven of beschikbaarheid?
+                Wij zijn 24/7 bereikbaar via telefoon, e-mail en WhatsApp.
               </p>
             </div>
           </FadeIn>

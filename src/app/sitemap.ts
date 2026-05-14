@@ -1,115 +1,124 @@
 import { MetadataRoute } from 'next'
 import { cityOrder } from '@/data/locations'
 import { getAllBlogSlugs } from '@/data/blogArticles'
+import { getAllFunctieSlugs } from '@/data/functies'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.toptalentjobs.nl'
 
-  // Static pages - gebruik vaste datum voor stabiele crawl signalen
-  const contentDate = new Date()
+  // Vaste datums per contentgroep voor betrouwbare crawl-signalen
+  // (Google negeert lastModified als het bij elke crawl verandert)
+  const coreDate = new Date('2026-05-01')
+  const contentDate = new Date('2026-05-13')
 
   // ALLEEN indexeerbare pagina's (zie src/proxy.ts whitelist)
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
+      url: `${baseUrl}/`,
       lastModified: contentDate,
       changeFrequency: 'weekly',
       priority: 1,
     },
     {
-      url: `${baseUrl}/diensten`,
-      lastModified: contentDate,
+      url: `${baseUrl}/diensten/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/diensten/uitzenden`,
-      lastModified: contentDate,
+      url: `${baseUrl}/diensten/uitzenden/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/diensten/detachering`,
-      lastModified: contentDate,
+      url: `${baseUrl}/diensten/detachering/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/diensten/recruitment`,
-      lastModified: contentDate,
+      url: `${baseUrl}/diensten/recruitment/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/locaties`,
-      lastModified: contentDate,
+      url: `${baseUrl}/locaties/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/over-ons`,
-      lastModified: contentDate,
+      url: `${baseUrl}/over-ons/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/contact`,
-      lastModified: contentDate,
+      url: `${baseUrl}/contact/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/testimonials`,
-      lastModified: contentDate,
+      url: `${baseUrl}/testimonials/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/kosten-calculator`,
-      lastModified: contentDate,
+      url: `${baseUrl}/kosten-calculator/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/personeel-aanvragen`,
-      lastModified: contentDate,
+      url: `${baseUrl}/personeel-aanvragen/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/inschrijven`,
-      lastModified: contentDate,
+      url: `${baseUrl}/inschrijven/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/blog`,
+      url: `${baseUrl}/functies/`,
+      lastModified: contentDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/`,
       lastModified: contentDate,
       changeFrequency: 'weekly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/afspraak-plannen`,
-      lastModified: contentDate,
+      url: `${baseUrl}/afspraak-plannen/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/kennismaking-plannen`,
-      lastModified: contentDate,
+      url: `${baseUrl}/kennismaking-plannen/`,
+      lastModified: coreDate,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
-      url: `${baseUrl}/privacy`,
-      lastModified: contentDate,
+      url: `${baseUrl}/privacy/`,
+      lastModified: new Date('2026-01-01'),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/voorwaarden`,
-      lastModified: contentDate,
+      url: `${baseUrl}/voorwaarden/`,
+      lastModified: new Date('2026-01-01'),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
@@ -117,8 +126,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Location overview pages
   const locationPages = cityOrder.map((city) => ({
-    url: `${baseUrl}/locaties/${city}`,
-    lastModified: contentDate,
+    url: `${baseUrl}/locaties/${city}/`,
+    lastModified: coreDate,
     changeFrequency: 'monthly' as const,
     priority: 0.8,
   }))
@@ -130,8 +139,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const city of cityOrder) {
     for (const service of services) {
       servicePages.push({
-        url: `${baseUrl}/locaties/${city}/${service}`,
-        lastModified: contentDate,
+        url: `${baseUrl}/locaties/${city}/${service}/`,
+        lastModified: coreDate,
         changeFrequency: 'monthly' as const,
         priority: 0.7,
       })
@@ -141,7 +150,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Blog articles
   const blogSlugs = getAllBlogSlugs()
   const blogPages = blogSlugs.map((slug) => ({
-    url: `${baseUrl}/blog/${slug}`,
+    url: `${baseUrl}/blog/${slug}/`,
     lastModified: contentDate,
     changeFrequency: 'monthly' as const,
     priority: 0.6,
@@ -157,7 +166,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     if (editorialSlugs) {
       editorialPages = editorialSlugs.map((item) => ({
-        url: `${baseUrl}/blog/editorial/${item.slug}`,
+        url: `${baseUrl}/blog/editorial/${item.slug}/`,
         lastModified: item.published_at ? new Date(item.published_at) : contentDate,
         changeFrequency: 'weekly' as const,
         priority: 0.7,
@@ -169,7 +178,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // FAQ hub + individual FAQ pages
   const faqHubPage: MetadataRoute.Sitemap = [{
-    url: `${baseUrl}/veelgestelde-vragen`,
+    url: `${baseUrl}/veelgestelde-vragen/`,
     lastModified: contentDate,
     changeFrequency: 'weekly' as const,
     priority: 0.9,
@@ -184,7 +193,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     if (faqSlugs) {
       faqPages = faqSlugs.map((item) => ({
-        url: `${baseUrl}/veelgestelde-vragen/${item.slug}`,
+        url: `${baseUrl}/veelgestelde-vragen/${item.slug}/`,
         lastModified: contentDate,
         changeFrequency: 'monthly' as const,
         priority: 0.6,
@@ -194,5 +203,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Silently fail if Supabase is unreachable during build
   }
 
-  return [...staticPages, ...locationPages, ...servicePages, ...blogPages, ...editorialPages, ...faqHubPage, ...faqPages]
+  // Geo content pages (AI-gegenereerde lokale content)
+  let geoPages: MetadataRoute.Sitemap = []
+  try {
+    const { data: geoSlugs } = await supabaseAdmin
+      .from('geo_content')
+      .select('slug, gepubliceerd_op')
+      .eq('status', 'gepubliceerd')
+
+    if (geoSlugs) {
+      geoPages = geoSlugs.map((item) => ({
+        url: `${baseUrl}/geo/${item.slug}/`,
+        lastModified: item.gepubliceerd_op ? new Date(item.gepubliceerd_op) : contentDate,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    }
+  } catch {
+    // Silently fail if Supabase is unreachable during build
+  }
+
+  // Functies pages (programmatic SEO)
+  const functieSlugs = getAllFunctieSlugs()
+  const functiePages = functieSlugs.map((slug) => ({
+    url: `${baseUrl}/functies/${slug}/`,
+    lastModified: contentDate,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
+  return [...staticPages, ...locationPages, ...servicePages, ...functiePages, ...blogPages, ...editorialPages, ...faqHubPage, ...faqPages, ...geoPages]
 }

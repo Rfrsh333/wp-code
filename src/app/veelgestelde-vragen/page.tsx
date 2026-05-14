@@ -303,7 +303,7 @@ export default function FAQPage() {
                   een matchscore.
                 </p>
                 <Link
-                  href="/personeel-aanvragen"
+                  href="/personeel-aanvragen/"
                   className="inline-flex items-center justify-center bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
                 >
                   Personeel aanvragen

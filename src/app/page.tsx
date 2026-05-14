@@ -107,6 +107,21 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }}
       />
+      {/* AI-citeerbaar definitieblok — zichtbaar voor crawlers en screen readers */}
+      <section className="sr-only" aria-label="Over TopTalent Jobs">
+        <h2>Wat is TopTalent Jobs?</h2>
+        <p>
+          TopTalent Jobs is een horeca uitzendbureau gevestigd in Utrecht, Nederland.
+          Het bedrijf levert gescreend en ervaren horecapersoneel binnen 24 uur aan
+          restaurants, hotels, catering bedrijven en evenementen. TopTalent Jobs is
+          actief in Utrecht, Amsterdam, Rotterdam, Den Haag en Eindhoven. Het bedrijf
+          biedt drie diensten: uitzenden (tijdelijk personeel), detachering (langdurige
+          plaatsing) en recruitment (werving en selectie van vast personeel). TopTalent
+          Jobs is WAADI-geregistreerd en 24/7 bereikbaar. Meer dan 500 horecabedrijven
+          maken gebruik van de diensten van TopTalent Jobs.
+        </p>
+      </section>
+
       {/* Hero Section */}
       <Hero />
 
@@ -138,7 +153,7 @@ export default function Home() {
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
                 Van fine dining tot festivals: wij leveren ervaren{" "}
-                <Link href="/diensten/detachering" className="text-[#F97316] hover:underline">horecapersoneel</Link> dat past bij uw tempo en service.
+                <Link href="/diensten/detachering/" className="text-[#F97316] hover:underline">horecapersoneel</Link> dat past bij uw tempo en service.
               </p>
             </div>
           </FadeIn>
@@ -156,6 +171,121 @@ export default function Home() {
               </FadeIn>
             ))}
           </div>
+        </Container>
+      </Section>
+
+      {/* Populaire Functies Section */}
+      <Section variant="white" spacing="large">
+        <Container>
+          <FadeIn>
+            <div className="text-center mb-12">
+              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+                Personeel per functie
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+                Populaire <span className="text-[#F97316]">horecafuncties</span>
+              </h2>
+              <p className="text-neutral-600 max-w-2xl mx-auto">
+                Van kok tot bediening: TopTalent Jobs levert ervaren horecapersoneel
+                binnen 24 uur. Kies een functie en ontdek de mogelijkheden.
+              </p>
+            </div>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+            {[
+              {
+                href: "/functies/kok-inhuren/",
+                title: "Kok inhuren",
+                description: "Ervaren koks voor uw keuken — van hulpkok tot sous-chef.",
+                rate: "€25–€45",
+              },
+              {
+                href: "/functies/bediening-inhuren/",
+                title: "Bediening inhuren",
+                description: "Professionele obers en serveersters voor restaurants en events.",
+                rate: "€18–€28",
+              },
+              {
+                href: "/functies/barista-inhuren/",
+                title: "Barista inhuren",
+                description: "Koffiespecialisten voor cafés, restaurants en evenementen.",
+                rate: "€18–€26",
+              },
+              {
+                href: "/functies/barman-inhuren/",
+                title: "Barman inhuren",
+                description: "Bartenders voor bars, clubs, restaurants en events.",
+                rate: "€18–€28",
+              },
+            ].map((functie, index) => (
+              <FadeIn key={functie.href} delay={0.05 * index}>
+                <Link
+                  href={functie.href}
+                  className="group block bg-neutral-50 rounded-2xl p-6 border border-neutral-100 hover:border-[#F97316]/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full"
+                >
+                  <h3 className="text-lg font-bold text-neutral-900 group-hover:text-[#F97316] transition-colors mb-2">
+                    {functie.title}
+                  </h3>
+                  <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                    {functie.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                      {functie.rate} / uur
+                    </span>
+                    <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                      Bekijk
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  </div>
+                </Link>
+              </FadeIn>
+            ))}
+          </div>
+
+          {/* Trust signals + alle functies link */}
+          <FadeIn delay={0.25}>
+            <div className="bg-gradient-to-r from-neutral-50 to-orange-50/30 rounded-2xl border border-neutral-100 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-6 flex-wrap text-sm text-neutral-600">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Binnen 24 uur geregeld
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  WAADI-geregistreerd
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  500+ tevreden klanten
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Flexibel inzetbaar
+                </span>
+              </div>
+              <Link
+                href="/functies/"
+                className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all duration-300 whitespace-nowrap"
+              >
+                Alle horeca functies bekijken
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+          </FadeIn>
         </Container>
       </Section>
 
@@ -335,7 +465,7 @@ export default function Home() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
-                    href="/personeel-aanvragen"
+                    href="/personeel-aanvragen/"
                     className="inline-flex items-center justify-center bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
                   >
                     Bekijk hoeveel personeel ik kan krijgen
@@ -344,7 +474,7 @@ export default function Home() {
                     </svg>
                   </Link>
                   <Link
-                    href="/kosten-calculator"
+                    href="/kosten-calculator/"
                     className="border-2 border-white/30 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-white/10 transition-all duration-300"
                   >
                     Bereken je kosten in 60 sec

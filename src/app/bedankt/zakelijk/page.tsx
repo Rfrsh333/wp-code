@@ -157,7 +157,7 @@ export default function BedanktZakelijkPage() {
           </Link>
 
           <Link
-            href="/diensten"
+            href="/diensten/"
             className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
             hover:border-[#FF7A00] hover:text-[#FF7A00] hover:-translate-y-0.5 active:scale-[0.98]
             transition-all duration-300"
@@ -173,7 +173,7 @@ export default function BedanktZakelijkPage() {
           }`}
         >
           <Link
-            href="/contact"
+            href="/contact/"
             className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#FF7A00] transition-colors duration-300 font-medium group"
           >
             Direct contact opnemen

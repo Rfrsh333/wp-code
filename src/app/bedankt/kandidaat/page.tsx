@@ -137,7 +137,7 @@ export default function BedanktKandidaatPage() {
               Een kort videogesprek van 15 minuten om kennis te maken. Zo kunnen we je sneller aan de slag helpen!
             </p>
             <Link
-              href="/kennismaking-plannen"
+              href="/kennismaking-plannen/"
               className="inline-flex items-center justify-center gap-2 bg-purple-600 text-white px-8 py-4 rounded-xl font-semibold
               shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30
               hover:bg-purple-700 hover:-translate-y-0.5 active:scale-[0.98]
@@ -177,7 +177,7 @@ export default function BedanktKandidaatPage() {
           </Link>
 
           <Link
-            href="/vacatures"
+            href="/vacatures/"
             className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
             hover:border-[#FF7A00] hover:text-[#FF7A00] hover:-translate-y-0.5 active:scale-[0.98]
             transition-all duration-300"
@@ -193,7 +193,7 @@ export default function BedanktKandidaatPage() {
           }`}
         >
           <Link
-            href="/contact"
+            href="/contact/"
             className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#FF7A00] transition-colors duration-300 font-medium group"
           >
             Contact opnemen

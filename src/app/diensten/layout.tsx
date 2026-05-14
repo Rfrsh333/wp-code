@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Diensten horeca uitzendbureau | Uitzenden, detachering, recruitment",
+  title: {
+    absolute: "Diensten — Uitzenden, Detachering & Recruitment | TopTalent Jobs",
+  },
   description: "Overzicht van de diensten van TopTalent Jobs: uitzenden, detachering en recruitment van horecapersoneel. Kies de oplossing die past bij uw situatie.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/diensten",

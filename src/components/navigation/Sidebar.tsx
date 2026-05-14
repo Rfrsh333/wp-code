@@ -267,7 +267,7 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect, forceVisi
       )}
     >
       <div className="flex items-center justify-between gap-3 border-b border-neutral-200/80 px-5 py-5">
-        <Link href="/admin" className={cn("flex items-center gap-3", collapsed && "sr-only")}>
+        <Link href="/admin/" className={cn("flex items-center gap-3", collapsed && "sr-only")}>
           <Image
             src="/favicon-icon.png"
             alt="TopTalent"

@@ -252,7 +252,7 @@ export default function DraftDetailReview() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <Link href="/admin/news/drafts" className="text-sm font-medium text-[#F27501]">&larr; Terug naar drafts</Link>
+          <Link href="/admin/news/drafts/" className="text-sm font-medium text-[#F27501]">&larr; Terug naar drafts</Link>
           <h1 className="mt-2 text-3xl font-bold text-neutral-900">
             <EditableField value={draft.title} onSave={(v) => saveField("title", v)} label="titel" />
           </h1>

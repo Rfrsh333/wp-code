@@ -295,7 +295,7 @@ export default function AlgemeneVoorwaardenPage() {
             Neem contact op via info@toptalentjobs.nl of +31 6 17 17 79 39.
           </p>
           <a
-            href="/contact"
+            href="/contact/"
             className="inline-flex items-center justify-center bg-[#FF7A00] text-white px-8 py-4 rounded-xl font-semibold
             shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
             hover:bg-[#E66E00] hover:-translate-y-0.5 active:scale-[0.98]

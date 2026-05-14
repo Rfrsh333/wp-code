@@ -100,6 +100,8 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/diensten") ||
     pathname.startsWith("/locaties") ||
     pathname.startsWith("/blog") ||
+    pathname.startsWith("/geo") ||
+    pathname.startsWith("/functies") ||
     pathname.startsWith("/veelgestelde-vragen") ||
     pathname === "/over-ons" ||
     pathname === "/contact" ||

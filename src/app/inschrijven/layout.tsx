@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Inschrijven als Medewerker",
+  title: "Werken in de Horeca — Schrijf Je In",
   description: "Wil je werken via TopTalent Jobs? Schrijf je in als horecamedewerker en ontvang flexibele opdrachten bij restaurants, hotels en evenementen in jouw regio.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/inschrijven",

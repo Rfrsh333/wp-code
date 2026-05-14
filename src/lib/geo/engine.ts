@@ -479,6 +479,34 @@ export async function getPublishedGeoContent(slug: string): Promise<GeoContent |
 /**
  * Haal alle gepubliceerde GEO content op per stad
  */
+/**
+ * Haal gepubliceerde GEO content op die relevant is voor een specifieke functie.
+ * Zoekt op slug/title match met het functie-keyword (bijv. "kok", "bediening").
+ * Retourneert max 1 resultaat per stad, gesorteerd per stad.
+ */
+export async function getPublishedGeoContentForFunctie(
+  functieKeyword: string,
+): Promise<Pick<GeoContent, "slug" | "title" | "stad">[]> {
+  const { data } = await supabaseAdmin
+    .from("geo_content")
+    .select("slug, title, stad")
+    .eq("status", "gepubliceerd")
+    .or(`slug.ilike.%${functieKeyword}%,title.ilike.%${functieKeyword}%`)
+    .order("stad")
+    .limit(20);
+
+  if (!data || data.length === 0) return [];
+
+  // Dedup: max 1 per stad (meest relevante = slug match > title match)
+  const perStad = new Map<string, Pick<GeoContent, "slug" | "title" | "stad">>();
+  for (const item of data) {
+    if (!perStad.has(item.stad) || item.slug.includes(functieKeyword)) {
+      perStad.set(item.stad, item);
+    }
+  }
+  return Array.from(perStad.values());
+}
+
 export async function getPublishedGeoContentByStad(stad: string): Promise<GeoContent[]> {
   const { data } = await supabaseAdmin
     .from("geo_content")

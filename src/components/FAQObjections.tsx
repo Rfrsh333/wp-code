@@ -61,7 +61,7 @@ export default function FAQObjections() {
                   Laat ons je situatie beoordelen. We geven je binnen 15 minuten een eerlijk antwoord of we kunnen helpen.
                 </p>
                 <Link
-                  href="/personeel-aanvragen"
+                  href="/personeel-aanvragen/"
                   className="inline-flex items-center justify-center bg-white text-[#F97316] px-6 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-all duration-300 w-full sm:w-auto shadow-xl"
                 >
                   Laat me de matchscore zien

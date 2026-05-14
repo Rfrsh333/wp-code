@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Uitzenden horeca personeel | diensten voor werkgevers",
+  title: "Horecapersoneel Uitzenden — Binnen 24 Uur",
   description: "Uitzenden van horecapersoneel voor restaurants, hotels en events. Snel tijdelijke inzet bij piekdrukte of uitval, met één contactpunt en duidelijke tarieven.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/diensten/uitzenden",

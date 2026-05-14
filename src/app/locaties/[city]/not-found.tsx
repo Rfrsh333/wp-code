@@ -49,13 +49,13 @@ export default function NotFound() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/locaties"
+            href="/locaties/"
             className="bg-[#F97316] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#EA580C] transition-colors"
           >
             Alle locaties
           </Link>
           <Link
-            href="/contact"
+            href="/contact/"
             className="border-2 border-neutral-300 text-neutral-700 px-8 py-3 rounded-xl font-semibold hover:bg-neutral-50 transition-colors"
           >
             Neem contact op

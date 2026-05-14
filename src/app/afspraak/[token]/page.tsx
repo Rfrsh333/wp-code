@@ -119,7 +119,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           <h1 className="text-xl font-bold text-neutral-900 mb-2">Boeking niet gevonden</h1>
           <p className="text-neutral-500 mb-6">{error || "Deze link is niet meer geldig of verlopen."}</p>
           <a
-            href="/afspraak-plannen"
+            href="/afspraak-plannen/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] text-white rounded-xl font-medium hover:bg-[#EA580C] transition-all duration-300 shadow-lg shadow-orange-500/20"
           >
             Nieuwe afspraak plannen
@@ -155,7 +155,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
             <p className="text-neutral-600 mb-2">We hebben een bevestiging naar je e-mail gestuurd.</p>
             <p className="text-neutral-400 text-sm mb-6">Het tijdslot is weer vrijgegeven.</p>
             <a
-              href="/afspraak-plannen"
+              href="/afspraak-plannen/"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] text-white rounded-xl font-medium hover:bg-[#EA580C] transition-all duration-300 shadow-lg shadow-orange-500/20"
             >
               Nieuwe afspraak plannen
@@ -194,7 +194,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           <h1 className="text-xl font-bold text-neutral-900 mb-2">{config.title}</h1>
           <p className="text-neutral-500 mb-6">Deze afspraak kan niet meer gewijzigd worden.</p>
           <a
-            href="/afspraak-plannen"
+            href="/afspraak-plannen/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] text-white rounded-xl font-medium hover:bg-[#EA580C] transition-all duration-300"
           >
             Nieuwe afspraak plannen

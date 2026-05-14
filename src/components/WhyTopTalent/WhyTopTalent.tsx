@@ -170,7 +170,7 @@ export default function WhyTopTalent() {
 
             {/* Text Link */}
             <Link
-              href="/over-ons"
+              href="/over-ons/"
               className={`${styles.textLink} ${styles.revealItem} ${styles.delayLink} ${
                 isInView ? styles.visible : ""
               }`}
@@ -216,7 +216,7 @@ export default function WhyTopTalent() {
 
             {/* CTA Button */}
             <Link
-              href="/inschrijven"
+              href="/inschrijven/"
               className={`${styles.ctaButton} ${styles.revealItem} ${styles.delayCta} ${
                 isInView ? styles.visible : ""
               }`}

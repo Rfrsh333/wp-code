@@ -142,7 +142,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
           <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-6">
             <Link href="/" className="hover:text-[#F97316] transition-colors">Home</Link>
             <span>/</span>
-            <Link href="/blog" className="hover:text-[#F97316] transition-colors">Blog</Link>
+            <Link href="/blog/" className="hover:text-[#F97316] transition-colors">Blog</Link>
             <span>/</span>
             <span className="text-neutral-700">{article.category}</span>
           </nav>

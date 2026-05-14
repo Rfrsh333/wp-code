@@ -943,7 +943,7 @@ export default function KostenCalculatorPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/contact"
+                href="/contact/"
                 className="bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                   hover:bg-[#EA580C] hover:-translate-y-0.5 transition-all duration-300 text-center"
@@ -951,7 +951,7 @@ export default function KostenCalculatorPage() {
                 Neem contact op
               </Link>
               <Link
-                href="/diensten"
+                href="/diensten/"
                 className="border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
                   hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300 text-center"
               >
@@ -1058,7 +1058,7 @@ export default function KostenCalculatorPage() {
 
             <p className="text-center text-sm text-neutral-500 mt-6">
               Wij delen uw gegevens nooit met derden.{" "}
-              <Link href="/privacy" className="text-[#F97316] hover:underline">
+              <Link href="/privacy/" className="text-[#F97316] hover:underline">
                 Privacybeleid
               </Link>
             </p>

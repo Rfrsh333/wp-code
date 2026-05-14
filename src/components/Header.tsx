@@ -156,7 +156,7 @@ export default function Header() {
                 <div className={`absolute left-0 top-full pt-2 transition-all duration-300 ${isDienstenOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}>
                   <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[200px]" role="menu">
                     <Link
-                      href="/diensten"
+                      href="/diensten/"
                       role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
@@ -164,7 +164,7 @@ export default function Header() {
                       Alle Diensten
                     </Link>
                     <Link
-                      href="/diensten/uitzenden"
+                      href="/diensten/uitzenden/"
                       role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
@@ -172,7 +172,7 @@ export default function Header() {
                       Uitzenden
                     </Link>
                     <Link
-                      href="/diensten/detachering"
+                      href="/diensten/detachering/"
                       role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
@@ -180,46 +180,55 @@ export default function Header() {
                       Detachering
                     </Link>
                     <Link
-                      href="/diensten/recruitment"
+                      href="/diensten/recruitment/"
                       role="menuitem"
                       className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
                     >
                       Recruitment
                     </Link>
+                    <div className="border-t border-neutral-100 my-1" />
+                    <Link
+                      href="/functies/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeDiensten}
+                    >
+                      Personeel per functie
+                    </Link>
                   </div>
                 </div>
               </div>
               <Link
-                href="/over-ons"
+                href="/over-ons/"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Over Ons
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
-                href="/blog"
+                href="/blog/"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Nieuws
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
-                href="/kosten-calculator"
+                href="/kosten-calculator/"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Kosten calculator
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
-                href="/veelgestelde-vragen"
+                href="/veelgestelde-vragen/"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 FAQ
                 <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
-                href="/contact"
+                href="/contact/"
                 className="px-4 py-2 text-neutral-600 font-medium hover:text-[#F27501] transition-colors duration-300 relative group"
               >
                 Contact
@@ -230,7 +239,7 @@ export default function Header() {
             {/* CTA Buttons */}
             <div className="hidden lg:flex items-center gap-3">
               <Link
-                href="/medewerker/login"
+                href="/medewerker/login/"
                 className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm
                 border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]
                 transition-all duration-300"
@@ -241,7 +250,7 @@ export default function Header() {
                 Login
               </Link>
               <Link
-                href="/contact"
+                href="/contact/"
                 className="bg-[#F27501] text-white px-6 py-2.5 rounded-lg font-semibold text-sm
                 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                 hover:bg-[#d96800] transition-all duration-300"
@@ -316,66 +325,73 @@ export default function Header() {
                 <div className={`overflow-hidden transition-all duration-200 ${isMobileDienstenOpen ? 'max-h-48' : 'max-h-0'}`}>
                   <div className="pl-4 py-1 space-y-1">
                     <Link
-                      href="/diensten"
+                      href="/diensten/"
                       className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Alle Diensten
                     </Link>
                     <Link
-                      href="/diensten/uitzenden"
+                      href="/diensten/uitzenden/"
                       className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Uitzenden
                     </Link>
                     <Link
-                      href="/diensten/detachering"
+                      href="/diensten/detachering/"
                       className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Detachering
                     </Link>
                     <Link
-                      href="/diensten/recruitment"
+                      href="/diensten/recruitment/"
                       className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Recruitment
                     </Link>
+                    <Link
+                      href="/functies/"
+                      className="block px-4 py-2 text-neutral-500 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Personeel per functie
+                    </Link>
                   </div>
                 </div>
               </div>
               <Link
-                href="/over-ons"
+                href="/over-ons/"
                 className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Over Ons
               </Link>
               <Link
-                href="/blog"
+                href="/blog/"
                 className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Nieuws
               </Link>
               <Link
-                href="/kosten-calculator"
+                href="/kosten-calculator/"
                 className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Kosten calculator
               </Link>
               <Link
-                href="/veelgestelde-vragen"
+                href="/veelgestelde-vragen/"
                 className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 FAQ
               </Link>
               <Link
-                href="/contact"
+                href="/contact/"
                 className="px-4 py-3 text-neutral-600 font-medium hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -383,7 +399,7 @@ export default function Header() {
               </Link>
               <div className="mt-4 px-4 space-y-3">
                 <Link
-                  href="/medewerker/login"
+                  href="/medewerker/login/"
                   className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-lg font-semibold
                   border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]
                   transition-all duration-200"
@@ -395,7 +411,7 @@ export default function Header() {
                   Login
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/contact/"
                   className="block w-full bg-[#F27501] text-white px-6 py-3 rounded-lg font-semibold text-center
                   hover:bg-[#d96800] transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}

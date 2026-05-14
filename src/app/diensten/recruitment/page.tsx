@@ -22,7 +22,7 @@ export default function RecruitmentPage() {
             <ClientAnimationWrapper direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                  <Link href="/diensten">Diensten</Link> › Recruitment
+                  <Link href="/diensten/">Diensten</Link> › Recruitment
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
                   Recruitment voor vast horecapersoneel
@@ -33,7 +33,7 @@ export default function RecruitmentPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/contact"
+                    href="/contact/"
                     className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                     hover:bg-[#EA580C] transition-all duration-300"
@@ -138,7 +138,7 @@ export default function RecruitmentPage() {
                 </h2>
                 <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
                   Recruitment voor{" "}
-                  <Link href="/diensten/detachering">vaste bezetting</Link> vraagt tijd en focus. Wij nemen dit uit handen
+                  <Link href="/diensten/detachering/">vaste bezetting</Link> vraagt tijd en focus. Wij nemen dit uit handen
                   en presenteren kandidaten die passen bij uw organisatie.
                 </p>
 
@@ -243,6 +243,42 @@ export default function RecruitmentPage() {
         </Section.Container>
       </Section>
 
+      {/* FUNCTIES VIA RECRUITMENT */}
+      <Section variant="white" spacing="default">
+        <Section.Container>
+          <ClientAnimationWrapper>
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4 text-center">
+                Voor welke functies werven wij?
+              </h2>
+              <p className="text-neutral-600 text-center max-w-2xl mx-auto mb-8">
+                TopTalent Jobs werft vast horecapersoneel voor uiteenlopende functies in keuken, bediening en evenementen.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { href: "/functies/kok-inhuren/", label: "Kok inhuren" },
+                  { href: "/functies/bediening-inhuren/", label: "Bediening inhuren" },
+                  { href: "/functies/barista-inhuren/", label: "Barista inhuren" },
+                  { href: "/functies/barman-inhuren/", label: "Barman inhuren" },
+                  { href: "/functies/catering-medewerker-inhuren/", label: "Catering medewerker" },
+                  { href: "/functies/afwasser-inhuren/", label: "Afwasser inhuren" },
+                  { href: "/functies/event-manager-inhuren/", label: "Event manager" },
+                  { href: "/functies/", label: "Alle functies →" },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-[#FEF3E7] text-neutral-700 hover:text-[#F97316] font-medium text-sm text-center transition-all duration-200"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </ClientAnimationWrapper>
+        </Section.Container>
+      </Section>
+
       {/* CTA - WIT */}
       <Section variant="white" spacing="large">
         <Section.Container>
@@ -263,7 +299,7 @@ export default function RecruitmentPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
-                    href="/contact"
+                    href="/contact/"
                     className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >

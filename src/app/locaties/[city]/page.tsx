@@ -61,7 +61,7 @@ export default async function CityPage({ params }: PageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                <Link href="/locaties">Locaties</Link> › {location.name}
+                <Link href="/locaties/">Locaties</Link> › {location.name}
               </span>
 
               {/* Sub-navigatie */}
@@ -75,7 +75,7 @@ export default async function CityPage({ params }: PageProps) {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  href="/personeel-aanvragen"
+                  href="/personeel-aanvragen/"
                   className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                   hover:bg-[#EA580C] transition-all duration-300"
@@ -86,7 +86,7 @@ export default async function CityPage({ params }: PageProps) {
                   </svg>
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/contact/"
                   className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
                   hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
                 >
@@ -148,7 +148,7 @@ export default async function CityPage({ params }: PageProps) {
                   ))}
                 </ul>
                 <Link
-                  href="/diensten"
+                  href="/diensten/"
                   className="inline-block mt-4 text-[#F97316] font-semibold hover:underline"
                 >
                   Bekijk alle diensten →
@@ -157,13 +157,33 @@ export default async function CityPage({ params }: PageProps) {
 
               <div className="bg-white rounded-xl p-6 border border-neutral-200">
                 <h3 className="text-xl font-bold text-neutral-900 mb-3">
-                  Beschikbare functies
+                  Populaire functies in {location.name}
                 </h3>
-                <ul className="space-y-2 text-neutral-700">
-                  {location.functions.map((func, index) => (
-                    <li key={index}>• {func}</li>
+                <ul className="space-y-2">
+                  {[
+                    { href: "/functies/kok-inhuren/", label: `Kok inhuren in ${location.name}` },
+                    { href: "/functies/bediening-inhuren/", label: `Bediening inhuren in ${location.name}` },
+                    { href: "/functies/barista-inhuren/", label: `Barista inhuren in ${location.name}` },
+                    { href: "/functies/barman-inhuren/", label: `Barman inhuren in ${location.name}` },
+                    { href: "/functies/catering-medewerker-inhuren/", label: `Catering medewerker inhuren` },
+                  ].map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
+                      >
+                        <span>•</span>
+                        <span className="group-hover:underline">{item.label}</span>
+                      </Link>
+                    </li>
                   ))}
                 </ul>
+                <Link
+                  href="/functies/"
+                  className="inline-block mt-4 text-[#F97316] font-semibold hover:underline"
+                >
+                  Alle functies bekijken →
+                </Link>
               </div>
             </div>
 
@@ -250,14 +270,14 @@ export default async function CityPage({ params }: PageProps) {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/personeel-aanvragen"
+                  href="/personeel-aanvragen/"
                   className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
                   hover:bg-neutral-100 transition-all duration-300"
                 >
                   Personeel aanvragen
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/contact/"
                   className="border-2 border-white/30 text-white px-8 py-4 rounded-xl text-base font-semibold
                   hover:bg-white/10 transition-all duration-300"
                 >

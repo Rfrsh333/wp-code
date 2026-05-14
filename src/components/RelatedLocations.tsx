@@ -77,7 +77,7 @@ export default function RelatedLocations({ currentSlug }: RelatedLocationsProps)
 
       <div className="text-center mt-8">
         <Link
-          href="/locaties"
+          href="/locaties/"
           className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:underline"
         >
           Bekijk alle locaties

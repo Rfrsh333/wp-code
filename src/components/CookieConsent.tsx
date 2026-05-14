@@ -52,7 +52,7 @@ export default function CookieConsent() {
               cookies voor analytics en marketing. Je kunt je voorkeur altijd wijzigen via
               onze cookie-instellingen.
             </p>
-            <Link href="/cookies" className="text-sm text-[#F27501] hover:underline">
+            <Link href="/cookies/" className="text-sm text-[#F27501] hover:underline">
               Cookie-instellingen
             </Link>
           </div>

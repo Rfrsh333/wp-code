@@ -454,7 +454,7 @@ function PersoneelLandingVariantBContent() {
             </p>
             <p className="text-center text-sm text-neutral-500 mt-2">
               Door te versturen ga je akkoord met ons{" "}
-              <Link href="/privacy" className="text-[#F97316] hover:underline">
+              <Link href="/privacy/" className="text-[#F97316] hover:underline">
                 privacybeleid
               </Link>
               .

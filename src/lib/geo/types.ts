@@ -4,13 +4,14 @@
 
 export type GeoContentType = "city_page" | "faq_cluster" | "service_guide" | "authority_article";
 export type GeoStatus = "concept" | "review" | "gepubliceerd" | "gearchiveerd";
-export type GeoStad = "amsterdam" | "rotterdam" | "den-haag" | "utrecht";
+export type GeoStad = "amsterdam" | "rotterdam" | "den-haag" | "utrecht" | "eindhoven";
 
 export const GEO_STEDEN: Record<GeoStad, { naam: string; regio: string }> = {
   amsterdam: { naam: "Amsterdam", regio: "Noord-Holland" },
   rotterdam: { naam: "Rotterdam", regio: "Zuid-Holland" },
   "den-haag": { naam: "Den Haag", regio: "Zuid-Holland" },
   utrecht: { naam: "Utrecht", regio: "Utrecht" },
+  eindhoven: { naam: "Eindhoven", regio: "Noord-Brabant" },
 };
 
 export const GEO_CONTENT_TYPES: Record<GeoContentType, { label: string; beschrijving: string }> = {

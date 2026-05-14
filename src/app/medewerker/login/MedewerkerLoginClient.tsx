@@ -76,7 +76,7 @@ export default function MedewerkerLoginClient() {
               placeholder="••••••••"
             />
             <div className="mt-2 text-right">
-              <a href="/medewerker/wachtwoord-vergeten" className="text-sm text-[#F27501] font-medium hover:text-[#d96800] transition-colors">
+              <a href="/medewerker/wachtwoord-vergeten/" className="text-sm text-[#F27501] font-medium hover:text-[#d96800] transition-colors">
                 Wachtwoord vergeten?
               </a>
             </div>
@@ -94,7 +94,7 @@ export default function MedewerkerLoginClient() {
           <p className="text-neutral-600 text-sm">
             Nog geen account?{" "}
             <a
-              href="/inschrijven"
+              href="/inschrijven/"
               className="text-[#F27501] font-semibold hover:text-[#d96800] transition-colors"
             >
               Registreer hier!

@@ -104,11 +104,11 @@ export default function Hero() {
                 isHeroInView ? styles.visible : ""
               } ${styles.delay4}`}
             >
-              <Link href="/personeel-aanvragen" className={styles.ctaPrimary}>
+              <Link href="/personeel-aanvragen/" className={styles.ctaPrimary}>
                 Vraag personeel aan
                 <ArrowIcon />
               </Link>
-              <Link href="/inschrijven" className={styles.ctaSecondary}>
+              <Link href="/inschrijven/" className={styles.ctaSecondary}>
                 Ik wil werken
               </Link>
             </div>

@@ -66,7 +66,7 @@ export default function AdminWachtwoordVergetenPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link href="/admin/login" className="text-sm text-neutral-500 hover:text-[#F27501]">
+          <Link href="/admin/login/" className="text-sm text-neutral-500 hover:text-[#F27501]">
             ← Terug naar admin login
           </Link>
         </div>

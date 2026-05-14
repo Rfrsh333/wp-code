@@ -22,7 +22,7 @@ export default function Error({
           <button onClick={reset} className="px-6 py-2 bg-[#F27501] text-white rounded-lg font-medium hover:bg-[#D96801] transition-colors">
             Probeer opnieuw
           </button>
-          <a href="/klant" className="px-6 py-2 border border-neutral-300 text-neutral-700 rounded-lg font-medium hover:bg-neutral-50 transition-colors">
+          <a href="/klant/" className="px-6 py-2 border border-neutral-300 text-neutral-700 rounded-lg font-medium hover:bg-neutral-50 transition-colors">
             Terug
           </a>
         </div>

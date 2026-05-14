@@ -66,7 +66,7 @@ export default function MedewerkerWachtwoordVergetenPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link href="/medewerker/login" className="text-sm text-neutral-500 hover:text-[#F27501]">
+          <Link href="/medewerker/login/" className="text-sm text-neutral-500 hover:text-[#F27501]">
             ← Terug naar medewerker login
           </Link>
         </div>

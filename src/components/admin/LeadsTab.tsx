@@ -31,7 +31,7 @@ export default function LeadsTab() {
           </p>
         </div>
         <a
-          href="/admin/leads/bookmarklet"
+          href="/admin/leads/bookmarklet/"
           target="_blank"
           className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 text-sm font-medium"
         >
