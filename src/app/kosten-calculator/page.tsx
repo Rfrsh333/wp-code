@@ -93,11 +93,11 @@ function AnimatedCounter({ value, prefix = "€", duration = 800 }: {
 
 function StepIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
   return (
-    <div className="flex items-center justify-center gap-3 mb-10">
+    <div className="flex items-center justify-center gap-2 md:gap-3 mb-6 md:mb-10">
       {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
         <div key={step} className="flex items-center">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-semibold text-sm
               transition-all duration-500 ${
               currentStep === step
                 ? "bg-[#F97316] text-white scale-110 shadow-lg shadow-orange-500/30"
@@ -107,7 +107,7 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
             }`}
           >
             {currentStep > step ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             ) : (
@@ -116,7 +116,7 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
           </div>
           {step < totalSteps && (
             <div
-              className={`w-16 sm:w-24 h-1 mx-2 rounded-full transition-all duration-500 ${
+              className={`w-12 sm:w-16 md:w-24 h-1 mx-1 md:mx-2 rounded-full transition-all duration-500 ${
                 currentStep > step ? "bg-[#F97316]" : "bg-neutral-200"
               }`}
             />
@@ -291,30 +291,30 @@ export default function KostenCalculatorPage() {
 
   return (
     <>
-      {/* Hero Section */}
+      {/* Hero Section - Mobile Optimized */}
       <section
-        className="pt-32 pb-16"
+        className="pt-24 md:pt-32 pb-12 md:pb-16"
         style={{
           background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F1 100%)",
         }}
       >
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <span className="inline-block bg-orange-100 text-[#F97316] text-xs font-semibold px-4 py-2 rounded-full uppercase tracking-wide mb-6">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
+          <span className="inline-block bg-orange-100 text-[#F97316] text-xs font-semibold px-3 py-1.5 md:px-4 md:py-2 rounded-full uppercase tracking-wide mb-4 md:mb-6">
             Gratis tool
           </span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-4 md:mb-6 leading-tight">
             Wat kost horecapersoneel <span className="text-[#F97316]">écht</span>?
           </h1>
-          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto">
             Bereken in 2 minuten uw personeelskosten. Vergelijk vast personeel,
             uitzendkrachten en ZZP&apos;ers - en ontvang een helder kostenoverzicht.
           </p>
         </div>
       </section>
 
-      {/* Calculator Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-3xl mx-auto px-6">
+      {/* Calculator Section - Mobile Optimized */}
+      <section className="py-12 md:py-16 bg-white">
+        <div className="max-w-3xl mx-auto px-4 md:px-6">
           {!showResults ? (
             <div
               className="opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]"
@@ -323,16 +323,16 @@ export default function KostenCalculatorPage() {
               {/* Progress Steps */}
               <StepIndicator currentStep={currentStep} totalSteps={3} />
 
-              {/* Calculator Card */}
-              <div className="bg-white rounded-3xl shadow-xl shadow-neutral-900/5 border border-neutral-100 p-8 lg:p-12">
+              {/* Calculator Card - Compact Mobile */}
+              <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl shadow-neutral-900/5 border border-neutral-100 p-5 md:p-8 lg:p-12">
                 {/* Step 1: Personeel */}
                 {currentStep === 1 && (
-                  <div className="space-y-8 animate-[slideIn_0.3s_ease-out]">
+                  <div className="space-y-5 md:space-y-8 animate-[slideIn_0.3s_ease-out]">
                     <div>
-                      <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+                      <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-1 md:mb-2">
                         Welk personeel heeft u nodig?
                       </h2>
-                      <p className="text-neutral-500">Stap 1 van 3</p>
+                      <p className="text-sm md:text-base text-neutral-500">Stap 1 van 3</p>
                     </div>
 
                     {/* Functie Selection */}
@@ -422,10 +422,10 @@ export default function KostenCalculatorPage() {
                       </div>
                     </div>
 
-                    {/* Next Button */}
+                    {/* Next Button - Mobile Optimized */}
                     <button
                       onClick={() => setCurrentStep(2)}
-                      className="w-full bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                      className="w-full bg-[#F97316] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                         shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                         hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
                         transition-all duration-300 flex items-center justify-center gap-2"
@@ -440,12 +440,12 @@ export default function KostenCalculatorPage() {
 
                 {/* Step 2: Inzet */}
                 {currentStep === 2 && (
-                  <div className="space-y-8 animate-[slideIn_0.3s_ease-out]">
+                  <div className="space-y-5 md:space-y-8 animate-[slideIn_0.3s_ease-out]">
                     <div>
-                      <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+                      <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-1 md:mb-2">
                         Wanneer en hoe vaak?
                       </h2>
-                      <p className="text-neutral-500">Stap 2 van 3</p>
+                      <p className="text-sm md:text-base text-neutral-500">Stap 2 van 3</p>
                     </div>
 
                     {/* Uren per dienst */}
@@ -538,11 +538,11 @@ export default function KostenCalculatorPage() {
                       </div>
                     </div>
 
-                    {/* Navigation Buttons */}
-                    <div className="flex gap-4">
+                    {/* Navigation Buttons - Mobile Optimized */}
+                    <div className="flex gap-3 md:gap-4">
                       <button
                         onClick={() => setCurrentStep(1)}
-                        className="flex-1 border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
+                        className="flex-1 border-2 border-neutral-200 text-neutral-700 px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           hover:border-neutral-300 hover:bg-neutral-50 transition-all duration-300
                           flex items-center justify-center gap-2"
                       >
@@ -554,7 +554,7 @@ export default function KostenCalculatorPage() {
                       <button
                         onClick={() => setCurrentStep(3)}
                         disabled={inputs.dagenPerWeek.length === 0}
-                        className="flex-1 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                        className="flex-1 bg-[#F97316] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                           hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
                           transition-all duration-300 flex items-center justify-center gap-2
@@ -571,12 +571,12 @@ export default function KostenCalculatorPage() {
 
                 {/* Step 3: Vergelijking */}
                 {currentStep === 3 && (
-                  <div className="space-y-8 animate-[slideIn_0.3s_ease-out]">
+                  <div className="space-y-5 md:space-y-8 animate-[slideIn_0.3s_ease-out]">
                     <div>
-                      <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+                      <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-1 md:mb-2">
                         Welke opties wilt u vergelijken?
                       </h2>
-                      <p className="text-neutral-500">Stap 3 van 3</p>
+                      <p className="text-sm md:text-base text-neutral-500">Stap 3 van 3</p>
                     </div>
 
                     {/* Vergelijking Options */}
@@ -632,11 +632,11 @@ export default function KostenCalculatorPage() {
                       <p className="text-red-500 text-sm">Selecteer minimaal 1 optie</p>
                     )}
 
-                    {/* Navigation Buttons */}
-                    <div className="flex gap-4">
+                    {/* Navigation Buttons - Mobile Optimized */}
+                    <div className="flex gap-3 md:gap-4">
                       <button
                         onClick={() => setCurrentStep(2)}
-                        className="flex-1 border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
+                        className="flex-1 border-2 border-neutral-200 text-neutral-700 px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           hover:border-neutral-300 hover:bg-neutral-50 transition-all duration-300
                           flex items-center justify-center gap-2"
                       >
@@ -648,7 +648,7 @@ export default function KostenCalculatorPage() {
                       <button
                         onClick={handleCalculate}
                         disabled={inputs.vergelijkingen.length === 0 || isCalculating}
-                        className="flex-1 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                        className="flex-1 bg-[#F97316] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                           hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
                           transition-all duration-300 flex items-center justify-center gap-2
@@ -664,7 +664,8 @@ export default function KostenCalculatorPage() {
                           </>
                         ) : (
                           <>
-                            Bereken kosten
+                            <span className="hidden sm:inline">Bereken kosten</span>
+                            <span className="sm:hidden">Bereken</span>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
@@ -962,14 +963,17 @@ export default function KostenCalculatorPage() {
         </div>
       </section>
 
-      {/* Lead Capture Modal */}
+      {/* Lead Capture Modal - Mobile Optimized */}
       {showLeadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4">
           <div
             className="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
             onClick={() => setShowLeadModal(false)}
           />
-          <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 max-h-[90vh] overflow-y-auto animate-[scaleIn_0.3s_ease-out]">
+          <div
+            className="relative bg-white rounded-2xl md:rounded-3xl shadow-2xl max-w-md w-full p-6 md:p-8 max-h-[90vh] overflow-y-auto animate-[scaleIn_0.3s_ease-out]"
+            style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+          >
             <button
               onClick={() => setShowLeadModal(false)}
               className="absolute top-4 right-4 w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center
@@ -980,21 +984,21 @@ export default function KostenCalculatorPage() {
               </svg>
             </button>
 
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-[#FFF7F1] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <svg className="w-8 h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center mb-6 md:mb-8">
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-[#FFF7F1] rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
+                <svg className="w-7 h-7 md:w-8 md:h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-neutral-900 mb-2">
+              <h3 className="text-xl md:text-2xl font-bold text-neutral-900 mb-2">
                 Ontvang uw kostenoverzicht
               </h3>
-              <p className="text-neutral-600">
+              <p className="text-sm md:text-base text-neutral-600">
                 Wij sturen u een overzichtelijke PDF met uw volledige berekening.
               </p>
             </div>
 
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-2.5 md:space-y-3 mb-6 md:mb-8">
               {[
                 "Uw volledige berekening",
                 "Vergelijking vast / uitzend / ZZP",
@@ -1017,7 +1021,7 @@ export default function KostenCalculatorPage() {
                   placeholder="Uw naam *"
                   value={leadForm.naam}
                   onChange={(e) => setLeadForm({ ...leadForm, naam: e.target.value })}
-                  className={`w-full px-4 py-3.5 border rounded-xl outline-none transition-all duration-300 bg-neutral-50 focus:bg-white
+                  className={`w-full px-4 py-3 md:py-3.5 border rounded-xl outline-none transition-all duration-300 bg-neutral-50 focus:bg-white text-base
                     ${formErrors.naam ? "border-red-400 focus:ring-red-200" : "border-neutral-200 focus:ring-[#F97316]/20 focus:border-[#F97316]"} focus:ring-2`}
                 />
                 {formErrors.naam && <p className="text-red-500 text-sm mt-1">{formErrors.naam}</p>}
@@ -1028,7 +1032,7 @@ export default function KostenCalculatorPage() {
                   placeholder="Bedrijfsnaam *"
                   value={leadForm.bedrijfsnaam}
                   onChange={(e) => setLeadForm({ ...leadForm, bedrijfsnaam: e.target.value })}
-                  className={`w-full px-4 py-3.5 border rounded-xl outline-none transition-all duration-300 bg-neutral-50 focus:bg-white
+                  className={`w-full px-4 py-3 md:py-3.5 border rounded-xl outline-none transition-all duration-300 bg-neutral-50 focus:bg-white text-base
                     ${formErrors.bedrijfsnaam ? "border-red-400 focus:ring-red-200" : "border-neutral-200 focus:ring-[#F97316]/20 focus:border-[#F97316]"} focus:ring-2`}
                 />
                 {formErrors.bedrijfsnaam && <p className="text-red-500 text-sm mt-1">{formErrors.bedrijfsnaam}</p>}
@@ -1039,7 +1043,7 @@ export default function KostenCalculatorPage() {
                   placeholder="E-mailadres *"
                   value={leadForm.email}
                   onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
-                  className={`w-full px-4 py-3.5 border rounded-xl outline-none transition-all duration-300 bg-neutral-50 focus:bg-white
+                  className={`w-full px-4 py-3 md:py-3.5 border rounded-xl outline-none transition-all duration-300 bg-neutral-50 focus:bg-white text-base
                     ${formErrors.email ? "border-red-400 focus:ring-red-200" : "border-neutral-200 focus:ring-[#F97316]/20 focus:border-[#F97316]"} focus:ring-2`}
                 />
                 {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
@@ -1048,7 +1052,7 @@ export default function KostenCalculatorPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                className="w-full bg-[#F97316] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                   hover:bg-[#EA580C] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
