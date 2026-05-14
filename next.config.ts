@@ -132,16 +132,27 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Non-www naar www redirect
+      // Non-www naar www redirect (met trailing slash om dubbele redirect te voorkomen)
       {
-        source: '/:path*',
+        source: '/:path+',
         has: [
           {
             type: 'host',
             value: 'toptalentjobs.nl',
           },
         ],
-        destination: 'https://www.toptalentjobs.nl/:path*',
+        destination: 'https://www.toptalentjobs.nl/:path+/',
+        permanent: true,
+      },
+      {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: 'toptalentjobs.nl',
+          },
+        ],
+        destination: 'https://www.toptalentjobs.nl/',
         permanent: true,
       },
       // Oude WordPress pagina redirects
