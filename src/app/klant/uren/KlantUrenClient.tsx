@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import * as Sentry from "@sentry/nextjs";
 import Image from "next/image";
 import KlantPortalLayout, { KlantTab } from "@/components/klant/KlantPortalLayout";
 import KlantMobileHeader from "@/components/klant/KlantMobileHeader";
@@ -1579,7 +1580,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
           afbeelding_url = uploadData.url;
         }
       } catch (err) {
-        console.error("Image upload error:", err);
+        Sentry.captureException(err);
         // Niet-kritiek: ga door zonder afbeelding
       } finally {
         setIsUploadingImage(false);

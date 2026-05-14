@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processInstantlyEvent } from "@/lib/instantly-events";
+import * as Sentry from "@sentry/nextjs";
 
 export async function POST(request: NextRequest) {
   // Verify webhook secret
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       lead_found: result.lead_found,
     });
   } catch (err) {
-    console.error("[instantly-webhook] Error:", err);
+    Sentry.captureException(err);
     // Return 200 to prevent Instantly from retrying
     return NextResponse.json({ received: true, error: "processing_failed" });
   }

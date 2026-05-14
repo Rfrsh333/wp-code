@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase";
 import { checkRedisRateLimit, getClientIP } from "@/lib/rate-limit-redis";
+import * as Sentry from "@sentry/nextjs";
 import { formRateLimit } from "@/lib/rate-limit-redis";
 
 const leadSchema = z.object({
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (dbError) {
-      console.error("Lead insert error:", dbError);
+      Sentry.captureException(dbError);
       return NextResponse.json(
         { error: "Er ging iets mis. Probeer het later opnieuw." },
         { status: 500 }

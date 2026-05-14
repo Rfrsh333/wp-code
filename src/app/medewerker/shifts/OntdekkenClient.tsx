@@ -5,6 +5,7 @@ import { SlidersHorizontal, Search } from "lucide-react";
 import ShiftCard from "@/components/medewerker/ShiftCard";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 interface Shift {
   id: string;
@@ -46,7 +47,7 @@ export default function OntdekkenClient() {
       const data = await res.json();
       setShifts(data.shifts || []);
     } catch (err) {
-      console.error("Fetch shifts error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setLoading(false);
@@ -70,7 +71,7 @@ export default function OntdekkenClient() {
       toast.success("Aanmelding geslaagd! 🎉");
       await fetchShifts(); // Refresh om beschikbare plekken te updaten
     } catch (err) {
-      console.error("Apply error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     }
   };

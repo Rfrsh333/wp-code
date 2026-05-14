@@ -32,23 +32,23 @@ export default async function CityPage({ params }: PageProps) {
 
   const cityImages: Record<string, { src: string; alt: string }> = {
     utrecht: {
-      src: "/images/locatie-utrecht-hero.png",
+      src: "/images/locatie-utrecht-hero.webp",
       alt: "Horeca personeel Utrecht centrum en Jaarbeurs"
     },
     amsterdam: {
-      src: "/images/locatie-amsterdam-hero.png",
+      src: "/images/locatie-amsterdam-hero.webp",
       alt: "Horeca personeel Amsterdam centrum en Zuidas"
     },
     rotterdam: {
-      src: "/images/locatie-rotterdam-hero.png",
+      src: "/images/locatie-rotterdam-hero.webp",
       alt: "Horeca personeel Rotterdam Markthal en haven"
     },
     "den-haag": {
-      src: "/images/locatie-den-haag-hero.png",
+      src: "/images/locatie-den-haag-hero.webp",
       alt: "Horeca personeel Den Haag Scheveningen en centrum"
     },
     eindhoven: {
-      src: "/images/locatie-eindhoven-hero.png",
+      src: "/images/locatie-eindhoven-hero.webp",
       alt: "Horeca personeel Eindhoven Strijp-S en High Tech Campus"
     }
   };
@@ -102,6 +102,8 @@ export default async function CityPage({ params }: PageProps) {
                   alt={cityImages[city].alt}
                   width={600}
                   height={600}
+                  sizes="600px"
+                  priority
                 />
               )}
             </div>

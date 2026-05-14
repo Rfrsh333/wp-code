@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import Section from "@/components/Section";
 import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
@@ -8,11 +7,6 @@ import FAQ from "@/components/FAQ";
 import type { FAQItem } from "@/data/location-service-faqs";
 
 export const revalidate = 3600;
-
-export const metadata: Metadata = {
-  title: "Horeca Uitzenden — Personeel Binnen 24 Uur",
-  description: "Snel uitzendkrachten nodig voor de horeca? TopTalent Jobs levert binnen 24 uur ervaren horecapersoneel voor piekdrukte, evenementen en seizoenswerk.",
-};
 
 const faqItems: FAQItem[] = [
   {
@@ -52,7 +46,7 @@ export default function UitzendenPage() {
             <ClientAnimationWrapper direction="left">
               <div>
                 <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
-                  <Link href="/diensten/">Diensten</Link> › Uitzenden
+                  <Link href="/diensten">Diensten</Link> › Uitzenden
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
                   Uitzenden met direct inzetbaar horecapersoneel
@@ -63,7 +57,7 @@ export default function UitzendenPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/personeel-aanvragen/"
+                    href="/personeel-aanvragen"
                     className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                     hover:bg-[#EA580C] transition-all duration-300"
@@ -87,11 +81,12 @@ export default function UitzendenPage() {
             <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
-                  src="/images/dienst-uitzenden.png"
+                  src="/images/dienst-uitzenden.webp"
                   alt="Horecapersoneel in de bediening tijdens tijdelijke inzet"
                   width={480}
                   height={480}
                   priority={true}
+                  sizes="480px"
                 />
               </div>
             </ClientAnimationWrapper>
@@ -109,9 +104,9 @@ export default function UitzendenPage() {
                   Wat is uitzenden?
                 </h2>
                 <p className="text-xl text-neutral-600 leading-relaxed">
-                  Uitzenden van horecapersoneel betekent dat medewerkers bij u werken, maar in dienst blijven bij TopTalent Jobs.
+                  Bij uitzenden werkt het horecapersoneel bij u, maar blijft in dienst bij TopTalent Jobs.
                   U houdt grip op de{" "}
-                  <Link href="/diensten/detachering/">personele bezetting</Link> zonder werkgeversrisico&apos;s. TopTalent Jobs levert uitzendkrachten voor de horeca binnen 24 uur, waaronder koks, bediening, barmedewerkers en afwassers. Wij regelen alles:
+                  <Link href="/diensten/detachering">personele bezetting</Link> zonder werkgeversrisico&apos;s. Wij regelen alles:
                   van werving tot salarisadministratie.
                 </p>
               </div>
@@ -345,42 +340,6 @@ export default function UitzendenPage() {
         </Section.Container>
       </Section>
 
-      {/* FUNCTIES VIA UITZENDEN */}
-      <Section variant="white" spacing="default">
-        <Section.Container>
-          <ClientAnimationWrapper>
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4 text-center">
-                Welke functies kunt u uitzenden?
-              </h2>
-              <p className="text-neutral-600 text-center max-w-2xl mx-auto mb-8">
-                Via uitzenden levert TopTalent Jobs ervaren horecapersoneel voor diverse functies.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { href: "/functies/kok-inhuren/", label: "Kok inhuren" },
-                  { href: "/functies/bediening-inhuren/", label: "Bediening inhuren" },
-                  { href: "/functies/barista-inhuren/", label: "Barista inhuren" },
-                  { href: "/functies/barman-inhuren/", label: "Barman inhuren" },
-                  { href: "/functies/catering-medewerker-inhuren/", label: "Catering medewerker" },
-                  { href: "/functies/afwasser-inhuren/", label: "Afwasser inhuren" },
-                  { href: "/functies/event-manager-inhuren/", label: "Event manager" },
-                  { href: "/functies/", label: "Alle functies →" },
-                ].map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-[#FEF3E7] text-neutral-700 hover:text-[#F97316] font-medium text-sm text-center transition-all duration-200"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </ClientAnimationWrapper>
-        </Section.Container>
-      </Section>
-
       {/* CTA - WIT */}
       <Section variant="white" spacing="large">
         <Section.Container>
@@ -405,14 +364,14 @@ export default function UitzendenPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
-                    href="/personeel-aanvragen/"
+                    href="/personeel-aanvragen"
                     className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >
                     Personeel aanvragen
                   </Link>
                   <Link
-                    href="/contact/"
+                    href="/contact"
                     className="border-2 border-white/30 text-white px-8 py-4 rounded-xl text-base font-semibold
                     hover:bg-white/10 transition-all duration-300"
                   >

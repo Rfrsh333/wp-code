@@ -8,6 +8,7 @@ import type { CalculatorInputs, Resultaten, LeadFormData } from "@/lib/calculato
 import { berekenKosten, validateInputs } from "@/lib/calculator/calculate";
 import { functieLabels, ervaringLabels, dagen } from "@/lib/calculator/tarieven";
 import { captureRouteError } from "@/lib/sentry-utils";
+import * as Sentry from "@sentry/nextjs";
 
 // ============================================================================
 // Types
@@ -345,7 +346,7 @@ export async function POST(request: NextRequest) {
     sendTelegramAlert(
       `🔥 <b>NIEUWE CALCULATOR LEAD!</b>\n\n` +
       `Nieuwe calculator lead ontvangen — bekijk in dashboard`
-    ).catch(console.error);
+    ).catch((err) => Sentry.captureException(err));
 
     // Send emails
     const leadEmailPromise = sendEmail({

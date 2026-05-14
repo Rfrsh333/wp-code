@@ -11,6 +11,7 @@ import { getOfferteAutoMode } from "@/lib/agents/offerte-generator";
 import { escapeHtml } from "@/lib/sanitize";
 import { personeelAanvraagSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
+import * as Sentry from "@sentry/nextjs";
 
 interface FormData {
   bedrijfsnaam: string;
@@ -246,7 +247,7 @@ export async function POST(request: NextRequest) {
       sendTelegramAlert(
         `⚠️ <b>PERSONEEL AANVRAAG DATABASE ERROR</b>\n\n` +
         `Data is NIET opgeslagen in Supabase — check logs`
-      ).catch(console.error);
+      ).catch((err) => Sentry.captureException(err));
 
       return NextResponse.json(
         { error: "Er is een fout opgetreden bij het opslaan. Probeer het later opnieuw." },
@@ -297,7 +298,7 @@ export async function POST(request: NextRequest) {
         sendTelegramAlert(
           `👥 <b>NIEUWE PERSONEEL AANVRAAG!</b>\n\n` +
           `Nieuwe personeel aanvraag: ${escapeTelegramHtml(data.aantalPersonen)} personen ${escapeTelegramHtml(data.typePersoneel.join(', '))} — bekijk in dashboard`
-        ).catch(console.error);
+        ).catch((err) => Sentry.captureException(err));
 
         // Auto-reply: check of het is ingeschakeld en stuur automatisch een reactie
         try {

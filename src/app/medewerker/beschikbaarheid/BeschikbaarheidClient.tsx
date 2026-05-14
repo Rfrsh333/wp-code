@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Calendar, Clock, Check } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 const DAGEN = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
 const TIJDBLOKKEN = [
@@ -31,7 +32,7 @@ export default function BeschikbaarheidClient() {
         setBeschikbaarheid(data.beschikbaarheid || {});
       }
     } catch (err) {
-      console.error("Fetch beschikbaarheid error:", err);
+      Sentry.captureException(err);
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export default function BeschikbaarheidClient() {
 
       toast.success("Beschikbaarheid opgeslagen! ✅");
     } catch (err) {
-      console.error("Save error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setSaving(false);

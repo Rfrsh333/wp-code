@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import * as Sentry from "@sentry/nextjs";
 
 interface MedewerkerContract {
   id: string;
@@ -47,7 +48,7 @@ export default function ContractenClient() {
         const { data } = await res.json();
         setContracten(data || []);
       } catch {
-        console.error('Contracten laden mislukt');
+        Sentry.captureMessage('Contracten laden mislukt');
       } finally {
         setIsLoading(false);
       }

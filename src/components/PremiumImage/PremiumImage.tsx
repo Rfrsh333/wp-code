@@ -11,6 +11,7 @@ interface PremiumImageProps {
   height: number;
   className?: string;
   priority?: boolean;
+  sizes?: string;
 }
 
 export default function PremiumImage({
@@ -20,6 +21,7 @@ export default function PremiumImage({
   height,
   className = "",
   priority = false,
+  sizes,
 }: PremiumImageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRevealed, setIsRevealed] = useState(
@@ -97,6 +99,7 @@ export default function PremiumImage({
               height={height}
               className={styles.image}
               priority={priority}
+              {...(sizes && { sizes })}
             />
           </picture>
         ) : (
@@ -107,6 +110,7 @@ export default function PremiumImage({
             height={height}
             className={styles.image}
             priority={priority}
+            {...(sizes && { sizes })}
           />
         )}
       </div>

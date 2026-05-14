@@ -154,7 +154,7 @@ export default function OverOnsPage() {
             <div className="order-1 lg:order-2">
               <div className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
                 <PremiumImage
-                  src="/images/over-ons-verhaal.png"
+                  src="/images/over-ons-verhaal.webp"
                   alt="TopTalent Jobs - horeca uitzendbureau team dat personeelstekort in de horeca oplost"
                   width={420}
                   height={420}

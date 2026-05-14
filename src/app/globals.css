@@ -132,6 +132,12 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Prevent CLS from scrollbar disappearing when dialogs/modals open */
+body[data-scroll-locked] {
+  padding-right: var(--scrollbar-width, 0px) !important;
+  overflow: hidden;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), var(--font-sans), sans-serif;
   font-weight: 700;
@@ -218,6 +224,18 @@ h1, h2, h3, h4, h5, h6 {
   .animate-fade-in {
     animation: none;
     opacity: 1;
+  }
+}
+
+/* Global reduced motion — covers all remaining animations and transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

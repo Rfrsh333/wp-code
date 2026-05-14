@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import AdminShell from "@/components/navigation/AdminShell";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import * as Sentry from "@sentry/nextjs";
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       setTwoFactorEnabled(data.enabled || false);
     } catch (err) {
-      console.error("Failed to check 2FA status:", err);
+      Sentry.captureException(err);
     }
   }
 

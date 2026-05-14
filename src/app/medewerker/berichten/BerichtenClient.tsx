@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Search } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 interface Bericht {
   id: string;
@@ -54,7 +55,7 @@ export default function BerichtenClient() {
         });
       }
     } catch (err) {
-      console.error("Fetch berichten error:", err);
+      Sentry.captureException(err);
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export default function BerichtenClient() {
       setNieuwBericht("");
       await fetchBerichten();
     } catch (err) {
-      console.error("Send error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setSending(false);

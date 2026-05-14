@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import QueryProvider from "@/components/QueryProvider";
@@ -39,7 +40,7 @@ export default function MarketingPage() {
         });
 
         if (!response.ok) {
-          console.error("Marketing verificatie mislukt");
+          Sentry.captureMessage("Marketing verificatie mislukt");
           await supabase.auth.signOut();
           await fetch("/api/admin/logout", { method: "POST" });
           router.push("/admin/login");
@@ -49,7 +50,7 @@ export default function MarketingPage() {
 
         setIsAuthenticated(true);
       } catch (error) {
-        console.error("Marketing verificatie error:", error);
+        Sentry.captureException(error);
         await supabase.auth.signOut();
         router.push("/admin/login");
       }

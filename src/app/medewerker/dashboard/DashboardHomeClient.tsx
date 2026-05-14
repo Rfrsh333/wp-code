@@ -7,6 +7,7 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import PushNotificationBanner from "@/components/medewerker/PushNotificationBanner";
 import RatingsCard from "@/components/medewerker/RatingsCard";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 interface DashboardStats {
   aankomende_diensten: number;
@@ -62,7 +63,7 @@ export default function DashboardHomeClient() {
         setStats(data.stats || {});
       }
     } catch (err) {
-      console.error("Fetch dashboard error:", err);
+      Sentry.captureException(err);
       if (!navigator.onLine) setIsOffline(true);
     } finally {
       setLoading(false);

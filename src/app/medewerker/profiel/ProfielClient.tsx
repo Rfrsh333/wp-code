@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 
 interface ProfielData {
@@ -65,7 +66,7 @@ export default function ProfielClient() {
         toast.error("Kon profiel niet laden");
       }
     } catch (err) {
-      console.error("Fetch error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setLoading(false);
@@ -125,7 +126,7 @@ export default function ProfielClient() {
         toast.error("Kon niet opslaan");
       }
     } catch (err) {
-      console.error("Save error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setSaving(false);

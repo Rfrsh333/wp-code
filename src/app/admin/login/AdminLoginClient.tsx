@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import * as Sentry from "@sentry/nextjs";
 
 export default function AdminLoginClient() {
   const [email, setEmail] = useState("");
@@ -55,7 +56,7 @@ export default function AdminLoginClient() {
       router.push("/admin");
       router.refresh();
     } catch (err) {
-      console.error("Login error:", err);
+      Sentry.captureException(err);
       setError("Er is een fout opgetreden. Probeer het opnieuw.");
       setIsLoading(false);
     }

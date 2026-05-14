@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { FileText, Download, Upload, Eye, Trash2, IdCard, X } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
 
 interface Document {
@@ -45,7 +46,7 @@ export default function DocumentenClient() {
         });
       }
     } catch (err) {
-      console.error("Fetch medewerker info error:", err);
+      Sentry.captureException(err);
     }
   };
 
@@ -58,7 +59,7 @@ export default function DocumentenClient() {
         setDocumenten(data.documenten || []);
       }
     } catch (err) {
-      console.error("Fetch documenten error:", err);
+      Sentry.captureException(err);
     } finally {
       setLoading(false);
     }
@@ -91,7 +92,7 @@ export default function DocumentenClient() {
       toast.success("Document geüpload!");
       await fetchDocumenten();
     } catch (err) {
-      console.error("Upload error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setUploading(false);
@@ -115,7 +116,7 @@ export default function DocumentenClient() {
       toast.success("Document verwijderd");
       await fetchDocumenten();
     } catch (err) {
-      console.error("Delete error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     }
   };

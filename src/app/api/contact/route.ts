@@ -7,6 +7,7 @@ import { sendTelegramAlert } from "@/lib/telegram";
 import { contactSchema, formatZodErrors } from "@/lib/validations";
 import { escapeHtml } from "@/lib/sanitize";
 import { captureRouteError } from "@/lib/sentry-utils";
+import * as Sentry from "@sentry/nextjs";
 
 interface ContactFormData {
   naam: string;
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
     sendTelegramAlert(
       `📧 <b>NIEUW CONTACTBERICHT!</b>\n\n` +
       `Nieuw contactbericht ontvangen — bekijk in dashboard`
-    ).catch(console.error);
+    ).catch((err) => Sentry.captureException(err));
 
     return NextResponse.json({ success: true });
   } catch (error) {

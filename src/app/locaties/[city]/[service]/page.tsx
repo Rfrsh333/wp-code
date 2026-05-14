@@ -18,31 +18,31 @@ const heroContent = {
     utrecht: {
       title: "Horeca uitzenden Utrecht",
       intro: "Van studentenevenementen tot Jaarbeurs congressen, van TivoliVredenburg tot binnenstad horeca. Wij leveren snel en betrouwbaar tijdelijk horecapersoneel in heel Utrecht en omgeving.",
-      image: "/images/locatie-utrecht-hero.png",
+      image: "/images/locatie-utrecht-hero.webp",
       alt: "Horeca personeel Utrecht centrum en Jaarbeurs"
     },
     amsterdam: {
       title: "Horeca uitzenden Amsterdam",
       intro: "Van centrum tot Zuidas, van RAI events tot Schiphol hotels. Wij leveren snel meertalig horecapersoneel voor uw Amsterdamse zaak. Binnen 24 uur inzetbaar.",
-      image: "/images/locatie-amsterdam-hero.png",
+      image: "/images/locatie-amsterdam-hero.webp",
       alt: "Horeca personeel Amsterdam centrum en Zuidas"
     },
     rotterdam: {
       title: "Horeca uitzenden Rotterdam",
       intro: "Van Markthal tot havengebied, van Ahoy events tot cruise terminal. Wij leveren snel en flexibel horecapersoneel in heel Rotterdam. Ervaring met grootschalige evenementen.",
-      image: "/images/locatie-rotterdam-hero.png",
+      image: "/images/locatie-rotterdam-hero.webp",
       alt: "Horeca personeel Rotterdam Markthal en haven"
     },
     "den-haag": {
       title: "Horeca uitzenden Den Haag",
       intro: "Van politiek centrum tot Scheveningen strand, van World Forum tot strandpaviljoens. Wij leveren snel meertalig horecapersoneel in heel Den Haag. Ervaring met diplomatieke events.",
-      image: "/images/locatie-den-haag-hero.png",
+      image: "/images/locatie-den-haag-hero.webp",
       alt: "Horeca personeel Den Haag Scheveningen en centrum"
     },
     eindhoven: {
       title: "Horeca uitzenden Eindhoven",
       intro: "Van High Tech Campus tot Stratumseind, van Strijp-S tot PSV Stadion. Wij leveren snel horecapersoneel voor innovatieve en zakelijke horeca in heel Eindhoven.",
-      image: "/images/locatie-eindhoven-hero.png",
+      image: "/images/locatie-eindhoven-hero.webp",
       alt: "Horeca personeel Eindhoven Strijp-S en High Tech Campus"
     }
   },
@@ -50,31 +50,31 @@ const heroContent = {
     utrecht: {
       title: "Horeca detachering Utrecht",
       intro: "Stabiele horecakracht voor uw Utrechtse restaurant, hotel of congreslocatie. Langdurige inzet zonder werkgeversrisico. Ideaal voor Jaarbeurs, TivoliVredenburg en binnenstad horeca.",
-      image: "/images/locatie-utrecht-hero.png",
+      image: "/images/locatie-utrecht-hero.webp",
       alt: "Horeca personeel Utrecht centrum en Jaarbeurs"
     },
     amsterdam: {
       title: "Horeca detachering Amsterdam",
       intro: "Vaste horecakracht voor uw Amsterdamse zaak zonder vaste lasten. Langdurige inzet van professioneel, meertalig personeel. Perfect voor high-end restaurants en hotels.",
-      image: "/images/locatie-amsterdam-hero.png",
+      image: "/images/locatie-amsterdam-hero.webp",
       alt: "Horeca personeel Amsterdam centrum en Zuidas"
     },
     rotterdam: {
       title: "Horeca detachering Rotterdam",
       intro: "Stabiel teamlid voor uw Rotterdamse horeca zonder werkgeversrisico. Langdurige inzet met flexibel contract. Ervaring met Rotterdamse diversiteit en dynamiek.",
-      image: "/images/locatie-rotterdam-hero.png",
+      image: "/images/locatie-rotterdam-hero.webp",
       alt: "Horeca personeel Rotterdam Markthal en haven"
     },
     "den-haag": {
       title: "Horeca detachering Den Haag",
       intro: "Vaste horecakracht voor uw Haagse restaurant, hotel of strandpaviljoen. Langdurige inzet zonder werkgeversrisico. Ervaring met politieke events en internationale gasten.",
-      image: "/images/locatie-den-haag-hero.png",
+      image: "/images/locatie-den-haag-hero.webp",
       alt: "Horeca personeel Den Haag Scheveningen en centrum"
     },
     eindhoven: {
       title: "Horeca detachering Eindhoven",
       intro: "Stabiel teamlid voor uw Eindhovense zaak zonder vaste lasten. Langdurige inzet met flexibiliteit. Ervaring met zakelijke horeca, High Tech Campus en innovatieve concepten.",
-      image: "/images/locatie-eindhoven-hero.png",
+      image: "/images/locatie-eindhoven-hero.webp",
       alt: "Horeca personeel Eindhoven Strijp-S en High Tech Campus"
     }
   }
@@ -346,6 +346,8 @@ export default async function CityServicePage({ params }: PageProps) {
                   alt={hero.alt}
                   width={480}
                   height={480}
+                  sizes="480px"
+                  priority
                 />
               </div>
             </ClientAnimationWrapper>

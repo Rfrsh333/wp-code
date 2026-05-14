@@ -5,6 +5,7 @@ import { Euro, Clock, Calendar, TrendingUp } from "lucide-react";
 import Image from "next/image";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 interface UrenRegistratie {
   id: string;
@@ -84,7 +85,7 @@ export default function UrenClient() {
       setAanpassingen(data.aanpassingen || []);
       setSummary(data.summary || { deze_maand: 0, totaal_uren: 0 });
     } catch (err) {
-      console.error("Fetch uren error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setLoading(false);
@@ -110,7 +111,7 @@ export default function UrenClient() {
       toast.success("Aanpassing geaccepteerd");
       await fetchUren();
     } catch (err) {
-      console.error("Accept error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     }
   };
@@ -134,7 +135,7 @@ export default function UrenClient() {
       toast.success("Aanpassing geweigerd");
       await fetchUren();
     } catch (err) {
-      console.error("Reject error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     }
   };
@@ -190,7 +191,7 @@ export default function UrenClient() {
       setUrenForm({ start: "", eind: "", pauze: "0", reiskosten_km: "0" });
       await fetchUren();
     } catch (err) {
-      console.error("Submit error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setSubmitting(false);
@@ -379,6 +380,7 @@ export default function UrenClient() {
                       src={item.dienst.klant.bedrijf_foto_url}
                       alt={item.dienst.klant.bedrijfsnaam}
                       fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover"
                     />
                   ) : (

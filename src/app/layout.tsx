@@ -39,11 +39,27 @@ export const metadata: Metadata = {
     siteName: "TopTalent Jobs",
     locale: "nl_NL",
     type: "website",
+    images: [
+      {
+        url: "https://www.toptalentjobs.nl/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
     description: "Snel en betrouwbaar horeca personeel nodig? TopTalent Jobs levert binnen 24 uur ervaren krachten.",
+    images: [
+      {
+        url: "https://www.toptalentjobs.nl/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "TopTalent Jobs - Horeca Uitzendbureau Utrecht",
+      },
+    ],
   },
   robots: {
     index: true,
@@ -82,6 +98,10 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://nntxpyoyrpquzghsnwxj.supabase.co" />
         <link rel="preconnect" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        {/* Hero image preload verwijderd: Next.js Image met priority genereert
+            automatisch de juiste preload tag met geoptimaliseerd formaat (avif/webp).
+            De handmatige preload naar de rauwe PNG matchte niet met de /_next/image URL
+            en veroorzaakte een wasted preload warning. */}
         <StructuredData />
       </head>
       <body

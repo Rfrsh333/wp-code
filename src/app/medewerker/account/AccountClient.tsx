@@ -18,6 +18,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
 import ThemeToggle from "@/components/medewerker/ThemeToggle";
 
@@ -51,7 +52,7 @@ export default function AccountClient() {
       const data = await res.json();
       setProfile(data.profile);
     } catch (err) {
-      console.error("Fetch profile error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     } finally {
       setLoading(false);
@@ -71,7 +72,7 @@ export default function AccountClient() {
         toast.error("Uitloggen mislukt");
       }
     } catch (err) {
-      console.error("Logout error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     }
   };

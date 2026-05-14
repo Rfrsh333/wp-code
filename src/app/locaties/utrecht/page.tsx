@@ -57,10 +57,12 @@ export default function UtrechtPage() {
 
             <div className="hidden lg:flex justify-center lg:justify-end">
               <PremiumImage
-                src="/images/locatie-utrecht-hero.png"
+                src="/images/locatie-utrecht-hero.webp"
                 alt="Horeca personeel Utrecht centrum en Jaarbeurs"
                 width={600}
                 height={600}
+                sizes="600px"
+                priority
               />
             </div>
           </div>

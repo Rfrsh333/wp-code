@@ -13,6 +13,7 @@ import {
   LogIn,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import * as Sentry from "@sentry/nextjs";
 
 export default function BookmarkletPage() {
   const [bookmarkletData, setBookmarkletData] = useState<{
@@ -31,7 +32,7 @@ export default function BookmarkletPage() {
         fetch('/bookmarklet-built.json')
           .then((res) => res.json())
           .then(setBookmarkletData)
-          .catch(console.error)
+          .catch((err) => Sentry.captureException(err))
       } else {
         setAuthenticated(false)
       }

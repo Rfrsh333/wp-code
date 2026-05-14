@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+import * as Sentry from "@sentry/nextjs";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -57,7 +58,7 @@ export default function AdminLoginPage() {
       router.push("/admin");
       router.refresh();
     } catch (err) {
-      console.error("Login error:", err);
+      Sentry.captureException(err);
       setError("Er is een fout opgetreden. Probeer het opnieuw.");
       setIsLoading(false);
     }

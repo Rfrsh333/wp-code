@@ -57,11 +57,12 @@ export default function RecruitmentPage() {
             <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
-                  src="/images/dienst-recruitment.png"
+                  src="/images/dienst-recruitment.webp"
                   alt="Recruitmentgesprek voor vaste horecakrachten in de horeca"
                   width={480}
                   height={480}
                   priority={true}
+                  sizes="480px"
                 />
               </div>
             </ClientAnimationWrapper>

@@ -6,6 +6,7 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import DienstCard from "@/components/medewerker/DienstCard";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 type SubTab = "aangeboden" | "gepland" | "voltooid";
 
@@ -91,7 +92,7 @@ export default function MijnDienstenClient() {
       setDiensten(data.diensten || []);
       setVervangingVerzoeken(data.vervangingVerzoeken || []);
     } catch (err) {
-      console.error("Fetch diensten error:", err);
+      Sentry.captureException(err);
       if (!navigator.onLine) {
         setIsOffline(true);
       } else {
@@ -123,7 +124,7 @@ export default function MijnDienstenClient() {
       toast.success("Vervanging geaccepteerd!");
       await fetchDiensten();
     } catch (err) {
-      console.error("Accept vervanging error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     }
   };
@@ -147,7 +148,7 @@ export default function MijnDienstenClient() {
       toast.success("Vervanging afgewezen");
       await fetchDiensten();
     } catch (err) {
-      console.error("Reject vervanging error:", err);
+      Sentry.captureException(err);
       toast.error("Er ging iets mis");
     }
   };

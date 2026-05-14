@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Users, Gift, Share2, Copy, Check, Mail, MessageCircle, Send } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 interface Referral {
   id: string;
@@ -33,7 +34,7 @@ export default function ReferralClient() {
         setReferralCode(data.referral_code || "");
       }
     } catch (err) {
-      console.error("Fetch referrals error:", err);
+      Sentry.captureException(err);
     } finally {
       setLoading(false);
     }

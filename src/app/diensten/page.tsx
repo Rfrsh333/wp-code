@@ -1,15 +1,9 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import Section from "@/components/Section";
-import ClientAnimationWrapper from "@/components/ClientAnimationWrapper";
+import FadeIn from "@/components/animations/FadeIn";
 import PremiumImage from "@/components/PremiumImage";
 
 export const revalidate = 86400;
-
-export const metadata: Metadata = {
-  title: "Horeca Diensten — Uitzenden, Detachering & Recruitment",
-  description: "Ontdek de horeca diensten van TopTalent Jobs: uitzenden, detachering en recruitment. Flexibel personeel voor restaurants, hotels en evenementen in Nederland.",
-};
 
 export default function DienstenPage() {
   return (
@@ -23,7 +17,7 @@ export default function DienstenPage() {
       {/* Hero Section - WHITE */}
       <Section variant="white" spacing="default">
         <Section.Container>
-          <ClientAnimationWrapper>
+          <FadeIn>
             <div className="text-center max-w-3xl mx-auto">
               <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
                 Diensten horeca uitzendbureau
@@ -33,13 +27,13 @@ export default function DienstenPage() {
               </h1>
               <p className="text-neutral-600 text-lg leading-relaxed">
                 Kies de inzet die past bij uw planning:{" "}
-                <Link href="/diensten/uitzenden/">tijdelijk</Link>,{" "}
-                <Link href="/diensten/detachering/">projectmatig</Link> of{" "}
-                <Link href="/diensten/recruitment/">vast</Link>.
+                <Link href="/diensten/uitzenden">tijdelijk</Link>,{" "}
+                <Link href="/diensten/detachering">projectmatig</Link> of{" "}
+                <Link href="/diensten/recruitment">vast</Link>.
                 Wij regelen selectie, inzet en administratie voor horeca en events.
               </p>
             </div>
-          </ClientAnimationWrapper>
+          </FadeIn>
         </Section.Container>
       </Section>
 
@@ -47,8 +41,8 @@ export default function DienstenPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div id="uitzenden" className="scroll-mt-32">
-            <ClientAnimationWrapper>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
+                <FadeIn direction="left">
                 <div className="order-2 lg:order-1 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Uitzenden horeca</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
@@ -74,7 +68,7 @@ export default function DienstenPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/diensten/uitzenden/"
+                    href="/diensten/uitzenden"
                     className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Meer over uitzenden
@@ -83,21 +77,24 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
+                </FadeIn>
+                <FadeIn direction="right" delay={0.15}>
                 <div className="order-1 lg:order-2">
-                  <Link href="/diensten/uitzenden/" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto group">
+                  <Link href="/diensten/uitzenden" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto group">
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
-                        src="/images/dienst-uitzenden.png"
+                        src="/images/dienst-uitzenden.webp"
                         alt="Horeca medewerker tijdens tijdelijke inzet via uitzendbureau"
                         width={380}
                         height={380}
                         priority={true}
+                        sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, 380px"
                       />
                     </div>
                   </Link>
                 </div>
+                </FadeIn>
               </div>
-            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -106,20 +103,23 @@ export default function DienstenPage() {
       <Section variant="white" spacing="default">
         <Section.Container>
           <div id="detachering" className="scroll-mt-32">
-            <ClientAnimationWrapper>
               <div className="grid grid-cols-1 lg:grid-cols-[42%_1fr] gap-8 lg:gap-12 items-center">
+                <FadeIn direction="left" delay={0.15}>
                 <div className="order-1">
-                  <Link href="/diensten/detachering/" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 group">
+                  <Link href="/diensten/detachering" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 group">
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
-                        src="/images/dienst-detachering.png"
+                        src="/images/dienst-detachering.webp"
                         alt="Gedetacheerde horecakrachten voor structurele inzet"
                         width={380}
                         height={380}
+                        sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, 380px"
                       />
                     </div>
                   </Link>
                 </div>
+                </FadeIn>
+                <FadeIn direction="right">
                 <div className="order-2 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Detachering</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
@@ -144,7 +144,7 @@ export default function DienstenPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/diensten/detachering/"
+                    href="/diensten/detachering"
                     className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Meer over detachering
@@ -153,8 +153,8 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
+                </FadeIn>
               </div>
-            </ClientAnimationWrapper>
           </div>
         </Section.Container>
       </Section>
@@ -163,8 +163,8 @@ export default function DienstenPage() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div id="recruitment" className="scroll-mt-32">
-            <ClientAnimationWrapper>
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_42%] gap-8 lg:gap-12 items-center">
+                <FadeIn direction="left">
                 <div className="order-2 lg:order-1 text-center lg:text-left">
                   <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-4">Recruitment</h2>
                   <p className="text-lg text-neutral-600 mb-6 leading-[1.6] max-w-[560px] mx-auto lg:mx-0">
@@ -189,7 +189,7 @@ export default function DienstenPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/diensten/recruitment/"
+                    href="/diensten/recruitment"
                     className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Meer over recruitment
@@ -198,64 +198,31 @@ export default function DienstenPage() {
                     </svg>
                   </Link>
                 </div>
+                </FadeIn>
+                <FadeIn direction="right" delay={0.15}>
                 <div className="order-1 lg:order-2">
-                  <Link href="/diensten/recruitment/" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto group">
+                  <Link href="/diensten/recruitment" className="block w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px] mx-auto lg:mx-0 lg:ml-auto group">
                     <div className="transition-transform duration-300 group-hover:scale-[1.02]">
                       <PremiumImage
-                        src="/images/dienst-recruitment.png"
+                        src="/images/dienst-recruitment.webp"
                         alt="Recruitmentgesprek voor vaste horeca functies"
                         width={380}
                         height={380}
+                        sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, 380px"
                       />
                     </div>
                   </Link>
                 </div>
+                </FadeIn>
               </div>
-            </ClientAnimationWrapper>
           </div>
-        </Section.Container>
-      </Section>
-
-      {/* FUNCTIES - WHITE */}
-      <Section variant="white" spacing="default">
-        <Section.Container>
-          <ClientAnimationWrapper>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
-                Welke functies leveren wij?
-              </h2>
-              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-                TopTalent Jobs levert ervaren horecapersoneel voor uiteenlopende functies — van keuken tot bediening, van bar tot evenementen.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-              {[
-                { href: "/functies/kok-inhuren/", label: "Kok inhuren" },
-                { href: "/functies/bediening-inhuren/", label: "Bediening inhuren" },
-                { href: "/functies/barista-inhuren/", label: "Barista inhuren" },
-                { href: "/functies/barman-inhuren/", label: "Barman inhuren" },
-                { href: "/functies/catering-medewerker-inhuren/", label: "Catering medewerker inhuren" },
-                { href: "/functies/afwasser-inhuren/", label: "Afwasser inhuren" },
-                { href: "/functies/event-manager-inhuren/", label: "Event manager inhuren" },
-                { href: "/functies/", label: "Alle functies →" },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="p-4 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-[#FEF3E7] text-neutral-700 hover:text-[#F97316] font-medium text-sm text-center transition-all duration-300"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </ClientAnimationWrapper>
         </Section.Container>
       </Section>
 
       {/* CTA Section - WHITE */}
       <Section variant="white" spacing="large">
         <Section.Container>
-          <ClientAnimationWrapper>
+          <FadeIn>
             <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -271,7 +238,7 @@ export default function DienstenPage() {
                   en maken een duidelijke planningsofferte.
                 </p>
                 <Link
-                  href="/contact/"
+                  href="/contact"
                   className="inline-block bg-white text-[#F97316] px-8 py-4 rounded-lg text-base font-semibold
                   hover:bg-neutral-100 transition-all duration-300"
                 >
@@ -279,7 +246,7 @@ export default function DienstenPage() {
                 </Link>
               </div>
             </div>
-          </ClientAnimationWrapper>
+          </FadeIn>
         </Section.Container>
       </Section>
     </>

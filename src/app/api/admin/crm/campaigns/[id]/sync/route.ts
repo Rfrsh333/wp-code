@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { syncCampaignLeads } from "@/lib/campaign-sync";
+import * as Sentry from "@sentry/nextjs";
 
 // POST: Sync a single campaign
 export async function POST(
@@ -28,7 +29,7 @@ export async function POST(
     const result = await syncCampaignLeads(campaign.id, campaign.instantly_campaign_id);
     return NextResponse.json(result);
   } catch (err) {
-    console.error("Campaign sync error:", err);
+    Sentry.captureException(err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Sync failed", details: String(err) },
       { status: 500 }

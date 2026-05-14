@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { listCampaigns, syncCampaignStatuses } from "@/lib/instantly";
 import { processBatchEvents, type InstantlyEvent } from "@/lib/instantly-events";
 import { fullCampaignSync } from "@/lib/campaign-sync";
+import * as Sentry from "@sentry/nextjs";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     try {
       campaignSyncResult = await fullCampaignSync();
     } catch (err) {
-      console.error("[instantly-sync] Campaign sync error:", err);
+      Sentry.captureException(err);
     }
 
     return NextResponse.json({
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
       campaign_sync: campaignSyncResult,
     });
   } catch (err) {
-    console.error("[instantly-sync] Cron error:", err);
+    Sentry.captureException(err);
     return NextResponse.json(
       { error: "Sync failed", message: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 },

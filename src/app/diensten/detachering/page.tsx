@@ -57,11 +57,12 @@ export default function DetacheringPage() {
             <ClientAnimationWrapper direction="right" delay={0.2}>
               <div className="hidden lg:flex justify-center lg:justify-end">
                 <PremiumImage
-                  src="/images/dienst-detachering.png"
+                  src="/images/dienst-detachering.webp"
                   alt="Gedetacheerde horecakracht voor langdurige inzet"
                   width={480}
                   height={480}
                   priority={true}
+                  sizes="480px"
                 />
               </div>
             </ClientAnimationWrapper>
