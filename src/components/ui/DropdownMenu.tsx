@@ -35,12 +35,14 @@ export default function DropdownMenu({ trigger, items, align = "right" }: Dropdo
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="menu"
         className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
       >
         {trigger || (
           <>
             Meer acties
-            <svg className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </>
@@ -49,6 +51,7 @@ export default function DropdownMenu({ trigger, items, align = "right" }: Dropdo
 
       {open && (
         <div
+          role="menu"
           className={`absolute z-50 mt-2 w-56 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 animate-fade-in ${
             align === "right" ? "right-0" : "left-0"
           }`}
@@ -56,6 +59,7 @@ export default function DropdownMenu({ trigger, items, align = "right" }: Dropdo
           {items.map((item, idx) => (
             <button
               key={idx}
+              role="menuitem"
               onClick={() => {
                 if (!item.disabled) {
                   item.onClick();
@@ -71,7 +75,7 @@ export default function DropdownMenu({ trigger, items, align = "right" }: Dropdo
                     : "text-neutral-700 hover:bg-neutral-50"
               }`}
             >
-              {item.icon && <span className="flex-shrink-0 w-4 h-4">{item.icon}</span>}
+              {item.icon && <span className="flex-shrink-0 w-4 h-4" aria-hidden="true">{item.icon}</span>}
               {item.label}
             </button>
           ))}
