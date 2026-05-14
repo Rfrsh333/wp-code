@@ -41,12 +41,12 @@
 }
 
 /* -----------------------------------------------------------------------------
-   Section Spacing - Responsive padding
-   Desktop: 96-120px | Tablet: 72-96px | Mobile: 56-72px
+   Section Spacing - Responsive padding (mobile-optimized)
+   Desktop: 96-120px | Tablet: 72-96px | Mobile: 48-64px (reduced for scroll flow)
    ----------------------------------------------------------------------------- */
 .spacing {
-  padding-top: 56px;
-  padding-bottom: 56px;
+  padding-top: 48px;
+  padding-bottom: 48px;
 }
 
 @media (min-width: 640px) {
@@ -65,8 +65,8 @@
 
 /* Larger spacing variant */
 .spacingLarge {
-  padding-top: 72px;
-  padding-bottom: 72px;
+  padding-top: 64px;
+  padding-bottom: 64px;
 }
 
 @media (min-width: 640px) {
@@ -85,8 +85,8 @@
 
 /* Smaller spacing variant */
 .spacingSmall {
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding-top: 32px;
+  padding-bottom: 32px;
 }
 
 @media (min-width: 640px) {

@@ -73,19 +73,19 @@ export default function Footer() {
               Navigatie
             </h2>
             <nav className="space-y-4">
-              <Link href="/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Home
               </Link>
-              <Link href="/diensten/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Diensten
               </Link>
-              <Link href="/over-ons/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/over-ons/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Over Ons
               </Link>
-              <Link href="/veelgestelde-vragen/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/veelgestelde-vragen/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Veelgestelde Vragen
               </Link>
-              <Link href="/contact/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/contact/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Contact
               </Link>
             </nav>
@@ -97,13 +97,13 @@ export default function Footer() {
               Diensten
             </h2>
             <nav className="space-y-4">
-              <Link href="/diensten/uitzenden/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/uitzenden/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Uitzenden
               </Link>
-              <Link href="/diensten/detachering/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/detachering/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Detachering
               </Link>
-              <Link href="/diensten/recruitment/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/diensten/recruitment/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Recruitment
               </Link>
             </nav>
@@ -111,16 +111,16 @@ export default function Footer() {
               Functies
             </h2>
             <nav className="space-y-4">
-              <Link href="/functies/kok-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/functies/kok-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Kok inhuren
               </Link>
-              <Link href="/functies/bediening-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/functies/bediening-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Bediening inhuren
               </Link>
-              <Link href="/functies/barista-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/functies/barista-inhuren/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Barista inhuren
               </Link>
-              <Link href="/functies/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/functies/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Alle functies →
               </Link>
             </nav>
@@ -132,19 +132,19 @@ export default function Footer() {
               Regio&apos;s
             </h2>
             <nav className="space-y-4">
-              <Link href="/locaties/utrecht/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/utrecht/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Utrecht
               </Link>
-              <Link href="/locaties/amsterdam/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/amsterdam/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Amsterdam
               </Link>
-              <Link href="/locaties/rotterdam/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/rotterdam/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Rotterdam
               </Link>
-              <Link href="/locaties/den-haag/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/den-haag/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Den Haag
               </Link>
-              <Link href="/locaties/eindhoven/" className="block text-neutral-300 hover:text-white transition-colors duration-300">
+              <Link href="/locaties/eindhoven/" className="block text-neutral-300 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Eindhoven
               </Link>
             </nav>
@@ -195,13 +195,13 @@ export default function Footer() {
               </p>
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <Link href="/voorwaarden/" className="text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/voorwaarden/" className="text-neutral-400 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Algemene voorwaarden
               </Link>
-              <Link href="/cookies/" className="text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/cookies/" className="text-neutral-400 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Cookie-instellingen
               </Link>
-              <Link href="/privacy/" className="text-neutral-400 hover:text-white transition-colors duration-300">
+              <Link href="/privacy/" className="text-neutral-400 hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">
                 Privacy Policy
               </Link>
             </div>

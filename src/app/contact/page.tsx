@@ -250,7 +250,7 @@ function ContactPageContent() {
                         type="text"
                         id="naam"
                         {...register("naam")}
-                        className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
+                        className="w-full px-4 py-3 md:py-3.5 border border-neutral-200 rounded-xl
                         focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                         placeholder="Uw naam"
@@ -265,7 +265,7 @@ function ContactPageContent() {
                         type="email"
                         id="email"
                         {...register("email")}
-                        className="w-full px-4 py-3.5 border border-neutral-200 rounded-xl
+                        className="w-full px-4 py-3 md:py-3.5 border border-neutral-200 rounded-xl
                         focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]
                         outline-none transition-all duration-300 bg-neutral-50 focus:bg-white"
                         placeholder="uw@email.nl"
