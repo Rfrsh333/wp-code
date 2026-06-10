@@ -41,8 +41,8 @@ export default function HelpClient() {
     {
       icon: Phone,
       label: "Bel ons",
-      value: "020 123 4567",
-      action: () => window.open("tel:+31201234567"),
+      value: "+31617889189",
+      action: () => window.open("tel:+31617889189"),
     },
     {
       icon: Mail,

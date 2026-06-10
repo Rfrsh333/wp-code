@@ -61,7 +61,7 @@ export default function StickyMobileCTA() {
         <div className="grid grid-cols-3 gap-2 p-2">
           {/* WhatsApp Button - Secondary */}
           <a
-            href="https://wa.me/31617177939?text=Hallo!%20Ik%20heb%20een%20vraag%20over%20TopTalent%20Jobs."
+            href="https://wa.me/31617889189?text=Hallo!%20Ik%20heb%20een%20vraag%20over%20TopTalent%20Jobs."
             target="_blank"
             rel="noopener noreferrer"
             className="
@@ -87,7 +87,7 @@ export default function StickyMobileCTA() {
 
           {/* Call Button - Secondary */}
           <a
-            href="tel:+31617177939"
+            href="tel:+31617889189"
             className="
               flex flex-col items-center justify-center gap-1
               min-h-[60px] rounded-xl

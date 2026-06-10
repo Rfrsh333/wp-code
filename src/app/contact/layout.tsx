@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Contact TopTalent Jobs — Horeca Personeel Aanvragen",
-  description: "Neem contact op met TopTalent Jobs. Horeca personeel binnen 24 uur. Bel +31 6 17 17 79 39, mail of WhatsApp. Wij reageren snel.",
+  description: "Neem contact op met TopTalent Jobs. Horeca personeel binnen 24 uur. Bel +31617889189, mail of WhatsApp. Wij reageren snel.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/contact/",
   },
@@ -16,7 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     "name": "TopTalent Jobs",
     "image": "https://www.toptalentjobs.nl/logo.png",
     "url": "https://www.toptalentjobs.nl",
-    "telephone": "+31617177939",
+    "telephone": "+31617889189",
     "email": "info@toptalentjobs.nl",
     "address": {
       "@type": "PostalAddress",

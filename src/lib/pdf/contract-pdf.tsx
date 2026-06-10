@@ -297,7 +297,7 @@ export function ContractPDF({ data }: { data: ContractPDFData }) {
             <Text style={styles.companyInfo}>Kanaalstraat 15, 3531 CJ Utrecht</Text>
             <Text style={styles.companyInfo}>KvK: 73401161 | BTW: NL002387654B82</Text>
             <Text style={styles.companyInfo}>WAADI-geregistreerd</Text>
-            <Text style={styles.companyInfo}>info@toptalentjobs.nl | +31 6 17 17 79 39</Text>
+            <Text style={styles.companyInfo}>info@toptalentjobs.nl | +31617889189</Text>
           </View>
         </View>
 

@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       ? aiIntroductie.replace(/\n/g, "<br>")
       : `Bedankt voor uw interesse in onze horecapersoneel diensten. Hierbij ontvangt u de offerte voor uw aanvraag.`;
 
-    const phoneNumber = process.env.CONTACT_PHONE_NUMBER || '+31 6 17 17 79 39';
+    const phoneNumber = process.env.CONTACT_PHONE_NUMBER || '+31617889189';
 
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

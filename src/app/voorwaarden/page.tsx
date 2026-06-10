@@ -35,7 +35,7 @@ export default function AlgemeneVoorwaardenPage() {
                 <strong>Toptalent</strong><br />
                 Utrecht<br />
                 KvK: 73401161 | BTW: NL002387654B82<br />
-                E-mail: info@toptalentjobs.nl | Telefoon: +31 6 17 17 79 39
+                E-mail: info@toptalentjobs.nl | Telefoon: +31617889189
               </p>
             </div>
 
@@ -295,7 +295,7 @@ export default function AlgemeneVoorwaardenPage() {
             Vragen over deze voorwaarden?
           </h2>
           <p className="text-neutral-600 mb-8">
-            Neem contact op via info@toptalentjobs.nl of +31 6 17 17 79 39.
+            Neem contact op via info@toptalentjobs.nl of +31617889189.
           </p>
           <a
             href="/contact/"

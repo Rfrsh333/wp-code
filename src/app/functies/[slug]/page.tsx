@@ -79,7 +79,7 @@ export default async function FunctiePage({ params }: PageProps) {
       "@type": "EmploymentAgency",
       name: "TopTalent Jobs",
       url: "https://www.toptalentjobs.nl/",
-      telephone: "+31617177939",
+      telephone: "+31617889189",
       address: {
         "@type": "PostalAddress",
         streetAddress: "Kanaalstraat 15",

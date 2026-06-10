@@ -430,7 +430,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
             <Text style={styles.companyInfo}>Kanaalstraat 15, 3531 CJ Utrecht</Text>
             <Text style={styles.companyInfo}>KvK: 73401161 | BTW: NL002387654B82</Text>
             <Text style={styles.companyInfo}>WAADI-geregistreerd</Text>
-            <Text style={styles.companyInfo}>info@toptalentjobs.nl | +31 6 17 17 79 39</Text>
+            <Text style={styles.companyInfo}>info@toptalentjobs.nl | +31617889189</Text>
           </View>
         </View>
 
@@ -589,7 +589,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
               <Text>Neem gerust contact met ons op. We helpen u graag!</Text>
             </View>
             <View style={styles.ctaPhone}>
-              <Text style={styles.ctaPhoneText}>+31 6 17 17 79 39</Text>
+              <Text style={styles.ctaPhoneText}>+31617889189</Text>
             </View>
           </View>
         </View>

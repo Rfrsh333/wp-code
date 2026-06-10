@@ -109,7 +109,7 @@ const faqData: FAQItem[] = [
   {
     category: "Over TopTalent",
     question: "Hoe neem ik contact op met TopTalent Jobs?",
-    answer: "U kunt TopTalent Jobs bereiken via telefoon (+31 6 17 17 79 39), e-mail (info@toptalentjobs.nl) of WhatsApp. Wij streven ernaar snel te reageren, doorgaans binnen enkele uren. U kunt ook het contactformulier op deze pagina invullen."
+    answer: "U kunt TopTalent Jobs bereiken via telefoon (+31617889189), e-mail (info@toptalentjobs.nl) of WhatsApp. Wij streven ernaar snel te reageren, doorgaans binnen enkele uren. U kunt ook het contactformulier op deze pagina invullen."
   },
 ];
 
@@ -377,8 +377,8 @@ function ContactPageContent() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-neutral-900 mb-1">Telefoon</h3>
-                        <a href="tel:+31617177939" className="text-[#F97316] hover:text-[#EA580C] transition-colors duration-300">
-                          +31 6 17 17 79 39
+                        <a href="tel:+31617889189" className="text-[#F97316] hover:text-[#EA580C] transition-colors duration-300">
+                          +31617889189
                         </a>
                         <p className="text-neutral-500 text-sm mt-1">Snel bereikbaar</p>
                       </div>
@@ -407,7 +407,7 @@ function ContactPageContent() {
                       <div>
                         <h3 className="font-semibold text-neutral-900 mb-1">WhatsApp</h3>
                         <a
-                          href="https://wa.me/31617177939"
+                          href="https://wa.me/31617889189"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-green-600 hover:text-green-700 transition-colors duration-300"

@@ -80,13 +80,13 @@ export default function Header() {
                 info@toptalentjobs.nl
               </a>
               <a
-                href="tel:+31617177939"
+                href="tel:+31617889189"
                 className="hidden sm:flex items-center text-neutral-300 hover:text-white transition-colors duration-300"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                +31 6 17 17 79 39
+                +31617889189
               </a>
             </div>
             <div className="flex items-center gap-4">
@@ -520,7 +520,7 @@ export default function Header() {
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <a
-                    href="https://wa.me/31617177939?text=Hallo!%20Ik%20heb%20een%20vraag%20over%20TopTalent%20Jobs."
+                    href="https://wa.me/31617889189?text=Hallo!%20Ik%20heb%20een%20vraag%20over%20TopTalent%20Jobs."
                     className="flex flex-col items-center gap-2 p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-all duration-200 active:scale-95"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -530,7 +530,7 @@ export default function Header() {
                     <span className="text-xs font-medium text-neutral-700">WhatsApp</span>
                   </a>
                   <a
-                    href="tel:+31617177939"
+                    href="tel:+31617889189"
                     className="flex flex-col items-center gap-2 p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-all duration-200 active:scale-95"
                     onClick={() => setIsMenuOpen(false)}
                   >

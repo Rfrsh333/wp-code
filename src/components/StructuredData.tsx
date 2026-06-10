@@ -27,7 +27,7 @@ export default function StructuredData() {
     "contactPoint": [
       {
         "@type": "ContactPoint",
-        "telephone": "+31617177939",
+        "telephone": "+31617889189",
         "email": "info@toptalentjobs.nl",
         "contactType": "customer service",
         "availableLanguage": ["Dutch", "English"],
@@ -70,7 +70,7 @@ export default function StructuredData() {
       ]
     },
     "sameAs": [
-      "https://wa.me/31617177939"
+      "https://wa.me/31617889189"
     ]
   };
 

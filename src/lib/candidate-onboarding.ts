@@ -97,7 +97,7 @@ function getEmailLayout(content: string): string {
             <p><strong>TopTalent Jobs</strong></p>
             <p>
               📧 <a href="mailto:info@toptalentjobs.nl" style="color: #F27501;">info@toptalentjobs.nl</a><br>
-              📱 <a href="tel:+31617177939" style="color: #F27501;">+31 6 17 17 79 39</a>
+              📱 <a href="tel:+31617889189" style="color: #F27501;">+31617889189</a>
             </p>
             <p style="margin-top: 20px; font-size: 12px; color: #aaa;">
               © ${new Date().getFullYear()} TopTalent Jobs. Alle rechten voorbehouden.

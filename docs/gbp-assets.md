@@ -2,7 +2,7 @@
 
 ## GBP Beschrijving (750 tekens max)
 
-TopTalent Jobs is een WAADI-geregistreerd horeca uitzendbureau in Utrecht. Wij leveren gescreend horecapersoneel — koks, bediening, barista's, barmannen en cateringmedewerkers — aan restaurants, hotels, cafes en evenementen in heel Nederland. 95% van onze klanten heeft binnen 24 uur personeel. Ons all-in uurtarief dekt werkgeverslasten, verzekeringen en administratie. Geen verborgen kosten, geen minimale afname. Bel +31 6 17 17 79 39 of bezoek toptalentjobs.nl voor een vrijblijvende offerte. Kantoor: Kanaalstraat 15, Utrecht.
+TopTalent Jobs is een WAADI-geregistreerd horeca uitzendbureau in Utrecht. Wij leveren gescreend horecapersoneel — koks, bediening, barista's, barmannen en cateringmedewerkers — aan restaurants, hotels, cafes en evenementen in heel Nederland. 95% van onze klanten heeft binnen 24 uur personeel. Ons all-in uurtarief dekt werkgeverslasten, verzekeringen en administratie. Geen verborgen kosten, geen minimale afname. Bel +31617889189 of bezoek toptalentjobs.nl voor een vrijblijvende offerte. Kantoor: Kanaalstraat 15, Utrecht.
 
 ---
 
@@ -16,7 +16,7 @@ TopTalent Jobs is een WAADI-geregistreerd horeca uitzendbureau in Utrecht. Wij l
 ### Post 2 — Seizoen: Terrasseizoen
 **Type:** What's New
 **Tekst:** Het terrasseizoen is begonnen! Heeft u extra bediening of keukenpersoneel nodig voor de drukke maanden? TopTalent Jobs helpt u opschalen met ervaren horecamedewerkers. Flexibel inzetbaar per shift, per week of per seizoen. Plan vooruit en voorkom personeelstekort op uw terras.
-**CTA:** Bel nu — +31 6 17 17 79 39
+**CTA:** Bel nu — +31617889189
 
 ### Post 3 — Tip: Personeelsplanning
 **Type:** What's New
