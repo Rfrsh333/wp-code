@@ -18,34 +18,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
-    const { data: profiel } = await supabaseAdmin
-      .from("medewerkers")
-      .select("naam, email, functie, stad, adres, postcode, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, kor_actief, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
-      .eq("id", medewerker.id)
-      .single();
-
-    // Calculate stats from dienst_aanmeldingen + uren_registraties
-    const { count: totalDiensten } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select("*", { count: "exact", head: true })
-      .eq("medewerker_id", medewerker.id)
-      .eq("status", "geaccepteerd");
-
-    const { count: completedDiensten } = await supabaseAdmin
-      .from("uren_registraties")
-      .select("*", { count: "exact", head: true })
-      .eq("medewerker_id", medewerker.id)
-      .eq("status", "goedgekeurd");
+    // Run all independent queries in parallel to reduce latency.
+    const [
+      { data: profiel },
+      { count: totalDiensten },
+      { count: completedDiensten },
+      { data: beoordelingen },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("medewerkers")
+        .select("naam, email, functie, stad, adres, postcode, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, kor_actief, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
+        .eq("id", medewerker.id)
+        .single(),
+      supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .select("*", { count: "exact", head: true })
+        .eq("medewerker_id", medewerker.id)
+        .eq("status", "geaccepteerd"),
+      supabaseAdmin
+        .from("uren_registraties")
+        .select("*", { count: "exact", head: true })
+        .eq("medewerker_id", medewerker.id)
+        .eq("status", "goedgekeurd"),
+      supabaseAdmin
+        .from("beoordelingen")
+        .select("score")
+        .eq("medewerker_id", medewerker.id),
+    ]);
 
     const opkomst = totalDiensten && totalDiensten > 0
       ? Math.round(((completedDiensten || 0) / totalDiensten) * 100)
       : 0;
-
-    // Get average rating from beoordelingen
-    const { data: beoordelingen } = await supabaseAdmin
-      .from("beoordelingen")
-      .select("score")
-      .eq("medewerker_id", medewerker.id);
 
     const scores = beoordelingen?.map(b => b.score).filter(Boolean) || [];
     const avgRating = scores.length > 0

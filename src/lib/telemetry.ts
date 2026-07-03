@@ -226,7 +226,7 @@ export function trackPerformance(metric: string, duration: number, metadata?: Re
 }
 
 /**
- * Track error
+ * Track error — also forwards to Sentry so errors aren't silently dropped.
  */
 export function trackError(error: Error | string, context?: Record<string, any>): void {
   const errorMessage = typeof error === 'string' ? error : error.message;
@@ -237,4 +237,15 @@ export function trackError(error: Error | string, context?: Record<string, any>)
     stack: errorStack,
     ...context,
   });
+
+  // Forward to Sentry when available (client-side only).
+  if (typeof window !== 'undefined') {
+    import('@sentry/nextjs').then(({ captureException, captureMessage }) => {
+      if (error instanceof Error) {
+        captureException(error, { extra: context });
+      } else {
+        captureMessage(errorMessage, { extra: context });
+      }
+    }).catch(() => {/* Sentry unavailable */});
+  }
 }

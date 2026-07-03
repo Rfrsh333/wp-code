@@ -36,4 +36,26 @@ Sentry.init({
     }
     return event;
   },
+
+  beforeBreadcrumb(breadcrumb) {
+    // Strip email addresses and tokens from breadcrumb messages to prevent PII leakage.
+    if (breadcrumb.message) {
+      breadcrumb.message = breadcrumb.message
+        .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, "[email]")
+        .replace(/\b[0-9a-f]{32,}\b/gi, "[token]");
+    }
+    if (breadcrumb.data) {
+      const safe: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(breadcrumb.data)) {
+        const lower = k.toLowerCase();
+        if (lower.includes("email") || lower.includes("token") || lower.includes("wachtwoord") || lower.includes("password") || lower.includes("bsn") || lower.includes("iban")) {
+          safe[k] = "[redacted]";
+        } else {
+          safe[k] = v;
+        }
+      }
+      breadcrumb.data = safe;
+    }
+    return breadcrumb;
+  },
 });

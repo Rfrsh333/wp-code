@@ -1,5 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Personal/office documents — nooit in git
+*.docx
+*.xlsx
+*.xls
+*.doc
+~$*
+
 # backups (database dumps, storage kopieën — NOOIT committen)
 /backups
 

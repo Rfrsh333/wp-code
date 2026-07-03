@@ -20,43 +20,45 @@ export async function GET(request: NextRequest) {
     startVanMaand.setDate(1);
     const startVanMaandStr = startVanMaand.toISOString().split("T")[0];
 
-    // Aankomende diensten
-    const { count: aankomende_diensten } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select("id", { count: "exact", head: true })
-      .eq("medewerker_id", medewerker.id)
-      .eq("status", "bevestigd")
-      .gte("diensten.datum", vandaag);
-
-    // Te registreren uren
-    const { data: voltooide } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select("id")
-      .eq("medewerker_id", medewerker.id)
-      .eq("status", "bevestigd")
-      .not("check_in_at", "is", null)
-      .lt("diensten.datum", vandaag);
-
-    const { data: geregistreerd } = await supabaseAdmin
-      .from("uren_registraties")
-      .select("aanmelding_id")
-      .eq("medewerker_id", medewerker.id);
+    // Run all independent queries in parallel.
+    const [
+      { count: aankomende_diensten },
+      { data: voltooide },
+      { data: geregistreerd },
+      { data: urenDezeMaand },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .select("id", { count: "exact", head: true })
+        .eq("medewerker_id", medewerker.id)
+        .eq("status", "bevestigd")
+        .gte("diensten.datum", vandaag),
+      supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .select("id")
+        .eq("medewerker_id", medewerker.id)
+        .eq("status", "bevestigd")
+        .not("check_in_at", "is", null)
+        .lt("diensten.datum", vandaag),
+      supabaseAdmin
+        .from("uren_registraties")
+        .select("aanmelding_id")
+        .eq("medewerker_id", medewerker.id),
+      supabaseAdmin
+        .from("uren_registraties")
+        .select(`
+          gewerkte_uren,
+          aanmelding:dienst_aanmeldingen!inner (
+            dienst:diensten!dienst_id (uurtarief, datum)
+          )
+        `)
+        .eq("medewerker_id", medewerker.id)
+        .in("status", ["klant_goedgekeurd", "gefactureerd"])
+        .gte("aanmelding.diensten.datum", startVanMaandStr),
+    ]);
 
     const geregistreerdIds = new Set((geregistreerd || []).map(u => u.aanmelding_id));
     const te_registreren_uren = (voltooide || []).filter(v => !geregistreerdIds.has(v.id)).length;
-
-    // Deze maand verdiensten en uren
-    const { data: urenDezeMaand } = await supabaseAdmin
-      .from("uren_registraties")
-      .select(`
-        gewerkte_uren,
-        aanmelding:dienst_aanmeldingen!inner (
-          dienst:diensten!dienst_id (uurtarief, datum)
-        )
-      `)
-      .eq("medewerker_id", medewerker.id)
-      .in("status", ["klant_goedgekeurd", "gefactureerd"])
-      .gte("aanmelding.diensten.datum", startVanMaandStr);
 
     let deze_maand_verdiensten = 0;
     let totaal_uren_deze_maand = 0;
@@ -70,7 +72,6 @@ export async function GET(request: NextRequest) {
       totaal_uren_deze_maand += uur.gewerkte_uren;
     }
 
-    // Gemiddelde rating (placeholder - kan later dynamisch worden)
     const gemiddelde_rating = 4.8;
 
     return NextResponse.json({
@@ -84,7 +85,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/medewerker/dashboard", action: "GET" });
-    // console.error("Dashboard error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

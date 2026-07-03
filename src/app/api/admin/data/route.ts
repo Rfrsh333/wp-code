@@ -121,6 +121,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (action === "update" && !hasRequiredAdminRole(role, ["owner", "operations", "recruiter"])) {
+    return NextResponse.json(
+      { error: "Onvoldoende rechten om records bij te werken" },
+      { status: 403 }
+    );
+  }
+
   let generatedMedewerkerLinks = 0;
 
   if (action === "update") {

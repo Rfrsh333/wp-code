@@ -50,23 +50,43 @@ const ENGAGEMENT_POINTS: Record<string, number> = {
   "email.complained": -30,
 };
 
-function verifyWebhookSignature(payload: string, signature: string): boolean {
+/**
+ * Verifies a Resend/svix webhook signature.
+ * Signed content: `${svix-id}.${svix-timestamp}.${rawBody}`
+ * Secret: whsec_... from Resend dashboard (base64-encoded after stripping prefix).
+ * Header format: `v1,<base64>` (space-separated list for multiple signatures).
+ */
+function verifyWebhookSignature(payload: string, headers: { id: string; timestamp: string; signature: string }): boolean {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) {
     captureRouteError(new Error("RESEND_WEBHOOK_SECRET niet ingesteld"), { route: "/api/webhooks/resend", action: "VERIFY" });
     return false;
   }
-  const hmac = createHmac("sha256", secret);
-  const digest = hmac.update(payload).digest("hex");
-  return signature === digest;
+  try {
+    const secretBytes = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
+    const signedContent = `${headers.id}.${headers.timestamp}.${payload}`;
+    const expectedDigest = createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+    return headers.signature.split(" ").some((part) => {
+      const [, sigValue] = part.split(",");
+      return sigValue === expectedDigest;
+    });
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const signature = request.headers.get("svix-signature") || "";
+    const svixId = request.headers.get("svix-id") || "";
+    const svixTimestamp = request.headers.get("svix-timestamp") || "";
+    const svixSignature = request.headers.get("svix-signature") || "";
     const payload = await request.text();
 
-    if (!verifyWebhookSignature(payload, signature)) {
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      return NextResponse.json({ error: "Missing svix headers" }, { status: 401 });
+    }
+
+    if (!verifyWebhookSignature(payload, { id: svixId, timestamp: svixTimestamp, signature: svixSignature })) {
       captureRouteError(new Error("Ongeldige webhook signature"), { route: "/api/webhooks/resend", action: "POST" });
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }

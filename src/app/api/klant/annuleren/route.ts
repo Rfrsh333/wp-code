@@ -43,7 +43,10 @@ export async function POST(request: NextRequest) {
     
     if (((count ?? 0) >= policy.geen_boete_eerste_x_keer)) {
       boeteToegepast = true;
-      const geschat = (dienst.uurtarief || 0) * (dienst.aantal_nodig || 1) * 6;
+      const startMs = new Date(`${dienst.datum}T${dienst.start_tijd}`).getTime();
+      const eindMs = new Date(`${dienst.datum}T${dienst.eind_tijd}`).getTime();
+      const geschatteUren = eindMs > startMs ? (eindMs - startMs) / (1000 * 60 * 60) : 6;
+      const geschat = (dienst.uurtarief || 0) * (dienst.aantal_nodig || 1) * geschatteUren;
       boeteBedrag = policy.gebruik_percentage ? geschat * (policy.boete_percentage / 100) : policy.boete_vast_bedrag || 0;
       boeteReden = `Late annulering ${urenVanTevoren.toFixed(1)}u van tevoren`;
     } else {

@@ -36,6 +36,16 @@ export default function Header() {
     };
   }, [isDienstenOpen, isLocatiesOpen, closeDiensten, closeLocaties]);
 
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMenuOpen(false);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [isMenuOpen]);
+
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -290,6 +300,7 @@ export default function Header() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? "Menu sluiten" : "Menu openen"}
               aria-expanded={isMenuOpen}
+              aria-controls="mobile-menu"
             >
               <svg
                 className="w-6 h-6 text-neutral-700"
@@ -321,6 +332,10 @@ export default function Header() {
 
       {/* Mobile Navigation Overlay - Full Screen */}
       <div
+        id="mobile-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigatiemenu"
         className={`lg:hidden fixed inset-0 z-40 transition-all duration-300 ${
           isMenuOpen ? "visible opacity-100" : "invisible opacity-0"
         }`}

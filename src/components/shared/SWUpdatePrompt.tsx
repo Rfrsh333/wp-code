@@ -23,6 +23,8 @@ export default function SWUpdatePrompt({
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
     const registerSW = async () => {
       try {
         const registration = await navigator.serviceWorker.register(swPath, {
@@ -51,16 +53,26 @@ export default function SWUpdatePrompt({
           });
         });
 
-        // Periodically check for updates (every 60 minutes)
-        const interval = setInterval(() => {
-          registration.update();
+        // Periodically check for updates (every 60 minutes) — store id so it can be cleared.
+        intervalId = setInterval(() => {
+          registration.update().catch(() => {/* ignore update errors */});
         }, 60 * 60 * 1000);
-
-        return () => clearInterval(interval);
       } catch (error) {
         console.error("[SW] Registration failed:", error);
       }
     };
+
+    // Only attach the reload listener when there is already an active controller.
+    // Without this guard, a first-time install triggers controllerchange and
+    // reloads the page even though there was no actual update.
+    const hadControllerOnMount = !!navigator.serviceWorker.controller;
+    let refreshing = false;
+    const onControllerChange = () => {
+      if (!hadControllerOnMount || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
     // Register after page load to avoid competing with critical resources
     if (document.readyState === "complete") {
@@ -69,23 +81,9 @@ export default function SWUpdatePrompt({
       window.addEventListener("load", () => void registerSW(), { once: true });
     }
 
-    // Listen for controller change to reload page
-    let refreshing = false;
-    const onControllerChange = () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener(
-      "controllerchange",
-      onControllerChange
-    );
-
     return () => {
-      navigator.serviceWorker.removeEventListener(
-        "controllerchange",
-        onControllerChange
-      );
+      if (intervalId !== null) clearInterval(intervalId);
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
     };
   }, [swPath, swScope]);
 
