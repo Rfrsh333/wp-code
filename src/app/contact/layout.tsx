@@ -14,7 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     "@type": ["LocalBusiness", "ContactPage"],
     "@id": "https://www.toptalentjobs.nl/#localbusiness",
     "name": "TopTalent Jobs",
-    "image": "https://www.toptalentjobs.nl/logo.png",
+    "image": "https://www.toptalentjobs.nl/images/logo.png",
     "url": "https://www.toptalentjobs.nl",
     "telephone": "+31617889189",
     "email": "info@toptalentjobs.nl",
@@ -76,13 +76,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://www.toptalentjobs.nl/"
+        "item": "https://www.toptalentjobs.nl"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Contact",
-        "item": "https://www.toptalentjobs.nl/contact/"
+        "item": "https://www.toptalentjobs.nl/contact"
       }
     ]
   };

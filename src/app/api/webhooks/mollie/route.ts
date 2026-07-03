@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
     return new NextResponse("OK", { status: 200 });
   } catch (error) {
     captureRouteError(error, { route: "/api/webhooks/mollie", action: "POST" });
-    // console.error("[MOLLIE WEBHOOK] Error:", error);
-    // Return 200 om retries te voorkomen bij onverwachte fouten
-    return new NextResponse("OK", { status: 200 });
+    // Geef 500 terug zodat Mollie de webhook opnieuw aanbiedt bij onverwachte fouten.
+    // 200 pas retourneren als de betaling succesvol verwerkt is.
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

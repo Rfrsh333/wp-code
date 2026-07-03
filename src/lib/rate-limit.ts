@@ -78,18 +78,22 @@ export function checkRateLimit(
   };
 }
 
-// Get client IP from request
+// Get client IP from request.
+// On Vercel the platform appends the real client IP as the LAST element of
+// x-forwarded-for, so we read from the right to prevent spoofing via a
+// client-controlled leftmost hop.
 export function getClientIP(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
+  // Vercel-specific: set by the platform and cannot be spoofed by the client.
+  const vercelIP = request.headers.get("x-vercel-forwarded-for");
+  if (vercelIP) return vercelIP.split(",").pop()!.trim();
+
+  // x-real-ip is set by nginx/proxies and is generally trustworthy.
   const realIP = request.headers.get("x-real-ip");
+  if (realIP) return realIP.trim();
 
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
-
-  if (realIP) {
-    return realIP;
-  }
+  // Fallback: use the rightmost (platform-appended) x-forwarded-for hop.
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",").pop()!.trim();
 
   return "unknown";
 }

@@ -668,33 +668,46 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  if (action === "accepteer_aanpassing") {
-    const { data: aanpassing } = await supabaseAdmin
+  if (action === "accepteer_aanpassing" || action === "weiger_aanpassing") {
+    if (!uren_id) {
+      return NextResponse.json({ error: "uren_id vereist" }, { status: 400 });
+    }
+
+    // Eigenaarscontrole: de uren_registratie moet via aanmelding bij deze medewerker horen
+    const { data: urenCheck } = await supabaseAdmin
       .from("uren_registraties")
-      .select("klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_reiskosten_km, klant_reiskosten_bedrag")
+      .select("id, klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_reiskosten_km, klant_reiskosten_bedrag, aanmelding:dienst_aanmeldingen(medewerker_id)")
       .eq("id", uren_id)
       .single();
 
-    if (aanpassing) {
+    type UrenWithAanmelding = typeof urenCheck & { aanmelding?: { medewerker_id?: string } | null };
+    const urenData = urenCheck as UrenWithAanmelding;
+    const aanmeldingMw = Array.isArray(urenData?.aanmelding) ? urenData.aanmelding[0] : urenData?.aanmelding;
+
+    if (!urenData || aanmeldingMw?.medewerker_id !== medewerker.id) {
+      return NextResponse.json({ error: "Niet geautoriseerd" }, { status: 403 });
+    }
+
+    if (action === "accepteer_aanpassing") {
       await supabaseAdmin.from("uren_registraties").update({
-        start_tijd: aanpassing.klant_start_tijd,
-        eind_tijd: aanpassing.klant_eind_tijd,
-        pauze_minuten: aanpassing.klant_pauze_minuten,
-        gewerkte_uren: aanpassing.klant_gewerkte_uren,
-        reiskosten_km: aanpassing.klant_reiskosten_km ?? 0,
-        reiskosten_bedrag: aanpassing.klant_reiskosten_bedrag ?? 0,
+        start_tijd: urenData.klant_start_tijd,
+        eind_tijd: urenData.klant_eind_tijd,
+        pauze_minuten: urenData.klant_pauze_minuten,
+        gewerkte_uren: urenData.klant_gewerkte_uren,
+        reiskosten_km: urenData.klant_reiskosten_km ?? 0,
+        reiskosten_bedrag: urenData.klant_reiskosten_bedrag ?? 0,
         status: "klant_goedgekeurd",
       }).eq("id", uren_id);
     }
-  }
 
-  if (action === "weiger_aanpassing") {
-    await supabaseAdmin.from("uren_registraties").update({
-      status: "ingediend",
-      klant_start_tijd: null, klant_eind_tijd: null,
-      klant_pauze_minuten: null, klant_gewerkte_uren: null,
-      klant_reiskosten_km: null, klant_reiskosten_bedrag: null, klant_opmerking: null,
-    }).eq("id", uren_id);
+    if (action === "weiger_aanpassing") {
+      await supabaseAdmin.from("uren_registraties").update({
+        status: "ingediend",
+        klant_start_tijd: null, klant_eind_tijd: null,
+        klant_pauze_minuten: null, klant_gewerkte_uren: null,
+        klant_reiskosten_km: null, klant_reiskosten_bedrag: null, klant_opmerking: null,
+      }).eq("id", uren_id);
+    }
   }
 
   return NextResponse.json({ success: true });

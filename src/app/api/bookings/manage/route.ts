@@ -3,7 +3,6 @@ import { supabaseAdmin } from "@/lib/supabase";
 import {
   deleteGoogleCalendarEvent,
   isGoogleCalendarConfigured,
-  createGoogleCalendarEvent,
 } from "@/lib/google-calendar";
 import { sendEmail } from "@/lib/email-service";
 import {
@@ -12,19 +11,35 @@ import {
 } from "@/lib/email-templates";
 import { captureRouteError } from "@/lib/sentry-utils";
 
+// Tokens are crypto.randomBytes(32).toString('hex') = exactly 64 hex chars.
+// Strict validation prevents PostgREST .or() filter injection.
+const TOKEN_RE = /^[0-9a-f]{64}$/i;
+
+const BOOKING_SELECT =
+  "id, client_name, client_email, client_phone, company_name, notes, status, " +
+  "cancellation_token, reschedule_token, event_type_id, google_calendar_event_id, inquiry_id, " +
+  "availability_slots(id, date, start_time, end_time), event_types(name, duration_minutes, color)";
+
+async function findBookingByToken(token: string) {
+  // Two separate parameterised .eq() calls instead of .or() string interpolation.
+  // maybeSingle() returns null (not an error) when no row is found.
+  const [byCancelToken, byRescheduleToken] = await Promise.all([
+    supabaseAdmin.from("bookings").select(BOOKING_SELECT).eq("cancellation_token", token).maybeSingle(),
+    supabaseAdmin.from("bookings").select(BOOKING_SELECT).eq("reschedule_token", token).maybeSingle(),
+  ]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (byCancelToken.data ?? byRescheduleToken.data ?? null) as any;
+}
+
 // GET: Ophalen van booking details via token
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
 
-  if (!token) {
+  if (!token || !TOKEN_RE.test(token)) {
     return NextResponse.json({ error: "Token vereist" }, { status: 400 });
   }
 
-  const { data: booking } = await supabaseAdmin
-    .from("bookings")
-    .select("id, client_name, client_email, client_phone, company_name, notes, status, cancellation_token, reschedule_token, event_type_id, availability_slots(id, date, start_time, end_time), event_types(name, duration_minutes, color)")
-    .or(`cancellation_token.eq.${token},reschedule_token.eq.${token}`)
-    .single();
+  const booking = await findBookingByToken(token);
 
   if (!booking) {
     return NextResponse.json({ error: "Boeking niet gevonden" }, { status: 404 });
@@ -53,16 +68,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { token, action, new_slot_id, new_date, new_start_time, new_end_time } = body;
 
-  if (!token || !action) {
+  if (!token || !TOKEN_RE.test(String(token)) || !action) {
     return NextResponse.json({ error: "Token en actie vereist" }, { status: 400 });
   }
 
-  // Zoek de booking
-  const { data: booking } = await supabaseAdmin
-    .from("bookings")
-    .select("*, availability_slots(id, date, start_time, end_time)")
-    .or(`cancellation_token.eq.${token},reschedule_token.eq.${token}`)
-    .single();
+  const booking = await findBookingByToken(token);
 
   if (!booking) {
     return NextResponse.json({ error: "Boeking niet gevonden" }, { status: 404 });
@@ -84,7 +94,6 @@ export async function POST(request: NextRequest) {
   const senderName = sMap.sender_name || "TopTalent Jobs";
 
   if (action === "cancel") {
-    // Annuleer de boeking
     await supabaseAdmin
       .from("bookings")
       .update({
@@ -94,7 +103,6 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", booking.id);
 
-    // Maak het slot weer beschikbaar
     if (slot) {
       await supabaseAdmin
         .from("availability_slots")
@@ -102,54 +110,49 @@ export async function POST(request: NextRequest) {
         .eq("id", slot.id);
     }
 
-    // Verwijder Google Calendar event
     if (booking.google_calendar_event_id && isGoogleCalendarConfigured()) {
       await deleteGoogleCalendarEvent(booking.google_calendar_event_id);
     }
 
-    // Stuur annuleringsmail
     const datumFormatted = slot ? new Date(slot.date).toLocaleDateString("nl-NL", {
       weekday: "long", year: "numeric", month: "long", day: "numeric",
     }) : "";
 
-      try {
-        await sendEmail({
-          from: `${senderName} <${senderEmail}>`,
-          to: [booking.client_email],
-          subject: `Afspraak geannuleerd — ${senderName}`,
-          html: buildCancellationEmailHtml({
-            clientName: booking.client_name,
-            datumFormatted,
-            startTime: slot?.start_time?.slice(0, 5) || "",
-            endTime: slot?.end_time?.slice(0, 5) || "",
-            senderName,
-          }),
-        });
-      } catch (err) {
-        captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
-        // console.error("Cancellation email error:", err);
-      }
+    try {
+      await sendEmail({
+        from: `${senderName} <${senderEmail}>`,
+        to: [booking.client_email],
+        subject: `Afspraak geannuleerd — ${senderName}`,
+        html: buildCancellationEmailHtml({
+          clientName: booking.client_name,
+          datumFormatted,
+          startTime: slot?.start_time?.slice(0, 5) || "",
+          endTime: slot?.end_time?.slice(0, 5) || "",
+          senderName,
+        }),
+      });
+    } catch (err) {
+      captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
+    }
 
-      // Notificatie naar admin
-      try {
-        await sendEmail({
-          from: `${senderName} <${senderEmail}>`,
-          to: [senderEmail],
-          subject: `Afspraak geannuleerd: ${booking.client_name}`,
-          html: buildCancellationEmailHtml({
-            clientName: booking.client_name,
-            datumFormatted,
-            startTime: slot?.start_time?.slice(0, 5) || "",
-            endTime: slot?.end_time?.slice(0, 5) || "",
-            senderName,
-            isAdmin: true,
-            reason: body.reason,
-          }),
-        });
-      } catch (err) {
-        captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
-        // console.error("Admin cancellation notification error:", err);
-      }
+    try {
+      await sendEmail({
+        from: `${senderName} <${senderEmail}>`,
+        to: [senderEmail],
+        subject: `Afspraak geannuleerd: ${booking.client_name}`,
+        html: buildCancellationEmailHtml({
+          clientName: booking.client_name,
+          datumFormatted,
+          startTime: slot?.start_time?.slice(0, 5) || "",
+          endTime: slot?.end_time?.slice(0, 5) || "",
+          senderName,
+          isAdmin: true,
+          reason: body.reason,
+        }),
+      });
+    } catch (err) {
+      captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
+    }
 
     return NextResponse.json({ success: true, action: "cancelled" });
   }
@@ -159,7 +162,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nieuw tijdslot vereist" }, { status: 400 });
     }
 
-    // Maak het oude slot weer beschikbaar
     if (slot) {
       await supabaseAdmin
         .from("availability_slots")
@@ -167,12 +169,10 @@ export async function POST(request: NextRequest) {
         .eq("id", slot.id);
     }
 
-    // Verwijder oud Google Calendar event
     if (booking.google_calendar_event_id && isGoogleCalendarConfigured()) {
       await deleteGoogleCalendarEvent(booking.google_calendar_event_id);
     }
 
-    // Markeer oude booking als cancelled (met verwijzing)
     await supabaseAdmin
       .from("bookings")
       .update({
@@ -182,7 +182,6 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", booking.id);
 
-    // Maak nieuwe booking aan via dezelfde flow
     const bookRes = await fetch(new URL("/api/bookings", request.url).toString(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -205,7 +204,6 @@ export async function POST(request: NextRequest) {
     const bookData = await bookRes.json();
 
     if (!bookData.success) {
-      // Rollback: herstel de originele booking
       await supabaseAdmin
         .from("bookings")
         .update({ status: "confirmed", cancelled_at: null, cancel_reason: null })
@@ -219,7 +217,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: bookData.error || "Kon niet verplaatsen" }, { status: 500 });
     }
 
-    // Update de nieuwe booking met rescheduled_from
     if (bookData.booking?.id) {
       await supabaseAdmin
         .from("bookings")
@@ -227,7 +224,6 @@ export async function POST(request: NextRequest) {
         .eq("id", bookData.booking.id);
     }
 
-    // Stuur reschedule bevestigingsmail
     if (bookData.booking) {
       try {
         await sendEmail({
@@ -248,7 +244,6 @@ export async function POST(request: NextRequest) {
         });
       } catch (err) {
         captureRouteError(err, { route: "/api/bookings/manage", action: "POST" });
-        // console.error("Reschedule email error:", err);
       }
     }
 

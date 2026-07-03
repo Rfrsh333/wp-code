@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "Vind betrouwbaar horeca personeel in Amsterdam, Rotterdam, Den Haag en Utrecht. TopTalent Jobs is jouw partner voor uitzenden, detachering en recruitment in de horeca.",
   alternates: {
-    canonical: "https://toptalentjobs.nl/geo",
+    canonical: "https://www.toptalentjobs.nl/geo",
   },
 };
 
@@ -143,11 +143,9 @@ export default async function GeoIndexPage() {
             "@type": "CollectionPage",
             name: "Horeca Personeel in de Randstad",
             description: "Gidsen en informatie over horeca personeel in Amsterdam, Rotterdam, Den Haag en Utrecht.",
-            url: "https://toptalentjobs.nl/geo",
+            url: "https://www.toptalentjobs.nl/geo",
             publisher: {
-              "@type": "Organization",
-              name: "TopTalent Jobs",
-              url: "https://toptalentjobs.nl",
+              "@id": "https://www.toptalentjobs.nl/#organization",
             },
           }),
         }}

@@ -8,11 +8,11 @@ export default function StructuredData() {
     "url": "https://www.toptalentjobs.nl",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://www.toptalentjobs.nl/logo.png",
+      "url": "https://www.toptalentjobs.nl/images/logo.png",
       "width": 512,
       "height": 512
     },
-    "image": "https://www.toptalentjobs.nl/logo.png",
+    "image": "https://www.toptalentjobs.nl/images/logo.png",
     "description": "TopTalent Jobs is een gespecialiseerd horeca uitzendbureau in Nederland. Wij leveren gescreend en ervaren horecapersoneel binnen 24 uur voor restaurants, hotels, catering en evenementen.",
     "slogan": "Gescreend horecapersoneel binnen 24 uur",
     "foundingLocation": "Utrecht, Nederland",
@@ -80,6 +80,7 @@ export default function StructuredData() {
     "@id": "https://www.toptalentjobs.nl/#website",
     "name": "TopTalent Jobs",
     "url": "https://www.toptalentjobs.nl",
+    "inLanguage": "nl-NL",
     "publisher": {
       "@id": "https://www.toptalentjobs.nl/#organization"
     }

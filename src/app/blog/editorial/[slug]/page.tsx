@@ -42,7 +42,7 @@ function buildArticleJsonLd(draft: {
       name: "TopTalent Jobs",
       logo: {
         "@type": "ImageObject",
-        url: "https://www.toptalentjobs.nl/logo.png",
+        url: "https://www.toptalentjobs.nl/images/logo.png",
       },
     },
     author: {

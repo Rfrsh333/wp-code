@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { verifyKlantSession } from "@/lib/session";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -61,10 +62,20 @@ export async function POST(request: NextRequest) {
   }).select().single();
 
   if (boeteToegepast && boeteBedrag > 0) {
-    await supabaseAdmin.from("facturen").insert({
-      klant_id: klant.id, factuurnummer: `ANN-${Date.now()}`, bedrag: boeteBedrag, btw: boeteBedrag * 0.21,
-      totaal: boeteBedrag * 1.21, status: "open", type: "boete", beschrijving: `Annuleringsboete - ${boeteReden}`,
+    const { error: factuurError } = await supabaseAdmin.from("facturen").insert({
+      klant_id: klant.id,
+      factuur_nummer: `ANN-${Date.now()}`,
+      subtotaal: boeteBedrag,
+      btw_bedrag: boeteBedrag * 0.21,
+      totaal: boeteBedrag * 1.21,
+      status: "open",
+      type: "boete",
+      beschrijving: `Annuleringsboete - ${boeteReden}`,
+      annulering_id: ann?.id ?? null,
     });
+    if (factuurError) {
+      captureRouteError(factuurError, { route: "/api/klant/annuleren", action: "factuur-insert" });
+    }
   }
 
   return NextResponse.json({ success: true, boete_toegepast: boeteToegepast, boete_bedrag: boeteBedrag, boete_reden: boeteReden });

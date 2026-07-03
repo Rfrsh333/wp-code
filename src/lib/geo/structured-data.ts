@@ -10,7 +10,7 @@ import type { GeoContent, FaqItem } from "./types";
 const TOPTALENT = {
   name: "TopTalent Jobs",
   url: "https://www.toptalentjobs.nl",
-  logo: "https://www.toptalentjobs.nl/logo.png",
+  logo: "https://www.toptalentjobs.nl/images/logo.png",
   telephone: "+31617889189",
   email: "info@toptalentjobs.nl",
   address: {
@@ -95,10 +95,9 @@ export function buildLocalBusinessSchema(stadNaam: string): object {
       name: stadNaam,
     },
     serviceType: ["Uitzenden", "Detachering", "Recruitment"],
-    knowsAbout: ["Horeca personeel", "Uitzendwerk", "Hospitality staffing"],
-    sameAs: [
-      "https://www.linkedin.com/company/toptalentjobs",
-    ],
+    parentOrganization: {
+      "@id": "https://www.toptalentjobs.nl/#organization",
+    },
   };
 }
 

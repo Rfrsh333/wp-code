@@ -73,6 +73,30 @@ export async function POST(request: NextRequest) {
   }
   const { action, id, data, score_punctualiteit, score_functie } = await request.json();
 
+  if (!id) return NextResponse.json({ error: "id vereist" }, { status: 400 });
+
+  // Verify ownership: the uren_registratie must belong to a dienst owned by this klant
+  const { data: urenRow } = await supabaseAdmin
+    .from("uren_registraties")
+    .select("id, status, aanmelding:dienst_aanmeldingen(dienst:diensten(klant_id))")
+    .eq("id", id)
+    .single();
+
+  if (!urenRow) {
+    return NextResponse.json({ error: "Niet gevonden" }, { status: 404 });
+  }
+
+  type AanmeldingWithDienst = { dienst?: { klant_id?: string } };
+  const aanmelding = urenRow.aanmelding as AanmeldingWithDienst | null;
+  if (aanmelding?.dienst?.klant_id !== klant.id) {
+    return NextResponse.json({ error: "Niet geautoriseerd" }, { status: 403 });
+  }
+
+  const allowedSourceStatuses = ["ingediend", "klant_aangepast"];
+  if (!allowedSourceStatuses.includes(urenRow.status)) {
+    return NextResponse.json({ error: "Status staat wijziging niet toe" }, { status: 400 });
+  }
+
   if (action === "approve") {
     await supabaseAdmin.from("uren_registraties").update({
       status: "klant_goedgekeurd",
@@ -85,9 +109,7 @@ export async function POST(request: NextRequest) {
       .update({ eerste_goedkeuring: new Date().toISOString().split("T")[0] })
       .eq("id", klant.id)
       .is("eerste_goedkeuring", null);
-  }
-
-  if (action === "adjust") {
+  } else if (action === "adjust") {
     await supabaseAdmin.from("uren_registraties").update({
       status: "klant_aangepast",
       klant_start_tijd: data.startTijd,
@@ -98,6 +120,8 @@ export async function POST(request: NextRequest) {
       klant_reiskosten_bedrag: calculateMedewerkerReiskosten(data.reiskostenKm),
       klant_opmerking: data.opmerking,
     }).eq("id", id);
+  } else {
+    return NextResponse.json({ error: "Ongeldige actie" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true });
