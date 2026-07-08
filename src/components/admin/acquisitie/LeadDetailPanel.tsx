@@ -161,6 +161,10 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
   // Enrichment state
   const [isEnriching, setIsEnriching] = useState(false);
 
+  // ReachIQ state
+  const [isPushingReachiq, setIsPushingReachiq] = useState(false);
+  const [reachiqResult, setReachiqResult] = useState<{ ok: boolean; text: string } | null>(null);
+
   // WhatsApp state
   const [waMessage, setWaMessage] = useState("");
   const [waType, setWaType] = useState("intro");
@@ -308,6 +312,27 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
       setMessage({ type: "error", text: "Versturen mislukt" });
     }
     setIsSending(false);
+  };
+
+  const pushToReachiq = async () => {
+    if (!lead) return;
+    setIsPushingReachiq(true);
+    setReachiqResult(null);
+    const token = await getToken();
+    const res = await fetch("/api/admin/acquisitie/leads/push-reachiq", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead_id: leadId }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setReachiqResult({ ok: true, text: `Ingeschreven! Onderwerp: "${data.emailSubject || "—"}"` });
+      fetchLead();
+      onUpdate();
+    } else {
+      setReachiqResult({ ok: false, text: data.error || "Onbekende fout" });
+    }
+    setIsPushingReachiq(false);
   };
 
   const scoreLead = async () => {
@@ -1046,6 +1071,36 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
                       </button>
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* ReachIQ Campagne */}
+              <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <h4 className="font-medium text-orange-800">ReachIQ Campagne</h4>
+                    <p className="text-xs text-orange-600 mt-0.5">1 intro + 2 follow-ups via ReachIQ</p>
+                  </div>
+                  {(lead.tags || []).includes("reachiq") ? (
+                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">✓ Ingeschreven</span>
+                  ) : (
+                    <button
+                      onClick={pushToReachiq}
+                      disabled={isPushingReachiq || !lead.email}
+                      title={!lead.email ? "Voeg eerst een emailadres toe" : "Stuur lead naar ReachIQ"}
+                      className="text-xs px-3 py-1.5 bg-[#F27501] text-white rounded-lg hover:bg-[#d96800] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {isPushingReachiq ? "Bezig..." : "Push naar ReachIQ →"}
+                    </button>
+                  )}
+                </div>
+                {reachiqResult && (
+                  <div className={`text-xs mt-2 p-2 rounded-lg ${reachiqResult.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                    {reachiqResult.text}
+                  </div>
+                )}
+                {!lead.email && (
+                  <p className="text-xs text-orange-500 mt-1">Geen emailadres — voeg toe in Info-tab</p>
                 )}
               </div>
 
