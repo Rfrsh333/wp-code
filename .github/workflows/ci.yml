@@ -32,6 +32,19 @@ jobs:
       # `next lint` is verwijderd in Next.js 16 — gebruik ESLint direct (flat config).
       - run: npx eslint . --max-warnings 150
 
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      # Pure functie-tests (geld/PII/security) — geen browser nodig.
+      - run: npm run test:unit
+
   build:
     name: Build
     runs-on: ubuntu-latest
