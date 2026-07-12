@@ -29,12 +29,15 @@ jobs:
           node-version: 20
           cache: "npm"
       - run: npm ci
-      - run: npx next lint --max-warnings 150
+      # `next lint` is verwijderd in Next.js 16 — gebruik ESLint direct (flat config).
+      - run: npx eslint . --max-warnings 150
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [typecheck, lint]
+    # Build hangt bewust NIET meer af van de lint-job: een lint-melding mag de
+    # productie-build-check niet blokkeren. Typecheck blijft wél een harde poort.
+    needs: [typecheck]
     env:
       # Dummy values voor build check (echte waarden staan in Vercel)
       NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"

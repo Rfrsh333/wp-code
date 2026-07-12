@@ -3,7 +3,7 @@
   "name": "TopTalent Business",
   "short_name": "TT Business",
   "description": "Beheer uw horecapersoneel via TopTalentJobs.nl",
-  "start_url": "/klant/?source=pwa",
+  "start_url": "/klant/dashboard/?source=pwa",
   "scope": "/klant/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],

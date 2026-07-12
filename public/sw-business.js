@@ -3,16 +3,23 @@
 
 const CACHE_NAME = "toptalent-business-v1";
 const STATIC_ASSETS = [
-  "/klant/",
+  "/klant/dashboard/",
   "/manifest-klant.json",
   "/icons/icon-klant-192.png",
   "/icons/icon-klant-512.png",
 ];
 
-// Install: cache statische assets
+// Install: cache statische assets.
+// `.catch()` zodat één falende asset de installatie niet volledig afbreekt
+// (voorheen brak het niet-bestaande "/klant/" de hele install-stap).
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .catch((error) => {
+        console.error("[SW-business] Install failed:", error);
+      })
   );
 });
 
@@ -83,7 +90,7 @@ self.addEventListener("fetch", (event) => {
             if (cached) return cached;
             // Offline fallback: custom offline page
             if (request.mode === "navigate") {
-              return caches.match("/klant/").then((homepage) => {
+              return caches.match("/klant/dashboard/").then((homepage) => {
                 if (homepage) return homepage;
                 return new Response(
                   '<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1e3a5f"><title>TopTalent Business - Offline</title><style>body{font-family:-apple-system,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f0f4f8;color:#1e3a5f;text-align:center;padding:20px}.offline-card{background:#fff;border-radius:16px;padding:40px;max-width:360px;box-shadow:0 2px 12px rgba(0,0,0,.08)}h1{font-size:20px;margin:0 0 8px}p{color:#64748b;font-size:14px;margin:0 0 20px}button{background:#1e3a5f;color:#fff;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer}</style></head><body><div class="offline-card"><h1>Je bent offline</h1><p>Controleer je internetverbinding en probeer het opnieuw.</p><button onclick="location.reload()">Opnieuw proberen</button></div></body></html>',
@@ -132,7 +139,7 @@ self.addEventListener("push", (event) => {
     icon: "/icons/icon-klant-192.png",
     badge: "/icons/icon-klant-192.png",
     tag: data.tag ?? "business-notif",
-    data: { url: data.url ?? "/klant/" },
+    data: { url: data.url ?? "/klant/dashboard/" },
     actions: data.actions ?? [],
     vibrate: [200, 100, 200],
   };
@@ -144,7 +151,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/klant/";
+  const url = event.notification.data?.url ?? "/klant/dashboard/";
   event.waitUntil(
     clients.matchAll({ type: "window" }).then((windowClients) => {
       const existing = windowClients.find((c) => c.url.includes("/klant"));
