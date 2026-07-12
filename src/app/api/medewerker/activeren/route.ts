@@ -3,12 +3,13 @@ import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { hashToken } from "@/lib/token-hash";
 
 async function findValidMedewerkerByToken(token: string) {
   const { data: medewerker, error } = await supabaseAdmin
     .from("medewerkers")
     .select("id, naam, email, magic_token_expires_at")
-    .eq("magic_token", token)
+    .eq("magic_token", hashToken(token))
     .gt("magic_token_expires_at", new Date().toISOString())
     .single();
 

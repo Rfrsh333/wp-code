@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin } from "@/lib/supabase";
+import { hashToken } from "@/lib/token-hash";
 
 interface MedewerkerActivationTarget {
   id: string;
@@ -37,7 +38,7 @@ export async function createMedewerkerActivationToken(medewerkerId: string) {
   const { error } = await supabaseAdmin
     .from("medewerkers")
     .update({
-      magic_token: token,
+      magic_token: hashToken(token), // hash at rest; plaintext gaat alleen in de e-mail-link
       magic_token_expires_at: expiresAt,
     })
     .eq("id", medewerkerId);

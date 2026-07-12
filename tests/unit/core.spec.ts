@@ -13,6 +13,7 @@ import {
 } from "../../src/lib/compliance/arbeidstijden";
 import { encryptField, decryptField, isEncrypted } from "../../src/lib/encryption";
 import { escapeHtml } from "../../src/lib/sanitize";
+import { hashToken } from "../../src/lib/token-hash";
 
 // Deze tests dekken de pure kernlogica achter de audit-fixes (geld, PII, security).
 // Ze draaien zonder browser via `npx playwright test tests/unit`.
@@ -92,5 +93,15 @@ test.describe("escapeHtml", () => {
       "&lt;script&gt;alert(1)&lt;&#x2F;script&gt;",
     );
     expect(escapeHtml(null)).toBe("");
+  });
+});
+
+test.describe("token-hash", () => {
+  test("deterministisch, niet de plaintext, 64 hex-tekens", () => {
+    const t = "reset-abc123";
+    expect(hashToken(t)).toBe(hashToken(t)); // deterministisch -> opzoekbaar
+    expect(hashToken(t)).not.toBe(t);
+    expect(hashToken(t)).toHaveLength(64);
+    expect(hashToken("a")).not.toBe(hashToken("b"));
   });
 });
