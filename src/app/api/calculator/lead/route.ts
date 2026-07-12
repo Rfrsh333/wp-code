@@ -9,6 +9,7 @@ import { berekenKosten, validateInputs } from "@/lib/calculator/calculate";
 import { functieLabels, ervaringLabels, dagen } from "@/lib/calculator/tarieven";
 import { captureRouteError } from "@/lib/sentry-utils";
 import * as Sentry from "@sentry/nextjs";
+import { escapeHtml } from "@/lib/sanitize";
 
 // ============================================================================
 // Types
@@ -65,7 +66,7 @@ function generateLeadEmail(lead: LeadFormData, inputs: CalculatorInputs, resulta
     <!-- Content -->
     <div style="padding: 30px;">
       <p style="color: #333; font-size: 16px; line-height: 1.6;">
-        Beste ${lead.naam},
+        Beste ${escapeHtml(lead.naam)},
       </p>
       <p style="color: #666; font-size: 15px; line-height: 1.6;">
         Bedankt voor het gebruik van onze kosten calculator. Hieronder vindt u een samenvatting van uw berekening.
@@ -198,16 +199,16 @@ function generateInternalEmail(lead: LeadFormData, inputs: CalculatorInputs, res
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 8px 0; color: #666; width: 30%;">Naam:</td>
-            <td style="padding: 8px 0; color: #333; font-weight: 500;">${lead.naam}</td>
+            <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(lead.naam)}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #666;">Bedrijf:</td>
-            <td style="padding: 8px 0; color: #333; font-weight: 500;">${lead.bedrijfsnaam}</td>
+            <td style="padding: 8px 0; color: #333; font-weight: 500;">${escapeHtml(lead.bedrijfsnaam)}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #666;">E-mail:</td>
             <td style="padding: 8px 0; color: #333; font-weight: 500;">
-              <a href="mailto:${lead.email}" style="color: #F27501;">${lead.email}</a>
+              <a href="mailto:${escapeHtml(lead.email)}" style="color: #F27501;">${escapeHtml(lead.email)}</a>
             </td>
           </tr>
         </table>
