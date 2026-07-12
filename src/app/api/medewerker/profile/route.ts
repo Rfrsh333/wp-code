@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { encryptField, decryptField } from "@/lib/encryption";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -45,6 +46,13 @@ export async function GET(request: NextRequest) {
         .select("score")
         .eq("medewerker_id", medewerker.id),
     ]);
+
+    // Ontsleutel gevoelige PII-velden voor weergave (zie src/lib/encryption.ts).
+    if (profiel) {
+      const p = profiel as Record<string, unknown>;
+      p.iban = decryptField(p.iban as string | null);
+      p.btw_nummer = decryptField(p.btw_nummer as string | null);
+    }
 
     const opkomst = totalDiensten && totalDiensten > 0
       ? Math.round(((completedDiensten || 0) / totalDiensten) * 100)
@@ -114,6 +122,10 @@ export async function PUT(request: NextRequest) {
         updateData[field] = body[field] || null;
       }
     }
+
+    // Versleutel gevoelige PII-velden bij opslag (zie src/lib/encryption.ts).
+    if ("iban" in updateData) updateData.iban = encryptField(updateData.iban as string | null);
+    if ("btw_nummer" in updateData) updateData.btw_nummer = encryptField(updateData.btw_nummer as string | null);
 
     const { error } = await supabaseAdmin
       .from("medewerkers")

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { decryptField } from "@/lib/encryption";
 
 export async function GET(
   request: NextRequest,
@@ -92,6 +93,11 @@ export async function GET(
     return NextResponse.json({ error: "Medewerker niet gevonden" }, { status: 404 });
   }
 
+  // Ontsleutel gevoelige PII-velden voor weergave (zie src/lib/encryption.ts).
+  const profiel = { ...(profielRes.data as Record<string, unknown>) };
+  profiel.iban = decryptField(profiel.iban as string | null);
+  profiel.btw_nummer = decryptField(profiel.btw_nummer as string | null);
+
   // Calculate stats
   const totalAanmeldingen = dienstenRes.data?.filter((d) => d.status === "geaccepteerd").length || 0;
   const goedgekeurdeUren = urenRes.data?.filter((u) => u.status === "goedgekeurd") || [];
@@ -120,7 +126,7 @@ export async function GET(
   const totalVerdiensten = financieel.reduce((sum, m) => sum + m.verdiensten, 0);
 
   return NextResponse.json({
-    profiel: profielRes.data,
+    profiel,
     werkervaring: werkervaringRes.data || [],
     vaardigheden: vaardighedenRes.data || [],
     documenten: documentenRes.data || [],
