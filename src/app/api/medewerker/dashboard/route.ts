@@ -21,25 +21,28 @@ export async function GET(request: NextRequest) {
     const startVanMaandStr = startVanMaand.toISOString().split("T")[0];
 
     // Run all independent queries in parallel.
+    // We embedden telkens de dienst via de bewezen FK-hint `diensten!dienst_id` en
+    // filteren de datums in applicatiecode. De vorige versie filterde op `diensten.datum`
+    // zonder die relatie te embedden (queries 1–2) en op de verkeerde alias
+    // `aanmelding.diensten.datum` i.p.v. `dienst` (query 4), waardoor de datumfilters
+    // werden genegeerd (aankomende diensten fout, verdiensten over álle maanden opgeteld).
     const [
-      { count: aankomende_diensten },
+      { data: aankomendeRows },
       { data: voltooide },
       { data: geregistreerd },
-      { data: urenDezeMaand },
+      { data: urenRegistraties },
     ] = await Promise.all([
       supabaseAdmin
         .from("dienst_aanmeldingen")
-        .select("id", { count: "exact", head: true })
+        .select("id, dienst:diensten!dienst_id(datum)")
         .eq("medewerker_id", medewerker.id)
-        .eq("status", "bevestigd")
-        .gte("diensten.datum", vandaag),
+        .eq("status", "bevestigd"),
       supabaseAdmin
         .from("dienst_aanmeldingen")
-        .select("id")
+        .select("id, dienst:diensten!dienst_id(datum)")
         .eq("medewerker_id", medewerker.id)
         .eq("status", "bevestigd")
-        .not("check_in_at", "is", null)
-        .lt("diensten.datum", vandaag),
+        .not("check_in_at", "is", null),
       supabaseAdmin
         .from("uren_registraties")
         .select("aanmelding_id")
@@ -53,24 +56,44 @@ export async function GET(request: NextRequest) {
           )
         `)
         .eq("medewerker_id", medewerker.id)
-        .in("status", ["klant_goedgekeurd", "gefactureerd"])
-        .gte("aanmelding.diensten.datum", startVanMaandStr),
+        .in("status", ["klant_goedgekeurd", "gefactureerd"]),
     ]);
 
+    const rowDatum = (row: unknown): string | null => {
+      const dienst = (row as { dienst?: { datum?: string } | null })?.dienst;
+      return dienst?.datum ?? null;
+    };
+
+    const aankomende_diensten = (aankomendeRows || []).filter((r) => {
+      const d = rowDatum(r);
+      return d !== null && d >= vandaag;
+    }).length;
+
+    const voltooideInVerleden = (voltooide || []).filter((r) => {
+      const d = rowDatum(r);
+      return d !== null && d < vandaag;
+    });
+
     const geregistreerdIds = new Set((geregistreerd || []).map(u => u.aanmelding_id));
-    const te_registreren_uren = (voltooide || []).filter(v => !geregistreerdIds.has(v.id)).length;
+    const te_registreren_uren = voltooideInVerleden.filter(v => !geregistreerdIds.has((v as { id: string }).id)).length;
 
     let deze_maand_verdiensten = 0;
     let totaal_uren_deze_maand = 0;
 
-    for (const uur of urenDezeMaand || []) {
+    for (const uur of urenRegistraties || []) {
       const aanmelding = uur.aanmelding as unknown as Record<string, unknown> | null;
       const dienst = aanmelding?.dienst as Record<string, unknown> | null;
+      const datum = (dienst?.datum as string) || null;
+      // Alleen deze maand meetellen (datumfilter in code i.p.v. via een fragiele embed-filter).
+      if (!datum || datum < startVanMaandStr) continue;
       const klantUurtarief = (dienst?.uurtarief as number) || 0;
-      const medewerkerUurtarief = klantUurtarief - 4; // €4 margin
+      const medewerkerUurtarief = Math.max(0, klantUurtarief - 4); // €4 marge, nooit negatief
       deze_maand_verdiensten += uur.gewerkte_uren * medewerkerUurtarief;
       totaal_uren_deze_maand += uur.gewerkte_uren;
     }
+
+    deze_maand_verdiensten = Math.round(deze_maand_verdiensten * 100) / 100;
+    totaal_uren_deze_maand = Math.round(totaal_uren_deze_maand * 100) / 100;
 
     const gemiddelde_rating = 4.8;
 

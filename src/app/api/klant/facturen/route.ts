@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyKlantSession } from "@/lib/session";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { calculateKlantReiskosten, roundCurrency } from "@/lib/reiskosten";
+import { calculateVat } from "@/lib/factuur-config";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -84,9 +86,11 @@ export async function POST(request: NextRequest) {
     const dienst = aanmelding?.dienst as Record<string, unknown> | null;
     const medewerker = aanmelding?.medewerker as Record<string, unknown> | null;
 
-    const urenBedrag = uren.gewerkte_uren * ((dienst?.uurtarief as number) || 0);
-    const reiskosten = uren.reiskosten_bedrag || 0;
-    const bedrag = urenBedrag + reiskosten;
+    const urenBedrag = roundCurrency(uren.gewerkte_uren * ((dienst?.uurtarief as number) || 0));
+    // Reiskosten voor de KLANT-factuur op basis van km × klanttarief (€0,23),
+    // niet het opgeslagen medewerkerbedrag (€0,21). Gelijk aan /api/facturen/generate.
+    const reiskosten = calculateKlantReiskosten(uren.reiskosten_km);
+    const bedrag = roundCurrency(urenBedrag + reiskosten);
     subtotaal += bedrag;
 
     regels.push({
@@ -101,8 +105,9 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const btw = subtotaal * 0.21;
-  const totaal = subtotaal + btw;
+  subtotaal = roundCurrency(subtotaal);
+  const btw = calculateVat(subtotaal, 21);
+  const totaal = roundCurrency(subtotaal + btw);
 
   // Generate factuur nummer
   const now = new Date();
@@ -137,6 +142,7 @@ export async function POST(request: NextRequest) {
       periode_start: regels[0]?.datum || now.toISOString().split("T")[0],
       periode_eind: regels[regels.length - 1]?.datum || now.toISOString().split("T")[0],
       subtotaal,
+      btw_percentage: 21,
       btw_bedrag: btw,
       totaal,
       status: "open",
