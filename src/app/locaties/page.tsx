@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "Bekijk in welke regio's TopTalent Jobs actief is. Lokale horecapersoneel oplossingen in Utrecht, Amsterdam en Rotterdam.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/locaties",
+    canonical: "https://www.toptalentjobs.nl/locaties/",
   },
 };
 

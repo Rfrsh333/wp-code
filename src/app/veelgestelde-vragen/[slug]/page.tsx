@@ -47,7 +47,7 @@ export async function generateMetadata({
     title: faq.question,
     description: `${shortAnswer}... Lees het volledige antwoord van TopTalent Jobs.`,
     alternates: {
-      canonical: `https://www.toptalentjobs.nl/veelgestelde-vragen/${slug}`,
+      canonical: `https://www.toptalentjobs.nl/veelgestelde-vragen/${slug}/`,
     },
     openGraph: {
       title: faq.question,

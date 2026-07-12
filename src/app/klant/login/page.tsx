@@ -106,20 +106,21 @@ export default function KlantLogin() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
+              {error && <div role="alert" className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
+                <label htmlFor="klant-email" className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
                 <input
+                  id="klant-email"
                   type="email"
                   {...register("email", { required: "Vul een geldig emailadres in", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Vul een geldig emailadres in" } })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="jouw@bedrijf.nl"
                 />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+                {errors.email && <p role="alert" className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-neutral-700">Wachtwoord</label>
+                  <label htmlFor="klant-wachtwoord" className="block text-sm font-medium text-neutral-700">Wachtwoord</label>
                   <button
                     type="button"
                     onClick={handleForgotPassword}
@@ -129,12 +130,13 @@ export default function KlantLogin() {
                   </button>
                 </div>
                 <input
+                  id="klant-wachtwoord"
                   type="password"
                   {...register("wachtwoord", { required: "Wachtwoord is verplicht" })}
                   className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
                   placeholder="••••••••"
                 />
-                {errors.wachtwoord && <p className="text-red-500 text-sm mt-1">{errors.wachtwoord.message}</p>}
+                {errors.wachtwoord && <p role="alert" className="text-red-500 text-sm mt-1">{errors.wachtwoord.message}</p>}
               </div>
               <button
                 type="submit"

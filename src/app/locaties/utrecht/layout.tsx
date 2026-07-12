@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Horeca Uitzendbureau Utrecht | TopTalent Jobs",
   description: "Snel en betrouwbaar horeca personeel in Utrecht. Ervaren krachten voor restaurants, hotels en evenementen. Binnen 24 uur beschikbaar.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/locaties/utrecht",
+    canonical: "https://www.toptalentjobs.nl/locaties/utrecht/",
   },
   openGraph: {
     title: "Horeca Uitzendbureau Utrecht | TopTalent Jobs",

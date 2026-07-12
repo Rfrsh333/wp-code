@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: article.metaTitle ?? `${article.title} | TopTalent Jobs Blog`,
     description: article.excerpt,
     alternates: {
-      canonical: `https://www.toptalentjobs.nl/blog/${slug}`,
+      canonical: `https://www.toptalentjobs.nl/blog/${slug}/`,
     },
     openGraph: {
       title: article.title,

@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Horeca Detachering — Vast Personeel Zonder Risico",
   description: "Detachering van horecapersoneel voor structurele bezetting. Een vaste horecakracht in uw team, zonder werkgeversrisico en met heldere afspraken.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/diensten/detachering",
+    canonical: "https://www.toptalentjobs.nl/diensten/detachering/",
   },
 };
 
