@@ -114,10 +114,19 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Allow SW scope beyond file location
+        // Allow SW scope beyond file location; no-store zodat SW-updates niet blijven hangen
         source: '/sw.js',
         headers: [
           { key: 'Service-Worker-Allowed', value: '/medewerker/' },
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+        ],
+      },
+      {
+        // Klant-service-worker: scope + no-store zodat updates altijd doorkomen
+        source: '/sw-business.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/klant/' },
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
         ],
       },
       {

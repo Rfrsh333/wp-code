@@ -26,15 +26,17 @@ self.addEventListener("install", (event) => {
 // Activate: verwijder oude caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k !== CACHE_NAME && k.startsWith("toptalent-business-"))
-          .map((k) => caches.delete(k))
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k !== CACHE_NAME && k.startsWith("toptalent-business-"))
+            .map((k) => caches.delete(k))
+        )
       )
-    )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 // Fetch strategie:
@@ -78,6 +80,13 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
+          // Sessie verlopen: bij een redirect naar de login-pagina de (mogelijk
+          // klant-identificerende) cache wissen, zodat een volgende gebruiker op een
+          // gedeeld toestel offline geen gegevens van de vorige klant ziet.
+          if (response.redirected && response.url.includes("/klant/login")) {
+            caches.delete(CACHE_NAME);
+            return response;
+          }
           // Cache succesvolle responses
           if (response.ok) {
             const clone = response.clone();

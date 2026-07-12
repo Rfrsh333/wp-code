@@ -1,7 +1,7 @@
-const CACHE_NAME = "toptalent-hub-v5";
 const STATIC_CACHE = "toptalent-static-v5";
 const DYNAMIC_CACHE = "toptalent-dynamic-v5";
-const API_CACHE = "toptalent-api-v1";
+// Meegroeien met de overige cache-versies zodat API-cache óók geïnvalideerd wordt bij een bump.
+const API_CACHE = "toptalent-api-v5";
 
 const STATIC_ASSETS = [
   "/medewerker/dashboard/",
@@ -14,11 +14,12 @@ const STATIC_ASSETS = [
   "/favicon-icon.png",
 ];
 
-// API routes die gecached mogen worden voor offline gebruik
+// API routes die gecached mogen worden voor offline gebruik.
+// Let op: /api/medewerker/profile bevat gevoelige PII (IBAN/BSN-status) en wordt
+// bewust NIET offline gecached om PII-at-rest op (gedeelde) toestellen te beperken.
 const CACHEABLE_API_ROUTES = [
   "/api/medewerker/diensten/lijst",
   "/api/medewerker/dashboard",
-  "/api/medewerker/profiel",
   "/api/medewerker/financieel",
   "/api/medewerker/beschikbaarheid",
 ];
@@ -97,18 +98,24 @@ self.addEventListener("message", (event) => {
   }
 
   if (event.data.type === "LOGOUT") {
-    event.waitUntil(
-      Promise.all([
-        caches.delete(API_CACHE),
-        caches.delete(DYNAMIC_CACHE),
-      ])
-    );
+    event.waitUntil(purgeSensitiveCaches());
   }
 });
 
-// Helper: check of een API route gecached mag worden
+// Helper: check of een API route gecached mag worden.
+// Exacte match (met optionele trailing slash) om overmatch te voorkomen,
+// bv. dat "/api/medewerker/dashboard" ook "/api/medewerker/dashboard-summary" ving.
 function isCacheableApi(pathname) {
-  return CACHEABLE_API_ROUTES.some((route) => pathname.startsWith(route));
+  return CACHEABLE_API_ROUTES.some(
+    (route) => pathname === route || pathname === route + "/",
+  );
+}
+
+// Wis de caches met (mogelijk) gebruikersgebonden data. Aangeroepen bij logout en
+// wanneer een response 401/403 teruggeeft (sessie verlopen of gewisseld) — zodat een
+// volgende gebruiker op een gedeeld toestel offline geen PII van de vorige krijgt.
+function purgeSensitiveCaches() {
+  return Promise.all([caches.delete(API_CACHE), caches.delete(DYNAMIC_CACHE)]);
 }
 
 // Fetch event
@@ -137,6 +144,11 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
+          // Sessie verlopen/gewisseld: gooi gebruikersgebonden caches weg.
+          if (response && (response.status === 401 || response.status === 403)) {
+            purgeSensitiveCaches();
+            return response;
+          }
           if (response && response.ok) {
             const cloned = response.clone();
             // Sla op in API cache met de volledige URL (inclusief query params)

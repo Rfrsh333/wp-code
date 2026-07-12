@@ -28,29 +28,6 @@
       "purpose": "any"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/klant-dashboard-narrow.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Klant dashboard"
-    },
-    {
-      "src": "/screenshots/klant-uren-narrow.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Uren overzicht"
-    },
-    {
-      "src": "/screenshots/klant-dashboard-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Klant dashboard"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Dashboard",
