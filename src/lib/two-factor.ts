@@ -57,7 +57,7 @@ export async function hashBackupCodes(codes: string[]): Promise<string[]> {
   const hashed: string[] = [];
 
   for (const code of codes) {
-    const hash = await bcrypt.hash(code, 10);
+    const hash = await bcrypt.hash(code, 12);
     hashed.push(hash);
   }
 

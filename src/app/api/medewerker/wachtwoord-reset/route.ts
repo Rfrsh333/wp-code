@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Resetlink is ongeldig of verlopen" }, { status: 404 });
     }
 
-    const hashedPassword = await bcrypt.hash(String(wachtwoord), 10);
+    const hashedPassword = await bcrypt.hash(String(wachtwoord), 12);
 
     const { error } = await supabaseAdmin
       .from("medewerkers")
