@@ -5,6 +5,7 @@ import { verifyKlantSession } from "@/lib/session";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { calculateKlantReiskosten, roundCurrency } from "@/lib/reiskosten";
 import { calculateVat } from "@/lib/factuur-config";
+import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
 
 async function getKlant() {
   const cookieStore = await cookies();
@@ -54,6 +55,8 @@ export async function POST(request: NextRequest) {
     .select(`
       id,
       gewerkte_uren,
+      start_tijd,
+      eind_tijd,
       reiskosten_km,
       reiskosten_bedrag,
       aanmelding:dienst_aanmeldingen!aanmelding_id(
@@ -103,6 +106,30 @@ export async function POST(request: NextRequest) {
       reiskosten,
       bedrag,
     });
+
+    // Toeslag (avond/nacht/weekend/feestdag) doorbelasten aan de klant, over het klanttarief.
+    const startTijd = (uren as { start_tijd?: string }).start_tijd;
+    const eindTijd = (uren as { eind_tijd?: string }).eind_tijd;
+    const toeslag = berekenToeslagRegel(
+      uren.gewerkte_uren,
+      (dienst?.uurtarief as number) || 0,
+      dienst?.datum as string,
+      startTijd,
+      eindTijd,
+    );
+    if (toeslag.bedrag > 0) {
+      subtotaal += toeslag.bedrag;
+      regels.push({
+        uren_registratie_id: uren.id,
+        omschrijving: `${toeslagLabel(toeslag.type)} (${toeslag.percentage}%) - ${(medewerker?.naam as string) || ''}`,
+        datum: (dienst?.datum as string) || '',
+        medewerker_naam: (medewerker?.naam as string) || '',
+        uren: 0,
+        uurtarief: 0,
+        reiskosten: 0,
+        bedrag: toeslag.bedrag,
+      });
+    }
   }
 
   subtotaal = roundCurrency(subtotaal);

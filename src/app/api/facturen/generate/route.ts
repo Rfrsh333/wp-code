@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { calculateVat } from "@/lib/factuur-config";
-import { calculateKlantReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
+import { calculateKlantReiskosten, sanitizeKilometers, roundCurrency } from "@/lib/reiskosten";
+import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 type UrenRegistratie = {
@@ -62,24 +63,45 @@ export async function POST(request: NextRequest) {
 
     // Bereken totalen
     let subtotaal = 0;
-    const regels = (uren || []).map((u): FactuurRegel => {
+    const regels: FactuurRegel[] = [];
+    for (const u of uren || []) {
       const typedU = u as unknown as UrenRegistratie;
+      const dienst = typedU.aanmelding?.dienst;
+      const uurtarief = dienst?.uurtarief || 0;
+      const medewerkerNaam = typedU.aanmelding?.medewerker?.naam || '';
       const reiskostenKm = sanitizeKilometers(typedU.reiskosten_km);
       const reiskosten = calculateKlantReiskosten(reiskostenKm);
-      const urenBedrag = typedU.gewerkte_uren * (typedU.aanmelding?.dienst?.uurtarief || 0);
-      const bedrag = urenBedrag + reiskosten;
+      const urenBedrag = roundCurrency(typedU.gewerkte_uren * uurtarief);
+      const bedrag = roundCurrency(urenBedrag + reiskosten);
       subtotaal += bedrag;
-      return {
+      regels.push({
         uren_registratie_id: typedU.id,
-        omschrijving: `${typedU.aanmelding?.dienst?.locatie || ''} - ${typedU.aanmelding?.medewerker?.naam || ''}`,
-        datum: typedU.aanmelding?.dienst?.datum || '',
-        medewerker_naam: typedU.aanmelding?.medewerker?.naam || '',
+        omschrijving: `${dienst?.locatie || ''} - ${medewerkerNaam}`,
+        datum: dienst?.datum || '',
+        medewerker_naam: medewerkerNaam,
         uren: typedU.gewerkte_uren,
-        uurtarief: typedU.aanmelding?.dienst?.uurtarief || 0,
+        uurtarief,
         reiskosten,
         bedrag,
-      };
-    });
+      });
+
+      // Toeslag (avond/nacht/weekend/feestdag) doorbelasten aan de klant, over het klanttarief.
+      const toeslag = berekenToeslagRegel(typedU.gewerkte_uren, uurtarief, dienst?.datum, typedU.start_tijd, typedU.eind_tijd);
+      if (toeslag.bedrag > 0) {
+        subtotaal += toeslag.bedrag;
+        regels.push({
+          uren_registratie_id: typedU.id,
+          omschrijving: `${toeslagLabel(toeslag.type)} (${toeslag.percentage}%) - ${medewerkerNaam}`,
+          datum: dienst?.datum || '',
+          medewerker_naam: medewerkerNaam,
+          uren: 0,
+          uurtarief: 0,
+          reiskosten: 0,
+          bedrag: toeslag.bedrag,
+        });
+      }
+    }
+    subtotaal = roundCurrency(subtotaal);
 
     const btw_percentage = 21;
     const btw_bedrag = calculateVat(subtotaal, btw_percentage);

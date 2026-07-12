@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession } from "@/lib/session";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { berekenToeslagRegel } from "@/lib/toeslag";
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,6 +52,8 @@ export async function GET(request: NextRequest) {
         .from("uren_registraties")
         .select(`
           gewerkte_uren,
+          start_tijd,
+          eind_tijd,
           aanmelding:dienst_aanmeldingen!inner (
             dienst:diensten!dienst_id (uurtarief, datum)
           )
@@ -88,7 +91,15 @@ export async function GET(request: NextRequest) {
       if (!datum || datum < startVanMaandStr) continue;
       const klantUurtarief = (dienst?.uurtarief as number) || 0;
       const medewerkerUurtarief = Math.max(0, klantUurtarief - 4); // €4 marge, nooit negatief
-      deze_maand_verdiensten += uur.gewerkte_uren * medewerkerUurtarief;
+      // Toeslag (avond/nacht/weekend/feestdag) meetellen in de verdiensten.
+      const toeslag = berekenToeslagRegel(
+        uur.gewerkte_uren,
+        medewerkerUurtarief,
+        datum,
+        (uur as { start_tijd?: string }).start_tijd,
+        (uur as { eind_tijd?: string }).eind_tijd,
+      );
+      deze_maand_verdiensten += uur.gewerkte_uren * medewerkerUurtarief + toeslag.bedrag;
       totaal_uren_deze_maand += uur.gewerkte_uren;
     }
 
