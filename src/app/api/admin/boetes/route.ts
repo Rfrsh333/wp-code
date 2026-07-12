@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import { boetesPostSchema, validateAdminBody } from "@/lib/validations-admin";
 
@@ -34,6 +34,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const { isAdmin, email, role } = await verifyAdmin(request);
   if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Geld-actie (boetes aanmaken/kwijtschelden): alleen owner/finance.
+  if (!hasRequiredAdminRole(role, ["owner", "finance"])) {
+    return NextResponse.json({ error: "Onvoldoende rechten — finance vereist" }, { status: 403 });
+  }
 
   const rawBody = await request.json();
   const validation = validateAdminBody(boetesPostSchema, rawBody);

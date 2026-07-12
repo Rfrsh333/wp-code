@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
 import { calculateVat } from "@/lib/factuur-config";
 import { calculateKlantReiskosten, sanitizeKilometers, roundCurrency } from "@/lib/reiskosten";
 import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
@@ -34,10 +34,14 @@ export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
     const cronAuthorized = !!process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
-    const { isAdmin, email } = await verifyAdmin(request);
+    const { isAdmin, email, role } = await verifyAdmin(request);
     if (!isAdmin && !cronAuthorized) {
       console.warn(`[SECURITY] Unauthorized factuur generate attempt by: ${email || 'unknown'}`);
       return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+    }
+    // Geld-actie: alleen owner/finance (cron mag door).
+    if (!cronAuthorized && !hasRequiredAdminRole(role, ["owner", "finance"])) {
+      return NextResponse.json({ error: "Onvoldoende rechten — finance vereist" }, { status: 403 });
     }
 
     const { klant_id, periode_start, periode_eind } = await request.json();
