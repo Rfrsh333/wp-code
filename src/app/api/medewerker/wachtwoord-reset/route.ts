@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
-  const rateLimit = await checkRedisRateLimit(`medewerker-reset:${clientIP}`, loginRateLimit);
+  const rateLimit = await checkRedisRateLimit(`medewerker-reset:${clientIP}`, loginRateLimit, { failClosed: true });
 
   if (!rateLimit.success) {
     return NextResponse.json(

@@ -248,12 +248,29 @@ setInterval(() => {
  */
 export async function checkRedisRateLimit(
   identifier: string,
-  limiter: Ratelimit | null
+  limiter: Ratelimit | null,
+  options?: { failClosed?: boolean }
 ): Promise<RateLimitResult> {
+  const failClosed = options?.failClosed === true;
+  const isProd = process.env.NODE_ENV === "production";
+
+  const deny = (): RateLimitResult => ({
+    success: false,
+    limit: 0,
+    remaining: 0,
+    reset: Date.now() + 60_000,
+  });
+
   if (!limiter) {
     if (!hasWarnedAboutMissingRedis) {
       console.warn("[RATE LIMIT] Redis not configured, using in-memory fallback rate limiting");
       hasWarnedAboutMissingRedis = true;
+    }
+    // Fail-closed voor auth in productie: geen zwakke per-instance fallback toestaan.
+    // (In dev blijft de in-memory fallback zodat lokaal inloggen blijft werken.)
+    if (failClosed && isProd) {
+      console.error("[RATE LIMIT] Redis niet geconfigureerd in productie — auth fail-closed");
+      return deny();
     }
 
     return checkMemoryFallbackRateLimit(identifier);
@@ -273,6 +290,12 @@ export async function checkRedisRateLimit(
     if (!hasWarnedAboutRedisErrors) {
       console.warn("[RATE LIMIT] Falling back to in-memory rate limiting after Redis error");
       hasWarnedAboutRedisErrors = true;
+    }
+    // Fail-closed voor auth: bij een Redis-storing niet degraderen naar de zwakke
+    // per-instance fallback (die brute-force op serverless nauwelijks remt).
+    if (failClosed) {
+      console.error("[RATE LIMIT] Redis onbereikbaar — auth fail-closed");
+      return deny();
     }
 
     return checkMemoryFallbackRateLimit(identifier);

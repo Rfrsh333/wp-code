@@ -11,7 +11,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 export async function POST(request: NextRequest) {
   // Rate limiting per IP
   const clientIP = getClientIP(request);
-  const rateLimitResult = await checkRedisRateLimit(`2fa-verify:${clientIP}`, loginRateLimit);
+  const rateLimitResult = await checkRedisRateLimit(`2fa-verify:${clientIP}`, loginRateLimit, { failClosed: true });
   if (!rateLimitResult.success) {
     return NextResponse.json({ error: "Te veel pogingen. Probeer het later opnieuw." }, { status: 429 });
   }

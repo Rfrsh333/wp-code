@@ -6,7 +6,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
-  const rateLimit = await checkRedisRateLimit(`admin-reset-update:${clientIP}`, loginRateLimit);
+  const rateLimit = await checkRedisRateLimit(`admin-reset-update:${clientIP}`, loginRateLimit, { failClosed: true });
 
   if (!rateLimit.success) {
     return NextResponse.json(
