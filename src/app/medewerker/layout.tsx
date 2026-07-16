@@ -19,6 +19,11 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "TopTalent Hub",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+    // Nodig voor iOS-standalone (Next 16 emit dit niet meer via appleWebApp.capable).
+    "apple-mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
@@ -39,20 +44,16 @@ export default function MedewerkerLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // PWA-/apple-meta wordt door de metadata-export hierboven geleverd; een handmatige
+  // <head> in een geneste layout veroorzaakt hydration-errors (head kan geen child van
+  // body zijn) — daarom bewust verwijderd.
   return (
-    <>
-      <head>
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      </head>
-      <QueryProvider>
-        <ThemeProvider>
-          <ServiceWorkerRegister />
-          {children}
-          <AIChatWidget userType="medewerker" />
-        </ThemeProvider>
-      </QueryProvider>
-    </>
+    <QueryProvider>
+      <ThemeProvider>
+        <ServiceWorkerRegister />
+        {children}
+        <AIChatWidget userType="medewerker" />
+      </ThemeProvider>
+    </QueryProvider>
   );
 }

@@ -569,9 +569,6 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   <p className="text-sm text-[var(--kp-text-secondary)]">{klant.bedrijfsnaam}</p>
                 </div>
 
-                {/* PWA Install Banner (iOS) */}
-                <KlantInstallBanner />
-
                 {/* NIEUW: Dashboard Widgets */}
                 <DashboardWidgets
                   stats={dashboardStats}
@@ -3208,83 +3205,6 @@ function QRScannerTab() {
   );
 }
 
-/* ============================================================
-   PWA Install Banner for Klant Portal
-   ============================================================ */
-function KlantInstallBanner() {
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
-  const [bannerGesloten, setBannerGesloten] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const isMobileOrTablet = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
-    if (!isMobileOrTablet) return true;
-    return localStorage.getItem("klant-pwa-banner-gesloten") === "true";
-  });
-  const [isIOS] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return /iPad|iPhone|iPod/.test(navigator.userAgent);
-  });
-  const [isStandalone] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(display-mode: standalone)").matches;
-  });
-
-  useEffect(() => {
-    const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e); };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  const handleInstall = async () => {
-    if (!installPrompt) return;
-    (installPrompt as unknown as { prompt: () => void }).prompt();
-    const result = await (installPrompt as unknown as { userChoice: Promise<{ outcome: string }> }).userChoice;
-    if (result.outcome === "accepted") setInstallPrompt(null);
-  };
-
-  const handleSluit = () => {
-    setBannerGesloten(true);
-    localStorage.setItem("klant-pwa-banner-gesloten", "true");
-  };
-
-  if (bannerGesloten || isStandalone) return null;
-
-  // Android: native install prompt
-  if (installPrompt) {
-    return (
-      <div className="bg-[#1e3a5f] rounded-2xl p-4 flex items-center gap-3">
-        <span className="text-2xl flex-shrink-0">📲</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-sm">Installeer TopTalent Beheer</p>
-          <p className="text-blue-200 text-xs">Beheer uw personeel direct vanaf uw beginscherm</p>
-        </div>
-        <button onClick={handleInstall} className="bg-white text-[#1e3a5f] text-xs font-bold px-3 py-1.5 rounded-xl flex-shrink-0">
-          Installeer
-        </button>
-        <button onClick={handleSluit} className="text-blue-300 flex-shrink-0">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-      </div>
-    );
-  }
-
-  // iOS: instructie banner
-  if (isIOS) {
-    return (
-      <div className="bg-[#1e3a5f] rounded-2xl p-4 flex items-start gap-3">
-        <span className="text-2xl flex-shrink-0">📲</span>
-        <div className="flex-1">
-          <p className="text-white font-semibold text-sm">Installeer TopTalent Beheer</p>
-          <p className="text-blue-200 text-xs mt-1">
-            Tik op <strong className="text-white">⬆</strong> onderaan en kies <strong className="text-white">&quot;Zet op beginscherm&quot;</strong>
-          </p>
-        </div>
-        <button onClick={handleSluit} className="text-blue-300 flex-shrink-0 mt-0.5">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-      </div>
-    );
-  }
-
-  return null;
-}
+/* Install-prompt voor het klant-portaal wordt app-breed afgehandeld door
+   <KlantPWAInstallPrompt /> in klant/layout.tsx (voorheen stond hier een tweede,
+   dubbele install-banner — audit P2-226). */
