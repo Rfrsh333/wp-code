@@ -313,7 +313,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
       {/* Detail Modal */}
       {showDetail && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
           onClick={() => { setShowDetail(false); setShowUrenForm(false); }}
         >
           {/* Backdrop */}
@@ -352,7 +352,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
             </div>
 
             {/* Modal Body */}
-            <div className="p-4">
+            <div className="px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
               <h2 className="text-lg font-bold text-[var(--mp-text-primary)] mb-1">
                 {dienst.klant.bedrijfsnaam}
               </h2>

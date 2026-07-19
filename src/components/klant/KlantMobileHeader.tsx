@@ -10,7 +10,10 @@ interface KlantMobileHeaderProps {
 
 export default function KlantMobileHeader({ bedrijfsnaam, contactpersoon, ongelezen }: KlantMobileHeaderProps) {
   return (
-    <header className="md:hidden sticky top-0 z-40 bg-white border-b border-[var(--kp-border)] px-4 py-3 flex items-center justify-between">
+    <header
+      className="md:hidden sticky top-0 z-40 bg-white border-b border-[var(--kp-border)] px-4 pb-3 flex items-center justify-between"
+      style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))" }}
+    >
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 bg-[#1e3a5f] rounded-lg flex items-center justify-center">
           <Image src="/favicon-icon.png" alt="TopTalent" width={16} height={16} />
