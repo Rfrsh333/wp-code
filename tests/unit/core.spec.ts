@@ -56,6 +56,28 @@ test.describe("arbeidstijden", () => {
     expect(isFeestdag("2026-07-15")).toBe(false);
     expect(berekenBewaarTot("2020-01-01")).toBe("2025-01-01");
   });
+
+  // De Pasen-gerelateerde feestdagen werden in Europe/Amsterdam een dag te vroeg
+  // berekend (lokale Date + toISOString), waardoor de 100%-toeslag op de verkeerde
+  // dag viel. Vaste ankers: 2e Paasdag is altijd een maandag, Hemelvaart een donderdag.
+  test("feestdagen rond Pasen vallen op de juiste dag (geen tijdzoneverschuiving)", () => {
+    // 2026: Pasen 5 april
+    expect(isFeestdag("2026-04-03")).toBe(true); // Goede Vrijdag
+    expect(isFeestdag("2026-04-05")).toBe(true); // Eerste Paasdag
+    expect(isFeestdag("2026-04-06")).toBe(true); // Tweede Paasdag (maandag)
+    expect(isFeestdag("2026-04-04")).toBe(false); // gewone zaterdag ertussen
+    expect(isFeestdag("2026-05-14")).toBe(true); // Hemelvaart (donderdag)
+    expect(isFeestdag("2026-05-24")).toBe(true); // Eerste Pinksterdag
+    expect(isFeestdag("2026-05-25")).toBe(true); // Tweede Pinksterdag
+
+    // 2027: Pasen 28 maart — ander jaar, andere zomertijdgrens
+    expect(isFeestdag("2027-03-29")).toBe(true); // Tweede Paasdag (maandag)
+    expect(isFeestdag("2027-05-06")).toBe(true); // Hemelvaart (donderdag)
+    expect(isFeestdag("2027-03-27")).toBe(false); // zaterdag vóór Pasen
+
+    // Tweede Paasdag levert 100%, niet de 50% van een gewone zondag.
+    expect(berekenToeslag("2026-04-06", "10:00", "18:00").percentage).toBe(100);
+  });
 });
 
 test.describe("encryptie (IBAN/BTW)", () => {

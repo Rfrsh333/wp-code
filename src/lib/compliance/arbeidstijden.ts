@@ -29,30 +29,33 @@ function getFeestdagen(jaar: number): string[] {
   const maand = Math.floor((h + l - 7 * m + 114) / 31);
   const dag = ((h + l - 7 * m + 114) % 31) + 1;
 
-  const pasen = new Date(jaar, maand - 1, dag);
-  const goedVrijdag = new Date(pasen);
-  goedVrijdag.setDate(pasen.getDate() - 2);
-  const tweedePaasdag = new Date(pasen);
-  tweedePaasdag.setDate(pasen.getDate() + 1);
-  const hemelvaartsdag = new Date(pasen);
-  hemelvaartsdag.setDate(pasen.getDate() + 39);
-  const tweedePinksterdag = new Date(pasen);
-  tweedePinksterdag.setDate(pasen.getDate() + 50);
-
-  const format = (d: Date) => d.toISOString().split("T")[0];
+  // In UTC rekenen. Met `new Date(jaar, maand-1, dag)` (lokale tijd) gaf het latere
+  // `toISOString()` in Europe/Amsterdam de dag ERVOOR terug — alle vijf de
+  // Pasen-gerelateerde feestdagen stonden daardoor een dag te vroeg, zodat de
+  // feestdagtoeslag van 100% op de verkeerde dag viel.
+  const pasen = new Date(Date.UTC(jaar, maand - 1, dag));
+  const naPasen = (dagen: number) => {
+    const d = new Date(pasen);
+    d.setUTCDate(pasen.getUTCDate() + dagen);
+    return d.toISOString().split("T")[0];
+  };
 
   return [
     ...vast,
-    format(goedVrijdag),
-    format(pasen),
-    format(tweedePaasdag),
-    format(hemelvaartsdag),
-    format(tweedePinksterdag),
+    naPasen(-2), // Goede Vrijdag
+    naPasen(0), // Eerste Paasdag
+    naPasen(1), // Tweede Paasdag
+    naPasen(39), // Hemelvaartsdag
+    naPasen(49), // Eerste Pinksterdag
+    naPasen(50), // Tweede Pinksterdag
   ];
 }
 
 export function isFeestdag(datum: string): boolean {
-  const jaar = new Date(datum).getFullYear();
+  // Jaar uit de string zelf halen; `new Date(datum).getFullYear()` leest in lokale
+  // tijd en kan rond de jaarwisseling het verkeerde jaar geven.
+  const jaar = Number(datum.slice(0, 4));
+  if (!Number.isFinite(jaar)) return false;
   return getFeestdagen(jaar).includes(datum);
 }
 
