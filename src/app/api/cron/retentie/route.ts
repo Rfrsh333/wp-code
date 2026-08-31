@@ -16,9 +16,15 @@ import { berekenBewaarTot } from "@/lib/compliance/arbeidstijden";
  * RETENTION_DELETE=1 is gezet. Zo kan de cron eerst draaien en rapporteren wat hij
  * zou opruimen voordat er onomkeerbaar data verdwijnt.
  */
+// Let op: de twee tabellen noemen het opslagpad anders (`file_path` vs `bestand_pad`).
+// Met één hardcoded veldnaam bleef het storage-object van de kandidaat-kant achter.
 const DOC_TABELLEN = [
-  { tabel: "medewerker_documenten", bucket: "medewerker-documenten" },
-  { tabel: "kandidaat_documenten", bucket: process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten" },
+  { tabel: "medewerker_documenten", bucket: "medewerker-documenten", padVeld: "file_path" },
+  {
+    tabel: "kandidaat_documenten",
+    bucket: process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten",
+    padVeld: "bestand_pad",
+  },
 ] as const;
 
 export async function GET(request: NextRequest) {
@@ -33,11 +39,15 @@ export async function GET(request: NextRequest) {
 
     // 1) Vul ontbrekende bewaar_tot voor documenten van uit-dienst medewerkers (datum_uit_dienst + 5 jaar).
     let bewaarTotGevuld = 0;
-    const { data: zonderBewaartermijn } = await supabaseAdmin
+    const { data: zonderBewaartermijn, error: vulFout } = await supabaseAdmin
       .from("medewerker_documenten")
       .select("id, medewerker:medewerkers!medewerker_id(datum_uit_dienst)")
       .is("bewaar_tot", null)
       .limit(1000);
+
+    if (vulFout) {
+      throw new Error(`Retentie kon medewerker_documenten niet lezen: ${vulFout.message}`);
+    }
 
     for (const d of zonderBewaartermijn || []) {
       const mw = (d as { medewerker?: { datum_uit_dienst?: string | null } | null }).medewerker;
@@ -54,18 +64,24 @@ export async function GET(request: NextRequest) {
 
     // 2) Verwijder documenten waarvan de bewaartermijn is verstreken (DB-rij + opslag-object).
     const verwijderd: Record<string, number> = {};
-    for (const { tabel, bucket } of DOC_TABELLEN) {
-      const { data: verlopen } = await supabaseAdmin
+    for (const { tabel, bucket, padVeld } of DOC_TABELLEN) {
+      const { data: verlopen, error: leesFout } = await supabaseAdmin
         .from(tabel)
-        .select("id, file_path")
+        .select(`id, ${padVeld}`)
         .not("bewaar_tot", "is", null)
         .lt("bewaar_tot", vandaag)
         .limit(1000);
 
+      // Een ontbrekende kolom geeft hier een error én data=null; zonder deze check
+      // rapporteert de cron stil "0 opgeruimd" terwijl hij niets kán zien.
+      if (leesFout) {
+        throw new Error(`Retentie kon ${tabel} niet lezen: ${leesFout.message}`);
+      }
+
       let aantal = 0;
       for (const doc of verlopen || []) {
         const id = (doc as { id: string }).id;
-        const filePath = (doc as { file_path?: string | null }).file_path;
+        const filePath = (doc as Record<string, unknown>)[padVeld] as string | null | undefined;
         if (!dryRun) {
           if (filePath) {
             await supabaseAdmin.storage.from(bucket).remove([filePath]);
