@@ -246,12 +246,24 @@ setInterval(() => {
  * @param limiter - Ratelimit instance from Upstash
  * @returns Promise<RateLimitResult>
  */
+/**
+ * Fail-closed is een BEWUSTE productieschakelaar, geen automatisme: hij vereist een
+ * bereikbare Redis. Staat `AUTH_RATE_LIMIT_FAIL_CLOSED` niet op "1", dan degradeert auth
+ * naar de in-memory fallback in plaats van iedereen buiten te sluiten. Zet de vlag pas aan
+ * als Redis aantoonbaar bereikbaar is vanuit productie — met een dode Upstash-URL weigert
+ * fail-closed élke login van admin, medewerker én klant.
+ */
+export function authFailClosedIngeschakeld(): boolean {
+  return process.env.AUTH_RATE_LIMIT_FAIL_CLOSED === "1";
+}
+
 export async function checkRedisRateLimit(
   identifier: string,
   limiter: Ratelimit | null,
   options?: { failClosed?: boolean }
 ): Promise<RateLimitResult> {
-  const failClosed = options?.failClosed === true;
+  const failClosedGewenst = options?.failClosed === true;
+  const failClosed = failClosedGewenst && authFailClosedIngeschakeld();
   const isProd = process.env.NODE_ENV === "production";
 
   const deny = (): RateLimitResult => ({
@@ -271,6 +283,12 @@ export async function checkRedisRateLimit(
     if (failClosed && isProd) {
       console.error("[RATE LIMIT] Redis niet geconfigureerd in productie — auth fail-closed");
       return deny();
+    }
+    if (failClosedGewenst && isProd) {
+      console.error(
+        "[RATE LIMIT] Auth-endpoint zonder Redis in productie; fail-closed staat UIT " +
+          "(AUTH_RATE_LIMIT_FAIL_CLOSED != 1). Brute-force wordt nu zwak geremd."
+      );
     }
 
     return checkMemoryFallbackRateLimit(identifier);
@@ -296,6 +314,12 @@ export async function checkRedisRateLimit(
     if (failClosed) {
       console.error("[RATE LIMIT] Redis onbereikbaar — auth fail-closed");
       return deny();
+    }
+    if (failClosedGewenst) {
+      console.error(
+        "[RATE LIMIT] Redis onbereikbaar op een auth-endpoint; fail-closed staat UIT " +
+          "(AUTH_RATE_LIMIT_FAIL_CLOSED != 1). Login blijft werken, remming is zwak."
+      );
     }
 
     return checkMemoryFallbackRateLimit(identifier);
