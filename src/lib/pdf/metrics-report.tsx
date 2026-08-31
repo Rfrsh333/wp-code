@@ -1,6 +1,8 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
+import type { BusinessMetrics } from "@/types/business-metrics";
+
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -64,7 +66,7 @@ const styles = StyleSheet.create({
 });
 
 interface MetricsReportProps {
-  metrics: any;
+  metrics: BusinessMetrics;
 }
 
 export const MetricsReport = ({ metrics }: MetricsReportProps) => {
@@ -121,7 +123,7 @@ export const MetricsReport = ({ metrics }: MetricsReportProps) => {
         {/* Pipeline Stages */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Pipeline per Stage</Text>
-          {Object.entries(metrics.pipeline.byStage).map(([stage, count]: [string, any]) => (
+          {Object.entries(metrics.pipeline.byStage).map(([stage, count]: [string, number]) => (
             <View key={stage} style={styles.row}>
               <Text style={styles.label}>{stage.charAt(0).toUpperCase() + stage.slice(1)}</Text>
               <Text style={styles.value}>{count}</Text>

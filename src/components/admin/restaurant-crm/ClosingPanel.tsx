@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Briefcase, Phone, AlertTriangle, Plus, ChevronDown } from "lucide-react";
+import { User, Briefcase, Phone, AlertTriangle, Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { PERSONEELSBEHOEFTE_OPTIONS, TYPE_BEHOEFTE_OPTIONS, URGENTIE_CONFIG } from "./constants";

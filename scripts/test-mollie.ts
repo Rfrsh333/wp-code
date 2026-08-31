@@ -100,10 +100,11 @@ async function testMolliePayment() {
     console.log("   3. Check webhook in je dev server logs");
     console.log("   4. Verifieer status met: npx tsx scripts/check-mollie-payment.ts " + payment.id);
 
-  } catch (error: any) {
-    console.error("❌ Error:", error.message);
-    if (error.field) {
-      console.error(`   Field: ${error.field}`);
+  } catch (error: unknown) {
+    const err = error as { message?: string; field?: string };
+    console.error("❌ Error:", err.message);
+    if (err.field) {
+      console.error(`   Field: ${err.field}`);
     }
     process.exit(1);
   }

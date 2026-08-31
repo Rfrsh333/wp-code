@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Loader2, GitMerge, XCircle } from "lucide-react";
+import { Search, Loader2, GitMerge } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import LeadMergeModal from "./LeadMergeModal";

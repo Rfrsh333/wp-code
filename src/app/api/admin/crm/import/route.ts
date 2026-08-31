@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Duplicate detection
-  let duplicates: string[] = [];
+  const duplicates: string[] = [];
   let toInsert = rows;
 
   if (skip_duplicates !== false) {

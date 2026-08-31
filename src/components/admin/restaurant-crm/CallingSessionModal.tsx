@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
-import { X, Phone, PhoneMissed, PhoneCall, MessageCircle, ChevronRight, Clock, SkipForward, Square, Voicemail } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { X, Phone, PhoneMissed, PhoneCall, ChevronRight, Clock, SkipForward, Voicemail } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { calculateNextBestChannel } from "./outreach-helpers";
-import { CALL_SCRIPTS, CLOSING_SCRIPTS } from "./sales-templates";
+import { CALL_SCRIPTS } from "./sales-templates";
 import type { CRMLead } from "./types";
 
 interface CallingSessionModalProps {

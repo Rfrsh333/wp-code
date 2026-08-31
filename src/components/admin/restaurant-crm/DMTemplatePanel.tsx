@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, Send } from "lucide-react";
+import { Copy, Check, Send } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import type { CRMLead } from "./types";
 

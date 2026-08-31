@@ -14,6 +14,10 @@ export default function CookieConsent() {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Bewust: SSR en de eerste client-render moeten identiek null zijn (anders
+    // hydration-mismatch). isVisible is gemengde state — ook gezet door het
+    // ttj-cookie-open event en handleConsent — dus geen zuivere externe store.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!window.localStorage.getItem(CONSENT_KEY)) setIsVisible(true);
   }, []);
 

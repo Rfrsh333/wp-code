@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as Sentry from "@sentry/nextjs";
 import Image from "next/image";
 import KlantPortalLayout, { KlantTab } from "@/components/klant/KlantPortalLayout";

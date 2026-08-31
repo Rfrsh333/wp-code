@@ -22,9 +22,7 @@ import { cn } from "@/lib/utils";
 import { useAdminDashboardExtended } from "@/hooks/queries/useAdminQueries";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
 import { MetricCard } from "./MetricCard";
-import { ActionCard } from "./ActionCard";
 import { CompactSummary } from "./CompactSummary";
-import { CompactEmptyState } from "./CompactEmptyState";
 import { InsightCard } from "./InsightCard";
 import { StatusDot } from "./StatusDot";
 
@@ -44,7 +42,7 @@ function SkeletonAnalytics() {
     </div>
   );
 }
-import { getDashboardInsights, formatKpiState, getEmptyStateContent } from "@/lib/dashboard-intelligence";
+import { getDashboardInsights, formatKpiState } from "@/lib/dashboard-intelligence";
 import { getRelativeTime } from "@/lib/temporal";
 import { convertToQuickActions } from "@/lib/automation-helpers";
 import { trackEvent } from "@/lib/telemetry";

@@ -4,11 +4,7 @@ import { type ReactNode, useState } from "react";
 import { Bell, ChevronRight, Menu, X } from "lucide-react";
 import Image from "next/image";
 import MarketingSidebar from "@/components/navigation/MarketingSidebar";
-import type {
-  MarketingTab,
-  MarketingSidebarBadgeMap,
-  MarketingSidebarItemDefinition,
-} from "@/lib/navigation/marketing-sidebar-types";
+import type { MarketingTab, MarketingSidebarBadgeMap } from "@/lib/navigation/marketing-sidebar-types";
 import {
   marketingSidebarItems,
   marketingSidebarGroups,

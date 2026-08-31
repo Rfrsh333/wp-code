@@ -2,19 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useToast } from '@/components/ui/Toast'
-import {
-  X,
-  Phone,
-  Mail,
-  MapPin,
-  Building,
-  Briefcase,
-  Calendar,
-  MessageCircle,
-  ExternalLink,
-  Trash2,
-  Save,
-} from 'lucide-react'
+import { X, Phone, Mail, MessageCircle, ExternalLink, Trash2, Save } from 'lucide-react';
 import { Lead, LeadOutreach, OutreachTemplate } from '@/types/leads'
 import { format } from 'date-fns'
 import { nl } from 'date-fns/locale'

@@ -55,6 +55,8 @@ export function useAdminAuth(): UseAdminAuthReturn {
   }, [router]);
 
   useEffect(() => {
+    // Fetch-on-mount: checkAuth is async en zet state pas na await.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkAuth();
 
     const {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, ChevronRight } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
 type Section = "script" | "followup" | "closing";

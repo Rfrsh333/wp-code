@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Clock, Check } from "lucide-react";
+import { Calendar, Check } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { Download, X } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -8,11 +8,17 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+/** iOS-detectie verandert nooit tijdens de sessie; geen abonnement nodig. */
+const geenAbonnement = () => () => {};
+const isIOSClient = () =>
+  /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+  !(window as unknown as { MSStream?: unknown }).MSStream;
+
 export default function KlantPWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
+  const isIOS = useSyncExternalStore(geenAbonnement, isIOSClient, () => false);
   const [showInstructions, setShowInstructions] = useState(false);
 
   useEffect(() => {
@@ -34,11 +40,6 @@ export default function KlantPWAInstallPrompt() {
 
     // Already dismissed
     if (localStorage.getItem("pwa-install-klant-dismissed")) return;
-
-    const iosDevice =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-      !(window as unknown as { MSStream?: unknown }).MSStream;
-    setIsIOS(iosDevice);
 
     const handler = (e: Event) => {
       e.preventDefault();

@@ -17,8 +17,6 @@
  * - Workflow completion states
  */
 
-import { trackEvent, TelemetryEvents } from './telemetry';
-
 /**
  * Aging severity based on hours without action
  */

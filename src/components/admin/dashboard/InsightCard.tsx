@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { LucideIcon, AlertCircle, Info, AlertTriangle, CheckCircle2, Eye, Phone } from "lucide-react";
+import { LucideIcon, AlertCircle, Info, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot } from "./StatusDot";
 import { getUpdateTime } from "@/lib/temporal";
