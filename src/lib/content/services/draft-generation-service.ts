@@ -1,6 +1,5 @@
 import "server-only";
 
-import { z } from "zod";
 import { buildDraftGenerationPrompt, buildTemplateDraftPrompt } from "@/lib/ai/content-prompts";
 import { draftGenerationSchema, parseStructuredJson } from "@/lib/ai/json-output";
 import { templateDraftSchema } from "@/lib/ai/template-schema";

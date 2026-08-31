@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
-import { ChevronRight } from "lucide-react";
-
 interface FunnelStage {
   key: string;
   label: string;

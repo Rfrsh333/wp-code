@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "Direct horecapersoneel nodig? Vraag gescreende krachten aan bij TopTalent Jobs. Bevestiging binnen 24 uur voor restaurants, hotels en evenementen.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/lp/personeel",
+    canonical: "https://www.toptalentjobs.nl/lp/personeel/",
   },
   openGraph: {
     title: "Horecapersoneel Aanvragen | TopTalent Jobs",

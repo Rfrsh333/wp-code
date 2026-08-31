@@ -50,6 +50,7 @@ export default function YoungOnesBottomNav() {
               onClick={() => router.push(tab.href)}
               className="flex-1 flex flex-col items-center justify-center relative group transition-colors"
               aria-label={tab.label}
+              aria-current={active ? "page" : undefined}
             >
               {/* Orange indicator line on top */}
               <div

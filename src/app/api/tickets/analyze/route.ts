@@ -4,6 +4,7 @@ import { chatCompletion, isOpenAIConfigured } from "@/lib/openai";
 import { sendEmail } from "@/lib/email-service";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { escapeHtml } from "@/lib/sanitize";
 
 interface TicketSubmission {
   question: string;
@@ -169,11 +170,11 @@ Antwoord ALLEEN in valid JSON format:
           subject: `🔴 High-priority FAQ ticket: ${body.question.slice(0, 60)}...`,
           html: `
             <h2>Nieuw high-priority ticket</h2>
-            <p><strong>Vraag:</strong> ${body.question}</p>
-            ${body.visitor_name ? `<p><strong>Naam:</strong> ${body.visitor_name}</p>` : ""}
-            ${body.visitor_email ? `<p><strong>Email:</strong> ${body.visitor_email}</p>` : ""}
-            <p><strong>AI Categorie:</strong> ${analysis.category}</p>
-            <p><strong>AI Redenering:</strong> ${analysis.reasoning}</p>
+            <p><strong>Vraag:</strong> ${escapeHtml(body.question)}</p>
+            ${body.visitor_name ? `<p><strong>Naam:</strong> ${escapeHtml(body.visitor_name)}</p>` : ""}
+            ${body.visitor_email ? `<p><strong>Email:</strong> ${escapeHtml(body.visitor_email)}</p>` : ""}
+            <p><strong>AI Categorie:</strong> ${escapeHtml(analysis.category)}</p>
+            <p><strong>AI Redenering:</strong> ${escapeHtml(analysis.reasoning)}</p>
             <hr>
             <p><a href="https://www.toptalentjobs.nl/admin">Bekijk in admin dashboard</a></p>
           `,

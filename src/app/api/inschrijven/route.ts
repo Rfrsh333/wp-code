@@ -61,6 +61,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: formatZodErrors(zodParsed.error) }, { status: 400 });
     }
 
+    // AVG: lees de daadwerkelijke toestemming uit het formulier (art. 7 lid 1 —
+    // toestemming moet aantoonbaar zijn) en weiger inschrijving zonder toestemming.
+    const toestemming = formData.get("toestemming") === "true";
+    if (!toestemming) {
+      return NextResponse.json(
+        { error: "Toestemming voor het verwerken van je gegevens is verplicht." },
+        { status: 400 },
+      );
+    }
+
     const voornaam = (formData.get("voornaam") as string) || "";
     const tussenvoegsel = (formData.get("tussenvoegsel") as string) || "";
     const achternaam = (formData.get("achternaam") as string) || "";
@@ -226,8 +236,8 @@ export async function POST(request: NextRequest) {
       max_uren_per_week: Number.isNaN(parsedMaxUren) ? null : parsedMaxUren,
       onboarding_status: "nieuw",
       referral_code: referralCode || null,
-      // AVG consent tracking
-      toestemming_verwerking: true,
+      // AVG consent tracking — werkelijke waarde uit het formulier (aantoonbaar).
+      toestemming_verwerking: toestemming,
       toestemming_timestamp: new Date().toISOString(),
       toestemming_ip: clientIP,
     };

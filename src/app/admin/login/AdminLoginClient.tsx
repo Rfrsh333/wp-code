@@ -11,6 +11,9 @@ export default function AdminLoginClient() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [useBackupCode, setUseBackupCode] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetDone = searchParams.get("reset") === "1";
@@ -24,13 +27,25 @@ export default function AdminLoginClient() {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(
+          requires2FA
+            ? { email, password, twoFactorCode: twoFactorCode.trim(), isBackupCode: useBackupCode }
+            : { email, password },
+        ),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(data.error || "Ongeldige inloggegevens");
+        setIsLoading(false);
+        return;
+      }
+
+      // Backend vraagt om een tweede factor: toon het 2FA-scherm en post opnieuw mét code.
+      // (De backend geeft hier bewust een 200 met requires2FA:true en géén sessie terug.)
+      if (data.requires2FA && !data.session) {
+        setRequires2FA(true);
         setIsLoading(false);
         return;
       }
@@ -83,42 +98,86 @@ export default function AdminLoginClient() {
           )}
           {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">E-mailadres</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
-              placeholder="admin@example.com"
-              required
-            />
-          </div>
+          {!requires2FA ? (
+            <>
+              <div>
+                <label htmlFor="admin-email" className="block text-sm font-medium text-neutral-700 mb-2">E-mailadres</label>
+                <input
+                  id="admin-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  placeholder="admin@example.com"
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Wachtwoord</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
-              placeholder="••••••••"
-              required
-            />
-            <div className="mt-2 text-right">
-              <Link href="/admin/wachtwoord-vergeten/" className="text-sm text-[#F27501] hover:text-[#d96800]">
-                Wachtwoord vergeten?
-              </Link>
+              <div>
+                <label htmlFor="admin-password" className="block text-sm font-medium text-neutral-700 mb-2">Wachtwoord</label>
+                <input
+                  id="admin-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                  placeholder="••••••••"
+                  required
+                />
+                <div className="mt-2 text-right">
+                  <Link href="/admin/wachtwoord-vergeten/" className="text-sm text-[#F27501] hover:text-[#d96800]">
+                    Wachtwoord vergeten?
+                  </Link>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div>
+              <label htmlFor="admin-2fa" className="block text-sm font-medium text-neutral-700 mb-2">
+                {useBackupCode ? "Back-upcode" : "Verificatiecode (2FA)"}
+              </label>
+              <input
+                id="admin-2fa"
+                type="text"
+                inputMode={useBackupCode ? "text" : "numeric"}
+                autoComplete="one-time-code"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] tracking-widest"
+                placeholder={useBackupCode ? "back-upcode" : "123456"}
+                autoFocus
+                required
+              />
+              <p className="mt-2 text-sm text-neutral-500">
+                Voer de code uit je authenticator-app in.
+              </p>
+              <button
+                type="button"
+                onClick={() => { setUseBackupCode((v) => !v); setTwoFactorCode(""); setError(""); }}
+                className="mt-2 text-sm text-[#F27501] hover:text-[#d96800]"
+              >
+                {useBackupCode ? "Gebruik authenticator-code" : "Gebruik een back-upcode"}
+              </button>
             </div>
-          </div>
+          )}
 
           <button
             type="submit"
             disabled={isLoading}
             className="w-full bg-[#F27501] text-white py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors disabled:opacity-50"
           >
-            {isLoading ? "Inloggen..." : "Inloggen"}
+            {isLoading ? "Bezig..." : requires2FA ? "Verifiëren" : "Inloggen"}
           </button>
+
+          {requires2FA && (
+            <button
+              type="button"
+              onClick={() => { setRequires2FA(false); setTwoFactorCode(""); setUseBackupCode(false); setError(""); }}
+              className="w-full text-sm text-neutral-500 hover:text-neutral-700"
+            >
+              ← Terug naar inloggen
+            </button>
+          )}
         </form>
 
         <div className="mt-6 text-center">

@@ -1,21 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  Filter,
-  Search,
-  Facebook,
-  Linkedin,
-  Instagram,
-  MapPin,
-  Globe,
-  MoreVertical,
-  Phone,
-  Mail,
-  Eye,
-  Trash2,
-  Download,
-} from 'lucide-react'
+import { Search, Facebook, Linkedin, Instagram, MapPin, Globe, Phone, Mail, Trash2, Download } from 'lucide-react';
 import { Lead, Platform, LeadStatus } from '@/types/leads'
 import { format } from 'date-fns'
 import { nl } from 'date-fns/locale'

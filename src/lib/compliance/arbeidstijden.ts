@@ -68,6 +68,25 @@ export interface ToeslagBerekening {
   reden: string;
 }
 
+/**
+ * Bereken netto gewerkte uren uit start/eind/pauze (server-side bron van waarheid).
+ * Ondersteunt diensten over middernacht en trekt de pauze af. Nooit negatief.
+ */
+export function berekenGewerkteUren(
+  startTijd: string,
+  eindTijd: string,
+  pauzeMinuten: number = 0,
+): number {
+  const [startU, startM] = startTijd.split(":").map(Number);
+  const [eindU, eindM] = eindTijd.split(":").map(Number);
+  if ([startU, startM, eindU, eindM].some((n) => Number.isNaN(n))) return 0;
+
+  let minuten = (eindU * 60 + eindM) - (startU * 60 + startM);
+  if (minuten <= 0) minuten += 24 * 60; // over middernacht
+  minuten -= Math.max(0, pauzeMinuten || 0);
+  return Math.max(0, Math.round((minuten / 60) * 100) / 100);
+}
+
 export function berekenToeslag(
   datum: string,
   startTijd: string,

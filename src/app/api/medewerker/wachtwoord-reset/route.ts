@@ -4,12 +4,13 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { hashToken } from "@/lib/token-hash";
 
 async function findValidMedewerkerResetToken(token: string) {
   const { data: medewerker } = await supabaseAdmin
     .from("medewerkers")
     .select("id, naam, email, reset_token_expires_at")
-    .eq("reset_token", token)
+    .eq("reset_token", hashToken(token)) // token wordt gehasht opgeslagen
     .gt("reset_token_expires_at", new Date().toISOString())
     .maybeSingle();
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
-  const rateLimit = await checkRedisRateLimit(`medewerker-reset:${clientIP}`, loginRateLimit);
+  const rateLimit = await checkRedisRateLimit(`medewerker-reset:${clientIP}`, loginRateLimit, { failClosed: true });
 
   if (!rateLimit.success) {
     return NextResponse.json(
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Resetlink is ongeldig of verlopen" }, { status: 404 });
     }
 
-    const hashedPassword = await bcrypt.hash(String(wachtwoord), 10);
+    const hashedPassword = await bcrypt.hash(String(wachtwoord), 12);
 
     const { error } = await supabaseAdmin
       .from("medewerkers")

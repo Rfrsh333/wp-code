@@ -28,6 +28,18 @@ interface CommandItem {
   keywords?: string[];
 }
 
+/** Pure filterfunctie — bewust buiten de component zodat render zuiver blijft. */
+function filterCommands(commands: CommandItem[], query: string): CommandItem[] {
+  const searchText = query.trim().toLowerCase();
+  if (!searchText) return commands;
+  return commands.filter(
+    (cmd) =>
+      cmd.label.toLowerCase().includes(searchText) ||
+      cmd.description?.toLowerCase().includes(searchText) ||
+      cmd.keywords?.some((k) => k.includes(searchText))
+  );
+}
+
 interface CommandPaletteProps {
   onTabChange?: (tab: string) => void;
 }
@@ -154,26 +166,20 @@ export function CommandPalette({ onTabChange }: CommandPaletteProps) {
     },
   ];
 
-  // Filter commands based on query (memoized for performance)
-  const filteredCommands = useMemo(() => {
-    const startTime = performance.now();
+  // Filter commands based on query (memoized for performance).
+  // Blijft puur: geen performance.now()/logging tijdens render.
+  const filteredCommands = useMemo(
+    () => filterCommands(commands, query),
+    [query, commands]
+  );
 
+  // Latentiemeting hoort na de render, niet erin (dev-only warning).
+  useEffect(() => {
     const trimmedQuery = query.trim();
-    const results = trimmedQuery
-      ? commands.filter((cmd) => {
-          const searchText = trimmedQuery.toLowerCase();
-          return (
-            cmd.label.toLowerCase().includes(searchText) ||
-            cmd.description?.toLowerCase().includes(searchText) ||
-            cmd.keywords?.some((k) => k.includes(searchText))
-          );
-        })
-      : commands;
-
-    const duration = performance.now() - startTime;
-    measureSearchLatency(trimmedQuery, results.length, duration);
-
-    return results;
+    if (!trimmedQuery) return;
+    const startTime = performance.now();
+    const results = filterCommands(commands, trimmedQuery);
+    measureSearchLatency(trimmedQuery, results.length, performance.now() - startTime);
   }, [query, commands]);
 
   // Group filtered commands (memoized)
@@ -185,10 +191,9 @@ export function CommandPalette({ onTabChange }: CommandPaletteProps) {
     [filteredCommands]
   );
 
-  // Reset selected index when results change
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
+  // Reset selected index when results change.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setSelectedIndex(0), [query]);
 
   // Keyboard shortcut to open (CMD+K, CTRL+K, or /)
   useEffect(() => {
@@ -218,10 +223,11 @@ export function CommandPalette({ onTabChange }: CommandPaletteProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // Focus input when opened
+  // Focus input when opened en start met een lege zoekterm.
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery('');
       setSelectedIndex(0);
     }

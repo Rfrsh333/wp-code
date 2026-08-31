@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createMollieClient } from "@mollie/api-client";
 import { logAuditEvent } from "@/lib/audit-log";
-import crypto from "crypto";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 function getMollieClient() {
@@ -13,72 +12,22 @@ function getMollieClient() {
 }
 
 /**
- * Verify Mollie webhook signature (HMAC-SHA256).
- * Mollie sends a `Mollie-Signature` header when a webhook secret is configured.
- * Format: "v1=<hex-encoded HMAC-SHA256>"
+ * Mollie Payments-webhook.
+ *
+ * Beveiligingsmodel (conform Mollie): de webhook-body bevat alléén het payment-id
+ * (`id=tr_xxx`). We vertrouwen NOOIT op de request-inhoud voor de betaalstatus — we
+ * halen de actuele status server-side op via de Mollie API met onze eigen API-sleutel.
+ * Een aanvaller die een willekeurig id post kan hooguit een verwerking triggeren voor
+ * een betaling die Mollie zélf als "paid" rapporteert én die al aan een openstaande
+ * boete is gekoppeld (via `mollie_payment_id`) én waarvan het bedrag klopt.
+ *
+ * Let op: Mollie's Payments-webhook ondertekent het request NIET met een HMAC-header.
+ * Een handtekeningcontrole is hier dus niet van toepassing — de vorige implementatie
+ * wees daardoor élke webhook af (401), waardoor boetebetalingen nooit werden verwerkt.
  */
-function verifyMollieSignature(rawBody: string, signatureHeader: string | null): boolean {
-  const webhookSecret = process.env.MOLLIE_WEBHOOK_SECRET;
-
-  // Fail-closed: zonder secret wordt de webhook geweigerd
-  if (!webhookSecret) {
-    captureRouteError(new Error("/api/webhooks/mollie UNKNOWN error"), { route: "/api/webhooks/mollie", action: "UNKNOWN" });
-    // console.error("[MOLLIE WEBHOOK] MOLLIE_WEBHOOK_SECRET niet geconfigureerd — webhook geweigerd");
-    return false;
-  }
-
-  if (!signatureHeader) {
-    captureRouteError(new Error("/api/webhooks/mollie UNKNOWN error"), { route: "/api/webhooks/mollie", action: "UNKNOWN" });
-    // console.error("[MOLLIE WEBHOOK] Geen Mollie-Signature header ontvangen");
-    return false;
-  }
-
-  // Mollie stuurt "v1=<hmac>"
-  const parts = signatureHeader.split("=");
-  if (parts.length < 2 || parts[0] !== "v1") {
-    captureRouteError(new Error("/api/webhooks/mollie UNKNOWN error"), { route: "/api/webhooks/mollie", action: "UNKNOWN" });
-    // console.error("[MOLLIE WEBHOOK] Ongeldig signature formaat:", signatureHeader);
-    return false;
-  }
-
-  const receivedHmac = parts.slice(1).join("="); // Rejoin in case of '=' in hash
-  const expectedHmac = crypto
-    .createHmac("sha256", webhookSecret)
-    .update(rawBody)
-    .digest("hex");
-
-  // Timing-safe vergelijking om timing attacks te voorkomen
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(receivedHmac, "hex"),
-      Buffer.from(expectedHmac, "hex")
-    );
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
-    // Lees raw body voor signature verificatie
     const rawBody = await request.text();
-    const signatureHeader = request.headers.get("mollie-signature");
-
-    // Verifieer webhook signature
-    if (!verifyMollieSignature(rawBody, signatureHeader)) {
-      captureRouteError(new Error("/api/webhooks/mollie POST error"), { route: "/api/webhooks/mollie", action: "POST" });
-      // console.error("[MOLLIE WEBHOOK] Ongeldige signature — mogelijke spoofing poging");
-      await logAuditEvent({
-        action: "mollie_webhook_signature_invalid",
-        targetTable: "boetes",
-        targetId: "unknown",
-        summary: "Mollie webhook ontvangen met ongeldige signature",
-        metadata: { signature: signatureHeader?.substring(0, 20) || "missing" },
-      });
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    // Parse form data uit de raw body
     const params = new URLSearchParams(rawBody);
     const paymentId = params.get("id");
 
@@ -86,56 +35,83 @@ export async function POST(request: NextRequest) {
       return new NextResponse("Missing payment ID", { status: 400 });
     }
 
-    // Haal actuele status op bij Mollie
+    // Haal actuele status op bij Mollie (de bron van waarheid).
     const mollie = getMollieClient();
     const payment = await mollie.payments.get(paymentId);
 
     if (payment.status === "paid") {
-      // Update boete status naar betaald
+      // Zoek de gekoppelde openstaande boete.
       const { data: boete } = await supabaseAdmin
         .from("boetes")
-        .update({
-          status: "betaald",
-          afgehandeld_at: new Date().toISOString(),
-          afgehandeld_door: "mollie_webhook",
-        })
+        .select("id, medewerker_id, bedrag")
         .eq("mollie_payment_id", paymentId)
         .eq("status", "openstaand")
-        .select("id, medewerker_id")
-        .single();
+        .maybeSingle();
 
       if (boete) {
-        // Check of er nog andere openstaande boetes zijn
-        const { count } = await supabaseAdmin
-          .from("boetes")
-          .select("id", { count: "exact", head: true })
-          .eq("medewerker_id", boete.medewerker_id)
-          .eq("status", "openstaand");
+        // Defense-in-depth: verifieer dat het betaalde bedrag overeenkomt met de boete
+        // (vergelijking in hele centen om afrondings-/formatteringsverschillen te vermijden).
+        const betaaldeCenten = Math.round(Number(payment.amount.value) * 100);
+        const boeteCenten = Math.round(Number(boete.bedrag) * 100);
 
-        // Alleen heractiveren als er geen andere openstaande boetes zijn
-        if (!count || count === 0) {
-          await supabaseAdmin
-            .from("medewerkers")
-            .update({ status: "actief" })
-            .eq("id", boete.medewerker_id)
-            .eq("status", "gepauzeerd");
+        if (betaaldeCenten !== boeteCenten) {
+          await logAuditEvent({
+            action: "mollie_payment_amount_mismatch",
+            targetTable: "boetes",
+            targetId: boete.id,
+            summary: `Mollie-betaling ${paymentId} bedrag (${payment.amount.value}) wijkt af van boete (${boete.bedrag}) — niet automatisch afgehandeld`,
+            metadata: { mollie_payment_id: paymentId, betaald: payment.amount.value, verwacht: String(boete.bedrag) },
+          });
+          // 200 zodat Mollie niet blijft herproberen; handmatige controle vereist.
+          return new NextResponse("OK", { status: 200 });
         }
 
-        await logAuditEvent({
-          action: "mollie_payment_received",
-          targetTable: "boetes",
-          targetId: boete.id,
-          summary: `Boete betaald via Mollie (${paymentId})`,
-          metadata: { mollie_payment_id: paymentId, medewerker_id: boete.medewerker_id },
-        });
+        // Markeer als betaald. Idempotent dankzij het status-filter: een tweede
+        // (retry-)webhook vindt geen "openstaand"-rij meer en doet niets.
+        const { data: updated } = await supabaseAdmin
+          .from("boetes")
+          .update({
+            status: "betaald",
+            afgehandeld_at: new Date().toISOString(),
+            afgehandeld_door: "mollie_webhook",
+          })
+          .eq("id", boete.id)
+          .eq("status", "openstaand")
+          .select("id, medewerker_id")
+          .maybeSingle();
+
+        if (updated) {
+          // Heractiveer de medewerker alleen als er geen andere openstaande boetes meer zijn.
+          const { count } = await supabaseAdmin
+            .from("boetes")
+            .select("id", { count: "exact", head: true })
+            .eq("medewerker_id", updated.medewerker_id)
+            .eq("status", "openstaand");
+
+          if (!count || count === 0) {
+            await supabaseAdmin
+              .from("medewerkers")
+              .update({ status: "actief" })
+              .eq("id", updated.medewerker_id)
+              .eq("status", "gepauzeerd");
+          }
+
+          await logAuditEvent({
+            action: "mollie_payment_received",
+            targetTable: "boetes",
+            targetId: updated.id,
+            summary: `Boete betaald via Mollie (${paymentId})`,
+            metadata: { mollie_payment_id: paymentId, medewerker_id: updated.medewerker_id },
+          });
+        }
       }
     }
 
-    // Mollie verwacht altijd 200 OK terug
+    // Mollie verwacht altijd 200 OK terug.
     return new NextResponse("OK", { status: 200 });
   } catch (error) {
     captureRouteError(error, { route: "/api/webhooks/mollie", action: "POST" });
-    // Geef 500 terug zodat Mollie de webhook opnieuw aanbiedt bij onverwachte fouten.
+    // 500 zodat Mollie de webhook opnieuw aanbiedt bij onverwachte fouten.
     // 200 pas retourneren als de betaling succesvol verwerkt is.
     return new NextResponse("Internal Server Error", { status: 500 });
   }

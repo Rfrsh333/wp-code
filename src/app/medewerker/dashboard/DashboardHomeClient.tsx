@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import PushNotificationBanner from "@/components/medewerker/PushNotificationBanner";
 import RatingsCard from "@/components/medewerker/RatingsCard";
-import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
 interface DashboardStats {

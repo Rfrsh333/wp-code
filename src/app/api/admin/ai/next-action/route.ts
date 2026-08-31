@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
+import { verifyAdmin } from "@/lib/admin-auth";
 import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
 import { determineNextAction } from "@/lib/agents/smart-sequence";

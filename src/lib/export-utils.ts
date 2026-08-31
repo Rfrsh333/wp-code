@@ -1,6 +1,8 @@
 // CSV Export Utilities
 
-export function downloadCSV(data: any[], filename: string) {
+import type { BusinessMetrics } from "@/types/business-metrics";
+
+export function downloadCSV(data: Record<string, unknown>[], filename: string) {
   const headers = Object.keys(data[0] || {});
   const csvContent = [
     headers.join(","),
@@ -29,7 +31,7 @@ export function downloadCSV(data: any[], filename: string) {
   document.body.removeChild(link);
 }
 
-export function metricsToCSV(metrics: any) {
+export function metricsToCSV(metrics: BusinessMetrics) {
   const rows = [
     // Pipeline data
     ...Object.entries(metrics.pipeline.byStage).map(([stage, count]) => ({

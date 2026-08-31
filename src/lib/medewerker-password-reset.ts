@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin } from "@/lib/supabase";
+import { hashToken } from "@/lib/token-hash";
 
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
@@ -31,7 +32,7 @@ export async function createMedewerkerPasswordResetToken(medewerkerId: string) {
   const { error } = await supabaseAdmin
     .from("medewerkers")
     .update({
-      reset_token: token,
+      reset_token: hashToken(token), // hash at rest; plaintext gaat alleen in de e-mail-link
       reset_token_expires_at: expiresAt,
     })
     .eq("id", medewerkerId);

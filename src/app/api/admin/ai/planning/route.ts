@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
+import { verifyAdmin } from "@/lib/admin-auth";
 import { checkRedisRateLimit, getClientIP, aiRateLimit } from "@/lib/rate-limit-redis";
 import { generatePlanningSuggestie } from "@/lib/agents/dienst-planner";
 import { isOpenAIConfigured } from "@/lib/openai";

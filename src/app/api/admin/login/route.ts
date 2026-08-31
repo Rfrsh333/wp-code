@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
 
   // Rate limiting check
-  const rateLimit = await checkRedisRateLimit(`admin-login:${clientIP}`, loginRateLimit);
+  const rateLimit = await checkRedisRateLimit(`admin-login:${clientIP}`, loginRateLimit, { failClosed: true });
 
   if (!rateLimit.success) {
     console.warn(`[ADMIN LOGIN] Rate limit exceeded for IP: ${clientIP}`);

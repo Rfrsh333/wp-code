@@ -94,6 +94,20 @@ export default function FacturenTab() {
     fetchData();
   };
 
+  const markeerBetaald = async (id: string) => {
+    const headers = await getAuthHeader();
+    const res = await fetch(`/api/facturen/${id}/betaald`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+    });
+    if (res.ok) {
+      toast.success("Factuur op betaald gezet");
+      fetchData();
+    } else {
+      toast.error("Bijwerken mislukt");
+    }
+  };
+
   const openFactuurPdf = async (id: string) => {
     const headers = await getAuthHeader();
     const res = await fetch(`/api/facturen/${id}/pdf`, { headers });
@@ -174,6 +188,9 @@ export default function FacturenTab() {
                     </button>
                     {f.status === "concept" && (
                       <button onClick={(e) => { e.stopPropagation(); sendFactuur(f.id, f.klant?.email); }} className="px-3 py-1 bg-[#F27501] text-white rounded text-sm hover:bg-[#d96800]">Versturen</button>
+                    )}
+                    {f.status !== "betaald" && (
+                      <button onClick={(e) => { e.stopPropagation(); markeerBetaald(f.id); }} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Betaald</button>
                     )}
                   </div>
                 </td>

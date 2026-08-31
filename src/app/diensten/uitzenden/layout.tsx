@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Horecapersoneel Uitzenden — Vaak Binnen 24 Uur",
   description: "Uitzenden van horecapersoneel voor restaurants, hotels en events. Snel tijdelijke inzet bij piekdrukte of uitval, met één contactpunt en duidelijke tarieven.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/diensten/uitzenden",
+    canonical: "https://www.toptalentjobs.nl/diensten/uitzenden/",
   },
 };
 

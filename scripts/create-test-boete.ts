@@ -109,8 +109,9 @@ async function createTestBoete() {
     console.log("");
     console.log("💡 TIP: Zorg dat je MOLLIE_API_KEY=test_... gebruikt in .env.local");
 
-  } catch (error: any) {
-    console.error("❌ Error:", error.message);
+  } catch (error: unknown) {
+    const err = error as { message?: string; field?: string };
+    console.error("❌ Error:", err.message);
     process.exit(1);
   }
 }

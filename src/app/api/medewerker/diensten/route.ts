@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
+import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
@@ -367,11 +368,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await supabaseAdmin.from("dienst_aanmeldingen").insert({
+    // Dubbele aanmelding voorkomen (een eerdere geannuleerde/afgewezen aanmelding mag opnieuw).
+    const { data: bestaandeAanmelding } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id")
+      .eq("dienst_id", dienst_id)
+      .eq("medewerker_id", medewerker.id)
+      .not("status", "in", "(geannuleerd,afgewezen)")
+      .limit(1);
+
+    if (bestaandeAanmelding && bestaandeAanmelding.length > 0) {
+      return NextResponse.json({ error: "Je bent al aangemeld voor deze dienst" }, { status: 409 });
+    }
+
+    // Vol-check: niet aanmelden op een volle dienst.
+    const { data: dienstVolCheck } = await supabaseAdmin
+      .from("diensten")
+      .select("status, plekken_beschikbaar")
+      .eq("id", dienst_id)
+      .single();
+
+    if (!dienstVolCheck || dienstVolCheck.status === "vol" || dienstVolCheck.plekken_beschikbaar === 0) {
+      return NextResponse.json({ error: "Deze dienst zit vol" }, { status: 409 });
+    }
+
+    const { error: aanmeldError } = await supabaseAdmin.from("dienst_aanmeldingen").insert({
       dienst_id,
       medewerker_id: medewerker.id,
       status: "aangemeld",
     });
+
+    // Verlaag plekken alleen na een geslaagde insert (voorkomt plekken-lek bij een fout).
+    if (aanmeldError) {
+      return NextResponse.json({ error: "Aanmelden mislukt" }, { status: 500 });
+    }
 
     // ✅ Verlaag plekken_beschikbaar na aanmelding
     const { data: dienstInfo } = await supabaseAdmin
@@ -508,11 +538,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Vervanging aanmelding ID ontbreekt" }, { status: 400 });
     }
 
-    // Vervanger aanmelding: set vervanging_voor, status → geaccepteerd
+    // Autorisatie: de vervanger-aanmelding moet bij DEZELFDE dienst horen en 'aangemeld' zijn.
+    // Zonder deze check kon een willekeurige aanmelding-id (van een andere dienst/medewerker)
+    // op 'geaccepteerd' worden gezet.
+    const { data: vervanger } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, dienst_id, status")
+      .eq("id", vervangingAanmeldingId)
+      .maybeSingle();
+
+    if (!vervanger || vervanger.dienst_id !== origAanmelding.dienst_id || vervanger.status !== "aangemeld") {
+      return NextResponse.json({ error: "Ongeldige vervanging voor deze dienst" }, { status: 400 });
+    }
+
+    // Vervanger aanmelding: set vervanging_voor, status → geaccepteerd (scoped op dienst + status).
     await supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ vervanging_voor: aanmelding_id, status: "geaccepteerd" })
-      .eq("id", vervangingAanmeldingId);
+      .eq("id", vervangingAanmeldingId)
+      .eq("dienst_id", origAanmelding.dienst_id)
+      .eq("status", "aangemeld");
 
     // Originele aanmelding: status → vervangen
     await supabaseAdmin
@@ -656,12 +701,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Voor deze dienst zijn al uren ingediend" }, { status: 409 });
     }
 
+    // Gewerkte uren server-side herberekenen uit start/eind/pauze i.p.v. de client
+    // te vertrouwen (voorkomt dat 24u wordt ingediend voor een 4u-dienst).
+    const startTijd = data?.start;
+    const eindTijd = data?.eind;
+    if (!startTijd || !eindTijd) {
+      return NextResponse.json({ error: "Start- en eindtijd zijn verplicht" }, { status: 400 });
+    }
+    const pauzeMin = Math.max(0, Number(data?.pauze) || 0);
+    const gewerkteUren = berekenGewerkteUren(startTijd, eindTijd, pauzeMin);
+
     await supabaseAdmin.from("uren_registraties").insert({
       aanmelding_id,
-      start_tijd: data.start,
-      eind_tijd: data.eind,
-      pauze_minuten: data.pauze,
-      gewerkte_uren: data.uren,
+      start_tijd: startTijd,
+      eind_tijd: eindTijd,
+      pauze_minuten: pauzeMin,
+      gewerkte_uren: gewerkteUren,
       reiskosten_km: sanitizeKilometers(data.reiskosten_km),
       reiskosten_bedrag: calculateMedewerkerReiskosten(data.reiskosten_km),
       status: "ingediend",

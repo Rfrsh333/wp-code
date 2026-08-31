@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
-import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAdmin, hasRequiredAdminRole } from "@/lib/admin-auth";
 import { signFactuurToken } from "@/lib/session";
 import { getFactuurConfig } from "@/lib/factuur-config";
 import { sendEmail } from "@/lib/email-service";
@@ -8,10 +8,14 @@ import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen verzenden
-  const { isAdmin, email: adminEmail } = await verifyAdmin(request);
+  const { isAdmin, email: adminEmail, role } = await verifyAdmin(request);
   if (!isAdmin) {
     console.warn(`[SECURITY] Unauthorized factuur send attempt by: ${adminEmail || 'unknown'}`);
     return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
+  }
+  // Geld-actie (factuur verzenden): alleen owner/finance.
+  if (!hasRequiredAdminRole(role, ["owner", "finance"])) {
+    return NextResponse.json({ error: "Onvoldoende rechten — finance vereist" }, { status: 403 });
   }
 
   try {

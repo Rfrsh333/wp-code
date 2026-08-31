@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
 
   // Rate limiting: per-IP
-  const rateLimitResult = await checkRedisRateLimit(`medewerker-login:${clientIP}`, loginRateLimit);
+  const rateLimitResult = await checkRedisRateLimit(`medewerker-login:${clientIP}`, loginRateLimit, { failClosed: true });
   if (!rateLimitResult.success) {
     const retryAfter = Math.max(1, Math.ceil((rateLimitResult.reset - Date.now()) / 1000));
     return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting: per-account (prevents credential stuffing on known emails)
-    const acctLimit = await checkRedisRateLimit(`medewerker-login-acct:${email.toLowerCase()}`, medewerkerLoginPerAccountRateLimit);
+    const acctLimit = await checkRedisRateLimit(`medewerker-login-acct:${email.toLowerCase()}`, medewerkerLoginPerAccountRateLimit, { failClosed: true });
     if (!acctLimit.success) {
       const retryAfter = Math.max(1, Math.ceil((acctLimit.reset - Date.now()) / 1000));
       return NextResponse.json(

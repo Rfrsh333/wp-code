@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Calendar, Users, MapPin, Trash2, Check, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus, Users, MapPin, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { TESTSHIFT_STATUS_CONFIG } from "./constants";
@@ -10,6 +10,11 @@ import type { CRMLead, CRMTestShift } from "./types";
 interface TestShiftPanelProps {
   lead: CRMLead;
   onUpdate: (lead: CRMLead) => void;
+}
+
+async function getToken() {
+  const session = await supabase.auth.getSession();
+  return session.data.session?.access_token || "";
 }
 
 export default function TestShiftPanel({ lead, onUpdate }: TestShiftPanelProps) {
@@ -26,16 +31,7 @@ export default function TestShiftPanel({ lead, onUpdate }: TestShiftPanelProps) 
   });
   const toast = useToast();
 
-  useEffect(() => {
-    fetchShifts();
-  }, [lead.id]);
-
-  async function getToken() {
-    const session = await supabase.auth.getSession();
-    return session.data.session?.access_token || "";
-  }
-
-  async function fetchShifts() {
+  const fetchShifts = useCallback(async () => {
     setLoading(true);
     const token = await getToken();
     const res = await fetch(`/api/admin/crm/test-shifts?lead_id=${lead.id}`, {
@@ -43,7 +39,13 @@ export default function TestShiftPanel({ lead, onUpdate }: TestShiftPanelProps) 
     });
     if (res.ok) setShifts(await res.json());
     setLoading(false);
-  }
+  }, [lead.id]);
+
+  useEffect(() => {
+    // Fetch-on-mount: fetchShifts is async en zet state pas na await.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchShifts();
+  }, [fetchShifts]);
 
   async function createShift() {
     if (!formData.shift_date) return;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, PhoneMissed, PhoneCall, Mail, Instagram, Facebook, MessageCircle, Star, Clock, Calendar, ClipboardCheck, Trophy, XCircle } from "lucide-react";
+import { Phone, PhoneMissed, PhoneCall, Mail, Instagram, Facebook, MessageCircle, Star, Calendar, ClipboardCheck, Trophy, XCircle } from "lucide-react";
 import type { CRMLead } from "./types";
 import { calculateNextBestChannel } from "./outreach-helpers";
 

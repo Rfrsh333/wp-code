@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { downloadCSV, metricsToCSV } from "@/lib/export-utils";
 import { Euro, Target, Calendar, Sparkles, TrendingUp, Users, CheckCircle, BarChart3, MessageCircle, Zap, Mail, Trophy, Phone, FileText, Download, RefreshCw, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { BusinessMetrics, MetricsDateRange } from "@/types/business-metrics";
 
 // Lazy-load recharts (admin-only, ~200KB)
 const RechartsCharts = dynamic(
@@ -96,55 +97,6 @@ const RechartsCharts = dynamic(
   }
 );
 
-interface BusinessMetrics {
-  pipeline: {
-    total: number;
-    byStage: {
-      nieuw: number;
-      benaderd: number;
-      interesse: number;
-      offerte: number;
-      klant: number;
-      afgewezen: number;
-    };
-    conversionRate: number;
-    recentLeads: number;
-    avgEngagement: number;
-  };
-  revenue: {
-    thisMonth: number;
-    lastMonth: number;
-    trend: number;
-    total: number;
-  };
-  operations: {
-    activeDiensten: number;
-    completedDiensten: number;
-    fillRate: number;
-    activeMedewerkers: number;
-  };
-  candidates: {
-    newApplications: number;
-    pendingReview: number;
-    approvedThisMonth: number;
-  };
-  engagement: {
-    totalContacts: number;
-    positiveRate: number;
-    topChannel: string | null;
-    avgResponseTime: number;
-    emailOpenRate: number;
-  };
-  period: {
-    from: string;
-    to: string;
-  };
-  charts: {
-    revenueTrend: Array<{ month: string; revenue: number }>;
-    channelPerformance: Array<{ channel: string; contacts: number; positive: number }>;
-    pipelineFunnel: Array<{ stage: string; count: number }>;
-  };
-}
 
 // ─── Helper components (defined before usage for Turbopack compat) ───
 
@@ -205,7 +157,7 @@ export default function BusinessMetricsDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   // Filters
-  const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d" | "6m" | "1y">("30d");
+  const [dateRange, setDateRange] = useState<MetricsDateRange>("30d");
   const [selectedBranche, setSelectedBranche] = useState<string>("all");
   const [selectedStad, setSelectedStad] = useState<string>("all");
   const [branches] = useState<string[]>(["Horeca", "Bouw", "Logistiek", "Retail", "Evenementen"]);
@@ -356,7 +308,7 @@ export default function BusinessMetricsDashboard() {
           {/* Date Range */}
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as any)}
+            onChange={(e) => setDateRange(e.target.value as MetricsDateRange)}
             className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F27501] focus:border-transparent"
           >
             <option value="7d">7 dagen</option>

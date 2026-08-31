@@ -38,13 +38,13 @@ import {
 } from '@/lib/reliability';
 import { trackError, trackPerformance } from '@/lib/telemetry';
 
-export interface UseReliableDataOptions {
+export interface UseReliableDataOptions<T = unknown> {
   enabled?: boolean;
   staleThresholdMinutes?: number;
   retryConfig?: Partial<RetryConfig>;
   refetchOnMount?: boolean;
   refetchInterval?: number;
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: T) => void;
   onError?: (error: RequestError) => void;
 }
 
@@ -61,7 +61,7 @@ export interface UseReliableDataResult<T> {
 export function useReliableData<T>(
   key: string,
   fetcher: () => Promise<T>,
-  options: UseReliableDataOptions = {}
+  options: UseReliableDataOptions<T> = {}
 ): UseReliableDataResult<T> {
   const {
     enabled = true,
@@ -181,6 +181,8 @@ export function useReliableData<T>(
    */
   useEffect(() => {
     if (enabled && refetchOnMount) {
+      // Fetch-on-mount: fetchData is async en zet state pas na await.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchData();
     }
 

@@ -7,8 +7,9 @@
     "build": "next build",
     "build:bookmarklet": "ts-node scripts/build-bookmarklet.ts",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test:e2e": "playwright test",
+    "test:unit": "playwright test tests/unit",
     "test:redis": "node scripts/test-redis.js",
     "optimize-images": "node scripts/optimize-images.js",
     "analyze": "ANALYZE=true next build --webpack"

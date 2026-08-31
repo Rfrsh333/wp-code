@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { valideerLeeftijdVoorDienst, isIDBewilsVerlopen, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
+import { valideerLeeftijdVoorDienst, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
 
 interface Medewerker {
   id: string;

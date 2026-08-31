@@ -77,14 +77,58 @@ export async function POST(request: NextRequest) {
     zou_opnieuw_boeken,
   } = await request.json();
 
-  await supabaseAdmin.from("beoordelingen").insert({
-    dienst_id, medewerker_id, klant_id: klant.id, score, opmerking,
+  // Basisvalidatie van de score (1–5). Voorkomt vergiftiging van het publieke gemiddelde.
+  const scoreNum = Number(score);
+  if (!dienst_id || !medewerker_id || !Number.isFinite(scoreNum) || scoreNum < 1 || scoreNum > 5) {
+    return NextResponse.json({ error: "Ongeldige beoordeling" }, { status: 400 });
+  }
+
+  // AUTORISATIE: verifieer dat déze klant déze medewerker voor déze afgeronde dienst
+  // mág beoordelen (zelfde criteria als de GET-lijst). Zonder deze check kon een
+  // ingelogde klant willekeurige medewerkers beoordelen en hun publieke score/badge manipuleren.
+  const vandaag = new Date().toISOString().split("T")[0];
+  const { data: aanmelding } = await supabaseAdmin
+    .from("dienst_aanmeldingen")
+    .select("id, dienst:diensten!inner(klant_id, datum)")
+    .eq("dienst_id", dienst_id)
+    .eq("medewerker_id", medewerker_id)
+    .eq("status", "geaccepteerd")
+    .eq("dienst.klant_id", klant.id)
+    .lt("dienst.datum", vandaag)
+    .maybeSingle();
+
+  if (!aanmelding) {
+    return NextResponse.json(
+      { error: "Niet gemachtigd om deze dienst/medewerker te beoordelen" },
+      { status: 403 },
+    );
+  }
+
+  // Voorkom dubbele beoordelingen (app-niveau; DB-constraint als extra laag aanbevolen).
+  const { data: bestaand } = await supabaseAdmin
+    .from("beoordelingen")
+    .select("id")
+    .eq("dienst_id", dienst_id)
+    .eq("medewerker_id", medewerker_id)
+    .eq("klant_id", klant.id)
+    .maybeSingle();
+
+  if (bestaand) {
+    return NextResponse.json({ error: "Deze dienst is al beoordeeld" }, { status: 409 });
+  }
+
+  const { error: insertError } = await supabaseAdmin.from("beoordelingen").insert({
+    dienst_id, medewerker_id, klant_id: klant.id, score: scoreNum, opmerking,
     score_punctualiteit: score_punctualiteit || null,
     score_professionaliteit: score_professionaliteit || null,
     score_vaardigheden: score_vaardigheden || null,
     score_communicatie: score_communicatie || null,
     zou_opnieuw_boeken: zou_opnieuw_boeken ?? null,
   });
+
+  if (insertError) {
+    return NextResponse.json({ error: "Beoordeling kon niet worden opgeslagen" }, { status: 500 });
+  }
 
   // Update gemiddelde score
   const { data } = await supabaseAdmin

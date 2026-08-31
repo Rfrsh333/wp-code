@@ -8,11 +8,18 @@ const CONSENT_KEY = "ttj_cookie_consent";
 type ConsentValue = "all" | "necessary";
 
 export default function CookieConsent() {
-  const [isVisible, setIsVisible] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !window.localStorage.getItem(CONSENT_KEY);
-  });
+  // Start altijd op false zodat SSR en de eerste client-render identiek zijn (beide null);
+  // pas ná mount bepalen we zichtbaarheid o.b.v. localStorage. Voorkomt hydration-mismatch.
+  const [isVisible, setIsVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Bewust: SSR en de eerste client-render moeten identiek null zijn (anders
+    // hydration-mismatch). isVisible is gemengde state — ook gezet door het
+    // ttj-cookie-open event en handleConsent — dus geen zuivere externe store.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!window.localStorage.getItem(CONSENT_KEY)) setIsVisible(true);
+  }, []);
 
   useEffect(() => {
     const onOpen = () => setIsVisible(true);

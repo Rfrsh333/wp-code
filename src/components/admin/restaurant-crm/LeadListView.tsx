@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Search, Filter, ChevronLeft, ChevronRight, Phone, Mail, Instagram, Facebook, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabase";
-import { StatusBadge, OutreachBadge, ChannelBadge, InstantlyBadge } from "./StatusBadge";
+import { StatusBadge, OutreachBadge } from "./StatusBadge";
 import NextActionBadge, { getContactAttemptBadge } from "./NextActionBadge";
 import LeadDetailPanel from "./LeadDetailPanel";
 import BulkActionsBar from "./BulkActionsBar";

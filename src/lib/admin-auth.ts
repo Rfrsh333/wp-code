@@ -11,20 +11,40 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+const VALID_ROLES: AdminRole[] = ["owner", "operations", "recruiter", "finance"];
+
 function parseAdminRoleMap(): Map<string, AdminRole> {
   const roleMap = new Map<string, AdminRole>();
-  const raw = process.env.ADMIN_ROLE_MAP || "";
+  const raw = (process.env.ADMIN_ROLE_MAP || "").trim();
+  if (!raw) return roleMap;
+
+  const add = (email?: string, role?: string) => {
+    const e = (email || "").trim().toLowerCase();
+    const r = (role || "").trim().toLowerCase();
+    if (e && VALID_ROLES.includes(r as AdminRole)) {
+      roleMap.set(normalizeEmail(e), r as AdminRole);
+    }
+  };
+
+  // Ondersteun zowel JSON ({"email":"role"}) als CSV (email:role,email:role) zodat de
+  // waarde niet stilletjes faalt bij een formaatverschil (audit P2-196).
+  if (raw.startsWith("{")) {
+    try {
+      const obj = JSON.parse(raw) as Record<string, string>;
+      for (const [email, role] of Object.entries(obj)) add(email, role);
+      return roleMap;
+    } catch {
+      // Val terug op CSV-parsing hieronder.
+    }
+  }
 
   raw
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean)
     .forEach((entry) => {
-      const [email, role] = entry.split(":").map((value) => value.trim().toLowerCase());
-      if (!email || !role) return;
-      if (["owner", "operations", "recruiter", "finance"].includes(role)) {
-        roleMap.set(normalizeEmail(email), role as AdminRole);
-      }
+      const [email, role] = entry.split(":");
+      add(email, role);
     });
 
   return roleMap;
@@ -32,8 +52,17 @@ function parseAdminRoleMap(): Map<string, AdminRole> {
 
 export function getAdminRole(email: string): AdminRole {
   const normalizedEmail = normalizeEmail(email);
-  const roleMap = parseAdminRoleMap();
-  return roleMap.get(normalizedEmail) || DEFAULT_ADMIN_ROLE;
+
+  const explicit = parseAdminRoleMap().get(normalizedEmail);
+  if (explicit) return explicit;
+
+  // Escape hatch: de eerste ADMIN_EMAILS-entry is standaard 'owner'. Zo houdt de primaire
+  // beheerder altijd volledige toegang, óók bij een lege of verkeerd geformatteerde
+  // ADMIN_ROLE_MAP — dit voorkomt dat rol-gates iemand permanent buitensluiten.
+  const emails = getAdminEmails().map(normalizeEmail);
+  if (emails.length > 0 && emails[0] === normalizedEmail) return "owner";
+
+  return DEFAULT_ADMIN_ROLE;
 }
 
 export function hasRequiredAdminRole(

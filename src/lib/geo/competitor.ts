@@ -11,7 +11,6 @@ import "server-only";
  */
 
 import { supabaseAdmin } from "@/lib/supabase";
-import type { GeoStad } from "./types";
 import { GEO_STEDEN } from "./types";
 
 // --- Interfaces conform Master Prompt Module 4 ---

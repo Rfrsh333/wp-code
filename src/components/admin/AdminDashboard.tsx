@@ -6,15 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminOverzicht, useAdminDataAction, adminKeys } from "@/hooks/queries/useAdminQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminRealtime } from "@/hooks/queries/useAdminRealtime";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import Pagination from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 import AdminShell from "@/components/navigation/AdminShell";
 import EmptyState from "@/components/ui/EmptyState";
-import StatCard from "@/components/admin/dashboard/StatCard";
 import DashboardOverzicht from "@/components/admin/dashboard/DashboardOverzicht";
-import { BriefcaseBusiness, Calculator, Inbox, Users, Plus, ClipboardList, Target, CalendarRange } from "lucide-react";
+import { BriefcaseBusiness, Inbox, Users } from "lucide-react";
 import { isAdminTab } from "@/lib/navigation/sidebar-config";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
 

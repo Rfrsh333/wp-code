@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Horeca Recruitment — Werving & Selectie",
   description: "Recruitment voor vast horecapersoneel. Wij werven en selecteren vaste medewerkers voor restaurants, hotels en catering met een helder proces en nazorg.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/diensten/recruitment",
+    canonical: "https://www.toptalentjobs.nl/diensten/recruitment/",
   },
 };
 

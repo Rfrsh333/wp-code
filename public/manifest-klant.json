@@ -3,7 +3,7 @@
   "name": "TopTalent Business",
   "short_name": "TT Business",
   "description": "Beheer uw horecapersoneel via TopTalentJobs.nl",
-  "start_url": "/klant/?source=pwa",
+  "start_url": "/klant/dashboard/?source=pwa",
   "scope": "/klant/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
@@ -26,29 +26,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/klant-dashboard-narrow.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Klant dashboard"
     },
     {
-      "src": "/screenshots/klant-uren-narrow.png",
-      "sizes": "540x720",
+      "src": "/icons/icon-klant-maskable-512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Uren overzicht"
-    },
-    {
-      "src": "/screenshots/klant-dashboard-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Klant dashboard"
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [

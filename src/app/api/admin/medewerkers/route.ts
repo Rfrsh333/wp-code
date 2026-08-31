@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     const temporaryPassword = generateTemporaryPassword();
-    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 12);
 
     const { error } = await supabaseAdmin
       .from("medewerkers")
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       if (!passwordValidation.valid) {
         return NextResponse.json({ error: passwordValidation.error }, { status: 400 });
       }
-      payload.wachtwoord = await bcrypt.hash(data.wachtwoord, 10);
+      payload.wachtwoord = await bcrypt.hash(data.wachtwoord, 12);
     } else {
       delete payload.wachtwoord;
     }

@@ -37,7 +37,7 @@
  */
 
 import { memo, useEffect } from 'react';
-import { X, CheckCircle2, XCircle, Mail, Eye } from 'lucide-react';
+import { X, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/telemetry';
 

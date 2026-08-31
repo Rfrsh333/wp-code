@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "Plan een vrijblijvende afspraak met TopTalent Jobs. Bespreek uw personeelsbehoefte en ontvang advies op maat voor uw horecabedrijf in Utrecht en omgeving.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/afspraak-plannen",
+    canonical: "https://www.toptalentjobs.nl/afspraak-plannen/",
   },
   openGraph: {
     title: "Afspraak Plannen | TopTalent Jobs",

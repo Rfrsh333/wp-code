@@ -286,10 +286,24 @@ export interface KpiState {
   tooltip?: string;
 }
 
+/** Extra cijfers per KPI-soort; elk veld hoort bij precies een van de vier types. */
+export interface KpiContext {
+  /** revenue: nog openstaand bedrag */
+  openstaand?: number;
+  /** requests: totaal aantal aanvragen */
+  total?: number;
+  /** diensten: nog niet bezette diensten */
+  open?: number;
+  /** conversion: genoeg data voor een betrouwbaar percentage */
+  hasData?: boolean;
+  /** conversion: aantal inzetbare medewerkers */
+  inzetbaar?: number;
+}
+
 export function formatKpiState(
   type: 'revenue' | 'requests' | 'diensten' | 'conversion',
   value: number | null | undefined,
-  context?: any
+  context?: KpiContext
 ): KpiState {
   switch (type) {
     case 'revenue':
@@ -346,7 +360,7 @@ export function formatKpiState(
       }
       return {
         value: value || 0,
-        subtitle: context?.open > 0 ? `${context.open} open` : 'Alle bezet',
+        subtitle: (context?.open ?? 0) > 0 ? `${context?.open} open` : 'Alle bezet',
         isEmpty: false,
         isInsufficient: false,
       };

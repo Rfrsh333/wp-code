@@ -1,8 +1,6 @@
 "use client";
 
 import { Phone, MessageCircle, ClipboardCheck, AlertTriangle, ChevronRight } from "lucide-react";
-import type { CRMLead } from "./types";
-
 interface ActionListsProps {
   phoneTodo: number;
   repliedCount: number;

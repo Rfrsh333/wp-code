@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Horecapersoneel Aanvragen — Persoonlijke Matching",
   description: "Vraag horecapersoneel aan via TopTalent Jobs. Persoonlijke matching, duidelijke afspraken en vaak binnen 24 uur een voorstel op maat voor uw zaak.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/personeel-aanvragen",
+    canonical: "https://www.toptalentjobs.nl/personeel-aanvragen/",
   },
   openGraph: {
     title: "Personeel Aanvragen | TopTalent Jobs",

@@ -11,18 +11,10 @@ jobs:
     name: Daily Cleanup & Reminders
     runs-on: ubuntu-latest
     steps:
-      - name: Verlopen diensten sluiten
-        run: |
-          curl -s -X POST "${{ secrets.APP_URL }}/api/cron/daily-cleanup" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json"
-
-      - name: Factuur herinneringen versturen
-        run: |
-          curl -s -X GET "${{ secrets.APP_URL }}/api/cron/herinneringen" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json"
-
+      # LET OP: /api/cron/daily-cleanup en /api/cron/herinneringen draaien al via Vercel
+      # Cron (zie vercel.json). Ze zijn hier bewust verwijderd om dubbele triggers te
+      # voorkomen — klanten kregen betalingsherinneringen meermaals per dag (audit P1-25).
+      # Alleen de job die NIET in Vercel Cron staat, draait hier.
       - name: Dienst herinneringen versturen
         run: |
           curl -s -X POST "${{ secrets.APP_URL }}/api/cron/dienst-herinneringen" \

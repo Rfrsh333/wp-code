@@ -38,7 +38,7 @@ function renderAdminResetEmail(actionLink: string) {
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
-  const rateLimit = await checkRedisRateLimit(`admin-password-reset:${clientIP}`, loginRateLimit);
+  const rateLimit = await checkRedisRateLimit(`admin-password-reset:${clientIP}`, loginRateLimit, { failClosed: true });
 
   if (!rateLimit.success) {
     return NextResponse.json(

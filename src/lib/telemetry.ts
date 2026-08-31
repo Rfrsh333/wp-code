@@ -14,7 +14,7 @@
 export interface TelemetryEvent {
   name: string;
   timestamp: number;
-  payload?: Record<string, any>;
+  payload?: Record<string, unknown>;
   sessionId?: string;
   userId?: string;
 }
@@ -50,7 +50,7 @@ class TelemetryService {
   /**
    * Track an event
    */
-  track(name: string, payload?: Record<string, any>): void {
+  track(name: string, payload?: Record<string, unknown>): void {
     if (!this.config.enabled) return;
 
     const event: TelemetryEvent = {
@@ -121,7 +121,7 @@ const telemetry = new TelemetryService();
 /**
  * Track an event
  */
-export function trackEvent(name: string, payload?: Record<string, any>): void {
+export function trackEvent(name: string, payload?: Record<string, unknown>): void {
   telemetry.track(name, payload);
 }
 
@@ -200,7 +200,7 @@ export const TelemetryEvents = {
 export function trackWorkflow(
   name: string,
   action: 'start' | 'complete' | 'abandon',
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): void {
   const eventName = {
     start: TelemetryEvents.WORKFLOW_STARTED,
@@ -217,7 +217,7 @@ export function trackWorkflow(
 /**
  * Track performance metric
  */
-export function trackPerformance(metric: string, duration: number, metadata?: Record<string, any>): void {
+export function trackPerformance(metric: string, duration: number, metadata?: Record<string, unknown>): void {
   trackEvent('performance_metric', {
     metric,
     duration,
@@ -228,7 +228,7 @@ export function trackPerformance(metric: string, duration: number, metadata?: Re
 /**
  * Track error — also forwards to Sentry so errors aren't silently dropped.
  */
-export function trackError(error: Error | string, context?: Record<string, any>): void {
+export function trackError(error: Error | string, context?: Record<string, unknown>): void {
   const errorMessage = typeof error === 'string' ? error : error.message;
   const errorStack = typeof error === 'string' ? undefined : error.stack;
 

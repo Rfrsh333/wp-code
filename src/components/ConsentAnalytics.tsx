@@ -1,26 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+const CONSENT_KEY = "ttj_cookie_consent";
+
+/** localStorage kan gooien (private mode, geblokkeerde cookies) — dan: geen consent. */
+function leesConsent(): boolean {
+  try {
+    return window.localStorage.getItem(CONSENT_KEY) === "all";
+  } catch {
+    return false;
+  }
+}
+
 export default function ConsentAnalytics() {
-  const [hasConsent, setHasConsent] = useState(false);
-
-  useEffect(() => {
-    // Check initial consent state
-    const consent = localStorage.getItem("ttj_cookie_consent");
-    setHasConsent(consent === "all");
-
-    // Listen for consent changes
-    const handleConsent = () => {
-      const updated = localStorage.getItem("ttj_cookie_consent");
-      setHasConsent(updated === "all");
-    };
-
-    window.addEventListener("ttj-cookie-consent", handleConsent);
-    return () => window.removeEventListener("ttj-cookie-consent", handleConsent);
-  }, []);
+  // Externe store: consent verandert via een custom event of een ander tabblad.
+  const hasConsent = useSyncExternalStore(
+    (onStoreChange) => {
+      window.addEventListener("ttj-cookie-consent", onStoreChange);
+      window.addEventListener("storage", onStoreChange);
+      return () => {
+        window.removeEventListener("ttj-cookie-consent", onStoreChange);
+        window.removeEventListener("storage", onStoreChange);
+      };
+    },
+    leesConsent,
+    () => false
+  );
 
   if (!hasConsent) return null;
 

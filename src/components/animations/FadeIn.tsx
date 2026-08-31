@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef, useEffect, useState } from "react";
+import { ReactNode, useRef, useEffect, useState, useSyncExternalStore } from "react";
 
 interface FadeInProps {
   children: ReactNode;
@@ -10,24 +10,22 @@ interface FadeInProps {
   className?: string;
 }
 
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+/**
+ * Leest de motion-voorkeur als externe store: hydration-veilig (server = false)
+ * en zonder setState in een effect.
+ */
 function usePrefersReducedMotion() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  });
-
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mql.matches);
-
-    const handler = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches);
-    };
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
-
-  return prefersReducedMotion;
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const mql = window.matchMedia(REDUCED_MOTION_QUERY);
+      mql.addEventListener("change", onStoreChange);
+      return () => mql.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia(REDUCED_MOTION_QUERY).matches,
+    () => false
+  );
 }
 
 export default function FadeIn({

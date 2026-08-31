@@ -40,9 +40,17 @@ Sentry.init({
   },
 });
 
-// Lazy-load Session Replay after page is interactive to avoid blocking initial load
+// Lazy-load Session Replay — alléén ná cookie-consent (analytics/marketing).
+// Session Replay neemt de DOM van (geauthenticeerde) pagina's op; dat mag pas met
+// toestemming (AVG). Consent = localStorage "ttj_cookie_consent" === "all", identiek
+// aan de GTM-loader. Errortracking hierboven blijft actief (gerechtvaardigd belang).
 if (typeof window !== "undefined") {
+  let replayGeladen = false;
+
   const loadReplay = () => {
+    if (replayGeladen) return;
+    if (window.localStorage.getItem("ttj_cookie_consent") !== "all") return;
+    replayGeladen = true;
     setTimeout(() => {
       import("@sentry/nextjs").then(({ replayIntegration, addIntegration }) => {
         addIntegration(replayIntegration());
@@ -50,11 +58,19 @@ if (typeof window !== "undefined") {
     }, 3000);
   };
 
-  if (document.readyState === "complete") {
-    loadReplay();
-  } else {
-    window.addEventListener("load", loadReplay, { once: true });
-  }
+  const scheduleWhenReady = () => {
+    if (document.readyState === "complete") {
+      loadReplay();
+    } else {
+      window.addEventListener("load", loadReplay, { once: true });
+    }
+  };
+
+  // Nu laden als consent al gegeven is; anders zodra consent later wordt verleend.
+  scheduleWhenReady();
+  window.addEventListener("ttj-cookie-consent", (event) => {
+    if ((event as CustomEvent<string>).detail === "all") loadReplay();
+  });
 }
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

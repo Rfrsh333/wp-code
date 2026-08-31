@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/lp/personeel",
+    canonical: "https://www.toptalentjobs.nl/lp/personeel/",
   },
   openGraph: {
     title,

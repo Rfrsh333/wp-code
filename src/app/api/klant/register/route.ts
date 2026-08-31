@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Er bestaat al een account met dit emailadres" }, { status: 409 });
     }
 
-    const hashedPassword = await bcrypt.hash(wachtwoord, 10);
+    const hashedPassword = await bcrypt.hash(wachtwoord, 12);
 
     const { data: klant, error } = await supabaseAdmin
       .from("klanten")

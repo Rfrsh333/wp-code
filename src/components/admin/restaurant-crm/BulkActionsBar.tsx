@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, Tag, Clock, Download, Send } from "lucide-react";
+import { Archive, Download, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import { STATUS_CONFIG } from "./constants";
-import type { CRMStatus } from "./types";
-
 interface BulkActionsBarProps {
   selectedIds: string[];
   onComplete: () => void;

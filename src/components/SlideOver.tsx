@@ -102,10 +102,10 @@ export function SlideOver({
       }
     };
 
-    panel.addEventListener('keydown', handleTab as any);
+    panel.addEventListener('keydown', handleTab as EventListener);
     firstFocusable?.focus();
 
-    return () => panel.removeEventListener('keydown', handleTab as any);
+    return () => panel.removeEventListener('keydown', handleTab as EventListener);
   }, [isOpen]);
 
   if (!isOpen) return null;

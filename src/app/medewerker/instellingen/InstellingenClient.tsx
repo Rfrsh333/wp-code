@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Bell, Mail, Lock, Shield, Eye, Moon, Globe } from "lucide-react";
+import { ArrowLeft, Bell, Mail, Lock, Shield, Eye, Moon } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
 

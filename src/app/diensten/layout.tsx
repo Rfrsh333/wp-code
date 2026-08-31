@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   },
   description: "Overzicht van de diensten van TopTalent Jobs: uitzenden, detachering en recruitment van horecapersoneel. Kies de oplossing die past bij uw situatie.",
   alternates: {
-    canonical: "https://www.toptalentjobs.nl/diensten",
+    canonical: "https://www.toptalentjobs.nl/diensten/",
   },
   openGraph: {
     title: "Onze Diensten | TopTalent Jobs - Horeca Uitzendbureau",
