@@ -80,7 +80,9 @@ export function proxy(request: NextRequest) {
     pathname === "/employer-public";
   const isWpJsonPath =
     pathname === "/wp-json" || pathname.startsWith("/wp-json/");
-  const hasLegacyWpQuery = searchParams.has("p") || searchParams.has("cat");
+  // De Sentry-tunnel stuurt zelf ?o=…&p=… mee; die mag niet als WordPress-URL gelden.
+  const hasLegacyWpQuery =
+    pathname !== "/monitoring" && (searchParams.has("p") || searchParams.has("cat"));
 
   if (isGonePath || isWpJsonPath || hasLegacyWpQuery) {
     return new NextResponse(null, { status: 410 });
