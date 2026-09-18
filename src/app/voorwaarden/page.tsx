@@ -13,7 +13,6 @@ export default function AlgemeneVoorwaardenPage() {
     <>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 py-20 lg:py-28">
-        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5" />
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Algemene Voorwaarden

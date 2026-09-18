@@ -193,7 +193,7 @@ export default function Footer() {
               <p>&copy; {new Date().getFullYear()} TopTalent Jobs. Alle rechten voorbehouden.</p>
               <p className="mt-1 text-neutral-500 text-xs flex flex-wrap items-center gap-x-3 gap-y-1">
                 <a
-                  href="https://www.kvk.nl/orderstraat/product-kiezen/?kvknummer=73401161"
+                  href="https://www.kvk.nl/zoeken/?source=all&q=73401161"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-neutral-300 transition-colors inline-flex items-center gap-1"

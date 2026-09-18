@@ -55,7 +55,7 @@ export default function OverOnsPage() {
                 <dt className="font-medium text-neutral-500">KvK-nummer</dt>
                 <dd>
                   <a
-                    href="https://www.kvk.nl/orderstraat/product-kiezen/?kvknummer=73401161"
+                    href="https://www.kvk.nl/zoeken/?source=all&q=73401161"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#F97316] hover:underline inline-flex items-center gap-1"

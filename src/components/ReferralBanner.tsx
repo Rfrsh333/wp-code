@@ -6,7 +6,7 @@ export default function ReferralBanner() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const referralUrl = "https://www.toptalentuitzendbureau.nl/inschrijven/";
+  const referralUrl = "https://www.toptalentjobs.nl/inschrijven/";
 
   const handleCopyLink = useCallback(async () => {
     try {
@@ -37,9 +37,9 @@ export default function ReferralBanner() {
 
   return (
     <>
-      {/* Floating pill */}
+      {/* Pill onder de pagina (niet zwevend: die lag op mobiel over het formulier) */}
       <div
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+        className="flex justify-center px-4 pb-12"
         role="complementary"
         aria-label="Referral bonus banner"
       >

@@ -553,9 +553,9 @@ export default function InschrijfFormulier() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="text-center mb-10 animate-fade-in">
-        <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
+        <h1 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
           Inschrijven bij TopTalent
-        </h2>
+        </h1>
         <p className="text-neutral-600 max-w-2xl mx-auto">
           Dit is je eerste intake. We houden het bewust kort en vragen documenten pas later op als je profiel aansluit.
         </p>
@@ -565,8 +565,8 @@ export default function InschrijfFormulier() {
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 px-6 py-5 mb-6">
         <div className="flex items-center justify-between">
           {stepTitles.map((title, index) => (
-            <div key={index} className="flex items-center">
-              <div className="flex flex-col items-center">
+            <div key={index} className={`flex items-center ${index < 3 ? "flex-1" : ""}`}>
+              <div className="flex flex-col items-center shrink-0">
                 <div
                   role="img"
                   aria-label={`Stap ${index + 1}: ${title}${index < currentStep ? " (voltooid)" : index === currentStep ? " (huidige stap)" : ""}`}
@@ -590,7 +590,7 @@ export default function InschrijfFormulier() {
               </div>
               {index < 3 && (
                 <div
-                  className={`w-12 md:w-20 h-1 mx-2 rounded transition-colors duration-300 ${
+                  className={`flex-1 h-1 mx-2 rounded transition-colors duration-300 ${
                     index < currentStep ? "bg-[#F27501]" : "bg-neutral-200"
                   }`}
                 />

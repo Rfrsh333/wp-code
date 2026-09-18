@@ -79,7 +79,7 @@ export default function InschrijvenPage() {
         </Section.Container>
       </Section>
 
-      {/* Referral Banner - floating pill */}
+      {/* Referral Banner */}
       <Suspense>
         <ReferralBanner />
       </Suspense>
