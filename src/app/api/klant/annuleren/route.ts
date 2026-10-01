@@ -2,16 +2,69 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { dienstUren, nlMoment, nlVandaag } from "@/lib/nl-tijd";
+import { nlMoment, nlVandaag } from "@/lib/nl-tijd";
 import { herberekenPlekken } from "@/lib/plekken";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { sendPushToUser } from "@/lib/push-notifications";
+import {
+  berekenAnnuleringsboete,
+  STANDAARD_ANNULERINGSBELEID,
+  type AnnuleringsBeleid,
+  type BoeteUitkomst,
+} from "@/lib/klant-annuleringsboete";
 
 // NL-wandkloktijd → echt moment. `new Date("…T18:00")` op een UTC-server las 18:00 UTC (= 20:00 NL),
 // waardoor de klant 1-2 uur extra "van tevoren" kreeg en een boete kon ontlopen.
 function berekenUrenVanTevoren(dienstDatum: string, dienstTijd: string): number {
   const verschilMs = nlMoment(dienstDatum, dienstTijd).getTime() - Date.now();
   return Math.max(0, verschilMs / (1000 * 60 * 60));
+}
+
+type Dienst = Record<string, unknown> & {
+  id: string;
+  status: string;
+  datum: string;
+  start_tijd: string;
+  eind_tijd: string;
+  uurtarief: number | null;
+  aantal_nodig: number | null;
+  functie: string | null;
+};
+
+/** Dienst van deze klant die nog geannuleerd mag worden, of een foutantwoord (zelfde checks voor POST en preview). */
+async function haalAnnuleerbareDienst(
+  klantId: string,
+  dienstId: string,
+): Promise<{ dienst: Dienst } | { fout: NextResponse }> {
+  const { data: dienst } = await supabaseAdmin.from("diensten").select("*").eq("id", dienstId).eq("klant_id", klantId).single();
+  if (!dienst) return { fout: NextResponse.json({ error: "Dienst niet gevonden" }, { status: 404 }) };
+  if (dienst.status === "geannuleerd") return { fout: NextResponse.json({ error: "Al geannuleerd" }, { status: 400 }) };
+  if (dienst.datum < nlVandaag() || ["afgerond", "voltooid"].includes(dienst.status)) {
+    return { fout: NextResponse.json({ error: "Een afgelopen dienst kan niet meer worden geannuleerd" }, { status: 400 }) };
+  }
+  return { dienst: dienst as Dienst };
+}
+
+/**
+ * Eén berekening voor de echte annulering én de preview: beleid + annuleringen deze maand ophalen
+ * en berekenAnnuleringsboete toepassen. Wijzigt niets.
+ */
+async function bepaalBoete(
+  klantId: string,
+  dienst: Dienst,
+): Promise<BoeteUitkomst & { urenVanTevoren: number; beleid: AnnuleringsBeleid }> {
+  const urenVanTevoren = berekenUrenVanTevoren(dienst.datum, dienst.start_tijd);
+  const { data: beleid } = await supabaseAdmin.from("klant_annuleringsbeleid").select("*").eq("klant_id", klantId).single();
+  const policy = (beleid as AnnuleringsBeleid | null) || STANDAARD_ANNULERINGSBELEID;
+
+  let annuleringenDezeMaand = 0;
+  if (policy.is_actief && urenVanTevoren < policy.uren_van_tevoren_min) {
+    const { count } = await supabaseAdmin.from("dienst_annuleringen").select("id", { count: "exact", head: true }).eq("klant_id", klantId).gte("created_at", nlMoment(`${nlVandaag().slice(0, 7)}-01`, "00:00").toISOString());
+    annuleringenDezeMaand = count ?? 0;
+  }
+
+  const uitkomst = berekenAnnuleringsboete({ dienst, beleid: policy, urenVanTevoren, annuleringenDezeMaand });
+  return { ...uitkomst, urenVanTevoren, beleid: policy };
 }
 
 export async function POST(request: NextRequest) {
@@ -21,39 +74,11 @@ export async function POST(request: NextRequest) {
   const { dienst_id, reden } = await request.json().catch(() => ({}));
   if (!dienst_id) return NextResponse.json({ error: "dienst_id required" }, { status: 400 });
 
-  const { data: dienst } = await supabaseAdmin.from("diensten").select("*").eq("id", dienst_id).eq("klant_id", klant.id).single();
-  if (!dienst) return NextResponse.json({ error: "Dienst niet gevonden" }, { status: 404 });
-  if (dienst.status === "geannuleerd") return NextResponse.json({ error: "Al geannuleerd" }, { status: 400 });
-  if (dienst.datum < nlVandaag() || ["afgerond", "voltooid"].includes(dienst.status)) {
-    return NextResponse.json({ error: "Een afgelopen dienst kan niet meer worden geannuleerd" }, { status: 400 });
-  }
+  const gevonden = await haalAnnuleerbareDienst(klant.id, dienst_id);
+  if ("fout" in gevonden) return gevonden.fout;
+  const { dienst } = gevonden;
 
-  const urenVanTevoren = berekenUrenVanTevoren(dienst.datum, dienst.start_tijd);
-  const { data: beleid } = await supabaseAdmin.from("klant_annuleringsbeleid").select("*").eq("klant_id", klant.id).single();
-  
-  const policy = beleid || { uren_van_tevoren_min: 24, boete_percentage: 50, gebruik_percentage: true, geen_boete_eerste_x_keer: 0, is_actief: true };
-  
-  let boeteToegepast = false;
-  let boeteBedrag = 0;
-  let boeteReden = "";
-
-  if (policy.is_actief && urenVanTevoren < policy.uren_van_tevoren_min) {
-    const { count } = await supabaseAdmin.from("dienst_annuleringen").select("id", { count: "exact", head: true }).eq("klant_id", klant.id).gte("created_at", nlMoment(`${nlVandaag().slice(0, 7)}-01`, "00:00").toISOString());
-    
-    if (((count ?? 0) >= policy.geen_boete_eerste_x_keer)) {
-      boeteToegepast = true;
-      // dienstUren rekent nachtdiensten over middernacht goed (voorheen viel dat terug op 6 uur).
-      const duur = dienstUren(String(dienst.start_tijd).slice(0, 5), String(dienst.eind_tijd).slice(0, 5));
-      const geschatteUren = Number.isFinite(duur) && duur > 0 ? duur : 6;
-      const geschat = (dienst.uurtarief || 0) * (dienst.aantal_nodig || 1) * geschatteUren;
-      boeteBedrag = policy.gebruik_percentage ? geschat * (policy.boete_percentage / 100) : policy.boete_vast_bedrag || 0;
-      boeteReden = `Late annulering ${urenVanTevoren.toFixed(1)}u van tevoren`;
-    } else {
-      boeteReden = `Gratis annulering ${(count ?? 0) + 1}/${policy.geen_boete_eerste_x_keer}`;
-    }
-  } else {
-    boeteReden = `Geen boete: ${urenVanTevoren.toFixed(1)}u van tevoren`;
-  }
+  const { boeteToegepast, boeteBedrag, boeteReden, urenVanTevoren } = await bepaalBoete(klant.id, dienst);
 
   // Conditioneel: bij een dubbelklik annuleert (en beboet) alleen het eerste verzoek.
   const { data: geannuleerd } = await supabaseAdmin
@@ -115,6 +140,26 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Preview: ?dienst_id=… rekent exact zoals de POST, zonder iets te wijzigen.
+  const previewDienstId = request.nextUrl.searchParams.get("dienst_id");
+  if (previewDienstId) {
+    const gevonden = await haalAnnuleerbareDienst(klant.id, previewDienstId);
+    if ("fout" in gevonden) return gevonden.fout;
+    const boete = await bepaalBoete(klant.id, gevonden.dienst);
+    return NextResponse.json(
+      {
+        dienst_id: previewDienstId,
+        boete_toegepast: boete.boeteToegepast,
+        boete_bedrag: boete.boeteBedrag,
+        boete_reden: boete.boeteReden,
+        uren_tot_start: Math.round(boete.urenVanTevoren * 10) / 10,
+        binnen_boetegrens: boete.binnenGrens,
+        uren_van_tevoren_min: boete.beleid.uren_van_tevoren_min,
+      },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
 
   const { data: beleid } = await supabaseAdmin.from("klant_annuleringsbeleid").select("*").eq("klant_id", klant.id).single();
   const { data: geschiedenis } = await supabaseAdmin.from("dienst_annuleringen").select("*").eq("klant_id", klant.id).order("created_at", { ascending: false }).limit(20);
