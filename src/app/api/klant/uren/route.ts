@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getKlantSession } from "@/lib/portal-auth";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 
-export async function GET() {
-  // KRITIEK: Verify signed JWT instead of trusting JSON
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyKlantSession } = await import("@/lib/session");
-  const klant = await verifyKlantSession(session.value);
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) {
     console.warn("[SECURITY] Invalid klant session token");
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
@@ -60,13 +54,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  // KRITIEK: Verify signed JWT instead of trusting JSON
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyKlantSession } = await import("@/lib/session");
-  const klant = await verifyKlantSession(session.value);
+  const klant = await getKlantSession(request);
   if (!klant) {
     console.warn("[SECURITY] Invalid klant session token");
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });

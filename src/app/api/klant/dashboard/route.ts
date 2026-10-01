@@ -1,17 +1,10 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { signFactuurToken, verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
+import { signFactuurToken } from "@/lib/session";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const klant = await verifyKlantSession(session.value);
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) {
     console.warn("[SECURITY] Invalid klant session token");
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });

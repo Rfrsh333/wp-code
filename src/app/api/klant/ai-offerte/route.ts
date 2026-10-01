@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
 import { checkRedisRateLimit, apiRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
-
-async function getKlant() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return null;
-  return await verifyKlantSession(session.value);
-}
 
 export async function POST(request: NextRequest) {
   // Rate limiting: voorkom misbruik van AI endpoint
@@ -22,7 +14,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { beschrijving } = await request.json();

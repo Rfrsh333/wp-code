@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 
-async function getKlant() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return null;
-  return await verifyKlantSession(session.value);
-}
-
 // GET - Haal alle templates op
-export async function GET() {
-  const klant = await getKlant();
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: templates, error } = await supabaseAdmin
@@ -34,7 +26,7 @@ export async function GET() {
 
 // POST - Maak nieuwe template
 export async function POST(request: NextRequest) {
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
@@ -86,7 +78,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Update template of increment gebruik
 export async function PATCH(request: NextRequest) {
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
@@ -134,7 +126,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Verwijder template
 export async function DELETE(request: NextRequest) {
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { template_id } = await request.json();

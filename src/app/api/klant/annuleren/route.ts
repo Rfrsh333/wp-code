@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
-
-async function getKlant() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return null;
-  return await verifyKlantSession(session.value);
-}
 
 function berekenUrenVanTevoren(dienstDatum: string, dienstTijd: string): number {
   const dienstDateTime = new Date(`${dienstDatum}T${dienstTijd}`);
@@ -19,7 +11,7 @@ function berekenUrenVanTevoren(dienstDatum: string, dienstTijd: string): number 
 }
 
 export async function POST(request: NextRequest) {
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { dienst_id, reden } = await request.json();
@@ -84,8 +76,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true, boete_toegepast: boeteToegepast, boete_bedrag: boeteBedrag, boete_reden: boeteReden });
 }
 
-export async function GET() {
-  const klant = await getKlant();
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: beleid } = await supabaseAdmin.from("klant_annuleringsbeleid").select("*").eq("klant_id", klant.id).single();

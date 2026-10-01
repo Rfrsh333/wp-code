@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { sendPushToAllOfType } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get("klant_session");
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const klant = await verifyKlantSession(session.value);
+    const klant = await getKlantSession(request);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Verify klant exists in database
@@ -195,13 +190,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get("klant_session");
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const klant = await verifyKlantSession(session.value);
+    const klant = await getKlantSession(request);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Get previous locations for this klant
