@@ -165,6 +165,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Deze aanmelding is intussen al gewijzigd" }, { status: 409 });
     }
 
+    // Twee gelijktijdige acceptaties op de laatste plek kunnen allebei door de check hierboven
+    // komen. Na de update opnieuw tellen en bij overboeking terugdraaien (zelfde patroon als meldAan).
+    if (naar === "geaccepteerd" && (await telIngepland(aanmelding.dienst_id)) > totaal) {
+      await supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .update({ status: aanmelding.status, beoordeeld_at: null })
+        .eq("id", id)
+        .eq("status", naar);
+      await herberekenPlekken(aanmelding.dienst_id);
+      return NextResponse.json(
+        { error: "Alle plekken voor deze dienst zijn intussen bezet. De aanmelding is niet geaccepteerd." },
+        { status: 409 },
+      );
+    }
+
     await herberekenPlekken(aanmelding.dienst_id);
 
     // Bij acceptatie: stuur bevestigingsmail
