@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
         dienst:diensten(datum)
       `)
       .in("dienst_id", klantDiensten.map((d) => d.id))
-      .eq("status", "bevestigd")
+      .in("status", [...INGEPLAND_STATUSSEN])
       .order("created_at", { ascending: false })
       .limit(50);
 

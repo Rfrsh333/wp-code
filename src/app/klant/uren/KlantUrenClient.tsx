@@ -22,6 +22,7 @@ import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
 import { usePlatformOptions } from "@/hooks/queries/usePlatformOptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseCheckinQr } from "@/lib/checkin-qr";
+import { isIngepland } from "@/lib/dienst-status";
 
 interface Klant {
   id: string;
@@ -866,6 +867,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                   const statusKleur: Record<string, string> = {
                                     aangemeld: "bg-amber-100 text-amber-800",
                                     geaccepteerd: "bg-green-100 text-green-800",
+                                    bevestigd: "bg-green-100 text-green-800",
+                                    uitgenodigd: "bg-blue-100 text-blue-800",
                                     afgewezen: "bg-red-100 text-red-800",
                                     geannuleerd: "bg-neutral-200 text-neutral-600",
                                   };
@@ -925,7 +928,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
                                             {a.status}
                                           </span>
-                                          {a.status === "geaccepteerd" && (
+                                          {isIngepland(a.status) && (
                                             a.check_in_at ? (
                                               <span className="flex items-center gap-1 text-xs text-green-600">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
