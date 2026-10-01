@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
-import { werkBezettingBij } from "@/lib/medewerker/aanmelden";
+import { planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
 import { annuleerUitkomst, urenTotDienststart } from "@/lib/medewerker/dienst-regels";
 
 
@@ -108,7 +108,13 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (actie === "accepteer") {
-    // Update vervanging
+    // Eerst de vervanger inplannen (capaciteit vooraf, hertellen en terugdraaien bij overboeking);
+    // pas daarna het verzoek en de originele aanmelding afsluiten.
+    const ingepland = await planVervangerIn(vervanging.dienst_id, vervanger_aanmelding_id, vervanging_id);
+    if (!ingepland.ok) {
+      return NextResponse.json({ error: ingepland.error }, { status: ingepland.status });
+    }
+
     await supabaseAdmin
       .from("dienst_vervangingen")
       .update({
@@ -117,14 +123,6 @@ export async function PATCH(request: NextRequest) {
         beantwoord_op: new Date().toISOString(),
       })
       .eq("id", vervanging_id);
-
-    // Vervanger aanmelding → geaccepteerd (scoped op dienst + status)
-    await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .update({ vervanging_voor: vervanging_id, status: "geaccepteerd" })
-      .eq("id", vervanger_aanmelding_id)
-      .eq("dienst_id", vervanging.dienst_id)
-      .eq("status", "aangemeld");
 
     // Originele aanmelding → vervangen
     await supabaseAdmin

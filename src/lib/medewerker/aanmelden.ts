@@ -157,6 +157,56 @@ export async function meldAan(
   return { ok: true, aanmeldingId };
 }
 
+/**
+ * Plan een vervanger (een open sollicitatie `aangemeld` op dezelfde dienst) in als `geaccepteerd`.
+ * Controleert de capaciteit vooraf en telt na de update opnieuw: bij overboeking (gelijktijdige
+ * acceptatie) gaat de vervanger terug naar `aangemeld` en volgt een 409. De bezetting wordt
+ * daarna altijd herberekend.
+ */
+export async function planVervangerIn(
+  dienstId: string,
+  vervangerAanmeldingId: string,
+  vervangingVoor: string,
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  const { data: dienst } = await supabaseAdmin
+    .from("diensten")
+    .select("id, status, plekken_beschikbaar, plekken_totaal, aantal_nodig")
+    .eq("id", dienstId)
+    .maybeSingle();
+  if (!dienst) return { ok: false, status: 404, error: "Dienst niet gevonden" };
+  if (dienst.status === "geannuleerd") return { ok: false, status: 409, error: "Deze dienst is geannuleerd" };
+
+  const totaal = dienst.plekken_totaal ?? dienst.aantal_nodig ?? 1;
+  if ((await telIngepland(dienstId)) >= totaal) {
+    return { ok: false, status: 409, error: "Alle plekken voor deze dienst zijn al bezet" };
+  }
+
+  const { data: bijgewerkt, error } = await supabaseAdmin
+    .from("dienst_aanmeldingen")
+    .update({ vervanging_voor: vervangingVoor, status: "geaccepteerd" })
+    .eq("id", vervangerAanmeldingId)
+    .eq("dienst_id", dienstId)
+    .eq("status", "aangemeld")
+    .select("id")
+    .maybeSingle();
+  if (error || !bijgewerkt) {
+    return { ok: false, status: 409, error: "Vervanger kon niet worden ingepland" };
+  }
+
+  if ((await telIngepland(dienstId)) > totaal) {
+    await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .update({ vervanging_voor: null, status: "aangemeld" })
+      .eq("id", vervangerAanmeldingId)
+      .eq("status", "geaccepteerd");
+    await werkBezettingBij(dienstId);
+    return { ok: false, status: 409, error: "Alle plekken voor deze dienst zijn intussen bezet" };
+  }
+
+  await werkBezettingBij(dienstId);
+  return { ok: true };
+}
+
 export type AfmeldResultaat =
   | { ok: true; uitkomst: "teruggetrokken" | "geannuleerd" | "vervanging_gezocht"; dienstId: string }
   | { ok: false; status: number; error: string };

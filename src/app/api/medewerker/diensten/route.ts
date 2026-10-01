@@ -9,7 +9,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { notifyKlantUrenIngediend } from "@/lib/klant-push-triggers";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
-import { meldAan, meldAf, werkBezettingBij } from "@/lib/medewerker/aanmelden";
+import { meldAan, meldAf, planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
 
 type UrenRegistratie = { status: string };
 
@@ -379,17 +379,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ongeldige vervanging voor deze dienst" }, { status: 400 });
     }
 
-    const { data: vervangerBijgewerkt, error: vervangerFout } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .update({ vervanging_voor: aanmelding_id, status: "geaccepteerd" })
-      .eq("id", vervangingAanmeldingId)
-      .eq("dienst_id", origAanmelding.dienst_id)
-      .eq("status", "aangemeld")
-      .select("id")
-      .maybeSingle();
-
-    if (vervangerFout || !vervangerBijgewerkt) {
-      return NextResponse.json({ error: "Vervanger kon niet worden ingepland" }, { status: 409 });
+    // Capaciteit vooraf + hertellen en terugdraaien bij overboeking.
+    const ingepland = await planVervangerIn(origAanmelding.dienst_id, vervangingAanmeldingId, aanmelding_id);
+    if (!ingepland.ok) {
+      return NextResponse.json({ error: ingepland.error }, { status: ingepland.status });
     }
 
     await supabaseAdmin
