@@ -66,11 +66,9 @@ export default function AccountClient() {
 
   const handleLogout = async () => {
     try {
-      // Wis SW caches voordat we uitloggen
-      const { clearSwCacheOnLogout } = await import("@/lib/sw-utils");
-      await clearSwCacheOnLogout();
-      const res = await fetch("/api/medewerker/logout", { method: "POST" });
-      if (res.ok) {
+      // Push-abonnement van dit toestel weg, SW-caches wissen, sessie wissen (met time-outs).
+      const { medewerkerUitloggen } = await import("@/lib/medewerker/uitloggen");
+      if (await medewerkerUitloggen()) {
         toast.success("Uitgelogd");
         router.push("/medewerker/login");
       } else {

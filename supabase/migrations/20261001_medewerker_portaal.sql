@@ -10,3 +10,9 @@
 -- waardoor elke upload vanuit het portaal (file_url: null) mislukte. Tot deze migratie draait
 -- schrijft de API het opslagpad in file_url.
 alter table public.medewerker_documenten alter column file_url drop not null;
+
+-- 2. Verzoek tot accountverwijdering ---------------------------------------------------------
+-- Gezet door /api/medewerker/account-verwijderen (na wachtwoordbevestiging). Het verzoek komt
+-- ook als bericht bij admin binnen; de afhandeling (anonimiseren met inachtneming van de
+-- bewaarplichten) gebeurt handmatig zolang het beleid daarvoor niet vastligt.
+alter table public.medewerkers add column if not exists verwijderverzoek_at timestamptz;
