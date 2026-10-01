@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     .from("dienst_aanmeldingen")
     .select("id", { count: "exact", head: true })
     .eq("medewerker_id", medewerker.id)
-    .eq("status", "geaccepteerd");
+    .in("status", [...INGEPLAND_STATUSSEN]);
 
   const { count: noShowCount } = await supabaseAdmin
     .from("boetes")
