@@ -104,13 +104,24 @@ function leesVelden(body: Record<string, unknown>): { ok: true; velden: Template
   return { ok: true, velden };
 }
 
-/** Schrijft; valt zonder migratie (kolom functies_met_aantal) terug op de oude kolommen. */
+const MEERDERE_FUNCTIES_NIET_BESCHIKBAAR =
+  "Templates met meerdere functies zijn nog niet beschikbaar. Sla per functie een aparte template op.";
+
+/**
+ * Schrijft; valt zonder migratie (kolom functies_met_aantal, 20261001_klant_portaal.sql) terug op
+ * de oude kolommen, maar alleen als dat zonder verlies kan: met één functieregel staat alles al in
+ * functie/aantal_nodig/uurtarief. Meerdere functies zouden als "bediening, bar" met één tarief
+ * worden opgeslagen; die worden geweigerd (`meerdereFunctiesNietBeschikbaar`) tot de kolom bestaat.
+ */
 async function schrijf<T>(
   actie: (velden: TemplateVelden) => PromiseLike<{ data: T | null; error: { code?: string } | null }>,
   velden: TemplateVelden,
-) {
+): Promise<{ data: T | null; error: { code?: string } | null; meerdereFunctiesNietBeschikbaar?: true }> {
   const res = await actie(velden);
   if (res.error && (res.error.code === "42703" || res.error.code === "PGRST204") && "functies_met_aantal" in velden) {
+    if ((velden.functies_met_aantal?.length ?? 0) > 1) {
+      return { data: null, error: null, meerdereFunctiesNietBeschikbaar: true };
+    }
     const zonder = { ...velden };
     delete zonder.functies_met_aantal;
     return actie(zonder);
@@ -157,7 +168,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Vul een uurtarief in" }, { status: 400 });
   }
 
-  const { data, error } = await schrijf(
+  const { data, error, meerdereFunctiesNietBeschikbaar } = await schrijf(
     (velden) =>
       supabaseAdmin
         .from("dienst_templates")
@@ -167,6 +178,9 @@ export async function POST(request: NextRequest) {
     v,
   );
 
+  if (meerdereFunctiesNietBeschikbaar) {
+    return NextResponse.json({ error: MEERDERE_FUNCTIES_NIET_BESCHIKBAAR }, { status: 409 });
+  }
   if (error) {
     captureRouteError(error, { route: "/api/klant/templates", action: "POST" });
     return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
@@ -223,7 +237,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Geen wijzigingen" }, { status: 400 });
   }
 
-  const { error } = await schrijf(
+  const { error, meerdereFunctiesNietBeschikbaar } = await schrijf(
     (velden) =>
       supabaseAdmin
         .from("dienst_templates")
@@ -234,6 +248,9 @@ export async function PATCH(request: NextRequest) {
     parsed.velden,
   );
 
+  if (meerdereFunctiesNietBeschikbaar) {
+    return NextResponse.json({ error: MEERDERE_FUNCTIES_NIET_BESCHIKBAAR }, { status: 409 });
+  }
   if (error) {
     captureRouteError(error, { route: "/api/klant/templates", action: "PATCH" });
     return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
