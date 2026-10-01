@@ -7,6 +7,8 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { calculateKlantReiskosten, roundCurrency } from "@/lib/reiskosten";
 import { calculateVat } from "@/lib/factuur-config";
 import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
+import { isOntbrekendeKolomFout, maakKlantSnapshot, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
+import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -171,10 +173,15 @@ export async function POST(request: NextRequest) {
   const prefix = vandaag.slice(0, 4) + vandaag.slice(5, 7);
   const datums = regels.map((r) => r.datum).filter(Boolean).sort();
 
+  // Klant-NAW vastleggen op de factuur (adreswijziging of accountverwijdering raakt hem later niet).
+  const snapshot =
+    (await haalKlantSnapshot(klant.id)) ?? maakKlantSnapshot({ bedrijfsnaam: klant.bedrijfsnaam, email: klant.email });
+  let metSnapshot = true;
+
   let factuur: { id: string } | null = null;
   let factuurError: unknown = null;
   let factuurNummer = "";
-  for (let poging = 0; poging < 5 && !factuur; poging++) {
+  for (let poging = 0; poging < 6 && !factuur; poging++) {
     const { data: laatsteFactuur } = await supabaseAdmin
       .from("facturen")
       .select("factuur_nummer")
@@ -188,26 +195,31 @@ export async function POST(request: NextRequest) {
     const laatste = laatsteFactuur?.factuur_nummer ? parseInt(laatsteFactuur.factuur_nummer.slice(-4)) : 0;
     factuurNummer = `${prefix}${String(laatste + 1).padStart(4, "0")}`;
 
+    const rij = {
+      factuur_nummer: factuurNummer,
+      klant_id: klant.id,
+      ...snapshot,
+      periode_start: datums[0] || vandaag,
+      periode_eind: datums[datums.length - 1] || vandaag,
+      subtotaal,
+      btw_percentage: 21,
+      btw_bedrag: btw,
+      totaal,
+      status: "open",
+    };
     const res = await supabaseAdmin
       .from("facturen")
-      .insert({
-        factuur_nummer: factuurNummer,
-        klant_id: klant.id,
-        klant_naam: klant.bedrijfsnaam,
-        klant_email: klant.email,
-        periode_start: datums[0] || vandaag,
-        periode_eind: datums[datums.length - 1] || vandaag,
-        subtotaal,
-        btw_percentage: 21,
-        btw_bedrag: btw,
-        totaal,
-        status: "open",
-      })
+      .insert(metSnapshot ? rij : zonderNieuweSnapshotKolommen(rij))
       .select("id")
       .single();
 
     factuur = res.data;
     factuurError = res.error;
+    // Snapshotkolommen nog niet gemigreerd: opnieuw zonder (zelfde nummer, telt niet als botsing).
+    if (metSnapshot && isOntbrekendeKolomFout(res.error)) {
+      metSnapshot = false;
+      continue;
+    }
     if (res.error && res.error.code !== "23505") break;
   }
 

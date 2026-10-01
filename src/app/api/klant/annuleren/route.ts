@@ -6,6 +6,8 @@ import { nlMoment, nlVandaag } from "@/lib/nl-tijd";
 import { herberekenPlekken } from "@/lib/plekken";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { sendPushToUser } from "@/lib/push-notifications";
+import { isOntbrekendeKolomFout, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
+import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
 import {
   berekenAnnuleringsboete,
   STANDAARD_ANNULERINGSBELEID,
@@ -118,8 +120,11 @@ export async function POST(request: NextRequest) {
   }).select().single();
 
   if (boeteToegepast && boeteBedrag > 0) {
-    const { error: factuurError } = await supabaseAdmin.from("facturen").insert({
+    // Klant-NAW vastleggen op de boetefactuur; zonder migratie opnieuw zonder de nieuwe kolommen.
+    const snapshot = await haalKlantSnapshot(klant.id);
+    const boeteFactuur = {
       klant_id: klant.id,
+      ...(snapshot ?? {}),
       factuur_nummer: `ANN-${Date.now()}`,
       subtotaal: boeteBedrag,
       btw_bedrag: boeteBedrag * 0.21,
@@ -128,7 +133,11 @@ export async function POST(request: NextRequest) {
       type: "boete",
       beschrijving: `Annuleringsboete - ${boeteReden}`,
       annulering_id: ann?.id ?? null,
-    });
+    };
+    let { error: factuurError } = await supabaseAdmin.from("facturen").insert(boeteFactuur);
+    if (snapshot && isOntbrekendeKolomFout(factuurError)) {
+      ({ error: factuurError } = await supabaseAdmin.from("facturen").insert(zonderNieuweSnapshotKolommen(boeteFactuur)));
+    }
     if (factuurError) {
       captureRouteError(factuurError, { route: "/api/klant/annuleren", action: "factuur-insert" });
     }

@@ -54,3 +54,42 @@ begin
     raise notice 'dienst_aanmeldingen bevat nog dubbelen; unieke index niet aangemaakt (zie stap a/b in 20261002_review_fixes.sql).';
   end if;
 end $$;
+
+-- 2. Klant-NAW vastleggen op de factuur ---------------------------------------------------
+-- Bij het aanmaken van een factuur (api/klant/facturen, api/facturen/generate, boetefactuur in
+-- api/klant/annuleren) worden de klantgegevens op de factuur zelf gezet. PDF en mail tonen de
+-- snapshot en vallen per veld terug op de live klant als de snapshot leeg is.
+-- klant_naam en klant_email bestonden al; voor de zekerheid ook hier idempotent.
+alter table public.facturen add column if not exists klant_naam text;
+alter table public.facturen add column if not exists klant_email text;
+alter table public.facturen add column if not exists klant_contactpersoon text;
+alter table public.facturen add column if not exists klant_adres text;
+alter table public.facturen add column if not exists klant_postcode text;
+alter table public.facturen add column if not exists klant_stad text;
+alter table public.facturen add column if not exists klant_kvk_nummer text;
+alter table public.facturen add column if not exists klant_btw_nummer text;
+
+-- Eenmalige backfill voor bestaande facturen, alleen waar de snapshotkolom nog leeg is.
+-- LET OP: dit neemt de HUIDIGE klantgegevens over, niet die van het factuurmoment (die zijn niet
+-- bewaard). Is een klant sinds de factuur verhuisd, dan staat het nieuwe adres op de oude factuur.
+-- to_jsonb(k) ->> '…' geeft null als een kolom op klanten (nog) niet bestaat, dus dit faalt niet
+-- zonder de adres-/KvK-kolommen. Contactpersoon/e-mail van verwijderde (geanonimiseerde)
+-- accounts worden niet overgenomen.
+update public.facturen f
+   set klant_naam           = coalesce(f.klant_naam, nullif(to_jsonb(k) ->> 'bedrijfsnaam', '')),
+       klant_email          = coalesce(f.klant_email,
+                                case when (to_jsonb(k) ->> 'email') like '%@verwijderd.invalid' then null
+                                     else nullif(to_jsonb(k) ->> 'email', '') end),
+       klant_contactpersoon = coalesce(f.klant_contactpersoon,
+                                case when (to_jsonb(k) ->> 'email') like '%@verwijderd.invalid' then null
+                                     else nullif(to_jsonb(k) ->> 'contactpersoon', '') end),
+       klant_adres          = coalesce(f.klant_adres,      nullif(to_jsonb(k) ->> 'adres', '')),
+       klant_postcode       = coalesce(f.klant_postcode,   nullif(to_jsonb(k) ->> 'postcode', '')),
+       klant_stad           = coalesce(f.klant_stad,       nullif(to_jsonb(k) ->> 'stad', '')),
+       klant_kvk_nummer     = coalesce(f.klant_kvk_nummer, nullif(to_jsonb(k) ->> 'kvk_nummer', '')),
+       klant_btw_nummer     = coalesce(f.klant_btw_nummer, nullif(to_jsonb(k) ->> 'btw_nummer', ''))
+  from public.klanten k
+ where k.id = f.klant_id
+   and (f.klant_naam is null or f.klant_email is null or f.klant_contactpersoon is null
+        or f.klant_adres is null or f.klant_postcode is null or f.klant_stad is null
+        or f.klant_kvk_nummer is null or f.klant_btw_nummer is null);

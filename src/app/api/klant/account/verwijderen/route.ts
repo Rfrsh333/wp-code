@@ -20,6 +20,8 @@ import { captureRouteError } from "@/lib/sentry-utils";
  * - persoonsgegevens geanonimiseerd: contactpersoon, e-mail, telefoon, wachtwoord, resettoken;
  * - bedrijfsgegevens (naam, adres, KvK, btw) blijven alleen staan als er facturen zijn — die
  *   horen bij de factuur; zonder facturen worden ook die gewist;
+ * - facturen zelf worden hier nooit gewijzigd: de klant-NAW staat als snapshot op de factuur
+ *   (lib/factuur-klant-snapshot, migratie 20261002_review_fixes.sql) en blijft dus correct;
  * - favorieten, templates en push-abonnementen verwijderd; open toekomstige diensten zonder
  *   ingeplande medewerkers geannuleerd.
  * Diensten waar al iemand voor ingepland staat blokkeren het verwijderen: die moeten eerst

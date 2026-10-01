@@ -4,6 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { verifyFactuurToken } from "@/lib/session";
 import { getFactuurConfig } from "@/lib/factuur-config";
 import { escapeHtml } from "@/lib/sanitize";
+import { factuurKlantNaw } from "@/lib/factuur-klant-snapshot";
 
 type FactuurRegel = {
   datum: string;
@@ -64,6 +65,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const formatCurrency = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
 
   const e = (v: unknown) => escapeHtml(v == null ? "" : String(v));
+  // NAW zoals vastgelegd bij het factureren; per veld terugvallen op de live klant (oude facturen).
+  const naw = factuurKlantNaw(factuur, factuur.klant);
 
   const html = `
 <!DOCTYPE html>
@@ -113,10 +116,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     </div>
     <div class="address">
       <div class="address-title">Aan</div>
-      <strong>${e(factuur.klant?.bedrijfsnaam)}</strong><br>
-      ${e(factuur.klant?.contactpersoon)}<br>
-      ${factuur.klant?.adres ? `${e(factuur.klant.adres)}<br>` : ""}${factuur.klant?.postcode ? `${e(factuur.klant.postcode)} ` : ""}${e(factuur.klant?.stad)}<br>
-      ${factuur.klant?.kvk_nummer ? `KVK: ${e(factuur.klant.kvk_nummer)}<br>` : ""}${factuur.klant?.btw_nummer ? `BTW: ${e(factuur.klant.btw_nummer)}<br>` : ""}${e(factuur.klant?.email)}
+      <strong>${e(naw.bedrijfsnaam)}</strong><br>
+      ${e(naw.contactpersoon)}<br>
+      ${naw.adres ? `${e(naw.adres)}<br>` : ""}${naw.postcode ? `${e(naw.postcode)} ` : ""}${e(naw.stad)}<br>
+      ${naw.kvk_nummer ? `KVK: ${e(naw.kvk_nummer)}<br>` : ""}${naw.btw_nummer ? `BTW: ${e(naw.btw_nummer)}<br>` : ""}${e(naw.email)}
     </div>
   </div>
 
