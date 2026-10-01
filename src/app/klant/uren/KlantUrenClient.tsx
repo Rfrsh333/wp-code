@@ -14,6 +14,7 @@ import {
 import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import KlantPushNotificationBanner from "../components/PushNotificationBanner";
 import QuickActions from "@/components/klant/QuickActions";
+import KlantInstellingen from "@/components/klant/KlantInstellingen";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
 import StarRating from "@/components/ui/StarRating";
@@ -22,6 +23,14 @@ import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
 import { usePlatformOptions } from "@/hooks/queries/usePlatformOptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseCheckinQr } from "@/lib/checkin-qr";
+import { isIngepland } from "@/lib/dienst-status";
+import { parseUurtarief, valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
+import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
+
+const KLANT_TAB_IDS = [
+  "overzicht", "uren", "diensten", "rooster", "aanvragen", "favorieten",
+  "facturen", "kosten", "beoordelingen", "qr-scanner", "instellingen",
+] as const;
 
 interface Klant {
   id: string;
@@ -44,6 +53,11 @@ interface UrenRegistratie {
   dienst_datum: string;
   dienst_locatie: string;
   uurtarief: number;
+  klant_start_tijd?: string | null;
+  klant_eind_tijd?: string | null;
+  klant_pauze_minuten?: number | null;
+  klant_gewerkte_uren?: number | null;
+  klant_opmerking?: string | null;
 }
 
 interface AanpassingModal {
@@ -68,8 +82,10 @@ interface DashboardStats {
   pendingHoursCount: number;
   pendingHoursTotal: number;
   approvedHoursThisMonth: number;
+  kostenDezeMaand?: number;
   activeDienstenCount: number;
   openFacturenCount: number;
+  openFacturenBedrag?: number;
 }
 
 interface UpcomingDienst {
@@ -137,6 +153,7 @@ interface DienstTemplate {
   duur_uren: number | null;
   uurtarief: number | null;
   favoriet_medewerker_ids: string[];
+  functies_met_aantal?: Array<{ functie: string; aantal: number; uurtarief: string }> | null;
   aantal_keer_gebruikt: number;
   laatst_gebruikt_op: string | null;
 }
@@ -170,10 +187,25 @@ interface KostenData {
   top_medewerkers: { naam: string; totaal: number; uren: number }[];
 }
 
-export default function KlantUrenClient({ klant }: { klant: Klant }) {
+export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; initialTab?: string | null }) {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overzicht");
+  // ?tab=… uit push-/maildeeplinks; onbekende waarden vallen terug op het overzicht.
+  const [activeTab, setActiveTabState] = useState(() =>
+    initialTab && (KLANT_TAB_IDS as readonly string[]).includes(initialTab) ? initialTab : "overzicht"
+  );
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    // URL bijwerken zodat herladen/terug-knop op dezelfde tab blijft.
+    try {
+      const url = new URL(window.location.href);
+      if (tab === "overzicht") url.searchParams.delete("tab");
+      else url.searchParams.set("tab", tab);
+      window.history.replaceState(null, "", url.toString());
+    } catch {
+      // geen URL-API (oude webview): tab werkt gewoon, alleen zonder deeplink
+    }
+  };
 
   // React Query data fetching
   const { data: urenData, isLoading: urenLoading } = useKlantUren();
@@ -192,10 +224,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const dienstenMutation = useDienstenAction();
 
   // Derived state from React Query
-  const uren: UrenRegistratie[] = urenData?.uren ?? [];
+  // Openstaand = ingediend, door u aangepast of door u goedgekeurd (nog te factureren); altijd volledig.
+  const uren: UrenRegistratie[] = urenData?.openstaand ?? urenData?.uren ?? [];
   const teBeoordeelen: TeBeoordelen[] = beoorData?.teBeoordeelen ?? [];
   const dashboardStats: DashboardStats | null = dashboardData?.stats ?? null;
   const upcomingDiensten: UpcomingDienst[] = dashboardData?.upcomingDiensten ?? [];
+  const vandaagMorgen: UpcomingDienst[] = dashboardData?.vandaagMorgen ?? [];
   const recentFacturen: Factuur[] = facturenData?.facturen ?? [];
   const dienstenVolledig: UpcomingDienst[] = dienstenData?.diensten ?? [];
   const isLoading = urenLoading;
@@ -231,6 +265,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     score_functie: number;
   }>({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
   const [urenZoek, setUrenZoek] = useState("");
+  // Favoriet die via "Boek" is gekozen; wordt in de aanvraag-wizard voorgeselecteerd.
+  const [boekMedewerker, setBoekMedewerker] = useState<string | null>(null);
 
   const createFactuur = async (urenIds: string[]) => {
     try {
@@ -282,7 +318,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   };
 
   const submitApproval = async () => {
-    if (!approveModal.uren) return;
+    if (!approveModal.uren || urenAction.isPending) return;
     urenAction.mutate(
       {
         action: "approve",
@@ -300,18 +336,20 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           toast.success("Uren goedgekeurd");
           setApproveModal({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
         },
-        onError: () => toast.error("Goedkeuren mislukt"),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Goedkeuren mislukt"),
       }
     );
   };
 
   const openAanpassingModal = (u: UrenRegistratie) => {
+    // Al eerder aangepast? Dan starten vanaf uw eigen voorstel.
+    const eerder = u.status === "klant_aangepast" && u.klant_start_tijd;
     setModal({
       open: true,
       uren: u,
-      startTijd: u.start_tijd?.slice(0, 5) || "",
-      eindTijd: u.eind_tijd?.slice(0, 5) || "",
-      pauzeMinuten: String(u.pauze_minuten || 0),
+      startTijd: (eerder ? u.klant_start_tijd : u.start_tijd)?.slice(0, 5) || "",
+      eindTijd: (eerder ? u.klant_eind_tijd : u.eind_tijd)?.slice(0, 5) || "",
+      pauzeMinuten: String((eerder ? u.klant_pauze_minuten : u.pauze_minuten) || 0),
       reiskostenKm: String(u.reiskosten_km || 0),
       opmerking: "",
     });
@@ -320,10 +358,16 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const submitAanpassing = async () => {
     if (!modal.uren) return;
 
-    const [startH, startM] = modal.startTijd.split(":").map(Number);
-    const [eindH, eindM] = modal.eindTijd.split(":").map(Number);
-    const pauze = parseInt(modal.pauzeMinuten) || 0;
-    const gewerkteUren = Math.max(0, ((eindH * 60 + eindM) - (startH * 60 + startM) - pauze) / 60);
+    // Zelfde validatie als de server (nachtdienst over middernacht telt gewoon mee).
+    const check = valideerUrenAanpassing({
+      startTijd: modal.startTijd,
+      eindTijd: modal.eindTijd,
+      pauzeMinuten: modal.pauzeMinuten,
+    });
+    if (!check.ok) {
+      toast.error(check.error);
+      return;
+    }
     const reiskostenKm = Math.max(0, Number(modal.reiskostenKm) || 0);
 
     urenAction.mutate(
@@ -331,10 +375,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         action: "adjust",
         id: modal.uren.id,
         data: {
-          startTijd: modal.startTijd,
-          eindTijd: modal.eindTijd,
-          pauzeMinuten: pauze,
-          gewerkteUren: Math.round(gewerkteUren * 100) / 100,
+          startTijd: check.startTijd,
+          eindTijd: check.eindTijd,
+          pauzeMinuten: check.pauzeMinuten,
           reiskostenKm,
           opmerking: modal.opmerking,
         },
@@ -348,7 +391,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           toast.success("Aanpassing verstuurd");
           setModal({ open: false, uren: null, startTijd: "", eindTijd: "", pauzeMinuten: "0", reiskostenKm: "0", opmerking: "" });
         },
-        onError: () => toast.error("Aanpassing versturen mislukt"),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Aanpassing versturen mislukt"),
       }
     );
   };
@@ -404,6 +447,46 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     );
   };
 
+  // Dienst annuleren via /api/klant/annuleren (boete volgens het annuleringsbeleid van de klant).
+  const [annulerenBezig, setAnnulerenBezig] = useState<string | null>(null);
+  const annuleerDienst = async (dienst: UpcomingDienst) => {
+    let beleidTekst = "";
+    try {
+      const res = await fetch("/api/klant/annuleren");
+      const b = (await res.json())?.beleid;
+      if (b?.uren_van_tevoren_min) {
+        beleidTekst = `\n\nLet op: bij annuleren binnen ${b.uren_van_tevoren_min} uur voor aanvang kan een annuleringsvergoeding in rekening worden gebracht.`;
+      }
+    } catch {
+      // beleid tonen is informatief; annuleren kan ook zonder
+    }
+    const reden = window.prompt(
+      `Dienst ${dienst.functie} op ${formatDateLong(dienst.datum)} annuleren? Ingeplande medewerkers krijgen bericht.${beleidTekst}\n\nReden (optioneel):`,
+      ""
+    );
+    if (reden === null) return;
+    setAnnulerenBezig(dienst.id);
+    try {
+      const res = await fetch("/api/klant/annuleren", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dienst_id: dienst.id, reden: reden.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Annuleren mislukt");
+      toast.success(data.boete_toegepast && data.boete_bedrag > 0
+        ? `Dienst geannuleerd. Annuleringsvergoeding: € ${Number(data.boete_bedrag).toFixed(2)} (excl. btw)`
+        : "Dienst geannuleerd");
+      queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
+      queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: klantKeys.facturen() });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Annuleren mislukt");
+    } finally {
+      setAnnulerenBezig(null);
+    }
+  };
+
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
   const formatDateLong = (d: string) => new Date(d).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
   const formatCurrency = (value: number) => `EUR ${value.toFixed(2)}`;
@@ -429,7 +512,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   );
 
   const pending = gefilterdeUren.filter(u => u.status === "ingediend");
-  const approved = gefilterdeUren.filter(u => ["klant_goedgekeurd", "goedgekeurd"].includes(u.status));
+  const aangepast = gefilterdeUren.filter(u => u.status === "klant_aangepast");
+  const approved = gefilterdeUren.filter(u => u.status === "klant_goedgekeurd");
 
   const tabs: KlantTab[] = [
     {
@@ -525,6 +609,16 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         </svg>
       ),
     },
+    {
+      id: "instellingen",
+      label: "Instellingen",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+    },
   ];
 
   const handleLogout = async () => {
@@ -543,6 +637,13 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         bedrijfsnaam={klant.bedrijfsnaam}
         contactpersoon={klant.contactpersoon}
         ongelezen={totalNotifCount}
+        onBellClick={() =>
+          setActiveTab(
+            (dashboardStats?.pendingHoursCount ?? 0) > 0 ? "uren" : teBeoordeelen.length > 0 ? "beoordelingen" : "overzicht"
+          )
+        }
+        onInstellingen={() => setActiveTab("instellingen")}
+        onLogout={handleLogout}
       />
       <KlantPortalLayout
         tabs={tabs}
@@ -575,9 +676,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   stats={dashboardStats}
                   volgendeDienst={upcomingDiensten[0] ?? null}
                   openFacturen={recentFacturen}
-                  maandBedrag={0}
-                  budgetGebruikt={0}
-                  budgetTotaal={3000}
+                  openBedrag={dashboardStats?.openFacturenBedrag}
+                  maandBedrag={dashboardStats?.kostenDezeMaand ?? 0}
                   onTabChange={setActiveTab}
                 />
 
@@ -586,7 +686,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
                 {/* NIEUW: Live Status */}
                 <LiveStatusTracker
-                  diensten={upcomingDiensten}
+                  diensten={vandaagMorgen}
+                  vandaag={dashboardData?.vandaag ?? nlVandaag()}
                   onTabChange={setActiveTab}
                 />
 
@@ -594,7 +695,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 <div className="flex gap-3 overflow-x-auto pb-1 pr-4 scrollbar-hide">
                   {[
                     { label: "Uren wachten", value: String(dashboardStats?.pendingHoursCount ?? pending.length), targetTab: "uren", urgent: pending.length > 0 },
-                    { label: "Goedgekeurd", value: `${dashboardStats?.approvedHoursThisMonth ?? 0}u`, targetTab: "uren", urgent: false },
+                    { label: "Goedgekeurd deze maand", value: `${dashboardStats?.approvedHoursThisMonth ?? 0}u`, targetTab: "uren", urgent: false },
                     { label: "Reviews", value: String(teBeoordeelen.length), targetTab: "beoordelingen", urgent: teBeoordeelen.length > 0 },
                     { label: "Open facturen", value: String(dashboardStats?.openFacturenCount ?? 0), targetTab: "facturen", urgent: false },
                   ].map((stat) => (
@@ -635,12 +736,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   </div>
                 )}
 
-                {/* Vandaag & Morgen */}
-                {upcomingDiensten.length > 0 && (
+                {/* Vandaag & Morgen — echte bezetting (geaccepteerd + bevestigd) uit het dashboard-endpoint */}
+                {vandaagMorgen.length > 0 && (
                   <div className="bg-white rounded-2xl border border-[var(--kp-border)] p-4 shadow-sm">
                     <p className="text-xs font-bold text-[var(--kp-text-tertiary)] uppercase tracking-wider mb-3">Vandaag & Morgen</p>
                     <div className="space-y-2">
-                      {upcomingDiensten.slice(0, 5).map((d) => (
+                      {vandaagMorgen.slice(0, 8).map((d) => (
                         <div key={d.id} className="flex items-center gap-3 py-2 border-b border-[var(--kp-border)] last:border-0">
                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                             (d.aanmeldingen_geaccepteerd || 0) >= d.aantal_nodig ? "bg-green-500" : "bg-amber-500"
@@ -704,18 +805,11 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   onSearch={setUrenZoek}
                 />
 
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => {}} className="rounded-xl bg-[#F27501] px-4 py-2 font-medium text-white">
-                    Te beoordelen ({pending.length})
-                  </button>
-                  <button onClick={() => {}} className="rounded-xl bg-neutral-100 px-4 py-2 font-medium text-neutral-600">
-                    Goedgekeurd ({approved.length})
-                  </button>
-                </div>
-
                 <UrenSubTabs
                   pending={pending}
+                  aangepast={aangepast}
                   approved={approved}
+                  zoekterm={urenZoek}
                   onApprove={approveUren}
                   onAdjust={openAanpassingModal}
                   formatDate={formatDate}
@@ -784,7 +878,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                     title="Geen komende diensten"
                     description="Zodra er shifts ingepland zijn, verschijnen ze hier. Vraag extra personeel aan om te beginnen."
                     actionLabel="Personeel aanvragen"
-                    actionHref="/personeel-aanvragen"
+                    onAction={() => setActiveTab("aanvragen")}
                   />
                 ) : (
                   <div className="space-y-3">
@@ -817,6 +911,13 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                   Heropenen
                                 </button>
                               )}
+                              <button
+                                onClick={() => annuleerDienst(dienst)}
+                                disabled={annulerenBezig === dienst.id}
+                                className="rounded-full px-2.5 py-1 text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 transition disabled:opacity-50"
+                              >
+                                {annulerenBezig === dienst.id ? "..." : "Annuleren"}
+                              </button>
                             </div>
                           </div>
                           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-600">
@@ -866,6 +967,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                   const statusKleur: Record<string, string> = {
                                     aangemeld: "bg-amber-100 text-amber-800",
                                     geaccepteerd: "bg-green-100 text-green-800",
+                                    bevestigd: "bg-green-100 text-green-800",
+                                    uitgenodigd: "bg-blue-100 text-blue-800",
                                     afgewezen: "bg-red-100 text-red-800",
                                     geannuleerd: "bg-neutral-200 text-neutral-600",
                                   };
@@ -925,7 +1028,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                                           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
                                             {a.status}
                                           </span>
-                                          {a.status === "geaccepteerd" && (
+                                          {isIngepland(a.status) && (
                                             a.check_in_at ? (
                                               <span className="flex items-center gap-1 text-xs text-green-600">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -980,10 +1083,18 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
             {activeTab === "rooster" && <RoosterTab formatTime={formatTime} statusTone={statusTone} />}
 
             {/* Tab: Aanvragen */}
-            {activeTab === "aanvragen" && <AanvraagTab klant={klant} onSuccess={() => { setActiveTab("diensten"); }} />}
+            {activeTab === "aanvragen" && (
+              <AanvraagTab
+                key={boekMedewerker ?? "nieuw"}
+                voorkeurMedewerkerId={boekMedewerker}
+                onSuccess={() => { setBoekMedewerker(null); setActiveTab("diensten"); }}
+              />
+            )}
 
             {/* Tab: Favorieten */}
-            {activeTab === "favorieten" && <FavorietenTab />}
+            {activeTab === "favorieten" && (
+              <FavorietenTab onBoek={(medewerkerId) => { setBoekMedewerker(medewerkerId); setActiveTab("aanvragen"); }} />
+            )}
 
             {/* Tab: Facturen */}
             {activeTab === "facturen" && (
@@ -1082,6 +1193,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
             {/* Tab: QR Check-in */}
             {activeTab === "qr-scanner" && <QRScannerTab />}
+
+            {/* Tab: Instellingen (bedrijfsgegevens, wachtwoord, meldingen, account verwijderen) */}
+            {activeTab === "instellingen" && <KlantInstellingen onLogout={handleLogout} />}
           </>
         )}
       </KlantPortalLayout>
@@ -1221,9 +1335,17 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Pauze (minuten)</label>
-                <input type="number" value={modal.pauzeMinuten}
+                <input type="number" value={modal.pauzeMinuten} min="0" step="1"
                   onChange={(e) => setModal({ ...modal, pauzeMinuten: e.target.value })}
                   className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+                {(() => {
+                  const check = valideerUrenAanpassing({ startTijd: modal.startTijd, eindTijd: modal.eindTijd, pauzeMinuten: modal.pauzeMinuten });
+                  return check.ok ? (
+                    <p className="mt-1 text-xs text-neutral-500">= {check.uren} uur</p>
+                  ) : (
+                    <p className="mt-1 text-xs text-red-600">{check.error}</p>
+                  );
+                })()}
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Reiskosten (km)</label>
@@ -1251,9 +1373,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 className="flex-1 px-4 py-2 border border-neutral-200 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition">
                 Annuleren
               </button>
-              <button onClick={submitAanpassing}
-                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition">
-                Versturen
+              <button onClick={submitAanpassing} disabled={urenAction.isPending}
+                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition disabled:opacity-50">
+                {urenAction.isPending ? "Versturen..." : "Versturen"}
               </button>
             </div>
           </div>
@@ -1329,9 +1451,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
               </button>
               <button
                 onClick={submitApproval}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition"
+                disabled={urenAction.isPending}
+                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition disabled:opacity-50"
               >
-                Goedkeuren
+                {urenAction.isPending ? "Bezig..." : "Goedkeuren"}
               </button>
             </div>
           </div>
@@ -1344,7 +1467,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 /* ============================================================
    Feature 2: Favorieten Tab
    ============================================================ */
-function FavorietenTab() {
+function FavorietenTab({ onBoek }: { onBoek: (medewerkerId: string) => void }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { data: favData, isLoading } = useKlantFavorieten();
@@ -1362,7 +1485,7 @@ function FavorietenTab() {
 
           toast.success(isFav ? "Favoriet verwijderd" : "Favoriet toegevoegd");
         },
-        onError: () => toast.error("Actie mislukt"),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Actie mislukt"),
       }
     );
   };
@@ -1450,13 +1573,25 @@ function FavorietenTab() {
                   {f.notitie && <p className="mt-1 text-xs text-[var(--kp-text-tertiary)] italic">{f.notitie}</p>}
                 </div>
 
-                {/* Boek opnieuw knop */}
-                <button
-                  onClick={() => window.location.href = "/klant/uren?tab=aanvragen"}
-                  className="flex-shrink-0 bg-[#F27501] text-white text-xs font-bold px-3 py-2 rounded-xl active:scale-95 transition-transform"
-                >
-                  Boek
-                </button>
+                {/* Boek opnieuw: naar de aanvraag-wizard met deze medewerker voorgeselecteerd */}
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => onBoek(f.medewerker_id)}
+                    className="bg-[#F27501] text-white text-xs font-bold px-3 py-2 rounded-xl active:scale-95 transition-transform"
+                  >
+                    Boek
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`${f.naam} verwijderen uit uw favorieten?`)) toggleFavoriet(f.medewerker_id, true);
+                    }}
+                    disabled={favorietAction.isPending}
+                    className="text-[11px] text-[var(--kp-text-tertiary)] hover:text-red-600 disabled:opacity-50"
+                    aria-label={`${f.naam} verwijderen uit favorieten`}
+                  >
+                    Verwijderen
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -1493,7 +1628,7 @@ function FavorietenTab() {
 /* ============================================================
    Feature 3: Aanvraag Tab (Multi-step form)
    ============================================================ */
-function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void }) {
+function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => void; voorkeurMedewerkerId?: string | null }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -1517,7 +1652,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     uurtarief: "",
     locatie: "",
     opmerkingen: "",
-    favoriet_medewerker_ids: [] as string[],
+    // Via "Boek" bij een favoriet: die medewerker staat al aangevinkt in stap 4.
+    favoriet_medewerker_ids: (voorkeurMedewerkerId ? [voorkeurMedewerkerId] : []) as string[],
   });
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateNaam, setTemplateNaam] = useState("");
@@ -1542,6 +1678,12 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   });
 
   const locaties: string[] = aanvraagData?.locaties ?? [];
+  // Ondergrens uit de bestaande prijsbron (server bepaalt en controleert; dit is alleen voor de hint).
+  const minUurtarief: number = Number(aanvraagData?.min_uurtarief) || 0;
+  const tariefOk = (t: string) => {
+    const n = parseUurtarief(t);
+    return Number.isFinite(n) && n > 0 && n >= minUurtarief;
+  };
   const favorieten: Favoriet[] = favData?.favorieten ?? [];
   const templates: DienstTemplate[] = templData?.templates ?? [];
 
@@ -1551,7 +1693,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const availableTags = filterOptions?.tags || [];
 
   const canNext = () => {
-    if (step === 1) return form.functies_met_aantal.length > 0 && form.functies_met_aantal.every(f => f.uurtarief && parseFloat(f.uurtarief) > 0);
+    if (step === 1) return form.functies_met_aantal.length > 0 && form.functies_met_aantal.every(f => tariefOk(f.uurtarief));
     if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd;
     if (step === 3) return !!form.locatie.trim();
     return true;
@@ -1586,16 +1728,17 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     }
 
     aanvraagAction.mutate({ ...form, afbeelding_url }, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         // Invalidate queries to refresh data (React Query v5)
         queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
         queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
 
-        toast.success("Aanvraag succesvol verstuurd!");
+        const uitgenodigd = Number(data?.favorieten_uitgenodigd) || 0;
+        toast.success(uitgenodigd > 0
+          ? `Aanvraag verstuurd! ${uitgenodigd} favoriet${uitgenodigd === 1 ? "" : "en"} uitgenodigd.`
+          : "Aanvraag succesvol verstuurd!");
+        // Geen automatische doorverwijzing meer: die sprong na 3 s weg terwijl u een templatenaam typte.
         setShowSaveTemplate(true);
-        setTimeout(() => {
-          if (!showSaveTemplate) onSuccess();
-        }, 3000);
         setIsSending(false);
       },
       onError: (e) => {
@@ -1608,13 +1751,16 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const stepLabels = ["Functie(s)", "Datum & Tijd", "Details", "Favorieten"];
 
   const applyTemplate = (template: DienstTemplate) => {
+    const functies = template.functies_met_aantal?.length
+      ? template.functies_met_aantal.map((f) => ({ functie: f.functie, aantal: f.aantal, uurtarief: String(f.uurtarief ?? "") }))
+      : [{ functie: template.functie, aantal: template.aantal_nodig, uurtarief: template.uurtarief?.toString() || "" }];
     setForm({
       functie: template.functie,
       categorie_id: "",
       functie_id: "",
       vereiste_taal: null,
       vereiste_vaardigheden: [],
-      functies_met_aantal: [{functie: template.functie, aantal: template.aantal_nodig, uurtarief: template.uurtarief?.toString() || ""}],
+      functies_met_aantal: functies,
       datum: "",
       start_tijd: "",
       eind_tijd: "",
@@ -1624,7 +1770,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       opmerkingen: template.beschrijving || "",
       favoriet_medewerker_ids: template.favoriet_medewerker_ids || [],
     });
-    setStep(2); // Skip naar datum selectie
+    // Skip naar datum selectie; ontbreekt er een (geldig) tarief, dan eerst stap 1 om dat in te vullen.
+    setStep(functies.every((f) => tariefOk(f.uurtarief)) ? 2 : 1);
 
     // Update template usage
     templateAction.mutate({ method: "PATCH", data: { template_id: template.id, increment_gebruik: true } });
@@ -1636,38 +1783,27 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       return;
     }
 
-    const functieSamenvatting = form.functies_met_aantal.length > 0
-      ? form.functies_met_aantal.map(f => f.functie).join(", ")
-      : form.functie;
-    const totaalNodig = form.functies_met_aantal.length > 0
-      ? form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)
-      : parseInt(form.aantal) || 1;
-
-    templateAction.mutate(
-      {
+    // Per functie opslaan, mét tarief (voorheen ging parseFloat("") = leeg tarief mee,
+    // waardoor "Snelle aanvraag" daarna niet te versturen was).
+    try {
+      await templateAction.mutateAsync({
         method: "POST",
         data: {
           naam: templateNaam,
-          functie: functieSamenvatting,
-          aantal_nodig: totaalNodig,
+          functies_met_aantal: form.functies_met_aantal,
           locatie: form.locatie,
-          uurtarief: parseFloat(form.uurtarief),
           favoriet_medewerker_ids: form.favoriet_medewerker_ids,
           beschrijving: form.opmerkingen,
         },
-      },
-      {
-        onSuccess: () => {
-          // Invalidate queries to refresh data (React Query v5)
-          queryClient.invalidateQueries({ queryKey: klantKeys.templates() });
-
-          toast.success("Template opgeslagen!");
-          setShowSaveTemplate(false);
-          setTemplateNaam("");
-        },
-        onError: () => toast.error("Template opslaan mislukt"),
-      }
-    );
+      });
+      queryClient.invalidateQueries({ queryKey: klantKeys.templates() });
+      toast.success("Template opgeslagen!");
+      setShowSaveTemplate(false);
+      setTemplateNaam("");
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Template opslaan mislukt");
+    }
   };
 
   return (
@@ -1837,10 +1973,10 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                     <label className="text-xs text-neutral-600 whitespace-nowrap">Uurtarief €:</label>
                     <input
                       type="number"
-                      min="0"
+                      min={minUurtarief || 0}
                       step="0.50"
                       value={functieData.uurtarief}
-                      placeholder="Bijv. 14.50"
+                      placeholder={minUurtarief ? `Min. ${minUurtarief.toFixed(2)}` : "Bijv. 27.50"}
                       onChange={(e) => {
                         setForm({
                           ...form,
@@ -1855,6 +1991,12 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                 </div>
               ))}
             </div>
+
+            {minUurtarief > 0 && form.functies_met_aantal.some(f => f.uurtarief && !tariefOk(f.uurtarief)) && (
+              <p className="mt-2 text-xs text-red-600">
+                Het minimale uurtarief is &euro;{minUurtarief.toFixed(2).replace(".", ",")}.
+              </p>
+            )}
 
             {form.functies_met_aantal.length > 0 && (
               <div className="mt-4 p-3 bg-neutral-50 rounded-lg">
@@ -1873,7 +2015,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Datum</label>
               <input type="date" value={form.datum} onChange={(e) => setForm({ ...form, datum: e.target.value })}
-                min={new Date().toISOString().split("T")[0]}
+                min={nlVandaag()}
                 className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -2126,7 +2268,9 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
         {step === 4 && (
           <div>
             <h3 className="text-lg font-bold text-neutral-900 mb-2">Voorkeur medewerkers (optioneel)</h3>
-            <p className="text-sm text-neutral-500 mb-4">Selecteer favoriete medewerkers die u graag wilt inzetten.</p>
+            <p className="text-sm text-neutral-500 mb-4">
+              Geselecteerde favorieten krijgen een persoonlijke uitnodiging voor deze dienst in hun app. Zodra zij accepteren, staan ze ingepland.
+            </p>
             {favorieten.length === 0 ? (
               <p className="text-sm text-neutral-400 py-4 text-center">Geen favoriete medewerkers beschikbaar.</p>
             ) : (
@@ -2230,7 +2374,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                 Nee, bedankt
               </button>
               <button
-                onClick={() => { saveAsTemplate(); onSuccess(); }}
+                onClick={() => { void saveAsTemplate(); }}
+                disabled={templateAction.isPending}
                 className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl text-sm font-medium hover:bg-[#d96800] transition"
               >
                 Opslaan als template
@@ -2260,22 +2405,23 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     return { start, end };
   };
 
-  const getMonthRange = (date: Date) => {
-    const start = new Date(date.getFullYear(), date.getMonth(), 1);
-    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    return { start, end };
-  };
-
-  const range = view === "maand" ? getMonthRange(currentDate) : getWeekRange(currentDate);
-  const startStr = range.start.toISOString().split("T")[0];
-  const endStr = range.end.toISOString().split("T")[0];
+  // Lokale kalenderdatum als YYYY-MM-DD. toISOString() op lokale middernacht gaf in NL de dag
+  // ervóór (UTC), waardoor de maand een dag te vroeg begon en de laatste dag wegviel.
+  const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const vandaagStr = nlVandaag();
+  const range = view === "maand"
+    ? maandGrenzen(currentDate.getFullYear(), currentDate.getMonth() + 1)
+    : (() => { const w = getWeekRange(currentDate); return { start: ymd(w.start), eind: ymd(w.end) }; })();
+  const startStr = range.start;
+  const endStr = range.eind;
 
   const { data: roosterData, isLoading } = useKlantRooster(startStr, endStr);
   const rooster: RoosterItem[] = roosterData?.rooster ?? [];
 
   const navigate = (dir: number) => {
     const d = new Date(currentDate);
-    if (view === "maand") d.setMonth(d.getMonth() + dir);
+    // Naar de 1e: anders springt 31 jan + 1 maand naar 3 maart.
+    if (view === "maand") { d.setDate(1); d.setMonth(d.getMonth() + dir); }
     else d.setDate(d.getDate() + dir * 7);
     setCurrentDate(d);
   };
@@ -2333,9 +2479,9 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
         </div>
 
         {days.map((day) => {
-          const dateStr = day.toISOString().split("T")[0];
+          const dateStr = ymd(day);
           const dayItems = rooster.filter((r) => r.datum === dateStr);
-          const isToday = dateStr === new Date().toISOString().split("T")[0];
+          const isToday = dateStr === vandaagStr;
 
           return (
             <div key={dateStr} className={`rounded-2xl border p-3 ${isToday ? "border-[#F27501]/30 bg-orange-50/30" : "border-neutral-200 bg-white"}`}>
@@ -2405,9 +2551,9 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     return (
       <div className="space-y-4">
         {days.map((day) => {
-          const dateStr = day.toISOString().split("T")[0];
+          const dateStr = ymd(day);
           const dayItems = rooster.filter((r) => r.datum === dateStr);
-          const isToday = dateStr === new Date().toISOString().split("T")[0];
+          const isToday = dateStr === vandaagStr;
 
           return (
             <div key={dateStr} className={`rounded-2xl border p-4 ${isToday ? "border-[#F27501]/30 bg-orange-50/30" : "border-neutral-200 bg-white"}`}>
@@ -2463,7 +2609,7 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     const lastDay = new Date(year, month + 1, 0);
     const startOffset = (firstDay.getDay() + 6) % 7;
     const totalDays = lastDay.getDate();
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = vandaagStr;
 
     const cells: (number | null)[] = [];
     for (let i = 0; i < startOffset; i++) cells.push(null);
@@ -2549,7 +2695,8 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
 const PIE_COLORS = ["#F27501", "#d96800", "#fb923c", "#fdba74", "#fed7aa", "#fef3c7"];
 
 function KostenTab() {
-  const [jaar, setJaar] = useState(new Date().getFullYear());
+  const huidigJaar = Number(nlVandaag().slice(0, 4));
+  const [jaar, setJaar] = useState(huidigJaar);
 
   const { data: rawData, isLoading } = useKlantKosten(jaar);
   const data = rawData as KostenData | null;
@@ -2581,43 +2728,13 @@ function KostenTab() {
         <div className="flex items-center gap-3">
           <select value={jaar} onChange={(e) => setJaar(Number(e.target.value))}
             className="px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20">
-            {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+            {Array.from({ length: huidigJaar - 2023 }, (_, i) => huidigJaar - i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <button onClick={exportCSV} className="px-4 py-2 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition">
             CSV Export
           </button>
         </div>
       </div>
-
-      {/* NIEUW: Budget Alert */}
-      {(() => {
-        const MAANDBUDGET = 3000;
-        const budgetGebruikt = data?.totaal ?? 0;
-        const budgetPct = Math.min(100, Math.round((budgetGebruikt / MAANDBUDGET) * 100));
-
-        return budgetPct >= 80 ? (
-          <div className={`flex items-start gap-3 rounded-2xl p-4 ${
-            budgetPct >= 95
-              ? "bg-red-50 border border-red-200"
-              : "bg-amber-50 border border-amber-200"
-          }`}>
-            <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${budgetPct >= 95 ? "text-red-600" : "text-amber-600"}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <p className={`font-semibold text-sm ${budgetPct >= 95 ? "text-red-900" : "text-amber-900"}`}>
-                {budgetPct >= 95 ? "Budget bijna uitgeput!" : "Budget waarschuwing"}
-              </p>
-              <p className={`text-xs mt-0.5 ${budgetPct >= 95 ? "text-red-700" : "text-amber-700"}`}>
-                €{budgetGebruikt.toLocaleString("nl-NL")} van €{MAANDBUDGET.toLocaleString("nl-NL")} gebruikt ({budgetPct}%).
-                Nog €{(MAANDBUDGET - budgetGebruikt).toLocaleString("nl-NL")} beschikbaar.
-              </p>
-            </div>
-          </div>
-        ) : null;
-      })()}
 
       {/* Totaal */}
       <div className="bg-gradient-to-r from-neutral-900 to-neutral-800 rounded-2xl p-6 text-white">
@@ -2693,36 +2810,61 @@ function KostenTab() {
    ============================================================ */
 function UrenSubTabs({
   pending,
+  aangepast,
   approved,
+  zoekterm,
   onApprove,
   onAdjust,
   formatDate,
   formatCurrency,
-  statusTone: _statusTone,
 }: {
   pending: UrenRegistratie[];
+  aangepast: UrenRegistratie[];
   approved: UrenRegistratie[];
+  zoekterm: string;
   onApprove: (u: UrenRegistratie) => void;
   onAdjust: (u: UrenRegistratie) => void;
   formatDate: (d: string) => string;
   formatCurrency: (value: number) => string;
   statusTone: Record<string, string>;
 }) {
-  const [subTab, setSubTab] = useState<"pending" | "approved">("pending");
-  const items = subTab === "pending" ? pending : approved;
+  const [subTab, setSubTab] = useState<"pending" | "aangepast" | "approved">("pending");
+  const [historiePagina, setHistoriePagina] = useState(1);
+  // Definitief goedgekeurde/gefactureerde uren komen gepagineerd van de server.
+  const { data: historieData, isFetching: historieLaden } = useKlantUren(historiePagina);
+  const historie: UrenRegistratie[] = (historieData?.historie ?? []).filter((u: UrenRegistratie) =>
+    u.medewerker_naam.toLowerCase().includes(zoekterm.toLowerCase())
+  );
+  const historieTotaal: number = historieData?.historie_totaal ?? 0;
+  const heeftMeer: boolean = !!historieData?.heeft_meer;
+
+  const items = subTab === "pending" ? pending : subTab === "aangepast" ? aangepast : [...approved, ...historie];
+  const statusLabel: Record<string, { label: string; cls: string }> = {
+    klant_goedgekeurd: { label: "Goedgekeurd · nog te factureren", cls: "bg-blue-100 text-blue-700" },
+    goedgekeurd: { label: "Goedgekeurd", cls: "bg-green-100 text-green-700" },
+    gefactureerd: { label: "Gefactureerd", cls: "bg-neutral-200 text-neutral-700" },
+  };
+
+  const subTabKnop = (id: typeof subTab, label: string) => (
+    <button onClick={() => setSubTab(id)}
+      className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === id ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
+      {label}
+    </button>
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <button onClick={() => setSubTab("pending")}
-          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "pending" ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
-          Te beoordelen ({pending.length})
-        </button>
-        <button onClick={() => setSubTab("approved")}
-          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "approved" ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
-          Goedgekeurd ({approved.length})
-        </button>
+      <div className="flex flex-wrap gap-2">
+        {subTabKnop("pending", `Te beoordelen (${pending.length})`)}
+        {aangepast.length > 0 && subTabKnop("aangepast", `Aangepast (${aangepast.length})`)}
+        {subTabKnop("approved", `Goedgekeurd (${approved.length + historieTotaal})`)}
       </div>
+
+      {subTab === "aangepast" && (
+        <p className="text-xs text-[var(--kp-text-tertiary)]">
+          Deze uren heeft u aangepast. TopTalent verwerkt uw aanpassing met de medewerker; tot die tijd kunt u uw voorstel nog wijzigen.
+        </p>
+      )}
 
       {items.length === 0 ? (
         <EmptyState
@@ -2731,50 +2873,88 @@ function UrenSubTabs({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          title={subTab === "pending" ? "Geen uren om te beoordelen" : "Nog geen goedgekeurde uren"}
-          description={subTab === "pending" ? "Er zijn momenteel geen openstaande uren die op uw goedkeuring wachten." : "Goedgekeurde uren verschijnen hier zodra u ze heeft beoordeeld."}
+          title={subTab === "pending" ? "Geen uren om te beoordelen" : subTab === "aangepast" ? "Geen aangepaste uren" : "Nog geen goedgekeurde uren"}
+          description={subTab === "pending" ? "Er zijn momenteel geen openstaande uren die op uw goedkeuring wachten." : subTab === "aangepast" ? "Uren die u aanpast verschijnen hier tot TopTalent ze verwerkt heeft." : "Goedgekeurde uren verschijnen hier zodra u ze heeft beoordeeld."}
         />
       ) : (
         <div className="space-y-3">
-          {items.map((u) => (
-            <div key={u.id} className="rounded-2xl border border-[var(--kp-border)] bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold text-[var(--kp-text-primary)]">{u.medewerker_naam}</p>
-                  <p className="text-sm text-[var(--kp-text-secondary)]">{formatDate(u.dienst_datum)}</p>
-                  <p className="text-xs text-[var(--kp-text-tertiary)] mt-0.5">{u.dienst_locatie}</p>
+          {items.map((u) => {
+            const metAanpassing = u.status === "klant_aangepast" && u.klant_gewerkte_uren != null;
+            const uren = metAanpassing ? Number(u.klant_gewerkte_uren) : u.gewerkte_uren;
+            return (
+              <div key={u.id} className="rounded-2xl border border-[var(--kp-border)] bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-semibold text-[var(--kp-text-primary)]">{u.medewerker_naam}</p>
+                    <p className="text-sm text-[var(--kp-text-secondary)]">{u.dienst_datum ? formatDate(u.dienst_datum) : "-"}</p>
+                    <p className="text-xs text-[var(--kp-text-tertiary)] mt-0.5">{u.dienst_locatie}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-[var(--kp-text-primary)]">{uren}u</p>
+                    <p className="text-sm text-[var(--kp-text-secondary)]">&euro;{((uren || 0) * (u.uurtarief || 0)).toFixed(2)}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-[var(--kp-text-primary)]">{u.gewerkte_uren}u</p>
-                  <p className="text-sm text-[var(--kp-text-secondary)]">&euro;{(u.gewerkte_uren * u.uurtarief).toFixed(2)}</p>
+                <div className="flex flex-wrap gap-2 mt-1 text-xs text-[var(--kp-text-tertiary)]">
+                  <span className={metAanpassing ? "line-through" : ""}>{u.start_tijd?.slice(0, 5)} - {u.eind_tijd?.slice(0, 5)}</span>
+                  <span className={metAanpassing ? "line-through" : ""}>{u.pauze_minuten}m pauze</span>
+                  {u.reiskosten_km > 0 && <span>{u.reiskosten_km}km reiskosten ({formatCurrency(u.reiskosten_bedrag)})</span>}
                 </div>
+                {metAanpassing && (
+                  <div className="mt-2 rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                    Uw aanpassing: {u.klant_start_tijd?.slice(0, 5)} - {u.klant_eind_tijd?.slice(0, 5)} · {u.klant_pauze_minuten ?? 0}m pauze · {u.klant_gewerkte_uren} uur
+                    {u.klant_opmerking && <span className="block mt-0.5 italic">&ldquo;{u.klant_opmerking}&rdquo;</span>}
+                  </div>
+                )}
+                {subTab === "pending" && (
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => onApprove(u)}
+                      className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold transition hover:bg-green-600">
+                      Akkoord
+                    </button>
+                    <button onClick={() => onAdjust(u)}
+                      className="flex-1 py-2.5 rounded-xl border border-[var(--kp-border)] text-[var(--kp-text-secondary)] text-sm font-medium transition hover:bg-[var(--kp-bg-page)]">
+                      Aanpassen
+                    </button>
+                  </div>
+                )}
+                {subTab === "aangepast" && (
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => onAdjust(u)}
+                      className="flex-1 py-2.5 rounded-xl border border-[var(--kp-border)] text-[var(--kp-text-secondary)] text-sm font-medium transition hover:bg-[var(--kp-bg-page)]">
+                      Aanpassing wijzigen
+                    </button>
+                  </div>
+                )}
+                {subTab === "approved" && (
+                  <div className="mt-2">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusLabel[u.status]?.cls ?? "bg-green-100 text-green-700"}`}>
+                      {statusLabel[u.status]?.label ?? "Goedgekeurd"}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex flex-wrap gap-2 mt-1 text-xs text-[var(--kp-text-tertiary)]">
-                <span>{u.start_tijd?.slice(0, 5)} - {u.eind_tijd?.slice(0, 5)}</span>
-                <span>{u.pauze_minuten}m pauze</span>
-                {u.reiskosten_km > 0 && <span>{u.reiskosten_km}km reiskosten ({formatCurrency(u.reiskosten_bedrag)})</span>}
-              </div>
-              {subTab === "pending" && (
-                <div className="flex gap-2 mt-3">
-                  <button onClick={() => onApprove(u)}
-                    className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold transition hover:bg-green-600">
-                    Akkoord
-                  </button>
-                  <button onClick={() => onAdjust(u)}
-                    className="flex-1 py-2.5 rounded-xl border border-[var(--kp-border)] text-[var(--kp-text-secondary)] text-sm font-medium transition hover:bg-[var(--kp-bg-page)]">
-                    Aanpassen
-                  </button>
-                </div>
-              )}
-              {subTab === "approved" && (
-                <div className="mt-2">
-                  <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                    Goedgekeurd
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      )}
+
+      {subTab === "approved" && (historiePagina > 1 || heeftMeer) && (
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <button
+            onClick={() => setHistoriePagina((p) => Math.max(1, p - 1))}
+            disabled={historiePagina === 1 || historieLaden}
+            className="rounded-xl border border-[var(--kp-border)] px-4 py-2 text-sm font-medium text-[var(--kp-text-secondary)] disabled:opacity-40"
+          >
+            Vorige
+          </button>
+          <span className="text-xs text-[var(--kp-text-tertiary)]">Pagina {historiePagina}</span>
+          <button
+            onClick={() => setHistoriePagina((p) => p + 1)}
+            disabled={!heeftMeer || historieLaden}
+            className="rounded-xl border border-[var(--kp-border)] px-4 py-2 text-sm font-medium text-[var(--kp-text-secondary)] disabled:opacity-40"
+          >
+            Volgende
+          </button>
         </div>
       )}
     </div>

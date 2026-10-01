@@ -14,11 +14,12 @@ interface KlantBottomNavProps {
   tabs: KlantTab[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
+  onLogout?: () => void;
 }
 
 const PRIMAIRE_TAB_IDS = ["overzicht", "aanvragen", "rooster", "uren"];
 
-export default function KlantBottomNav({ tabs, activeTab, onTabChange }: KlantBottomNavProps) {
+export default function KlantBottomNav({ tabs, activeTab, onTabChange, onLogout }: KlantBottomNavProps) {
   const [showMore, setShowMore] = useState(false);
 
   const primaireTabs = tabs.filter((t) => PRIMAIRE_TAB_IDS.includes(t.id));
@@ -120,6 +121,19 @@ export default function KlantBottomNav({ tabs, activeTab, onTabChange }: KlantBo
                       )}
                     </button>
                   ))}
+                  {onLogout && (
+                    <button
+                      onClick={() => { setShowMore(false); onLogout(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 border-t border-[var(--kp-border)] mt-2 pt-4"
+                    >
+                      <span className="w-5 h-5">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                      </span>
+                      <span className="flex-1 text-left">Uitloggen</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>

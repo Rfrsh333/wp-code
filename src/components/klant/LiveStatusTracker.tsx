@@ -13,15 +13,13 @@ interface LiveDienst {
 
 interface LiveStatusTrackerProps {
   diensten: LiveDienst[];
+  /** Vandaag (NL) als YYYY-MM-DD; vergelijken op tekst voorkomt tijdzoneverschuiving. */
+  vandaag: string;
   onTabChange: (tab: string) => void;
 }
 
-function isVandaag(datum: string): boolean {
-  return new Date(datum).toDateString() === new Date().toDateString();
-}
-
-export default function LiveStatusTracker({ diensten, onTabChange }: LiveStatusTrackerProps) {
-  const vandaag = diensten.filter((d) => isVandaag(d.datum));
+export default function LiveStatusTracker({ diensten, vandaag: vandaagDatum, onTabChange }: LiveStatusTrackerProps) {
+  const vandaag = diensten.filter((d) => d.datum === vandaagDatum);
   if (vandaag.length === 0) return null;
 
   return (

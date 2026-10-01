@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,26 +23,37 @@ export default function KlantLogin() {
     setIsLoading(true);
     setError("");
 
-    const res = await fetch("/api/klant/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.email, wachtwoord: formData.wachtwoord }),
-    });
+    try {
+      const res = await fetch("/api/klant/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, wachtwoord: formData.wachtwoord }),
+      });
 
-    const data = await res.json();
-    setIsLoading(false);
+      // Bij een 429/500 zonder JSON-body niet crashen (de knop bleef dan eeuwig op "Inloggen...").
+      const data = await res.json().catch(() => ({}));
 
-    if (data.success) {
-      toast.success("Welkom terug!");
-      router.push("/klant/dashboard");
-    } else {
-      setError(data.error || "Er ging iets mis");
+      if (res.ok && data.success) {
+        toast.success("Welkom terug!");
+        router.push("/klant/dashboard");
+      } else {
+        setError(data.error || (res.status === 429 ? "Te veel pogingen. Probeer het later opnieuw." : "Er ging iets mis"));
+      }
+    } catch {
+      setError("Geen verbinding. Controleer uw internet en probeer het opnieuw.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleForgotPassword = () => {
-    toast.info("Neem contact op met uw accountmanager of mail naar info@toptalentjobs.nl voor een wachtwoord reset.");
-  };
+  // Melding na een geslaagde wachtwoordreset (/klant/login?reset=1).
+  // (Na mount gelezen: tijdens SSR is er geen URL, anders hydration-verschil.)
+  const [resetGelukt, setResetGelukt] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("reset") === "1") {
+      queueMicrotask(() => setResetGelukt(true));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex">
@@ -106,6 +117,11 @@ export default function KlantLogin() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {resetGelukt && !error && (
+                <div role="status" className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm">
+                  Uw wachtwoord is gewijzigd. Log in met uw nieuwe wachtwoord.
+                </div>
+              )}
               {error && <div role="alert" className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
               <div>
                 <label htmlFor="klant-email" className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
@@ -121,13 +137,12 @@ export default function KlantLogin() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label htmlFor="klant-wachtwoord" className="block text-sm font-medium text-neutral-700">Wachtwoord</label>
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
+                  <Link
+                    href="/klant/wachtwoord-vergeten"
                     className="text-sm text-[#F27501] hover:text-[#d96800] font-medium transition-colors"
                   >
                     Wachtwoord vergeten?
-                  </button>
+                  </Link>
                 </div>
                 <input
                   id="klant-wachtwoord"
