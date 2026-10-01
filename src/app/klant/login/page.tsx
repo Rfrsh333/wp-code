@@ -23,20 +23,26 @@ export default function KlantLogin() {
     setIsLoading(true);
     setError("");
 
-    const res = await fetch("/api/klant/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.email, wachtwoord: formData.wachtwoord }),
-    });
+    try {
+      const res = await fetch("/api/klant/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, wachtwoord: formData.wachtwoord }),
+      });
 
-    const data = await res.json();
-    setIsLoading(false);
+      // Bij een 429/500 zonder JSON-body niet crashen (de knop bleef dan eeuwig op "Inloggen...").
+      const data = await res.json().catch(() => ({}));
 
-    if (data.success) {
-      toast.success("Welkom terug!");
-      router.push("/klant/dashboard");
-    } else {
-      setError(data.error || "Er ging iets mis");
+      if (res.ok && data.success) {
+        toast.success("Welkom terug!");
+        router.push("/klant/dashboard");
+      } else {
+        setError(data.error || (res.status === 429 ? "Te veel pogingen. Probeer het later opnieuw." : "Er ging iets mis"));
+      }
+    } catch {
+      setError("Geen verbinding. Controleer uw internet en probeer het opnieuw.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

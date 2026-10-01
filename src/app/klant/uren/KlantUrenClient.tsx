@@ -26,6 +26,11 @@ import { isIngepland } from "@/lib/dienst-status";
 import { parseUurtarief, valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
 import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
 
+const KLANT_TAB_IDS = [
+  "overzicht", "uren", "diensten", "rooster", "aanvragen", "favorieten",
+  "facturen", "kosten", "beoordelingen", "qr-scanner", "instellingen",
+] as const;
+
 interface Klant {
   id: string;
   bedrijfsnaam: string;
@@ -181,10 +186,25 @@ interface KostenData {
   top_medewerkers: { naam: string; totaal: number; uren: number }[];
 }
 
-export default function KlantUrenClient({ klant }: { klant: Klant }) {
+export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; initialTab?: string | null }) {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overzicht");
+  // ?tab=… uit push-/maildeeplinks; onbekende waarden vallen terug op het overzicht.
+  const [activeTab, setActiveTabState] = useState(() =>
+    initialTab && (KLANT_TAB_IDS as readonly string[]).includes(initialTab) ? initialTab : "overzicht"
+  );
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    // URL bijwerken zodat herladen/terug-knop op dezelfde tab blijft.
+    try {
+      const url = new URL(window.location.href);
+      if (tab === "overzicht") url.searchParams.delete("tab");
+      else url.searchParams.set("tab", tab);
+      window.history.replaceState(null, "", url.toString());
+    } catch {
+      // geen URL-API (oude webview): tab werkt gewoon, alleen zonder deeplink
+    }
+  };
 
   // React Query data fetching
   const { data: urenData, isLoading: urenLoading } = useKlantUren();
@@ -566,6 +586,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         bedrijfsnaam={klant.bedrijfsnaam}
         contactpersoon={klant.contactpersoon}
         ongelezen={totalNotifCount}
+        onBellClick={() =>
+          setActiveTab(
+            (dashboardStats?.pendingHoursCount ?? 0) > 0 ? "uren" : teBeoordeelen.length > 0 ? "beoordelingen" : "overzicht"
+          )
+        }
+        onLogout={handleLogout}
       />
       <KlantPortalLayout
         tabs={tabs}
@@ -800,7 +826,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                     title="Geen komende diensten"
                     description="Zodra er shifts ingepland zijn, verschijnen ze hier. Vraag extra personeel aan om te beginnen."
                     actionLabel="Personeel aanvragen"
-                    actionHref="/personeel-aanvragen"
+                    onAction={() => setActiveTab("aanvragen")}
                   />
                 ) : (
                   <div className="space-y-3">
