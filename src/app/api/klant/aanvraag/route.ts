@@ -4,7 +4,8 @@ import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { sendPushToAllOfType, sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { getAllPricingOverview } from "@/lib/pricing/smart-pricing";
+import { laagsteBasistarief } from "@/lib/pricing/ondergrens";
+import { haalTariefOverzicht } from "@/lib/pricing/tarief-overzicht";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
 
@@ -19,14 +20,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * Lukt het ophalen niet, dan geen ondergrens (0) i.p.v. alle aanvragen te blokkeren.
  */
 async function minimaalUurtarief(): Promise<number> {
-  try {
-    const { tarieven } = await getAllPricingOverview();
-    const basis = tarieven.map((t) => t.basis).filter((b) => Number.isFinite(b) && b > 0);
-    return basis.length ? Math.min(...basis) : 0;
-  } catch (e) {
-    captureRouteError(e, { route: "/api/klant/aanvraag", action: "MIN_TARIEF" });
-    return 0;
-  }
+  return laagsteBasistarief(await haalTariefOverzicht("/api/klant/aanvraag"));
 }
 
 type FunctieRegel = { functie: string; aantal: number; tarief: number };
