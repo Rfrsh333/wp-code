@@ -6,6 +6,7 @@ import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { notifyKlantUrenIngediend } from "@/lib/klant-push-triggers";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { meldAan, meldAf, werkBezettingBij } from "@/lib/medewerker/aanmelden";
@@ -547,6 +548,14 @@ export async function POST(request: NextRequest) {
     if (urenFout) {
       captureRouteError(urenFout, { route: "/api/medewerker/diensten", action: "uren_indienen" });
       return NextResponse.json({ error: "Uren indienen mislukt" }, { status: 500 });
+    }
+
+    // Klant krijgt een melding dat er uren klaarstaan om goed te keuren.
+    const klantId = (dienst as Record<string, unknown>).klant_id as string | undefined;
+    if (klantId) {
+      await notifyKlantUrenIngediend(klantId, medewerker.naam, gewerkteUren).catch((err) =>
+        captureRouteError(err, { route: "/api/medewerker/diensten", action: "uren_push" }),
+      );
     }
     return NextResponse.json({ success: true });
   }
