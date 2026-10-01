@@ -75,16 +75,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const teAnnuleren = (toekomstig || []).map((d) => d.id);
-    if (teAnnuleren.length > 0) {
-      await supabaseAdmin.from("diensten").update({ status: "geannuleerd" }).in("id", teAnnuleren);
-      await supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .update({ status: "geannuleerd" })
-        .in("dienst_id", teAnnuleren)
-        .in("status", ["aangemeld", "uitgenodigd"]);
-    }
-
     const { count: aantalFacturen } = await supabaseAdmin
       .from("facturen")
       .select("id", { count: "exact", head: true })
@@ -116,9 +106,13 @@ export async function POST(request: NextRequest) {
 
     // Kolommen die (nog) niet bestaan weglaten en opnieuw proberen; 23514 = status-CHECK.
     let update = { ...anoniem };
+    let gelukt = false;
     for (let poging = 0; poging < 8; poging++) {
       const { error } = await supabaseAdmin.from("klanten").update(update).eq("id", klant.id);
-      if (!error) break;
+      if (!error) {
+        gelukt = true;
+        break;
+      }
       if (error.code === "23514" && update.status === "verwijderd") {
         update = { ...update, status: "inactief" };
         continue;
@@ -136,6 +130,40 @@ export async function POST(request: NextRequest) {
       captureRouteError(error, { route: "/api/klant/account/verwijderen", action: "ANONIMISEREN" });
       return NextResponse.json({ error: "Verwijderen mislukt. Neem contact op met TopTalent." }, { status: 500 });
     }
+
+    // Controleren dat de kern echt is weggeschreven (herhaallus kan uitgeput raken of de status-,
+    // e-mail- of wachtwoordkolom hebben laten vallen). Zo niet: 500 en verder niets wissen.
+    const { data: na, error: naFout } = await supabaseAdmin
+      .from("klanten")
+      .select("status, email, wachtwoord")
+      .eq("id", klant.id)
+      .maybeSingle();
+    const echtGeanonimiseerd =
+      gelukt &&
+      !naFout &&
+      !!na &&
+      ["verwijderd", "inactief"].includes(na.status as string) &&
+      na.email === anoniem.email &&
+      na.wachtwoord === onbruikbaar;
+    if (!echtGeanonimiseerd) {
+      captureRouteError(naFout ?? new Error("Anonimiseren niet (volledig) gelukt"), {
+        route: "/api/klant/account/verwijderen",
+        action: "ANONIMISEREN_CONTROLE",
+      });
+      return NextResponse.json({ error: "Verwijderen mislukt. Neem contact op met TopTalent." }, { status: 500 });
+    }
+
+    // Pas na geslaagde anonimisering: open toekomstige diensten annuleren.
+    const teAnnuleren = (toekomstig || []).map((d) => d.id);
+    if (teAnnuleren.length > 0) {
+      await supabaseAdmin.from("diensten").update({ status: "geannuleerd" }).in("id", teAnnuleren);
+      await supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .update({ status: "geannuleerd" })
+        .in("dienst_id", teAnnuleren)
+        .in("status", ["aangemeld", "uitgenodigd"]);
+    }
+
 
     // Gekoppelde gegevens die niet fiscaal bewaard hoeven te worden.
     await Promise.all([
