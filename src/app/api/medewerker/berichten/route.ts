@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   // Fetch inbox (berichten aan mij) + verzonden (berichten van mij)
   const { data: inbox } = await supabaseAdmin
     .from("berichten")
-    .select("id, van_type, van_id, aan_type, aan_id, onderwerp, inhoud, created_at")
+    .select("id, van_type, van_id, aan_type, aan_id, onderwerp, inhoud, gelezen, created_at")
     .eq("aan_type", "medewerker")
     .eq("aan_id", medewerker.id)
     .order("created_at", { ascending: false })
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   const { data: verzonden } = await supabaseAdmin
     .from("berichten")
-    .select("id, van_type, van_id, aan_type, aan_id, onderwerp, inhoud, created_at")
+    .select("id, van_type, van_id, aan_type, aan_id, onderwerp, inhoud, gelezen, created_at")
     .eq("van_type", "medewerker")
     .eq("van_id", medewerker.id)
     .order("created_at", { ascending: false })
@@ -35,9 +35,13 @@ export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
   if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { onderwerp, inhoud } = await request.json();
+  const body = await request.json().catch(() => ({}));
+  const onderwerp = typeof body.onderwerp === "string" ? body.onderwerp.slice(0, 200) : null;
+  // `bericht` = oude veldnaam van de Berichten-pagina; de kolom heet `inhoud`.
+  const ruweInhoud = typeof body.inhoud === "string" ? body.inhoud : typeof body.bericht === "string" ? body.bericht : "";
+  const inhoud = ruweInhoud.slice(0, 5000);
 
-  if (!inhoud?.trim()) {
+  if (!inhoud.trim()) {
     return NextResponse.json({ error: "Bericht inhoud is verplicht" }, { status: 400 });
   }
 

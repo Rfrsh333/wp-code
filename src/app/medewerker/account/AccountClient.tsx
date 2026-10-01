@@ -13,6 +13,9 @@ import {
   Award,
   Euro,
   Users,
+  CalendarCheck,
+  MessageSquare,
+  FileSignature,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -88,11 +91,19 @@ export default function AccountClient() {
       ],
     },
     {
+      title: "Planning & contact",
+      items: [
+        { icon: CalendarCheck, label: "Beschikbaarheid", onClick: () => router.push("/medewerker/beschikbaarheid") },
+        { icon: MessageSquare, label: "Berichten", onClick: () => router.push("/medewerker/berichten") },
+      ],
+    },
+    {
       title: "Financieel & Extra",
       items: [
         { icon: Euro, label: "Financieel overzicht", onClick: () => router.push("/medewerker/financieel") },
         { icon: Users, label: "Vrienden werven", onClick: () => router.push("/medewerker/referral") },
         { icon: FileText, label: "Documenten", onClick: () => router.push("/medewerker/documenten") },
+        { icon: FileSignature, label: "Contracten", onClick: () => router.push("/medewerker/contracten") },
       ],
     },
     {
