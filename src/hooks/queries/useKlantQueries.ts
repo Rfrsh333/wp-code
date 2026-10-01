@@ -16,6 +16,7 @@ export const klantKeys = {
   kosten: (jaar?: number) => [...klantKeys.all, 'kosten', jaar] as const,
   checkin: () => [...klantKeys.all, 'checkin'] as const,
   aanvraag: () => [...klantKeys.all, 'aanvraag'] as const,
+  account: () => [...klantKeys.all, 'account'] as const,
 };
 
 // === QUERIES ===
@@ -137,6 +138,17 @@ export function useKlantCheckins() {
     queryFn: async () => {
       const res = await fetch('/api/klant/checkin');
       if (!res.ok) throw new Error('Failed to fetch checkins');
+      return res.json();
+    },
+  });
+}
+
+export function useKlantAccount() {
+  return useQuery({
+    queryKey: klantKeys.account(),
+    queryFn: async () => {
+      const res = await fetch('/api/klant/account');
+      if (!res.ok) throw new Error('Failed to fetch account');
       return res.json();
     },
   });

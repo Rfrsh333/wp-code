@@ -14,6 +14,7 @@ import {
 import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import KlantPushNotificationBanner from "../components/PushNotificationBanner";
 import QuickActions from "@/components/klant/QuickActions";
+import KlantInstellingen from "@/components/klant/KlantInstellingen";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
 import StarRating from "@/components/ui/StarRating";
@@ -568,6 +569,16 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
         </svg>
       ),
     },
+    {
+      id: "instellingen",
+      label: "Instellingen",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+    },
   ];
 
   const handleLogout = async () => {
@@ -591,6 +602,7 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
             (dashboardStats?.pendingHoursCount ?? 0) > 0 ? "uren" : teBeoordeelen.length > 0 ? "beoordelingen" : "overzicht"
           )
         }
+        onInstellingen={() => setActiveTab("instellingen")}
         onLogout={handleLogout}
       />
       <KlantPortalLayout
@@ -1134,6 +1146,9 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
 
             {/* Tab: QR Check-in */}
             {activeTab === "qr-scanner" && <QRScannerTab />}
+
+            {/* Tab: Instellingen (bedrijfsgegevens, wachtwoord, meldingen, account verwijderen) */}
+            {activeTab === "instellingen" && <KlantInstellingen onLogout={handleLogout} />}
           </>
         )}
       </KlantPortalLayout>
