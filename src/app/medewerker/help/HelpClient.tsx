@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronDown, Mail, Phone, MessageCircle, HelpCircle } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
-import { toast } from "sonner";
 
 export default function HelpClient() {
   const router = useRouter();
@@ -47,14 +46,15 @@ export default function HelpClient() {
     {
       icon: Mail,
       label: "Email ons",
-      value: "info@toptalent.nl",
-      action: () => window.open("mailto:info@toptalent.nl"),
+      value: "info@toptalentjobs.nl",
+      action: () => window.open("mailto:info@toptalentjobs.nl"),
     },
     {
       icon: MessageCircle,
       label: "WhatsApp",
       value: "Chat met ons",
-      action: () => toast.info("WhatsApp chat opent..."),
+      // Zelfde nummer als op /contact
+      action: () => window.open("https://wa.me/31617889189", "_blank", "noopener,noreferrer"),
     },
   ];
 

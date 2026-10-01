@@ -21,16 +21,20 @@ export default function MedewerkerWachtwoordResetClient() {
         return;
       }
 
-      const response = await fetch(`/api/medewerker/wachtwoord-reset?token=${encodeURIComponent(token)}`);
-      const data = await response.json();
+      try {
+        const response = await fetch(`/api/medewerker/wachtwoord-reset?token=${encodeURIComponent(token)}`);
+        const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        setError(data.error || "Resetlink is ongeldig of verlopen.");
-        return;
+        if (!response.ok) {
+          setError(data.error || "Resetlink is ongeldig of verlopen.");
+          return;
+        }
+
+        setNaam(data.medewerker?.naam || "");
+        setIsReady(true);
+      } catch {
+        setError("Geen verbinding. Controleer je internet en laad de pagina opnieuw.");
       }
-
-      setNaam(data.medewerker?.naam || "");
-      setIsReady(true);
     };
 
     void validateToken();
@@ -51,20 +55,25 @@ export default function MedewerkerWachtwoordResetClient() {
     }
 
     setIsLoading(true);
-    const response = await fetch("/api/medewerker/wachtwoord-reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, wachtwoord }),
-    });
-    const data = await response.json();
-    setIsLoading(false);
+    try {
+      const response = await fetch("/api/medewerker/wachtwoord-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, wachtwoord }),
+      });
+      const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      setError(data.error || "Wachtwoord resetten mislukt.");
-      return;
+      if (!response.ok) {
+        setError(data.error || "Wachtwoord resetten mislukt.");
+        return;
+      }
+
+      router.push("/medewerker/login?reset=1");
+    } catch {
+      setError("Geen verbinding. Controleer je internet en probeer het opnieuw.");
+    } finally {
+      setIsLoading(false);
     }
-
-    router.push("/medewerker/login?reset=1");
   };
 
   return (

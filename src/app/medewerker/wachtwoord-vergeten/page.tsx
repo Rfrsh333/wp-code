@@ -15,21 +15,26 @@ export default function MedewerkerWachtwoordVergetenPage() {
     setError("");
     setSuccess("");
 
-    const response = await fetch("/api/medewerker/wachtwoord-reset/request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const response = await fetch("/api/medewerker/wachtwoord-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    const data = await response.json();
-    setIsLoading(false);
+      const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      setError(data.error || "Resetmail versturen mislukt");
-      return;
+      if (!response.ok) {
+        setError(data.error || "Resetmail versturen mislukt");
+        return;
+      }
+
+      setSuccess(data.message || "Als het account bestaat, ontvangt u zo een resetmail.");
+    } catch {
+      setError("Geen verbinding. Controleer je internet en probeer het opnieuw.");
+    } finally {
+      setIsLoading(false);
     }
-
-    setSuccess(data.message || "Als het account bestaat, ontvangt u zo een resetmail.");
   };
 
   return (
