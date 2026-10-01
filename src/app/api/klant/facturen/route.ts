@@ -183,8 +183,10 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
+    // Na een botsing (23505) is het laatste nummer hierboven opnieuw gelezen: gewoon +1.
+    // (Voorheen + poging erbij, waardoor er gaten in de nummering vielen.)
     const laatste = laatsteFactuur?.factuur_nummer ? parseInt(laatsteFactuur.factuur_nummer.slice(-4)) : 0;
-    factuurNummer = `${prefix}${String(laatste + 1 + poging).padStart(4, "0")}`;
+    factuurNummer = `${prefix}${String(laatste + 1).padStart(4, "0")}`;
 
     const res = await supabaseAdmin
       .from("facturen")
