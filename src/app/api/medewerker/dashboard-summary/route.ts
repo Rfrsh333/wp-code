@@ -6,6 +6,7 @@ import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { haalUrenRegistraties } from "@/lib/medewerker/uren";
 import { isVerdiend } from "@/lib/medewerker/uren-regels";
+import { telVerlopendeDocumenten } from "@/lib/medewerker/dienst-regels";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,13 +36,17 @@ export async function GET(request: NextRequest) {
       .eq("medewerker_id", medewerker.id)
       .eq("status", "aangeboden");
 
-    // Verlopen documenten (within 30 days)
-    const { count: verlopenDocumenten } = await supabaseAdmin
+    // Verlopen of binnen 30 dagen verlopende documenten; per type telt alleen het nieuwste.
+    const { data: documenten } = await supabaseAdmin
       .from("medewerker_documenten")
-      .select("id", { count: "exact", head: true })
+      .select("document_type, expiry_date, uploaded_at")
       .eq("medewerker_id", medewerker.id)
-      .not("expiry_date", "is", null)
-      .lte("expiry_date", plusDagen(today, 30));
+      .order("uploaded_at", { ascending: false })
+      .limit(200);
+    const verlopenDocumenten = telVerlopendeDocumenten(
+      (documenten ?? []) as { document_type: string; expiry_date: string | null; uploaded_at: string | null }[],
+      plusDagen(today, 30),
+    );
 
     // Ongelezen berichten
     const { count: ongelezen } = await supabaseAdmin

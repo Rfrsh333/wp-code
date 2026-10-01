@@ -3,7 +3,9 @@ import {
   annuleerUitkomst,
   heeftVrijePlek,
   inzetbaarheidsMelding,
+  nieuwstePerType,
   plekkenTotaal,
+  telVerlopendeDocumenten,
   urenTotDienststart,
 } from "../../src/lib/medewerker/dienst-regels";
 
@@ -56,5 +58,47 @@ test.describe("medewerker dienst-regels", () => {
     expect(inzetbaarheidsMelding({ vandaag, documenten: [], werkvergunningGeldigTot: "2026-09-01" })).toContain(
       "werkvergunning",
     );
+  });
+
+  test("nieuwstePerType: per documenttype telt alleen de nieuwste upload", () => {
+    const docs = [
+      { document_type: "id_bewijs", uploaded_at: "2025-01-01T10:00:00Z", expiry_date: "2026-01-01" },
+      { document_type: "id_bewijs", uploaded_at: "2026-09-01T10:00:00Z", expiry_date: "2031-01-01" },
+      { document_type: "vog", uploaded_at: null, created_at: "2026-02-01T00:00:00Z", expiry_date: null },
+      { document_type: "vog", uploaded_at: null, created_at: "2026-03-01T00:00:00Z", expiry_date: "2027-01-01" },
+    ];
+    const resultaat = nieuwstePerType(docs);
+    expect(resultaat).toHaveLength(2);
+    expect(resultaat.find((d) => d.document_type === "id_bewijs")?.expiry_date).toBe("2031-01-01");
+    expect(resultaat.find((d) => d.document_type === "vog")?.expiry_date).toBe("2027-01-01");
+    // Volgorde van de invoer maakt niet uit
+    expect(nieuwstePerType([...docs].reverse()).find((d) => d.document_type === "id_bewijs")?.expiry_date).toBe(
+      "2031-01-01",
+    );
+  });
+
+  test("inzetbaarheidsMelding: oud verlopen ID telt niet als er een nieuwer geldig ID is", () => {
+    const vandaag = "2026-10-01";
+    const oud = { document_type: "id_bewijs", expiry_date: "2026-09-30", uploaded_at: "2024-01-01T00:00:00Z" };
+    const nieuw = { document_type: "id_bewijs", expiry_date: "2031-09-30", uploaded_at: "2026-09-15T00:00:00Z" };
+    expect(inzetbaarheidsMelding({ vandaag, documenten: [oud, nieuw] })).toBeNull();
+    // Omgekeerd: de nieuwste upload is verlopen → blokkeren
+    const nieuwVerlopen = { ...oud, uploaded_at: "2026-09-20T00:00:00Z" };
+    expect(inzetbaarheidsMelding({ vandaag, documenten: [nieuw, nieuwVerlopen] })).toContain("ID-bewijs");
+  });
+
+  test("telVerlopendeDocumenten: alleen nieuwste per type, grens inclusief", () => {
+    const grens = "2026-10-31";
+    expect(
+      telVerlopendeDocumenten(
+        [
+          { document_type: "id_bewijs", expiry_date: "2026-09-01", uploaded_at: "2024-01-01T00:00:00Z" },
+          { document_type: "id_bewijs", expiry_date: "2031-01-01", uploaded_at: "2026-09-01T00:00:00Z" },
+          { document_type: "vog", expiry_date: "2026-10-31", uploaded_at: "2026-01-01T00:00:00Z" },
+          { document_type: "diploma", expiry_date: null, uploaded_at: "2026-01-01T00:00:00Z" },
+        ],
+        grens,
+      ),
+    ).toBe(1);
   });
 });

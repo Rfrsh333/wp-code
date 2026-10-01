@@ -27,16 +27,18 @@ export async function controleerInzetbaarheid(medewerkerId: string): Promise<str
   const [{ data: documenten }, { data: mw }] = await Promise.all([
     supabaseAdmin
       .from("medewerker_documenten")
-      .select("document_type, expiry_date")
+      .select("document_type, expiry_date, uploaded_at")
       .eq("medewerker_id", medewerkerId)
       .in("document_type", [...KRITIEKE_DOCUMENTEN])
-      .lt("expiry_date", vandaag),
+      .order("uploaded_at", { ascending: false })
+      .limit(100),
     supabaseAdmin.from("medewerkers").select("werkvergunning_geldig_tot").eq("id", medewerkerId).maybeSingle(),
   ]);
 
   return inzetbaarheidsMelding({
     vandaag,
-    documenten: (documenten ?? []) as { document_type: string; expiry_date: string | null }[],
+    // Alle versies ophalen: inzetbaarheidsMelding beoordeelt alleen het nieuwste document per type.
+    documenten: (documenten ?? []) as { document_type: string; expiry_date: string | null; uploaded_at: string | null }[],
     werkvergunningGeldigTot: (mw as { werkvergunning_geldig_tot?: string | null } | null)?.werkvergunning_geldig_tot,
   });
 }

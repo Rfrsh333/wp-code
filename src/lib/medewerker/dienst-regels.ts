@@ -64,16 +64,34 @@ const DOCUMENT_LABELS: Record<string, string> = {
   verblijfsvergunning: "verblijfsvergunning",
 };
 
+type DocumentVersie = { document_type: string; uploaded_at?: string | null; created_at?: string | null };
+
+/**
+ * Alleen het nieuwste document per documenttype (op uploaded_at, anders created_at).
+ * Een oud, verlopen ID-bewijs telt niet meer zodra er een nieuwer exemplaar is geüpload.
+ * Documenten zonder datum verliezen van documenten met datum; bij gelijke datum wint de eerste.
+ */
+export function nieuwstePerType<T extends DocumentVersie>(documenten: readonly T[]): T[] {
+  const perType = new Map<string, T>();
+  const moment = (d: DocumentVersie) => d.uploaded_at ?? d.created_at ?? "";
+  for (const doc of documenten) {
+    const huidig = perType.get(doc.document_type);
+    if (!huidig || moment(doc) > moment(huidig)) perType.set(doc.document_type, doc);
+  }
+  return [...perType.values()];
+}
+
 /**
  * Melding als de medewerker niet ingezet mag worden (verlopen ID/werkvergunning), anders null.
- * `vandaag` is YYYY-MM-DD (NL); datums vóór vandaag zijn verlopen.
+ * `vandaag` is YYYY-MM-DD (NL); datums vóór vandaag zijn verlopen. Per documenttype telt alleen
+ * het nieuwste document (zie nieuwstePerType).
  */
 export function inzetbaarheidsMelding(input: {
   vandaag: string;
-  documenten: { document_type: string; expiry_date: string | null }[];
+  documenten: { document_type: string; expiry_date: string | null; uploaded_at?: string | null }[];
   werkvergunningGeldigTot?: string | null;
 }): string | null {
-  const verlopen = input.documenten
+  const verlopen = nieuwstePerType(input.documenten)
     .filter((d) => (KRITIEKE_DOCUMENTEN as readonly string[]).includes(d.document_type))
     .filter((d) => !!d.expiry_date && d.expiry_date < input.vandaag)
     .map((d) => DOCUMENT_LABELS[d.document_type] ?? d.document_type);
@@ -85,4 +103,15 @@ export function inzetbaarheidsMelding(input: {
     return "Je werkvergunning is verlopen. Neem contact op met TopTalent om je werkvergunning te vernieuwen.";
   }
   return null;
+}
+
+/**
+ * Aantal documenten dat verlopen is of binnen `grens` (YYYY-MM-DD, inclusief) verloopt,
+ * waarbij per documenttype alleen het nieuwste document meetelt.
+ */
+export function telVerlopendeDocumenten(
+  documenten: readonly { document_type: string; expiry_date: string | null; uploaded_at?: string | null }[],
+  grens: string,
+): number {
+  return nieuwstePerType(documenten).filter((d) => !!d.expiry_date && d.expiry_date <= grens).length;
 }
