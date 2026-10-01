@@ -12,6 +12,7 @@ import {
 } from "@/lib/rate-limit-redis";
 import { signKlantSession, signMedewerkerSession } from "@/lib/session";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { APP_TOKEN_GELDIGHEID } from "@/lib/klant-sessie-cookie";
 
 // Login voor de native app (één app, rolkeuze bij inloggen).
 // Zelfde controles als de web-logins, maar het token komt in de body: de app bewaart het in
@@ -19,7 +20,6 @@ import { captureRouteError } from "@/lib/sentry-utils";
 // App-tokens leven 30 dagen; intrekken kan via `sessie_geldig_vanaf` (src/lib/portal-auth.ts).
 
 const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
-const APP_TOKEN_GELDIGHEID = "30d";
 
 const schema = z.object({
   rol: z.enum(["medewerker", "klant"]),

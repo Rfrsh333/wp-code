@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest) {
   // Contactpersoon staat in de sessie (begroeting, header): sessie vernieuwen bij een wijziging.
   let token: string | undefined;
   if ("contactpersoon" in parsed.update && data.contactpersoon !== klant.contactpersoon) {
-    token = await zetKlantSessie(data);
+    token = await zetKlantSessie(data, request);
   }
 
   return NextResponse.json({ success: true, ...(token && isBearerRequest(request) ? { token } : {}) });

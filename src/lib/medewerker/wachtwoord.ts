@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { signMedewerkerSession, type MedewerkerSession } from "@/lib/session";
+import { APP_TOKEN_GELDIGHEID, isBearerRequest } from "@/lib/klant-sessie-cookie";
 
 /** Zelfde kosten als activeren/wachtwoord-reset. */
 export const BCRYPT_KOSTEN = 12;
@@ -16,15 +17,21 @@ export async function controleerWachtwoord(medewerkerId: string, wachtwoord: str
 
 /**
  * Nieuwe sessie na een wachtwoordwijziging (de oude zijn net ingetrokken). Zelfde cookie-
- * instellingen als /api/medewerker/login; het token gaat ook terug voor Bearer-clients (app).
+ * instellingen als /api/medewerker/login. Bearer-request (app): token 30 dagen geldig en géén
+ * cookie; het token gaat dan in de response terug.
  */
-export async function geefNieuweSessie(sessie: MedewerkerSession): Promise<string> {
-  const token = await signMedewerkerSession({
-    id: sessie.id,
-    naam: sessie.naam,
-    email: sessie.email,
-    functie: sessie.functie,
-  });
+export async function geefNieuweSessie(sessie: MedewerkerSession, request: Request): Promise<string> {
+  const app = isBearerRequest(request);
+  const token = await signMedewerkerSession(
+    {
+      id: sessie.id,
+      naam: sessie.naam,
+      email: sessie.email,
+      functie: sessie.functie,
+    },
+    app ? APP_TOKEN_GELDIGHEID : undefined,
+  );
+  if (app) return token;
   const cookieStore = await cookies();
   cookieStore.set("medewerker_session", token, {
     httpOnly: true,

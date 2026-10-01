@@ -56,8 +56,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Andere apparaten uitloggen, dan dit apparaat een verse sessie geven (na de intrekking).
-    await revokeSessions("klanten", klant.id);
-    const token = await zetKlantSessie(account);
+    try {
+      await revokeSessions("klanten", klant.id);
+    } catch (revokeError) {
+      captureRouteError(revokeError, { route: "/api/klant/account/wachtwoord", action: "REVOKE" });
+    }
+    const token = await zetKlantSessie(account, request);
 
     return NextResponse.json({ success: true, ...(isBearerRequest(request) ? { token } : {}) });
   } catch (error) {

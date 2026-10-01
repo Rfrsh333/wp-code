@@ -5,6 +5,7 @@ import { getMedewerkerSession, revokeSessions } from "@/lib/portal-auth";
 import { checkRedisRateLimit, loginRateLimit } from "@/lib/rate-limit-redis";
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { isBearerRequest } from "@/lib/klant-sessie-cookie";
 import { BCRYPT_KOSTEN, controleerWachtwoord, geefNieuweSessie } from "@/lib/medewerker/wachtwoord";
 
 /**
@@ -54,11 +55,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Wachtwoord wijzigen mislukt" }, { status: 500 });
     }
 
-    await revokeSessions("medewerkers", medewerker.id);
-    const token = await geefNieuweSessie(medewerker);
+    // Het wachtwoord is al gewijzigd: een mislukte intrekking mag geen 500 geven (dan denkt de
+    // gebruiker dat het wijzigen mislukte) en dit toestel krijgt altijd een nieuwe sessie.
+    try {
+      await revokeSessions("medewerkers", medewerker.id);
+    } catch (revokeError) {
+      captureRouteError(revokeError, { route: "/api/medewerker/wachtwoord-wijzigen", action: "REVOKE" });
+    }
+    const token = await geefNieuweSessie(medewerker, request);
 
-    const isBearer = request.headers.get("authorization")?.toLowerCase().startsWith("bearer ");
-    return NextResponse.json({ success: true, ...(isBearer ? { token } : {}) });
+    return NextResponse.json({ success: true, ...(isBearerRequest(request) ? { token } : {}) });
   } catch (error) {
     captureRouteError(error, { route: "/api/medewerker/wachtwoord-wijzigen", action: "POST" });
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
