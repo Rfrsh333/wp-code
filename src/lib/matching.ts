@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { valideerLeeftijdVoorDienst, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
+import { normaliseerBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
 
 interface Medewerker {
   id: string;
@@ -93,13 +94,15 @@ function calculateMatchScore(
 
   // 2. Beschikbaarheid (30%)
   let isBeschikbaar = true;
-  if (beschikbaarheid?.beschikbaarheid && typeof beschikbaarheid.beschikbaarheid === "object") {
+  // Dagnotatie: korte sleutels (ma…zo). Oudere portaaldata met "Maandag"… wordt bij lezen omgezet.
+  const weekBeschikbaarheid = normaliseerBeschikbaarheid(beschikbaarheid?.beschikbaarheid);
+  if (weekBeschikbaarheid) {
     const dienstDatum = new Date(dienst.datum);
-    const dagNaam = dagNamen[dienstDatum.getDay()];
+    const dagNaam = dagNamen[dienstDatum.getDay()] as keyof typeof weekBeschikbaarheid;
     const tijdslot = getTijdslot(dienst.start_tijd);
-    const dagBeschikbaarheid = beschikbaarheid.beschikbaarheid[dagNaam];
+    const dagBeschikbaarheid = weekBeschikbaarheid[dagNaam];
 
-    if (dagBeschikbaarheid && Array.isArray(dagBeschikbaarheid)) {
+    if (dagBeschikbaarheid && dagBeschikbaarheid.length > 0) {
       if (dagBeschikbaarheid.includes(tijdslot) || dagBeschikbaarheid.includes("hele_dag")) {
         breakdown.beschikbaarheid_score = 30;
       } else {

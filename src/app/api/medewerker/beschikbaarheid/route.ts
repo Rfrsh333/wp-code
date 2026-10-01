@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { nlVandaag } from "@/lib/nl-tijd";
+import { normaliseerBeschikbaarheid, schoneBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,17 +13,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { beschikbaarheid, beschikbaar_vanaf, max_uren_per_week } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const update: Record<string, unknown> = {};
+    if ("beschikbaarheid" in body) {
+      // Altijd opslaan in de notatie van de matching (ma…zo); oude "Maandag"-sleutels worden omgezet.
+      const schoon = schoneBeschikbaarheid(body.beschikbaarheid);
+      if (!schoon) return NextResponse.json({ error: "Ongeldige beschikbaarheid" }, { status: 400 });
+      update.beschikbaarheid = schoon;
+    }
+    if ("beschikbaar_vanaf" in body) update.beschikbaar_vanaf = body.beschikbaar_vanaf || null;
+    if ("max_uren_per_week" in body) update.max_uren_per_week = body.max_uren_per_week ?? null;
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json({ error: "Niets om op te slaan" }, { status: 400 });
+    }
 
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("inschrijvingen")
-      .update({ beschikbaarheid, beschikbaar_vanaf, max_uren_per_week })
-      .eq("email", medewerker.email);
+      .update(update)
+      .eq("email", medewerker.email)
+      .select("id");
 
     if (error) {
       captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "POST" });
-      // console.error("DB error:", error);
       return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
+    }
+
+    // Geen inschrijving op dit e-mailadres: er is niets opgeslagen, dus ook niet "opgeslagen" melden.
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: "We konden je inschrijving niet vinden. Stuur TopTalent een bericht, dan zetten we het recht." },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ success: true });
@@ -58,18 +80,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Medewerker niet gevonden" }, { status: 404 });
     }
 
+    const genormaliseerd = {
+      ...data,
+      beschikbaarheid: normaliseerBeschikbaarheid(data.beschikbaarheid) ?? data.beschikbaarheid,
+    };
+
     if (wantOverrides) {
       const { data: overrides } = await supabaseAdmin
         .from("medewerker_beschikbaarheid_overrides")
         .select("id, week_start, beschikbaarheid, notitie")
         .eq("medewerker_id", medewerker.id)
-        .gte("week_start", new Date().toISOString().split("T")[0])
+        .gte("week_start", nlVandaag())
         .order("week_start", { ascending: true });
 
-      return NextResponse.json({ ...data, overrides: overrides || [] });
+      return NextResponse.json({
+        ...genormaliseerd,
+        overrides: (overrides || []).map((o) => ({
+          ...o,
+          beschikbaarheid: normaliseerBeschikbaarheid(o.beschikbaarheid) ?? o.beschikbaarheid,
+        })),
+      });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(genormaliseerd);
   } catch (error) {
     captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "GET" });
     // console.error("API error:", error);
@@ -83,7 +116,8 @@ export async function PUT(request: NextRequest) {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { week_start, beschikbaarheid, notitie } = await request.json();
+    const { week_start, beschikbaarheid: ruw, notitie } = await request.json();
+    const beschikbaarheid = schoneBeschikbaarheid(ruw);
     if (!week_start || !beschikbaarheid) {
       return NextResponse.json({ error: "week_start en beschikbaarheid zijn verplicht" }, { status: 400 });
     }
