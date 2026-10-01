@@ -38,11 +38,11 @@ export async function POST(request: NextRequest) {
     `)
     .eq("medewerker_id", medewerker_id)
     .in("status", [...INGEPLAND_STATUSSEN])
-    .eq("diensten.klant_id", klant.id)
-    .gte("diensten.datum", today);
+    .eq("dienst.klant_id", klant.id)
+    .gte("dienst.datum", today);
 
   if (dienst_id) {
-    query = query.eq("diensten.id", dienst_id);
+    query = query.eq("dienst.id", dienst_id);
   }
 
   const { data: aanmeldingen, error: fetchError } = await query;
@@ -177,8 +177,8 @@ export async function GET(request: NextRequest) {
       dienst:diensten!inner(datum, start_tijd, eind_tijd, locatie, functie, klant_id)
     `)
     .not("check_in_at", "is", null)
-    .eq("diensten.klant_id", klant.id)
-    .eq("diensten.datum", today)
+    .eq("dienst.klant_id", klant.id)
+    .eq("dienst.datum", today)
     .order("check_in_at", { ascending: false });
 
   if (error) {
