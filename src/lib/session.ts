@@ -30,22 +30,22 @@ export interface MedewerkerSession {
 /**
  * Maakt een signed JWT token voor klant sessie
  */
-export async function signKlantSession(data: KlantSession): Promise<string> {
+export async function signKlantSession(data: KlantSession, expiresIn: string = "7d"): Promise<string> {
   return await new SignJWT({ ...data, type: "klant" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime(expiresIn)
     .sign(JWT_SECRET);
 }
 
 /**
  * Maakt een signed JWT token voor medewerker sessie
  */
-export async function signMedewerkerSession(data: MedewerkerSession): Promise<string> {
+export async function signMedewerkerSession(data: MedewerkerSession, expiresIn: string = "7d"): Promise<string> {
   return await new SignJWT({ ...data, type: "medewerker" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime(expiresIn)
     .sign(JWT_SECRET);
 }
 
