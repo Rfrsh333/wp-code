@@ -6,6 +6,9 @@ import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { nlVandaag } from "@/lib/nl-tijd";
+import { meldAan, meldAf, werkBezettingBij } from "@/lib/medewerker/aanmelden";
 
 type UrenRegistratie = { status: string };
 
@@ -57,7 +60,7 @@ export async function GET(request: NextRequest) {
         klant:klanten(qr_verplicht)
       `)
       .in("status", ["open", "vol"])
-      .gte("datum", new Date().toISOString().split("T")[0])
+      .gte("datum", nlVandaag())
       .order("datum", { ascending: true })
       .limit(100);
 
@@ -98,7 +101,7 @@ export async function GET(request: NextRequest) {
       .from("diensten")
       .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief")
       .in("status", ["open", "vol"])
-      .gte("datum", new Date().toISOString().split("T")[0])
+      .gte("datum", nlVandaag())
       .order("datum", { ascending: true })
       .limit(100);
     alleDiensten = fallbackData;
@@ -186,7 +189,7 @@ export async function GET(request: NextRequest) {
       .from('dienst_aanmeldingen')
       .select('dienst:diensten!inner(klant_id, klant_naam)')
       .eq('medewerker_id', medewerker.id)
-      .eq('status', 'geaccepteerd')
+      .in('status', [...INGEPLAND_STATUSSEN])
       .not('dienst_id', 'in', `(${dienstIds.join(',')})`);
 
     const previousKlanten = new Set(
@@ -263,13 +266,8 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  // Check of account gepauzeerd is
-  const { data: mwStatusCheck } = await supabaseAdmin
-    .from("medewerkers")
-    .select("status")
-    .eq("id", medewerker.id)
-    .single();
-  const accountGepauzeerd = mwStatusCheck?.status === "gepauzeerd";
+  // getMedewerkerSession laat alleen actieve accounts door; gepauzeerd kan hier niet meer voorkomen.
+  const accountGepauzeerd = false;
 
   // Vervangingsverzoeken: diensten waar deze medewerker vervanging zoekt + aanmeldingen van anderen
   const myVervangingAanmeldingen = aanmeldingen?.filter(a => a.status === "vervanging_gezocht") || [];
@@ -288,7 +286,8 @@ export async function GET(request: NextRequest) {
       return {
         aanmelding_id: v.id,
         dienst_id: v.dienst_id,
-        originele_aanmelding_id: v.vervanging_voor || "",
+        // De eigen aanmelding met status vervanging_gezocht; `vervanging_voor` is pas na accepteren gevuld.
+        originele_aanmelding_id: myVervangingAanmeldingen.find((a) => a.dienst_id === v.dienst_id)?.id || "",
         naam: mw?.naam || "Onbekend",
         functie: mw?.functie || "",
         profile_photo_url: mw?.profile_photo_url || null,
@@ -305,103 +304,9 @@ export async function POST(request: NextRequest) {
   const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
 
   if (action === "aanmelden") {
-    // Check of account gepauzeerd is
-    const { data: mwStatus } = await supabaseAdmin
-      .from("medewerkers")
-      .select("status")
-      .eq("id", medewerker.id)
-      .single();
-
-    if (mwStatus?.status === "gepauzeerd") {
-      return NextResponse.json(
-        { error: "Je account is gepauzeerd vanwege een openstaande boete. Neem contact op met TopTalent." },
-        { status: 403 }
-      );
-    }
-
-    // Document-expiry check: blokkeer bij verlopen ID-bewijs of werkvergunning
-    const todayStr = new Date().toISOString().split("T")[0];
-    const { data: verlopenDocs } = await supabaseAdmin
-      .from("medewerker_documenten")
-      .select("document_type, expiry_date")
-      .eq("medewerker_id", medewerker.id)
-      .in("document_type", ["id_bewijs", "werkvergunning", "verblijfsvergunning"])
-      .lt("expiry_date", todayStr);
-
-    if (verlopenDocs && verlopenDocs.length > 0) {
-      const typen = verlopenDocs.map((d) => d.document_type).join(", ");
-      return NextResponse.json(
-        { error: `Je kunt je niet aanmelden: de volgende documenten zijn verlopen: ${typen}. Upload een nieuw document via je profiel.` },
-        { status: 403 }
-      );
-    }
-
-    // Check werkvergunning_geldig_tot op medewerker-niveau
-    const { data: mwWerkvergunning } = await supabaseAdmin
-      .from("medewerkers")
-      .select("werkvergunning_geldig_tot")
-      .eq("id", medewerker.id)
-      .single();
-
-    if (mwWerkvergunning?.werkvergunning_geldig_tot && mwWerkvergunning.werkvergunning_geldig_tot < todayStr) {
-      return NextResponse.json(
-        { error: "Je werkvergunning is verlopen. Neem contact op met TopTalent om je werkvergunning te vernieuwen." },
-        { status: 403 }
-      );
-    }
-
-    // Dubbele aanmelding voorkomen (een eerdere geannuleerde/afgewezen aanmelding mag opnieuw).
-    const { data: bestaandeAanmelding } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select("id")
-      .eq("dienst_id", dienst_id)
-      .eq("medewerker_id", medewerker.id)
-      .not("status", "in", "(geannuleerd,afgewezen)")
-      .limit(1);
-
-    if (bestaandeAanmelding && bestaandeAanmelding.length > 0) {
-      return NextResponse.json({ error: "Je bent al aangemeld voor deze dienst" }, { status: 409 });
-    }
-
-    // Vol-check: niet aanmelden op een volle dienst.
-    const { data: dienstVolCheck } = await supabaseAdmin
-      .from("diensten")
-      .select("status, plekken_beschikbaar")
-      .eq("id", dienst_id)
-      .single();
-
-    if (!dienstVolCheck || dienstVolCheck.status === "vol" || dienstVolCheck.plekken_beschikbaar === 0) {
-      return NextResponse.json({ error: "Deze dienst zit vol" }, { status: 409 });
-    }
-
-    const { error: aanmeldError } = await supabaseAdmin.from("dienst_aanmeldingen").insert({
-      dienst_id,
-      medewerker_id: medewerker.id,
-      status: "aangemeld",
-    });
-
-    // Verlaag plekken alleen na een geslaagde insert (voorkomt plekken-lek bij een fout).
-    if (aanmeldError) {
-      return NextResponse.json({ error: "Aanmelden mislukt" }, { status: 500 });
-    }
-
-    // ✅ Verlaag plekken_beschikbaar na aanmelding
-    const { data: dienstInfo } = await supabaseAdmin
-      .from("diensten")
-      .select("plekken_beschikbaar, plekken_totaal")
-      .eq("id", dienst_id)
-      .single();
-
-    if (dienstInfo && dienstInfo.plekken_beschikbaar !== null && dienstInfo.plekken_beschikbaar > 0) {
-      const nieuwBeschikbaar = dienstInfo.plekken_beschikbaar - 1;
-      await supabaseAdmin
-        .from("diensten")
-        .update({
-          plekken_beschikbaar: nieuwBeschikbaar,
-          status: nieuwBeschikbaar === 0 ? "vol" : "open"
-        })
-        .eq("id", dienst_id);
-    }
+    if (!dienst_id) return NextResponse.json({ error: "Dienst ID is verplicht" }, { status: 400 });
+    const resultaat = await meldAan(medewerker.id, dienst_id, "aangemeld");
+    if (!resultaat.ok) return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
 
     // Push notificatie naar klant: iemand heeft zich aangemeld
     const { data: dienstDetails } = await supabaseAdmin
@@ -424,81 +329,18 @@ export async function POST(request: NextRequest) {
         tag: `aanmelding-${dienst_id}`,
       }).catch((e) => captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" }));
     }
+    return NextResponse.json({ success: true });
   }
 
-  if (action === "afmelden") {
-    await supabaseAdmin.from("dienst_aanmeldingen").delete()
-      .eq("dienst_id", dienst_id)
-      .eq("medewerker_id", medewerker.id);
-
-    // ✅ Verhoog plekken_beschikbaar na afmelding
-    const { data: dienstInfo } = await supabaseAdmin
-      .from("diensten")
-      .select("plekken_beschikbaar, plekken_totaal")
-      .eq("id", dienst_id)
-      .single();
-
-    if (dienstInfo && dienstInfo.plekken_beschikbaar !== null && dienstInfo.plekken_totaal !== null) {
-      const nieuwBeschikbaar = Math.min(dienstInfo.plekken_beschikbaar + 1, dienstInfo.plekken_totaal);
-      await supabaseAdmin
-        .from("diensten")
-        .update({
-          plekken_beschikbaar: nieuwBeschikbaar,
-          status: nieuwBeschikbaar > 0 ? "open" : "vol"
-        })
-        .eq("id", dienst_id);
-    }
-  }
-
-  if (action === "annuleer_geaccepteerd") {
-    // Haal aanmelding + dienst info op
-    const { data: aanmelding } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select("id, dienst_id, status, dienst:diensten(datum, start_tijd, status)")
-      .eq("id", aanmelding_id)
-      .eq("medewerker_id", medewerker.id)
-      .single();
-
-    const dienst = Array.isArray(aanmelding?.dienst) ? aanmelding?.dienst[0] : aanmelding?.dienst;
-    if (!aanmelding || aanmelding.status !== "geaccepteerd" || !dienst) {
-      return NextResponse.json({ error: "Aanmelding niet gevonden of niet geaccepteerd" }, { status: 400 });
-    }
-
-    const dienstStart = new Date(`${dienst.datum}T${dienst.start_tijd}`);
-    const now = new Date();
-    const urenTotStart = (dienstStart.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-    if (urenTotStart > 48) {
-      // > 48 uur: direct annuleren
-      await supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .update({ status: "geannuleerd" })
-        .eq("id", aanmelding_id);
-
-      // Dienst terug naar open als die vol was
-      if (dienst.status === "vol") {
-        await supabaseAdmin
-          .from("diensten")
-          .update({ status: "open" })
-          .eq("id", aanmelding.dienst_id);
-      }
-    } else {
-      // <= 48 uur: vervanging zoeken
-      await supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .update({ status: "vervanging_gezocht" })
-        .eq("id", aanmelding_id);
-
-      // Dienst terug naar open zodat vervangers zich kunnen aanmelden
-      if (dienst.status === "vol") {
-        await supabaseAdmin
-          .from("diensten")
-          .update({ status: "open" })
-          .eq("id", aanmelding.dienst_id);
-      }
-    }
-
-    return NextResponse.json({ success: true, vervanging: urenTotStart <= 48 });
+  // Afmelden/annuleren: één flow voor beide acties (eigen aanmelding, statuscheck, 48-uurregel in NL-tijd).
+  if (action === "afmelden" || action === "annuleer_geaccepteerd") {
+    const resultaat = await meldAf(medewerker.id, { aanmeldingId: aanmelding_id, dienstId: dienst_id });
+    if (!resultaat.ok) return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+    return NextResponse.json({
+      success: true,
+      uitkomst: resultaat.uitkomst,
+      vervanging: resultaat.uitkomst === "vervanging_gezocht",
+    });
   }
 
   if (action === "accept_vervanging") {
@@ -509,7 +351,7 @@ export async function POST(request: NextRequest) {
       .eq("id", aanmelding_id)
       .eq("medewerker_id", medewerker.id)
       .eq("status", "vervanging_gezocht")
-      .single();
+      .maybeSingle();
 
     if (!origAanmelding) {
       return NextResponse.json({ error: "Originele aanmelding niet gevonden of geen vervanging actief" }, { status: 400 });
@@ -520,54 +362,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Vervanging aanmelding ID ontbreekt" }, { status: 400 });
     }
 
-    // Autorisatie: de vervanger-aanmelding moet bij DEZELFDE dienst horen en 'aangemeld' zijn.
-    // Zonder deze check kon een willekeurige aanmelding-id (van een andere dienst/medewerker)
-    // op 'geaccepteerd' worden gezet.
+    // De vervanger moet bij DEZELFDE dienst horen, 'aangemeld' zijn en niet de medewerker zelf.
     const { data: vervanger } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("id, dienst_id, status")
+      .select("id, dienst_id, status, medewerker_id")
       .eq("id", vervangingAanmeldingId)
       .maybeSingle();
 
-    if (!vervanger || vervanger.dienst_id !== origAanmelding.dienst_id || vervanger.status !== "aangemeld") {
+    if (
+      !vervanger ||
+      vervanger.dienst_id !== origAanmelding.dienst_id ||
+      vervanger.status !== "aangemeld" ||
+      vervanger.medewerker_id === medewerker.id
+    ) {
       return NextResponse.json({ error: "Ongeldige vervanging voor deze dienst" }, { status: 400 });
     }
 
-    // Vervanger aanmelding: set vervanging_voor, status → geaccepteerd (scoped op dienst + status).
-    await supabaseAdmin
+    const { data: vervangerBijgewerkt, error: vervangerFout } = await supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ vervanging_voor: aanmelding_id, status: "geaccepteerd" })
       .eq("id", vervangingAanmeldingId)
       .eq("dienst_id", origAanmelding.dienst_id)
-      .eq("status", "aangemeld");
+      .eq("status", "aangemeld")
+      .select("id")
+      .maybeSingle();
 
-    // Originele aanmelding: status → vervangen
+    if (vervangerFout || !vervangerBijgewerkt) {
+      return NextResponse.json({ error: "Vervanger kon niet worden ingepland" }, { status: 409 });
+    }
+
     await supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ status: "vervangen" })
-      .eq("id", aanmelding_id);
+      .eq("id", aanmelding_id)
+      .eq("status", "vervanging_gezocht");
 
-    // Check of dienst weer vol moet
-    const { data: dienstInfo } = await supabaseAdmin
-      .from("diensten")
-      .select("id, aantal_nodig")
-      .eq("id", origAanmelding.dienst_id)
-      .single();
-
-    if (dienstInfo) {
-      const { count } = await supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .select("id", { count: "exact", head: true })
-        .eq("dienst_id", origAanmelding.dienst_id)
-        .eq("status", "geaccepteerd");
-
-      if (count !== null && count >= (dienstInfo.aantal_nodig || 1)) {
-        await supabaseAdmin
-          .from("diensten")
-          .update({ status: "vol" })
-          .eq("id", origAanmelding.dienst_id);
-      }
-    }
+    await werkBezettingBij(origAanmelding.dienst_id);
 
     // Stuur bevestigingsmail naar vervanger
     const { data: fullVervanger } = await supabaseAdmin
@@ -606,18 +436,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Vervanging aanmelding ID ontbreekt" }, { status: 400 });
     }
 
-    // Verifieer dat de oorspronkelijke medewerker dit mag doen
     const { data: vervangingAanmelding } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("id, dienst_id")
+      .select("id, dienst_id, status, medewerker_id")
       .eq("id", vervangingAanmeldingId)
-      .single();
+      .maybeSingle();
 
-    if (!vervangingAanmelding) {
+    // Alleen een kandidaat-vervanger ('aangemeld', niet jezelf) op een dienst waarvoor jij vervanging zoekt.
+    // Voorheen kon elke aanmelding op die dienst (ook al ingeplande collega's) worden afgewezen.
+    if (
+      !vervangingAanmelding ||
+      vervangingAanmelding.status !== "aangemeld" ||
+      vervangingAanmelding.medewerker_id === medewerker.id
+    ) {
       return NextResponse.json({ error: "Vervanging aanmelding niet gevonden" }, { status: 404 });
     }
 
-    // Check dat medewerker een vervanging_gezocht aanmelding heeft voor deze dienst
     const { data: origCheck } = await supabaseAdmin
       .from("dienst_aanmeldingen")
       .select("id")
@@ -633,7 +467,8 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ status: "afgewezen" })
-      .eq("id", vervangingAanmeldingId);
+      .eq("id", vervangingAanmeldingId)
+      .eq("status", "aangemeld");
 
     return NextResponse.json({ success: true });
   }
@@ -652,7 +487,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Aanmelding of dienst niet gevonden" }, { status: 404 });
     }
 
-    if (!["geaccepteerd", "bevestigd"].includes(aanmelding.status)) {
+    if (!(INGEPLAND_STATUSSEN as readonly string[]).includes(aanmelding.status)) {
       return NextResponse.json({ error: "Je kunt alleen uren indienen voor bevestigde diensten" }, { status: 400 });
     }
 
@@ -692,8 +527,11 @@ export async function POST(request: NextRequest) {
     }
     const pauzeMin = Math.max(0, Number(data?.pauze) || 0);
     const gewerkteUren = berekenGewerkteUren(startTijd, eindTijd, pauzeMin);
+    if (!(gewerkteUren > 0)) {
+      return NextResponse.json({ error: "Gewerkte uren moeten meer dan 0 zijn" }, { status: 400 });
+    }
 
-    await supabaseAdmin.from("uren_registraties").insert({
+    const { error: urenFout } = await supabaseAdmin.from("uren_registraties").insert({
       aanmelding_id,
       start_tijd: startTijd,
       eind_tijd: eindTijd,
@@ -703,6 +541,14 @@ export async function POST(request: NextRequest) {
       reiskosten_bedrag: calculateMedewerkerReiskosten(data.reiskosten_km),
       status: "ingediend",
     });
+    if (urenFout?.code === "23505") {
+      return NextResponse.json({ error: "Voor deze dienst zijn al uren ingediend" }, { status: 409 });
+    }
+    if (urenFout) {
+      captureRouteError(urenFout, { route: "/api/medewerker/diensten", action: "uren_indienen" });
+      return NextResponse.json({ error: "Uren indienen mislukt" }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
   }
 
   if (action === "accepteer_aanpassing" || action === "weiger_aanpassing") {
@@ -713,9 +559,9 @@ export async function POST(request: NextRequest) {
     // Eigenaarscontrole: de uren_registratie moet via aanmelding bij deze medewerker horen
     const { data: urenCheck } = await supabaseAdmin
       .from("uren_registraties")
-      .select("id, klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_reiskosten_km, klant_reiskosten_bedrag, aanmelding:dienst_aanmeldingen(medewerker_id)")
+      .select("id, status, klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_reiskosten_km, klant_reiskosten_bedrag, aanmelding:dienst_aanmeldingen(medewerker_id)")
       .eq("id", uren_id)
-      .single();
+      .maybeSingle();
 
     type UrenWithAanmelding = typeof urenCheck & { aanmelding?: { medewerker_id?: string } | null };
     const urenData = urenCheck as UrenWithAanmelding;
@@ -723,6 +569,12 @@ export async function POST(request: NextRequest) {
 
     if (!urenData || aanmeldingMw?.medewerker_id !== medewerker.id) {
       return NextResponse.json({ error: "Niet geautoriseerd" }, { status: 403 });
+    }
+
+    // Alleen een openstaande klantaanpassing kan worden geaccepteerd/geweigerd. Zonder deze check
+    // kon een al goedgekeurde of gefactureerde registratie terug naar 'ingediend' of de klantwaarden.
+    if (urenData.status !== "klant_aangepast") {
+      return NextResponse.json({ error: "Er staat geen klantaanpassing open voor deze uren" }, { status: 409 });
     }
 
     if (action === "accepteer_aanpassing") {
@@ -734,7 +586,7 @@ export async function POST(request: NextRequest) {
         reiskosten_km: urenData.klant_reiskosten_km ?? 0,
         reiskosten_bedrag: urenData.klant_reiskosten_bedrag ?? 0,
         status: "klant_goedgekeurd",
-      }).eq("id", uren_id);
+      }).eq("id", uren_id).eq("status", "klant_aangepast");
     }
 
     if (action === "weiger_aanpassing") {
@@ -743,9 +595,11 @@ export async function POST(request: NextRequest) {
         klant_start_tijd: null, klant_eind_tijd: null,
         klant_pauze_minuten: null, klant_gewerkte_uren: null,
         klant_reiskosten_km: null, klant_reiskosten_bedrag: null, klant_opmerking: null,
-      }).eq("id", uren_id);
+      }).eq("id", uren_id).eq("status", "klant_aangepast");
     }
+
+    return NextResponse.json({ success: true });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ error: "Onbekende actie" }, { status: 400 });
 }

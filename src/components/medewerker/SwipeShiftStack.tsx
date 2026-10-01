@@ -21,7 +21,12 @@ interface Aanbieding {
   } | null;
 }
 
-export default function SwipeShiftStack() {
+interface SwipeShiftStackProps {
+  /** Meldt het aantal open aanbiedingen, zodat de pagina een lege staat kan tonen. */
+  onAantalChange?: (aantal: number) => void;
+}
+
+export default function SwipeShiftStack({ onAantalChange }: SwipeShiftStackProps = {}) {
   const toast = useToast();
   const [aanbiedingen, setAanbiedingen] = useState<Aanbieding[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +34,10 @@ export default function SwipeShiftStack() {
   useEffect(() => {
     fetchAanbiedingen();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading) onAantalChange?.(aanbiedingen.length);
+  }, [aanbiedingen.length, isLoading, onAantalChange]);
 
   const fetchAanbiedingen = async () => {
     try {
@@ -52,10 +61,13 @@ export default function SwipeShiftStack() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: actie }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Kon niet reageren op aanbieding");
+      }
       toast.success(actie === "geaccepteerd" ? "Dienst geaccepteerd!" : "Aanbieding afgewezen");
-    } catch {
-      toast.error("Kon niet reageren op aanbieding");
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Kon niet reageren op aanbieding");
       fetchAanbiedingen(); // Re-fetch on error
     }
   };

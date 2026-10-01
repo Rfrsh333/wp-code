@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Calendar, Check, Clock, WifiOff } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import DienstCard from "@/components/medewerker/DienstCard";
@@ -35,6 +35,7 @@ interface VervangingVerzoek {
   naam: string;
   functie: string | string[];
   profile_photo_url: string | null;
+  dienst?: { datum: string; start_tijd: string; locatie: string; klant_naam: string } | null;
 }
 
 export default function MijnDienstenClient() {
@@ -44,6 +45,8 @@ export default function MijnDienstenClient() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [isCachedData, setIsCachedData] = useState(false);
+  const [aantalAanbiedingen, setAantalAanbiedingen] = useState(0);
+  const onAantalAanbiedingen = useCallback((n: number) => setAantalAanbiedingen(n), []);
 
   // Luister naar online/offline events
   useEffect(() => {
@@ -141,7 +144,8 @@ export default function MijnDienstenClient() {
       });
 
       if (!res.ok) {
-        toast.error("Afwijzen mislukt");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Afwijzen mislukt");
         return;
       }
 
@@ -252,10 +256,13 @@ export default function MijnDienstenClient() {
                       </div>
                     </div>
 
-                    {dienst && (
+                    {(verzoek.dienst || dienst) && (
                       <div className="text-xs text-[var(--mp-text-secondary)] mb-3 pl-13">
-                        <div>{dienst.klant.bedrijfsnaam}</div>
-                        <div>{new Date(dienst.datum).toLocaleDateString("nl-NL")} • {dienst.locatie}</div>
+                        <div>{verzoek.dienst?.klant_naam || dienst?.klant.bedrijfsnaam}</div>
+                        <div>
+                          {new Date(verzoek.dienst?.datum || dienst!.datum).toLocaleDateString("nl-NL")} •{" "}
+                          {verzoek.dienst?.locatie || dienst?.locatie}
+                        </div>
                       </div>
                     )}
 
@@ -287,22 +294,37 @@ export default function MijnDienstenClient() {
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-3 border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : activeTab === "aangeboden" ? (
+          <>
+            {/* Shift-aanbiedingen (swipe) + uitnodigingen (accepteren/afwijzen) */}
+            <SwipeShiftStack onAantalChange={onAantalAanbiedingen} />
+            {diensten.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {diensten.map((dienst) => (
+                  <DienstCard key={dienst.id} dienst={dienst} type="aangeboden" onRefresh={fetchDiensten} />
+                ))}
+              </div>
+            )}
+            {diensten.length === 0 && aantalAanbiedingen === 0 && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 rounded-full bg-[var(--mp-bg)] mx-auto mb-4 flex items-center justify-center">
+                  <Clock className="w-8 h-8 text-[var(--mp-text-tertiary)]" />
+                </div>
+                <p className="text-[var(--mp-text-secondary)] text-sm">Geen aangeboden diensten</p>
+              </div>
+            )}
+          </>
         ) : diensten.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 rounded-full bg-[var(--mp-bg)] mx-auto mb-4 flex items-center justify-center">
-              {activeTab === "aangeboden" && <Clock className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
               {activeTab === "gepland" && <Calendar className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
               {activeTab === "voltooid" && <Check className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
             </div>
             <p className="text-[var(--mp-text-secondary)] text-sm">
-              {activeTab === "aangeboden" && "Geen aangeboden diensten"}
               {activeTab === "gepland" && "Geen geplande diensten"}
               {activeTab === "voltooid" && "Geen voltooide diensten"}
             </p>
           </div>
-        ) : activeTab === "aangeboden" ? (
-          /* Swipe cards voor aangeboden diensten */
-          <SwipeShiftStack />
         ) : (
           /* Regular cards voor gepland/voltooid - grid layout zoals Ontdekken */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">

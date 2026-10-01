@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { meldAan } from "@/lib/medewerker/aanmelden";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,22 +22,17 @@ export async function POST(request: NextRequest) {
       .eq("dienst_id", dienst_id)
       .eq("medewerker_id", medewerker.id)
       .eq("status", "uitgenodigd")
-      .single();
+      .maybeSingle();
 
     if (aanmeldError || !aanmelding) {
       return NextResponse.json({ error: "Aanmelding niet gevonden of al verwerkt" }, { status: 404 });
     }
 
-    // Update status naar bevestigd
-    const { error: updateError } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .update({ status: "bevestigd" })
-      .eq("id", aanmelding.id);
-
-    if (updateError) {
-      captureRouteError(updateError, { route: "/api/medewerker/diensten/accept", action: "POST" });
-      // console.error("Accept dienst error:", updateError);
-      return NextResponse.json({ error: "Accepteren mislukt" }, { status: 500 });
+    // Uitnodiging aannemen = direct ingepland: zelfde controles als aanmelden (verlopen documenten,
+    // capaciteit) en daarna de bezetting herberekenen.
+    const resultaat = await meldAan(medewerker.id, dienst_id, "bevestigd", { bestaandeAanmeldingId: aanmelding.id });
+    if (!resultaat.ok) {
+      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
     }
 
     return NextResponse.json({ success: true });

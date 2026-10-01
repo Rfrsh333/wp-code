@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       .eq("dienst_id", dienst_id)
       .eq("medewerker_id", medewerker.id)
       .eq("status", "uitgenodigd")
-      .single();
+      .maybeSingle();
 
     if (aanmeldError || !aanmelding) {
       return NextResponse.json({ error: "Aanmelding niet gevonden of al verwerkt" }, { status: 404 });
@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ status: "afgewezen" })
-      .eq("id", aanmelding.id);
+      .eq("id", aanmelding.id)
+      .eq("status", "uitgenodigd");
 
     if (updateError) {
       captureRouteError(updateError, { route: "/api/medewerker/diensten/decline", action: "POST" });
