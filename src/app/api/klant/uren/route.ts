@@ -240,6 +240,33 @@ export async function POST(request: NextRequest) {
       captureRouteError(error, { route: "/api/klant/uren", action: "adjust" });
       return NextResponse.json({ error: "Aanpassing opslaan mislukt" }, { status: 500 });
     }
+  } else if (action === "reject") {
+    // Zelfde status als de admin-afwijzing (admin/uren update_status → "afgewezen"). Alleen uren
+    // die nog bij de klant liggen; goedgekeurde of gefactureerde uren lopen via TopTalent.
+    if (!["ingediend", "klant_aangepast"].includes(urenRow.status)) {
+      return NextResponse.json({ error: "Deze uren kunnen niet (meer) worden afgewezen" }, { status: 409 });
+    }
+    const reden = typeof data?.reden === "string" ? data.reden.trim().slice(0, 1000) : "";
+
+    const afwijzen = (metReden: boolean) =>
+      supabaseAdmin
+        .from("uren_registraties")
+        .update({ status: "afgewezen", goedgekeurd_at: null, ...(metReden && reden ? { klant_opmerking: reden } : {}) })
+        .eq("id", id)
+        .eq("status", urenRow.status)
+        .select("id");
+
+    let { data: bijgewerkt, error } = await afwijzen(true);
+    if (error && (error.code === "42703" || error.code === "PGRST204")) {
+      ({ data: bijgewerkt, error } = await afwijzen(false));
+    }
+    if (error) {
+      captureRouteError(error, { route: "/api/klant/uren", action: "reject" });
+      return NextResponse.json({ error: "Afwijzen mislukt" }, { status: 500 });
+    }
+    if (!bijgewerkt || bijgewerkt.length === 0) {
+      return NextResponse.json({ error: "Deze uren zijn intussen al verwerkt" }, { status: 409 });
+    }
   } else {
     return NextResponse.json({ error: "Ongeldige actie" }, { status: 400 });
   }
