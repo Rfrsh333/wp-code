@@ -20,8 +20,8 @@ alter table public.klanten add column if not exists verwijderd_at timestamptz;
 
 -- 3. Templates met meerdere functies --------------------------------------------------------
 -- [{ "functie": "bediening", "aantal": 2, "uurtarief": "27.50" }, …]
--- Zolang deze kolom ontbreekt weigert /api/klant/templates templates met meer dan één functie (409);
--- met één functie valt de route terug op functie/aantal_nodig/uurtarief.
+-- Zolang deze kolom ontbreekt slaat /api/klant/templates alleen de eerste functieregel op
+-- (functie/aantal_nodig/uurtarief van die regel) en geeft een `waarschuwing` terug.
 alter table public.dienst_templates add column if not exists functies_met_aantal jsonb;
 
 -- 4. Gebruik van een template atomair ophogen ----------------------------------------------

@@ -104,27 +104,31 @@ function leesVelden(body: Record<string, unknown>): { ok: true; velden: Template
   return { ok: true, velden };
 }
 
-const MEERDERE_FUNCTIES_NIET_BESCHIKBAAR =
-  "Templates met meerdere functies zijn nog niet beschikbaar. Sla per functie een aparte template op.";
+const ALLEEN_EERSTE_FUNCTIE =
+  "Templates met meerdere functies zijn nog niet beschikbaar: alleen de eerste functie is opgeslagen.";
 
 /**
  * Schrijft; valt zonder migratie (kolom functies_met_aantal, 20261001_klant_portaal.sql) terug op
- * de oude kolommen, maar alleen als dat zonder verlies kan: met één functieregel staat alles al in
- * functie/aantal_nodig/uurtarief. Meerdere functies zouden als "bediening, bar" met één tarief
- * worden opgeslagen; die worden geweigerd (`meerdereFunctiesNietBeschikbaar`) tot de kolom bestaat.
+ * de oude kolommen. Zoals die migratie belooft wordt dan alleen de EERSTE functieregel opgeslagen
+ * (functie, aantal en tarief van die regel) — niet meer "bediening, bar" met het totaalaantal en
+ * één tarief. `alleenEersteFunctie` meldt dat er regels zijn weggevallen.
  */
 async function schrijf<T>(
   actie: (velden: TemplateVelden) => PromiseLike<{ data: T | null; error: { code?: string } | null }>,
   velden: TemplateVelden,
-): Promise<{ data: T | null; error: { code?: string } | null; meerdereFunctiesNietBeschikbaar?: true }> {
+): Promise<{ data: T | null; error: { code?: string } | null; alleenEersteFunctie?: true }> {
   const res = await actie(velden);
   if (res.error && (res.error.code === "42703" || res.error.code === "PGRST204") && "functies_met_aantal" in velden) {
-    if ((velden.functies_met_aantal?.length ?? 0) > 1) {
-      return { data: null, error: null, meerdereFunctiesNietBeschikbaar: true };
-    }
+    const regels = velden.functies_met_aantal ?? [];
     const zonder = { ...velden };
     delete zonder.functies_met_aantal;
-    return actie(zonder);
+    if (regels.length > 0) {
+      zonder.functie = regels[0].functie;
+      zonder.aantal_nodig = regels[0].aantal;
+      zonder.uurtarief = Number(regels[0].uurtarief);
+    }
+    const terug = await actie(zonder);
+    return regels.length > 1 ? { ...terug, alleenEersteFunctie: true } : terug;
   }
   return res;
 }
@@ -168,7 +172,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Vul een uurtarief in" }, { status: 400 });
   }
 
-  const { data, error, meerdereFunctiesNietBeschikbaar } = await schrijf(
+  const { data, error, alleenEersteFunctie } = await schrijf(
     (velden) =>
       supabaseAdmin
         .from("dienst_templates")
@@ -178,15 +182,16 @@ export async function POST(request: NextRequest) {
     v,
   );
 
-  if (meerdereFunctiesNietBeschikbaar) {
-    return NextResponse.json({ error: MEERDERE_FUNCTIES_NIET_BESCHIKBAAR }, { status: 409 });
-  }
   if (error) {
     captureRouteError(error, { route: "/api/klant/templates", action: "POST" });
     return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, template: data });
+  return NextResponse.json({
+    success: true,
+    template: data,
+    ...(alleenEersteFunctie ? { waarschuwing: ALLEEN_EERSTE_FUNCTIE } : {}),
+  });
 }
 
 // PATCH - Update template of increment gebruik
@@ -237,7 +242,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Geen wijzigingen" }, { status: 400 });
   }
 
-  const { error, meerdereFunctiesNietBeschikbaar } = await schrijf(
+  const { error, alleenEersteFunctie } = await schrijf(
     (velden) =>
       supabaseAdmin
         .from("dienst_templates")
@@ -248,15 +253,12 @@ export async function PATCH(request: NextRequest) {
     parsed.velden,
   );
 
-  if (meerdereFunctiesNietBeschikbaar) {
-    return NextResponse.json({ error: MEERDERE_FUNCTIES_NIET_BESCHIKBAAR }, { status: 409 });
-  }
   if (error) {
     captureRouteError(error, { route: "/api/klant/templates", action: "PATCH" });
     return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, ...(alleenEersteFunctie ? { waarschuwing: ALLEEN_EERSTE_FUNCTIE } : {}) });
 }
 
 // DELETE - Verwijder template

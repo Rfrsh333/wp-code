@@ -1786,7 +1786,7 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
     // Per functie opslaan, mét tarief (voorheen ging parseFloat("") = leeg tarief mee,
     // waardoor "Snelle aanvraag" daarna niet te versturen was).
     try {
-      await templateAction.mutateAsync({
+      const resultaat = await templateAction.mutateAsync({
         method: "POST",
         data: {
           naam: templateNaam,
@@ -1797,7 +1797,8 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
         },
       });
       queryClient.invalidateQueries({ queryKey: klantKeys.templates() });
-      toast.success("Template opgeslagen!");
+      if (resultaat?.waarschuwing) toast.warning(resultaat.waarschuwing);
+      else toast.success("Template opgeslagen!");
       setShowSaveTemplate(false);
       setTemplateNaam("");
       onSuccess();
