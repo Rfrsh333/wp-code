@@ -21,6 +21,7 @@ import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDienste
 import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
 import { usePlatformOptions } from "@/hooks/queries/usePlatformOptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseCheckinQr } from "@/lib/checkin-qr";
 
 interface Klant {
   id: string;
@@ -2874,17 +2875,8 @@ function QRScannerTab() {
   const handleScan = async (decodedText: string) => {
     setProcessing(true);
     try {
-      // Parse QR data
-      let qrData: { type?: string; id?: string; naam?: string };
-      try {
-        qrData = JSON.parse(decodedText);
-      } catch {
-        setResult({ type: "error", message: "Ongeldige QR-code: geen geldig TopTalent ID" });
-        setProcessing(false);
-        return;
-      }
-
-      if (qrData.type !== "toptalent_medewerker" || !qrData.id) {
+      const qrData = parseCheckinQr(decodedText);
+      if (!qrData) {
         setResult({ type: "error", message: "Ongeldige QR-code: dit is geen TopTalent medewerker ID" });
         setProcessing(false);
         return;
@@ -2895,15 +2887,15 @@ function QRScannerTab() {
         { medewerker_id: qrData.id },
         {
           onSuccess: (data) => {
-            if (data.status === 200 || !data.status || data.status === "multiple_diensten") {
+            if (data.httpStatus === 200) {
               if (data.status === "multiple_diensten") {
-                setMultipleData({ ...data, medewerker_id: qrData.id! });
+                setMultipleData({ ...data, medewerker_id: qrData.id });
                 setResult({ type: "multiple", data });
               } else {
                   setResult({ type: "success", data });
                 toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
               }
-            } else if (data.status === 409) {
+            } else if (data.httpStatus === 409) {
               setResult({ type: "warning", data });
             } else {
               setResult({ type: "error", message: data.error || "Check-in mislukt" });
@@ -2932,11 +2924,11 @@ function QRScannerTab() {
       { medewerker_id: multipleData.medewerker_id, dienst_id },
       {
         onSuccess: (data) => {
-          if (data.status === 200 || !data.status) {
+          if (data.httpStatus === 200 && data.status === "ingecheckt") {
             setResult({ type: "success", data });
             setMultipleData(null);
             toast.success(`${data.medewerker?.naam || "Medewerker"} is ingecheckt!`);
-          } else if (data.status === 409) {
+          } else if (data.httpStatus === 409) {
             setResult({ type: "warning", data });
             setMultipleData(null);
           } else {

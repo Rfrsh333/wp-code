@@ -14,6 +14,8 @@ export interface KlantSession {
   bedrijfsnaam: string;
   contactpersoon: string;
   email: string;
+  /** Uitgiftemoment (seconden sinds epoch); gebruikt voor sessie-intrekking. */
+  iat?: number;
 }
 
 export interface MedewerkerSession {
@@ -21,6 +23,8 @@ export interface MedewerkerSession {
   naam: string;
   email: string;
   functie: string | string[];
+  /** Uitgiftemoment (seconden sinds epoch); gebruikt voor sessie-intrekking. */
+  iat?: number;
 }
 
 /**
@@ -62,6 +66,7 @@ export async function verifyKlantSession(token: string): Promise<KlantSession | 
       bedrijfsnaam: payload.bedrijfsnaam as string,
       contactpersoon: payload.contactpersoon as string,
       email: payload.email as string,
+      iat: payload.iat,
     };
   } catch {
     console.warn("[SECURITY] Invalid or expired klant session token");
@@ -86,6 +91,7 @@ export async function verifyMedewerkerSession(token: string): Promise<Medewerker
       naam: payload.naam as string,
       email: payload.email as string,
       functie: payload.functie as string | string[],
+      iat: payload.iat,
     };
   } catch {
     console.warn("[SECURITY] Invalid or expired medewerker session token");

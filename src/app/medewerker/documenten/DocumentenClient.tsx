@@ -6,6 +6,7 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
+import { buildCheckinQr } from "@/lib/checkin-qr";
 
 interface Document {
   id: string;
@@ -305,12 +306,7 @@ export default function DocumentenClient() {
             {/* QR Code */}
             <div id="qr-modal" className="bg-white p-6 rounded-xl flex items-center justify-center mb-6">
               <QRCode
-                value={JSON.stringify({
-                  type: "medewerker_id",
-                  id: medewerkerInfo.id,
-                  naam: medewerkerInfo.naam,
-                  timestamp: Date.now(),
-                })}
+                value={buildCheckinQr(medewerkerInfo)}
                 size={256}
                 level="H"
               />

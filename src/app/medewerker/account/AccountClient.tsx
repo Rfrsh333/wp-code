@@ -20,9 +20,11 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
+import { buildCheckinQr } from "@/lib/checkin-qr";
 import ThemeToggle from "@/components/medewerker/ThemeToggle";
 
 interface MedewerkerProfile {
+  id?: string;
   naam: string;
   email: string;
   profile_photo_url?: string;
@@ -162,10 +164,10 @@ export default function AccountClient() {
                 style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
               >
                 <div className="p-3 flex flex-col items-center justify-center h-full">
-                  {/* QR Code - scannable met medewerker email */}
+                  {/* Check-in-QR: zelfde formaat als de scanner in het klantportaal verwacht */}
                   <div className="w-20 h-20 bg-white p-1 rounded-lg mb-2">
                     <QRCode
-                      value={profile?.email || "medewerker@toptalent.nl"}
+                      value={profile?.id ? buildCheckinQr({ id: profile.id, naam: profile.naam }) : ""}
                       size={76}
                       level="M"
                       style={{ width: "100%", height: "100%" }}

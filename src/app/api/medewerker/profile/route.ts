@@ -83,7 +83,12 @@ export async function GET(request: NextRequest) {
         rating: avgRating,
       },
       profile_photo_url: profilePhotoUrl,
+      // Top-level id/naam/email: gebruikt voor de check-in-QR (Documenten las `data.id`, dat bestond niet).
+      id: medewerker.id,
+      naam: profiel?.naam || medewerker.naam,
+      email: profiel?.email || medewerker.email,
       profile: {
+        id: medewerker.id,
         naam: profiel?.naam || medewerker.naam,
         email: profiel?.email || medewerker.email,
         functie: profiel?.functie,

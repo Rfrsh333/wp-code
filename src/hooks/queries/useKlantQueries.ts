@@ -303,7 +303,8 @@ export function useCheckinAction() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      return { ...data, status: res.status };
+      // httpStatus apart houden: `status` is het veld uit de API ("ingecheckt", "multiple_diensten", ...).
+      return { ...data, httpStatus: res.status };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: klantKeys.checkin() });
