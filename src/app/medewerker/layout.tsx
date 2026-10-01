@@ -3,6 +3,7 @@ import ThemeProvider from "@/components/medewerker/ThemeProvider";
 import ServiceWorkerRegister from "@/components/medewerker/ServiceWorkerRegister";
 import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidgetLazy";
 import QueryProvider from "@/components/QueryProvider";
+import SessieVerlopenBewaker from "@/components/shared/SessieVerlopenBewaker";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default function MedewerkerLayout({
   // body zijn) — daarom bewust verwijderd.
   return (
     <QueryProvider>
+      <SessieVerlopenBewaker portaal="medewerker" />
       <ThemeProvider>
         <ServiceWorkerRegister />
         {children}
