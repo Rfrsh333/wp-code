@@ -18,6 +18,18 @@ export class ResetNietBeschikbaarError extends Error {
   }
 }
 
+export const RESET_NIET_BESCHIKBAAR_MELDING =
+  "Wachtwoord herstellen is nog niet beschikbaar. Neem contact op met TopTalent via info@toptalentjobs.nl.";
+
+/**
+ * Bestaan de resetkolommen? Los van een specifiek account gecontroleerd (limit 0), zodat het
+ * antwoord niet verraadt of een e-mailadres bestaat. Bij een andere fout: aannemen van wel.
+ */
+export async function klantResetBeschikbaar(): Promise<boolean> {
+  const { error } = await supabaseAdmin.from("klanten").select("reset_token, reset_token_expires_at").limit(0);
+  return !(error && (error.code === "42703" || error.code === "PGRST204"));
+}
+
 function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
 }

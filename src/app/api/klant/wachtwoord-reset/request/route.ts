@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { checkRedisRateLimit, getClientIP, loginRateLimit, klantLoginPerAccountRateLimit } from "@/lib/rate-limit-redis";
 import { supabaseAdmin } from "@/lib/supabase";
-import { sendKlantPasswordResetEmail } from "@/lib/klant-password-reset";
+import {
+  klantResetBeschikbaar,
+  RESET_NIET_BESCHIKBAAR_MELDING,
+  sendKlantPasswordResetEmail,
+} from "@/lib/klant-password-reset";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 const ANTWOORD = "Als dit e-mailadres bij een actief account hoort, ontvangt u binnen enkele minuten een e-mail met een resetlink.";
@@ -23,6 +27,15 @@ export async function POST(request: NextRequest) {
 
     if (!emailLower || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
       return NextResponse.json({ error: "Vul een geldig e-mailadres in" }, { status: 400 });
+    }
+
+    // Zonder resetkolommen (migratie 20261001_klant_portaal.sql) kan er geen mail uit: eerlijk
+    // melden. Dit hangt niet van het adres af, dus verraadt niet of het account bestaat.
+    if (!(await klantResetBeschikbaar())) {
+      return NextResponse.json(
+        { success: false, beschikbaar: false, error: RESET_NIET_BESCHIKBAAR_MELDING },
+        { status: 503 },
+      );
     }
 
     // Per adres begrenzen (geen mailbombardement op één inbox). Zelfde antwoord als bij succes,
