@@ -23,7 +23,7 @@ import { usePlatformOptions } from "@/hooks/queries/usePlatformOptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseCheckinQr } from "@/lib/checkin-qr";
 import { isIngepland } from "@/lib/dienst-status";
-import { valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
+import { parseUurtarief, valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
 import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
 
 interface Klant {
@@ -147,6 +147,7 @@ interface DienstTemplate {
   duur_uren: number | null;
   uurtarief: number | null;
   favoriet_medewerker_ids: string[];
+  functies_met_aantal?: Array<{ functie: string; aantal: number; uurtarief: string }> | null;
   aantal_keer_gebruikt: number;
   laatst_gebruikt_op: string | null;
 }
@@ -243,6 +244,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
     score_functie: number;
   }>({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
   const [urenZoek, setUrenZoek] = useState("");
+  // Favoriet die via "Boek" is gekozen; wordt in de aanvraag-wizard voorgeselecteerd.
+  const [boekMedewerker, setBoekMedewerker] = useState<string | null>(null);
 
   const createFactuur = async (urenIds: string[]) => {
     try {
@@ -995,10 +998,18 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
             {activeTab === "rooster" && <RoosterTab formatTime={formatTime} statusTone={statusTone} />}
 
             {/* Tab: Aanvragen */}
-            {activeTab === "aanvragen" && <AanvraagTab klant={klant} onSuccess={() => { setActiveTab("diensten"); }} />}
+            {activeTab === "aanvragen" && (
+              <AanvraagTab
+                key={boekMedewerker ?? "nieuw"}
+                voorkeurMedewerkerId={boekMedewerker}
+                onSuccess={() => { setBoekMedewerker(null); setActiveTab("diensten"); }}
+              />
+            )}
 
             {/* Tab: Favorieten */}
-            {activeTab === "favorieten" && <FavorietenTab />}
+            {activeTab === "favorieten" && (
+              <FavorietenTab onBoek={(medewerkerId) => { setBoekMedewerker(medewerkerId); setActiveTab("aanvragen"); }} />
+            )}
 
             {/* Tab: Facturen */}
             {activeTab === "facturen" && (
@@ -1368,7 +1379,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 /* ============================================================
    Feature 2: Favorieten Tab
    ============================================================ */
-function FavorietenTab() {
+function FavorietenTab({ onBoek }: { onBoek: (medewerkerId: string) => void }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { data: favData, isLoading } = useKlantFavorieten();
@@ -1386,7 +1397,7 @@ function FavorietenTab() {
 
           toast.success(isFav ? "Favoriet verwijderd" : "Favoriet toegevoegd");
         },
-        onError: () => toast.error("Actie mislukt"),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Actie mislukt"),
       }
     );
   };
@@ -1474,13 +1485,25 @@ function FavorietenTab() {
                   {f.notitie && <p className="mt-1 text-xs text-[var(--kp-text-tertiary)] italic">{f.notitie}</p>}
                 </div>
 
-                {/* Boek opnieuw knop */}
-                <button
-                  onClick={() => window.location.href = "/klant/uren?tab=aanvragen"}
-                  className="flex-shrink-0 bg-[#F27501] text-white text-xs font-bold px-3 py-2 rounded-xl active:scale-95 transition-transform"
-                >
-                  Boek
-                </button>
+                {/* Boek opnieuw: naar de aanvraag-wizard met deze medewerker voorgeselecteerd */}
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => onBoek(f.medewerker_id)}
+                    className="bg-[#F27501] text-white text-xs font-bold px-3 py-2 rounded-xl active:scale-95 transition-transform"
+                  >
+                    Boek
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`${f.naam} verwijderen uit uw favorieten?`)) toggleFavoriet(f.medewerker_id, true);
+                    }}
+                    disabled={favorietAction.isPending}
+                    className="text-[11px] text-[var(--kp-text-tertiary)] hover:text-red-600 disabled:opacity-50"
+                    aria-label={`${f.naam} verwijderen uit favorieten`}
+                  >
+                    Verwijderen
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -1517,7 +1540,7 @@ function FavorietenTab() {
 /* ============================================================
    Feature 3: Aanvraag Tab (Multi-step form)
    ============================================================ */
-function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void }) {
+function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => void; voorkeurMedewerkerId?: string | null }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -1541,7 +1564,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     uurtarief: "",
     locatie: "",
     opmerkingen: "",
-    favoriet_medewerker_ids: [] as string[],
+    // Via "Boek" bij een favoriet: die medewerker staat al aangevinkt in stap 4.
+    favoriet_medewerker_ids: (voorkeurMedewerkerId ? [voorkeurMedewerkerId] : []) as string[],
   });
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateNaam, setTemplateNaam] = useState("");
@@ -1566,6 +1590,12 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   });
 
   const locaties: string[] = aanvraagData?.locaties ?? [];
+  // Ondergrens uit de bestaande prijsbron (server bepaalt en controleert; dit is alleen voor de hint).
+  const minUurtarief: number = Number(aanvraagData?.min_uurtarief) || 0;
+  const tariefOk = (t: string) => {
+    const n = parseUurtarief(t);
+    return Number.isFinite(n) && n > 0 && n >= minUurtarief;
+  };
   const favorieten: Favoriet[] = favData?.favorieten ?? [];
   const templates: DienstTemplate[] = templData?.templates ?? [];
 
@@ -1575,7 +1605,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const availableTags = filterOptions?.tags || [];
 
   const canNext = () => {
-    if (step === 1) return form.functies_met_aantal.length > 0 && form.functies_met_aantal.every(f => f.uurtarief && parseFloat(f.uurtarief) > 0);
+    if (step === 1) return form.functies_met_aantal.length > 0 && form.functies_met_aantal.every(f => tariefOk(f.uurtarief));
     if (step === 2) return !!form.datum && !!form.start_tijd && !!form.eind_tijd;
     if (step === 3) return !!form.locatie.trim();
     return true;
@@ -1610,16 +1640,17 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
     }
 
     aanvraagAction.mutate({ ...form, afbeelding_url }, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         // Invalidate queries to refresh data (React Query v5)
         queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
         queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
 
-        toast.success("Aanvraag succesvol verstuurd!");
+        const uitgenodigd = Number(data?.favorieten_uitgenodigd) || 0;
+        toast.success(uitgenodigd > 0
+          ? `Aanvraag verstuurd! ${uitgenodigd} favoriet${uitgenodigd === 1 ? "" : "en"} uitgenodigd.`
+          : "Aanvraag succesvol verstuurd!");
+        // Geen automatische doorverwijzing meer: die sprong na 3 s weg terwijl u een templatenaam typte.
         setShowSaveTemplate(true);
-        setTimeout(() => {
-          if (!showSaveTemplate) onSuccess();
-        }, 3000);
         setIsSending(false);
       },
       onError: (e) => {
@@ -1632,13 +1663,16 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
   const stepLabels = ["Functie(s)", "Datum & Tijd", "Details", "Favorieten"];
 
   const applyTemplate = (template: DienstTemplate) => {
+    const functies = template.functies_met_aantal?.length
+      ? template.functies_met_aantal.map((f) => ({ functie: f.functie, aantal: f.aantal, uurtarief: String(f.uurtarief ?? "") }))
+      : [{ functie: template.functie, aantal: template.aantal_nodig, uurtarief: template.uurtarief?.toString() || "" }];
     setForm({
       functie: template.functie,
       categorie_id: "",
       functie_id: "",
       vereiste_taal: null,
       vereiste_vaardigheden: [],
-      functies_met_aantal: [{functie: template.functie, aantal: template.aantal_nodig, uurtarief: template.uurtarief?.toString() || ""}],
+      functies_met_aantal: functies,
       datum: "",
       start_tijd: "",
       eind_tijd: "",
@@ -1648,7 +1682,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       opmerkingen: template.beschrijving || "",
       favoriet_medewerker_ids: template.favoriet_medewerker_ids || [],
     });
-    setStep(2); // Skip naar datum selectie
+    // Skip naar datum selectie; ontbreekt er een (geldig) tarief, dan eerst stap 1 om dat in te vullen.
+    setStep(functies.every((f) => tariefOk(f.uurtarief)) ? 2 : 1);
 
     // Update template usage
     templateAction.mutate({ method: "PATCH", data: { template_id: template.id, increment_gebruik: true } });
@@ -1660,38 +1695,27 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
       return;
     }
 
-    const functieSamenvatting = form.functies_met_aantal.length > 0
-      ? form.functies_met_aantal.map(f => f.functie).join(", ")
-      : form.functie;
-    const totaalNodig = form.functies_met_aantal.length > 0
-      ? form.functies_met_aantal.reduce((sum, f) => sum + f.aantal, 0)
-      : parseInt(form.aantal) || 1;
-
-    templateAction.mutate(
-      {
+    // Per functie opslaan, mét tarief (voorheen ging parseFloat("") = leeg tarief mee,
+    // waardoor "Snelle aanvraag" daarna niet te versturen was).
+    try {
+      await templateAction.mutateAsync({
         method: "POST",
         data: {
           naam: templateNaam,
-          functie: functieSamenvatting,
-          aantal_nodig: totaalNodig,
+          functies_met_aantal: form.functies_met_aantal,
           locatie: form.locatie,
-          uurtarief: parseFloat(form.uurtarief),
           favoriet_medewerker_ids: form.favoriet_medewerker_ids,
           beschrijving: form.opmerkingen,
         },
-      },
-      {
-        onSuccess: () => {
-          // Invalidate queries to refresh data (React Query v5)
-          queryClient.invalidateQueries({ queryKey: klantKeys.templates() });
-
-          toast.success("Template opgeslagen!");
-          setShowSaveTemplate(false);
-          setTemplateNaam("");
-        },
-        onError: () => toast.error("Template opslaan mislukt"),
-      }
-    );
+      });
+      queryClient.invalidateQueries({ queryKey: klantKeys.templates() });
+      toast.success("Template opgeslagen!");
+      setShowSaveTemplate(false);
+      setTemplateNaam("");
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Template opslaan mislukt");
+    }
   };
 
   return (
@@ -1861,10 +1885,10 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                     <label className="text-xs text-neutral-600 whitespace-nowrap">Uurtarief €:</label>
                     <input
                       type="number"
-                      min="0"
+                      min={minUurtarief || 0}
                       step="0.50"
                       value={functieData.uurtarief}
-                      placeholder="Bijv. 14.50"
+                      placeholder={minUurtarief ? `Min. ${minUurtarief.toFixed(2)}` : "Bijv. 27.50"}
                       onChange={(e) => {
                         setForm({
                           ...form,
@@ -1879,6 +1903,12 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                 </div>
               ))}
             </div>
+
+            {minUurtarief > 0 && form.functies_met_aantal.some(f => f.uurtarief && !tariefOk(f.uurtarief)) && (
+              <p className="mt-2 text-xs text-red-600">
+                Het minimale uurtarief is &euro;{minUurtarief.toFixed(2).replace(".", ",")}.
+              </p>
+            )}
 
             {form.functies_met_aantal.length > 0 && (
               <div className="mt-4 p-3 bg-neutral-50 rounded-lg">
@@ -2150,7 +2180,9 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
         {step === 4 && (
           <div>
             <h3 className="text-lg font-bold text-neutral-900 mb-2">Voorkeur medewerkers (optioneel)</h3>
-            <p className="text-sm text-neutral-500 mb-4">Selecteer favoriete medewerkers die u graag wilt inzetten.</p>
+            <p className="text-sm text-neutral-500 mb-4">
+              Geselecteerde favorieten krijgen een persoonlijke uitnodiging voor deze dienst in hun app. Zodra zij accepteren, staan ze ingepland.
+            </p>
             {favorieten.length === 0 ? (
               <p className="text-sm text-neutral-400 py-4 text-center">Geen favoriete medewerkers beschikbaar.</p>
             ) : (
@@ -2254,7 +2286,8 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
                 Nee, bedankt
               </button>
               <button
-                onClick={() => { saveAsTemplate(); onSuccess(); }}
+                onClick={() => { void saveAsTemplate(); }}
+                disabled={templateAction.isPending}
                 className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl text-sm font-medium hover:bg-[#d96800] transition"
               >
                 Opslaan als template
