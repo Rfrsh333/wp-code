@@ -6,12 +6,16 @@ import Image from "next/image";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
+import { dienstUren } from "@/lib/nl-tijd";
 
 interface UrenRegistratie {
   id: string;
   gewerkte_uren: number;
   status: string;
   created_at: string;
+  /** Berekend door de API (zelfde formule als dashboard/Financieel, incl. toeslag). */
+  verdiensten?: number;
+  medewerker_uurtarief?: number;
   dienst: {
     datum: string;
     locatie: string;
@@ -104,7 +108,8 @@ export default function UrenClient() {
       });
 
       if (!res.ok) {
-        toast.error("Accepteren mislukt");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Accepteren mislukt");
         return;
       }
 
@@ -128,7 +133,8 @@ export default function UrenClient() {
       });
 
       if (!res.ok) {
-        toast.error("Weigeren mislukt");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Weigeren mislukt");
         return;
       }
 
@@ -147,13 +153,10 @@ export default function UrenClient() {
     const eind = urenForm.eind || urenModal.eind_tijd;
     const pauze = parseInt(urenForm.pauze) || 0;
 
-    // Bereken gewerkte uren
-    const [startH, startM] = start.split(":").map(Number);
-    const [eindH, eindM] = eind.split(":").map(Number);
-    const totalMinutes = (eindH * 60 + eindM) - (startH * 60 + startM) - pauze;
-    const uren = totalMinutes / 60;
+    // Gewerkte uren; eind vóór start = nachtdienst over middernacht (22:00–03:00 = 5 uur).
+    const uren = dienstUren(start, eind, pauze);
 
-    if (uren <= 0) {
+    if (!(uren > 0)) {
       toast.error("Ongeldige uren");
       return;
     }
@@ -209,6 +212,7 @@ export default function UrenClient() {
     const labels: { [key: string]: { text: string; color: string } } = {
       ingediend: { text: "In behandeling", color: "bg-yellow-500/10 text-yellow-600" },
       klant_goedgekeurd: { text: "Goedgekeurd", color: "bg-[var(--mp-success)]/10 text-[var(--mp-success)]" },
+      goedgekeurd: { text: "Goedgekeurd", color: "bg-[var(--mp-success)]/10 text-[var(--mp-success)]" },
       gefactureerd: { text: "Gefactureerd", color: "bg-blue-500/10 text-blue-600" },
       klant_aangepast: { text: "Aangepast door klant", color: "bg-orange-500/10 text-orange-600" },
     };
@@ -326,8 +330,8 @@ export default function UrenClient() {
                   onClick={() => {
                     setUrenModal(dienst);
                     setUrenForm({
-                      start: dienst.start_tijd,
-                      eind: dienst.eind_tijd,
+                      start: dienst.start_tijd?.slice(0, 5) || "",
+                      eind: dienst.eind_tijd?.slice(0, 5) || "",
                       pauze: "0",
                       reiskosten_km: "0",
                     });
@@ -364,8 +368,8 @@ export default function UrenClient() {
           </div>
         ) : (
           uren.map((item) => {
-            const medewerkerUurtarief = item.dienst.uurtarief - 4;
-            const verdiensten = item.gewerkte_uren * medewerkerUurtarief;
+            const medewerkerUurtarief = item.medewerker_uurtarief ?? Math.max(0, item.dienst.uurtarief - 4);
+            const verdiensten = item.verdiensten ?? item.gewerkte_uren * medewerkerUurtarief;
             const statusInfo = getStatusLabel(item.status);
 
             return (
@@ -423,17 +427,11 @@ export default function UrenClient() {
                       </div>
                       <div className="text-xs text-[var(--mp-text-secondary)]">
                         {item.gewerkte_uren.toFixed(1)}u × €{medewerkerUurtarief}
+                        {verdiensten > item.gewerkte_uren * medewerkerUurtarief + 0.005 ? " + toeslag" : ""}
                       </div>
                     </div>
                   </div>
 
-                  {/* CTA Button */}
-                  <button
-                    onClick={() => toast.info("Navigeren naar uren details...")}
-                    className="w-full py-3 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-sm transition-all active:scale-[0.98]"
-                  >
-                    Bekijk details
-                  </button>
                 </div>
               </div>
             );

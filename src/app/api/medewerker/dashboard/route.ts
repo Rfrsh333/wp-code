@@ -2,112 +2,54 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { berekenToeslagRegel } from "@/lib/toeslag";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
+import { haalTeRegistreren, haalUrenRegistraties } from "@/lib/medewerker/uren";
+import { telVerdiend } from "@/lib/medewerker/uren-regels";
 
 export async function GET(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const vandaag = new Date().toISOString().split("T")[0];
-    const startVanMaand = new Date();
-    startVanMaand.setDate(1);
-    const startVanMaandStr = startVanMaand.toISOString().split("T")[0];
+    const vandaag = nlVandaag();
+    const [jaar, maand] = vandaag.split("-").map(Number);
 
-    // Run all independent queries in parallel.
-    // We embedden telkens de dienst via de bewezen FK-hint `diensten!dienst_id` en
-    // filteren de datums in applicatiecode. De vorige versie filterde op `diensten.datum`
-    // zonder die relatie te embedden (queries 1–2) en op de verkeerde alias
-    // `aanmelding.diensten.datum` i.p.v. `dienst` (query 4), waardoor de datumfilters
-    // werden genegeerd (aankomende diensten fout, verdiensten over álle maanden opgeteld).
-    const [
-      { data: aankomendeRows },
-      { data: voltooide },
-      { data: geregistreerd },
-      { data: urenRegistraties },
-    ] = await Promise.all([
+    const [{ data: aankomendeRows }, registraties, teRegistreren, { data: beoordelingen }] = await Promise.all([
+      // Aankomend = ingepland (geaccepteerd óf bevestigd); voorheen telde alleen 'bevestigd'.
       supabaseAdmin
         .from("dienst_aanmeldingen")
         .select("id, dienst:diensten!dienst_id(datum)")
         .eq("medewerker_id", medewerker.id)
-        .eq("status", "bevestigd"),
-      supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .select("id, dienst:diensten!dienst_id(datum)")
-        .eq("medewerker_id", medewerker.id)
-        .eq("status", "bevestigd")
-        .not("check_in_at", "is", null),
-      supabaseAdmin
-        .from("uren_registraties")
-        .select("aanmelding_id")
-        .eq("medewerker_id", medewerker.id),
-      supabaseAdmin
-        .from("uren_registraties")
-        .select(`
-          gewerkte_uren,
-          start_tijd,
-          eind_tijd,
-          aanmelding:dienst_aanmeldingen!inner (
-            dienst:diensten!dienst_id (uurtarief, datum)
-          )
-        `)
-        .eq("medewerker_id", medewerker.id)
-        .in("status", ["klant_goedgekeurd", "gefactureerd"]),
+        .in("status", [...INGEPLAND_STATUSSEN]),
+      haalUrenRegistraties(medewerker.id),
+      haalTeRegistreren(medewerker.id),
+      supabaseAdmin.from("beoordelingen").select("score").eq("medewerker_id", medewerker.id),
     ]);
 
-    const rowDatum = (row: unknown): string | null => {
-      const dienst = (row as { dienst?: { datum?: string } | null })?.dienst;
-      return dienst?.datum ?? null;
-    };
-
     const aankomende_diensten = (aankomendeRows || []).filter((r) => {
-      const d = rowDatum(r);
-      return d !== null && d >= vandaag;
+      const dienst = (r as { dienst?: { datum?: string } | { datum?: string }[] | null }).dienst;
+      const datum = Array.isArray(dienst) ? dienst[0]?.datum : dienst?.datum;
+      return !!datum && datum >= vandaag;
     }).length;
 
-    const voltooideInVerleden = (voltooide || []).filter((r) => {
-      const d = rowDatum(r);
-      return d !== null && d < vandaag;
-    });
+    // Zelfde definitie als Uren en Financieel (lib/medewerker/uren-regels).
+    const dezeMaand = telVerdiend(registraties, maandGrenzen(jaar, maand));
 
-    const geregistreerdIds = new Set((geregistreerd || []).map(u => u.aanmelding_id));
-    const te_registreren_uren = voltooideInVerleden.filter(v => !geregistreerdIds.has((v as { id: string }).id)).length;
-
-    let deze_maand_verdiensten = 0;
-    let totaal_uren_deze_maand = 0;
-
-    for (const uur of urenRegistraties || []) {
-      const aanmelding = uur.aanmelding as unknown as Record<string, unknown> | null;
-      const dienst = aanmelding?.dienst as Record<string, unknown> | null;
-      const datum = (dienst?.datum as string) || null;
-      // Alleen deze maand meetellen (datumfilter in code i.p.v. via een fragiele embed-filter).
-      if (!datum || datum < startVanMaandStr) continue;
-      const klantUurtarief = (dienst?.uurtarief as number) || 0;
-      const medewerkerUurtarief = Math.max(0, klantUurtarief - 4); // €4 marge, nooit negatief
-      // Toeslag (avond/nacht/weekend/feestdag) meetellen in de verdiensten.
-      const toeslag = berekenToeslagRegel(
-        uur.gewerkte_uren,
-        medewerkerUurtarief,
-        datum,
-        (uur as { start_tijd?: string }).start_tijd,
-        (uur as { eind_tijd?: string }).eind_tijd,
-      );
-      deze_maand_verdiensten += uur.gewerkte_uren * medewerkerUurtarief + toeslag.bedrag;
-      totaal_uren_deze_maand += uur.gewerkte_uren;
-    }
-
-    deze_maand_verdiensten = Math.round(deze_maand_verdiensten * 100) / 100;
-    totaal_uren_deze_maand = Math.round(totaal_uren_deze_maand * 100) / 100;
-
-    const gemiddelde_rating = 4.8;
+    // Echte gemiddelde beoordeling i.p.v. de vaste 4.8; 0 = nog geen beoordelingen.
+    const scores = (beoordelingen || []).map((b) => Number(b.score)).filter((s) => s > 0);
+    const gemiddelde_rating = scores.length
+      ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+      : 0;
 
     return NextResponse.json({
       stats: {
-        aankomende_diensten: aankomende_diensten || 0,
-        te_registreren_uren,
-        deze_maand_verdiensten,
-        totaal_uren_deze_maand,
+        aankomende_diensten,
+        te_registreren_uren: teRegistreren.length,
+        deze_maand_verdiensten: dezeMaand.bedrag,
+        totaal_uren_deze_maand: dezeMaand.uren,
         gemiddelde_rating,
+        aantal_beoordelingen: scores.length,
       },
     });
   } catch (error) {

@@ -174,7 +174,7 @@ export default function DashboardHomeClient() {
                 <span className="text-xs text-[var(--mp-text-tertiary)]">Rating</span>
               </div>
               <div className="text-xl md:text-2xl font-bold text-[var(--mp-text-primary)]">
-                {loading ? "..." : stats.gemiddelde_rating.toFixed(1)}
+                {loading ? "..." : stats.gemiddelde_rating > 0 ? stats.gemiddelde_rating.toFixed(1) : "–"}
               </div>
             </div>
           </div>
