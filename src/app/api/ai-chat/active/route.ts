@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession, verifyKlantSession } from "@/lib/session";
+import { getKlantSession, getMedewerkerSession } from "@/lib/portal-auth";
 import type { UserType } from "@/types/chatbot";
 import { captureRouteError } from "@/lib/sentry-utils";
 
@@ -10,17 +10,14 @@ interface SessionUser {
   email: string;
 }
 
+// Via portal-auth: ook Bearer-tokens (app), accountstatus en ingetrokken sessies.
 async function getSessionUser(request: NextRequest, userType: UserType): Promise<SessionUser | null> {
   if (userType === "medewerker") {
-    const cookie = request.cookies.get("medewerker_session");
-    if (!cookie) return null;
-    const session = await verifyMedewerkerSession(cookie.value);
+    const session = await getMedewerkerSession(request);
     if (!session) return null;
     return { id: session.id, naam: session.naam, email: session.email };
   } else {
-    const cookie = request.cookies.get("klant_session");
-    if (!cookie) return null;
-    const session = await verifyKlantSession(cookie.value);
+    const session = await getKlantSession(request);
     if (!session) return null;
     return { id: session.id, naam: session.contactpersoon || session.bedrijfsnaam, email: session.email };
   }

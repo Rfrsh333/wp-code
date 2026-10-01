@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { meldAan } from "@/lib/medewerker/aanmelden";
+import { notifyKlantMedewerkerAssigned } from "@/lib/klant-push-triggers";
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { dienst_id } = await request.json();
 
@@ -28,22 +23,32 @@ export async function POST(request: NextRequest) {
       .eq("dienst_id", dienst_id)
       .eq("medewerker_id", medewerker.id)
       .eq("status", "uitgenodigd")
-      .single();
+      // Zonder unieke index kunnen er dubbele rijen zijn: neem de nieuwste i.p.v. te falen.
+      .order("aangemeld_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
 
     if (aanmeldError || !aanmelding) {
       return NextResponse.json({ error: "Aanmelding niet gevonden of al verwerkt" }, { status: 404 });
     }
 
-    // Update status naar bevestigd
-    const { error: updateError } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .update({ status: "bevestigd" })
-      .eq("id", aanmelding.id);
+    // Uitnodiging aannemen = direct ingepland: zelfde controles als aanmelden (verlopen documenten,
+    // capaciteit) en daarna de bezetting herberekenen.
+    const resultaat = await meldAan(medewerker.id, dienst_id, "bevestigd", { bestaandeAanmeldingId: aanmelding.id });
+    if (!resultaat.ok) {
+      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+    }
 
-    if (updateError) {
-      captureRouteError(updateError, { route: "/api/medewerker/diensten/accept", action: "POST" });
-      // console.error("Accept dienst error:", updateError);
-      return NextResponse.json({ error: "Accepteren mislukt" }, { status: 500 });
+    // Klant laten weten wie er komt.
+    const { data: dienst } = await supabaseAdmin
+      .from("diensten")
+      .select("klant_id, functie, datum")
+      .eq("id", dienst_id)
+      .maybeSingle();
+    if (dienst?.klant_id) {
+      await notifyKlantMedewerkerAssigned(dienst.klant_id, medewerker.naam, dienst.functie ?? "medewerker", dienst.datum).catch((err) =>
+        captureRouteError(err, { route: "/api/medewerker/diensten/accept", action: "push" }),
+      );
     }
 
     return NextResponse.json({ success: true });

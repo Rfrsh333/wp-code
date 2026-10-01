@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getKlantSession } from "@/lib/portal-auth";
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -11,13 +11,8 @@ function generateCode(): string {
   return code;
 }
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyKlantSession } = await import("@/lib/session");
-  const klant = await verifyKlantSession(session.value);
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
 
   // Haal bestaande referral code op of maak nieuwe

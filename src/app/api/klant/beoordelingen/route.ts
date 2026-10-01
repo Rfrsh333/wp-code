@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getKlantSession } from "@/lib/portal-auth";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { nlVandaag } from "@/lib/nl-tijd";
 
 type DienstAanmelding = {
   id: string;
@@ -8,14 +10,8 @@ type DienstAanmelding = {
   dienst: { id: string; datum: string; locatie: string; klant_id: string } | null;
 };
 
-export async function GET() {
-  // KRITIEK: Verify signed JWT instead of trusting JSON
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyKlantSession } = await import("@/lib/session");
-  const klant = await verifyKlantSession(session.value);
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) {
     console.warn("[SECURITY] Invalid klant session token");
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
@@ -29,8 +25,8 @@ export async function GET() {
       dienst:diensten!inner(id, datum, locatie, klant_id)
     `)
     .eq("dienst.klant_id", klant.id)
-    .eq("status", "geaccepteerd")
-    .lt("dienst.datum", new Date().toISOString().split("T")[0])
+    .in("status", [...INGEPLAND_STATUSSEN])
+    .lt("dienst.datum", nlVandaag())
     .limit(100);
 
   // Filter al beoordeelde
@@ -60,13 +56,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  // KRITIEK: Verify signed JWT instead of trusting JSON
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyKlantSession } = await import("@/lib/session");
-  const klant = await verifyKlantSession(session.value);
+  const klant = await getKlantSession(request);
   if (!klant) {
     console.warn("[SECURITY] Invalid klant session token");
     return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
@@ -86,13 +76,13 @@ export async function POST(request: NextRequest) {
   // AUTORISATIE: verifieer dat déze klant déze medewerker voor déze afgeronde dienst
   // mág beoordelen (zelfde criteria als de GET-lijst). Zonder deze check kon een
   // ingelogde klant willekeurige medewerkers beoordelen en hun publieke score/badge manipuleren.
-  const vandaag = new Date().toISOString().split("T")[0];
+  const vandaag = nlVandaag();
   const { data: aanmelding } = await supabaseAdmin
     .from("dienst_aanmeldingen")
     .select("id, dienst:diensten!inner(klant_id, datum)")
     .eq("dienst_id", dienst_id)
     .eq("medewerker_id", medewerker_id)
-    .eq("status", "geaccepteerd")
+    .in("status", [...INGEPLAND_STATUSSEN])
     .eq("dienst.klant_id", klant.id)
     .lt("dienst.datum", vandaag)
     .maybeSingle();

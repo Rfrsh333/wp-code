@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession, verifyKlantSession } from "@/lib/session";
+import { getKlantSession, getMedewerkerSession } from "@/lib/portal-auth";
 import { getHandoffSystemMessage } from "@/lib/ai-chat/system-prompts";
 import { z } from "zod";
 import type { UserType } from "@/types/chatbot";
@@ -11,18 +11,10 @@ const bodySchema = z.object({
   user_type: z.enum(["medewerker", "klant"]),
 });
 
+// Via portal-auth: ook Bearer-tokens (app), accountstatus en ingetrokken sessies.
 async function getUserId(request: NextRequest, userType: UserType): Promise<string | null> {
-  if (userType === "medewerker") {
-    const cookie = request.cookies.get("medewerker_session");
-    if (!cookie) return null;
-    const session = await verifyMedewerkerSession(cookie.value);
-    return session?.id || null;
-  } else {
-    const cookie = request.cookies.get("klant_session");
-    if (!cookie) return null;
-    const session = await verifyKlantSession(cookie.value);
-    return session?.id || null;
-  }
+  const session = userType === "medewerker" ? await getMedewerkerSession(request) : await getKlantSession(request);
+  return session?.id || null;
 }
 
 export async function POST(request: NextRequest) {

@@ -94,6 +94,14 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
+        // De klant scant de QR-code van de medewerker bij check-in; camera alleen hier toestaan.
+        // Staat ná de globale regel zodat deze Permissions-Policy wint.
+        source: '/klant/:path*',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=()' },
+        ],
+      },
+      {
         // Cache statische images voor 1 jaar
         source: '/images/:path*',
         headers: [

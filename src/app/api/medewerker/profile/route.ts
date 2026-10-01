@@ -1,46 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { encryptField, decryptField } from "@/lib/encryption";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { nlVandaag } from "@/lib/nl-tijd";
+import { isGeldigIban, normaliseerIban } from "@/lib/medewerker/iban";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+// Vercel weigert bodies boven ~4,5 MB al vóór de route; 4 MB is de eerlijke grens.
+const MAX_SIZE = 4 * 1024 * 1024;
+
+const TEKSTVELDEN = ["stad", "adres", "postcode", "geboortedatum", "telefoon", "factuur_adres", "factuur_postcode", "factuur_stad", "btw_nummer"] as const;
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    // Run all independent queries in parallel to reduce latency.
-    const [
-      { data: profiel },
-      { count: totalDiensten },
-      { count: completedDiensten },
-      { data: beoordelingen },
-    ] = await Promise.all([
+    const vandaag = nlVandaag();
+    const [{ data: profiel }, { data: ingepland }, { data: beoordelingen }] = await Promise.all([
       supabaseAdmin
         .from("medewerkers")
         .select("naam, email, functie, stad, adres, postcode, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, kor_actief, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
         .eq("id", medewerker.id)
         .single(),
+      // Ingeplande diensten met check-in of uren = daadwerkelijk gewerkt (filter via de aanmelding;
+      // uren_registraties.medewerker_id wordt niet gevuld).
       supabaseAdmin
         .from("dienst_aanmeldingen")
-        .select("*", { count: "exact", head: true })
+        .select("id, check_in_at, dienst:diensten!dienst_id(datum), uren:uren_registraties!aanmelding_id(id)")
         .eq("medewerker_id", medewerker.id)
-        .eq("status", "geaccepteerd"),
-      supabaseAdmin
-        .from("uren_registraties")
-        .select("*", { count: "exact", head: true })
-        .eq("medewerker_id", medewerker.id)
-        .eq("status", "goedgekeurd"),
+        .in("status", [...INGEPLAND_STATUSSEN])
+        .limit(1000),
       supabaseAdmin
         .from("beoordelingen")
         .select("score")
@@ -54,11 +46,22 @@ export async function GET(request: NextRequest) {
       p.btw_nummer = decryptField(p.btw_nummer as string | null);
     }
 
-    const opkomst = totalDiensten && totalDiensten > 0
-      ? Math.round(((completedDiensten || 0) / totalDiensten) * 100)
-      : 0;
+    // Opkomst = van de ingeplande diensten in het verleden, het deel waarbij is ingecheckt of
+    // uren zijn ingediend. null als er nog geen afgelopen diensten zijn (dan tonen we niets).
+    // Het oude "op tijd %" (opkomst + 2) was verzonnen en is weg.
+    let gepland = 0;
+    let gewerkt = 0;
+    for (const a of ingepland || []) {
+      const dienst = (a as { dienst?: { datum?: string } | { datum?: string }[] | null }).dienst;
+      const datum = Array.isArray(dienst) ? dienst[0]?.datum : dienst?.datum;
+      if (!datum || datum >= vandaag) continue;
+      gepland += 1;
+      const uren = (a as { uren?: unknown[] | null }).uren ?? [];
+      if ((a as { check_in_at?: string | null }).check_in_at || uren.length > 0) gewerkt += 1;
+    }
+    const opkomst = gepland > 0 ? Math.round((gewerkt / gepland) * 100) : null;
 
-    const scores = beoordelingen?.map(b => b.score).filter(Boolean) || [];
+    const scores = (beoordelingen || []).map((b) => Number(b.score)).filter((x) => x > 0);
     const avgRating = scores.length > 0
       ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 10) / 10
       : 0;
@@ -79,20 +82,31 @@ export async function GET(request: NextRequest) {
       profiel: profiel || {},
       stats: {
         opkomst_percentage: opkomst,
-        op_tijd_percentage: opkomst > 0 ? Math.min(opkomst + 2, 100) : 0,
         rating: avgRating,
+        aantal_beoordelingen: scores.length,
+        gewerkte_diensten: gewerkt,
       },
       profile_photo_url: profilePhotoUrl,
+      // Top-level id/naam/email: gebruikt voor de check-in-QR (Documenten las `data.id`, dat bestond niet).
+      id: medewerker.id,
+      naam: profiel?.naam || medewerker.naam,
+      email: profiel?.email || medewerker.email,
       profile: {
+        id: medewerker.id,
         naam: profiel?.naam || medewerker.naam,
         email: profiel?.email || medewerker.email,
         functie: profiel?.functie,
         profile_photo_url: profilePhotoUrl,
         rating: avgRating,
-        totaal_diensten: completedDiensten || 0,
+        aantal_beoordelingen: scores.length,
+        totaal_diensten: gewerkt,
+        badge: (profiel as Record<string, unknown> | null)?.badge ?? null,
+        beoordeelde_diensten: (profiel as Record<string, unknown> | null)?.totaal_diensten ?? 0,
+        gemiddelde_score: (profiel as Record<string, unknown> | null)?.gemiddelde_score ?? null,
       },
     }, {
-      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+      // Bevat IBAN/BTW: niet cachen (ook niet door de browser na een wijziging).
+      headers: { "Cache-Control": "private, no-store" },
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/medewerker/profile", action: "GET" });
@@ -103,24 +117,33 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const allowedFields = ["stad", "adres", "postcode", "geboortedatum", "telefoon", "factuur_adres", "factuur_postcode", "factuur_stad", "btw_nummer", "iban", "kor_actief"];
     const updateData: Record<string, string | boolean | null> = {};
 
-    for (const field of allowedFields) {
+    for (const field of TEKSTVELDEN) {
       if (field in body) {
-        updateData[field] = body[field] || null;
+        const waarde = typeof body[field] === "string" ? body[field].trim().slice(0, 200) : "";
+        updateData[field] = waarde || null;
       }
+    }
+
+    // KOR: `body[field] || null` maakte van false een null. De medewerker kan de KOR alleen
+    // AANzetten; uitzetten loopt via support (zo staat het ook in de app). false = geen wijziging.
+    if (body.kor_actief === true) updateData.kor_actief = true;
+
+    if ("iban" in body) {
+      const iban = typeof body.iban === "string" ? normaliseerIban(body.iban) : "";
+      if (iban && !isGeldigIban(iban)) {
+        return NextResponse.json({ error: "Dit IBAN klopt niet. Controleer het nummer." }, { status: 400 });
+      }
+      updateData.iban = iban || null;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ success: true });
     }
 
     // Versleutel gevoelige PII-velden bij opslag (zie src/lib/encryption.ts).
@@ -146,15 +169,8 @@ export async function PUT(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const formData = await request.formData();
     const file = formData.get("photo") as File | null;
@@ -168,7 +184,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "Bestand mag maximaal 5MB zijn" }, { status: 400 });
+      return NextResponse.json({ error: "Foto mag maximaal 4 MB zijn" }, { status: 400 });
     }
 
     // Check for existing photo and remove it
@@ -231,15 +247,8 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Get current photo path
     const { data: existing } = await supabaseAdmin

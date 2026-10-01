@@ -6,15 +6,20 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
+import { buildCheckinQr } from "@/lib/checkin-qr";
+import {
+  DOCUMENT_ACCEPT,
+  DOCUMENT_HINT,
+  DOCUMENT_TYPES,
+  documentTypeLabel,
+  valideerDocument,
+  type MedewerkerDocument,
+} from "@/lib/medewerker/documenten";
 
-interface Document {
-  id: string;
-  naam: string;
-  type: string;
-  url: string;
-  created_at: string;
-  size?: number;
-}
+const REVIEW_LABELS: Record<string, { tekst: string; kleur: string }> = {
+  goedgekeurd: { tekst: "Goedgekeurd", kleur: "text-[var(--mp-success)]" },
+  afgekeurd: { tekst: "Afgekeurd", kleur: "text-[var(--mp-danger)]" },
+};
 
 interface MedewerkerInfo {
   id: string;
@@ -23,7 +28,10 @@ interface MedewerkerInfo {
 }
 
 export default function DocumentenClient() {
-  const [documenten, setDocumenten] = useState<Document[]>([]);
+  const [documenten, setDocumenten] = useState<MedewerkerDocument[]>([]);
+  const [documentType, setDocumentType] = useState<string>(DOCUMENT_TYPES[0].value);
+  const [vervaldatum, setVervaldatum] = useState("");
+  const vraagtVervaldatum = DOCUMENT_TYPES.find((t) => t.value === documentType)?.vervaldatum ?? false;
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -69,8 +77,10 @@ export default function DocumentenClient() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Bestand mag maximaal 10MB zijn");
+    const fout = valideerDocument(file);
+    if (fout) {
+      toast.error(fout);
+      e.target.value = "";
       return;
     }
 
@@ -78,6 +88,8 @@ export default function DocumentenClient() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("document_type", documentType);
+      if (vraagtVervaldatum && vervaldatum) formData.append("expiry_date", vervaldatum);
 
       const res = await fetch("/api/medewerker/documenten", {
         method: "POST",
@@ -85,10 +97,12 @@ export default function DocumentenClient() {
       });
 
       if (!res.ok) {
-        toast.error("Upload mislukt");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || (res.status === 413 ? "Bestand is te groot (maximaal 4 MB)" : "Upload mislukt"));
         return;
       }
 
+      setVervaldatum("");
       toast.success("Document geüpload!");
       await fetchDocumenten();
     } catch (err) {
@@ -109,7 +123,8 @@ export default function DocumentenClient() {
       });
 
       if (!res.ok) {
-        toast.error("Verwijderen mislukt");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Verwijderen mislukt");
         return;
       }
 
@@ -121,13 +136,14 @@ export default function DocumentenClient() {
     }
   };
 
-  const getFileIcon = (type: string) => {
-    if (type.includes("pdf")) return <FileText className="w-8 h-8 text-red-500" />;
-    if (type.includes("image")) return <Eye className="w-8 h-8 text-blue-500" />;
+  const getFileIcon = (bestandsnaam: string | null | undefined) => {
+    const ext = (bestandsnaam ?? "").split(".").pop()?.toLowerCase() ?? "";
+    if (ext === "pdf") return <FileText className="w-8 h-8 text-red-500" />;
+    if (["jpg", "jpeg", "png", "heic", "heif"].includes(ext)) return <Eye className="w-8 h-8 text-blue-500" />;
     return <FileText className="w-8 h-8 text-[var(--mp-text-tertiary)]" />;
   };
 
-  const formatFileSize = (bytes?: number) => {
+  const formatFileSize = (bytes?: number | null) => {
     if (!bytes) return "";
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -156,11 +172,44 @@ export default function DocumentenClient() {
             <h2 className="text-lg font-semibold text-[var(--mp-text-primary)] mb-4">
               Document uploaden
             </h2>
+            <div className="grid gap-3 sm:grid-cols-2 mb-4">
+              <label className="block">
+                <span className="block text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase mb-1">
+                  Soort document
+                </span>
+                <select
+                  value={documentType}
+                  onChange={(e) => setDocumentType(e.target.value)}
+                  disabled={uploading}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
+                >
+                  {DOCUMENT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {vraagtVervaldatum && (
+                <label className="block">
+                  <span className="block text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase mb-1">
+                    Geldig tot
+                  </span>
+                  <input
+                    type="date"
+                    value={vervaldatum}
+                    onChange={(e) => setVervaldatum(e.target.value)}
+                    disabled={uploading}
+                    className="w-full px-3 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
+                  />
+                </label>
+              )}
+            </div>
             <label className="block">
               <input
                 type="file"
                 onChange={handleUpload}
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                accept={DOCUMENT_ACCEPT}
                 className="hidden"
                 disabled={uploading}
               />
@@ -179,7 +228,7 @@ export default function DocumentenClient() {
                       Klik om een document te uploaden
                     </p>
                     <p className="text-xs text-[var(--mp-text-tertiary)]">
-                      PDF, JPG, PNG of DOC (max 10MB)
+                      {DOCUMENT_HINT}
                     </p>
                   </>
                 )}
@@ -234,34 +283,47 @@ export default function DocumentenClient() {
                   key={doc.id}
                   className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] p-4 shadow-[var(--mp-shadow)] flex items-center gap-4"
                 >
-                  <div className="flex-shrink-0">{getFileIcon(doc.type)}</div>
+                  <div className="flex-shrink-0">{getFileIcon(doc.file_name)}</div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-[var(--mp-text-primary)] truncate">
-                      {doc.naam}
+                      {documentTypeLabel(doc.document_type)}
                     </h3>
-                    <p className="text-xs text-[var(--mp-text-tertiary)] mt-0.5">
-                      {new Date(doc.created_at).toLocaleDateString("nl-NL")}
-                      {doc.size && ` · ${formatFileSize(doc.size)}`}
+                    <p className="text-xs text-[var(--mp-text-tertiary)] mt-0.5 truncate">
+                      {doc.file_name}
                     </p>
+                    <p className="text-xs text-[var(--mp-text-tertiary)] mt-0.5">
+                      {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString("nl-NL") : ""}
+                      {doc.file_size ? ` · ${formatFileSize(doc.file_size)}` : ""}
+                      {doc.expiry_date ? ` · geldig tot ${new Date(doc.expiry_date + "T12:00:00").toLocaleDateString("nl-NL")}` : ""}
+                    </p>
+                    {doc.review_status && REVIEW_LABELS[doc.review_status] && (
+                      <p className={`text-xs font-medium mt-0.5 ${REVIEW_LABELS[doc.review_status].kleur}`}>
+                        {REVIEW_LABELS[doc.review_status].tekst}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-accent)] transition-colors"
-                      aria-label="Bekijken"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </a>
-                    <a
-                      href={doc.url}
-                      download
-                      className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-accent)] transition-colors"
-                      aria-label="Downloaden"
-                    >
-                      <Download className="w-5 h-5" />
-                    </a>
+                    {doc.url && (
+                      <>
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-accent)] transition-colors"
+                          aria-label="Bekijken"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </a>
+                        <a
+                          href={doc.url}
+                          download={doc.file_name}
+                          className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-accent)] transition-colors"
+                          aria-label="Downloaden"
+                        >
+                          <Download className="w-5 h-5" />
+                        </a>
+                      </>
+                    )}
                     <button
                       onClick={() => handleDelete(doc.id)}
                       className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-danger)] transition-colors"
@@ -305,12 +367,7 @@ export default function DocumentenClient() {
             {/* QR Code */}
             <div id="qr-modal" className="bg-white p-6 rounded-xl flex items-center justify-center mb-6">
               <QRCode
-                value={JSON.stringify({
-                  type: "medewerker_id",
-                  id: medewerkerInfo.id,
-                  naam: medewerkerInfo.naam,
-                  timestamp: Date.now(),
-                })}
+                value={buildCheckinQr(medewerkerInfo)}
                 size={256}
                 level="H"
               />

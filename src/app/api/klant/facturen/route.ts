@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
+import { signFactuurToken } from "@/lib/session";
+import { nlVandaag } from "@/lib/nl-tijd";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { calculateKlantReiskosten, roundCurrency } from "@/lib/reiskosten";
 import { calculateVat } from "@/lib/factuur-config";
 import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
+import { isOntbrekendeKolomFout, maakKlantSnapshot, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
+import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
 
-async function getKlant() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return null;
-  return verifyKlantSession(session.value);
-}
-
-export async function GET() {
-  const klant = await getKlant();
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -34,18 +30,27 @@ export async function GET() {
     return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
   }
 
-  return NextResponse.json({ facturen: facturen || [] });
+  // viewUrl: de factuurpagina vraagt een getekend token (de UI las dit veld al, maar kreeg het nooit).
+  const metUrl = await Promise.all(
+    (facturen || []).map(async (f) => ({
+      ...f,
+      viewUrl: `/api/facturen/${f.id}/pdf?token=${await signFactuurToken(f.id, klant.id)}`,
+    })),
+  );
+
+  return NextResponse.json({ facturen: metUrl });
 }
 
 export async function POST(request: NextRequest) {
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { uren_ids } = await request.json();
+  const body = await request.json().catch(() => null);
+  const uren_ids: unknown = body?.uren_ids;
 
-  if (!uren_ids || !Array.isArray(uren_ids) || uren_ids.length === 0) {
+  if (!Array.isArray(uren_ids) || uren_ids.length === 0 || !uren_ids.every((id) => typeof id === "string")) {
     return NextResponse.json({ error: "Geen uren opgegeven" }, { status: 400 });
   }
 
@@ -79,6 +84,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ongeautoriseerde uren" }, { status: 403 });
     }
   }
+
+  // Claim de uren vóór de factuur bestaat: alleen rijen die (nog) klant_goedgekeurd zijn en
+  // hierboven als eigen uren zijn gecontroleerd. Voorheen ging de ruwe uren_ids-lijst de update
+  // in (uren van andere klanten op 'gefactureerd') en gaf een dubbelklik twee facturen.
+  const gevalideerdeIds = urenRegistraties.map((u) => u.id);
+  const { data: geclaimd, error: claimError } = await supabaseAdmin
+    .from("uren_registraties")
+    .update({ status: "gefactureerd" })
+    .in("id", gevalideerdeIds)
+    .eq("status", "klant_goedgekeurd")
+    .select("id");
+
+  if (claimError) {
+    captureRouteError(claimError, { route: "/api/klant/facturen", action: "POST" });
+    return NextResponse.json({ error: "Factuur aanmaken mislukt" }, { status: 500 });
+  }
+  if ((geclaimd?.length ?? 0) !== gevalideerdeIds.length) {
+    // Een deel is intussen al gefactureerd (bv. dubbelklik): niets half doen.
+    const terug = (geclaimd ?? []).map((u) => u.id);
+    if (terug.length > 0) {
+      await supabaseAdmin.from("uren_registraties").update({ status: "klant_goedgekeurd" }).in("id", terug);
+    }
+    return NextResponse.json({ error: "Deze uren zijn al gefactureerd" }, { status: 409 });
+  }
+
+  const zetUrenTerug = () =>
+    supabaseAdmin.from("uren_registraties").update({ status: "klant_goedgekeurd" }).in("id", gevalideerdeIds);
 
   // Bereken totaal
   let subtotaal = 0;
@@ -136,48 +168,63 @@ export async function POST(request: NextRequest) {
   const btw = calculateVat(subtotaal, 21);
   const totaal = roundCurrency(subtotaal + btw);
 
-  // Generate factuur nummer
-  const now = new Date();
-  const jaar = now.getFullYear();
-  const maand = String(now.getMonth() + 1).padStart(2, "0");
+  // Factuurnummer JJJJMM#### — bij een botsing (gelijktijdige factuur) opnieuw proberen.
+  const vandaag = nlVandaag();
+  const prefix = vandaag.slice(0, 4) + vandaag.slice(5, 7);
+  const datums = regels.map((r) => r.datum).filter(Boolean).sort();
 
-  // Haal laatste factuur nummer op
-  const { data: laatsteFactuur } = await supabaseAdmin
-    .from("facturen")
-    .select("factuur_nummer")
-    .like("factuur_nummer", `${jaar}${maand}%`)
-    .order("factuur_nummer", { ascending: false })
-    .limit(1)
-    .single();
+  // Klant-NAW vastleggen op de factuur (adreswijziging of accountverwijdering raakt hem later niet).
+  const snapshot =
+    (await haalKlantSnapshot(klant.id)) ?? maakKlantSnapshot({ bedrijfsnaam: klant.bedrijfsnaam, email: klant.email });
+  let metSnapshot = true;
 
-  let volgnummer = 1;
-  if (laatsteFactuur?.factuur_nummer) {
-    const laatste = parseInt(laatsteFactuur.factuur_nummer.slice(-4));
-    volgnummer = laatste + 1;
-  }
+  let factuur: { id: string } | null = null;
+  let factuurError: unknown = null;
+  let factuurNummer = "";
+  for (let poging = 0; poging < 6 && !factuur; poging++) {
+    const { data: laatsteFactuur } = await supabaseAdmin
+      .from("facturen")
+      .select("factuur_nummer")
+      .like("factuur_nummer", `${prefix}%`)
+      .order("factuur_nummer", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  const factuurNummer = `${jaar}${maand}${String(volgnummer).padStart(4, "0")}`;
+    // Na een botsing (23505) is het laatste nummer hierboven opnieuw gelezen: gewoon +1.
+    // (Voorheen + poging erbij, waardoor er gaten in de nummering vielen.)
+    const laatste = laatsteFactuur?.factuur_nummer ? parseInt(laatsteFactuur.factuur_nummer.slice(-4)) : 0;
+    factuurNummer = `${prefix}${String(laatste + 1).padStart(4, "0")}`;
 
-  // Maak factuur aan
-  const { data: factuur, error: factuurError } = await supabaseAdmin
-    .from("facturen")
-    .insert({
+    const rij = {
       factuur_nummer: factuurNummer,
       klant_id: klant.id,
-      klant_naam: klant.bedrijfsnaam,
-      klant_email: klant.email,
-      periode_start: regels[0]?.datum || now.toISOString().split("T")[0],
-      periode_eind: regels[regels.length - 1]?.datum || now.toISOString().split("T")[0],
+      ...snapshot,
+      periode_start: datums[0] || vandaag,
+      periode_eind: datums[datums.length - 1] || vandaag,
       subtotaal,
       btw_percentage: 21,
       btw_bedrag: btw,
       totaal,
       status: "open",
-    })
-    .select("id")
-    .single();
+    };
+    const res = await supabaseAdmin
+      .from("facturen")
+      .insert(metSnapshot ? rij : zonderNieuweSnapshotKolommen(rij))
+      .select("id")
+      .single();
+
+    factuur = res.data;
+    factuurError = res.error;
+    // Snapshotkolommen nog niet gemigreerd: opnieuw zonder (zelfde nummer, telt niet als botsing).
+    if (metSnapshot && isOntbrekendeKolomFout(res.error)) {
+      metSnapshot = false;
+      continue;
+    }
+    if (res.error && res.error.code !== "23505") break;
+  }
 
   if (factuurError || !factuur) {
+    await zetUrenTerug();
     captureRouteError(factuurError, { route: "/api/klant/facturen", action: "POST" });
     // console.error("Factuur aanmaken error:", factuurError);
     return NextResponse.json({ error: "Factuur aanmaken mislukt" }, { status: 500 });
@@ -198,14 +245,9 @@ export async function POST(request: NextRequest) {
     // console.error("Factuur regels error:", regelsError);
     // Rollback factuur
     await supabaseAdmin.from("facturen").delete().eq("id", factuur.id);
+    await zetUrenTerug();
     return NextResponse.json({ error: "Factuur regels aanmaken mislukt" }, { status: 500 });
   }
-
-  // Update uren status naar "gefactureerd"
-  await supabaseAdmin
-    .from("uren_registraties")
-    .update({ status: "gefactureerd" })
-    .in("id", uren_ids);
 
   return NextResponse.json({
     success: true,

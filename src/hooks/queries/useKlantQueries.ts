@@ -16,6 +16,7 @@ export const klantKeys = {
   kosten: (jaar?: number) => [...klantKeys.all, 'kosten', jaar] as const,
   checkin: () => [...klantKeys.all, 'checkin'] as const,
   aanvraag: () => [...klantKeys.all, 'aanvraag'] as const,
+  account: () => [...klantKeys.all, 'account'] as const,
 };
 
 // === QUERIES ===
@@ -31,11 +32,11 @@ export function useKlantDashboard() {
   });
 }
 
-export function useKlantUren() {
+export function useKlantUren(pagina: number = 1) {
   return useQuery({
-    queryKey: klantKeys.uren(),
+    queryKey: [...klantKeys.uren(), pagina],
     queryFn: async () => {
-      const res = await fetch('/api/klant/uren');
+      const res = await fetch(`/api/klant/uren?pagina=${pagina}`);
       if (!res.ok) throw new Error('Failed to fetch uren');
       return res.json();
     },
@@ -137,6 +138,17 @@ export function useKlantCheckins() {
     queryFn: async () => {
       const res = await fetch('/api/klant/checkin');
       if (!res.ok) throw new Error('Failed to fetch checkins');
+      return res.json();
+    },
+  });
+}
+
+export function useKlantAccount() {
+  return useQuery({
+    queryKey: klantKeys.account(),
+    queryFn: async () => {
+      const res = await fetch('/api/klant/account');
+      if (!res.ok) throw new Error('Failed to fetch account');
       return res.json();
     },
   });
@@ -303,7 +315,8 @@ export function useCheckinAction() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      return { ...data, status: res.status };
+      // httpStatus apart houden: `status` is het veld uit de API ("ingecheckt", "multiple_diensten", ...).
+      return { ...data, httpStatus: res.status };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: klantKeys.checkin() });

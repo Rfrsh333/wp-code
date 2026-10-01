@@ -1,34 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { nlVandaag } from "@/lib/nl-tijd";
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status") || "gepland";
 
-    const vandaag = new Date().toISOString().split("T")[0];
+    const vandaag = nlVandaag();
 
     // Bepaal welke aanmelding statussen we willen
-    let statusFilter: string[];
-    if (status === "aangeboden") {
-      statusFilter = ["uitgenodigd"];
-    } else if (status === "gepland" || status === "voltooid") {
-      statusFilter = ["bevestigd", "geaccepteerd"];
-    } else {
-      statusFilter = ["bevestigd", "geaccepteerd"];
-    }
+    const statusFilter: string[] = status === "aangeboden" ? ["uitgenodigd"] : [...INGEPLAND_STATUSSEN];
 
     // Stap 1: Haal aanmeldingen op
     const { data: aanmeldingen, error: aanmeldingenError } = await supabaseAdmin
@@ -117,23 +105,42 @@ export async function GET(request: NextRequest) {
         return a.datum.localeCompare(b.datum);
       });
 
-    // Haal vervangingsverzoeken op
-    const myVervangingAanmeldingen = (await supabaseAdmin
+    // Vervangingsverzoeken: kandidaten ('aangemeld') op diensten waarvoor ik een vervanger zoek.
+    // `originele_aanmelding_id` is MIJN aanmelding (status vervanging_gezocht); die heeft de
+    // accept-actie nodig. Voorheen kwam hier `vervanging_voor` van de kandidaat in — die is pas
+    // na accepteren gevuld, dus accepteren gaf altijd 400.
+    const myVervangingAanmeldingen = ((await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("dienst_id")
+      .select("id, dienst_id")
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "vervanging_gezocht")).data || [];
+      .eq("status", "vervanging_gezocht")).data || []) as { id: string; dienst_id: string }[];
 
-    const vervangingDienstIds = myVervangingAanmeldingen.map(a => a.dienst_id);
-    let vervangingVerzoeken: { aanmelding_id: string; dienst_id: string; originele_aanmelding_id: string; naam: string; functie: string; profile_photo_url: string | null }[] = [];
+    const eigenAanmeldingPerDienst = new Map(myVervangingAanmeldingen.map((a) => [a.dienst_id, a.id]));
+    const vervangingDienstIds = [...eigenAanmeldingPerDienst.keys()];
+    let vervangingVerzoeken: {
+      aanmelding_id: string;
+      dienst_id: string;
+      originele_aanmelding_id: string;
+      naam: string;
+      functie: string;
+      profile_photo_url: string | null;
+      dienst: { datum: string; start_tijd: string; locatie: string; klant_naam: string } | null;
+    }[] = [];
 
     if (vervangingDienstIds.length > 0) {
-      const { data: vervangers } = await supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .select("id, dienst_id, vervanging_voor, medewerker_id")
-        .in("dienst_id", vervangingDienstIds)
-        .eq("status", "aangemeld")
-        .neq("medewerker_id", medewerker.id);
+      const [{ data: vervangers }, { data: vervangDiensten }] = await Promise.all([
+        supabaseAdmin
+          .from("dienst_aanmeldingen")
+          .select("id, dienst_id, medewerker_id")
+          .in("dienst_id", vervangingDienstIds)
+          .eq("status", "aangemeld")
+          .neq("medewerker_id", medewerker.id),
+        supabaseAdmin
+          .from("diensten")
+          .select("id, datum, start_tijd, locatie, klant_naam")
+          .in("id", vervangingDienstIds),
+      ]);
+      const dienstInfo = new Map((vervangDiensten || []).map((d) => [d.id, d]));
 
       if (vervangers && vervangers.length > 0) {
         const mwIds = [...new Set(vervangers.map(v => v.medewerker_id))];
@@ -146,13 +153,17 @@ export async function GET(request: NextRequest) {
 
         vervangingVerzoeken = vervangers.map(v => {
           const mw = mwMap.get(v.medewerker_id);
+          const d = dienstInfo.get(v.dienst_id);
           return {
             aanmelding_id: v.id,
             dienst_id: v.dienst_id,
-            originele_aanmelding_id: v.vervanging_voor || "",
+            originele_aanmelding_id: eigenAanmeldingPerDienst.get(v.dienst_id) || "",
             naam: mw?.naam || "Onbekend",
             functie: Array.isArray(mw?.functie) ? mw.functie.join(", ") : (mw?.functie || ""),
             profile_photo_url: mw?.profile_photo_url || null,
+            dienst: d
+              ? { datum: d.datum, start_tijd: d.start_tijd, locatie: d.locatie, klant_naam: d.klant_naam }
+              : null,
           };
         });
       }

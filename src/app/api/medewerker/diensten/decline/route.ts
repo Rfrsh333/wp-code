@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { dienst_id } = await request.json();
 
@@ -28,7 +21,10 @@ export async function POST(request: NextRequest) {
       .eq("dienst_id", dienst_id)
       .eq("medewerker_id", medewerker.id)
       .eq("status", "uitgenodigd")
-      .single();
+      // Zonder unieke index kunnen er dubbele rijen zijn: neem de nieuwste i.p.v. te falen.
+      .order("aangemeld_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
 
     if (aanmeldError || !aanmelding) {
       return NextResponse.json({ error: "Aanmelding niet gevonden of al verwerkt" }, { status: 404 });
@@ -38,7 +34,8 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ status: "afgewezen" })
-      .eq("id", aanmelding.id);
+      .eq("id", aanmelding.id)
+      .eq("status", "uitgenodigd");
 
     if (updateError) {
       captureRouteError(updateError, { route: "/api/medewerker/diensten/decline", action: "POST" });

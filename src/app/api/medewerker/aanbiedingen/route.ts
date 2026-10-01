@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { sendShiftReactieEmail } from "@/lib/notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { meldAan } from "@/lib/medewerker/aanmelden";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    console.warn("[SECURITY] Invalid medewerker session token");
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data } = await supabaseAdmin
     .from("dienst_aanbiedingen")
@@ -27,15 +20,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, status } = await request.json();
 
@@ -49,7 +35,7 @@ export async function PATCH(request: NextRequest) {
     .select("id, dienst_id, status")
     .eq("id", id)
     .eq("medewerker_id", medewerker.id)
-    .single();
+    .maybeSingle();
 
   if (!aanbieding) {
     return NextResponse.json({ error: "Aanbieding niet gevonden" }, { status: 404 });
@@ -59,18 +45,24 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Deze aanbieding is al beantwoord" }, { status: 400 });
   }
 
-  await supabaseAdmin
+  // Accepteren = direct ingepland. Eerst de aanmelding (capaciteit, dubbele aanmelding, verlopen
+  // documenten); pas als die lukt de aanbieding op geaccepteerd. Voorheen werd de insert-fout
+  // genegeerd en kon een volle dienst overboekt raken.
+  if (status === "geaccepteerd") {
+    const resultaat = await meldAan(medewerker.id, aanbieding.dienst_id, "geaccepteerd");
+    if (!resultaat.ok) {
+      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+    }
+  }
+
+  const { error: updateFout } = await supabaseAdmin
     .from("dienst_aanbiedingen")
     .update({ status, reactie_at: new Date().toISOString() })
-    .eq("id", id);
-
-  // If accepted, also create a dienst_aanmelding
-  if (status === "geaccepteerd") {
-    await supabaseAdmin.from("dienst_aanmeldingen").insert({
-      dienst_id: aanbieding.dienst_id,
-      medewerker_id: medewerker.id,
-      status: "geaccepteerd",
-    });
+    .eq("id", id)
+    .eq("status", "aangeboden");
+  if (updateFout) {
+    captureRouteError(updateFout, { route: "/api/medewerker/aanbiedingen", action: "PATCH" });
+    return NextResponse.json({ error: "Reageren mislukt" }, { status: 500 });
   }
 
   // Notify admin about response

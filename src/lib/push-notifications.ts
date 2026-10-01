@@ -10,9 +10,26 @@ interface PushPayload {
 
 interface PushSubscriptionRecord {
   id: string;
-  endpoint: string;
-  p256dh: string;
-  auth: string;
+  endpoint: string | null;
+  p256dh: string | null;
+  auth: string | null;
+  expo_token?: string | null;
+}
+
+// expo_token bestaat pas na migratie 20261001_portaal_sessies.sql; zonder die kolom (42703)
+// valt de query terug op alleen web-push.
+const SUB_COLUMNS = "id, endpoint, p256dh, auth, expo_token";
+const SUB_COLUMNS_WEB = "id, endpoint, p256dh, auth";
+
+async function selectSubscriptions(
+  filter: (q: ReturnType<ReturnType<typeof supabaseAdmin.from>["select"]>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>,
+): Promise<PushSubscriptionRecord[]> {
+  const eerste = await filter(supabaseAdmin.from("push_subscriptions").select(SUB_COLUMNS));
+  if (eerste.error?.code === "42703") {
+    const web = await filter(supabaseAdmin.from("push_subscriptions").select(SUB_COLUMNS_WEB));
+    return (web.data as PushSubscriptionRecord[] | null) ?? [];
+  }
+  return (eerste.data as PushSubscriptionRecord[] | null) ?? [];
 }
 
 /**
@@ -24,13 +41,9 @@ export async function sendPushToUser(
   payload: PushPayload
 ): Promise<{ sent: number; failed: number }> {
   // Haal alle subscriptions op voor deze user
-  const { data: subscriptions, error } = await supabaseAdmin
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .eq("user_id", userId)
-    .eq("user_type", userType);
+  const subscriptions = await selectSubscriptions((q) => q.eq("user_id", userId).eq("user_type", userType));
 
-  if (error || !subscriptions?.length) {
+  if (!subscriptions.length) {
     return { sent: 0, failed: 0 };
   }
 
@@ -44,12 +57,9 @@ export async function sendPushToAllOfType(
   userType: "medewerker" | "klant",
   payload: PushPayload
 ): Promise<{ sent: number; failed: number }> {
-  const { data: subscriptions, error } = await supabaseAdmin
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .eq("user_type", userType);
+  const subscriptions = await selectSubscriptions((q) => q.eq("user_type", userType));
 
-  if (error || !subscriptions?.length) {
+  if (!subscriptions.length) {
     return { sent: 0, failed: 0 };
   }
 
@@ -66,13 +76,9 @@ export async function sendPushToUsers(
 ): Promise<{ sent: number; failed: number }> {
   if (!userIds.length) return { sent: 0, failed: 0 };
 
-  const { data: subscriptions, error } = await supabaseAdmin
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .in("user_id", userIds)
-    .eq("user_type", userType);
+  const subscriptions = await selectSubscriptions((q) => q.in("user_id", userIds).eq("user_type", userType));
 
-  if (error || !subscriptions?.length) {
+  if (!subscriptions.length) {
     return { sent: 0, failed: 0 };
   }
 
@@ -83,7 +89,80 @@ export async function sendPushToUsers(
  * Interne functie: verstuur naar array van subscriptions
  */
 async function sendPushToSubscriptions(
-  subscriptions: PushSubscriptionRecord[],
+  alle: PushSubscriptionRecord[],
+  payload: PushPayload
+): Promise<{ sent: number; failed: number }> {
+  const appSubs = alle.filter((s) => s.expo_token);
+  const subscriptions = alle.filter(
+    (s): s is PushSubscriptionRecord & { endpoint: string; p256dh: string; auth: string } =>
+      !s.expo_token && !!s.endpoint && !!s.p256dh && !!s.auth,
+  );
+
+  const app = await sendExpoPush(appSubs, payload);
+  if (subscriptions.length === 0) return app;
+  const web = await sendWebPush(subscriptions, payload);
+  return { sent: app.sent + web.sent, failed: app.failed + web.failed };
+}
+
+/**
+ * Native app (iOS/Android) via de Expo push-dienst, die doorstuurt naar APNs/FCM.
+ * `url` gaat mee als data; de app vertaalt die naar het juiste scherm.
+ */
+async function sendExpoPush(
+  subs: PushSubscriptionRecord[],
+  payload: PushPayload
+): Promise<{ sent: number; failed: number }> {
+  if (subs.length === 0) return { sent: 0, failed: 0 };
+
+  const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
+  if (process.env.EXPO_ACCESS_TOKEN) headers.Authorization = `Bearer ${process.env.EXPO_ACCESS_TOKEN}`;
+
+  let sent = 0;
+  let failed = 0;
+  const verlopen: string[] = [];
+
+  // Expo accepteert max. 100 berichten per verzoek.
+  for (let i = 0; i < subs.length; i += 100) {
+    const batch = subs.slice(i, i + 100);
+    try {
+      const res = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(
+          batch.map((s) => ({
+            to: s.expo_token,
+            title: payload.title,
+            body: payload.body,
+            data: { url: payload.url ?? null, tag: payload.tag ?? null },
+            sound: "default",
+          })),
+        ),
+      });
+      const json = (await res.json().catch(() => null)) as { data?: Array<{ status: string; details?: { error?: string } }> } | null;
+      const tickets = json?.data ?? [];
+      batch.forEach((s, idx) => {
+        const t = tickets[idx];
+        if (t?.status === "ok") sent++;
+        else {
+          failed++;
+          if (t?.details?.error === "DeviceNotRegistered") verlopen.push(s.id);
+        }
+      });
+    } catch (err) {
+      failed += batch.length;
+      console.error("[Push] Expo-verzending mislukt:", err);
+    }
+  }
+
+  if (verlopen.length > 0) {
+    await supabaseAdmin.from("push_subscriptions").delete().in("id", verlopen);
+  }
+  return { sent, failed };
+}
+
+/** Web-push (PWA) via VAPID. */
+async function sendWebPush(
+  subscriptions: Array<PushSubscriptionRecord & { endpoint: string; p256dh: string; auth: string }>,
   payload: PushPayload
 ): Promise<{ sent: number; failed: number }> {
   // Dynamic import om build failures te voorkomen als web-push niet geïnstalleerd is

@@ -3,6 +3,8 @@ import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { verifyFactuurToken } from "@/lib/session";
 import { getFactuurConfig } from "@/lib/factuur-config";
+import { escapeHtml } from "@/lib/sanitize";
+import { factuurKlantNaw } from "@/lib/factuur-klant-snapshot";
 
 type FactuurRegel = {
   datum: string;
@@ -62,6 +64,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
   const formatCurrency = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
 
+  const e = (v: unknown) => escapeHtml(v == null ? "" : String(v));
+  // NAW zoals vastgelegd bij het factureren; per veld terugvallen op de live klant (oude facturen).
+  const naw = factuurKlantNaw(factuur, factuur.klant);
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -93,7 +99,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   <div class="header">
     <div class="logo">TopTalent Jobs</div>
     <div class="factuur-info">
-      <div class="factuur-nummer">Factuur ${factuur.factuur_nummer}</div>
+      <div class="factuur-nummer">Factuur ${e(factuur.factuur_nummer)}</div>
       <div style="color: #666; margin-top: 4px;">Datum: ${formatDate(factuur.created_at)}</div>
     </div>
   </div>
@@ -101,19 +107,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   <div class="addresses">
     <div class="address">
       <div class="address-title">Van</div>
-      <strong>${factuurConfig.bedrijfsnaam}</strong><br>
-      ${addressLines.length > 0 ? `${addressLines.join("<br>")}<br>` : ""}
-      KVK: ${factuurConfig.kvk}<br>
-      BTW: ${factuurConfig.btw}<br>
-      WAADI: ${factuurConfig.waadi}<br>
-      Loonheffingen: ${factuurConfig.loonbelastingnummer}
+      <strong>${e(factuurConfig.bedrijfsnaam)}</strong><br>
+      ${addressLines.length > 0 ? `${addressLines.map(e).join("<br>")}<br>` : ""}
+      KVK: ${e(factuurConfig.kvk)}<br>
+      BTW: ${e(factuurConfig.btw)}<br>
+      WAADI: ${e(factuurConfig.waadi)}<br>
+      Loonheffingen: ${e(factuurConfig.loonbelastingnummer)}
     </div>
     <div class="address">
       <div class="address-title">Aan</div>
-      <strong>${factuur.klant?.bedrijfsnaam}</strong><br>
-      ${factuur.klant?.contactpersoon}<br>
-      ${factuur.klant?.adres ? `${factuur.klant.adres}<br>` : ""}${factuur.klant?.postcode ? `${factuur.klant.postcode} ` : ""}${factuur.klant?.stad || ""}<br>
-      ${factuur.klant?.kvk_nummer ? `KVK: ${factuur.klant.kvk_nummer}<br>` : ""}${factuur.klant?.btw_nummer ? `BTW: ${factuur.klant.btw_nummer}<br>` : ""}${factuur.klant?.email}
+      <strong>${e(naw.bedrijfsnaam)}</strong><br>
+      ${e(naw.contactpersoon)}<br>
+      ${naw.adres ? `${e(naw.adres)}<br>` : ""}${naw.postcode ? `${e(naw.postcode)} ` : ""}${e(naw.stad)}<br>
+      ${naw.kvk_nummer ? `KVK: ${e(naw.kvk_nummer)}<br>` : ""}${naw.btw_nummer ? `BTW: ${e(naw.btw_nummer)}<br>` : ""}${e(naw.email)}
     </div>
   </div>
 
@@ -136,8 +142,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ${(factuur.regels as FactuurRegel[]).map((r) => `
         <tr>
           <td>${new Date(r.datum).toLocaleDateString("nl-NL")}</td>
-          <td>${r.omschrijving}</td>
-          <td>${r.uren}</td>
+          <td>${e(r.omschrijving)}</td>
+          <td>${e(r.uren)}</td>
           <td>${formatCurrency(r.uurtarief)}</td>
           <td>${formatCurrency(r.reiskosten || 0)}</td>
           <td style="text-align: right;">${formatCurrency(r.bedrag)}</td>
@@ -148,25 +154,30 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   <div class="totals">
     <div class="totals-row"><span>Subtotaal</span><span>${formatCurrency(factuur.subtotaal)}</span></div>
-    <div class="totals-row"><span>BTW (${factuur.btw_percentage}%)</span><span>${formatCurrency(factuur.btw_bedrag)}</span></div>
+    <div class="totals-row"><span>BTW (${e(factuur.btw_percentage)}%)</span><span>${formatCurrency(factuur.btw_bedrag)}</span></div>
     <div class="totals-row total"><span>Totaal</span><span>${formatCurrency(factuur.totaal)}</span></div>
   </div>
 
   <div class="payment">
     <div class="payment-title">Betaalinformatie</div>
-    Gelieve het bedrag binnen ${factuurConfig.paymentTermDays} dagen over te maken naar:<br>
-    <strong>${factuurConfig.iban}</strong> t.n.v. ${factuurConfig.tenaamstelling}<br>
-    o.v.v. factuurnummer ${factuur.factuur_nummer}
+    Gelieve het bedrag binnen ${e(factuurConfig.paymentTermDays)} dagen over te maken naar:<br>
+    <strong>${e(factuurConfig.iban)}</strong> t.n.v. ${e(factuurConfig.tenaamstelling)}<br>
+    o.v.v. factuurnummer ${e(factuur.factuur_nummer)}
   </div>
 
   <div class="footer">
-    ${factuurConfig.bedrijfsnaam} &bull; ${factuurConfig.adres}, ${factuurConfig.postcodeStad} &bull; ${factuurConfig.email} &bull; www.toptalentjobs.nl<br>
-    KVK: ${factuurConfig.kvk} &bull; BTW: ${factuurConfig.btw} &bull; WAADI: ${factuurConfig.waadi}
+    ${e(factuurConfig.bedrijfsnaam)} &bull; ${e(factuurConfig.adres)}, ${e(factuurConfig.postcodeStad)} &bull; ${e(factuurConfig.email)} &bull; www.toptalentjobs.nl<br>
+    KVK: ${e(factuurConfig.kvk)} &bull; BTW: ${e(factuurConfig.btw)} &bull; WAADI: ${e(factuurConfig.waadi)}
   </div>
 </body>
 </html>`;
 
   return new NextResponse(html, {
-    headers: { "Content-Type": "text/html; charset=utf-8" },
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      // Geen scripts op deze pagina: ook als er ooit iets onge-escaped doorglipt, draait het niet.
+      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "Cache-Control": "private, no-store",
+    },
   });
 }

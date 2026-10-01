@@ -24,18 +24,22 @@ export default function MedewerkerActiverenClient() {
         return;
       }
 
-      const response = await fetch(`/api/medewerker/activeren?token=${encodeURIComponent(token)}`);
-      const result = await response.json();
+      try {
+        const response = await fetch(`/api/medewerker/activeren?token=${encodeURIComponent(token)}`);
+        const result = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        setError(result.error || "Activatielink is ongeldig of verlopen.");
+        if (!response.ok) {
+          setError(result.error || "Activatielink is ongeldig of verlopen.");
+          return;
+        }
+
+        setNaam(result.medewerker?.naam || "");
+        setEmail(result.medewerker?.email || "");
+      } catch {
+        setError("Geen verbinding. Controleer je internet en laad de pagina opnieuw.");
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      setNaam(result.medewerker?.naam || "");
-      setEmail(result.medewerker?.email || "");
-      setIsLoading(false);
     };
 
     void validateToken();
@@ -56,21 +60,25 @@ export default function MedewerkerActiverenClient() {
     }
 
     setIsSaving(true);
+    try {
+      const response = await fetch("/api/medewerker/activeren", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, wachtwoord }),
+      });
+      const result = await response.json().catch(() => ({}));
 
-    const response = await fetch("/api/medewerker/activeren", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, wachtwoord }),
-    });
-    const result = await response.json();
-    setIsSaving(false);
+      if (!response.ok) {
+        setError(result.error || "Wachtwoord instellen mislukt.");
+        return;
+      }
 
-    if (!response.ok) {
-      setError(result.error || "Wachtwoord instellen mislukt.");
-      return;
+      router.push("/medewerker/login?activated=1");
+    } catch {
+      setError("Geen verbinding. Controleer je internet en probeer het opnieuw.");
+    } finally {
+      setIsSaving(false);
     }
-
-    router.push("/medewerker/login?activated=1");
   };
 
   return (

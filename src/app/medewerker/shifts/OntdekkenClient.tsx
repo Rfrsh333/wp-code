@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SlidersHorizontal, Search } from "lucide-react";
 import ShiftCard from "@/components/medewerker/ShiftCard";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
@@ -31,6 +31,9 @@ export default function OntdekkenClient() {
   const [loading, setLoading] = useState(true);
   const [savedShifts, setSavedShifts] = useState<Set<string>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
+  const [aanmeldenBezig, setAanmeldenBezig] = useState<string | null>(null);
+  // Ref i.p.v. alleen state: een snelle dubbelklik komt vóór de re-render binnen.
+  const aanmeldenLoopt = useRef(false);
 
   useEffect(() => {
     fetchShifts();
@@ -55,6 +58,9 @@ export default function OntdekkenClient() {
   };
 
   const handleApply = async (shiftId: string) => {
+    if (aanmeldenLoopt.current) return;
+    aanmeldenLoopt.current = true;
+    setAanmeldenBezig(shiftId);
     try {
       const res = await fetch("/api/medewerker/shifts/aanmelden", {
         method: "POST",
@@ -73,6 +79,9 @@ export default function OntdekkenClient() {
     } catch (err) {
       Sentry.captureException(err);
       toast.error("Er ging iets mis");
+    } finally {
+      aanmeldenLoopt.current = false;
+      setAanmeldenBezig(null);
     }
   };
 
@@ -145,6 +154,7 @@ export default function OntdekkenClient() {
                 onApply={handleApply}
                 onSave={handleSave}
                 saved={savedShifts.has(shift.id)}
+                bezig={aanmeldenBezig !== null}
               />
             ))}
           </div>

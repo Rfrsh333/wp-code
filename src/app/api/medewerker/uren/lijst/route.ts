@@ -1,144 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
+import { haalTeRegistreren, haalUrenRegistraties } from "@/lib/medewerker/uren";
+import { medewerkerUurtarief, telVerdiend, verdienstenVanRegel } from "@/lib/medewerker/uren-regels";
+import { roundCurrency } from "@/lib/reiskosten";
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const [registraties, teRegistreren] = await Promise.all([
+      haalUrenRegistraties(medewerker.id),
+      haalTeRegistreren(medewerker.id),
+    ]);
 
-    // Haal uren registraties op met dienst en klant info
-    const { data: urenRegistraties, error } = await supabaseAdmin
-      .from("uren_registraties")
-      .select(`
-        id,
-        gewerkte_uren,
-        status,
-        created_at,
-        aanmelding:dienst_aanmeldingen!aanmelding_id (
-          dienst:diensten!dienst_id (
-            datum,
-            locatie,
-            uurtarief,
-            klant:klanten!klant_id (
-              bedrijfsnaam
-            )
-          )
-        )
-      `)
-      .eq("medewerker_id", medewerker.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
+    const uren = registraties.slice(0, 50).map((u) => ({
+      id: u.id,
+      gewerkte_uren: u.gewerkte_uren ?? 0,
+      status: u.status,
+      created_at: u.created_at,
+      // Zelfde formule als dashboard/Financieel (incl. toeslag), zodat de bedragen kloppen.
+      verdiensten: roundCurrency(verdienstenVanRegel(u)),
+      medewerker_uurtarief: medewerkerUurtarief(u.klant_uurtarief),
+      dienst: {
+        datum: u.datum || "",
+        locatie: u.locatie,
+        uurtarief: u.klant_uurtarief || 0,
+        klant: { bedrijfsnaam: u.klant_naam },
+      },
+    }));
 
-    if (error) {
-      captureRouteError(error, { route: "/api/medewerker/uren/lijst", action: "GET" });
-      // console.error("Uren lijst ophalen error:", error);
-      return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
-    }
+    // "Deze maand" = verdiende uren (zie lib/medewerker/uren-regels) met een dienstdatum in de
+    // huidige NL-kalendermaand — dezelfde definitie als dashboard en Financieel.
+    const [jaar, maand] = nlVandaag().split("-").map(Number);
+    const dezeMaand = telVerdiend(registraties, maandGrenzen(jaar, maand));
 
-    // Map naar simpele structuur en filter null diensten
-    const uren = (urenRegistraties || [])
-      .filter((u) => u.aanmelding && (u.aanmelding as unknown as Record<string, unknown>).dienst)
-      .map((u) => {
-        const aanmelding = u.aanmelding as unknown as Record<string, unknown>;
-        const dienst = aanmelding.dienst as Record<string, unknown> | null;
-        const klant = dienst?.klant as Record<string, unknown> | null;
-
-        return {
-          id: u.id,
-          gewerkte_uren: u.gewerkte_uren,
-          status: u.status,
-          created_at: u.created_at,
-          dienst: {
-            datum: (dienst?.datum as string) || "",
-            locatie: (dienst?.locatie as string) || "",
-            uurtarief: (dienst?.uurtarief as number) || 0,
-            klant: {
-              bedrijfsnaam: (klant?.bedrijfsnaam as string) || "Onbekend",
-              bedrijf_foto_url: undefined, // Optional - kan later toegevoegd worden
-            },
-          },
-        };
-      });
-
-    // Bereken summary (deze maand)
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    let deze_maand = 0;
-    let totaal_uren = 0;
-
-    for (const u of uren) {
-      const createdAt = new Date(u.created_at);
-      const medewerkerUurtarief = u.dienst.uurtarief - 4;
-      const verdiensten = u.gewerkte_uren * medewerkerUurtarief;
-
-      if (createdAt >= startOfMonth && (u.status === "klant_goedgekeurd" || u.status === "gefactureerd")) {
-        deze_maand += verdiensten;
-        totaal_uren += u.gewerkte_uren;
-      }
-    }
-
-    // Haal voltooide diensten op zonder uren registratie
-    const { data: dienstenZonderUren } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select(`
-        id,
-        dienst:diensten!dienst_id (
-          id,
-          datum,
-          start_tijd,
-          eind_tijd,
-          locatie,
-          uurtarief,
-          klant:klanten!klant_id (
-            bedrijfsnaam
-          )
-        )
-      `)
-      .eq("medewerker_id", medewerker.id)
-      .eq("status", "bevestigd")
-      .not("check_in_at", "is", null)
-      .lt("diensten.datum", new Date().toISOString().split("T")[0]);
-
-    // Filter diensten die nog geen uren hebben
-    const te_registreren = (dienstenZonderUren || [])
-      .filter((aanmelding) => {
-        const dienstId = (aanmelding.dienst as unknown as Record<string, unknown> | null)?.id;
-        return dienstId && !uren.some(u => {
-          const uDienst = (u as Record<string, unknown>).aanmelding;
-          const uDienstId = (uDienst as Record<string, unknown> | undefined)?.dienst;
-          return ((uDienstId as Record<string, unknown> | undefined)?.id) === dienstId;
-        });
-      })
-      .slice(0, 10)
-      .map((aanmelding) => {
-        const dienst = aanmelding.dienst as unknown as Record<string, unknown> | null;
-        const klant = dienst?.klant as unknown as Record<string, unknown> | null;
-        return {
-          id: dienst?.id || "",
-          aanmelding_id: aanmelding.id,
-          datum: dienst?.datum || "",
-          start_tijd: dienst?.start_tijd || "",
-          eind_tijd: dienst?.eind_tijd || "",
-          locatie: dienst?.locatie || "",
-          uurtarief: dienst?.uurtarief || 0,
-          klant: {
-            bedrijfsnaam: klant?.bedrijfsnaam || "Onbekend",
-            bedrijf_foto_url: undefined,
-          },
-        };
-      });
-
-    // Haal klant aanpassingen op
+    // Klant-aanpassingen (filter via de aanmelding; uren_registraties.medewerker_id wordt niet gevuld)
     const { data: aanpassingenData } = await supabaseAdmin
       .from("uren_registraties")
       .select(`
@@ -151,40 +51,42 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq("status", "klant_aangepast")
-      .eq("medewerker_id", medewerker.id);
+      .eq("aanmelding.medewerker_id", medewerker.id);
 
-    const aanpassingen = (aanpassingenData || []).map((u: Record<string, unknown>) => ({
-      id: u.id,
-      start_tijd: u.start_tijd,
-      eind_tijd: u.eind_tijd,
-      pauze_minuten: u.pauze_minuten,
-      gewerkte_uren: u.gewerkte_uren,
-      reiskosten_km: u.reiskosten_km,
-      reiskosten_bedrag: u.reiskosten_bedrag,
-      klant_start_tijd: u.klant_start_tijd,
-      klant_eind_tijd: u.klant_eind_tijd,
-      klant_pauze_minuten: u.klant_pauze_minuten,
-      klant_gewerkte_uren: u.klant_gewerkte_uren,
-      klant_reiskosten_km: u.klant_reiskosten_km,
-      klant_reiskosten_bedrag: u.klant_reiskosten_bedrag,
-      klant_opmerking: u.klant_opmerking,
-      dienst_datum: ((u.aanmelding as Record<string, unknown> | null)?.dienst as Record<string, unknown> | null)?.datum || "",
-      klant_naam: ((u.aanmelding as Record<string, unknown> | null)?.dienst as Record<string, unknown> | null)?.klant_naam || "",
-      locatie: ((u.aanmelding as Record<string, unknown> | null)?.dienst as Record<string, unknown> | null)?.locatie || "",
-    }));
+    const aanpassingen = (aanpassingenData || []).map((u: Record<string, unknown>) => {
+      const dienst = (u.aanmelding as Record<string, unknown> | null)?.dienst as Record<string, unknown> | null;
+      return {
+        id: u.id,
+        start_tijd: u.start_tijd,
+        eind_tijd: u.eind_tijd,
+        pauze_minuten: u.pauze_minuten,
+        gewerkte_uren: u.gewerkte_uren,
+        reiskosten_km: u.reiskosten_km,
+        reiskosten_bedrag: u.reiskosten_bedrag,
+        klant_start_tijd: u.klant_start_tijd,
+        klant_eind_tijd: u.klant_eind_tijd,
+        klant_pauze_minuten: u.klant_pauze_minuten,
+        klant_gewerkte_uren: u.klant_gewerkte_uren,
+        klant_reiskosten_km: u.klant_reiskosten_km,
+        klant_reiskosten_bedrag: u.klant_reiskosten_bedrag,
+        klant_opmerking: u.klant_opmerking,
+        dienst_datum: dienst?.datum || "",
+        klant_naam: dienst?.klant_naam || "",
+        locatie: dienst?.locatie || "",
+      };
+    });
 
     return NextResponse.json({
       uren,
-      te_registreren,
+      te_registreren: teRegistreren.slice(0, 10),
       aanpassingen,
       summary: {
-        deze_maand,
-        totaal_uren,
+        deze_maand: dezeMaand.bedrag,
+        totaal_uren: dezeMaand.uren,
       },
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/medewerker/uren/lijst", action: "GET" });
-    // console.error("Uren lijst error:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }

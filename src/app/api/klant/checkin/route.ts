@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
-
-async function getKlant() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return null;
-  return verifyKlantSession(session.value);
-}
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { nlVandaag } from "@/lib/nl-tijd";
 
 export async function POST(request: NextRequest) {
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -29,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Ongeldige QR-code: medewerker_id ontbreekt" }, { status: 400 });
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = nlVandaag();
 
   // Als dienst_id is opgegeven, gebruik die specifieke dienst
   // Anders zoek alle upcoming geaccepteerde diensten
@@ -43,12 +37,12 @@ export async function POST(request: NextRequest) {
       dienst:diensten!inner(id, klant_id, datum, start_tijd, eind_tijd, locatie, functie)
     `)
     .eq("medewerker_id", medewerker_id)
-    .eq("status", "geaccepteerd")
-    .eq("diensten.klant_id", klant.id)
-    .gte("diensten.datum", today);
+    .in("status", [...INGEPLAND_STATUSSEN])
+    .eq("dienst.klant_id", klant.id)
+    .gte("dienst.datum", today);
 
   if (dienst_id) {
-    query = query.eq("diensten.id", dienst_id);
+    query = query.eq("dienst.id", dienst_id);
   }
 
   const { data: aanmeldingen, error: fetchError } = await query;
@@ -60,7 +54,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!aanmeldingen || aanmeldingen.length === 0) {
-    return NextResponse.json({ error: "Geen geaccepteerde dienst gevonden voor deze medewerker" }, { status: 404 });
+    return NextResponse.json({ error: "Geen ingeplande dienst gevonden voor deze medewerker" }, { status: 404 });
   }
 
   // Als er meerdere diensten zijn en geen specifieke dienst_id is opgegeven, return de lijst
@@ -166,13 +160,13 @@ export async function POST(request: NextRequest) {
   });
 }
 
-export async function GET() {
-  const klant = await getKlant();
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = nlVandaag();
 
   const { data: checkins, error } = await supabaseAdmin
     .from("dienst_aanmeldingen")
@@ -183,8 +177,8 @@ export async function GET() {
       dienst:diensten!inner(datum, start_tijd, eind_tijd, locatie, functie, klant_id)
     `)
     .not("check_in_at", "is", null)
-    .eq("diensten.klant_id", klant.id)
-    .eq("diensten.datum", today)
+    .eq("dienst.klant_id", klant.id)
+    .eq("dienst.datum", today)
     .order("check_in_at", { ascending: false });
 
   if (error) {
