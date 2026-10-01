@@ -85,3 +85,28 @@ export interface MedewerkerDocument {
   /** Kortlevende signed URL (privé bucket); null als die niet kon worden gemaakt. */
   url: string | null;
 }
+
+/** Privé opslagbucket van medewerkerdocumenten. */
+export const MEDEWERKER_DOCUMENTEN_BUCKET = "medewerker-documenten";
+
+/**
+ * Opslagpad in de bucket voor een documentrij: `file_path`, anders `file_url` als dat een pad is
+ * (de upload-route schrijft het pad in file_url zolang die kolom NOT NULL is) of een
+ * Supabase-storage-URL naar deze bucket. Onbekende externe URL's geven null.
+ */
+export function documentOpslagPad(doc: { file_path?: string | null; file_url?: string | null }): string | null {
+  if (doc.file_path) return doc.file_path;
+  const url = doc.file_url?.trim();
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) return url.replace(/^\/+/, "");
+  const marker = `/storage/v1/object/`;
+  const i = url.indexOf(marker);
+  if (i === -1) return null;
+  const rest = url.slice(i + marker.length).split("?")[0];
+  const delen = rest.split("/");
+  // object/public/<bucket>/<pad> of object/sign/<bucket>/<pad> of object/<bucket>/<pad>
+  const start = ["public", "sign", "authenticated"].includes(delen[0]) ? 1 : 0;
+  if (delen[start] !== MEDEWERKER_DOCUMENTEN_BUCKET) return null;
+  const pad = delen.slice(start + 1).join("/");
+  return pad ? decodeURIComponent(pad) : null;
+}
