@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { FileSignature } from 'lucide-react';
+import { toast } from 'sonner';
 import * as Sentry from "@sentry/nextjs";
+import MedewerkerResponsiveLayout from '@/components/medewerker/MedewerkerResponsiveLayout';
 
 interface MedewerkerContract {
   id: string;
@@ -45,10 +48,15 @@ export default function ContractenClient() {
     const fetchContracten = async () => {
       try {
         const res = await fetch('/api/medewerker/contracten');
-        const { data } = await res.json();
-        setContracten(data || []);
-      } catch {
-        Sentry.captureMessage('Contracten laden mislukt');
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(body.error || 'Contracten laden mislukt');
+          return;
+        }
+        setContracten(body.data || []);
+      } catch (err) {
+        Sentry.captureException(err);
+        toast.error('Contracten laden mislukt');
       } finally {
         setIsLoading(false);
       }
@@ -62,57 +70,59 @@ export default function ContractenClient() {
   );
   const overige = contracten.filter((c) => ['verlopen', 'opgezegd'].includes(c.status));
 
-  if (isLoading) {
-    return (
-      <div className="p-6 text-center">
-        <div className="animate-spin h-8 w-8 border-4 border-[#F27501] border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-gray-500">Contracten laden...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-neutral-900">Mijn Contracten</h1>
-
-      {contracten.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-neutral-200 p-8 text-center">
-          <p className="text-gray-500">Je hebt nog geen contracten.</p>
+    <MedewerkerResponsiveLayout>
+      <div className="min-h-screen bg-[var(--mp-bg)]">
+        <div className="sticky top-0 z-40 bg-[var(--mp-card)] border-b border-[var(--mp-separator)]">
+          <div className="px-4 py-3">
+            <h1 className="text-2xl font-bold text-[var(--mp-text-primary)]">Mijn contracten</h1>
+            <p className="text-sm text-[var(--mp-text-secondary)] mt-1">Bekijk en onderteken je contracten</p>
+          </div>
         </div>
-      ) : (
-        <>
-          {/* Open contracten (actie vereist) */}
-          {openContracten.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-neutral-800">Actie vereist</h2>
-              {openContracten.map((contract) => (
-                <ContractCard key={contract.id} contract={contract} highlight />
-              ))}
-            </div>
-          )}
 
-          {/* Actieve contracten */}
-          {actieveContracten.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-neutral-800">Actieve contracten</h2>
-              {actieveContracten.map((contract) => (
-                <ContractCard key={contract.id} contract={contract} />
-              ))}
+        <div className="p-4 max-w-3xl mx-auto space-y-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-3 border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" />
             </div>
-          )}
+          ) : contracten.length === 0 ? (
+            <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] p-8 text-center shadow-[var(--mp-shadow)]">
+              <FileSignature className="w-12 h-12 text-[var(--mp-text-tertiary)] mx-auto mb-3" />
+              <p className="text-sm text-[var(--mp-text-secondary)]">Je hebt nog geen contracten.</p>
+            </div>
+          ) : (
+            <>
+              {openContracten.length > 0 && (
+                <section className="space-y-3">
+                  <h2 className="text-lg font-semibold text-[var(--mp-text-primary)]">Actie vereist</h2>
+                  {openContracten.map((contract) => (
+                    <ContractCard key={contract.id} contract={contract} highlight />
+                  ))}
+                </section>
+              )}
 
-          {/* Overige */}
-          {overige.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-neutral-800">Afgelopen</h2>
-              {overige.map((contract) => (
-                <ContractCard key={contract.id} contract={contract} />
-              ))}
-            </div>
+              {actieveContracten.length > 0 && (
+                <section className="space-y-3">
+                  <h2 className="text-lg font-semibold text-[var(--mp-text-primary)]">Actieve contracten</h2>
+                  {actieveContracten.map((contract) => (
+                    <ContractCard key={contract.id} contract={contract} />
+                  ))}
+                </section>
+              )}
+
+              {overige.length > 0 && (
+                <section className="space-y-3">
+                  <h2 className="text-lg font-semibold text-[var(--mp-text-primary)]">Afgelopen</h2>
+                  {overige.map((contract) => (
+                    <ContractCard key={contract.id} contract={contract} />
+                  ))}
+                </section>
+              )}
+            </>
           )}
-        </>
-      )}
-    </div>
+        </div>
+      </div>
+    </MedewerkerResponsiveLayout>
   );
 }
 
@@ -123,24 +133,44 @@ function ContractCard({
   contract: MedewerkerContract;
   highlight?: boolean;
 }) {
+  const [bezig, setBezig] = useState(false);
   const status = statusLabels[contract.status] || { label: contract.status, color: 'bg-gray-100 text-gray-600' };
   const needsAction = ['verzonden', 'bekeken', 'ondertekend_admin'].includes(contract.status);
 
+  // Haalt via een ingelogde route de bestaande ondertekenlink (token) van dit eigen contract op.
+  const openOndertekenen = async () => {
+    setBezig(true);
+    try {
+      const res = await fetch(`/api/medewerker/contracten/${encodeURIComponent(contract.id)}/onderteken-link`);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.url) {
+        toast.error(body.error || 'Ondertekenen openen mislukt');
+        return;
+      }
+      window.location.href = body.url;
+    } catch (err) {
+      Sentry.captureException(err);
+      toast.error('Er ging iets mis');
+    } finally {
+      setBezig(false);
+    }
+  };
+
   return (
     <div
-      className={`bg-white rounded-2xl border p-5 ${
-        highlight ? 'border-[#F27501]/30 shadow-sm' : 'border-neutral-200'
+      className={`bg-[var(--mp-card)] rounded-[var(--mp-radius)] shadow-[var(--mp-shadow)] p-5 border ${
+        highlight ? 'border-[var(--mp-accent)]/30' : 'border-transparent'
       }`}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-neutral-900 truncate">{contract.titel}</h3>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h3 className="font-semibold text-[var(--mp-text-primary)] truncate">{contract.titel}</h3>
             <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${status.color}`}>
               {status.label}
             </span>
           </div>
-          <div className="flex flex-wrap gap-x-4 text-sm text-neutral-500">
+          <div className="flex flex-wrap gap-x-4 text-sm text-[var(--mp-text-secondary)]">
             <span>{contract.contract_nummer}</span>
             <span>{typeLabels[contract.type] || contract.type}</span>
             {contract.startdatum && (
@@ -152,12 +182,14 @@ function ContractCard({
         </div>
 
         {needsAction && (
-          <a
-            href={`/api/contract/ondertekenen?redirect=true&contract_id=${contract.id}`}
-            className="px-3 py-1.5 text-sm bg-[#F27501] text-white rounded-lg hover:bg-[#d96800] whitespace-nowrap"
+          <button
+            type="button"
+            onClick={openOndertekenen}
+            disabled={bezig}
+            className="px-4 py-2 text-sm font-semibold bg-[var(--mp-accent)] text-white rounded-xl hover:bg-[var(--mp-accent-dark)] disabled:opacity-50 whitespace-nowrap"
           >
-            Ondertekenen
-          </a>
+            {bezig ? 'Openen…' : 'Ondertekenen'}
+          </button>
         )}
       </div>
     </div>
