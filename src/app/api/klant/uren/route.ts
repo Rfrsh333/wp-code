@@ -127,11 +127,6 @@ export async function GET(request: NextRequest) {
   });
 }
 
-function score(waarde: unknown): number {
-  const n = Number(waarde);
-  return Number.isInteger(n) && n >= 1 && n <= 5 ? n : 5;
-}
-
 export async function POST(request: NextRequest) {
   const klant = await getKlantSession(request);
   if (!klant) {
@@ -142,12 +137,10 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Ongeldige request body" }, { status: 400 });
   }
-  const { action, id, data, score_punctualiteit, score_functie } = body as {
+  const { action, id, data } = body as {
     action?: string;
     id?: string;
     data?: Record<string, unknown> | null;
-    score_punctualiteit?: unknown;
-    score_functie?: unknown;
   };
 
   if (!id || typeof id !== "string") return NextResponse.json({ error: "id vereist" }, { status: 400 });
@@ -176,13 +169,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Deze uren kunnen niet (meer) worden goedgekeurd" }, { status: 409 });
     }
 
+    // Alleen de status: uren_registraties heeft geen score-kolommen (de update faalde daarop met
+    // PGRST204, dus goedkeuren lukte nooit). Beoordelen is een aparte stap via /api/klant/beoordelingen.
     const { data: bijgewerkt, error } = await supabaseAdmin
       .from("uren_registraties")
-      .update({
-        status: "klant_goedgekeurd",
-        score_punctualiteit: score(score_punctualiteit),
-        score_functie: score(score_functie),
-      })
+      .update({ status: "klant_goedgekeurd" })
       .eq("id", id)
       .eq("status", "ingediend")
       .select("id");
