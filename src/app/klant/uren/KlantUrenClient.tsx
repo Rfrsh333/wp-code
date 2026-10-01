@@ -24,6 +24,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseCheckinQr } from "@/lib/checkin-qr";
 import { isIngepland } from "@/lib/dienst-status";
 import { valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
+import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
 
 interface Klant {
   id: string;
@@ -75,8 +76,10 @@ interface DashboardStats {
   pendingHoursCount: number;
   pendingHoursTotal: number;
   approvedHoursThisMonth: number;
+  kostenDezeMaand?: number;
   activeDienstenCount: number;
   openFacturenCount: number;
+  openFacturenBedrag?: number;
 }
 
 interface UpcomingDienst {
@@ -204,6 +207,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const teBeoordeelen: TeBeoordelen[] = beoorData?.teBeoordeelen ?? [];
   const dashboardStats: DashboardStats | null = dashboardData?.stats ?? null;
   const upcomingDiensten: UpcomingDienst[] = dashboardData?.upcomingDiensten ?? [];
+  const vandaagMorgen: UpcomingDienst[] = dashboardData?.vandaagMorgen ?? [];
   const recentFacturen: Factuur[] = facturenData?.facturen ?? [];
   const dienstenVolledig: UpcomingDienst[] = dienstenData?.diensten ?? [];
   const isLoading = urenLoading;
@@ -591,9 +595,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   stats={dashboardStats}
                   volgendeDienst={upcomingDiensten[0] ?? null}
                   openFacturen={recentFacturen}
-                  maandBedrag={0}
-                  budgetGebruikt={0}
-                  budgetTotaal={3000}
+                  openBedrag={dashboardStats?.openFacturenBedrag}
+                  maandBedrag={dashboardStats?.kostenDezeMaand ?? 0}
                   onTabChange={setActiveTab}
                 />
 
@@ -602,7 +605,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
 
                 {/* NIEUW: Live Status */}
                 <LiveStatusTracker
-                  diensten={upcomingDiensten}
+                  diensten={vandaagMorgen}
+                  vandaag={dashboardData?.vandaag ?? nlVandaag()}
                   onTabChange={setActiveTab}
                 />
 
@@ -610,7 +614,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 <div className="flex gap-3 overflow-x-auto pb-1 pr-4 scrollbar-hide">
                   {[
                     { label: "Uren wachten", value: String(dashboardStats?.pendingHoursCount ?? pending.length), targetTab: "uren", urgent: pending.length > 0 },
-                    { label: "Goedgekeurd", value: `${dashboardStats?.approvedHoursThisMonth ?? 0}u`, targetTab: "uren", urgent: false },
+                    { label: "Goedgekeurd deze maand", value: `${dashboardStats?.approvedHoursThisMonth ?? 0}u`, targetTab: "uren", urgent: false },
                     { label: "Reviews", value: String(teBeoordeelen.length), targetTab: "beoordelingen", urgent: teBeoordeelen.length > 0 },
                     { label: "Open facturen", value: String(dashboardStats?.openFacturenCount ?? 0), targetTab: "facturen", urgent: false },
                   ].map((stat) => (
@@ -651,12 +655,12 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   </div>
                 )}
 
-                {/* Vandaag & Morgen */}
-                {upcomingDiensten.length > 0 && (
+                {/* Vandaag & Morgen — echte bezetting (geaccepteerd + bevestigd) uit het dashboard-endpoint */}
+                {vandaagMorgen.length > 0 && (
                   <div className="bg-white rounded-2xl border border-[var(--kp-border)] p-4 shadow-sm">
                     <p className="text-xs font-bold text-[var(--kp-text-tertiary)] uppercase tracking-wider mb-3">Vandaag & Morgen</p>
                     <div className="space-y-2">
-                      {upcomingDiensten.slice(0, 5).map((d) => (
+                      {vandaagMorgen.slice(0, 8).map((d) => (
                         <div key={d.id} className="flex items-center gap-3 py-2 border-b border-[var(--kp-border)] last:border-0">
                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                             (d.aanmeldingen_geaccepteerd || 0) >= d.aantal_nodig ? "bg-green-500" : "bg-amber-500"
@@ -1893,7 +1897,7 @@ function AanvraagTab({ klant, onSuccess }: { klant: Klant; onSuccess: () => void
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Datum</label>
               <input type="date" value={form.datum} onChange={(e) => setForm({ ...form, datum: e.target.value })}
-                min={new Date().toISOString().split("T")[0]}
+                min={nlVandaag()}
                 className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -2280,22 +2284,23 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     return { start, end };
   };
 
-  const getMonthRange = (date: Date) => {
-    const start = new Date(date.getFullYear(), date.getMonth(), 1);
-    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    return { start, end };
-  };
-
-  const range = view === "maand" ? getMonthRange(currentDate) : getWeekRange(currentDate);
-  const startStr = range.start.toISOString().split("T")[0];
-  const endStr = range.end.toISOString().split("T")[0];
+  // Lokale kalenderdatum als YYYY-MM-DD. toISOString() op lokale middernacht gaf in NL de dag
+  // ervóór (UTC), waardoor de maand een dag te vroeg begon en de laatste dag wegviel.
+  const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const vandaagStr = nlVandaag();
+  const range = view === "maand"
+    ? maandGrenzen(currentDate.getFullYear(), currentDate.getMonth() + 1)
+    : (() => { const w = getWeekRange(currentDate); return { start: ymd(w.start), eind: ymd(w.end) }; })();
+  const startStr = range.start;
+  const endStr = range.eind;
 
   const { data: roosterData, isLoading } = useKlantRooster(startStr, endStr);
   const rooster: RoosterItem[] = roosterData?.rooster ?? [];
 
   const navigate = (dir: number) => {
     const d = new Date(currentDate);
-    if (view === "maand") d.setMonth(d.getMonth() + dir);
+    // Naar de 1e: anders springt 31 jan + 1 maand naar 3 maart.
+    if (view === "maand") { d.setDate(1); d.setMonth(d.getMonth() + dir); }
     else d.setDate(d.getDate() + dir * 7);
     setCurrentDate(d);
   };
@@ -2353,9 +2358,9 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
         </div>
 
         {days.map((day) => {
-          const dateStr = day.toISOString().split("T")[0];
+          const dateStr = ymd(day);
           const dayItems = rooster.filter((r) => r.datum === dateStr);
-          const isToday = dateStr === new Date().toISOString().split("T")[0];
+          const isToday = dateStr === vandaagStr;
 
           return (
             <div key={dateStr} className={`rounded-2xl border p-3 ${isToday ? "border-[#F27501]/30 bg-orange-50/30" : "border-neutral-200 bg-white"}`}>
@@ -2425,9 +2430,9 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     return (
       <div className="space-y-4">
         {days.map((day) => {
-          const dateStr = day.toISOString().split("T")[0];
+          const dateStr = ymd(day);
           const dayItems = rooster.filter((r) => r.datum === dateStr);
-          const isToday = dateStr === new Date().toISOString().split("T")[0];
+          const isToday = dateStr === vandaagStr;
 
           return (
             <div key={dateStr} className={`rounded-2xl border p-4 ${isToday ? "border-[#F27501]/30 bg-orange-50/30" : "border-neutral-200 bg-white"}`}>
@@ -2483,7 +2488,7 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
     const lastDay = new Date(year, month + 1, 0);
     const startOffset = (firstDay.getDay() + 6) % 7;
     const totalDays = lastDay.getDate();
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = vandaagStr;
 
     const cells: (number | null)[] = [];
     for (let i = 0; i < startOffset; i++) cells.push(null);
@@ -2569,7 +2574,8 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
 const PIE_COLORS = ["#F27501", "#d96800", "#fb923c", "#fdba74", "#fed7aa", "#fef3c7"];
 
 function KostenTab() {
-  const [jaar, setJaar] = useState(new Date().getFullYear());
+  const huidigJaar = Number(nlVandaag().slice(0, 4));
+  const [jaar, setJaar] = useState(huidigJaar);
 
   const { data: rawData, isLoading } = useKlantKosten(jaar);
   const data = rawData as KostenData | null;
@@ -2601,43 +2607,13 @@ function KostenTab() {
         <div className="flex items-center gap-3">
           <select value={jaar} onChange={(e) => setJaar(Number(e.target.value))}
             className="px-3 py-2 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20">
-            {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+            {Array.from({ length: huidigJaar - 2023 }, (_, i) => huidigJaar - i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <button onClick={exportCSV} className="px-4 py-2 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition">
             CSV Export
           </button>
         </div>
       </div>
-
-      {/* NIEUW: Budget Alert */}
-      {(() => {
-        const MAANDBUDGET = 3000;
-        const budgetGebruikt = data?.totaal ?? 0;
-        const budgetPct = Math.min(100, Math.round((budgetGebruikt / MAANDBUDGET) * 100));
-
-        return budgetPct >= 80 ? (
-          <div className={`flex items-start gap-3 rounded-2xl p-4 ${
-            budgetPct >= 95
-              ? "bg-red-50 border border-red-200"
-              : "bg-amber-50 border border-amber-200"
-          }`}>
-            <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${budgetPct >= 95 ? "text-red-600" : "text-amber-600"}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <p className={`font-semibold text-sm ${budgetPct >= 95 ? "text-red-900" : "text-amber-900"}`}>
-                {budgetPct >= 95 ? "Budget bijna uitgeput!" : "Budget waarschuwing"}
-              </p>
-              <p className={`text-xs mt-0.5 ${budgetPct >= 95 ? "text-red-700" : "text-amber-700"}`}>
-                €{budgetGebruikt.toLocaleString("nl-NL")} van €{MAANDBUDGET.toLocaleString("nl-NL")} gebruikt ({budgetPct}%).
-                Nog €{(MAANDBUDGET - budgetGebruikt).toLocaleString("nl-NL")} beschikbaar.
-              </p>
-            </div>
-          </div>
-        ) : null;
-      })()}
 
       {/* Totaal */}
       <div className="bg-gradient-to-r from-neutral-900 to-neutral-800 rounded-2xl p-6 text-white">
