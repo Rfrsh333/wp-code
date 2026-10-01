@@ -12,6 +12,9 @@ import {
   Users,
   LogOut,
   ChevronRight,
+  Compass,
+  MessageSquare,
+  FileSignature,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -30,7 +33,7 @@ const menuSections = [
     title: "Hoofdmenu",
     items: [
       { id: "dashboard", label: "Dashboard", icon: Home, href: "/medewerker/dashboard" },
-      { id: "ontdekken", label: "Ontdekken", icon: Home, href: "/medewerker/shifts" },
+      { id: "ontdekken", label: "Ontdekken", icon: Compass, href: "/medewerker/shifts" },
       { id: "diensten", label: "Mijn diensten", icon: Calendar, href: "/medewerker/diensten" },
       { id: "uren", label: "Uren", icon: Clock, href: "/medewerker/uren" },
     ] as MenuItem[],
@@ -39,6 +42,7 @@ const menuSections = [
     title: "Planning",
     items: [
       { id: "beschikbaarheid", label: "Beschikbaarheid", icon: CalendarCheck, href: "/medewerker/beschikbaarheid" },
+      { id: "berichten", label: "Berichten", icon: MessageSquare, href: "/medewerker/berichten" },
     ] as MenuItem[],
   },
   {
@@ -47,6 +51,7 @@ const menuSections = [
       { id: "profiel", label: "Mijn profiel", icon: User, href: "/medewerker/account" },
       { id: "financieel", label: "Financieel", icon: Euro, href: "/medewerker/financieel" },
       { id: "documenten", label: "Documenten", icon: FileText, href: "/medewerker/documenten" },
+      { id: "contracten", label: "Contracten", icon: FileSignature, href: "/medewerker/contracten" },
       { id: "referral", label: "Vrienden werven", icon: Users, href: "/medewerker/referral" },
     ] as MenuItem[],
   },
@@ -76,11 +81,9 @@ export default function DesktopSidebar({
 
   const handleLogout = async () => {
     try {
-      // Wis SW caches voordat we uitloggen
-      const { clearSwCacheOnLogout } = await import("@/lib/sw-utils");
-      await clearSwCacheOnLogout();
-      const res = await fetch("/api/medewerker/logout", { method: "POST" });
-      if (res.ok) {
+      // Push-abonnement van dit toestel weg, SW-caches wissen, sessie wissen (met time-outs).
+      const { medewerkerUitloggen } = await import("@/lib/medewerker/uitloggen");
+      if (await medewerkerUitloggen()) {
         router.push("/medewerker/login");
       }
     } catch (err) {

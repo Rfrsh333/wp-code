@@ -1,17 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Haal alle beoordelingen op
   const { data: beoordelingen } = await supabaseAdmin
@@ -29,7 +23,7 @@ export async function GET() {
     .from("dienst_aanmeldingen")
     .select("id", { count: "exact", head: true })
     .eq("medewerker_id", medewerker.id)
-    .eq("status", "geaccepteerd");
+    .in("status", [...INGEPLAND_STATUSSEN]);
 
   const { count: noShowCount } = await supabaseAdmin
     .from("boetes")

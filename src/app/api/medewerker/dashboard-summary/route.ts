@@ -1,26 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { nlVandaag, plusDagen } from "@/lib/nl-tijd";
+import { haalUrenRegistraties } from "@/lib/medewerker/uren";
+import { isVerdiend } from "@/lib/medewerker/uren-regels";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get("medewerker_session");
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const { verifyMedewerkerSession } = await import("@/lib/session");
-    const medewerker = await verifyMedewerkerSession(session.value);
+    const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = nlVandaag();
 
     // Volgende shift
     const { data: volgendeDiensten } = await supabaseAdmin
       .from("dienst_aanmeldingen")
       .select("dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie)")
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "geaccepteerd")
+      .in("status", [...INGEPLAND_STATUSSEN])
       .order("created_at", { ascending: true })
       .limit(100);
 
@@ -34,17 +33,15 @@ export async function GET() {
       .from("dienst_aanbiedingen")
       .select("id", { count: "exact", head: true })
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "verstuurd");
+      .eq("status", "aangeboden");
 
     // Verlopen documenten (within 30 days)
-    const dertigDagenVoorruit = new Date();
-    dertigDagenVoorruit.setDate(dertigDagenVoorruit.getDate() + 30);
     const { count: verlopenDocumenten } = await supabaseAdmin
       .from("medewerker_documenten")
       .select("id", { count: "exact", head: true })
       .eq("medewerker_id", medewerker.id)
       .not("expiry_date", "is", null)
-      .lte("expiry_date", dertigDagenVoorruit.toISOString().split("T")[0]);
+      .lte("expiry_date", plusDagen(today, 30));
 
     // Ongelezen berichten
     const { count: ongelezen } = await supabaseAdmin
@@ -54,22 +51,16 @@ export async function GET() {
       .eq("aan_type", "medewerker")
       .eq("gelezen", false);
 
-    // Totaal diensten en uren
+    // Totaal diensten en uren (zelfde definities als dashboard/Uren; filter via de aanmelding)
     const { data: stats } = await supabaseAdmin
       .from("dienst_aanmeldingen")
       .select("id")
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "geaccepteerd")
+      .in("status", [...INGEPLAND_STATUSSEN])
       .limit(500);
 
-    const { data: urenData } = await supabaseAdmin
-      .from("uren_registraties")
-      .select("gewerkte_uren, aanmelding:dienst_aanmeldingen!inner(medewerker_id)")
-      .eq("status", "goedgekeurd")
-      .eq("aanmelding.medewerker_id", medewerker.id)
-      .limit(500);
-
-    const totaalUren = (urenData || []).reduce((sum, u) => sum + (u.gewerkte_uren || 0), 0);
+    const registraties = await haalUrenRegistraties(medewerker.id);
+    const totaalUren = registraties.filter((u) => isVerdiend(u.status)).reduce((sum, u) => sum + (u.gewerkte_uren || 0), 0);
 
     return NextResponse.json({
       volgendeShift,

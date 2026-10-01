@@ -5,6 +5,7 @@ import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-lim
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { hashToken } from "@/lib/token-hash";
+import { revokeSessions } from "@/lib/portal-auth";
 
 async function findValidMedewerkerResetToken(token: string) {
   const { data: medewerker } = await supabaseAdmin
@@ -82,6 +83,13 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: "Wachtwoord resetten mislukt" }, { status: 500 });
+    }
+
+    // Wie zijn wachtwoord reset (bv. omdat het gelekt is) wil dat bestaande sessies stoppen.
+    try {
+      await revokeSessions("medewerkers", medewerker.id);
+    } catch (revokeError) {
+      captureRouteError(revokeError, { route: "/api/medewerker/wachtwoord-reset", action: "REVOKE" });
     }
 
     return NextResponse.json({ success: true });
