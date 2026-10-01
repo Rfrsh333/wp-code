@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSessieInclGepauzeerd } from "@/lib/medewerker/sessie-boete";
 import { createMollieClient } from "@mollie/api-client";
 
 function getMollieClient() {
@@ -16,16 +16,10 @@ const getBaseUrl = () =>
   process.env.NEXT_PUBLIC_BASE_URL ||
   "https://www.toptalentjobs.nl";
 
-export async function POST() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function POST(request: NextRequest) {
+  // Gepauzeerde medewerkers moeten hun boete juist kunnen zien en betalen.
+  const medewerker = await getMedewerkerSessieInclGepauzeerd(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Haal open boete op
   const { data: boete } = await supabaseAdmin

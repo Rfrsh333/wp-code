@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { data, error } = await supabaseAdmin
       .from("medewerker_documenten")
@@ -32,11 +29,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -90,11 +84,8 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

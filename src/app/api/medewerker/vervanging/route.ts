@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 
-async function getMedewerker() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return null;
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  return verifyMedewerkerSession(session.value);
-}
 
 // POST — initieer vervangingsverzoek
 export async function POST(request: NextRequest) {
-  const medewerker = await getMedewerker();
+  const medewerker = await getMedewerkerSession(request);
   if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { dienst_id } = await request.json();
@@ -75,7 +68,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH — originele medewerker accepteert/weigert vervanger
 export async function PATCH(request: NextRequest) {
-  const medewerker = await getMedewerker();
+  const medewerker = await getMedewerkerSession(request);
   if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { vervanging_id, actie, vervanger_aanmelding_id } = await request.json();

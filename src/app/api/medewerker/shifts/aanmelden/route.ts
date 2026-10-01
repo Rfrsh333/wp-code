@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify medewerker session via signed JWT
-    const cookieStore = await cookies();
-    const session = cookieStore.get("medewerker_session");
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const { verifyMedewerkerSession } = await import("@/lib/session");
-    const medewerker = await verifyMedewerkerSession(session.value);
-    if (!medewerker) {
-      console.warn("[SECURITY] Invalid medewerker session token on shifts/aanmelden");
-      return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { dienst_id } = await request.json();
 

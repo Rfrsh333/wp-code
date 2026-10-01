@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
-import { verifyMedewerkerSession, verifyKlantSession } from "@/lib/session";
+import { getKlantSession, getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 /**
@@ -9,28 +8,24 @@ import { captureRouteError } from "@/lib/sentry-utils";
  * DELETE - Push subscription verwijderen
  */
 
-async function getAuthenticatedUser(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  // Probeer medewerker session
-  const medewerkerSession = cookieStore.get("medewerker_session");
-  if (medewerkerSession) {
-    const medewerker = await verifyMedewerkerSession(medewerkerSession.value);
-    if (medewerker) return { id: medewerker.id, type: "medewerker" as const };
-  }
+/**
+ * Medewerker eerst (cookie óf Bearer, met statuscheck en sessie-intrekking), daarna klant.
+ * Voorheen werd alleen de JWT gecontroleerd, waardoor een gedeactiveerd account nog
+ * pushabonnementen kon registreren.
+ */
+async function getAuthenticatedUser(request: NextRequest) {
+  const medewerker = await getMedewerkerSession(request);
+  if (medewerker) return { id: medewerker.id, type: "medewerker" as const };
 
-  // Probeer klant session
-  const klantSession = cookieStore.get("klant_session");
-  if (klantSession) {
-    const klant = await verifyKlantSession(klantSession.value);
-    if (klant) return { id: klant.id, type: "klant" as const };
-  }
+  const klant = await getKlantSession(request);
+  if (klant) return { id: klant.id, type: "klant" as const };
 
   return null;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const user = await getAuthenticatedUser(cookieStore);
+    const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -72,8 +67,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const user = await getAuthenticatedUser(cookieStore);
+    const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -89,6 +83,7 @@ export async function DELETE(request: NextRequest) {
       .from("push_subscriptions")
       .delete()
       .eq("user_id", user.id)
+      .eq("user_type", user.type)
       .eq("endpoint", endpoint);
 
     if (error) {

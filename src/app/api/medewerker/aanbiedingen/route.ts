@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { sendShiftReactieEmail } from "@/lib/notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    console.warn("[SECURITY] Invalid medewerker session token");
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data } = await supabaseAdmin
     .from("dienst_aanbiedingen")
@@ -27,15 +19,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, status } = await request.json();
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
@@ -31,17 +31,8 @@ type UrenAanpassing = {
 };
 
 export async function GET(request: NextRequest) {
-  // KRITIEK: Verify signed JWT instead of trusting JSON
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    console.warn("[SECURITY] Invalid medewerker session token");
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Parse filter params
   const { searchParams } = new URL(request.url);
@@ -309,17 +300,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // KRITIEK: Verify signed JWT instead of trusting JSON
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    console.warn("[SECURITY] Invalid medewerker session token");
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
 
   if (action === "aanmelden") {

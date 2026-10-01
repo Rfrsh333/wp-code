@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -12,11 +12,8 @@ function generateCode(): string {
 }
 
 export async function GET(request: NextRequest) {
-  const sessionCookie = request.cookies.get("medewerker_session");
-  if (!sessionCookie) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-  if (!medewerker) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Haal bestaande referral code op of maak nieuwe
   const { data: existing } = await supabaseAdmin

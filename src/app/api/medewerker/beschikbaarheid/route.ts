@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
-
-async function getMedewerker() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return null;
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  return verifyMedewerkerSession(session.value);
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const medewerker = await getMedewerker();
+    const medewerker = await getMedewerkerSession(request);
     if (!medewerker) {
       console.warn("[SECURITY] Invalid medewerker session token");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -42,7 +34,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const medewerker = await getMedewerker();
+    const medewerker = await getMedewerkerSession(request);
     if (!medewerker) {
       console.warn("[SECURITY] Invalid medewerker session token");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -88,7 +80,7 @@ export async function GET(request: NextRequest) {
 // PUT: upsert week override
 export async function PUT(request: NextRequest) {
   try {
-    const medewerker = await getMedewerker();
+    const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { week_start, beschikbaarheid, notitie } = await request.json();
@@ -126,7 +118,7 @@ export async function PUT(request: NextRequest) {
 // DELETE: remove week override
 export async function DELETE(request: NextRequest) {
   try {
-    const medewerker = await getMedewerker();
+    const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const weekStart = request.nextUrl.searchParams.get("week_start");
