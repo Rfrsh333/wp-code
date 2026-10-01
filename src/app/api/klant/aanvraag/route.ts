@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
@@ -77,12 +77,14 @@ async function nodigFavorietenUit(
     }
     uitgenodigd++;
 
-    sendPushToUser(med.id, "medewerker", {
-      title: "Je bent uitgenodigd voor een dienst",
-      body: omschrijving,
-      url: "/medewerker/diensten/",
-      tag: `uitnodiging-${dienstId}`,
-    }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH_UITNODIGING" }));
+    after(() =>
+      sendPushToUser(med.id, "medewerker", {
+        title: "Je bent uitgenodigd voor een dienst",
+        body: omschrijving,
+        url: "/medewerker/diensten/",
+        tag: `uitnodiging-${dienstId}`,
+      }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH_UITNODIGING" })),
+    );
   }
 
   return { uitgenodigd, overgeslagen };
@@ -233,20 +235,24 @@ export async function POST(request: NextRequest) {
     const uitnodigingen = await nodigFavorietenUit(klantData.id, favorietIds, diensten || [], omschrijving);
 
     // Telegram notification (geen PII — AVG compliance)
-    sendTelegramAlert(
-      `<b>🆕 Nieuwe personeelsaanvraag</b>\n` +
-      `👥 ${totaalPersoneel} personen op ${datum}\n` +
-      `🕐 ${start_tijd} - ${eind_tijd}\n` +
-      `📋 ${diensten?.length || 1} diensten — bekijk in dashboard`
-    ).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "TELEGRAM" }));
+    after(() =>
+      sendTelegramAlert(
+        `<b>🆕 Nieuwe personeelsaanvraag</b>\n` +
+        `👥 ${totaalPersoneel} personen op ${datum}\n` +
+        `🕐 ${start_tijd} - ${eind_tijd}\n` +
+        `📋 ${diensten?.length || 1} diensten — bekijk in dashboard`
+      ).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "TELEGRAM" })),
+    );
 
     // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar
-    sendPushToAllOfType("medewerker", {
-      title: "Nieuwe dienst beschikbaar!",
-      body: omschrijving,
-      url: "/medewerker/diensten/",
-      tag: `nieuwe-dienst-${datum}`,
-    }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" }));
+    after(() =>
+      sendPushToAllOfType("medewerker", {
+        title: "Nieuwe dienst beschikbaar!",
+        body: omschrijving,
+        url: "/medewerker/diensten/",
+        tag: `nieuwe-dienst-${datum}`,
+      }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
+    );
 
     return NextResponse.json({
       success: true,

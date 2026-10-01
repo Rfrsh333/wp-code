@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
@@ -76,12 +76,14 @@ export async function POST(request: NextRequest) {
     .select("medewerker_id");
   await herberekenPlekken(dienst_id);
   for (const a of vervallen || []) {
-    sendPushToUser(a.medewerker_id, "medewerker", {
-      title: "Dienst geannuleerd",
-      body: `De dienst ${dienst.functie || ""} op ${dienst.datum} is door de opdrachtgever geannuleerd.`,
-      url: "/medewerker/diensten/",
-      tag: `dienst-geannuleerd-${dienst_id}`,
-    }).catch((e) => captureRouteError(e, { route: "/api/klant/annuleren", action: "PUSH" }));
+    after(() =>
+      sendPushToUser(a.medewerker_id, "medewerker", {
+        title: "Dienst geannuleerd",
+        body: `De dienst ${dienst.functie || ""} op ${dienst.datum} is door de opdrachtgever geannuleerd.`,
+        url: "/medewerker/diensten/",
+        tag: `dienst-geannuleerd-${dienst_id}`,
+      }).catch((e) => captureRouteError(e, { route: "/api/klant/annuleren", action: "PUSH" })),
+    );
   }
   
   const { data: ann } = await supabaseAdmin.from("dienst_annuleringen").insert({

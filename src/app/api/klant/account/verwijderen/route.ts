@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
@@ -149,8 +149,10 @@ export async function POST(request: NextRequest) {
     cookieStore.delete("klant_session");
 
     // Telegram (geen PII — AVG)
-    sendTelegramAlert(`<b>Klantaccount verwijderd</b>\nEen klant heeft zijn account verwijderd via het portaal — bekijk in dashboard`)
-      .catch((e) => captureRouteError(e, { route: "/api/klant/account/verwijderen", action: "TELEGRAM" }));
+    after(() =>
+      sendTelegramAlert(`<b>Klantaccount verwijderd</b>\nEen klant heeft zijn account verwijderd via het portaal — bekijk in dashboard`)
+        .catch((e) => captureRouteError(e, { route: "/api/klant/account/verwijderen", action: "TELEGRAM" })),
+    );
 
     return NextResponse.json({ success: true, facturen_bewaard: aantalFacturen || 0 });
   } catch (error) {

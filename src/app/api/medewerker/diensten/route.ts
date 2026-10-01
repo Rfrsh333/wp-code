@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
@@ -323,12 +323,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (dienstDetails?.klant_id) {
-      sendPushToUser(dienstDetails.klant_id, "klant", {
-        title: "Nieuwe aanmelding!",
-        body: `${mwNaam?.voornaam || "Een medewerker"} heeft zich aangemeld voor ${dienstDetails.functie || "dienst"} op ${dienstDetails.datum}`,
-        url: "/klant/uren/",
-        tag: `aanmelding-${dienst_id}`,
-      }).catch((e) => captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" }));
+      after(() =>
+        sendPushToUser(dienstDetails.klant_id, "klant", {
+          title: "Nieuwe aanmelding!",
+          body: `${mwNaam?.voornaam || "Een medewerker"} heeft zich aangemeld voor ${dienstDetails.functie || "dienst"} op ${dienstDetails.datum}`,
+          url: "/klant/uren/",
+          tag: `aanmelding-${dienst_id}`,
+        }).catch((e) => captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" })),
+      );
     }
     return NextResponse.json({ success: true });
   }
