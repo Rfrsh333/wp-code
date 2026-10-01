@@ -447,6 +447,46 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
     );
   };
 
+  // Dienst annuleren via /api/klant/annuleren (boete volgens het annuleringsbeleid van de klant).
+  const [annulerenBezig, setAnnulerenBezig] = useState<string | null>(null);
+  const annuleerDienst = async (dienst: UpcomingDienst) => {
+    let beleidTekst = "";
+    try {
+      const res = await fetch("/api/klant/annuleren");
+      const b = (await res.json())?.beleid;
+      if (b?.uren_van_tevoren_min) {
+        beleidTekst = `\n\nLet op: bij annuleren binnen ${b.uren_van_tevoren_min} uur voor aanvang kan een annuleringsvergoeding in rekening worden gebracht.`;
+      }
+    } catch {
+      // beleid tonen is informatief; annuleren kan ook zonder
+    }
+    const reden = window.prompt(
+      `Dienst ${dienst.functie} op ${formatDateLong(dienst.datum)} annuleren? Ingeplande medewerkers krijgen bericht.${beleidTekst}\n\nReden (optioneel):`,
+      ""
+    );
+    if (reden === null) return;
+    setAnnulerenBezig(dienst.id);
+    try {
+      const res = await fetch("/api/klant/annuleren", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dienst_id: dienst.id, reden: reden.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Annuleren mislukt");
+      toast.success(data.boete_toegepast && data.boete_bedrag > 0
+        ? `Dienst geannuleerd. Annuleringsvergoeding: € ${Number(data.boete_bedrag).toFixed(2)} (excl. btw)`
+        : "Dienst geannuleerd");
+      queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
+      queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: klantKeys.facturen() });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Annuleren mislukt");
+    } finally {
+      setAnnulerenBezig(null);
+    }
+  };
+
   const formatDate = (d: string) => new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
   const formatDateLong = (d: string) => new Date(d).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
   const formatCurrency = (value: number) => `EUR ${value.toFixed(2)}`;
@@ -871,6 +911,13 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
                                   Heropenen
                                 </button>
                               )}
+                              <button
+                                onClick={() => annuleerDienst(dienst)}
+                                disabled={annulerenBezig === dienst.id}
+                                className="rounded-full px-2.5 py-1 text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 transition disabled:opacity-50"
+                              >
+                                {annulerenBezig === dienst.id ? "..." : "Annuleren"}
+                              </button>
                             </div>
                           </div>
                           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-600">

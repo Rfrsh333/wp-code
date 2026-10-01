@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        // claude-3-5-sonnet-20241022 is uitgefaseerd (requests faalden).
+        model: "claude-sonnet-5-5",
         max_tokens: 1024,
         messages: [{
           role: "user",
@@ -65,8 +66,13 @@ Return format:
     }
 
     const data = await response.json();
-    const aiText = data.content[0].text;
-    const parsed = JSON.parse(aiText);
+    // Bij nieuwere modellen kan de eerste content-block een (lege) thinking-block zijn:
+    // zoek het tekstblok i.p.v. blind content[0].text te lezen. Weigering = geen offerte.
+    if (data.stop_reason === "refusal") throw new Error("AI weigerde de aanvraag");
+    const aiText: string = (data.content || []).find((b: { type?: string }) => b.type === "text")?.text ?? "";
+    // Model zet JSON soms in een ```json-blok; pak het eerste {...}-object.
+    const jsonTekst = aiText.slice(aiText.indexOf("{"), aiText.lastIndexOf("}") + 1);
+    const parsed = JSON.parse(jsonTekst);
 
     const uurtarief = parsed.uurtarief_suggestie || 14;
     const uren = parsed.uren_geschat || 6;
