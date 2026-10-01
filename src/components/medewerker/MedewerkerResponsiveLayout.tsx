@@ -20,6 +20,9 @@ export default function MedewerkerResponsiveLayout({
 }: MedewerkerResponsiveLayoutProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [accountGepauzeerd, setAccountGepauzeerd] = useState(false);
+  const [openBoete, setOpenBoete] = useState<{ bedrag: number; reden: string | null } | null>(null);
+  const [betalen, setBetalen] = useState(false);
+  const [betaalFout, setBetaalFout] = useState("");
 
   const checkAccountStatus = async () => {
     try {
@@ -27,9 +30,30 @@ export default function MedewerkerResponsiveLayout({
       if (res.ok) {
         const data = await res.json();
         setAccountGepauzeerd(data.gepauzeerd || false);
+        setOpenBoete(data.openstaande_boete ?? null);
       }
     } catch (err) {
       console.error("Check status error:", err);
+    }
+  };
+
+  // Boete betalen via de bestaande Mollie-route; na betaling heft de webhook de pauze op.
+  const betaalBoete = async () => {
+    setBetalen(true);
+    setBetaalFout("");
+    try {
+      const res = await fetch("/api/medewerker/betaal-boete", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.checkoutUrl) {
+        setBetaalFout(data.error || "Betaling starten mislukt. Neem contact op met TopTalent.");
+        return;
+      }
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      console.error("Boete betalen error:", err);
+      setBetaalFout("Betaling starten mislukt. Neem contact op met TopTalent.");
+    } finally {
+      setBetalen(false);
     }
   };
 
@@ -66,9 +90,21 @@ export default function MedewerkerResponsiveLayout({
               <div className="flex-1 text-sm">
                 <strong className="font-semibold">Account gepauzeerd</strong>
                 <p className="text-white/90 mt-0.5">
-                  Je account is tijdelijk gepauzeerd. Neem contact op met TopTalent voor meer informatie.
+                  {openBoete
+                    ? `Je account is gepauzeerd vanwege een openstaande boete van €${openBoete.bedrag.toFixed(2)}${openBoete.reden ? ` (${openBoete.reden})` : ""}.`
+                    : "Je account is tijdelijk gepauzeerd. Neem contact op met TopTalent voor meer informatie."}
                 </p>
+                {betaalFout && <p className="text-white mt-1 font-medium">{betaalFout}</p>}
               </div>
+              {openBoete && (
+                <button
+                  onClick={betaalBoete}
+                  disabled={betalen}
+                  className="flex-shrink-0 px-3 py-2 rounded-lg bg-white text-red-600 text-sm font-semibold disabled:opacity-60"
+                >
+                  {betalen ? "Bezig..." : "Boete betalen"}
+                </button>
+              )}
             </div>
           )}
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSessieInclGepauzeerd } from "@/lib/medewerker/sessie-boete";
 import { createMollieClient } from "@mollie/api-client";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 function getMollieClient() {
   if (!process.env.MOLLIE_API_KEY) {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     .eq("status", "openstaand")
     .order("created_at", { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!boete) {
     return NextResponse.json({ error: "Geen openstaande boete gevonden" }, { status: 404 });
@@ -38,20 +39,26 @@ export async function POST(request: NextRequest) {
   const baseUrl = getBaseUrl();
 
   // Maak Mollie betaling aan
-  const mollie = getMollieClient();
-  const payment = await mollie.payments.create({
-    amount: {
-      currency: "EUR",
-      value: Number(boete.bedrag).toFixed(2),
-    },
-    description: `TopTalentJobs — Boete #${boete.id.slice(0, 8)}`,
-    redirectUrl: `${baseUrl}/medewerker/dashboard?betaling=succes`,
-    webhookUrl: `${baseUrl}/api/webhooks/mollie`,
-    metadata: {
-      boete_id: boete.id,
-      medewerker_id: medewerker.id,
-    },
-  });
+  let payment;
+  try {
+    const mollie = getMollieClient();
+    payment = await mollie.payments.create({
+      amount: {
+        currency: "EUR",
+        value: Number(boete.bedrag).toFixed(2),
+      },
+      description: `TopTalentJobs — Boete #${boete.id.slice(0, 8)}`,
+      redirectUrl: `${baseUrl}/medewerker/dashboard?betaling=succes`,
+      webhookUrl: `${baseUrl}/api/webhooks/mollie`,
+      metadata: {
+        boete_id: boete.id,
+        medewerker_id: medewerker.id,
+      },
+    });
+  } catch (error) {
+    captureRouteError(error, { route: "/api/medewerker/betaal-boete", action: "MOLLIE" });
+    return NextResponse.json({ error: "Betaling starten mislukt. Probeer het later opnieuw." }, { status: 502 });
+  }
 
   // Sla Mollie payment ID en checkout URL op
   await supabaseAdmin
