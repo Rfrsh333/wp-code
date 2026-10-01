@@ -7,6 +7,7 @@ import {
   HERACTIVEERBAAR,
   heeftVrijePlek,
   inzetbaarheidsMelding,
+  kiesTeHoudenAanmelding,
   KRITIEKE_DOCUMENTEN,
   urenTotDienststart,
   VRIJ_AFMELDBAAR,
@@ -140,6 +141,22 @@ export async function meldAan(
     if (error?.code === "23505") return { ok: false, status: 409, error: "Je bent al aangemeld voor deze dienst" };
     if (error || !data) return { ok: false, status: 500, error: "Aanmelden mislukt" };
     aanmeldingId = data.id;
+
+    // Zonder unieke index (migratie 20261001_portaal_sessies.sql niet gedraaid of geblokkeerd door
+    // bestaande dubbelen) kunnen twee gelijktijdige aanmeldingen allebei een rij invoegen. Alle
+    // aanvragen kiezen dezelfde rij om te houden (oudste op aangemeld_at, dan id); wie niet die
+    // rij is, verwijdert zijn eigen insert weer.
+    const { data: rijenNa } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id, aangemeld_at")
+      .eq("dienst_id", dienstId)
+      .eq("medewerker_id", medewerkerId);
+    const houden = kiesTeHoudenAanmelding((rijenNa ?? []) as { id: string; aangemeld_at: string | null }[]);
+    if (houden && houden !== aanmeldingId) {
+      await supabaseAdmin.from("dienst_aanmeldingen").delete().eq("id", aanmeldingId);
+      await werkBezettingBij(dienstId);
+      return { ok: false, status: 409, error: "Je bent al aangemeld voor deze dienst" };
+    }
   }
 
   // Ingepland boven capaciteit (gelijktijdige acceptatie)? Terugdraaien.

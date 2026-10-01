@@ -21,6 +21,9 @@ export async function POST(request: NextRequest) {
       .eq("dienst_id", dienst_id)
       .eq("medewerker_id", medewerker.id)
       .eq("status", "uitgenodigd")
+      // Zonder unieke index kunnen er dubbele rijen zijn: neem de nieuwste i.p.v. te falen.
+      .order("aangemeld_at", { ascending: false, nullsFirst: false })
+      .limit(1)
       .maybeSingle();
 
     if (aanmeldError || !aanmelding) {

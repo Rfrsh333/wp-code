@@ -454,6 +454,7 @@ export async function POST(request: NextRequest) {
       .eq("dienst_id", vervangingAanmelding.dienst_id)
       .eq("medewerker_id", medewerker.id)
       .eq("status", "vervanging_gezocht")
+      .limit(1)
       .maybeSingle();
 
     if (!origCheck) {

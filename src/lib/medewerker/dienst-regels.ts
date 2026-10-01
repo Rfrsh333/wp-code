@@ -115,3 +115,19 @@ export function telVerlopendeDocumenten(
 ): number {
   return nieuwstePerType(documenten).filter((d) => !!d.expiry_date && d.expiry_date <= grens).length;
 }
+
+/**
+ * Bij dubbele aanmeldingen (zelfde dienst + medewerker) de rij die blijft: de oudste op
+ * aangemeld_at (rijen zonder datum achteraan), bij gelijke tijd de laagste id. Deterministisch,
+ * zodat gelijktijdige aanvragen dezelfde keuze maken. null bij een lege lijst.
+ */
+export function kiesTeHoudenAanmelding(rijen: readonly { id: string; aangemeld_at?: string | null }[]): string | null {
+  if (rijen.length === 0) return null;
+  const gesorteerd = [...rijen].sort((a, b) => {
+    const ta = a.aangemeld_at ?? "\uffff";
+    const tb = b.aangemeld_at ?? "\uffff";
+    if (ta !== tb) return ta < tb ? -1 : 1;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+  return gesorteerd[0].id;
+}

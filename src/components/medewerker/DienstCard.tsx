@@ -2,7 +2,7 @@
 
 import { MapPin, Clock, Euro, Calendar, Check, X, Briefcase, FileText, Car } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface DienstCardProps {
@@ -30,6 +30,7 @@ interface DienstCardProps {
 export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps) {
   const [accepting, setAccepting] = useState(false);
   const [declining, setDeclining] = useState(false);
+  const verzoekLoopt = useRef(false);
   const [showDetail, setShowDetail] = useState(false);
   const [showUrenForm, setShowUrenForm] = useState(false);
   const [submittingUren, setSubmittingUren] = useState(false);
@@ -84,6 +85,9 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   const verdiensten = parseFloat(uren) * medewerkerUurtarief;
 
   const handleAccept = async () => {
+    // Ref-guard: een dubbelklik komt vóór de re-render (disabled) binnen.
+    if (verzoekLoopt.current) return;
+    verzoekLoopt.current = true;
     setAccepting(true);
     try {
       const res = await fetch("/api/medewerker/diensten/accept", {
@@ -104,11 +108,14 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
       console.error("Accept error:", err);
       toast.error("Er ging iets mis");
     } finally {
+      verzoekLoopt.current = false;
       setAccepting(false);
     }
   };
 
   const handleDecline = async () => {
+    if (verzoekLoopt.current) return;
+    verzoekLoopt.current = true;
     setDeclining(true);
     try {
       const res = await fetch("/api/medewerker/diensten/decline", {
@@ -129,6 +136,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
       console.error("Decline error:", err);
       toast.error("Er ging iets mis");
     } finally {
+      verzoekLoopt.current = false;
       setDeclining(false);
     }
   };
@@ -303,7 +311,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
             <div className="flex gap-2">
               <button
                 onClick={handleDecline}
-                disabled={declining}
+                disabled={declining || accepting}
                 className="flex-1 py-2.5 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {declining ? (
@@ -317,7 +325,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
               </button>
               <button
                 onClick={handleAccept}
-                disabled={accepting}
+                disabled={accepting || declining}
                 className="flex-1 py-2.5 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-xs transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)] disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {accepting ? (

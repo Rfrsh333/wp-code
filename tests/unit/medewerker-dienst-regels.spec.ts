@@ -3,6 +3,7 @@ import {
   annuleerUitkomst,
   heeftVrijePlek,
   inzetbaarheidsMelding,
+  kiesTeHoudenAanmelding,
   nieuwstePerType,
   plekkenTotaal,
   telVerlopendeDocumenten,
@@ -100,5 +101,23 @@ test.describe("medewerker dienst-regels", () => {
         grens,
       ),
     ).toBe(1);
+  });
+
+  test("kiesTeHoudenAanmelding: oudste aangemeld_at, dan laagste id; deterministisch", () => {
+    expect(kiesTeHoudenAanmelding([])).toBeNull();
+    const rijen = [
+      { id: "b", aangemeld_at: "2026-10-01T10:00:00.200Z" },
+      { id: "a", aangemeld_at: "2026-10-01T10:00:00.100Z" },
+      { id: "c", aangemeld_at: null },
+    ];
+    expect(kiesTeHoudenAanmelding(rijen)).toBe("a");
+    expect(kiesTeHoudenAanmelding([...rijen].reverse())).toBe("a");
+    expect(
+      kiesTeHoudenAanmelding([
+        { id: "y", aangemeld_at: "2026-10-01T10:00:00Z" },
+        { id: "x", aangemeld_at: "2026-10-01T10:00:00Z" },
+      ]),
+    ).toBe("x");
+    expect(kiesTeHoudenAanmelding([{ id: "z", aangemeld_at: null }, { id: "q" }])).toBe("q");
   });
 });
