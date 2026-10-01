@@ -23,6 +23,7 @@ import { usePlatformOptions } from "@/hooks/queries/usePlatformOptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseCheckinQr } from "@/lib/checkin-qr";
 import { isIngepland } from "@/lib/dienst-status";
+import { valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
 
 interface Klant {
   id: string;
@@ -45,6 +46,11 @@ interface UrenRegistratie {
   dienst_datum: string;
   dienst_locatie: string;
   uurtarief: number;
+  klant_start_tijd?: string | null;
+  klant_eind_tijd?: string | null;
+  klant_pauze_minuten?: number | null;
+  klant_gewerkte_uren?: number | null;
+  klant_opmerking?: string | null;
 }
 
 interface AanpassingModal {
@@ -193,7 +199,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const dienstenMutation = useDienstenAction();
 
   // Derived state from React Query
-  const uren: UrenRegistratie[] = urenData?.uren ?? [];
+  // Openstaand = ingediend, door u aangepast of door u goedgekeurd (nog te factureren); altijd volledig.
+  const uren: UrenRegistratie[] = urenData?.openstaand ?? urenData?.uren ?? [];
   const teBeoordeelen: TeBeoordelen[] = beoorData?.teBeoordeelen ?? [];
   const dashboardStats: DashboardStats | null = dashboardData?.stats ?? null;
   const upcomingDiensten: UpcomingDienst[] = dashboardData?.upcomingDiensten ?? [];
@@ -283,7 +290,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   };
 
   const submitApproval = async () => {
-    if (!approveModal.uren) return;
+    if (!approveModal.uren || urenAction.isPending) return;
     urenAction.mutate(
       {
         action: "approve",
@@ -301,18 +308,20 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           toast.success("Uren goedgekeurd");
           setApproveModal({ open: false, uren: null, score_punctualiteit: 5, score_functie: 5 });
         },
-        onError: () => toast.error("Goedkeuren mislukt"),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Goedkeuren mislukt"),
       }
     );
   };
 
   const openAanpassingModal = (u: UrenRegistratie) => {
+    // Al eerder aangepast? Dan starten vanaf uw eigen voorstel.
+    const eerder = u.status === "klant_aangepast" && u.klant_start_tijd;
     setModal({
       open: true,
       uren: u,
-      startTijd: u.start_tijd?.slice(0, 5) || "",
-      eindTijd: u.eind_tijd?.slice(0, 5) || "",
-      pauzeMinuten: String(u.pauze_minuten || 0),
+      startTijd: (eerder ? u.klant_start_tijd : u.start_tijd)?.slice(0, 5) || "",
+      eindTijd: (eerder ? u.klant_eind_tijd : u.eind_tijd)?.slice(0, 5) || "",
+      pauzeMinuten: String((eerder ? u.klant_pauze_minuten : u.pauze_minuten) || 0),
       reiskostenKm: String(u.reiskosten_km || 0),
       opmerking: "",
     });
@@ -321,10 +330,16 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   const submitAanpassing = async () => {
     if (!modal.uren) return;
 
-    const [startH, startM] = modal.startTijd.split(":").map(Number);
-    const [eindH, eindM] = modal.eindTijd.split(":").map(Number);
-    const pauze = parseInt(modal.pauzeMinuten) || 0;
-    const gewerkteUren = Math.max(0, ((eindH * 60 + eindM) - (startH * 60 + startM) - pauze) / 60);
+    // Zelfde validatie als de server (nachtdienst over middernacht telt gewoon mee).
+    const check = valideerUrenAanpassing({
+      startTijd: modal.startTijd,
+      eindTijd: modal.eindTijd,
+      pauzeMinuten: modal.pauzeMinuten,
+    });
+    if (!check.ok) {
+      toast.error(check.error);
+      return;
+    }
     const reiskostenKm = Math.max(0, Number(modal.reiskostenKm) || 0);
 
     urenAction.mutate(
@@ -332,10 +347,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
         action: "adjust",
         id: modal.uren.id,
         data: {
-          startTijd: modal.startTijd,
-          eindTijd: modal.eindTijd,
-          pauzeMinuten: pauze,
-          gewerkteUren: Math.round(gewerkteUren * 100) / 100,
+          startTijd: check.startTijd,
+          eindTijd: check.eindTijd,
+          pauzeMinuten: check.pauzeMinuten,
           reiskostenKm,
           opmerking: modal.opmerking,
         },
@@ -349,7 +363,7 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
           toast.success("Aanpassing verstuurd");
           setModal({ open: false, uren: null, startTijd: "", eindTijd: "", pauzeMinuten: "0", reiskostenKm: "0", opmerking: "" });
         },
-        onError: () => toast.error("Aanpassing versturen mislukt"),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Aanpassing versturen mislukt"),
       }
     );
   };
@@ -430,7 +444,8 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
   );
 
   const pending = gefilterdeUren.filter(u => u.status === "ingediend");
-  const approved = gefilterdeUren.filter(u => ["klant_goedgekeurd", "goedgekeurd"].includes(u.status));
+  const aangepast = gefilterdeUren.filter(u => u.status === "klant_aangepast");
+  const approved = gefilterdeUren.filter(u => u.status === "klant_goedgekeurd");
 
   const tabs: KlantTab[] = [
     {
@@ -705,18 +720,11 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                   onSearch={setUrenZoek}
                 />
 
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => {}} className="rounded-xl bg-[#F27501] px-4 py-2 font-medium text-white">
-                    Te beoordelen ({pending.length})
-                  </button>
-                  <button onClick={() => {}} className="rounded-xl bg-neutral-100 px-4 py-2 font-medium text-neutral-600">
-                    Goedgekeurd ({approved.length})
-                  </button>
-                </div>
-
                 <UrenSubTabs
                   pending={pending}
+                  aangepast={aangepast}
                   approved={approved}
+                  zoekterm={urenZoek}
                   onApprove={approveUren}
                   onAdjust={openAanpassingModal}
                   formatDate={formatDate}
@@ -1224,9 +1232,17 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Pauze (minuten)</label>
-                <input type="number" value={modal.pauzeMinuten}
+                <input type="number" value={modal.pauzeMinuten} min="0" step="1"
                   onChange={(e) => setModal({ ...modal, pauzeMinuten: e.target.value })}
                   className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+                {(() => {
+                  const check = valideerUrenAanpassing({ startTijd: modal.startTijd, eindTijd: modal.eindTijd, pauzeMinuten: modal.pauzeMinuten });
+                  return check.ok ? (
+                    <p className="mt-1 text-xs text-neutral-500">= {check.uren} uur</p>
+                  ) : (
+                    <p className="mt-1 text-xs text-red-600">{check.error}</p>
+                  );
+                })()}
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Reiskosten (km)</label>
@@ -1254,9 +1270,9 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
                 className="flex-1 px-4 py-2 border border-neutral-200 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition">
                 Annuleren
               </button>
-              <button onClick={submitAanpassing}
-                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition">
-                Versturen
+              <button onClick={submitAanpassing} disabled={urenAction.isPending}
+                className="flex-1 px-4 py-2 bg-[#F27501] text-white rounded-xl font-medium hover:bg-[#d96800] transition disabled:opacity-50">
+                {urenAction.isPending ? "Versturen..." : "Versturen"}
               </button>
             </div>
           </div>
@@ -1332,9 +1348,10 @@ export default function KlantUrenClient({ klant }: { klant: Klant }) {
               </button>
               <button
                 onClick={submitApproval}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition"
+                disabled={urenAction.isPending}
+                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition disabled:opacity-50"
               >
-                Goedkeuren
+                {urenAction.isPending ? "Bezig..." : "Goedkeuren"}
               </button>
             </div>
           </div>
@@ -2696,36 +2713,61 @@ function KostenTab() {
    ============================================================ */
 function UrenSubTabs({
   pending,
+  aangepast,
   approved,
+  zoekterm,
   onApprove,
   onAdjust,
   formatDate,
   formatCurrency,
-  statusTone: _statusTone,
 }: {
   pending: UrenRegistratie[];
+  aangepast: UrenRegistratie[];
   approved: UrenRegistratie[];
+  zoekterm: string;
   onApprove: (u: UrenRegistratie) => void;
   onAdjust: (u: UrenRegistratie) => void;
   formatDate: (d: string) => string;
   formatCurrency: (value: number) => string;
   statusTone: Record<string, string>;
 }) {
-  const [subTab, setSubTab] = useState<"pending" | "approved">("pending");
-  const items = subTab === "pending" ? pending : approved;
+  const [subTab, setSubTab] = useState<"pending" | "aangepast" | "approved">("pending");
+  const [historiePagina, setHistoriePagina] = useState(1);
+  // Definitief goedgekeurde/gefactureerde uren komen gepagineerd van de server.
+  const { data: historieData, isFetching: historieLaden } = useKlantUren(historiePagina);
+  const historie: UrenRegistratie[] = (historieData?.historie ?? []).filter((u: UrenRegistratie) =>
+    u.medewerker_naam.toLowerCase().includes(zoekterm.toLowerCase())
+  );
+  const historieTotaal: number = historieData?.historie_totaal ?? 0;
+  const heeftMeer: boolean = !!historieData?.heeft_meer;
+
+  const items = subTab === "pending" ? pending : subTab === "aangepast" ? aangepast : [...approved, ...historie];
+  const statusLabel: Record<string, { label: string; cls: string }> = {
+    klant_goedgekeurd: { label: "Goedgekeurd · nog te factureren", cls: "bg-blue-100 text-blue-700" },
+    goedgekeurd: { label: "Goedgekeurd", cls: "bg-green-100 text-green-700" },
+    gefactureerd: { label: "Gefactureerd", cls: "bg-neutral-200 text-neutral-700" },
+  };
+
+  const subTabKnop = (id: typeof subTab, label: string) => (
+    <button onClick={() => setSubTab(id)}
+      className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === id ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
+      {label}
+    </button>
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <button onClick={() => setSubTab("pending")}
-          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "pending" ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
-          Te beoordelen ({pending.length})
-        </button>
-        <button onClick={() => setSubTab("approved")}
-          className={`rounded-xl px-4 py-2 text-sm font-medium transition ${subTab === "approved" ? "bg-[#1e3a5f] text-white" : "bg-[var(--kp-primary-light)] text-[var(--kp-text-secondary)] hover:bg-[var(--kp-border)]"}`}>
-          Goedgekeurd ({approved.length})
-        </button>
+      <div className="flex flex-wrap gap-2">
+        {subTabKnop("pending", `Te beoordelen (${pending.length})`)}
+        {aangepast.length > 0 && subTabKnop("aangepast", `Aangepast (${aangepast.length})`)}
+        {subTabKnop("approved", `Goedgekeurd (${approved.length + historieTotaal})`)}
       </div>
+
+      {subTab === "aangepast" && (
+        <p className="text-xs text-[var(--kp-text-tertiary)]">
+          Deze uren heeft u aangepast. TopTalent verwerkt uw aanpassing met de medewerker; tot die tijd kunt u uw voorstel nog wijzigen.
+        </p>
+      )}
 
       {items.length === 0 ? (
         <EmptyState
@@ -2734,50 +2776,88 @@ function UrenSubTabs({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          title={subTab === "pending" ? "Geen uren om te beoordelen" : "Nog geen goedgekeurde uren"}
-          description={subTab === "pending" ? "Er zijn momenteel geen openstaande uren die op uw goedkeuring wachten." : "Goedgekeurde uren verschijnen hier zodra u ze heeft beoordeeld."}
+          title={subTab === "pending" ? "Geen uren om te beoordelen" : subTab === "aangepast" ? "Geen aangepaste uren" : "Nog geen goedgekeurde uren"}
+          description={subTab === "pending" ? "Er zijn momenteel geen openstaande uren die op uw goedkeuring wachten." : subTab === "aangepast" ? "Uren die u aanpast verschijnen hier tot TopTalent ze verwerkt heeft." : "Goedgekeurde uren verschijnen hier zodra u ze heeft beoordeeld."}
         />
       ) : (
         <div className="space-y-3">
-          {items.map((u) => (
-            <div key={u.id} className="rounded-2xl border border-[var(--kp-border)] bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold text-[var(--kp-text-primary)]">{u.medewerker_naam}</p>
-                  <p className="text-sm text-[var(--kp-text-secondary)]">{formatDate(u.dienst_datum)}</p>
-                  <p className="text-xs text-[var(--kp-text-tertiary)] mt-0.5">{u.dienst_locatie}</p>
+          {items.map((u) => {
+            const metAanpassing = u.status === "klant_aangepast" && u.klant_gewerkte_uren != null;
+            const uren = metAanpassing ? Number(u.klant_gewerkte_uren) : u.gewerkte_uren;
+            return (
+              <div key={u.id} className="rounded-2xl border border-[var(--kp-border)] bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-semibold text-[var(--kp-text-primary)]">{u.medewerker_naam}</p>
+                    <p className="text-sm text-[var(--kp-text-secondary)]">{u.dienst_datum ? formatDate(u.dienst_datum) : "-"}</p>
+                    <p className="text-xs text-[var(--kp-text-tertiary)] mt-0.5">{u.dienst_locatie}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-[var(--kp-text-primary)]">{uren}u</p>
+                    <p className="text-sm text-[var(--kp-text-secondary)]">&euro;{((uren || 0) * (u.uurtarief || 0)).toFixed(2)}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-[var(--kp-text-primary)]">{u.gewerkte_uren}u</p>
-                  <p className="text-sm text-[var(--kp-text-secondary)]">&euro;{(u.gewerkte_uren * u.uurtarief).toFixed(2)}</p>
+                <div className="flex flex-wrap gap-2 mt-1 text-xs text-[var(--kp-text-tertiary)]">
+                  <span className={metAanpassing ? "line-through" : ""}>{u.start_tijd?.slice(0, 5)} - {u.eind_tijd?.slice(0, 5)}</span>
+                  <span className={metAanpassing ? "line-through" : ""}>{u.pauze_minuten}m pauze</span>
+                  {u.reiskosten_km > 0 && <span>{u.reiskosten_km}km reiskosten ({formatCurrency(u.reiskosten_bedrag)})</span>}
                 </div>
+                {metAanpassing && (
+                  <div className="mt-2 rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                    Uw aanpassing: {u.klant_start_tijd?.slice(0, 5)} - {u.klant_eind_tijd?.slice(0, 5)} · {u.klant_pauze_minuten ?? 0}m pauze · {u.klant_gewerkte_uren} uur
+                    {u.klant_opmerking && <span className="block mt-0.5 italic">&ldquo;{u.klant_opmerking}&rdquo;</span>}
+                  </div>
+                )}
+                {subTab === "pending" && (
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => onApprove(u)}
+                      className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold transition hover:bg-green-600">
+                      Akkoord
+                    </button>
+                    <button onClick={() => onAdjust(u)}
+                      className="flex-1 py-2.5 rounded-xl border border-[var(--kp-border)] text-[var(--kp-text-secondary)] text-sm font-medium transition hover:bg-[var(--kp-bg-page)]">
+                      Aanpassen
+                    </button>
+                  </div>
+                )}
+                {subTab === "aangepast" && (
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => onAdjust(u)}
+                      className="flex-1 py-2.5 rounded-xl border border-[var(--kp-border)] text-[var(--kp-text-secondary)] text-sm font-medium transition hover:bg-[var(--kp-bg-page)]">
+                      Aanpassing wijzigen
+                    </button>
+                  </div>
+                )}
+                {subTab === "approved" && (
+                  <div className="mt-2">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusLabel[u.status]?.cls ?? "bg-green-100 text-green-700"}`}>
+                      {statusLabel[u.status]?.label ?? "Goedgekeurd"}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex flex-wrap gap-2 mt-1 text-xs text-[var(--kp-text-tertiary)]">
-                <span>{u.start_tijd?.slice(0, 5)} - {u.eind_tijd?.slice(0, 5)}</span>
-                <span>{u.pauze_minuten}m pauze</span>
-                {u.reiskosten_km > 0 && <span>{u.reiskosten_km}km reiskosten ({formatCurrency(u.reiskosten_bedrag)})</span>}
-              </div>
-              {subTab === "pending" && (
-                <div className="flex gap-2 mt-3">
-                  <button onClick={() => onApprove(u)}
-                    className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold transition hover:bg-green-600">
-                    Akkoord
-                  </button>
-                  <button onClick={() => onAdjust(u)}
-                    className="flex-1 py-2.5 rounded-xl border border-[var(--kp-border)] text-[var(--kp-text-secondary)] text-sm font-medium transition hover:bg-[var(--kp-bg-page)]">
-                    Aanpassen
-                  </button>
-                </div>
-              )}
-              {subTab === "approved" && (
-                <div className="mt-2">
-                  <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                    Goedgekeurd
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      )}
+
+      {subTab === "approved" && (historiePagina > 1 || heeftMeer) && (
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <button
+            onClick={() => setHistoriePagina((p) => Math.max(1, p - 1))}
+            disabled={historiePagina === 1 || historieLaden}
+            className="rounded-xl border border-[var(--kp-border)] px-4 py-2 text-sm font-medium text-[var(--kp-text-secondary)] disabled:opacity-40"
+          >
+            Vorige
+          </button>
+          <span className="text-xs text-[var(--kp-text-tertiary)]">Pagina {historiePagina}</span>
+          <button
+            onClick={() => setHistoriePagina((p) => p + 1)}
+            disabled={!heeftMeer || historieLaden}
+            className="rounded-xl border border-[var(--kp-border)] px-4 py-2 text-sm font-medium text-[var(--kp-text-secondary)] disabled:opacity-40"
+          >
+            Volgende
+          </button>
         </div>
       )}
     </div>

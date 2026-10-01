@@ -31,11 +31,11 @@ export function useKlantDashboard() {
   });
 }
 
-export function useKlantUren() {
+export function useKlantUren(pagina: number = 1) {
   return useQuery({
-    queryKey: klantKeys.uren(),
+    queryKey: [...klantKeys.uren(), pagina],
     queryFn: async () => {
-      const res = await fetch('/api/klant/uren');
+      const res = await fetch(`/api/klant/uren?pagina=${pagina}`);
       if (!res.ok) throw new Error('Failed to fetch uren');
       return res.json();
     },
