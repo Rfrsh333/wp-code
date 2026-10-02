@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 // hier content van een ander bedrijf; nu is het een TopTalent-pagina voor
 // horeca-opdrachtgevers die (meer) personeel nodig hebben.
 export const metadata: Metadata = {
-  title: "Meer Horecapersoneel Nodig? | TopTalent Jobs",
+  title: "Meer Horecapersoneel Nodig?",
   description:
     "Extra handen nodig in uw zaak? Vraag horecapersoneel aan via TopTalent Jobs. Persoonlijke matching en vaak binnen 24 uur een voorstel op maat.",
   alternates: {
