@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       referral_code: referralCode,
       status: "pending",
       reward_type: "bonus",
-      reward_amount: 50,
+      reward_amount: 25,
     });
   }
 

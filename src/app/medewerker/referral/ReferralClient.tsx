@@ -73,7 +73,7 @@ export default function ReferralClient() {
 
   const shareReferralLink = async () => {
     const link = referralLink;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50: ${link}`;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25: ${link}`;
 
     if (navigator.share) {
       try {
@@ -88,7 +88,7 @@ export default function ReferralClient() {
 
   const shareViaWhatsApp = () => {
     const link = referralLink;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50: ${link}`;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25: ${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -104,20 +104,20 @@ export default function ReferralClient() {
 
   const shareViaTwitter = () => {
     const link = referralLink;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50:`;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25:`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`, '_blank');
   };
 
   const shareViaEmail = () => {
     const link = referralLink;
     const subject = "Word medewerker bij TopTalent!";
-    const body = `Hoi!\n\nIk werk bij TopTalent en vind het echt top! Als jij je via mijn referral link aanmeldt, verdienen we allebei €50.\n\nGebruik deze link om je aan te melden:\n${link}\n\nGroetjes!`;
+    const body = `Hoi!\n\nIk werk bij TopTalent en vind het echt top! Als jij je via mijn referral link aanmeldt, verdienen we allebei €25.\n\nGebruik deze link om je aan te melden:\n${link}\n\nGroetjes!`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const shareViaSMS = () => {
     const link = referralLink;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50: ${link}`;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25: ${link}`;
     window.location.href = `sms:?&body=${encodeURIComponent(text)}`;
   };
 
@@ -144,7 +144,7 @@ export default function ReferralClient() {
               Vrienden werven
             </h1>
             <p className="text-sm text-[var(--mp-text-secondary)] mt-1">
-              Verdien €50 per vriend die je werft!
+              Verdien €25 per vriend die je werft!
             </p>
           </div>
         </div>
@@ -158,9 +158,9 @@ export default function ReferralClient() {
                 <Gift className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-bold mb-2">€50 per vriend!</h2>
+                <h2 className="text-xl font-bold mb-2">€25 per vriend!</h2>
                 <p className="text-sm text-white/90">
-                  Werf een vriend en jullie verdienen allebei €50 zodra je vriend zijn eerste dienst heeft afgerond.
+                  Werf een vriend en jullie verdienen allebei €25 zodra je vriend zijn eerste dienst heeft afgerond.
                 </p>
               </div>
             </div>
@@ -390,10 +390,10 @@ export default function ReferralClient() {
                 </div>
                 <div>
                   <div className="font-semibold text-[var(--mp-text-primary)] text-sm mb-1">
-                    Jullie verdienen €50!
+                    Jullie verdienen €25!
                   </div>
                   <div className="text-sm text-[var(--mp-text-secondary)]">
-                    Jullie ontvangen allebei €50 bonus
+                    Jullie ontvangen allebei €25 bonus
                   </div>
                 </div>
               </div>
