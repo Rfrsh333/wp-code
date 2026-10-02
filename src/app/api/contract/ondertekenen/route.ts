@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       id, contract_nummer, titel, type, status, startdatum, einddatum,
       contract_data, onderteken_token_verloopt_at,
       template:contract_templates(id, naam, inhoud),
-      medewerker:medewerkers(id, naam, voornaam, achternaam)
+      medewerker:medewerkers(id, naam)
     `)
     .eq("onderteken_token", token)
     .single();

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       id, contract_nummer, type, titel, status, startdatum, einddatum,
       verzonden_at, ondertekend_medewerker_at, ondertekend_admin_at,
       created_at, updated_at, aangemaakt_door, notities,
-      medewerker:medewerkers(id, naam, voornaam, achternaam, email, telefoon),
+      medewerker:medewerkers(id, naam, email, telefoon),
       klant:klanten(id, bedrijfsnaam, contactpersoon),
       template:contract_templates(id, naam, type)
     `)

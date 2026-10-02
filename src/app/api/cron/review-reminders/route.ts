@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { notifyKlantReviewReminder } from "@/lib/klant-push-triggers";
 import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 
 /**
  * Review Reminders Cron
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
         dienst:diensten!inner(id, datum, klant_id, functie, locatie)
       `)
       .eq("dienst.datum", gisterenStr)
-      .eq("status", "geaccepteerd")
+      .in("status", [...INGEPLAND_STATUSSEN])
       .limit(200);
 
     if (!aanmeldingen?.length) {

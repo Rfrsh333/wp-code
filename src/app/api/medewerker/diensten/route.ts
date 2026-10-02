@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
 
     const { data: mwNaam } = await supabaseAdmin
       .from("medewerkers")
-      .select("voornaam")
+      .select("naam")
       .eq("id", medewerker.id)
       .single();
 
@@ -326,7 +326,7 @@ export async function POST(request: NextRequest) {
       after(() =>
         sendPushToUser(dienstDetails.klant_id, "klant", {
           title: "Nieuwe aanmelding!",
-          body: `${mwNaam?.voornaam || "Een medewerker"} heeft zich aangemeld voor ${dienstDetails.functie || "dienst"} op ${dienstDetails.datum}`,
+          body: `${mwNaam?.naam?.trim().split(/\s+/)[0] || "Een medewerker"} heeft zich aangemeld voor ${dienstDetails.functie || "dienst"} op ${dienstDetails.datum}`,
           url: "/klant/uren/",
           tag: `aanmelding-${dienst_id}`,
         }).catch((e) => captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" })),

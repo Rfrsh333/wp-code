@@ -35,13 +35,14 @@ export async function GET(request: NextRequest) {
     supabaseAdmin
       .from("dienst_aanmeldingen")
       .select(`
-        medewerker_id, created_at,
+        medewerker_id, aangemeld_at,
         medewerker:medewerkers(id, naam, functie, profile_photo_url, gemiddelde_score),
         dienst:diensten!inner(datum, klant_id)
       `)
       .eq("dienst.klant_id", klant.id)
       .in("status", [...INGEPLAND_STATUSSEN])
-      .order("created_at", { ascending: false })
+      // dienst_aanmeldingen heeft geen created_at (42703 → lege lijst, nooit "recent gewerkt").
+      .order("aangemeld_at", { ascending: false })
       .limit(1000),
   ]);
 

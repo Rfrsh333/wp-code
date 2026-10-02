@@ -11,6 +11,22 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 // Vercel weigert bodies boven ~4,5 MB al vóór de route; 4 MB is de eerlijke grens.
 const MAX_SIZE = 4 * 1024 * 1024;
 
+// Kolommen die pas met migratie 20261005_app_test_fixes.sql bestaan. Zonder die migratie gaf
+// élke select/update met deze kolommen 42703: profiel leeg en opslaan altijd "Update mislukt".
+// Tot de migratie draait laten we ze weg i.p.v. alles te laten falen.
+const NIEUWE_KOLOMMEN = ["adres", "postcode", "kor_actief"] as const;
+const PROFIEL_KOLOMMEN = "naam, email, functie, stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, profile_photo_path";
+const isOntbrekendeKolom = (e: { code?: string } | null) => e?.code === "42703";
+
+type Profiel = Record<string, unknown> & { naam?: string; email?: string; functie?: string; profile_photo_path?: string | null };
+
+async function haalProfiel(id: string): Promise<{ data: Profiel | null }> {
+  const res = await supabaseAdmin.from("medewerkers").select(`${PROFIEL_KOLOMMEN}, ${NIEUWE_KOLOMMEN.join(", ")}`).eq("id", id).single();
+  if (!isOntbrekendeKolom(res.error)) return { data: res.data as unknown as Profiel | null };
+  const zonder = await supabaseAdmin.from("medewerkers").select(PROFIEL_KOLOMMEN).eq("id", id).single();
+  return { data: zonder.data as unknown as Profiel | null };
+}
+
 const TEKSTVELDEN = ["stad", "adres", "postcode", "geboortedatum", "telefoon", "factuur_adres", "factuur_postcode", "factuur_stad", "btw_nummer"] as const;
 
 export async function GET(request: NextRequest) {
@@ -20,11 +36,7 @@ export async function GET(request: NextRequest) {
 
     const vandaag = nlVandaag();
     const [{ data: profiel }, { data: ingepland }, { data: beoordelingen }] = await Promise.all([
-      supabaseAdmin
-        .from("medewerkers")
-        .select("naam, email, functie, stad, adres, postcode, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, kor_actief, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, streak_count, profile_photo_path")
-        .eq("id", medewerker.id)
-        .single(),
+      haalProfiel(medewerker.id),
       // Ingeplande diensten met check-in of uren = daadwerkelijk gewerkt (filter via de aanmelding;
       // uren_registraties.medewerker_id wordt niet gevuld).
       supabaseAdmin
@@ -150,12 +162,23 @@ export async function PUT(request: NextRequest) {
     if ("iban" in updateData) updateData.iban = encryptField(updateData.iban as string | null);
     if ("btw_nummer" in updateData) updateData.btw_nummer = encryptField(updateData.btw_nummer as string | null);
 
-    const { error } = await supabaseAdmin
+    let { error } = await supabaseAdmin
       .from("medewerkers")
       .update(updateData)
       .eq("id", medewerker.id);
 
+    if (isOntbrekendeKolom(error)) {
+      const zonderNieuw = Object.fromEntries(
+        Object.entries(updateData).filter(([k]) => !(NIEUWE_KOLOMMEN as readonly string[]).includes(k)),
+      );
+      captureRouteError(error, { route: "/api/medewerker/profile", action: "PUT-zonder-migratie" });
+      ({ error } = Object.keys(zonderNieuw).length
+        ? await supabaseAdmin.from("medewerkers").update(zonderNieuw).eq("id", medewerker.id)
+        : { error: null });
+    }
+
     if (error) {
+      captureRouteError(error, { route: "/api/medewerker/profile", action: "PUT" });
       return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
     }
 

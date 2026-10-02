@@ -25,8 +25,9 @@ export async function POST(request: NextRequest) {
 
   const today = nlVandaag();
 
-  // Als dienst_id is opgegeven, gebruik die specifieke dienst
-  // Anders zoek alle upcoming geaccepteerde diensten
+  // Alleen diensten van VANDAAG: voorheen telde alles vanaf vandaag mee (ongesorteerd), waardoor
+  // een scan vandaag kon inchecken op een dienst van volgende week. Met dienst_id: die dienst,
+  // mits vandaag.
   let query = supabaseAdmin
     .from("dienst_aanmeldingen")
     .select(`
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     .eq("medewerker_id", medewerker_id)
     .in("status", [...INGEPLAND_STATUSSEN])
     .eq("dienst.klant_id", klant.id)
-    .gte("dienst.datum", today);
+    .eq("dienst.datum", today);
 
   if (dienst_id) {
     query = query.eq("dienst.id", dienst_id);
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!aanmeldingen || aanmeldingen.length === 0) {
-    return NextResponse.json({ error: "Geen ingeplande dienst gevonden voor deze medewerker" }, { status: 404 });
+    return NextResponse.json({ error: "Geen ingeplande dienst vandaag voor deze medewerker" }, { status: 404 });
   }
 
   // Als er meerdere diensten zijn en geen specifieke dienst_id is opgegeven, return de lijst
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
         functie: d.functie,
         check_in_at: a.check_in_at,
       };
-    });
+    }).sort((x, y) => String(x.start_tijd).localeCompare(String(y.start_tijd)));
 
     return NextResponse.json({
       status: "multiple_diensten",
