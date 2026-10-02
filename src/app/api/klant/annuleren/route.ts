@@ -113,33 +113,48 @@ export async function POST(request: NextRequest) {
     );
   }
   
-  const { data: ann } = await supabaseAdmin.from("dienst_annuleringen").insert({
+  const { error: annError } = await supabaseAdmin.from("dienst_annuleringen").insert({
     dienst_id, klant_id: klant.id, geannuleerd_door: "klant", reden, uren_van_tevoren: urenVanTevoren,
     boete_toegepast: boeteToegepast, boete_bedrag: boeteBedrag, boete_reden: boeteReden,
     dienst_datum: dienst.datum, dienst_start_tijd: dienst.start_tijd, aantal_medewerkers: dienst.aantal_nodig,
-  }).select().single();
+  });
+  if (annError) captureRouteError(annError, { route: "/api/klant/annuleren", action: "annulering-insert" });
 
   if (boeteToegepast && boeteBedrag > 0) {
     // Klant-NAW vastleggen op de boetefactuur; zonder migratie opnieuw zonder de nieuwe kolommen.
     const snapshot = await haalKlantSnapshot(klant.id);
+    // Als CONCEPT: admin controleert en verstuurt. "open" bestaat niet als factuurstatus (CHECK),
+    // en type/beschrijving/annulering_id zijn geen kolommen van facturen. Periode = de dienstdatum
+    // (verplichte kolommen). De omschrijving staat op de factuurregel.
     const boeteFactuur = {
       klant_id: klant.id,
       ...(snapshot ?? {}),
       factuur_nummer: `ANN-${Date.now()}`,
+      periode_start: dienst.datum,
+      periode_eind: dienst.datum,
       subtotaal: boeteBedrag,
-      btw_bedrag: boeteBedrag * 0.21,
-      totaal: boeteBedrag * 1.21,
-      status: "open",
-      type: "boete",
-      beschrijving: `Annuleringsboete - ${boeteReden}`,
-      annulering_id: ann?.id ?? null,
+      btw_bedrag: Math.round(boeteBedrag * 0.21 * 100) / 100,
+      totaal: Math.round(boeteBedrag * 1.21 * 100) / 100,
+      status: "concept",
     };
-    let { error: factuurError } = await supabaseAdmin.from("facturen").insert(boeteFactuur);
+    let { data: factuur, error: factuurError } = await supabaseAdmin.from("facturen").insert(boeteFactuur).select("id").single();
     if (snapshot && isOntbrekendeKolomFout(factuurError)) {
-      ({ error: factuurError } = await supabaseAdmin.from("facturen").insert(zonderNieuweSnapshotKolommen(boeteFactuur)));
+      ({ data: factuur, error: factuurError } = await supabaseAdmin
+        .from("facturen")
+        .insert(zonderNieuweSnapshotKolommen(boeteFactuur))
+        .select("id")
+        .single());
     }
-    if (factuurError) {
-      captureRouteError(factuurError, { route: "/api/klant/annuleren", action: "factuur-insert" });
+    if (factuurError || !factuur) {
+      captureRouteError(factuurError ?? new Error("boetefactuur zonder id"), { route: "/api/klant/annuleren", action: "factuur-insert" });
+    } else {
+      const { error: regelError } = await supabaseAdmin.from("factuur_regels").insert({
+        factuur_id: factuur.id,
+        datum: dienst.datum,
+        omschrijving: `Annuleringsboete ${dienst.functie || "dienst"} ${dienst.datum} - ${boeteReden}`,
+        bedrag: boeteBedrag,
+      });
+      if (regelError) captureRouteError(regelError, { route: "/api/klant/annuleren", action: "factuurregel-insert" });
     }
   }
 

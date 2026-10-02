@@ -110,9 +110,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       <strong>${e(factuurConfig.bedrijfsnaam)}</strong><br>
       ${addressLines.length > 0 ? `${addressLines.map(e).join("<br>")}<br>` : ""}
       KVK: ${e(factuurConfig.kvk)}<br>
-      BTW: ${e(factuurConfig.btw)}<br>
-      WAADI: ${e(factuurConfig.waadi)}<br>
-      Loonheffingen: ${e(factuurConfig.loonbelastingnummer)}
+      BTW: ${e(factuurConfig.btw)}
+      ${factuurConfig.waadi ? `<br>WAADI: ${e(factuurConfig.waadi)}` : ""}
+      ${factuurConfig.loonbelastingnummer ? `<br>Loonheffingen: ${e(factuurConfig.loonbelastingnummer)}` : ""}
     </div>
     <div class="address">
       <div class="address-title">Aan</div>
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   <div class="footer">
     ${e(factuurConfig.bedrijfsnaam)} &bull; ${e(factuurConfig.adres)}, ${e(factuurConfig.postcodeStad)} &bull; ${e(factuurConfig.email)} &bull; www.toptalentjobs.nl<br>
-    KVK: ${e(factuurConfig.kvk)} &bull; BTW: ${e(factuurConfig.btw)} &bull; WAADI: ${e(factuurConfig.waadi)}
+    KVK: ${e(factuurConfig.kvk)} &bull; BTW: ${e(factuurConfig.btw)}${factuurConfig.waadi ? ` &bull; WAADI: ${e(factuurConfig.waadi)}` : ""}
   </div>
 </body>
 </html>`;

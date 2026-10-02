@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("medewerkers")
-    .select("id, naam, voornaam, achternaam, email, telefoon, telefoonnummer, status, functie, geboortedatum, woonplaats, wachtwoord, profiel_foto, admin_score_aanwezigheid, admin_score_vaardigheden, no_show_count, notificatie_voorkeuren, created_at")
+    // Alleen bestaande kolommen: voornaam/achternaam/telefoonnummer/woonplaats/profiel_foto bestaan
+    // niet (42703) → deze route gaf altijd 500 en Medewerkers/Planning/Contracten/Berichten/
+    // Shift-aanbiedingen in de admin bleven leeg.
+    .select("id, naam, email, telefoon, status, functie, geboortedatum, stad, wachtwoord, profile_photo_url, admin_score_aanwezigheid, admin_score_vaardigheden, no_show_count, notificatie_voorkeuren, created_at")
     .order("naam")
     .limit(500);
 

@@ -205,7 +205,10 @@ export async function POST(request: NextRequest) {
       btw_percentage: 21,
       btw_bedrag: btw,
       totaal,
-      status: "open",
+      // "open" bestaat niet als factuurstatus (CHECK: concept/verzonden/betaald) → aanmaken faalde altijd.
+      // De klant maakt de factuur zelf aan en heeft hem dus direct: verzonden.
+      status: "verzonden",
+      verzonden_at: new Date().toISOString(),
     };
     const res = await supabaseAdmin
       .from("facturen")

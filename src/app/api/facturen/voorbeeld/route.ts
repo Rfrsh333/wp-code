@@ -103,9 +103,9 @@ export async function GET() {
         ${config.postcodeStad}<br>
         <br>
         KVK: ${config.kvk}<br>
-        BTW: ${config.btw}<br>
-        WAADI: ${config.waadi}<br>
-        Loonheffingen: ${config.loonbelastingnummer}
+        BTW: ${config.btw}
+        ${config.waadi ? `<br>WAADI: ${config.waadi}` : ""}
+        ${config.loonbelastingnummer ? `<br>Loonheffingen: ${config.loonbelastingnummer}` : ""}
       </div>
       <div class="address">
         <div class="address-title">Factuuradres</div>
@@ -185,7 +185,7 @@ export async function GET() {
 
     <div class="footer">
       ${config.bedrijfsnaam} &bull; ${config.adres}, ${config.postcodeStad} &bull; ${config.email} &bull; www.toptalentjobs.nl<br>
-      KVK: ${config.kvk} &bull; BTW: ${config.btw} &bull; WAADI: ${config.waadi} &bull; IBAN: ${config.iban}
+      KVK: ${config.kvk} &bull; BTW: ${config.btw}${config.waadi ? ` &bull; WAADI: ${config.waadi}` : ""} &bull; IBAN: ${config.iban}
     </div>
   </div>
 </body>
