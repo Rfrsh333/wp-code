@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     // Fetch kandidaat documenten
     const { data: documenten } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .select("id, document_type, review_status, uploaded_at")
+      .select("id, type, status, uploaded_at")
       .eq("inschrijving_id", kandidaat.id)
       .order("uploaded_at", { ascending: false });
 
@@ -85,8 +85,10 @@ export async function GET(request: NextRequest) {
       },
       documenten: documenten?.map((doc) => ({
         id: doc.id,
-        document_type: doc.document_type,
-        review_status: doc.review_status,
+        // Live kolommen heten type/status; de statuspagina verwacht de oude
+        // veldnamen (met Nederlandse statuswaarden).
+        document_type: doc.type,
+        review_status: doc.status,
         uploaded_at: doc.uploaded_at,
       })) || [],
     });

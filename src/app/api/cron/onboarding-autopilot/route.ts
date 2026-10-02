@@ -160,10 +160,13 @@ export async function GET(request: NextRequest) {
           // Check of er voldoende documenten zijn (minimaal ID + CV)
           const { data: docs } = await supabaseAdmin
             .from("kandidaat_documenten")
-            .select("document_type, review_status")
+            .select("type, status")
             .eq("inschrijving_id", kandidaat.id);
 
-          const docTypes = (docs || []).map((d: { document_type: string }) => d.document_type);
+          // Afgekeurde documenten tellen niet mee voor "compleet".
+          const docTypes = (docs || [])
+            .filter((d: { status: string }) => d.status !== "afgekeurd")
+            .map((d: { type: string }) => d.type);
           const heeftID = docTypes.includes("id");
           const heeftCV = docTypes.includes("cv");
 

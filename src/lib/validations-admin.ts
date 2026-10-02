@@ -382,7 +382,8 @@ export const reviewsPostSchema = z.discriminatedUnion("action", [
 
 export const kandidaatDocumentenPatchSchema = z.object({
   id: uuid,
-  status: z.string().max(50).optional(),
+  // Zelfde waarden als de CHECK op kandidaat_documenten.status
+  status: z.enum(["ontvangen", "goedgekeurd", "afgekeurd"]).optional(),
   notitie: z.string().max(5000).optional().nullable(),
 });
 

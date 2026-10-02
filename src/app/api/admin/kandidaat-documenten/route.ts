@@ -3,6 +3,11 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { kandidaatDocumentenPatchSchema, validateAdminBody } from "@/lib/validations-admin";
 import { captureRouteError } from "@/lib/sentry-utils";
+import {
+  KANDIDAAT_DOCUMENT_KOLOMMEN,
+  naarAdminDocument,
+  type KandidaatDocumentRij,
+} from "@/lib/kandidaat-documenten";
 
 const DOCUMENT_BUCKET = process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten";
 
@@ -26,7 +31,9 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("kandidaat_documenten")
-    .select("id, inschrijving_id, type, bestandsnaam, bestand_pad, file_path, mime_type, bestand_grootte, status, notitie, reviewed_at, uploaded_at")
+    // `file_path` bestaat niet in de live tabel; selecteren gaf een fout en
+    // daardoor een lege documentenlijst in de admin.
+    .select(KANDIDAAT_DOCUMENT_KOLOMMEN)
     .eq("inschrijving_id", inschrijvingId)
     .order("uploaded_at", { ascending: false })
     .limit(100);
@@ -39,16 +46,14 @@ export async function GET(request: NextRequest) {
 
   // Generate signed URLs for all documents
   const enrichedDocuments = await Promise.all(
-    (data || []).map(async (document) => {
-      // Support both old and new column names during migration
-      const filePath = document.file_path || document.bestand_pad;
-
+    ((data || []) as KandidaatDocumentRij[]).map(async (document) => {
       const { data: signedData } = await supabaseAdmin.storage
         .from(DOCUMENT_BUCKET)
-        .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+        .createSignedUrl(document.bestand_pad, 60 * 60); // 1 hour expiry
 
+      // Live kolommen (AdminDashboard) + oude aliasnamen (KandidaatDocumentenModal)
       return {
-        ...document,
+        ...naarAdminDocument(document),
         download_url: signedData?.signedUrl || null,
       };
     })
