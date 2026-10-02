@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Blog - Tips & Nieuws over Horeca Personeel | TopTalent Jobs",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Blog - Tips & Nieuws over Horeca Personeel | TopTalent Jobs" },
   description: "Praktische tips en nieuws over horecapersoneel inhuren, recruitment trends en de uitzendbranche. Blijf op de hoogte met TopTalent Jobs.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/blog/",

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Kennismakingsgesprek Plannen | TopTalent Jobs",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Kennismakingsgesprek Plannen | TopTalent Jobs" },
   description:
     "Plan een gratis kennismakingsgesprek met TopTalent Jobs. Ontdek hoe wij uw horecabedrijf helpen met betrouwbaar en flexibel personeel.",
   alternates: {

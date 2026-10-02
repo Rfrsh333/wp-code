@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { getFaqs } from "./getFaqs";
 
 export const metadata: Metadata = {
-  title: "Veelgestelde vragen over horecapersoneel inhuren | TopTalent",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Veelgestelde vragen over horecapersoneel inhuren | TopTalent" },
   description:
     "Antwoorden op veelgestelde vragen over horecapersoneel inhuren via TopTalent. Kosten, contracten, beschikbaarheid en meer.",
   alternates: {
