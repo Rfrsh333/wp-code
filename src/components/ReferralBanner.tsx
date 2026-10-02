@@ -47,7 +47,7 @@ export default function ReferralBanner() {
           <div className="bg-white rounded-full px-6 py-3 flex items-center gap-4">
             <span className="text-lg" aria-hidden="true">🎁</span>
             <span className="text-sm font-medium text-neutral-900 hidden sm:block">
-              Verdien €50 per verwijzing!
+              Verdien €25 per verwijzing!
             </span>
             <button
               onClick={() => setIsModalOpen(true)}
@@ -93,10 +93,10 @@ export default function ReferralBanner() {
             <div className="text-center mb-6">
               <span className="text-4xl mb-3 block">🎁</span>
               <h2 className="text-2xl font-bold text-neutral-900">
-                Verdien €50 per verwijzing!
+                Verdien €25 per verwijzing!
               </h2>
               <p className="text-neutral-600 mt-2">
-                Ken jij iemand die in de horeca wil werken? Wanneer jouw vriend zich inschrijft en de eerste dienst voltooit, ontvang jij €50 bonus.
+                Ken jij iemand die in de horeca wil werken? Wanneer jouw vriend zich inschrijft en de eerste dienst voltooit, ontvang jij €25 bonus.
               </p>
             </div>
 
@@ -105,7 +105,7 @@ export default function ReferralBanner() {
               {[
                 { step: "1", title: "Deel jouw link", desc: "Stuur de inschrijflink naar een vriend" },
                 { step: "2", title: "Vriend schrijft zich in", desc: "Je vriend meldt zich aan via jouw link" },
-                { step: "3", title: "€50 bonus!", desc: "Na de eerste voltooide dienst ontvang jij €50" },
+                { step: "3", title: "€25 bonus!", desc: "Na de eerste voltooide dienst ontvang jij €25" },
               ].map((item) => (
                 <div key={item.step} className="flex items-start gap-4">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#F97316] to-[#EA580C] flex items-center justify-center shrink-0">
