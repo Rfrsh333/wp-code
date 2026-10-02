@@ -215,7 +215,6 @@ export function useAgendaQueries() {
         client_phone: phone.trim() || null,
         company_name: company.trim() || null,
         notes: notes.trim() || null,
-        source: "admin",
       };
       if (slotId) {
         body.slot_id = slotId;
@@ -225,9 +224,11 @@ export function useAgendaQueries() {
         body.end_time = customEnd;
       }
 
+      // Admin-token mee: dan slaat de route reCAPTCHA over en zet zelf
+      // source = "admin" (source uit de body wordt niet meer vertrouwd).
       const res = await fetch("/api/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(body),
       });
       const data = await res.json();

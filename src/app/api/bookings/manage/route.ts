@@ -10,6 +10,8 @@ import {
   buildRescheduleEmailHtml,
 } from "@/lib/email-templates";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { maakBoeking, stuurBoekingMails } from "@/lib/bookings/aanmaken";
+import { geldigeSource } from "@/lib/bookings/regels";
 
 // Tokens are crypto.randomBytes(32).toString('hex') = exactly 64 hex chars.
 // Strict validation prevents PostgREST .or() filter injection.
@@ -18,6 +20,8 @@ const TOKEN_RE = /^[0-9a-f]{64}$/i;
 const BOOKING_SELECT =
   "id, client_name, client_email, client_phone, company_name, notes, status, " +
   "cancellation_token, reschedule_token, event_type_id, google_calendar_event_id, inquiry_id, " +
+  "source, booking_type, kandidaat_naam, kandidaat_email, kandidaat_telefoon, kandidaat_cv_url, " +
+  "kandidaat_notities, inschrijving_id, " +
   "availability_slots(id, date, start_time, end_time), event_types(name, duration_minutes, color)";
 
 async function findBookingByToken(token: string) {
@@ -65,7 +69,12 @@ export async function GET(request: NextRequest) {
 
 // POST: Cancel or reschedule
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: Record<string, string | undefined>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Ongeldig verzoek" }, { status: 400 });
+  }
   const { token, action, new_slot_id, new_date, new_start_time, new_end_time } = body;
 
   if (!token || !TOKEN_RE.test(String(token)) || !action) {
@@ -162,6 +171,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nieuw tijdslot vereist" }, { status: 400 });
     }
 
+    // Eerst de nieuwe afspraak maken (met overlapcheck, waarbij de huidige
+    // afspraak niet als conflict telt) en pas daarna de oude annuleren. Zo
+    // hoeft er niets teruggedraaid te worden als het nieuwe tijdstip bezet is.
+    // Source en kandidaatgegevens komen van de originele boeking; vroeger werd
+    // `source: "reschedule"` gestuurd (buiten de CHECK) en faalde elke verplaatsing.
+    const isKandidaat = booking.booking_type === "kandidaat";
+    const resultaat = await maakBoeking(
+      {
+        slotId: new_slot_id || null,
+        eventTypeId: booking.event_type_id || null,
+        gevraagdBookingType: isKandidaat ? "kandidaat" : "client",
+        datum: new_date || null,
+        startTijd: new_start_time || null,
+        eindTijd: new_end_time || null,
+        clientName: booking.client_name,
+        clientEmail: booking.client_email,
+        clientPhone: booking.client_phone,
+        companyName: booking.company_name,
+        notes: booking.notes,
+        inquiryId: booking.inquiry_id,
+        kandidaatNaam: booking.kandidaat_naam,
+        kandidaatEmail: booking.kandidaat_email,
+        kandidaatTelefoon: booking.kandidaat_telefoon,
+        kandidaatNotities: booking.kandidaat_notities,
+        kandidaatCvPad: booking.kandidaat_cv_url,
+        inschrijvingId: booking.inschrijving_id,
+      },
+      {
+        source: geldigeSource(booking.source),
+        // Een afspraak zonder afspraaktype (door admin gemaakt) houdt zijn eigen duur.
+        eigenEindtijdToegestaan: !booking.event_type_id,
+        negeerBookingId: booking.id,
+      },
+    );
+
+    if (!resultaat.ok) {
+      return NextResponse.json({ error: resultaat.error || "Kon niet verplaatsen" }, { status: resultaat.status });
+    }
+
+    await supabaseAdmin
+      .from("bookings")
+      .update({
+        status: "cancelled",
+        cancelled_at: new Date().toISOString(),
+        cancel_reason: "Verplaatst naar nieuw tijdstip",
+      })
+      .eq("id", booking.id);
+
     if (slot) {
       await supabaseAdmin
         .from("availability_slots")
@@ -175,54 +232,13 @@ export async function POST(request: NextRequest) {
 
     await supabaseAdmin
       .from("bookings")
-      .update({
-        status: "cancelled",
-        cancelled_at: new Date().toISOString(),
-        cancel_reason: "Verplaatst naar nieuw tijdstip",
-      })
-      .eq("id", booking.id);
+      .update({ rescheduled_from: booking.id })
+      .eq("id", resultaat.booking.id);
 
-    const bookRes = await fetch(new URL("/api/bookings", request.url).toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        slot_id: new_slot_id,
-        event_type_id: booking.event_type_id,
-        date: new_date,
-        start_time: new_start_time,
-        end_time: new_end_time,
-        client_name: booking.client_name,
-        client_email: booking.client_email,
-        client_phone: booking.client_phone,
-        company_name: booking.company_name,
-        notes: booking.notes,
-        inquiry_id: booking.inquiry_id,
-        source: "reschedule",
-      }),
-    });
+    // Melding naar TopTalent; de klant krijgt hieronder de verplaatsmail.
+    await stuurBoekingMails(resultaat.context, { klant: false, admin: true });
 
-    const bookData = await bookRes.json();
-
-    if (!bookData.success) {
-      await supabaseAdmin
-        .from("bookings")
-        .update({ status: "confirmed", cancelled_at: null, cancel_reason: null })
-        .eq("id", booking.id);
-      if (slot) {
-        await supabaseAdmin
-          .from("availability_slots")
-          .update({ is_booked: true, is_available: false })
-          .eq("id", slot.id);
-      }
-      return NextResponse.json({ error: bookData.error || "Kon niet verplaatsen" }, { status: 500 });
-    }
-
-    if (bookData.booking?.id) {
-      await supabaseAdmin
-        .from("bookings")
-        .update({ rescheduled_from: booking.id })
-        .eq("id", bookData.booking.id);
-    }
+    const bookData = { booking: resultaat.booking };
 
     if (bookData.booking) {
       try {
