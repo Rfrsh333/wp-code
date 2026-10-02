@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { checkRedisRateLimit, contractSignRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 
 // POST /api/offerte/[token]/accept - Klant accepteert offerte (digitale ondertekening)
 export async function POST(
@@ -8,14 +9,35 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
+    // Publiek endpoint met een token in de URL: beperk het aantal pogingen per IP
+    // (zelfde limiet als het ondertekenen van contracten).
+    const ip = getClientIP(request);
+    const rateLimit = await checkRedisRateLimit(`offerte-accept:${ip}`, contractSignRateLimit);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Te veel verzoeken. Probeer het later opnieuw." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))),
+          },
+        }
+      );
+    }
+
     const { token } = await params;
-    const { naam } = await request.json();
+    let naam: unknown;
+    try {
+      ({ naam } = await request.json());
+    } catch {
+      return NextResponse.json({ error: "Ongeldig verzoek" }, { status: 400 });
+    }
 
     if (!token || token.length < 32) {
       return NextResponse.json({ error: "Ongeldige link" }, { status: 400 });
     }
 
-    if (!naam || naam.trim().length < 2) {
+    if (typeof naam !== "string" || naam.trim().length < 2) {
       return NextResponse.json({ error: "Naam is verplicht voor ondertekening" }, { status: 400 });
     }
 
@@ -39,11 +61,6 @@ export async function POST(
       return NextResponse.json({ error: "Deze offerte is verlopen" }, { status: 400 });
     }
 
-    // Get client IP
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-      || request.headers.get("x-real-ip")
-      || "unknown";
-
     // Update offerte
     const { error: updateError } = await supabaseAdmin
       .from("offertes")
@@ -56,8 +73,7 @@ export async function POST(
       .eq("id", offerte.id);
 
     if (updateError) {
-      captureRouteError(error, { route: "/api/offerte/[token]/accept", action: "POST" });
-      // console.error("Accept offerte error:", updateError);
+      captureRouteError(updateError, { route: "/api/offerte/[token]/accept", action: "POST" });
       return NextResponse.json({ error: "Fout bij accepteren" }, { status: 500 });
     }
 
