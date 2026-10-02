@@ -26,7 +26,9 @@ export function buildPageMetadata({
   const imageUrl = image ? `${BASE_URL}${image}` : FALLBACK_OG_IMAGE;
 
   return {
-    title,
+    // Titel met merknaam al erin: absolute, anders plakt de root-template er nogmaals
+    // "| TopTalent Jobs" achter.
+    title: /\|\s*TopTalent/.test(title) ? { absolute: title } : title,
     description,
     alternates: {
       canonical: url,

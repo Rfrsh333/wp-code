@@ -6,7 +6,8 @@ import { createEditorialImageSignedUrl } from "@/lib/images/storage";
 import { formatEditorialLabel } from "@/lib/content/presentation";
 
 export const metadata = {
-  title: "Editorial Blog | TopTalent Jobs",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Editorial Blog | TopTalent Jobs" },
   description: "AI-assisted en redactioneel beoordeelde inzichten voor horeca, hospitality staffing, werkgevers en medewerkers.",
 };
 

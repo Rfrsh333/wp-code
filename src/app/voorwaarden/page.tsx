@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Algemene Voorwaarden | TopTalent Jobs",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Algemene Voorwaarden | TopTalent Jobs" },
   description: "Lees de algemene voorwaarden van Toptalent voor bemiddeling van zelfstandige horecaprofessionals.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/voorwaarden/",
