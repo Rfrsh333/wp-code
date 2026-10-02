@@ -4,6 +4,9 @@ import { createHash } from "crypto";
 import { checkRedisRateLimit, getClientIP, contractSignRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
 
+// Statussen waarin de medewerker nog mag tekenen (zelfde lijst als de GET).
+const TEKENBARE_STATUSSEN = ["verzonden", "bekeken", "ondertekend_admin"];
+
 // GET: Haal contract op via token (publiek)
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Check status
-  if (!["verzonden", "bekeken", "ondertekend_admin"].includes(contract.status)) {
+  if (!TEKENBARE_STATUSSEN.includes(contract.status)) {
     return NextResponse.json({ error: "Dit contract kan niet meer ondertekend worden." }, { status: 400 });
   }
 
@@ -88,9 +91,17 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { token, ondertekenaar_naam, handtekening_data } = await request.json();
+    let body: { token?: unknown; ondertekenaar_naam?: unknown; handtekening_data?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Ongeldig verzoek" }, { status: 400 });
+    }
+    const token = typeof body.token === "string" ? body.token : "";
+    const ondertekenaar_naam = typeof body.ondertekenaar_naam === "string" ? body.ondertekenaar_naam.trim().slice(0, 200) : "";
+    const handtekening_data = typeof body.handtekening_data === "string" ? body.handtekening_data : "";
 
-    if (!token || !ondertekenaar_naam || !handtekening_data) {
+    if (token.length !== 32 || !ondertekenaar_naam || !handtekening_data) {
       return NextResponse.json(
         { error: "Token, naam en handtekening zijn verplicht" },
         { status: 400 }
@@ -118,7 +129,7 @@ export async function POST(request: NextRequest) {
       .from("contracten")
       .select("id, status, onderteken_token_verloopt_at, medewerker:medewerkers(email)")
       .eq("onderteken_token", token)
-      .single();
+      .maybeSingle();
 
     if (!contract) {
       return NextResponse.json({ error: "Contract niet gevonden" }, { status: 404 });
@@ -130,6 +141,12 @@ export async function POST(request: NextRequest) {
       if (verloopt < new Date()) {
         return NextResponse.json({ error: "Link verlopen" }, { status: 410 });
       }
+    }
+
+    // Alleen tekenen in een tekenbare status: een concept, opgezegd of al
+    // actief contract mag niet via een (oude) link opnieuw getekend worden.
+    if (!TEKENBARE_STATUSSEN.includes(contract.status)) {
+      return NextResponse.json({ error: "Dit contract kan niet meer ondertekend worden." }, { status: 400 });
     }
 
     // Check of medewerker al getekend heeft
@@ -153,7 +170,7 @@ export async function POST(request: NextRequest) {
       : contract.medewerker;
 
     // Sla ondertekening op
-    await supabaseAdmin.from("contract_ondertekeningen").insert({
+    const { data: ondertekening, error: insertError } = await supabaseAdmin.from("contract_ondertekeningen").insert({
       contract_id: contract.id,
       ondertekenaar_type: "medewerker",
       ondertekenaar_naam,
@@ -162,7 +179,12 @@ export async function POST(request: NextRequest) {
       handtekening_hash: hash,
       ip_adres: clientIP,
       user_agent: request.headers.get("user-agent")?.substring(0, 500) || null,
-    });
+    }).select("id").single();
+
+    if (insertError || !ondertekening) {
+      captureRouteError(insertError ?? new Error("Ondertekening niet opgeslagen"), { route: "/api/contract/ondertekenen", action: "POST" });
+      return NextResponse.json({ error: "Ondertekenen is niet gelukt. Probeer het opnieuw." }, { status: 500 });
+    }
 
     // Check of admin ook al getekend heeft
     const { data: adminSign } = await supabaseAdmin
@@ -174,19 +196,31 @@ export async function POST(request: NextRequest) {
 
     const newStatus = adminSign ? "actief" : "ondertekend_medewerker";
 
-    await supabaseAdmin
+    const { data: bijgewerkt, error: updateError } = await supabaseAdmin
       .from("contracten")
       .update({
         status: newStatus,
         ondertekend_medewerker_at: new Date().toISOString(),
       })
-      .eq("id", contract.id);
+      .eq("id", contract.id)
+      .in("status", TEKENBARE_STATUSSEN)
+      .select("id");
+
+    if (updateError || !bijgewerkt || bijgewerkt.length === 0) {
+      // Handtekening terugdraaien zodat de medewerker het opnieuw kan proberen
+      // en er geen losse handtekening bij een niet-bijgewerkt contract blijft.
+      await supabaseAdmin.from("contract_ondertekeningen").delete().eq("id", ondertekening.id);
+      captureRouteError(updateError ?? new Error("Contractstatus gewijzigd tijdens ondertekenen"), {
+        route: "/api/contract/ondertekenen",
+        action: "POST",
+      });
+      return NextResponse.json({ error: "Ondertekenen is niet gelukt. Probeer het opnieuw." }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, status: newStatus });
   } catch (err) {
-    const message = err instanceof Error ? err.message : JSON.stringify(err);
     captureRouteError(err, { route: "/api/contract/ondertekenen", action: "POST" });
-    // console.error("[CONTRACT] Sign error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Geen ruwe foutmelding naar de client (kan interne details bevatten).
+    return NextResponse.json({ error: "Er ging iets mis bij het ondertekenen" }, { status: 500 });
   }
 }
