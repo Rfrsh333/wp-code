@@ -61,8 +61,6 @@ function toDateKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-const ACCENT = "#8B5CF6";
-const ACCENT_DARK = "#7C3AED";
 
 /* ───────────── Skeleton Components ───────────── */
 
@@ -162,13 +160,13 @@ function CVUpload({ file, onFileChange, error }: {
         onClick={() => inputRef.current?.click()}
         className={`
           border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all
-          ${dragOver ? `border-[${ACCENT}] bg-purple-50` : "border-neutral-200 hover:border-purple-300 hover:bg-purple-50/50"}
+          ${dragOver ? `border-[#F97316] bg-[#FEF3E7]` : "border-neutral-200 hover:border-orange-300 hover:bg-[#FEF3E7]/50"}
           ${error ? "border-red-300" : ""}
         `}
       >
         {file ? (
           <div className="flex items-center justify-center gap-2">
-            <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <span className="text-sm font-medium text-neutral-700">{file.name}</span>
@@ -186,7 +184,7 @@ function CVUpload({ file, onFileChange, error }: {
             <svg className="w-8 h-8 mx-auto text-neutral-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            <p className="text-sm text-neutral-500">Sleep je CV hierheen of <span className="text-purple-600 font-medium">klik om te uploaden</span></p>
+            <p className="text-sm text-neutral-500">Sleep je CV hierheen of <span className="text-orange-700 font-medium">klik om te uploaden</span></p>
             <p className="text-xs text-neutral-400 mt-1">PDF, DOC of DOCX</p>
           </>
         )}
@@ -541,7 +539,7 @@ function KennismakingPlannenContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-50">
-        <div className="bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white">
+        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
             <div className="animate-pulse space-y-3">
               <div className="h-8 w-64 bg-white/20 rounded-lg mx-auto" />
@@ -567,7 +565,7 @@ function KennismakingPlannenContent() {
           @keyframes checkStroke { to { stroke-dashoffset: 0; } }
           @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
-        <div className="bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white">
+        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
           <div className="max-w-3xl mx-auto px-4 py-14 text-center">
             <AnimatedCheckmark />
             <h1 className="text-3xl font-bold mb-2 animate-[fadeSlideUp_0.5s_ease-out_0.8s_both]">
@@ -583,7 +581,7 @@ function KennismakingPlannenContent() {
           <div className="bg-white rounded-2xl shadow-lg p-6 animate-[fadeSlideUp_0.5s_ease-out_0.6s_both]">
             {/* Summary card */}
             <div className="flex items-start gap-4 mb-6 pb-6 border-b border-neutral-100">
-              <div className="w-12 h-12 rounded-xl bg-purple-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-[#F97316] flex items-center justify-center flex-shrink-0">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
@@ -591,7 +589,7 @@ function KennismakingPlannenContent() {
               <div>
                 <p className="text-sm text-neutral-500">Kennismakingsgesprek (15 min)</p>
                 <p className="font-semibold text-neutral-900 text-lg">{bookingResult.datum_formatted}</p>
-                <p className="text-purple-600 font-bold text-lg">{bookingResult.start_time} - {bookingResult.end_time}</p>
+                <p className="text-orange-700 font-bold text-lg">{bookingResult.start_time} - {bookingResult.end_time}</p>
               </div>
             </div>
 
@@ -601,7 +599,7 @@ function KennismakingPlannenContent() {
                 href={bookingResult.meet_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-300 font-medium shadow-lg shadow-purple-500/20 mb-3"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#F97316] text-white rounded-xl hover:bg-[#EA580C] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20 mb-3"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -621,7 +619,7 @@ function KennismakingPlannenContent() {
                 href={googleCalendarUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border-2 border-purple-200 text-purple-700 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-all duration-300 font-medium"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border-2 border-orange-200 text-orange-700 rounded-xl hover:border-orange-300 hover:bg-[#FEF3E7] transition-all duration-300 font-medium"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V8h15v11.5z" />
@@ -641,7 +639,7 @@ function KennismakingPlannenContent() {
 
             {bookingResult.manage_url && (
               <div className="mt-6 pt-6 border-t border-neutral-100 text-center">
-                <a href={bookingResult.manage_url} className="text-sm text-neutral-500 hover:text-purple-600 transition-colors">
+                <a href={bookingResult.manage_url} className="text-sm text-neutral-500 hover:text-orange-700 transition-colors">
                   Afspraak wijzigen of annuleren &rarr;
                 </a>
               </div>
@@ -650,7 +648,7 @@ function KennismakingPlannenContent() {
 
           <div className="text-center mt-8 pb-8">
             <p className="text-sm text-neutral-400">
-              <a href="https://www.toptalentjobs.nl" className="text-purple-600 hover:underline font-medium">TopTalent Jobs</a>
+              <a href="https://www.toptalentjobs.nl" className="text-orange-700 hover:underline font-medium">TopTalent Jobs</a>
               {" "}&mdash; Specialist in horeca personeel
             </p>
           </div>
@@ -663,7 +661,7 @@ function KennismakingPlannenContent() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white">
+      <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
         <div className="max-w-4xl mx-auto px-4 py-10 md:py-12 text-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Plan je kennismakingsgesprek</h1>
           <p className="text-white/90 text-base md:text-lg max-w-xl mx-auto">
@@ -688,7 +686,7 @@ function KennismakingPlannenContent() {
         <div className="space-y-4">
           {/* Event type banner */}
           <div className="bg-white rounded-2xl shadow-lg p-4 flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-purple-500" />
+            <div className="w-3 h-3 rounded-full bg-[#F97316]" />
             <div>
               <p className="font-semibold text-neutral-900">Kennismakingsgesprek</p>
               <p className="text-sm text-neutral-500 flex items-center gap-1">
@@ -717,7 +715,7 @@ function KennismakingPlannenContent() {
               <h2 className="text-lg font-semibold text-neutral-900 mb-2">Geen tijdslots beschikbaar</h2>
               <p className="text-neutral-500">
                 Neem contact op via{" "}
-                <a href="mailto:info@toptalentjobs.nl" className="text-purple-600 hover:underline">info@toptalentjobs.nl</a>
+                <a href="mailto:info@toptalentjobs.nl" className="text-orange-700 hover:underline">info@toptalentjobs.nl</a>
               </p>
             </div>
           ) : (
@@ -766,12 +764,12 @@ function KennismakingPlannenContent() {
                           disabled={!canSelect}
                           className={`
                             relative h-11 rounded-lg text-sm font-medium transition-all duration-200
-                            focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1 outline-none
+                            focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-1 outline-none
                             ${!cell.isCurrentMonth ? "text-neutral-300" : ""}
                             ${cell.isCurrentMonth && !canSelect ? "text-neutral-300 cursor-default" : ""}
-                            ${canSelect && !isSelected ? "text-neutral-900 hover:bg-purple-50 cursor-pointer" : ""}
-                            ${isSelected ? "bg-purple-600 text-white shadow-md shadow-purple-500/20" : ""}
-                            ${cell.isToday && !isSelected ? "ring-2 ring-purple-400/30" : ""}
+                            ${canSelect && !isSelected ? "text-neutral-900 hover:bg-[#FEF3E7] cursor-pointer" : ""}
+                            ${isSelected ? "bg-[#F97316] text-white shadow-md shadow-orange-500/20" : ""}
+                            ${cell.isToday && !isSelected ? "ring-2 ring-[#F97316]/30" : ""}
                           `}
                           aria-label={`${cell.day} ${MONTH_NAMES[viewMonth]}${cell.hasSlots ? ", beschikbaar" : ""}${isSelected ? ", geselecteerd" : ""}`}
                           aria-selected={isSelected}
@@ -779,7 +777,7 @@ function KennismakingPlannenContent() {
                         >
                           {cell.day}
                           {cell.hasSlots && !isSelected && cell.isCurrentMonth && (
-                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#F97316]" />
                           )}
                         </button>
                       );
@@ -788,11 +786,11 @@ function KennismakingPlannenContent() {
 
                   <div className="flex items-center gap-4 mt-4 text-xs text-neutral-400">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-purple-500" />
+                      <span className="w-2 h-2 rounded-full bg-[#F97316]" />
                       Beschikbaar
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-purple-500 ring-2 ring-purple-400/30" />
+                      <span className="w-2 h-2 rounded-full bg-[#F97316] ring-2 ring-[#F97316]/30" />
                       Vandaag
                     </div>
                   </div>
@@ -828,10 +826,10 @@ function KennismakingPlannenContent() {
                               onClick={() => setSelectedSlot(isSlotSelected ? null : slot)}
                               className={`
                                 w-full py-3 px-4 rounded-xl border-2 text-left transition-all duration-200
-                                focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1 outline-none
+                                focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-1 outline-none
                                 ${isSlotSelected
-                                  ? "border-purple-500 bg-purple-600 text-white shadow-md shadow-purple-500/20"
-                                  : "border-neutral-200 hover:border-purple-400 hover:bg-purple-50"
+                                  ? "border-[#F97316] bg-[#F97316] text-white shadow-md shadow-orange-500/20"
+                                  : "border-neutral-200 hover:border-orange-400 hover:bg-[#FEF3E7]"
                                 }
                               `}
                               style={{ animationDelay: `${idx * 50}ms`, animation: "fadeSlideUp 0.3s ease-out both" }}
@@ -865,9 +863,9 @@ function KennismakingPlannenContent() {
               <p className="text-sm text-neutral-500 mb-6">Zodat wij je bevestiging en Meet-link kunnen sturen.</p>
 
               {/* Selected time summary */}
-              <div className="bg-purple-50 rounded-xl p-4 mb-6 flex items-center justify-between">
+              <div className="bg-[#FEF3E7] rounded-xl p-4 mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-[#F97316] flex items-center justify-center flex-shrink-0">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
@@ -877,7 +875,7 @@ function KennismakingPlannenContent() {
                     <p className="font-medium text-neutral-900">
                       {selectedDag?.dag} {new Date(selectedDatum!).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
                     </p>
-                    <p className="text-purple-600 font-bold">{selectedSlot.start} - {selectedSlot.eind}</p>
+                    <p className="text-orange-700 font-bold">{selectedSlot.start} - {selectedSlot.eind}</p>
                   </div>
                 </div>
                 <button onClick={() => setSelectedSlot(null)} className="text-sm text-neutral-400 hover:text-neutral-600 transition-colors" aria-label="Wijzig datum en tijd">Wijzig</button>
@@ -897,7 +895,7 @@ function KennismakingPlannenContent() {
                       onChange={(e) => { setNaam(e.target.value); if (touched.naam) setFormErrors((prev) => ({ ...prev, naam: validateField("naam", e.target.value) })); }}
                       onBlur={() => handleBlur("naam", naam)}
                       placeholder="Je volledige naam"
-                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${touched.naam && formErrors.naam ? "border-red-300" : "border-neutral-200"}`}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] ${touched.naam && formErrors.naam ? "border-red-300" : "border-neutral-200"}`}
                       autoComplete="name"
                     />
                     {touched.naam && formErrors.naam && <p className="text-red-500 text-xs mt-1">{formErrors.naam}</p>}
@@ -913,7 +911,7 @@ function KennismakingPlannenContent() {
                       onChange={(e) => { setEmail(e.target.value); if (touched.email) setFormErrors((prev) => ({ ...prev, email: validateField("email", e.target.value) })); }}
                       onBlur={() => handleBlur("email", email)}
                       placeholder="je@email.nl"
-                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${touched.email && formErrors.email ? "border-red-300" : "border-neutral-200"}`}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] ${touched.email && formErrors.email ? "border-red-300" : "border-neutral-200"}`}
                       autoComplete="email"
                     />
                     {touched.email && formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
@@ -929,7 +927,7 @@ function KennismakingPlannenContent() {
                     value={telefoon}
                     onChange={(e) => setTelefoon(e.target.value)}
                     placeholder="06-12345678"
-                    className="w-full px-4 py-3 border border-neutral-200 rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    className="w-full px-4 py-3 border border-neutral-200 rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]"
                     autoComplete="tel"
                   />
                 </div>
@@ -947,7 +945,7 @@ function KennismakingPlannenContent() {
                     placeholder="Bijv. ik heb ervaring als kok en ben direct beschikbaar"
                     rows={3}
                     maxLength={500}
-                    className="w-full px-4 py-3 border border-neutral-200 rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
+                    className="w-full px-4 py-3 border border-neutral-200 rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] resize-none"
                   />
                   <p className="text-xs text-neutral-400 text-right mt-1">{notities.length}/500</p>
                 </div>
@@ -956,7 +954,7 @@ function KennismakingPlannenContent() {
               <button
                 onClick={handleBook}
                 disabled={submitting}
-                className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-purple-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 hover:bg-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#EA580C] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -978,7 +976,7 @@ function KennismakingPlannenContent() {
 
         <div className="text-center mt-8 pb-4">
           <p className="text-sm text-neutral-400">
-            <a href="https://www.toptalentjobs.nl" className="text-purple-600 hover:underline font-medium">TopTalent Jobs</a>
+            <a href="https://www.toptalentjobs.nl" className="text-orange-700 hover:underline font-medium">TopTalent Jobs</a>
             {" "}&mdash; Specialist in horeca personeel
           </p>
         </div>
@@ -990,7 +988,7 @@ function KennismakingPlannenContent() {
           <button
             onClick={handleBook}
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>
