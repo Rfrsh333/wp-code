@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: recaptchaResult.error || "Spam detectie mislukt" }, { status: 400 });
     }
 
-    const file = formData.get("file") as File | null;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: "Geen bestand gevonden" }, { status: 400 });
     }
 
@@ -66,15 +66,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
     }
 
-    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
-      .from("kandidaat-documenten")
-      .createSignedUrl(path, 300); // 5 min expiry
-
-    if (signedUrlError) {
-      return NextResponse.json({ url: null, path });
-    }
-
-    return NextResponse.json({ url: signedUrlData.signedUrl, path });
+    // Alleen het pad teruggeven: dat wordt bij de afspraak opgeslagen en de
+    // admin vraagt bij openen een vers gesigneerde URL op. Een signed URL van
+    // 5 minuten (zoals vroeger) was al verlopen voordat iemand hem opende.
+    return NextResponse.json({ path });
   } catch (error) {
     captureRouteError(error, { route: "/api/cv-upload", action: "POST" });
     // console.error("CV upload error:", error);

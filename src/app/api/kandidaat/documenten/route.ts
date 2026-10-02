@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { KANDIDAAT_UPLOAD_TYPES } from "@/lib/kandidaat-documenten";
 
 // 🚀 Optimized: O(1) token validation via database lookup
 async function validateUploadToken(token: string): Promise<{ valid: boolean; kandidaatId?: string }> {
@@ -54,12 +55,17 @@ export async function GET(request: NextRequest) {
     // Fetch already uploaded documents
     const { data: documents } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .select("document_type, file_name, file_size")
+      .select("type, bestandsnaam, bestand_grootte")
       .eq("inschrijving_id", validation.kandidaatId);
 
     return NextResponse.json({
       kandidaat,
-      uploaded_documents: documents || [],
+      // Live kolommen → veldnamen die de uploadpagina verwacht
+      uploaded_documents: (documents || []).map((doc) => ({
+        document_type: doc.type,
+        file_name: doc.bestandsnaam,
+        file_size: doc.bestand_grootte ?? 0,
+      })),
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/kandidaat/documenten", action: "GET" });
@@ -73,9 +79,12 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const token = formData.get("token") as string;
-    const file = formData.get("file") as File;
-    const documentType = formData.get("document_type") as string || "overig";
-    const expiryDate = formData.get("expiry_date") as string | null;
+    const file = formData.get("file");
+    // Alleen bekende types: de waarde komt ook in het opslagpad terecht.
+    const gevraagdType = String(formData.get("document_type") || formData.get("type") || "overig");
+    const documentType = (KANDIDAAT_UPLOAD_TYPES as readonly string[]).includes(gevraagdType)
+      ? gevraagdType
+      : "overig";
 
     // Validate token
     if (!token) {
@@ -89,7 +98,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: "Geen bestand geselecteerd" }, { status: 400 });
     }
 
@@ -126,7 +135,8 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const timestamp = Date.now();
-    const fileExt = file.name.split('.').pop();
+    // Extensie uit het (al gecontroleerde) mime-type, niet uit de bestandsnaam.
+    const fileExt = file.type === "application/pdf" ? "pdf" : file.type === "image/png" ? "png" : "jpg";
     const fileName = `${validation.kandidaatId}/${documentType}_${timestamp}.${fileExt}`;
 
     // Upload to Supabase Storage
@@ -144,19 +154,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Upload mislukt" }, { status: 500 });
     }
 
-    // Save to database (file_path is used for signed URL generation on demand)
+    // Save to database (bestand_pad wordt gebruikt om op aanvraag een signed URL
+    // te maken). Kolomnamen volgen de live tabel; zie lib/kandidaat-documenten.
     const { error: dbError } = await supabaseAdmin
       .from("kandidaat_documenten")
       .insert({
         inschrijving_id: validation.kandidaatId,
-        document_type: documentType,
-        file_name: file.name,
-        file_path: fileName,
-        file_size: file.size,
-        file_url: null,
-        review_status: "in_review",
+        type: documentType,
+        bestandsnaam: file.name.slice(0, 255),
+        bestand_pad: fileName,
+        mime_type: file.type,
+        bestand_grootte: file.size,
+        status: "ontvangen",
         uploaded_at: new Date().toISOString(),
-        document_expires_at: expiryDate || null,
       });
 
     if (dbError) {

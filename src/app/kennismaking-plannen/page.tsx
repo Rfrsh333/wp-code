@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { generateICS } from "@/lib/ics";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /* ───────────── Types ───────────── */
 
@@ -231,6 +232,8 @@ function KennismakingPlannenContent() {
   const prefillTelefoon = searchParams.get("telefoon");
 
   /* ── Data state ── */
+  const { executeRecaptcha } = useRecaptcha();
+  const [eventTypeId, setEventTypeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -321,6 +324,7 @@ function KennismakingPlannenContent() {
       }
 
       setDays(data.days || []);
+      setEventTypeId(data.event_type?.id ?? null);
 
       if (data.days?.length) {
         const firstDate = new Date(data.days[0].datum);
@@ -404,29 +408,40 @@ function KennismakingPlannenContent() {
     setError(null);
 
     try {
-      // Upload CV if present
-      let cvUrl: string | undefined;
+      // Upload CV if present. De route eist een reCAPTCHA-token; zonder token
+      // faalde de upload altijd stil en kwam de afspraak zonder cv binnen.
+      // We bewaren het opslagpad (een signed URL verliep na 5 minuten); de
+      // admin opent het cv via een vers gesigneerde link.
+      let cvPad: string | undefined;
       if (cvFile) {
         const formData = new FormData();
         formData.append("file", cvFile);
+        formData.append("recaptchaToken", (await executeRecaptcha("cv_upload")) || "");
         const uploadRes = await fetch("/api/cv-upload", { method: "POST", body: formData });
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          cvUrl = uploadData.url;
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        if (!uploadRes.ok || !uploadData.path) {
+          setCvError(uploadData.error || "Je cv kon niet worden geüpload. Probeer het opnieuw of boek zonder cv.");
+          setError("Je cv kon niet worden geüpload. Je afspraak is nog niet geboekt.");
+          return;
         }
+        cvPad = uploadData.path;
       }
+
+      const recaptchaToken = await executeRecaptcha("kennismaking_boeken");
 
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slot_id: selectedSlot.id,
+          event_type_id: eventTypeId || undefined,
           booking_type: "kandidaat",
+          recaptchaToken,
           kandidaat_naam: naam.trim(),
           kandidaat_email: email.trim(),
           kandidaat_telefoon: telefoon.trim() || undefined,
           kandidaat_notities: notities.trim() || undefined,
-          kandidaat_cv_url: cvUrl || undefined,
+          kandidaat_cv_pad: cvPad || undefined,
           inschrijving_id: refId || undefined,
           client_name: naam.trim(),
           client_email: email.trim(),

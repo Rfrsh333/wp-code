@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { generateICS } from "@/lib/ics";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /* ───────────── Types ───────────── */
 
@@ -169,6 +170,7 @@ function AfspraakPlannenContent() {
   const inquiryRef = searchParams.get("ref");
 
   /* ── Data state ── */
+  const { executeRecaptcha } = useRecaptcha();
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -379,10 +381,12 @@ function AfspraakPlannenContent() {
     setError(null);
 
     try {
+      const recaptchaToken = await executeRecaptcha("afspraak_boeken");
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          recaptchaToken,
           slot_id: selectedSlot.id,
           event_type_id: selectedEventType?.id || null,
           client_name: naam.trim(),

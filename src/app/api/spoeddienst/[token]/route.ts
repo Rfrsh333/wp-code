@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { checkRedisRateLimit, formRateLimit, getClientIP } from "@/lib/rate-limit-redis";
 
 // GET: Publiek — Haal dienstdetails op via uniek token
 export async function GET(
@@ -67,6 +68,21 @@ export async function POST(
     return NextResponse.json({ error: "Ongeldig token" }, { status: 400 });
   }
 
+  // Publiek formulier: zelfde rate limit als de andere publieke formulieren.
+  const clientIP = getClientIP(request);
+  const rateLimit = await checkRedisRateLimit(`spoeddienst:${clientIP}`, formRateLimit);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Te veel verzoeken. Probeer het zo opnieuw." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))),
+        },
+      }
+    );
+  }
+
   // Haal dienst op
   const { data: dienst, error: dienstError } = await supabaseAdmin
     .from("diensten")
@@ -90,10 +106,16 @@ export async function POST(
   }
 
   // Parse body
-  const body = await request.json();
-  const { naam, telefoon } = body;
+  let body: { naam?: unknown; telefoon?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Ongeldig verzoek" }, { status: 400 });
+  }
+  const naam = typeof body.naam === "string" ? body.naam : "";
+  const telefoon = typeof body.telefoon === "string" ? body.telefoon : "";
 
-  if (!naam || !telefoon) {
+  if (!naam.trim() || !telefoon.trim()) {
     return NextResponse.json(
       { error: "Naam en telefoon zijn verplicht" },
       { status: 400 }

@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+/**
+ * reCAPTCHA-token zoals de formulieren hem meesturen. Een client zonder
+ * geladen reCAPTCHA stuurt `null`; met `.optional()` gaf Zod dan een Engelse
+ * melding ("Invalid input: expected string, received null"). Daarom null en
+ * ontbrekend toestaan en de route laten weigeren met de Nederlandse melding
+ * "reCAPTCHA verificatie vereist" (die controle staat in elke route).
+ * Een ander type (getal, object) krijgt dezelfde Nederlandse melding.
+ */
+const recaptchaTokenVeld = z
+  .string({ error: "reCAPTCHA verificatie vereist" })
+  .max(4000)
+  .nullish()
+  .transform((v) => v ?? undefined);
+
 export const loginSchema = z.object({
   email: z.string().email("Ongeldig e-mailadres").max(255),
   wachtwoord: z.string().min(1, "Wachtwoord is verplicht").max(255),
@@ -11,7 +25,7 @@ export const contactSchema = z.object({
   telefoon: z.string().max(20).optional().or(z.literal("")),
   onderwerp: z.string().min(1, "Onderwerp is verplicht").max(100),
   bericht: z.string().min(1, "Bericht is verplicht").max(5000),
-  recaptchaToken: z.string().optional(),
+  recaptchaToken: recaptchaTokenVeld,
   leadSource: z.string().max(100).optional(),
   campaignName: z.string().max(100).optional(),
   utmSource: z.string().max(100).optional(),
@@ -42,7 +56,7 @@ export const inschrijvenSchema = z.object({
   ]).optional(),
   functie_voorkeur: z.array(z.string()).optional(),
   uitbetalingswijze: z.string().max(50).optional(),
-  recaptchaToken: z.string().optional(),
+  recaptchaToken: recaptchaTokenVeld,
   leadSource: z.string().max(100).optional(),
   campaignName: z.string().max(100).optional(),
   utmSource: z.string().max(100).optional(),
@@ -65,7 +79,7 @@ export const personeelAanvraagSchema = z.object({
   werktijden: z.string().max(100),
   locatie: z.string().max(500),
   opmerkingen: z.string().max(5000).optional().or(z.literal("")),
-  recaptchaToken: z.string().optional(),
+  recaptchaToken: recaptchaTokenVeld,
   leadSource: z.string().max(100).optional(),
   campaignName: z.string().max(100).optional(),
   utmSource: z.string().max(100).optional(),
@@ -85,7 +99,7 @@ export const kandidaatBookingSchema = z.object({
   email: z.string().email("Ongeldig e-mailadres").max(255),
   telefoon: z.string().max(20).optional().or(z.literal("")),
   notities: z.string().max(500).optional().or(z.literal("")),
-  recaptchaToken: z.string().optional(),
+  recaptchaToken: recaptchaTokenVeld,
 });
 
 

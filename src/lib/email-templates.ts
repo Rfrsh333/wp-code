@@ -468,7 +468,8 @@ export function buildKandidaatBookingNotificatie(params: {
   kandidaatNaam: string;
   email: string;
   telefoon?: string;
-  cvUrl?: string;
+  /** CV staat in de bucket; een link in de mail zou verlopen, dus verwijzen naar de admin-agenda. */
+  cvGeupload?: boolean;
   inschrijvingId?: string;
   meetLink?: string;
   datum: string;
@@ -486,7 +487,7 @@ export function buildKandidaatBookingNotificatie(params: {
     <h2 style="color: #333; margin: 0 0 16px 0; font-size: 18px;">Nieuw kennismakingsgesprek ingepland</h2>
     <p style="font-size: 15px; line-height: 1.6; color: #333;">Er is een nieuw kennismakingsgesprek ingepland met een kandidaat.</p>
     ${kandidaatInfoBlock(items)}
-    ${params.cvUrl ? `<p style="font-size: 14px; margin: 12px 0;"><strong>CV:</strong> <a href="${params.cvUrl}" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">Download CV</a></p>` : ""}
+    ${params.cvGeupload ? `<p style="font-size: 14px; margin: 12px 0;"><strong>CV:</strong> geüpload — open het via Agenda in het admin-dashboard.</p>` : ""}
     ${params.meetLink ? `<p style="font-size: 14px; margin: 12px 0;"><strong>Google Meet:</strong> <a href="${params.meetLink}" style="color: ${KANDIDAAT_COLOR}; text-decoration: none;">${params.meetLink}</a></p>` : ""}
     ${params.inschrijvingId ? `<p style="font-size: 13px; color: #999;">Inschrijving ID: ${escapeHtml(params.inschrijvingId)}</p>` : ""}`;
 

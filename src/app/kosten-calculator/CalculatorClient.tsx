@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 import type {
   CalculatorInputs,
   Resultaten,
@@ -141,6 +142,7 @@ export default function CalculatorClient() {
   const [pdfToken, setPdfToken] = useState<string | null>(null);
   const [isPdfDownloading, setIsPdfDownloading] = useState(false);
   const toast = useToast();
+  const { executeRecaptcha } = useRecaptcha();
 
   const [inputs, setInputs] = useState<CalculatorInputs>({
     functie: "bediening",
@@ -216,10 +218,12 @@ export default function CalculatorClient() {
     setIsSubmitting(true);
 
     try {
+      const recaptchaToken = await executeRecaptcha("calculator_lead");
       const response = await fetch("/api/calculator/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          recaptchaToken,
           lead: leadForm,
           inputs,
           resultaten,

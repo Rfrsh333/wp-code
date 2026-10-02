@@ -80,11 +80,12 @@ export async function POST(request: NextRequest) {
           });
 
           if (mailResult.error) {
-            captureRouteError(error, { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
+            captureRouteError(mailResult.error, { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
             // console.error("Admin password reset email send error:", mailResult.error);
           }
         } else {
-          captureRouteError(error, { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
+          // `error` is hier altijd null; log een eigen fout zodat Sentry iets ziet.
+          captureRouteError(new Error("Admin reset-link zonder action_link"), { route: "/api/admin/wachtwoord-reset/request", action: "POST" });
           // console.error("Admin password reset link missing action_link", data);
         }
       }

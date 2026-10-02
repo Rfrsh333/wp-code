@@ -6,6 +6,7 @@ import { verifyRecaptcha } from "@/lib/recaptcha";
 import { escapeHtml } from "@/lib/sanitize";
 import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { ontbrekendeInschrijfVelden, inschrijfFoutmelding } from "@/lib/inschrijving-regels";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -102,25 +103,28 @@ export async function POST(request: NextRequest) {
       .map((value) => String(value).trim())
       .filter(Boolean);
 
-    if (
-      !voornaam ||
-      !achternaam ||
-      !email ||
-      !telefoon ||
-      !stad ||
-      !geboortedatum ||
-      !geslacht ||
-      !horecaErvaring ||
-      !beschikbaarheid ||
-      !beschikbaarVanaf ||
-      !motivatie ||
-      !hoeGekomen ||
-      !uitbetalingswijze ||
-      functies.length === 0 ||
-      talen.length === 0
-    ) {
+    // Motivatie is in het formulier "(optioneel)" — niet meer eisen, anders
+    // strandt een kandidaat die dat veld leeg laat op een vage foutmelding.
+    // Noem bij een fout wélk veld ontbreekt, zodat de kandidaat het kan herstellen.
+    const ontbrekend = ontbrekendeInschrijfVelden({
+      voornaam,
+      achternaam,
+      email,
+      telefoon,
+      stad,
+      geboortedatum,
+      geslacht,
+      horecaErvaring,
+      beschikbaarheid,
+      beschikbaarVanaf,
+      hoeGekomen,
+      uitbetalingswijze,
+      functies,
+      talen,
+    });
+    if (ontbrekend.length > 0) {
       return NextResponse.json(
-        { error: "Vul alle verplichte velden in" },
+        { error: inschrijfFoutmelding(ontbrekend), ontbrekend },
         { status: 400 }
       );
     }
@@ -202,7 +206,7 @@ export async function POST(request: NextRequest) {
               Extra context
             </h2>
             <p style="margin: 0 0 15px; color: #666;"><strong>Hoe bij ons gekomen:</strong> ${escapeHtml(hoeGekomen)}</p>
-            <p style="margin: 0; color: #666;"><strong>Motivatie:</strong><br>${escapeHtml(motivatie)}</p>
+            <p style="margin: 0; color: #666;"><strong>Motivatie:</strong><br>${escapeHtml(motivatie) || "Niet ingevuld"}</p>
             <p style="margin-top: 20px; font-size: 12px; color: #777;">
               Deze intake bevat bewust nog geen documenten. Die worden later in de onboarding apart opgevraagd.
             </p>
@@ -223,7 +227,8 @@ export async function POST(request: NextRequest) {
       stad,
       geboortedatum,
       geslacht,
-      motivatie,
+      // Kolom is NOT NULL; lege string = "niet ingevuld" (veld is optioneel).
+      motivatie: motivatie.trim(),
       hoe_gekomen: hoeGekomen,
       uitbetalingswijze,
       kvk_nummer: kvkNummer || null,
