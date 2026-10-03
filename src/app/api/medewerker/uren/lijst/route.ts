@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
-import { haalTeRegistreren, haalUrenRegistraties } from "@/lib/medewerker/uren";
+import { haalAfgelopenZonderUren, haalUrenRegistraties } from "@/lib/medewerker/uren";
 import { medewerkerUurtarief, telVerdiend, verdienstenVanRegel } from "@/lib/medewerker/uren-regels";
 import { roundCurrency } from "@/lib/reiskosten";
 
@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const [registraties, teRegistreren] = await Promise.all([
+    const [registraties, { teRegistreren, nietIngecheckt }] = await Promise.all([
       haalUrenRegistraties(medewerker.id),
-      haalTeRegistreren(medewerker.id),
+      haalAfgelopenZonderUren(medewerker.id),
     ]);
 
     const uren = registraties.slice(0, 50).map((u) => ({
@@ -79,6 +79,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       uren,
       te_registreren: teRegistreren.slice(0, 10),
+      // Nieuw (3-10-2026): afgelopen diensten waarvoor indienen geblokkeerd is (geen QR-check-in,
+      // klant eist QR). Apart veld zodat oudere app-versies er geen "Uren invullen"-knop voor tonen.
+      niet_ingecheckt: nietIngecheckt.slice(0, 10),
       aanpassingen,
       summary: {
         deze_maand: dezeMaand.bedrag,

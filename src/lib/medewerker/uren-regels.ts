@@ -63,22 +63,43 @@ export function dienstEindMoment(datum: string, startTijd: string, eindTijd: str
   return nlMoment(overMiddernacht ? plusDagen(datum, 1) : datum, eindTijd);
 }
 
+type UrenDienst = {
+  datum: string | null;
+  start_tijd: string | null;
+  eind_tijd: string | null;
+  check_in_at: string | null;
+  qr_verplicht: boolean | null;
+  heeft_uren: boolean;
+};
+
+/** Ingeplande dienst die voorbij is en waarvoor nog geen uren zijn ingediend. */
+function isAfgelopenZonderUren(d: UrenDienst, nu: Date): boolean {
+  if (d.heeft_uren || !d.datum || !d.start_tijd || !d.eind_tijd) return false;
+  return dienstEindMoment(d.datum, d.start_tijd, d.eind_tijd).getTime() <= nu.getTime();
+}
+
+/**
+ * Laat de backend het indienen toe? Zelfde regel als `uren_indienen` in
+ * api/medewerker/diensten: ingecheckt, of de klant heeft QR expliciet uitgezet
+ * (onbekend/null = verplicht).
+ */
+function magIndienenZonderBlokkade(d: Pick<UrenDienst, "check_in_at" | "qr_verplicht">): boolean {
+  return !!d.check_in_at || d.qr_verplicht === false;
+}
+
 /**
  * Moet de medewerker voor deze ingeplande dienst nog uren registreren?
  * Dienst is afgelopen, er zijn nog geen uren, en hij is ingecheckt (of de klant eist geen QR).
  */
-export function isTeRegistreren(
-  d: {
-    datum: string | null;
-    start_tijd: string | null;
-    eind_tijd: string | null;
-    check_in_at: string | null;
-    qr_verplicht: boolean | null;
-    heeft_uren: boolean;
-  },
-  nu: Date = new Date(),
-): boolean {
-  if (d.heeft_uren || !d.datum || !d.start_tijd || !d.eind_tijd) return false;
-  if (dienstEindMoment(d.datum, d.start_tijd, d.eind_tijd).getTime() > nu.getTime()) return false;
-  return !!d.check_in_at || d.qr_verplicht === false;
+export function isTeRegistreren(d: UrenDienst, nu: Date = new Date()): boolean {
+  return isAfgelopenZonderUren(d, nu) && magIndienenZonderBlokkade(d);
+}
+
+/**
+ * Afgelopen dienst zonder uren waarvoor indienen geblokkeerd is omdat de QR-check-in ontbreekt
+ * en de klant QR verplicht stelt. De medewerker kan zelf niets indienen (de backend weigert);
+ * de app toont de dienst met uitleg in plaats van hem te verbergen.
+ */
+export function wachtOpCheckin(d: UrenDienst, nu: Date = new Date()): boolean {
+  return isAfgelopenZonderUren(d, nu) && !magIndienenZonderBlokkade(d);
 }

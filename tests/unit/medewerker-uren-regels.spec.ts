@@ -6,6 +6,7 @@ import {
   medewerkerUurtarief,
   telVerdiend,
   verdienstenVanRegel,
+  wachtOpCheckin,
 } from "../../src/lib/medewerker/uren-regels";
 import { berekenToeslagRegel } from "../../src/lib/toeslag";
 
@@ -75,5 +76,30 @@ test.describe("medewerker uren-regels", () => {
     expect(
       isTeRegistreren({ ...basis, check_in_at: null, qr_verplicht: false }, new Date("2026-10-03T00:00:00Z")),
     ).toBe(true);
+  });
+
+  test("wachtOpCheckin: afgelopen zonder uren, niet ingecheckt en QR verplicht (of onbekend)", () => {
+    const basis = {
+      datum: "2026-10-01",
+      start_tijd: "10:00",
+      eind_tijd: "14:00",
+      check_in_at: null,
+      qr_verplicht: true as boolean | null,
+      heeft_uren: false,
+    };
+    const later = new Date("2026-10-02T10:00:00Z");
+    expect(wachtOpCheckin(basis, later)).toBe(true);
+    // Onbekend = verplicht, net als de uren_indienen-check in api/medewerker/diensten
+    expect(wachtOpCheckin({ ...basis, qr_verplicht: null }, later)).toBe(true);
+    // QR uit of wel ingecheckt: gewoon indienbaar, dus niet "wacht op check-in"
+    expect(wachtOpCheckin({ ...basis, qr_verplicht: false }, later)).toBe(false);
+    expect(wachtOpCheckin({ ...basis, check_in_at: "2026-10-01T08:00:00Z" }, later)).toBe(false);
+    // Nog bezig of al uren: niets
+    expect(wachtOpCheckin(basis, new Date("2026-10-01T11:00:00Z"))).toBe(false);
+    expect(wachtOpCheckin({ ...basis, heeft_uren: true }, later)).toBe(false);
+    // Nooit allebei waar
+    for (const d of [basis, { ...basis, qr_verplicht: false }, { ...basis, check_in_at: "x" }]) {
+      expect(isTeRegistreren(d, later) && wachtOpCheckin(d, later)).toBe(false);
+    }
   });
 });
