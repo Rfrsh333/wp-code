@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { valideerLeeftijdVoorDienst, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
 import { normaliseerBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
+import { beschikbaarheidPerMedewerker } from "@/lib/medewerker/beschikbaarheid-bron";
 
 interface Medewerker {
   id: string;
@@ -19,7 +20,7 @@ interface Medewerker {
 }
 
 interface Beschikbaarheid {
-  email: string;
+  email?: string;
   beschikbaarheid: Record<string, string[]> | string | null;
   beschikbaar_vanaf: string | null;
   max_uren_per_week: number | null;
@@ -215,16 +216,9 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
     return { dienst, matches: [] };
   }
 
-  // Haal beschikbaarheid op voor alle medewerkers
-  const emails = medewerkers.map((m) => m.email);
-  const { data: beschikbaarheidData } = await supabaseAdmin
-    .from("inschrijvingen")
-    .select("email, beschikbaarheid, beschikbaar_vanaf, max_uren_per_week")
-    .in("email", emails);
-
-  const beschikbaarheidMap = new Map(
-    (beschikbaarheidData || []).map((b) => [b.email, b as Beschikbaarheid])
-  );
+  // Haal beschikbaarheid op voor alle medewerkers: inschrijving (e-mail of medewerker_id),
+  // anders het rooster op de medewerker zelf (medewerkers zonder inschrijving).
+  const beschikbaarheidMap = await beschikbaarheidPerMedewerker(medewerkers);
 
   // Haal bestaande aanmeldingen op voor deze dienst
   const { data: bestaandeAanmeldingen } = await supabaseAdmin
@@ -271,7 +265,7 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
   const matches = medewerkers
     .filter((m) => !alAangemeldIds.has(m.id))
     .filter((m) => !verlopenIDSet.has(m.id))
-    .map((m) => calculateMatchScore(m, dienst, beschikbaarheidMap.get(m.email) || null, vshSet.has(m.id)))
+    .map((m) => calculateMatchScore(m, dienst, (beschikbaarheidMap.get(m.id) as Beschikbaarheid | undefined) || null, vshSet.has(m.id)))
     .filter((m) => m.score > 0)
     .sort((a, b) => {
       // Beschikbare medewerkers eerst, dan op score

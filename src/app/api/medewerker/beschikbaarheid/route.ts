@@ -4,6 +4,7 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { normaliseerBeschikbaarheid, schoneBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
+import { schrijfBron, zoekBron } from "@/lib/medewerker/beschikbaarheid-bron";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,23 +28,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Niets om op te slaan" }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("inschrijvingen")
-      .update(update)
-      .eq("email", medewerker.email)
-      .select("id");
+    // Inschrijving (gekoppeld of op e-mailadres), anders het rooster op de medewerker zelf.
+    // Voorheen alleen inschrijvingen op exact e-mailadres: medewerkers die de admin zelf
+    // aanmaakt kregen altijd 404 en konden hun beschikbaarheid nooit opslaan.
+    const { bron, error: zoekFout } = await zoekBron(medewerker);
+    if (zoekFout) {
+      captureRouteError(zoekFout, { route: "/api/medewerker/beschikbaarheid", action: "POST" });
+      return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
+    }
+    if (bron.soort === "geen") {
+      // Alleen zolang migratie 20261006_medewerker_beschikbaarheid.sql niet gedraaid is.
+      return NextResponse.json(
+        { error: "Je beschikbaarheid kan nog niet worden opgeslagen. Stuur TopTalent een bericht, dan zetten we het recht." },
+        { status: 409 },
+      );
+    }
 
+    const { error } = await schrijfBron(bron, medewerker.id, update);
     if (error) {
       captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "POST" });
       return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
-    }
-
-    // Geen inschrijving op dit e-mailadres: er is niets opgeslagen, dus ook niet "opgeslagen" melden.
-    if (!data || data.length === 0) {
-      return NextResponse.json(
-        { error: "We konden je inschrijving niet vinden. Stuur TopTalent een bericht, dan zetten we het recht." },
-        { status: 404 },
-      );
     }
 
     return NextResponse.json({ success: true });
@@ -64,21 +68,15 @@ export async function GET(request: NextRequest) {
 
     const wantOverrides = request.nextUrl.searchParams.get("overrides") === "true";
 
-    const { data, error } = await supabaseAdmin
-      .from("inschrijvingen")
-      .select("beschikbaarheid, beschikbaar_vanaf, max_uren_per_week")
-      .eq("email", medewerker.email)
-      .maybeSingle();
-
+    const { bron, error } = await zoekBron(medewerker);
     if (error) {
       captureRouteError(error, { route: "/api/medewerker/beschikbaarheid", action: "GET" });
-      // console.error("DB error:", error);
       return NextResponse.json({ error: "Ophalen mislukt" }, { status: 500 });
     }
 
-    if (!data) {
-      return NextResponse.json({ error: "Medewerker niet gevonden" }, { status: 404 });
-    }
+    // Geen inschrijving is geen fout meer: dan een leeg rooster dat de medewerker zelf invult.
+    const data =
+      bron.soort === "geen" ? { beschikbaarheid: null, beschikbaar_vanaf: null, max_uren_per_week: null } : bron.velden;
 
     const genormaliseerd = {
       ...data,
