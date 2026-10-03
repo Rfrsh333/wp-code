@@ -209,7 +209,7 @@ export default function Footer() {
                 <span>WAADI-geregistreerd</span>
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-sm">
               <Link href="/voorwaarden/" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Algemene voorwaarden
               </Link>

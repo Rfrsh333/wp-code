@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
@@ -19,7 +20,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-lg text-neutral-300">
-            TopTalent B.V. - Laatst bijgewerkt: april 2026
+            TopTalent B.V. - Laatst bijgewerkt: oktober 2026
           </p>
         </div>
       </section>
@@ -32,7 +33,7 @@ export default function PrivacyPolicyPage() {
             {/* Inleiding */}
             <div className="bg-[#FFF7F1] rounded-2xl p-6 mb-10">
               <p className="text-neutral-700 mb-0">
-                TopTalent B.V. hecht groot belang aan de bescherming van uw persoonsgegevens. In deze privacy policy informeren wij u over hoe wij omgaan met uw persoonsgegevens in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG/GDPR) en overige toepasselijke Nederlandse privacywetgeving. Deze policy is van toepassing op alle diensten die wij aanbieden als uitzendbureau gespecialiseerd in horecapersoneel.
+                TopTalent B.V. hecht groot belang aan de bescherming van uw persoonsgegevens. In deze privacy policy informeren wij u over hoe wij omgaan met uw persoonsgegevens in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG/GDPR) en overige toepasselijke Nederlandse privacywetgeving. Deze policy is van toepassing op alle diensten die wij aanbieden als uitzendbureau gespecialiseerd in horecapersoneel, inclusief onze website, de online portalen voor werknemers en werkgevers en de TopTalent-app (zie paragraaf 10c).
               </p>
             </div>
 
@@ -371,6 +372,10 @@ export default function PrivacyPolicyPage() {
               <li><strong>OpenAI (VS):</strong> voor AI-ondersteunde screening van kandidaatprofielen (geanonimiseerd, zonder naam of geboortedatum)</li>
               <li><strong>Sentry (VS):</strong> voor foutmonitoring en applicatiestabiliteit (geen persoonsgegevens)</li>
               <li><strong>Vercel (VS):</strong> voor hosting, analytics en performance monitoring (alleen met uw toestemming voor analytics)</li>
+              <li><strong>Supabase:</strong> voor de database en de opslag van documenten (servers in Frankfurt, Duitsland)</li>
+              <li><strong>Resend (VS):</strong> voor het verzenden van e-mails vanuit onze systemen</li>
+              <li><strong>Mollie (Nederland):</strong> voor de betaling van boetes</li>
+              <li><strong>Expo / 650 Industries (VS), Apple en Google:</strong> voor het bezorgen van pushmeldingen in de TopTalent-app</li>
             </ul>
             <p>Met alle verwerkers hebben wij verwerkersovereenkomsten gesloten die voldoen aan de eisen van artikel 28 AVG.</p>
 
@@ -516,6 +521,71 @@ export default function PrivacyPolicyPage() {
               <li>U kunt bezwaar maken tegen AI-verwerking van uw gegevens</li>
             </ul>
 
+            {/* 10c. TopTalent-app */}
+            <h2 id="app" className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
+              10c. De TopTalent-app
+            </h2>
+            <p>TopTalent heeft een app voor iOS en Android, voor werknemers en werkgevers. Deze privacy policy geldt ook voor de app. Hieronder leest u wat de app specifiek doet met uw gegevens.</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Welke gegevens de app verwerkt</h3>
+            <p>De app is een andere toegang tot hetzelfde account als het werknemers- of werkgeversportaal op deze website. De gegevens worden bewaard op onze servers, niet in de app. Het gaat om:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Inloggen:</strong> uw e-mailadres en wachtwoord</li>
+              <li><strong>Werknemers:</strong> profielgegevens (naam, e-mail, telefoon, adres, geboortedatum, factuuradres, btw-nummer, IBAN en KOR-keuze), profielfoto, geüploade documenten (zoals identiteitsbewijs, werk- of verblijfsvergunning, VOG, KvK-uittreksel, loonheffingsverklaring en contract), diensten en aanmeldingen, beschikbaarheid, gewerkte uren en verdiensten, en berichten aan TopTalent. De app toont alleen óf uw BSN is gecontroleerd, niet het BSN zelf.</li>
+              <li><strong>Werkgevers:</strong> bedrijfsgegevens (contactpersoon, e-mail, telefoon, adres, KvK- en btw-nummer), personeelsaanvragen en diensten, goedgekeurde uren, facturen en beoordelingen die u over werknemers geeft</li>
+              <li><strong>Pushmeldingen:</strong> een pushtoken van uw toestel en het platform (iOS of Android), zie hieronder</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Camera en foto&apos;s</h3>
+            <p>De app vraagt pas om toegang tot de camera of uw foto&apos;s op het moment dat u de functie gebruikt:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>QR-code scannen (werkgever):</strong> bij het inchecken scant u de QR-code van de werknemer. Alleen de gelezen code (met daarin het id en de naam van de werknemer) wordt naar onze server gestuurd. Camerabeelden worden niet opgeslagen of verstuurd.</li>
+              <li><strong>Foto of document uploaden (werknemer):</strong> voor uw profielfoto of een document kunt u een foto maken of een foto of bestand kiezen. Alleen wat u zelf kiest om te uploaden, wordt naar ons verstuurd.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Bewegingssensor</h3>
+            <p>Het QR-pasje van de werknemer kantelt mee als u de telefoon beweegt. Daarvoor leest de app de bewegingssensor van het toestel uit. Die gegevens worden alleen op het toestel gebruikt voor dit visuele effect en worden niet opgeslagen of verstuurd.</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Pushmeldingen</h3>
+            <p>Als u toestemming geeft, stuurt de app meldingen over uw werk bij TopTalent, bijvoorbeeld een uitnodiging voor een dienst, een nieuwe dienst, een geannuleerde dienst, een nieuwe aanmelding, uren die op goedkeuring wachten of een nieuwe factuur. Daarvoor slaan wij een pushtoken van uw toestel op, gekoppeld aan uw account. De meldingen lopen via:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Expo Push Service</strong> van 650 Industries, Inc. (VS)</li>
+              <li><strong>Apple Push Notification service</strong> (iPhone)</li>
+              <li><strong>Firebase Cloud Messaging</strong> van Google (Android)</li>
+            </ul>
+            <p>Bij het uitloggen wordt het pushtoken van dat toestel bij ons verwijderd. Werknemers kunnen meldingen in de app uitzetten onder Account &rarr; Meldingen en wachtwoord. Iedereen kan meldingen ook uitzetten in de instellingen van de telefoon.</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Opslag op uw toestel</h3>
+            <p>De app bewaart op uw toestel, in de beveiligde opslag van iOS (Keychain) of Android (Keystore):</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>uw sessietoken, zodat u ingelogd blijft;</li>
+              <li>voor werknemers een offline kopie van het QR-pasje (naam, id, functie en de eerstvolgende dienst), zodat het pasje ook zonder internet werkt;</li>
+              <li>of u meldingen zelf heeft uitgezet.</li>
+            </ul>
+            <p>Het sessietoken en het QR-pasje worden gewist als u uitlogt.</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Wat de app niet doet</h3>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>De app gebruikt uw locatie niet.</li>
+              <li>De app bevat geen advertenties, geen tracking en geen analyse-software en gebruikt geen advertentie-ID.</li>
+              <li>De app gebruikt de microfoon, uw contacten en uw agenda niet.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Betalen</h3>
+            <p>Een werknemer van wie het account is gepauzeerd vanwege een boete, kan die boete betalen via Mollie. De app opent daarvoor de betaalpagina van Mollie in de browser. Uw bank- of kaartgegevens vult u in bij Mollie, niet in de app.</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Dienstverleners voor de app en de portalen</h3>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Supabase:</strong> database en opslag van geüploade documenten en foto&apos;s (servers in Frankfurt, Duitsland)</li>
+              <li><strong>Vercel (VS):</strong> hosting van de website en de servers waarmee de app communiceert</li>
+              <li><strong>Resend (VS):</strong> verzending van e-mails, zoals wachtwoordherstel en meldingen</li>
+              <li><strong>Mollie (Nederland):</strong> betaling van boetes</li>
+              <li><strong>Expo, Apple en Google:</strong> bezorging van pushmeldingen (zie hierboven)</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Account verwijderen</h3>
+            <p>U kunt uw account in de app verwijderen. Werknemers gaan naar Account &rarr; Account verwijderen en sturen daarmee een verzoek, dat wij uiterlijk binnen één maand afhandelen. Werkgevers gaan naar Meer &rarr; Wachtwoord en account; het account wordt dan direct verwijderd. Zonder de app kunt u verwijdering aanvragen via <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a>. Op de pagina <Link href="/account-verwijderen/" className="text-[#FF7A00] hover:underline">Account verwijderen</Link> leest u precies hoe dat werkt en welke gegevens wij vanwege de wettelijke bewaarplicht bewaren (zie ook paragraaf 6).</p>
+
             {/* 11. Beveiliging */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
               11. Beveiliging van persoonsgegevens
@@ -569,6 +639,7 @@ export default function PrivacyPolicyPage() {
               <li>U bezwaar maakt en er geen dwingende gerechtvaardigde gronden zijn</li>
             </ul>
             <p>Dit recht is niet absoluut; wij kunnen verwijdering weigeren indien wij wettelijk verplicht zijn gegevens te bewaren.</p>
+            <p>Heeft u een account voor de app of een van onze portalen? Op de pagina <Link href="/account-verwijderen/" className="text-[#FF7A00] hover:underline">Account verwijderen</Link> leest u hoe u dat account laat verwijderen, ook zonder de app.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">12.4 Recht op beperking van de verwerking (artikel 18 AVG)</h3>
             <p>U heeft het recht om de verwerking van uw persoonsgegevens tijdelijk te laten beperken, bijvoorbeeld wanneer u de juistheid van de gegevens betwist.</p>
@@ -645,10 +716,10 @@ export default function PrivacyPolicyPage() {
             {/* Footer */}
             <div className="mt-16 pt-8 border-t border-neutral-200">
               <p className="text-neutral-500 text-sm">
-                <strong>Utrecht, april 2026</strong>
+                <strong>Utrecht, oktober 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 2.0
+                TopTalent B.V. - Privacy Policy versie 2.1
               </p>
             </div>
           </div>
