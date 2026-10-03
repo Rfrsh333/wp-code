@@ -123,6 +123,7 @@ export function proxy(request: NextRequest) {
     pathname === "/afspraak-plannen" ||
     pathname === "/kennismaking-plannen" ||
     pathname === "/privacy" ||
+    pathname === "/account-verwijderen" ||
     pathname === "/voorwaarden";
 
   if (!isIndexablePath) {
