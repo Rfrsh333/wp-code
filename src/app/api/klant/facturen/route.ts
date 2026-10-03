@@ -9,6 +9,7 @@ import { calculateVat } from "@/lib/factuur-config";
 import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
 import { isOntbrekendeKolomFout, maakKlantSnapshot, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
 import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
+import { DEMO_MELDINGEN, isDemoKlant } from "@/lib/demo";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -52,6 +53,12 @@ export async function POST(request: NextRequest) {
 
   if (!Array.isArray(uren_ids) || uren_ids.length === 0 || !uren_ids.every((id) => typeof id === "string")) {
     return NextResponse.json({ error: "Geen uren opgegeven" }, { status: 400 });
+  }
+
+  // Demo-account (reviewer): geen echte factuur, dus geen factuurnummer uit de reeks en geen
+  // uren op "gefactureerd". Weigeren met een nette melding (zie docs/demo-account.md).
+  if (await isDemoKlant(klant.id)) {
+    return NextResponse.json({ error: DEMO_MELDINGEN.factuur, demo: true }, { status: 403 });
   }
 
   // Haal goedgekeurde uren op

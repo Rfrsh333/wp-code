@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { INGEPLAND_STATUSSEN, isIngepland } from "@/lib/dienst-status";
 import { herberekenPlekken } from "@/lib/plekken";
 import { nlVandaag } from "@/lib/nl-tijd";
+import { haalDemoIds, zelfdeWereld } from "@/lib/demo";
 import {
   annuleerUitkomst,
   HERACTIVEERBAAR,
@@ -89,10 +90,15 @@ export async function meldAan(
 
   const { data: dienst } = await supabaseAdmin
     .from("diensten")
-    .select("id, status, plekken_beschikbaar, plekken_totaal, aantal_nodig")
+    .select("id, klant_id, status, plekken_beschikbaar, plekken_totaal, aantal_nodig")
     .eq("id", dienstId)
     .maybeSingle();
   if (!dienst) return { ok: false, status: 404, error: "Dienst niet gevonden" };
+  // Demo-medewerkers alleen op diensten van demo-klanten en andersom (lib/demo.ts). Zelfde
+  // antwoord als een onbekende dienst: de andere wereld bestaat voor deze medewerker niet.
+  if (!zelfdeWereld(await haalDemoIds(), medewerkerId, dienst.klant_id as string | null)) {
+    return { ok: false, status: 404, error: "Dienst niet gevonden" };
+  }
 
   const ingepland = await telIngepland(dienstId);
   if (!heeftVrijePlek(dienst, ingepland)) {

@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { haalDemoIds } from "@/lib/demo";
+import { NIL_UUID } from "@/lib/demo-regels";
 
 interface PushPayload {
   title: string;
@@ -51,13 +53,26 @@ export async function sendPushToUser(
 }
 
 /**
- * Stuur push notificatie naar alle gebruikers van een bepaald type
+ * Stuur push notificatie naar alle gebruikers van een bepaald type.
+ *
+ * Demo-accounts (lib/demo.ts) vormen een eigen wereld: standaard (`demo: false`) gaat een
+ * broadcast alleen naar echte gebruikers; met `demo: true` (actie van een demo-account) alleen
+ * naar demo-gebruikers, zodat een reviewer nooit een push naar echte medewerkers veroorzaakt.
  */
 export async function sendPushToAllOfType(
   userType: "medewerker" | "klant",
-  payload: PushPayload
+  payload: PushPayload,
+  opties: { demo?: boolean } = {}
 ): Promise<{ sent: number; failed: number }> {
-  const subscriptions = await selectSubscriptions((q) => q.eq("user_type", userType));
+  const demo = opties.demo === true;
+  const ids = await haalDemoIds();
+  const demoSet = userType === "medewerker" ? ids.medewerkers : ids.klanten;
+  const demoLijst = [...demoSet];
+  const subscriptions = await selectSubscriptions((q) => {
+    const basis = q.eq("user_type", userType);
+    if (demo) return basis.in("user_id", demoLijst.length > 0 ? demoLijst : [NIL_UUID]);
+    return demoLijst.length > 0 ? basis.not("user_id", "in", `(${demoLijst.join(",")})`) : basis;
+  });
 
   if (!subscriptions.length) {
     return { sent: 0, failed: 0 };

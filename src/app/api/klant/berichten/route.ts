@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { isDemoKlant } from "@/lib/demo";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -59,8 +60,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Bericht versturen mislukt" }, { status: 500 });
   }
 
-  // Telegram notification (geen PII — AVG compliance)
-  await sendTelegramAlert(
+  // Telegram notification (geen PII — AVG compliance); niet voor demo-accounts (lib/demo.ts).
+  if (!(await isDemoKlant(klant.id))) await sendTelegramAlert(
     `<b>Nieuw bericht van klant</b>\n` +
     `Nieuw bericht van klant — bekijk in dashboard`
   );
