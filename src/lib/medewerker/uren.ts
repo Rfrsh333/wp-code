@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
-import { isTeRegistreren, type UrenRegel } from "@/lib/medewerker/uren-regels";
+import { isTeRegistreren, wachtOpCheckin, type UrenRegel } from "@/lib/medewerker/uren-regels";
+import { nlVandaag, plusDagen } from "@/lib/nl-tijd";
 
 /**
  * Gedeelde queries voor dashboard, Uren en Financieel.
@@ -76,8 +77,32 @@ export type TeRegistreren = {
   klant: { bedrijfsnaam: string };
 };
 
+export type NietIngecheckt = TeRegistreren & {
+  reden: "geen_checkin";
+  /** Dienst was vandaag: de werkgever kan de QR-code vandaag nog scannen (api/klant/checkin). */
+  werkgever_kan_nog_scannen: boolean;
+};
+
+/**
+ * Hoe ver terug afgelopen diensten zonder check-in nog getoond worden. Oudere blijven bij
+ * TopTalent (admin kan uren handmatig invoeren); anders staan maanden-oude diensten eeuwig open.
+ */
+export const NIET_INGECHECKT_DAGEN = 30;
+
 /** Ingeplande (geaccepteerd/bevestigd), afgelopen diensten zonder uren-registratie. */
 export async function haalTeRegistreren(medewerkerId: string, nu: Date = new Date()): Promise<TeRegistreren[]> {
+  return (await haalAfgelopenZonderUren(medewerkerId, nu)).teRegistreren;
+}
+
+/**
+ * Afgelopen ingeplande diensten zonder uren, gesplitst in:
+ * - `teRegistreren`: indienen kan (ingecheckt of QR niet verplicht);
+ * - `nietIngecheckt`: de backend weigert indienen omdat de QR-check-in ontbreekt.
+ */
+export async function haalAfgelopenZonderUren(
+  medewerkerId: string,
+  nu: Date = new Date(),
+): Promise<{ teRegistreren: TeRegistreren[]; nietIngecheckt: NietIngecheckt[] }> {
   const { data, error } = await supabaseAdmin
     .from("dienst_aanmeldingen")
     .select(`
@@ -94,25 +119,24 @@ export async function haalTeRegistreren(medewerkerId: string, nu: Date = new Dat
 
   if (error) throw error;
 
-  const resultaat: TeRegistreren[] = [];
+  const vandaag = nlVandaag();
+  const grens = plusDagen(vandaag, -NIET_INGECHECKT_DAGEN);
+  const teRegistreren: TeRegistreren[] = [];
+  const nietIngecheckt: NietIngecheckt[] = [];
   for (const a of data ?? []) {
     const dienst = een(a.dienst as Embed<Record<string, unknown>>);
     if (!dienst) continue;
     const klant = een(dienst.klant as Embed<{ bedrijfsnaam?: string; qr_verplicht?: boolean | null }>);
     const uren = (a.uren as unknown[] | null) ?? [];
-    const teDoen = isTeRegistreren(
-      {
-        datum: (dienst.datum as string) ?? null,
-        start_tijd: (dienst.start_tijd as string) ?? null,
-        eind_tijd: (dienst.eind_tijd as string) ?? null,
-        check_in_at: (a.check_in_at as string | null) ?? null,
-        qr_verplicht: klant?.qr_verplicht ?? null,
-        heeft_uren: uren.length > 0,
-      },
-      nu,
-    );
-    if (!teDoen) continue;
-    resultaat.push({
+    const regel = {
+      datum: (dienst.datum as string) ?? null,
+      start_tijd: (dienst.start_tijd as string) ?? null,
+      eind_tijd: (dienst.eind_tijd as string) ?? null,
+      check_in_at: (a.check_in_at as string | null) ?? null,
+      qr_verplicht: klant?.qr_verplicht ?? null,
+      heeft_uren: uren.length > 0,
+    };
+    const item: TeRegistreren = {
       id: dienst.id as string,
       aanmelding_id: a.id as string,
       datum: dienst.datum as string,
@@ -121,7 +145,13 @@ export async function haalTeRegistreren(medewerkerId: string, nu: Date = new Dat
       locatie: (dienst.locatie as string) || "",
       uurtarief: (dienst.uurtarief as number) || 0,
       klant: { bedrijfsnaam: klant?.bedrijfsnaam || (dienst.klant_naam as string) || "Onbekend" },
-    });
+    };
+    if (isTeRegistreren(regel, nu)) {
+      teRegistreren.push(item);
+    } else if (wachtOpCheckin(regel, nu) && item.datum >= grens) {
+      nietIngecheckt.push({ ...item, reden: "geen_checkin", werkgever_kan_nog_scannen: item.datum === vandaag });
+    }
   }
-  return resultaat.sort((x, y) => y.datum.localeCompare(x.datum));
+  const nieuwsteEerst = (x: TeRegistreren, y: TeRegistreren) => y.datum.localeCompare(x.datum);
+  return { teRegistreren: teRegistreren.sort(nieuwsteEerst), nietIngecheckt: nietIngecheckt.sort(nieuwsteEerst) };
 }

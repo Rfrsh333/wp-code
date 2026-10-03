@@ -80,22 +80,39 @@ export async function GET(request: NextRequest) {
     kostenDezeMaand += uren * (dienst?.uurtarief || 0);
   }
 
-  // Echte bezetting per dienst (geaccepteerd + bevestigd).
-  const ingeplandPerDienst: Record<string, number> = {};
+  // Aanmeldingen per dienst per status. `aanmeldingen_geaccepteerd` blijft (zoals altijd) het
+  // aantal ingeplande medewerkers = geaccepteerd + bevestigd (lib/dienst-status); de losse
+  // tellers en `aanmeldingen_per_status` zijn nieuw (3-10-2026) zodat het overzicht ook laat zien
+  // dat er aanmeldingen op de klant wachten. Zelfde definities als GET /api/klant/diensten.
+  const perDienst: Record<string, Record<string, number>> = {};
   if (diensten.length > 0) {
     const { data: aanmeldingen } = await supabaseAdmin
       .from("dienst_aanmeldingen")
       .select("dienst_id, status")
       .in("dienst_id", diensten.map((d) => d.id));
     for (const a of aanmeldingen || []) {
-      if (isIngepland(a.status)) ingeplandPerDienst[a.dienst_id] = (ingeplandPerDienst[a.dienst_id] || 0) + 1;
+      const telling = (perDienst[a.dienst_id] ??= {});
+      telling[a.status] = (telling[a.status] || 0) + 1;
     }
   }
 
-  const metBezetting = diensten.map((d) => ({
-    ...d,
-    aanmeldingen_geaccepteerd: ingeplandPerDienst[d.id] || 0,
-  }));
+  const metBezetting = diensten.map((d) => {
+    const telling = perDienst[d.id] ?? {};
+    const ingepland = Object.entries(telling).reduce((s, [status, n]) => s + (isIngepland(status) ? n : 0), 0);
+    return {
+      ...d,
+      aanmeldingen_geaccepteerd: ingepland,
+      aanmeldingen_aangemeld: telling.aangemeld || 0,
+      aanmeldingen_bevestigd: telling.bevestigd || 0,
+      aanmeldingen_uitgenodigd: telling.uitgenodigd || 0,
+      aanmeldingen_per_status: telling,
+    };
+  });
+
+  // Aandachtspunt: aanmeldingen (status `aangemeld`) die op een beslissing van de klant wachten,
+  // over álle komende diensten (niet alleen de vier in upcomingDiensten).
+  const wachtend = metBezetting.filter((d) => d.aanmeldingen_aangemeld > 0);
+  const aanmeldingenWachtend = wachtend.reduce((s, d) => s + d.aanmeldingen_aangemeld, 0);
 
   const upcomingDiensten = metBezetting.slice(0, 4);
   const vandaagMorgen = metBezetting.filter((d) => d.datum === today || d.datum === morgen);
@@ -125,12 +142,18 @@ export async function GET(request: NextRequest) {
       activeDienstenCount,
       openFacturenCount,
       openFacturenBedrag: roundCurrency(openFacturenBedrag),
+      aanmeldingenWachtend,
+      aanmeldingenWachtendDiensten: wachtend.length,
     },
+    /** Eerste komende dienst met wachtende aanmeldingen (om direct naartoe te navigeren), of null. */
+    eersteWachtendeDienstId: wachtend[0]?.id ?? null,
     vandaag: today,
     upcomingDiensten,
     vandaagMorgen,
     recentFacturen,
   }, {
-    headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+    // Geen max-age: de app (iOS-URL-cache) en het portaal toonden na accepteren/annuleren tot 30 s
+    // een oude bezetting ("Nog niemand ingepland"). React Query regelt het cachen al in de client.
+    headers: { "Cache-Control": "private, no-store" },
   });
 }
