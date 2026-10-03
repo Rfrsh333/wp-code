@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
+import { haalDemoIds } from "@/lib/demo";
 
 // Draait dagelijks om 09:00 - checkt per klant of 2 weken verstreken zijn sinds eerste goedkeuring of laatste factuur
 
@@ -29,8 +30,14 @@ export async function GET(request: NextRequest) {
     }
 
     const results = [];
+    const demoIds = await haalDemoIds();
 
     for (const klant of klanten) {
+      // Demo-accounts (reviewers) worden nooit gefactureerd of gemaild.
+      if (demoIds.klanten.has(klant.id)) {
+        results.push({ klant_id: klant.id, status: "demo_overgeslagen" });
+        continue;
+      }
       // Bepaal of 2 weken verstreken zijn
       const referentieDatum = klant.laatste_factuur_datum || klant.eerste_goedkeuring;
       const refDate = new Date(referentieDatum);

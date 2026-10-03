@@ -7,6 +7,7 @@ import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isOntbrekendeKolomFout, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
 import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
+import { DEMO_MELDINGEN, isDemoKlant } from "@/lib/demo";
 
 type UrenRegistratie = {
   id: string;
@@ -47,6 +48,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { klant_id, periode_start, periode_eind } = await request.json();
+
+    // Nooit een factuurnummer verbruiken voor een demo-account (ook niet via de cron).
+    if (await isDemoKlant(klant_id)) {
+      return NextResponse.json({ success: false, error: DEMO_MELDINGEN.factuur, demo: true }, { status: 403 });
+    }
 
     // Haal goedgekeurde uren op voor deze klant in deze periode
     const { data: uren } = await supabase

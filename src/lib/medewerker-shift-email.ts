@@ -1,5 +1,6 @@
-import { sendEmail } from "@/lib/email-service";
+import { sendEmail, type EmailResult } from "@/lib/email-service";
 import { escapeHtml } from "@/lib/sanitize";
+import { isDemoAdres } from "@/lib/demo";
 
 interface ShiftConfirmationInput {
   medewerkerNaam: string;
@@ -45,6 +46,8 @@ function renderLayout(content: string) {
 }
 
 export async function sendMedewerkerShiftConfirmationEmail(input: ShiftConfirmationInput) {
+  // Demo-accounts (reviewers) krijgen geen bevestigingsmails (lib/demo.ts).
+  if (await isDemoAdres(input.medewerkerEmail)) return { data: null, error: null, suppressed: true } satisfies EmailResult;
   const portalUrl = `${getBaseUrl()}/medewerker/diensten`;
   const firstName = input.medewerkerNaam.split(" ")[0] || input.medewerkerNaam;
   const kledingvoorschrift = input.kledingvoorschrift?.trim()

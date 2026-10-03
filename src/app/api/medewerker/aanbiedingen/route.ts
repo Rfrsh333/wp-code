@@ -4,6 +4,7 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { sendShiftReactieEmail } from "@/lib/notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { meldAan } from "@/lib/medewerker/aanmelden";
+import { isDemoMedewerker } from "@/lib/demo";
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
@@ -73,7 +74,8 @@ export async function PATCH(request: NextRequest) {
       .eq("id", aanbieding.dienst_id)
       .single();
 
-    if (dienst) {
+    // Geen mail naar TopTalent voor reacties van demo-accounts (lib/demo.ts).
+    if (dienst && !(await isDemoMedewerker(medewerker.id))) {
       await sendShiftReactieEmail({
         medewerkerNaam: medewerker.naam,
         functie: dienst.functie,

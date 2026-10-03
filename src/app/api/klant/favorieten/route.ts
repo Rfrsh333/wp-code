@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { haalDemoIds } from "@/lib/demo";
 
 type Med = {
   id: string;
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   // Favorieten + alle ingeplande aanmeldingen bij deze klant in twee queries
   // (voorheen per favoriet opnieuw álle dienst-id's van de klant ophalen: N+1 en een
   // telling die ook afgewezen/geannuleerde aanmeldingen meenam).
-  const [{ data: favorieten }, { data: gewerkt }] = await Promise.all([
+  const [{ data: favorieten }, { data: gewerkt }, demoIds] = await Promise.all([
     supabaseAdmin
       .from("klant_favoriete_medewerkers")
       .select(`
@@ -44,7 +45,13 @@ export async function GET(request: NextRequest) {
       // dienst_aanmeldingen heeft geen created_at (42703 → lege lijst, nooit "recent gewerkt").
       .order("aangemeld_at", { ascending: false })
       .limit(1000),
+    haalDemoIds(),
   ]);
+
+  // Demo-klant ziet alleen demo-medewerkers, een echte klant nooit een demo-medewerker
+  // (ook niet als een account later als demo is gemarkeerd en er oude koppelingen zijn).
+  const klantIsDemo = demoIds.klanten.has(klant.id);
+  const inWereld = (medewerkerId: string) => demoIds.medewerkers.has(medewerkerId) === klantIsDemo;
 
   const telling: Record<string, number> = {};
   for (const a of gewerkt || []) telling[a.medewerker_id] = (telling[a.medewerker_id] || 0) + 1;
@@ -52,7 +59,7 @@ export async function GET(request: NextRequest) {
   const favorietenData = (favorieten || [])
     .map((f) => {
       const med = eerste(f.medewerker as unknown as Med | Med[] | null);
-      if (!med) return null;
+      if (!med || !inWereld(med.id)) return null;
       return {
         id: f.id,
         notitie: f.notitie,
@@ -73,7 +80,7 @@ export async function GET(request: NextRequest) {
   for (const a of gewerkt || []) {
     const med = eerste(a.medewerker as unknown as Med | Med[] | null);
     const dienst = eerste(a.dienst as unknown as { datum: string } | { datum: string }[] | null);
-    if (!med || seen.has(med.id) || favorietIds.has(med.id)) continue;
+    if (!med || seen.has(med.id) || favorietIds.has(med.id) || !inWereld(med.id)) continue;
     seen.add(med.id);
     recentMedewerkers.push({
       medewerker_id: med.id,
@@ -109,7 +116,8 @@ export async function POST(request: NextRequest) {
     .eq("medewerker_id", medewerker_id)
     .eq("dienst.klant_id", klant.id)
     .in("status", [...INGEPLAND_STATUSSEN]);
-  if (!count) {
+  const demoIds = await haalDemoIds();
+  if (!count || demoIds.medewerkers.has(medewerker_id) !== demoIds.klanten.has(klant.id)) {
     return NextResponse.json({ error: "U kunt alleen medewerkers toevoegen die al bij u hebben gewerkt" }, { status: 403 });
   }
 

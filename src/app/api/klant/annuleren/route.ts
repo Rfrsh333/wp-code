@@ -6,6 +6,7 @@ import { nlMoment, nlVandaag } from "@/lib/nl-tijd";
 import { herberekenPlekken } from "@/lib/plekken";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { sendPushToUser } from "@/lib/push-notifications";
+import { haalDemoIds } from "@/lib/demo";
 import { isOntbrekendeKolomFout, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
 import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
 import {
@@ -102,7 +103,11 @@ export async function POST(request: NextRequest) {
     .in("status", ["aangemeld", "uitgenodigd", ...INGEPLAND_STATUSSEN])
     .select("medewerker_id");
   await herberekenPlekken(dienst_id);
+  // Demo-klant (reviewer): push alleen binnen de demo-wereld en geen boetefactuur (lib/demo.ts).
+  const demoIds = await haalDemoIds();
+  const demo = demoIds.klanten.has(klant.id);
   for (const a of vervallen || []) {
+    if (demoIds.medewerkers.has(a.medewerker_id) !== demo) continue;
     after(() =>
       sendPushToUser(a.medewerker_id, "medewerker", {
         title: "Dienst geannuleerd",
@@ -120,7 +125,7 @@ export async function POST(request: NextRequest) {
   });
   if (annError) captureRouteError(annError, { route: "/api/klant/annuleren", action: "annulering-insert" });
 
-  if (boeteToegepast && boeteBedrag > 0) {
+  if (boeteToegepast && boeteBedrag > 0 && !demo) {
     // Klant-NAW vastleggen op de boetefactuur; zonder migratie opnieuw zonder de nieuwe kolommen.
     const snapshot = await haalKlantSnapshot(klant.id);
     // Als CONCEPT: admin controleert en verstuurt. "open" bestaat niet als factuurstatus (CHECK),

@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { withCronMonitor } from "@/lib/sentry-utils";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { isDemoAdres } from "@/lib/demo";
 
 type EmailResult = {
   medewerker: string;
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
     const m = (aanmelding as unknown as { medewerker: Medewerker }).medewerker;
     const d = (aanmelding as unknown as { dienst: Dienst }).dienst;
     if (!m?.email || !d) continue;
+    if (await isDemoAdres(m.email)) continue; // demo-accounts (reviewers) krijgen geen herinneringen
 
     try {
       await sendEmail({

@@ -10,6 +10,7 @@ import { notifyKlantUrenIngediend } from "@/lib/klant-push-triggers";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { meldAan, meldAf, planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
+import { beperkDiensten, haalDemoIds } from "@/lib/demo";
 
 type UrenRegistratie = { status: string };
 
@@ -45,13 +46,17 @@ export async function GET(request: NextRequest) {
   const taalFilter = searchParams.get('taal') as 'nl' | 'en' | null;
   const tagsFilter = searchParams.get('tags')?.split(',').filter(Boolean) || [];
 
+  // Demo-medewerkers zien alleen diensten van demo-klanten, echte medewerkers die nooit (lib/demo.ts).
+  const demoIds = await haalDemoIds();
+  const demo = demoIds.medewerkers.has(medewerker.id);
+
   // Try query with joins first, fall back to simple query if filter tables don't exist yet
   let alleDiensten: Record<string, unknown>[] | null = null;
   let queryError: unknown = null;
 
   // First attempt: full query with category/function joins
   {
-    let query = supabaseAdmin
+    let query = beperkDiensten(supabaseAdmin
       .from("diensten")
       .select(`
         id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, klant_id, status, notities, aantal_nodig, uurtarief,
@@ -63,7 +68,7 @@ export async function GET(request: NextRequest) {
       .in("status", ["open", "vol"])
       .gte("datum", nlVandaag())
       .order("datum", { ascending: true })
-      .limit(100);
+      .limit(100), demoIds, demo);
 
     // Apply filters only if filter tables exist
     if (categorieFilter.length > 0) {
@@ -98,13 +103,13 @@ export async function GET(request: NextRequest) {
   // Fallback: if the join query failed (e.g. filter tables don't exist yet), use a simple query
   if (queryError || alleDiensten === null) {
     console.warn("[MEDEWERKER DIENSTEN] Join query failed, using fallback:", queryError);
-    const { data: fallbackData } = await supabaseAdmin
+    const { data: fallbackData } = await beperkDiensten(supabaseAdmin
       .from("diensten")
       .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief")
       .in("status", ["open", "vol"])
       .gte("datum", nlVandaag())
       .order("datum", { ascending: true })
-      .limit(100);
+      .limit(100), demoIds, demo);
     alleDiensten = fallbackData;
   }
 

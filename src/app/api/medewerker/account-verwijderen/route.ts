@@ -5,6 +5,7 @@ import { checkRedisRateLimit, loginRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { logAuditEvent } from "@/lib/audit-log";
 import { controleerWachtwoord } from "@/lib/medewerker/wachtwoord";
+import { isDemoMedewerker } from "@/lib/demo";
 
 /**
  * POST { wachtwoord, reden? } — verzoek om het account te verwijderen (Apple 5.1.1(v)).
@@ -34,6 +35,13 @@ export async function POST(request: NextRequest) {
 
     if (!(await controleerWachtwoord(medewerker.id, wachtwoord))) {
       return NextResponse.json({ error: "Je wachtwoord klopt niet" }, { status: 400 });
+    }
+
+    // Demo-account (reviewaccount Apple/Google): zelfde antwoord als een echt verzoek, maar geen
+    // bericht aan TopTalent, geen audit-regel en geen verwijderverzoek_at, zodat het account
+    // blijft bestaan voor de volgende reviewer. Zie docs/demo-account.md.
+    if (await isDemoMedewerker(medewerker.id)) {
+      return NextResponse.json({ success: true, demo: true });
     }
 
     const nu = new Date().toISOString();

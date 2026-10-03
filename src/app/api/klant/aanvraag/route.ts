@@ -8,6 +8,7 @@ import { laagsteBasistarief } from "@/lib/pricing/ondergrens";
 import { haalTariefOverzicht } from "@/lib/pricing/tarief-overzicht";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
+import { isDemoKlant, medewerkersInWereld } from "@/lib/demo";
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 const TIJD = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
@@ -33,11 +34,17 @@ type FunctieRegel = { functie: string; aantal: number; tarief: number };
  */
 async function nodigFavorietenUit(
   klantId: string,
-  medewerkerIds: string[],
+  gekozenIds: string[],
   diensten: { id: string; functie: string | null }[],
   omschrijving: string,
+  demo: boolean,
 ): Promise<{ uitgenodigd: number; overgeslagen: number }> {
-  if (medewerkerIds.length === 0 || diensten.length === 0) return { uitgenodigd: 0, overgeslagen: 0 };
+  if (gekozenIds.length === 0 || diensten.length === 0) return { uitgenodigd: 0, overgeslagen: 0 };
+
+  // Demo-klant nodigt alleen demo-medewerkers uit, een echte klant nooit een demo-medewerker.
+  const medewerkerIds = await medewerkersInWereld(gekozenIds, demo);
+  const buitenWereld = gekozenIds.length - medewerkerIds.length;
+  if (medewerkerIds.length === 0) return { uitgenodigd: 0, overgeslagen: buitenWereld };
 
   const { data: favorieten } = await supabaseAdmin
     .from("klant_favoriete_medewerkers")
@@ -46,7 +53,7 @@ async function nodigFavorietenUit(
     .in("medewerker_id", medewerkerIds);
 
   let uitgenodigd = 0;
-  let overgeslagen = medewerkerIds.length - (favorieten?.length ?? 0);
+  let overgeslagen = buitenWereld + medewerkerIds.length - (favorieten?.length ?? 0);
 
   for (const fav of favorieten || []) {
     const med = (Array.isArray(fav.medewerker) ? fav.medewerker[0] : fav.medewerker) as
@@ -100,6 +107,10 @@ export async function POST(request: NextRequest) {
       captureRouteError(klantError, { route: "/api/klant/aanvraag", action: "POST" });
       return NextResponse.json({ error: "Klant account niet gevonden. Neem contact op met support." }, { status: 404 });
     }
+
+    // Demo-account (reviewer): dienst wel aanmaken, maar alleen zichtbaar voor demo-medewerkers
+    // en geen Telegram of push naar echte mensen (lib/demo.ts).
+    const demo = await isDemoKlant(klantData.id);
 
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -226,10 +237,10 @@ export async function POST(request: NextRequest) {
     const favorietIds = Array.isArray(favoriet_medewerker_ids)
       ? [...new Set(favoriet_medewerker_ids.filter((i: unknown): i is string => typeof i === "string" && UUID.test(i)))].slice(0, 50)
       : [];
-    const uitnodigingen = await nodigFavorietenUit(klantData.id, favorietIds, diensten || [], omschrijving);
+    const uitnodigingen = await nodigFavorietenUit(klantData.id, favorietIds, diensten || [], omschrijving, demo);
 
-    // Telegram notification (geen PII — AVG compliance)
-    after(() =>
+    // Telegram notification (geen PII — AVG compliance); niet voor demo-aanvragen.
+    if (!demo) after(() =>
       sendTelegramAlert(
         `<b>🆕 Nieuwe personeelsaanvraag</b>\n` +
         `👥 ${totaalPersoneel} personen op ${datum}\n` +
@@ -238,14 +249,15 @@ export async function POST(request: NextRequest) {
       ).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "TELEGRAM" })),
     );
 
-    // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar
+    // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar. Bij een demo-klant
+    // alleen naar demo-medewerkers (sendPushToAllOfType filtert op de wereld).
     after(() =>
       sendPushToAllOfType("medewerker", {
         title: "Nieuwe dienst beschikbaar!",
         body: omschrijving,
         url: "/medewerker/diensten/",
         tag: `nieuwe-dienst-${datum}`,
-      }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
+      }, { demo }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
     );
 
     return NextResponse.json({

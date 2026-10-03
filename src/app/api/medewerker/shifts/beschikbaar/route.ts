@@ -4,6 +4,7 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { dienstUren, nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { HERACTIVEERBAAR, heeftVrijePlek } from "@/lib/medewerker/dienst-regels";
+import { beperkDiensten, haalDemoIds } from "@/lib/demo";
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,9 +13,12 @@ export async function GET(request: NextRequest) {
 
     const vandaag = nlVandaag();
     const morgen = plusDagen(vandaag, 1);
+    // Demo-medewerkers zien alleen diensten van demo-klanten, echte medewerkers die nooit.
+    const demoIds = await haalDemoIds();
+    const demo = demoIds.medewerkers.has(medewerker.id);
 
     // Haal alle toekomstige open diensten op (met optionele klant join)
-    const result = await supabaseAdmin
+    const result = await beperkDiensten(supabaseAdmin
       .from("diensten")
       .select(`
         id,
@@ -42,7 +46,7 @@ export async function GET(request: NextRequest) {
       .gte("datum", vandaag)
       .order("datum", { ascending: true })
       .order("start_tijd", { ascending: true })
-      .limit(50);
+      .limit(50), demoIds, demo);
 
     let diensten = result.data as Record<string, unknown>[] | null;
     const error = result.error;
@@ -50,13 +54,13 @@ export async function GET(request: NextRequest) {
     // Fallback: Als de join query faalt, gebruik simpele query
     if (error) {
       console.warn("[SHIFTS BESCHIKBAAR] Join query failed, using fallback:", error);
-      const { data: fallbackDiensten } = await supabaseAdmin
+      const { data: fallbackDiensten } = await beperkDiensten(supabaseAdmin
         .from("diensten")
         .select("id, datum, start_tijd, eind_tijd, locatie, notities, uurtarief, aantal_nodig, plekken_totaal, plekken_beschikbaar, functie, klant_naam, klant_id, status, afbeelding_url")
         .in("status", ["open", "vol"])
         .gte("datum", vandaag)
         .order("datum", { ascending: true })
-        .limit(50);
+        .limit(50), demoIds, demo);
       // Add null klant property to match type
       diensten = (fallbackDiensten || []).map(d => ({ ...d, klant: null })) as Record<string, unknown>[];
     }

@@ -9,6 +9,7 @@ import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { isDemoKlant } from "@/lib/demo";
 
 /**
  * Account verwijderen (App Store-richtlijn 5.1.1(v)).
@@ -52,6 +53,15 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
     if (!account?.wachtwoord || !(await bcrypt.compare(wachtwoord, account.wachtwoord))) {
       return NextResponse.json({ error: "Wachtwoord is onjuist" }, { status: 403 });
+    }
+
+    // Demo-account (reviewaccount Apple/Google): de flow werkt zoals bij een echt account (de
+    // app logt uit), maar het account blijft bestaan zodat de volgende reviewer kan inloggen.
+    // Geen anonimisering, geen sessie-intrekking, geen Telegram. Zie docs/demo-account.md.
+    if (await isDemoKlant(klant.id)) {
+      const cookieStore = await cookies();
+      cookieStore.delete("klant_session");
+      return NextResponse.json({ success: true, facturen_bewaard: 0, demo: true });
     }
 
     // Toekomstige diensten
