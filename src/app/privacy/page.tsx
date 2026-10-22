@@ -376,6 +376,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Resend (VS):</strong> voor het verzenden van e-mails vanuit onze systemen</li>
               <li><strong>Mollie (Nederland):</strong> voor de betaling van boetes</li>
               <li><strong>Expo / 650 Industries (VS), Apple en Google:</strong> voor het bezorgen van pushmeldingen in de TopTalent-app</li>
+              <li><strong>PostHog (servers in Frankfurt, Duitsland):</strong> voor gebruiksstatistieken van de website, de portalen en de app, zonder naam, e-mailadres of schermopnames (op de website alleen met uw toestemming voor analytics)</li>
             </ul>
             <p>Met alle verwerkers hebben wij verwerkersovereenkomsten gesloten die voldoen aan de eisen van artikel 28 AVG.</p>
 
@@ -430,6 +431,7 @@ export default function PrivacyPolicyPage() {
             <p>Met uw toestemming gebruiken wij analytische cookies om te begrijpen hoe bezoekers onze website gebruiken:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Google Analytics:</strong> voor websitestatistieken (IP-anonimisering ingeschakeld)</li>
+              <li><strong>PostHog:</strong> om te zien hoe de website en de portalen worden gebruikt, bijvoorbeeld welke pagina&apos;s worden bezocht en waar bezoekers afhaken (zonder schermopnames, zonder naam of e-mailadres; servers in Frankfurt)</li>
               <li>Bezoekersaantallen en paginaweergaven</li>
               <li>Herkomst van bezoekers</li>
               <li>Gebruikte apparaten en browsers</li>
@@ -493,9 +495,13 @@ export default function PrivacyPolicyPage() {
                     <td className="px-4 py-3">CRM-systeem</td>
                     <td className="px-4 py-3">Relatiebeheer en contacthistorie</td>
                   </tr>
-                  <tr>
+                  <tr className="border-b">
                     <td className="px-4 py-3">Cloudopslag</td>
                     <td className="px-4 py-3">Beveiligde opslag van documenten</td>
+                  </tr>
+                  <tr className="bg-neutral-50">
+                    <td className="px-4 py-3">PostHog</td>
+                    <td className="px-4 py-3">Gebruiksstatistieken van website, portalen en app</td>
                   </tr>
                 </tbody>
               </table>
@@ -555,6 +561,9 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>Bij het uitloggen wordt het pushtoken van dat toestel bij ons verwijderd. Werknemers kunnen meldingen in de app uitzetten onder Account &rarr; Meldingen en wachtwoord. Iedereen kan meldingen ook uitzetten in de instellingen van de telefoon.</p>
 
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Gebruiksstatistieken</h3>
+            <p>Om de app te verbeteren meten wij welke schermen worden geopend en welke stappen worden gezet, bijvoorbeeld een aanmelding voor een dienst of het indienen van uren. Wij sturen daarbij geen naam, e-mailadres of telefoonnummer mee en maken geen schermopnames. De gegevens gaan naar PostHog (servers in Frankfurt, Duitsland). Wij doen dit op basis van ons gerechtvaardigd belang om de app te verbeteren. U kunt het altijd uitzetten in de instellingen van de app, onder &ldquo;Gebruiksstatistieken delen&rdquo;.</p>
+
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Opslag op uw toestel</h3>
             <p>De app bewaart op uw toestel, in de beveiligde opslag van iOS (Keychain) of Android (Keystore):</p>
             <ul className="list-disc pl-6 space-y-2">
@@ -562,12 +571,12 @@ export default function PrivacyPolicyPage() {
               <li>voor werknemers een offline kopie van het QR-pasje (naam, id, functie en de eerstvolgende dienst), zodat het pasje ook zonder internet werkt;</li>
               <li>of u meldingen zelf heeft uitgezet.</li>
             </ul>
-            <p>Het sessietoken en het QR-pasje worden gewist als u uitlogt.</p>
+            <p>Het sessietoken en het QR-pasje worden gewist als u uitlogt. Voor de gebruiksstatistieken bewaart de app daarnaast een willekeurig id en uw keuze om ze wel of niet te delen.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Wat de app niet doet</h3>
             <ul className="list-disc pl-6 space-y-2">
               <li>De app gebruikt uw locatie niet.</li>
-              <li>De app bevat geen advertenties, geen tracking en geen analyse-software en gebruikt geen advertentie-ID.</li>
+              <li>De app bevat geen advertenties, volgt u niet buiten de app en gebruikt geen advertentie-ID.</li>
               <li>De app gebruikt de microfoon, uw contacten en uw agenda niet.</li>
             </ul>
 
@@ -581,6 +590,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Resend (VS):</strong> verzending van e-mails, zoals wachtwoordherstel en meldingen</li>
               <li><strong>Mollie (Nederland):</strong> betaling van boetes</li>
               <li><strong>Expo, Apple en Google:</strong> bezorging van pushmeldingen (zie hierboven)</li>
+              <li><strong>PostHog:</strong> gebruiksstatistieken (zie hierboven; servers in Frankfurt, Duitsland)</li>
             </ul>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Account verwijderen</h3>
@@ -719,7 +729,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Utrecht, oktober 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 2.1
+                TopTalent B.V. - Privacy Policy versie 2.2
               </p>
             </div>
           </div>

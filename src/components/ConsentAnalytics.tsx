@@ -1,8 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { volgCookiekeuze } from "@/lib/posthog";
 
 const CONSENT_KEY = "ttj_cookie_consent";
 
@@ -29,6 +30,10 @@ export default function ConsentAnalytics() {
     leesConsent,
     () => false
   );
+
+  useEffect(() => {
+    volgCookiekeuze(hasConsent);
+  }, [hasConsent]);
 
   if (!hasConsent) return null;
 
