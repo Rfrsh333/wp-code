@@ -22,6 +22,9 @@ wereld veroorzaken. Daarom heeft `klanten` en `medewerkers` een kolom `is_demo` 
 | Bericht aan TopTalent (klant) | Telegram-melding | opgeslagen, geen Telegram |
 | Bevestigings- en herinneringsmails aan medewerker | normaal | niet verstuurd |
 | Reviewverzoek-mail (cron) | normaal | niet verstuurd |
+| Werkgever beoordelen na een dienst | normaal | alleen eigen (demo-)diensten; telt alleen mee bij demo-werkgevers |
+| Herinnering "Hoe was het bij …?" (push, cron) | normaal | niet verstuurd |
+| Werkgeversprofiel (sterren, kengetallen) | zonder waarnemingen van demo-accounts | alleen waarnemingen uit de demo-wereld; profiel van een echte werkgever opvragen geeft 404 |
 
 Waarom een factuur weigeren in plaats van een concept met DEMO-nummer: een concept staat nog steeds in
 `facturen` (admin-overzichten, omzetcijfers, herinneringscron) en zet uren op `gefactureerd`. Weigeren
