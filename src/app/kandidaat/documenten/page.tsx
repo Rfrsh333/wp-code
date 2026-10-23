@@ -9,6 +9,7 @@ import {
   kandidaatDocumentLabel,
   kandidaatUploadPlan,
   uploadFoutmelding,
+  verplichteKandidaatDocumenten,
   type KandidaatUploadType,
 } from "@/lib/kandidaat-documenten";
 
@@ -169,19 +170,14 @@ function DocumentenUploadContent() {
     );
   }
 
-  const requiredDocs = [
-    { type: "id", label: "Geldig identiteitsbewijs", icon: "📸" },
-    { type: "cv", label: "CV", icon: "📝" },
-  ];
-
-  if (kandidaat.uitbetalingswijze === "zzp") {
-    requiredDocs.push({ type: "kvk", label: "KVK uittreksel", icon: "🏢" });
-  }
-
-  // C-20: Uitgebreide documenten per type
-  if (kandidaat.uitbetalingswijze === "loondienst") {
-    requiredDocs.push({ type: "loonheffingsverklaring", label: "Loonheffingsverklaring", icon: "📋" });
-  }
+  // Zelfde lijst als de server bij het goedkeuren hanteert (lib/kandidaat-documenten). B11: geen
+  // loonheffingsverklaring meer; die kon nooit worden afgevinkt en TopTalent werkt alleen met zzp'ers.
+  const ICONEN: Record<string, string> = { id: "📸", cv: "📝", kvk: "🏢" };
+  const requiredDocs = verplichteKandidaatDocumenten(kandidaat.uitbetalingswijze).map((type) => ({
+    type,
+    label: type === "id" ? "Geldig identiteitsbewijs" : kandidaatDocumentLabel(type),
+    icon: ICONEN[type] ?? "📄",
+  }));
 
   const isDocUploaded = (type: string) => uploadedDocs.some(doc => doc.document_type === type);
 

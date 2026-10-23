@@ -13,6 +13,7 @@ import {
   inschrijfFoutmelding,
 } from "@/lib/inschrijving-regels";
 import { emailIlikePatroon, normaliseerEmail } from "@/lib/email-normalisatie";
+import { isGeldigKvkNummer, normaliseerKvkNummer } from "@/lib/medewerker/zzp-gegevens";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -136,9 +137,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (uitbetalingswijze === "zzp" && !kvkNummer) {
+    // B11: TopTalent werkt alleen met zzp'ers; KvK-nummer (8 cijfers) is dus altijd verplicht.
+    if (uitbetalingswijze !== "zzp") {
       return NextResponse.json(
-        { error: "KVK nummer is verplicht voor ZZP inschrijvingen" },
+        { error: "Via TopTalent werk je als zelfstandige (zzp). Kies zzp en vul je KvK-nummer in." },
+        { status: 400 }
+      );
+    }
+    if (!isGeldigKvkNummer(kvkNummer)) {
+      return NextResponse.json(
+        { error: kvkNummer ? "Een KvK-nummer bestaat uit 8 cijfers" : "KvK-nummer is verplicht" },
         { status: 400 }
       );
     }
@@ -241,7 +249,7 @@ export async function POST(request: NextRequest) {
       motivatie: motivatie.trim(),
       hoe_gekomen: hoeGekomen,
       uitbetalingswijze,
-      kvk_nummer: kvkNummer || null,
+      kvk_nummer: normaliseerKvkNummer(kvkNummer) || null,
       horeca_ervaring: horecaErvaring,
       gewenste_functies: functies,
       talen,
