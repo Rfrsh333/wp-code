@@ -164,6 +164,9 @@ interface DienstTemplate {
   uurtarief: number | null;
   favoriet_medewerker_ids: string[];
   functies_met_aantal?: Array<{ functie: string; aantal: number; uurtarief: string }> | null;
+  /** Ontbreken zolang migratie 20261023_sjablonen_kleding_pauze.sql niet gedraaid is. */
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
   aantal_keer_gebruikt: number;
   laatst_gebruikt_op: string | null;
 }
@@ -188,8 +191,21 @@ interface RoosterItem {
   aantal_nodig: number;
   kledingvoorschrift?: string | null;
   pauze_minuten?: number | null;
-  /** start_tijd/eind_tijd per medewerker: eigen tijden als die zijn afgesproken. */
-  medewerkers: { id: string; naam: string; functie: string | string[]; profile_photo_url: string | null; start_tijd?: string; eind_tijd?: string; eigen_tijden?: boolean }[];
+  /**
+   * start_tijd/eind_tijd per medewerker: eigen tijden als die zijn afgesproken.
+   * voorgestelde_start_tijd/voorgestelde_eind_tijd: alleen de geaccepteerde eigen tijden, anders null.
+   */
+  medewerkers: {
+    id: string;
+    naam: string;
+    functie: string | string[];
+    profile_photo_url: string | null;
+    start_tijd?: string;
+    eind_tijd?: string;
+    eigen_tijden?: boolean;
+    voorgestelde_start_tijd?: string | null;
+    voorgestelde_eind_tijd?: string | null;
+  }[];
 }
 
 interface KostenData {
@@ -1819,8 +1835,9 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
       uurtarief: template.uurtarief?.toString() || "",
       locatie: template.locatie,
       opmerkingen: template.beschrijving || "",
-      kledingvoorschrift: form.kledingvoorschrift,
-      pauze_minuten: form.pauze_minuten,
+      // Uit de template; een template van vóór de migratie heeft ze niet: dan leeg.
+      kledingvoorschrift: template.kledingvoorschrift ?? "",
+      pauze_minuten: template.pauze_minuten != null ? String(template.pauze_minuten) : "",
       favoriet_medewerker_ids: template.favoriet_medewerker_ids || [],
     });
     // Skip naar datum selectie; ontbreekt er een (geldig) tarief, dan eerst stap 1 om dat in te vullen.
@@ -1847,6 +1864,8 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
           locatie: form.locatie,
           favoriet_medewerker_ids: form.favoriet_medewerker_ids,
           beschrijving: form.opmerkingen,
+          kledingvoorschrift: form.kledingvoorschrift,
+          pauze_minuten: form.pauze_minuten,
         },
       });
       queryClient.invalidateQueries({ queryKey: klantKeys.templates() });
@@ -2342,7 +2361,7 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
               <select id="aanvraag-pauze" value={form.pauze_minuten} onChange={(e) => setForm({ ...form, pauze_minuten: e.target.value })}
                 className="w-full px-3 py-2 border border-neutral-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]">
                 <option value="">Niet opgegeven</option>
-                {[0, 15, 30, 45, 60, 90].filter((m) => m <= PAUZE_MAX_MINUTEN).map((m) => (
+                {[0, 15, 30, 45, 60, 90, 120].filter((m) => m <= PAUZE_MAX_MINUTEN).map((m) => (
                   <option key={m} value={String(m)}>{m === 0 ? "Geen pauze" : `${m} minuten`}</option>
                 ))}
               </select>
@@ -2547,6 +2566,18 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
 
   const dagNamen = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
+  // Geaccepteerde eigen tijden van een medewerker ("18:00–21:00"), of null bij de hele dienst.
+  // Valt terug op start_tijd/eind_tijd + eigen_tijden van een oudere API.
+  const eigenTijden = (mw: RoosterItem["medewerkers"][number]): string | null => {
+    const start = mw.voorgestelde_start_tijd ?? (mw.eigen_tijden ? mw.start_tijd : null);
+    const eind = mw.voorgestelde_eind_tijd ?? (mw.eigen_tijden ? mw.eind_tijd : null);
+    return start && eind ? `${formatTime(start)}–${formatTime(eind)}` : null;
+  };
+  const metEigenTijden = (mw: RoosterItem["medewerkers"][number], naam: string) => {
+    const t = eigenTijden(mw);
+    return t ? `${naam} (${t})` : naam;
+  };
+
   // Tijdlijn helpers
   const TIMELINE_START = 6; // 06:00
   const TIMELINE_END = 24; // 00:00 (middernacht)
@@ -2619,11 +2650,11 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
                             <div
                               className={`absolute top-1 bottom-1 rounded-md ${statusBarColor[item.status] || "bg-neutral-300"} flex items-center px-2 overflow-hidden cursor-default`}
                               style={{ left: `${left}%`, width: `${width}%` }}
-                              title={`${item.functie} · ${formatTime(item.start_tijd)}-${formatTime(item.eind_tijd)} · ${item.medewerkers.map(m => m.naam).join(", ") || "Geen medewerkers"}`}
+                              title={`${item.functie} · ${formatTime(item.start_tijd)}-${formatTime(item.eind_tijd)} · ${item.medewerkers.map(m => metEigenTijden(m, m.naam)).join(", ") || "Geen medewerkers"}`}
                             >
                               <span className="text-[10px] font-semibold text-white truncate">
                                 {item.functie} · {item.medewerkers.length > 0
-                                  ? item.medewerkers.map(m => m.naam.split(" ")[0]).join(", ")
+                                  ? item.medewerkers.map(m => metEigenTijden(m, m.naam.split(" ")[0])).join(", ")
                                   : "Geen MW"}
                               </span>
                             </div>
@@ -2688,8 +2719,8 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
                                   </span>
                                 )}
                                 {mw.naam}
-                                {mw.eigen_tijden && mw.start_tijd && mw.eind_tijd && (
-                                  <span className="text-neutral-500">({formatTime(mw.start_tijd)}–{formatTime(mw.eind_tijd)})</span>
+                                {eigenTijden(mw) && (
+                                  <span className="text-neutral-500" title="Eigen tijden, afgesproken bij het accepteren">({eigenTijden(mw)})</span>
                                 )}
                               </span>
                             ))}

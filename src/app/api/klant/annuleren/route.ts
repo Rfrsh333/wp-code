@@ -13,8 +13,10 @@ import {
   berekenAnnuleringsboete,
   STANDAARD_ANNULERINGSBELEID,
   type AnnuleringsBeleid,
+  type BoeteAanmelding,
   type BoeteUitkomst,
 } from "@/lib/klant-annuleringsboete";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 // NL-wandkloktijd → echt moment. `new Date("…T18:00")` op een UTC-server las 18:00 UTC (= 20:00 NL),
 // waardoor de klant 1-2 uur extra "van tevoren" kreeg en een boete kon ontlopen.
@@ -49,8 +51,31 @@ async function haalAnnuleerbareDienst(
 }
 
 /**
- * Eén berekening voor de echte annulering én de preview: beleid + annuleringen deze maand ophalen
- * en berekenAnnuleringsboete toepassen. Wijzigt niets.
+ * Tegenbod en eigen tijden van de ingeplande aanmeldingen (uitgebreid reageren), voor de boete.
+ * Zonder migratie leeg (haalVoorwaarden). Bij een databasefout ook leeg (= tarief van de dienst)
+ * met een melding in Sentry: de annulering mag daar niet op stuklopen, en de boetefactuur is een
+ * concept dat de admin nog controleert.
+ */
+async function haalIngeplandVoorBoete(dienstId: string): Promise<BoeteAanmelding[]> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select("id")
+      .eq("dienst_id", dienstId)
+      .in("status", [...INGEPLAND_STATUSSEN]);
+    if (error) throw error;
+    const ids = (data ?? []).map((a) => a.id as string);
+    const voorwaarden = await haalVoorwaarden(ids);
+    return ids.map((id) => voorwaarden.get(id) ?? {});
+  } catch (e) {
+    captureRouteError(e, { route: "/api/klant/annuleren", action: "boete-tarief-per-aanmelding" });
+    return [];
+  }
+}
+
+/**
+ * Eén berekening voor de echte annulering én de preview: beleid + annuleringen deze maand +
+ * tarieven per aanmelding ophalen en berekenAnnuleringsboete toepassen. Wijzigt niets.
  */
 async function bepaalBoete(
   klantId: string,
@@ -61,12 +86,17 @@ async function bepaalBoete(
   const policy = (beleid as AnnuleringsBeleid | null) || STANDAARD_ANNULERINGSBELEID;
 
   let annuleringenDezeMaand = 0;
+  let ingepland: BoeteAanmelding[] = [];
   if (policy.is_actief && urenVanTevoren < policy.uren_van_tevoren_min) {
-    const { count } = await supabaseAdmin.from("dienst_annuleringen").select("id", { count: "exact", head: true }).eq("klant_id", klantId).gte("created_at", nlMoment(`${nlVandaag().slice(0, 7)}-01`, "00:00").toISOString());
+    const [{ count }, aanmeldingen] = await Promise.all([
+      supabaseAdmin.from("dienst_annuleringen").select("id", { count: "exact", head: true }).eq("klant_id", klantId).gte("created_at", nlMoment(`${nlVandaag().slice(0, 7)}-01`, "00:00").toISOString()),
+      haalIngeplandVoorBoete(dienst.id),
+    ]);
     annuleringenDezeMaand = count ?? 0;
+    ingepland = aanmeldingen;
   }
 
-  const uitkomst = berekenAnnuleringsboete({ dienst, beleid: policy, urenVanTevoren, annuleringenDezeMaand });
+  const uitkomst = berekenAnnuleringsboete({ dienst, beleid: policy, urenVanTevoren, annuleringenDezeMaand, ingepland });
   return { ...uitkomst, urenVanTevoren, beleid: policy };
 }
 

@@ -65,6 +65,9 @@ export async function GET(request: NextRequest) {
           start_tijd: tijden.start_tijd,
           eind_tijd: tijden.eind_tijd,
           eigen_tijden: tijden.eigen_tijden,
+          // De geaccepteerde eigen tijden ("HH:MM"), of null als de medewerker de hele dienst werkt.
+          voorgestelde_start_tijd: tijden.eigen_tijden ? tijden.start_tijd : null,
+          voorgestelde_eind_tijd: tijden.eigen_tijden ? tijden.eind_tijd : null,
         };
       }),
   }));

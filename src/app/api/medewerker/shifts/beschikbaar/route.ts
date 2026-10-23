@@ -7,7 +7,7 @@ import { dienstUren, nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { HERACTIVEERBAAR, heeftVrijePlek } from "@/lib/medewerker/dienst-regels";
 import { beperkDiensten, haalDemoIds } from "@/lib/demo";
 import { leesMetKolomFallback } from "@/lib/db-kolom-fallback";
-import { isAutomatischIngetrokken, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
+import { isAutomatischIngetrokken, medewerkerTariefVanDienst, richtlijnBereik } from "@/lib/medewerker/reactie-regels";
 import { GEEN_EXTRAS, haalDienstExtras } from "@/lib/medewerker/reactie-voorwaarden";
 
 export async function GET(request: NextRequest) {
@@ -135,6 +135,9 @@ export async function GET(request: NextRequest) {
           kledingvoorschrift: extra.kledingvoorschrift,
           pauze_minuten: extra.pauze_minuten,
           medewerker_uurtarief: medewerkerTariefVanDienst(d.uurtarief as number | null),
+          // Richtlijn voor de functie (wat de werkgever per uur betaalt; null bij een onbekende
+          // functie): de app rekent er de waarschuwing "boven de richtlijn" mee na (tegenbod + € 4 > max).
+          richtlijn: richtlijnBereik(d.functie as string | null),
           uurtarief: d.uurtarief,
           plekken_beschikbaar: plekkenBeschikbaar,
           plekken_totaal: plekkenTotaal,

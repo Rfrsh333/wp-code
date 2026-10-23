@@ -204,6 +204,36 @@ export function effectieveAanmeldStatus(rij: IntrekRij & { status: string }, die
   return isAutomatischIngetrokken(rij, dienst, nu) ? "geannuleerd" : rij.status;
 }
 
+export type IntrekInfo = {
+  /** Status zoals die geldt (zie effectieveAanmeldStatus). */
+  status: string;
+  /** `dienst_aanmeldingen.annuleer_reden`; bij een verlopen reactie die de cron nog niet zag `automatisch_ingetrokken`. */
+  annuleer_reden: string | null;
+  /** De reactie verviel vanzelf (cron of lazy check). */
+  automatisch_ingetrokken: boolean;
+};
+
+/**
+ * Status, annuleerreden en vlag "automatisch ingetrokken" voor de medewerker-API's. Ook als de
+ * cron nog niet gedraaid heeft (lazy check) zijn reden en vlag al gezet, zodat de app een reactie
+ * die vanzelf verviel meteen als "Ingetrokken" kan tonen.
+ */
+export function intrekInfo(
+  rij: IntrekRij & { status: string; annuleer_reden?: string | null },
+  dienst: IntrekDienst,
+  nu: Date = new Date(),
+): IntrekInfo {
+  if (isAutomatischIngetrokken(rij, dienst, nu)) {
+    return { status: "geannuleerd", annuleer_reden: ANNULEER_REDEN_AUTOMATISCH, automatisch_ingetrokken: true };
+  }
+  const reden = rij.annuleer_reden?.trim() || null;
+  return {
+    status: rij.status,
+    annuleer_reden: reden,
+    automatisch_ingetrokken: rij.status === "geannuleerd" && reden === ANNULEER_REDEN_AUTOMATISCH,
+  };
+}
+
 // --- Kledingvoorschrift en pauze op de dienst ---------------------------------------------
 
 /** Kledingvoorschrift voor mails: het nieuwe veld, met de oude `notities` als fallback. */
@@ -424,6 +454,19 @@ export function valideerReactie(
 }
 
 // --- Zachte waarschuwing bij het tegenbod ------------------------------------------------
+
+/**
+ * Richtlijn voor de functie van een dienst, klein genoeg voor de medewerker-API's (veld
+ * `richtlijn`). `min` en `max` zijn wat de WERKGEVER per uur betaalt (klanttarief, zoals
+ * `uurtarief`); de waarschuwing "boven de richtlijn" van tegenbodAdvies geldt als
+ * tegenbod + € 4 > max. `label` is de naam in die waarschuwing. Onbekende functie: null.
+ */
+export type RichtlijnBereik = { min: number; max: number; label: string };
+
+export function richtlijnBereik(functie: string | null | undefined): RichtlijnBereik | null {
+  const r = richtlijnVoorFunctie(functie);
+  return r ? { min: r.min, max: r.max, label: r.label } : null;
+}
 
 export type TegenbodAdvies = {
   /** Wat de werkgever per uur betaalt bij dit tegenbod (tegenbod + € 4). */
