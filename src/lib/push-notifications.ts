@@ -1,14 +1,28 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { haalDemoIds } from "@/lib/demo";
 import { NIL_UUID } from "@/lib/demo-regels";
-import { bewaarMeldingen, bewaarMeldingenVoorIedereen } from "@/lib/meldingen/meldingen-opslag";
-import type { MeldingCategorie, MeldingInvoer } from "@/lib/meldingen/meldingen-regels";
+import { bewaarMeldingen, bewaarMeldingenVoorIedereen, type MeldingOpslag } from "@/lib/meldingen/meldingen-opslag";
+import {
+  meldingIdVoor,
+  pushData,
+  type MeldingCategorie,
+  type MeldingIds,
+  type MeldingInvoer,
+} from "@/lib/meldingen/meldingen-regels";
 
 /**
  * Meldingencentrum (stap 5): elke push hieronder wordt per ontvanger ook een melding (tabel
- * `meldingen`), ook voor wie geen pushabonnement heeft. Dat gebeurt naast de push en kan hem
- * nooit breken: een mislukte insert gaat naar Sentry, zonder tabel (migratie
- * 20261023_meldingencentrum.sql) wordt er niets opgeslagen. De push zelf is ongewijzigd.
+ * `meldingen`), ook voor wie geen pushabonnement heeft. Dat kan de push nooit breken: een mislukte
+ * insert gaat naar Sentry, zonder tabel (migratie 20261023_meldingencentrum.sql) wordt er niets
+ * opgeslagen.
+ *
+ * `melding_id` in de push: eerst wordt de melding opgeslagen (hooguit MELDING_WACHT_MS; intussen
+ * worden de pushabonnementen al opgehaald), daarna gaat de push met per abonnement het id van de
+ * melding van de eigenaar: Expo in `data.melding_id`, web-push als `melding_id` in de payload. De
+ * app markeert die melding bij openen als gelezen. Ook bij een broadcast (sendPushToAllOfType,
+ * sendPushToUsers) krijgt elke ontvanger zijn eigen id. Null als er voor die ontvanger geen melding
+ * is (account inactief, tabel ontbreekt) of als het opslaan niet op tijd klaar was; bij ontdubbelen
+ * ("overslaan") het id van de eerdere kaart over hetzelfde.
  */
 export interface PushPayload {
   title: string;
@@ -37,33 +51,56 @@ function pushDeel(payload: PushPayload): PushPayload {
 }
 
 /**
- * Hoe lang de push na afloop nog op de melding wacht. Daarna gaat de aanroeper door (routes hebben
- * 10 s); het opslaan loopt dan op de achtergrond verder.
+ * Hoe lang de push op de melding (en haar id) wacht. Daarna gaat de push zonder melding_id en loopt
+ * het opslaan op de achtergrond verder (routes hebben 10 s).
  */
 const MELDING_WACHT_MS = 3000;
 
-/** Push en melding naast elkaar; de push bepaalt het resultaat (en een eventuele fout). */
-async function metMelding(
-  melding: Promise<unknown>,
-  push: () => Promise<{ sent: number; failed: number }>,
-): Promise<{ sent: number; failed: number }> {
+/** De ids van de opgeslagen meldingen, of een lege lijst als het opslaan niet op tijd klaar is. */
+async function meldingIdsOpTijd(melding: Promise<MeldingOpslag>): Promise<MeldingIds> {
+  let klok: ReturnType<typeof setTimeout> | undefined;
+  const teLaat = new Promise<"te_laat">((klaar) => {
+    klok = setTimeout(() => klaar("te_laat"), MELDING_WACHT_MS);
+  });
   try {
-    return await push();
-  } finally {
-    let klok: ReturnType<typeof setTimeout> | undefined;
-    const teLaat = new Promise<"te_laat">((klaar) => {
-      klok = setTimeout(() => klaar("te_laat"), MELDING_WACHT_MS);
-    });
-    // bewaarMeldingen* gooit nooit, dus dit kan de push niet laten falen.
-    if ((await Promise.race([melding, teLaat])) === "te_laat") {
-      console.warn(`[Push] melding na ${MELDING_WACHT_MS} ms nog niet opgeslagen; loopt op de achtergrond door`);
+    // bewaarMeldingen* gooit nooit; voor de zekerheid toch afgevangen, zodat de push altijd gaat.
+    const uitkomst = await Promise.race([melding.catch(() => null), teLaat]);
+    if (uitkomst === "te_laat") {
+      console.warn(`[Push] melding na ${MELDING_WACHT_MS} ms nog niet opgeslagen; push gaat zonder melding_id`);
+      return new Map();
     }
+    return uitkomst?.ids ?? new Map();
+  } finally {
     clearTimeout(klok);
   }
 }
 
+/**
+ * Eerst de melding (voor melding_id), intussen de abonnementen ophalen, dan de push. De push bepaalt
+ * het resultaat (en een eventuele fout); een mislukte melding houdt de push nooit tegen.
+ */
+async function metMelding(
+  melding: Promise<MeldingOpslag>,
+  abonnementen: Promise<PushSubscriptionRecord[]>,
+  payload: PushPayload,
+): Promise<{ sent: number; failed: number }> {
+  const ids = meldingIdsOpTijd(melding);
+  let subscriptions: PushSubscriptionRecord[];
+  try {
+    subscriptions = await abonnementen;
+  } catch (e) {
+    await ids;
+    throw e;
+  }
+  const meldingIds = await ids;
+  if (!subscriptions.length) return { sent: 0, failed: 0 };
+  return sendPushToSubscriptions(subscriptions, pushDeel(payload), meldingIds);
+}
+
 interface PushSubscriptionRecord {
   id: string;
+  /** Eigenaar van het abonnement: daarmee zoeken we zijn melding_id op. */
+  user_id?: string | null;
   endpoint: string | null;
   p256dh: string | null;
   auth: string | null;
@@ -72,8 +109,8 @@ interface PushSubscriptionRecord {
 
 // expo_token bestaat pas na migratie 20261001_portaal_sessies.sql; zonder die kolom (42703)
 // valt de query terug op alleen web-push.
-const SUB_COLUMNS = "id, endpoint, p256dh, auth, expo_token";
-const SUB_COLUMNS_WEB = "id, endpoint, p256dh, auth";
+const SUB_COLUMNS = "id, user_id, endpoint, p256dh, auth, expo_token";
+const SUB_COLUMNS_WEB = "id, user_id, endpoint, p256dh, auth";
 
 async function selectSubscriptions(
   filter: (q: ReturnType<ReturnType<typeof supabaseAdmin.from>["select"]>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>,
@@ -94,16 +131,12 @@ export async function sendPushToUser(
   userType: "medewerker" | "klant",
   payload: PushPayload
 ): Promise<{ sent: number; failed: number }> {
-  return metMelding(bewaarMeldingen([userId], userType, payload), async () => {
-    // Haal alle subscriptions op voor deze user
-    const subscriptions = await selectSubscriptions((q) => q.eq("user_id", userId).eq("user_type", userType));
-
-    if (!subscriptions.length) {
-      return { sent: 0, failed: 0 };
-    }
-
-    return sendPushToSubscriptions(subscriptions, pushDeel(payload));
-  });
+  return metMelding(
+    bewaarMeldingen([userId], userType, payload),
+    // Alle abonnementen van deze gebruiker
+    selectSubscriptions((q) => q.eq("user_id", userId).eq("user_type", userType)),
+    payload,
+  );
 }
 
 /**
@@ -123,19 +156,15 @@ export async function sendPushToAllOfType(
   const ids = await haalDemoIds();
   const demoSet = userType === "medewerker" ? ids.medewerkers : ids.klanten;
   const demoLijst = [...demoSet];
-  return metMelding(bewaarMeldingenVoorIedereen(userType, payload, { demo, demoIds: demoSet }), async () => {
-    const subscriptions = await selectSubscriptions((q) => {
+  return metMelding(
+    bewaarMeldingenVoorIedereen(userType, payload, { demo, demoIds: demoSet }),
+    selectSubscriptions((q) => {
       const basis = q.eq("user_type", userType);
       if (demo) return basis.in("user_id", demoLijst.length > 0 ? demoLijst : [NIL_UUID]);
       return demoLijst.length > 0 ? basis.not("user_id", "in", `(${demoLijst.join(",")})`) : basis;
-    });
-
-    if (!subscriptions.length) {
-      return { sent: 0, failed: 0 };
-    }
-
-    return sendPushToSubscriptions(subscriptions, pushDeel(payload));
-  });
+    }),
+    payload,
+  );
 }
 
 /**
@@ -148,24 +177,21 @@ export async function sendPushToUsers(
 ): Promise<{ sent: number; failed: number }> {
   if (!userIds.length) return { sent: 0, failed: 0 };
 
-  // Gerichte broadcast (pushNaarMedewerkers): per blok één melding per ontvanger.
-  return metMelding(bewaarMeldingen(userIds, userType, payload), async () => {
-    const subscriptions = await selectSubscriptions((q) => q.in("user_id", userIds).eq("user_type", userType));
-
-    if (!subscriptions.length) {
-      return { sent: 0, failed: 0 };
-    }
-
-    return sendPushToSubscriptions(subscriptions, pushDeel(payload));
-  });
+  // Gerichte broadcast (pushNaarMedewerkers): per blok één melding (en melding_id) per ontvanger.
+  return metMelding(
+    bewaarMeldingen(userIds, userType, payload),
+    selectSubscriptions((q) => q.in("user_id", userIds).eq("user_type", userType)),
+    payload,
+  );
 }
 
 /**
- * Interne functie: verstuur naar array van subscriptions
+ * Interne functie: verstuur naar array van subscriptions, elk met het melding_id van de eigenaar.
  */
 async function sendPushToSubscriptions(
   alle: PushSubscriptionRecord[],
-  payload: PushPayload
+  payload: PushPayload,
+  meldingIds: MeldingIds,
 ): Promise<{ sent: number; failed: number }> {
   const appSubs = alle.filter((s) => s.expo_token);
   const subscriptions = alle.filter(
@@ -173,19 +199,21 @@ async function sendPushToSubscriptions(
       !s.expo_token && !!s.endpoint && !!s.p256dh && !!s.auth,
   );
 
-  const app = await sendExpoPush(appSubs, payload);
+  const app = await sendExpoPush(appSubs, payload, meldingIds);
   if (subscriptions.length === 0) return app;
-  const web = await sendWebPush(subscriptions, payload);
+  const web = await sendWebPush(subscriptions, payload, meldingIds);
   return { sent: app.sent + web.sent, failed: app.failed + web.failed };
 }
 
 /**
  * Native app (iOS/Android) via de Expo push-dienst, die doorstuurt naar APNs/FCM.
- * `url` gaat mee als data; de app vertaalt die naar het juiste scherm.
+ * `data`: url (de app vertaalt die naar het juiste scherm), tag en melding_id (de app markeert die
+ * melding bij openen als gelezen; null als die onbekend is).
  */
 async function sendExpoPush(
   subs: PushSubscriptionRecord[],
-  payload: PushPayload
+  payload: PushPayload,
+  meldingIds: MeldingIds,
 ): Promise<{ sent: number; failed: number }> {
   if (subs.length === 0) return { sent: 0, failed: 0 };
 
@@ -208,7 +236,7 @@ async function sendExpoPush(
             to: s.expo_token,
             title: payload.title,
             body: payload.body,
-            data: { url: payload.url ?? null, tag: payload.tag ?? null },
+            data: pushData(payload, meldingIdVoor(meldingIds, s.user_id)),
             sound: "default",
           })),
         ),
@@ -235,10 +263,11 @@ async function sendExpoPush(
   return { sent, failed };
 }
 
-/** Web-push (PWA) via VAPID. */
+/** Web-push (PWA) via VAPID. De payload krijgt per abonnement `melding_id` (of null) erbij. */
 async function sendWebPush(
   subscriptions: Array<PushSubscriptionRecord & { endpoint: string; p256dh: string; auth: string }>,
-  payload: PushPayload
+  payload: PushPayload,
+  meldingIds: MeldingIds,
 ): Promise<{ sent: number; failed: number }> {
   // Dynamic import om build failures te voorkomen als web-push niet geïnstalleerd is
   let webpush: typeof import("web-push");
@@ -275,7 +304,7 @@ async function sendWebPush(
               auth: sub.auth,
             },
           },
-          JSON.stringify(payload),
+          JSON.stringify({ ...payload, melding_id: meldingIdVoor(meldingIds, sub.user_id) }),
           { TTL: 86400 } // 24 uur geldig
         );
         sent++;

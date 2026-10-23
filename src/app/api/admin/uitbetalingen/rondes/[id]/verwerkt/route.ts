@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { sendPushToUser } from "@/lib/push-notifications";
+import { meldingUitbetaald } from "@/lib/meldingen/meldingen-teksten";
 import { GEEN_CACHE, uitbetalingToegang } from "@/lib/uitbetaling/admin-toegang";
 import { markeerRondeVerwerkt } from "@/lib/uitbetaling/ronde";
 import { euroTekst, naarCenten } from "@/lib/uitbetaling/regels";
@@ -27,12 +28,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       for (const u of resultaat.uitbetalingen) {
         if (!u.medewerker_id) continue;
         try {
-          await sendPushToUser(u.medewerker_id, "medewerker", {
-            title: "Je uitbetaling is verwerkt",
-            body: `Factuur ${u.factuur_nummer}: ${euroTekst(naarCenten(u.bedrag_incl))} is uitbetaald${u.iban_laatste4 ? ` naar je rekening die eindigt op ${u.iban_laatste4}` : ""}.`,
-            url: "/medewerker/financieel/facturen",
-            tag: `uitbetaling-${u.id}`,
-          });
+          await sendPushToUser(
+            u.medewerker_id,
+            "medewerker",
+            meldingUitbetaald({
+              uitbetalingId: u.id,
+              factuurNummer: u.factuur_nummer,
+              bedrag: euroTekst(naarCenten(u.bedrag_incl)),
+              ibanLaatste4: u.iban_laatste4,
+            }),
+          );
         } catch (e) {
           captureRouteError(e, { route: "/api/admin/uitbetalingen/rondes/[id]/verwerkt", action: "PUSH" });
         }

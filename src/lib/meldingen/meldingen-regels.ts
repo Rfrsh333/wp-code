@@ -167,6 +167,58 @@ export function inBlokken<T>(lijst: readonly T[], grootte = MELDING_INSERT_BLOK)
   return uit;
 }
 
+// --- Push ↔ melding (melding_id in de push) -------------------------------------------------------
+
+/**
+ * Per ontvanger (user_id in kleine letters) het id van zijn melding. Bij een broadcast heeft elke
+ * ontvanger een eigen melding en dus een eigen id; de push krijgt per abonnement het id van de
+ * eigenaar mee (`data.melding_id`), zodat de app hem bij openen als gelezen kan markeren.
+ */
+export type MeldingIds = ReadonlyMap<string, string>;
+
+/**
+ * Ontdubbelen met "overslaan": de ontvanger krijgt geen nieuwe kaart, maar de push gaat wel. Dan
+ * verwijst de push naar zijn nieuwste eerdere kaart over hetzelfde (die wordt bij openen gelezen).
+ */
+export function nieuwsteKaartPerOntvanger(
+  rijen: readonly { id: string; user_id: string; created_at?: string | null }[],
+): Map<string, string> {
+  const uit = new Map<string, { id: string; t: number }>();
+  for (const r of rijen) {
+    if (!isUuid(r.id) || !r.user_id) continue;
+    const uid = String(r.user_id).toLowerCase();
+    const t = r.created_at ? new Date(r.created_at).getTime() : Number.NEGATIVE_INFINITY;
+    const tijd = Number.isFinite(t) ? t : Number.NEGATIVE_INFINITY;
+    const huidig = uit.get(uid);
+    if (!huidig || tijd > huidig.t) uit.set(uid, { id: r.id, t: tijd });
+  }
+  return new Map([...uit].map(([uid, { id }]) => [uid, id]));
+}
+
+/** Ids van de nieuw opgeslagen meldingen, aangevuld met de eerdere kaart van wie is overgeslagen. */
+export function verzamelMeldingIds(
+  nieuw: readonly { id: string; user_id: string }[],
+  eerder: MeldingIds = new Map(),
+): Map<string, string> {
+  const uit = new Map(eerder);
+  for (const r of nieuw) if (isUuid(r.id) && r.user_id) uit.set(String(r.user_id).toLowerCase(), r.id);
+  return uit;
+}
+
+/** melding_id voor het abonnement van `userId`, of null (geen melding opgeslagen, of niet op tijd). */
+export function meldingIdVoor(ids: MeldingIds, userId: string | null | undefined): string | null {
+  if (!userId) return null;
+  return ids.get(String(userId).toLowerCase()) ?? null;
+}
+
+/** `data` van een Expo-push: url en tag zoals voorheen, plus melding_id (null als die onbekend is). */
+export function pushData(
+  payload: { url?: string | null; tag?: string | null },
+  meldingId: string | null,
+): { url: string | null; tag: string | null; melding_id: string | null } {
+  return { url: payload.url ?? null, tag: payload.tag ?? null, melding_id: meldingId };
+}
+
 // --- Cursor (keyset op created_at + id, nieuwste eerst) ------------------------------------------
 
 const TIJDSTEMPEL = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}(:?\d{2})?)$/;

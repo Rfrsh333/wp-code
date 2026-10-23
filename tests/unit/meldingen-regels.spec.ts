@@ -13,17 +13,22 @@ import {
   legeTelling,
   maakCursor,
   maakMeldingRijen,
+  meldingIdVoor,
   meldingTijd,
   MELDING_LIMIET_MAX,
   MELDING_TEKST_MAX,
   MELDING_TITEL_MAX,
+  nieuwsteKaartPerOntvanger,
   opruimGrens,
+  pushData,
   telling,
   veiligeMeldingUrl,
+  verzamelMeldingIds,
 } from "../../src/lib/meldingen/meldingen-regels";
 import {
   meldingContractTerOndertekening,
   meldingDienstAangeboden,
+  meldingUitbetaald,
   meldingUrenBeoordeeld,
   meldingVervangerIngepland,
 } from "../../src/lib/meldingen/meldingen-teksten";
@@ -361,5 +366,66 @@ test.describe("meldingUrenBeoordeeld (Uren & geld)", () => {
     expect(meldingUrenBeoordeeld({ actie: "goedgekeurd", door: "klant", aantal: 0 }).body).toBe(
       "De opdrachtgever heeft je uren voor je dienst goedgekeurd.",
     );
+  });
+});
+
+test.describe("melding_id in de push (per ontvanger)", () => {
+  const A = "aaaaaaaa-0000-4000-8000-000000000001";
+  const B = "bbbbbbbb-0000-4000-8000-000000000002";
+  const M1 = "11111111-0000-4000-8000-000000000001";
+  const M2 = "22222222-0000-4000-8000-000000000002";
+  const M3 = "33333333-0000-4000-8000-000000000003";
+
+  test("broadcast: elke ontvanger zijn eigen melding-id, opzoeken los van hoofdletters", () => {
+    const ids = verzamelMeldingIds([
+      { id: M1, user_id: A },
+      { id: M2, user_id: B.toUpperCase() },
+    ]);
+    expect(meldingIdVoor(ids, A)).toBe(M1);
+    expect(meldingIdVoor(ids, B)).toBe(M2);
+    expect(meldingIdVoor(ids, A.toUpperCase())).toBe(M1);
+  });
+
+  test("geen melding voor de ontvanger (of geen user_id op het abonnement): null", () => {
+    const ids = verzamelMeldingIds([{ id: M1, user_id: A }]);
+    expect(meldingIdVoor(ids, B)).toBeNull();
+    expect(meldingIdVoor(ids, null)).toBeNull();
+    expect(meldingIdVoor(new Map(), A)).toBeNull();
+  });
+
+  test("ontdubbelen (overslaan): de push verwijst naar de nieuwste eerdere kaart", () => {
+    const eerder = nieuwsteKaartPerOntvanger([
+      { id: M1, user_id: A, created_at: "2026-10-23T10:00:00Z" },
+      { id: M2, user_id: A, created_at: "2026-10-23T10:30:00Z" },
+      { id: M3, user_id: B, created_at: null },
+      { id: "geen-uuid", user_id: B, created_at: "2026-10-23T11:00:00Z" },
+    ]);
+    expect(eerder.get(A)).toBe(M2);
+    expect(eerder.get(B)).toBe(M3);
+    // Een nieuwe kaart gaat voor een eerdere.
+    const ids = verzamelMeldingIds([{ id: M1, user_id: B }], eerder);
+    expect(meldingIdVoor(ids, A)).toBe(M2);
+    expect(meldingIdVoor(ids, B)).toBe(M1);
+  });
+
+  test("Expo-data: url en tag zoals voorheen, plus melding_id (null als onbekend)", () => {
+    expect(pushData({ url: "/medewerker/uren/", tag: "uren-goedgekeurd" }, M1)).toEqual({
+      url: "/medewerker/uren/",
+      tag: "uren-goedgekeurd",
+      melding_id: M1,
+    });
+    expect(pushData({}, null)).toEqual({ url: null, tag: null, melding_id: null });
+  });
+});
+
+test.describe("uitbetaald (stap 6)", () => {
+  test("push en melding in de categorie uren_geld, tag per uitbetaling", () => {
+    const m = meldingUitbetaald({ uitbetalingId: "u-1", factuurNummer: "ZF-1A2B3C4D-0001", bedrag: "€ 193,60", ibanLaatste4: "1234" });
+    expect(m.categorie).toBe("uren_geld");
+    expect(m.tag).toBe("uitbetaling-u-1");
+    expect(m.url).toBe("/medewerker/financieel/facturen");
+    expect(m.body).toBe("Factuur ZF-1A2B3C4D-0001: € 193,60 is uitbetaald naar je rekening die eindigt op 1234.");
+    expect(categorieVoorMelding(m)).toBe("uren_geld");
+    expect(meldingUitbetaald({ uitbetalingId: "u-2", factuurNummer: "ZF-X", bedrag: "€ 50,00" }).body).toBe("Factuur ZF-X: € 50,00 is uitbetaald.");
   });
 });
