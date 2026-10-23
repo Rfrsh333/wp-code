@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import {
+  begintijdVoorbij,
   kiesDienstVoorFavoriet,
   magKlantAanmeldingWijzigen,
   parseUurtarief,
@@ -117,5 +118,29 @@ test.describe("klantportaal: profielupdate", () => {
     expect(schoonProfielUpdate({ postcode: "ABCD 12" }).ok).toBe(false);
     expect(schoonProfielUpdate({ telefoon: 123 }).ok).toBe(false);
     expect(schoonProfielUpdate({ status: "actief" }).ok).toBe(false);
+  });
+});
+
+test.describe("klantportaal: begintijd van een nieuwe dienst", () => {
+  // 23-10-2026 14:00 NL (zomertijd, UTC+2) = 12:00 UTC
+  const nu = new Date("2026-10-23T12:00:00Z");
+
+  test("vandaag, begintijd al voorbij: geweigerd", () => {
+    expect(begintijdVoorbij("2026-10-23", "08:00", nu)).toBe(true);
+    expect(begintijdVoorbij("2026-10-23", "14:00", nu)).toBe(true);
+    expect(begintijdVoorbij("2026-10-23", "13:59:00", nu)).toBe(true);
+  });
+
+  test("vandaag later, of een latere datum: toegestaan", () => {
+    expect(begintijdVoorbij("2026-10-23", "14:01", nu)).toBe(false);
+    expect(begintijdVoorbij("2026-10-24", "06:00", nu)).toBe(false);
+  });
+
+  test("rekent in NL-tijd, niet in UTC", () => {
+    // 13:30 NL is 11:30 UTC: al voorbij om 12:00 UTC, ook al is 13:30 > 12:00
+    expect(begintijdVoorbij("2026-10-23", "13:30", nu)).toBe(true);
+    // winter: 1 dec 18:00 NL = 17:00 UTC
+    expect(begintijdVoorbij("2026-12-01", "18:00", new Date("2026-12-01T16:59:00Z"))).toBe(false);
+    expect(begintijdVoorbij("2026-12-01", "18:00", new Date("2026-12-01T17:00:00Z"))).toBe(true);
   });
 });

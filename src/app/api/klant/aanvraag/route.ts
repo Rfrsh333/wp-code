@@ -7,7 +7,8 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { laagsteBasistarief } from "@/lib/pricing/ondergrens";
 import { haalTariefOverzicht } from "@/lib/pricing/tarief-overzicht";
 import { nlVandaag } from "@/lib/nl-tijd";
-import { kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
+import { begintijdVoorbij, kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
+import { checkRedisRateLimit, klantAanvraagRateLimit } from "@/lib/rate-limit-redis";
 import { isDemoKlant, medewerkersInWereld } from "@/lib/demo";
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
@@ -96,6 +97,15 @@ export async function POST(request: NextRequest) {
     const klant = await getKlantSession(request);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Per klantaccount begrenzen: elke aanvraag kan een push naar alle medewerkers geven.
+    const limiet = await checkRedisRateLimit(`klant-aanvraag:${klant.id}`, klantAanvraagRateLimit);
+    if (!limiet.success) {
+      return NextResponse.json(
+        { error: "U heeft in korte tijd veel aanvragen geplaatst. Probeer het over een uur opnieuw of neem contact op met TopTalent." },
+        { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((limiet.reset - Date.now()) / 1000))) } },
+      );
+    }
+
     // Verify klant exists in database
     const { data: klantData, error: klantError } = await supabaseAdmin
       .from("klanten")
@@ -128,6 +138,13 @@ export async function POST(request: NextRequest) {
     // Datum vandaag of later (NL-kalenderdatum; voorheen UTC-middernacht vs. lokale tijd)
     if (datum < nlVandaag()) {
       return NextResponse.json({ error: "Datum moet in de toekomst liggen" }, { status: 400 });
+    }
+    // Vandaag met een begintijd die al voorbij is (NL-tijd)
+    if (begintijdVoorbij(datum, start_tijd)) {
+      return NextResponse.json(
+        { error: "De begintijd ligt al in het verleden. Kies een latere begintijd of een andere datum." },
+        { status: 400 },
+      );
     }
 
     // Functies + tarieven normaliseren (nieuw formaat: meerdere functies met eigen tarief;
