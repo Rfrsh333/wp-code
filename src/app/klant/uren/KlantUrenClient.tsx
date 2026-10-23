@@ -20,7 +20,7 @@ import KlantInstellingen from "@/components/klant/KlantInstellingen";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
 import TabSearchBar from "@/components/klant/TabSearchBar";
 import StarRating from "@/components/ui/StarRating";
-import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useKlantFavorieten, useKlantTemplates, useKlantAanvraagLocaties, useKlantRooster, useKlantKosten, useKlantCheckins, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction, useFavorietAction, useAanvraagAction, useTemplateAction, useCheckinAction, klantKeys } from "@/hooks/queries/useKlantQueries";
+import { useKlantUren, useKlantBeoordelingen, useKlantDashboard, useKlantDiensten, useKlantFacturen, useKlantFavorieten, useKlantTemplates, useKlantAanvraagLocaties, useKlantRooster, useKlantKosten, useKlantCheckins, useUrenAction, useFactuurAction, useBeoordelingAction, useDienstenAction, useFavorietAction, useAanvraagAction, useTemplateAction, useCheckinAction, useKlantBedrijfsfoto, klantKeys } from "@/hooks/queries/useKlantQueries";
 import { useKlantRealtime } from "@/hooks/queries/useKlantRealtime";
 import { usePlatformOptions } from "@/hooks/queries/usePlatformOptions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +30,8 @@ import { parseUurtarief, valideerUrenAanpassing } from "@/lib/klant-portaal-rege
 import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
 import ReactieVoorstel, { type ReactieWeergave } from "@/components/reacties/ReactieVoorstel";
 import { PAUZE_MAX_MINUTEN, KLEDINGVOORSCHRIFT_MAX } from "@/lib/medewerker/reactie-regels";
+import { sfeerCategorieVoorFunctie, webFotoSrc, type DienstFoto } from "@/lib/sfeerfotos";
+import SfeerfotoKiezer from "@/components/klant/SfeerfotoKiezer";
 
 const KLANT_TAB_IDS = [
   "overzicht", "uren", "diensten", "rooster", "aanvragen", "favorieten",
@@ -108,6 +110,8 @@ interface UpcomingDienst {
   kledingvoorschrift?: string | null;
   pauze_minuten?: number | null;
   notities?: string | null;
+  /** Sfeerfoto (dienst → bedrijfsfoto → standaard per functie), zie lib/sfeerfotos.ts. */
+  foto?: DienstFoto | null;
 }
 
 interface DienstAanmelding {
@@ -925,11 +929,22 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
                       <div key={dienst.id} className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
                         <div className="p-5">
                           <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <p className="font-semibold text-neutral-900">{dienst.locatie}</p>
-                              <p className="mt-1 text-sm text-neutral-500">
-                                {formatDateLong(dienst.datum)} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}
-                              </p>
+                            <div className="flex min-w-0 items-start gap-3">
+                              {/* Sfeerfoto die medewerkers bij deze dienst zien (dienst → bedrijfsfoto → standaard) */}
+                              {dienst.foto?.klein && (() => {
+                                const f = webFotoSrc(dienst.foto.klein, "klein");
+                                return (
+                                  <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                                    <Image src={f.src} unoptimized={f.unoptimized} alt="" fill sizes="64px" className="object-cover" />
+                                  </div>
+                                );
+                              })()}
+                              <div className="min-w-0">
+                                <p className="font-semibold text-neutral-900">{dienst.locatie}</p>
+                                <p className="mt-1 text-sm text-neutral-500">
+                                  {formatDateLong(dienst.datum)} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}
+                                </p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <span
@@ -1692,6 +1707,10 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
   const [dienstImage, setDienstImage] = useState<File | null>(null);
   const [dienstImagePreview, setDienstImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  // Foto voor deze dienst: de bedrijfsfoto (standaard), een standaardfoto van TopTalent of een eigen foto.
+  const [fotoKeuze, setFotoKeuze] = useState<"bedrijf" | "standaard" | "eigen">("bedrijf");
+  const [sfeerfotoId, setSfeerfotoId] = useState<string | null>(null);
+  const { data: bedrijfsfotoData } = useKlantBedrijfsfoto();
   const [form, setForm] = useState({
     functie: "", // ✅ Will be set based on selected functions
     categorie_id: "",
@@ -1761,9 +1780,10 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
   const submit = async () => {
     setIsSending(true);
 
-    // Upload afbeelding als die is geselecteerd
+    // Eigen foto: eerst uploaden. Lukt dat niet, dan gaat de aanvraag door met de bedrijfsfoto
+    // of een standaardfoto (niet-kritiek).
     let afbeelding_url: string | undefined;
-    if (dienstImage) {
+    if (fotoKeuze === "eigen" && dienstImage) {
       try {
         setIsUploadingImage(true);
         const { compressImage } = await import("@/lib/image-compress");
@@ -1774,19 +1794,23 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
           method: "POST",
           body: uploadForm,
         });
-        const uploadData = await uploadRes.json();
-        if (uploadData.url) {
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        if (uploadRes.ok && uploadData.url) {
           afbeelding_url = uploadData.url;
+        } else {
+          toast.warning(uploadData.error ? `Foto niet geüpload: ${uploadData.error}` : "Foto uploaden mislukt; de dienst krijgt uw bedrijfsfoto of een standaardfoto.");
         }
       } catch (err) {
         Sentry.captureException(err);
-        // Niet-kritiek: ga door zonder afbeelding
+        toast.warning("Foto uploaden mislukt; de dienst krijgt uw bedrijfsfoto of een standaardfoto.");
       } finally {
         setIsUploadingImage(false);
       }
     }
+    const fotoVelden =
+      fotoKeuze === "standaard" && sfeerfotoId ? { sfeerfoto_id: sfeerfotoId } : afbeelding_url ? { afbeelding_url } : {};
 
-    aanvraagAction.mutate({ ...form, afbeelding_url }, {
+    aanvraagAction.mutate({ ...form, ...fotoVelden }, {
       onSuccess: (data) => {
         // Invalidate queries to refresh data (React Query v5)
         queryClient.invalidateQueries({ queryKey: klantKeys.diensten() });
@@ -2304,10 +2328,60 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
                 </div>
               </div>
             </div>
-            {/* Dienst afbeelding */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Foto van de locatie (optioneel)</label>
-              <p className="text-xs text-neutral-500 mb-2">Voeg een foto toe zodat medewerkers de locatie herkennen. Max 5MB, wordt automatisch gecomprimeerd.</p>
+            {/* Foto voor deze dienst: bedrijfsfoto (standaard), standaardfoto of eigen foto */}
+            <fieldset>
+              <legend className="block text-sm font-medium text-neutral-700 mb-1">Foto voor deze dienst</legend>
+              <p className="text-xs text-neutral-500 mb-2">Medewerkers zien deze foto bij de dienst in de app en het portaal.</p>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {([
+                  ["bedrijf", "Bedrijfsfoto"],
+                  ["standaard", "Standaardfoto"],
+                  ["eigen", "Eigen foto"],
+                ] as const).map(([waarde, label]) => (
+                  <label
+                    key={waarde}
+                    className={`cursor-pointer rounded-xl border px-2 py-2 text-center text-sm font-medium transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#F27501]/40 ${
+                      fotoKeuze === waarde ? "border-[#F27501] bg-[#F27501]/5 text-[#c25e00]" : "border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                    }`}
+                  >
+                    <input type="radio" name="aanvraag-foto" value={waarde} checked={fotoKeuze === waarde} onChange={() => setFotoKeuze(waarde)} className="sr-only" />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              {fotoKeuze === "bedrijf" && (
+                bedrijfsfotoData?.foto ? (
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                      {(() => {
+                        const f = webFotoSrc(bedrijfsfotoData.foto.klein, "klein");
+                        return <Image src={f.src} unoptimized={f.unoptimized} alt="" fill sizes="96px" className="object-cover" />;
+                      })()}
+                    </div>
+                    <p className="text-xs text-neutral-500">Uw bedrijfsfoto komt bij deze dienst. Wijzigen kan bij Instellingen.</p>
+                  </div>
+                ) : (
+                  <p className="rounded-xl bg-neutral-50 p-3 text-xs text-neutral-600">
+                    U heeft nog geen bedrijfsfoto. Medewerkers zien dan een standaardfoto die bij de functie past. Een vaste bedrijfsfoto instellen kan bij Instellingen.
+                  </p>
+                )
+              )}
+
+              {fotoKeuze === "standaard" && (
+                <div className="space-y-2">
+                  {!sfeerfotoId && <p className="text-xs text-neutral-500">Kies een foto. Kiest u niets, dan geldt uw bedrijfsfoto.</p>}
+                  <SfeerfotoKiezer
+                    gekozen={sfeerfotoId}
+                    onKies={setSfeerfotoId}
+                    eersteCategorie={sfeerCategorieVoorFunctie(form.functies_met_aantal[0]?.functie ?? form.functie)}
+                  />
+                </div>
+              )}
+
+              {fotoKeuze === "eigen" && (
+              <div>
+              <p className="text-xs text-neutral-500 mb-2">Bijvoorbeeld een foto van de locatie, zodat medewerkers die herkennen. Max 5MB, wordt automatisch gecomprimeerd.</p>
               {dienstImagePreview ? (
                 <div className="relative w-full aspect-[2/1] rounded-xl overflow-hidden border border-neutral-200 mb-2">
                   <Image src={dienstImagePreview} alt="Preview" width={200} height={200} className="w-full h-full object-cover" unoptimized />
@@ -2346,7 +2420,9 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
                   />
                 </label>
               )}
-            </div>
+              </div>
+              )}
+            </fieldset>
 
             <div>
               <label htmlFor="aanvraag-kleding" className="block text-sm font-medium text-neutral-700 mb-1">Kledingvoorschrift (optioneel)</label>

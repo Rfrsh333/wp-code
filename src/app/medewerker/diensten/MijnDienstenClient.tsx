@@ -7,6 +7,7 @@ import DienstCard from "@/components/medewerker/DienstCard";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
+import type { DienstFoto } from "@/lib/sfeerfotos";
 
 type SubTab = "aangeboden" | "aangemeld" | "gepland" | "voltooid";
 
@@ -26,6 +27,8 @@ interface Dienst {
     bedrijfsnaam: string;
     bedrijf_foto_url?: string;
   };
+  /** Sfeerfoto (dienst → bedrijf → standaard), zie lib/sfeerfotos.ts. */
+  foto?: DienstFoto | null;
   // Uitgebreid reageren (tarief/tijden per aanmelding, kleding en pauze van de dienst)
   medewerker_uurtarief?: number;
   kledingvoorschrift?: string | null;

@@ -21,6 +21,7 @@ import { meldDienstInControle, pushNieuweDienst } from "@/lib/klant-controle";
 import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
 import { werkDienstLocatiesBij } from "@/lib/locatie/locatie-opslag";
 import { parseKledingvoorschrift, parsePauzeMinuten } from "@/lib/medewerker/reactie-regels";
+import { kiesDienstAfbeelding } from "@/lib/sfeerfotos";
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 const TIJD = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 });
     }
-    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief, afbeelding_url, kledingvoorschrift, pauze_minuten } = body;
+    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief, afbeelding_url, sfeerfoto_id, kledingvoorschrift, pauze_minuten } = body;
 
     // Datum en tijden
     if (typeof datum !== "string" || !DATUM.test(datum) || typeof start_tijd !== "string" || !TIJD.test(start_tijd) || typeof eind_tijd !== "string" || !TIJD.test(eind_tijd)) {
@@ -217,11 +218,15 @@ export async function POST(request: NextRequest) {
         tekst: a.waarschuwing as string,
       }));
 
-    // Alleen een afbeelding die via /api/klant/dienst-afbeelding voor déze klant is geüpload.
-    const afbeelding =
-      typeof afbeelding_url === "string" && afbeelding_url.includes(`/dienst-afbeeldingen/diensten/${klantData.id}/`)
-        ? afbeelding_url
-        : null;
+    // Foto voor deze dienst (lib/sfeerfotos.ts): een standaardfoto (`sfeerfoto_id` of een
+    // catalogus-URL in `afbeelding_url`) of een eigen upload van déze klant via
+    // /api/klant/dienst-afbeelding. Niets gekozen: de dienst volgt de bedrijfsfoto, anders een
+    // standaardfoto per functie. Een ongeldige keuze blokkeert de aanvraag niet (waarschuwing).
+    const fotoKeuze = kiesDienstAfbeelding(
+      { sfeerfoto_id, afbeelding_url },
+      { klantId: klantData.id, supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL },
+    );
+    const afbeelding = fotoKeuze.url;
 
     const gemeenschappelijk: Record<string, unknown> = {
       klant_id: klantData.id,
@@ -293,9 +298,13 @@ export async function POST(request: NextRequest) {
       }
       ({ data: diensten, error } = await supabaseAdmin.from("diensten").insert(dienstenToCreate).select("id, functie"));
     }
-    const extrasWaarschuwing = extrasNietOpgeslagen
-      ? "Kledingvoorschrift en pauze konden nog niet worden opgeslagen. Zet ze voorlopig bij de opmerkingen."
-      : null;
+    const extrasWaarschuwing =
+      [
+        extrasNietOpgeslagen ? "Kledingvoorschrift en pauze konden nog niet worden opgeslagen. Zet ze voorlopig bij de opmerkingen." : null,
+        fotoKeuze.waarschuwing,
+      ]
+        .filter(Boolean)
+        .join(" ") || null;
 
     // 23514: de status-CHECK op diensten kent in_controle nog niet (migratie half gedraaid).
     // Dan zoals voorheen direct open, en een melding in Sentry zodat het opvalt.

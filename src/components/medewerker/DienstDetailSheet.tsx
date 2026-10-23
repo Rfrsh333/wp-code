@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import Image from "next/image";
 import { Clock, EyeOff, Heart, MapPin, Shirt, Star, Users, X } from "lucide-react";
 import { afstandLabel } from "@/lib/locatie/locatie-regels";
 import { reactiesLabel } from "@/lib/medewerker/ontdekken-regels";
 import { geschatteVerdiensten, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
+import { webFotoSrc, type DienstFoto } from "@/lib/sfeerfotos";
 
 /**
  * Dienstdetail in Ontdekken (medewerkerportaal, stap 3): alle gegevens van de dienst, de afstand,
@@ -32,6 +34,8 @@ export type DetailDienst = {
   aantal_reacties?: number;
   werkgever_favoriet?: boolean;
   ik_ben_favoriet?: boolean;
+  /** Sfeerfoto; de grote versie staat bovenaan het detail. Ontbreekt bij een oudere backend. */
+  foto?: DienstFoto | null;
 };
 
 const euro = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
@@ -78,6 +82,7 @@ export default function DienstDetailSheet({
   const afstand = afstandLabel(dienst.afstand_km);
   const reacties = reactiesLabel(dienst.aantal_reacties);
   const kanVoorkeur = voorkeurenBeschikbaar && !!dienst.klant_id;
+  const foto = dienst.foto?.groot ? webFotoSrc(dienst.foto.groot, "groot") : null;
 
   const wisselFavoriet = async () => {
     setBezig("favoriet");
@@ -107,6 +112,11 @@ export default function DienstDetailSheet({
         className="relative w-full sm:max-w-md max-h-[92vh] overflow-y-auto bg-[var(--mp-card)] rounded-t-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {foto && (
+          <div className="relative w-full aspect-[2/1] bg-[var(--mp-bg)]">
+            <Image src={foto.src} unoptimized={foto.unoptimized} alt="" fill sizes="(max-width: 640px) 100vw, 448px" className="object-cover" />
+          </div>
+        )}
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 bg-[var(--mp-card)] px-4 pt-4 pb-3 border-b border-[var(--mp-separator)]">
           <div className="min-w-0">
             <h2 id={titelId} className="text-lg font-bold text-[var(--mp-text-primary)] truncate">

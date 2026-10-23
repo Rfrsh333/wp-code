@@ -12,6 +12,7 @@ import { MAX_AFSTAND_OPTIES_KM } from "@/lib/locatie/locatie-regels";
 import type { OntdekSortering } from "@/lib/medewerker/ontdekken-regels";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
+import type { DienstFoto } from "@/lib/sfeerfotos";
 
 interface Shift {
   id: string;
@@ -41,6 +42,9 @@ interface Shift {
   aantal_reacties?: number;
   werkgever_favoriet?: boolean;
   ik_ben_favoriet?: boolean;
+  afbeelding_url?: string | null;
+  /** Sfeerfoto: klein in de lijst, groot bovenaan het detail. */
+  foto?: DienstFoto | null;
 }
 
 type Antwoord = {

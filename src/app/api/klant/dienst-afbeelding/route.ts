@@ -3,45 +3,30 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import crypto from "crypto";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { AFBEELDING_MAX_BYTES, AFBEELDING_TYPES, leesAfbeeldingUitVerzoek } from "@/lib/afbeelding-upload";
 
-const MAX_FILE_SIZE = 500 * 1024; // 500KB (client comprimeert al tot ~200KB)
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+// 500KB (client comprimeert al tot ~200KB); type, inhoud en de Vercel-grens: lib/afbeelding-upload.
+const MAX_FILE_SIZE = AFBEELDING_MAX_BYTES;
+const ALLOWED_TYPES = [...AFBEELDING_TYPES];
 
 export async function POST(request: NextRequest) {
   try {
     const klant = await getKlantSession(request);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-
-    if (!file) {
-      return NextResponse.json({ error: "Geen afbeelding ontvangen" }, { status: 400 });
+    // Type (ook de eerste bytes), grootte en de Vercel-grens van ~4,5 MB.
+    const bestand = await leesAfbeeldingUitVerzoek(request);
+    if (!bestand.ok) {
+      return NextResponse.json({ error: bestand.error }, { status: bestand.status });
     }
-
-    // Valideer bestandstype
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Alleen JPG, PNG of WebP afbeeldingen zijn toegestaan" },
-        { status: 400 }
-      );
-    }
-
-    // Valideer bestandsgrootte
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "Afbeelding is te groot (max 500KB)" },
-        { status: 400 }
-      );
-    }
+    const { buffer, ext } = bestand;
+    const file = { type: bestand.type };
 
     // Genereer unieke bestandsnaam
-    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
     const hash = crypto.randomBytes(8).toString("hex");
     const fileName = `diensten/${klant.id}/${hash}.${ext}`;
 
     // Upload naar Supabase Storage
-    const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from("dienst-afbeeldingen")

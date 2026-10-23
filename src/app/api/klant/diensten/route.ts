@@ -17,6 +17,8 @@ import { herberekenPlekken } from "@/lib/plekken";
 import { magKlantAanmeldingWijzigen } from "@/lib/klant-portaal-regels";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { notifyMedewerkerAanmeldingBeslist } from "@/lib/dienst-push-triggers";
+import { fotoVoorDienst } from "@/lib/sfeerfotos";
+import { haalBedrijfsfotos } from "@/lib/sfeerfotos-opslag";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
 
   const { data: diensten } = await supabaseAdmin
     .from("diensten")
-    .select("id, datum, start_tijd, eind_tijd, locatie, functie, aantal_nodig, plekken_totaal, status, notities, uurtarief")
+    .select("id, datum, start_tijd, eind_tijd, locatie, functie, aantal_nodig, plekken_totaal, status, notities, uurtarief, afbeelding_url")
     .eq("klant_id", klant.id)
     .gte("datum", today)
     .neq("status", "geannuleerd")
@@ -43,8 +45,9 @@ export async function GET(request: NextRequest) {
   const dienstIds = diensten.map((d) => d.id);
   const dienstPerId = new Map(diensten.map((d) => [d.id, d]));
 
-  // auto_intrekken_uren bestaat pas na migratie 20261023_uitgebreid_reageren.sql.
-  const [{ data: aanmeldingenRuw }, extras] = await Promise.all([
+  // auto_intrekken_uren bestaat pas na migratie 20261023_uitgebreid_reageren.sql. De eigen
+  // bedrijfsfoto voor `foto` (dienst → bedrijfsfoto → standaard, lib/sfeerfotos.ts).
+  const [{ data: aanmeldingenRuw }, extras, bedrijfsfotos] = await Promise.all([
     leesMetKolomFallback((metNieuw) =>
       supabaseAdmin
         .from("dienst_aanmeldingen")
@@ -52,6 +55,7 @@ export async function GET(request: NextRequest) {
         .in("dienst_id", dienstIds),
     ),
     haalDienstExtras(dienstIds),
+    haalBedrijfsfotos([klant.id]),
   ]);
   const aanmeldingen = (aanmeldingenRuw ?? []) as unknown as { id: string; dienst_id: string; status: string; auto_intrekken_uren?: number | null }[];
 
@@ -76,6 +80,7 @@ export async function GET(request: NextRequest) {
     aanmeldingen_aangemeld: countMap[d.id]?.aangemeld || 0,
     aanmeldingen_geaccepteerd: countMap[d.id]?.geaccepteerd || 0,
     aanmeldingen_uitgenodigd: countMap[d.id]?.uitgenodigd || 0,
+    foto: fotoVoorDienst(d, bedrijfsfotos.get(klant.id)),
   }));
 
   return NextResponse.json({ diensten: result });

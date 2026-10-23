@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { geschatteVerdiensten, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
+import { webFotoSrc, type DienstFoto } from "@/lib/sfeerfotos";
 
 interface DienstCardProps {
   dienst: {
@@ -21,8 +22,10 @@ interface DienstCardProps {
     status: string;
     klant: {
       bedrijfsnaam: string;
-      bedrijf_foto_url?: string;
+      bedrijf_foto_url?: string | null;
     };
+    /** Sfeerfoto (api/medewerker/diensten/lijst); ontbreekt bij een oudere backend. */
+    foto?: DienstFoto | null;
     /**
      * Uitgebreid reageren (api/medewerker/diensten/lijst): start/eind/uurtarief zijn al die van
      * deze aanmelding (eigen tijden en tegenbod); dit zijn de extra's erbij.
@@ -51,6 +54,12 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   const [intrekken, setIntrekken] = useState(false);
 
   // Uren form state
+  // Sfeerfoto: klein op de kaart, groot in het detail; zonder `foto` de bedrijfsfoto zoals voorheen.
+  const fotoKlein = dienst.foto?.klein || dienst.klant.bedrijf_foto_url || null;
+  const fotoGroot = dienst.foto?.groot || dienst.klant.bedrijf_foto_url || null;
+  const kaartFoto = fotoKlein ? webFotoSrc(fotoKlein, "klein") : null;
+  const detailFoto = fotoGroot ? webFotoSrc(fotoGroot, "groot") : null;
+
   const [urenStart, setUrenStart] = useState(dienst.start_tijd?.slice(0, 5) || "");
   const [urenEind, setUrenEind] = useState(dienst.eind_tijd?.slice(0, 5) || "");
   // Pauze van de dienst vooringevuld (uitgebreid reageren); de medewerker kan hem aanpassen.
@@ -288,12 +297,13 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   return (
     <>
       <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] overflow-hidden shadow-[var(--mp-shadow)]">
-        {/* Bedrijfsfoto */}
+        {/* Sfeerfoto (dienst → bedrijf → standaard) */}
         <div className="relative w-full aspect-[2/1] bg-[var(--mp-bg)]">
-          {dienst.klant.bedrijf_foto_url ? (
+          {kaartFoto ? (
             <Image
-              src={dienst.klant.bedrijf_foto_url}
-              alt={dienst.klant.bedrijfsnaam}
+              src={kaartFoto.src}
+              unoptimized={kaartFoto.unoptimized}
+              alt=""
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover"
@@ -457,10 +467,11 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
           >
             {/* Header image */}
             <div className="relative w-full aspect-[3/1] bg-[var(--mp-bg)]">
-              {dienst.klant.bedrijf_foto_url ? (
+              {detailFoto ? (
                 <Image
-                  src={dienst.klant.bedrijf_foto_url}
-                  alt={dienst.klant.bedrijfsnaam}
+                  src={detailFoto.src}
+                  unoptimized={detailFoto.unoptimized}
+                  alt=""
                   fill
                   sizes="(max-width: 640px) 100vw, 672px"
                   className="object-cover rounded-t-2xl"

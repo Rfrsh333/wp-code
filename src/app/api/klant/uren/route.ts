@@ -7,6 +7,8 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
 import { haalVoorwaarden, type AanmeldingVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+import { fotoVoorDienst } from "@/lib/sfeerfotos";
+import { haalBedrijfsfotos } from "@/lib/sfeerfotos-opslag";
 
 /**
  * Uren van de medewerkers bij deze klant.
@@ -30,7 +32,7 @@ const SELECT = `
   klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_opmerking,
   aanmelding:dienst_aanmeldingen!inner(
     medewerker:medewerkers(naam),
-    dienst:diensten!inner(datum, locatie, uurtarief, klant_id)
+    dienst:diensten!inner(id, datum, locatie, uurtarief, klant_id, functie, afbeelding_url)
   )
 `;
 
@@ -57,11 +59,16 @@ function eerste<T>(v: T | T[] | null | undefined): T | null {
   return (Array.isArray(v) ? v[0] : v) ?? null;
 }
 
-/** `uurtarief` = wat de klant per uur betaalt voor deze aanmelding (tegenbod + € 4, anders de dienst). */
-function naarUren(u: Rij, voorwaarden: Map<string, AanmeldingVoorwaarden>) {
+/**
+ * `uurtarief` = wat de klant per uur betaalt voor deze aanmelding (tegenbod + € 4, anders de dienst).
+ * `foto` = sfeerfoto van de dienst (dienst → bedrijfsfoto → standaard, lib/sfeerfotos.ts).
+ */
+function naarUren(u: Rij, voorwaarden: Map<string, AanmeldingVoorwaarden>, bedrijfsfoto: string | null = null) {
   const aanmelding = eerste(u.aanmelding as { medewerker?: unknown; dienst?: unknown } | null);
   const medewerker = eerste(aanmelding?.medewerker as { naam?: string } | null);
-  const dienst = eerste(aanmelding?.dienst as { datum?: string; locatie?: string; uurtarief?: number } | null);
+  const dienst = eerste(
+    aanmelding?.dienst as { id?: string; datum?: string; locatie?: string; uurtarief?: number; functie?: string | null; afbeelding_url?: string | null } | null,
+  );
   return {
     id: u.id,
     start_tijd: u.start_tijd ?? "",
@@ -81,6 +88,9 @@ function naarUren(u: Rij, voorwaarden: Map<string, AanmeldingVoorwaarden>) {
     dienst_datum: dienst?.datum || "",
     dienst_locatie: dienst?.locatie || "",
     uurtarief: klantUurtariefVoorAanmelding(dienst?.uurtarief, voorwaarden.get(u.aanmelding_id ?? "")?.voorgesteld_uurtarief),
+    foto: dienst?.id
+      ? fotoVoorDienst({ id: dienst.id, functie: dienst.functie, afbeelding_url: dienst.afbeelding_url }, bedrijfsfoto)
+      : null,
   };
 }
 
@@ -117,9 +127,13 @@ export async function GET(request: NextRequest) {
 
   const openRijen = (openRes.data || []) as Rij[];
   const histRijen = (histRes.data || []) as Rij[];
-  const voorwaarden = await haalVoorwaarden([...openRijen, ...histRijen].map((u) => u.aanmelding_id));
-  const openstaand = openRijen.map((u) => naarUren(u, voorwaarden));
-  const historie = histRijen.map((u) => naarUren(u, voorwaarden));
+  const [voorwaarden, bedrijfsfotos] = await Promise.all([
+    haalVoorwaarden([...openRijen, ...histRijen].map((u) => u.aanmelding_id)),
+    haalBedrijfsfotos([klant.id]),
+  ]);
+  const bedrijfsfoto = bedrijfsfotos.get(klant.id) ?? null;
+  const openstaand = openRijen.map((u) => naarUren(u, voorwaarden, bedrijfsfoto));
+  const historie = histRijen.map((u) => naarUren(u, voorwaarden, bedrijfsfoto));
   const historieTotaal = histRes.count ?? historie.length;
 
   return NextResponse.json({

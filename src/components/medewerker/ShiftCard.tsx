@@ -5,6 +5,7 @@ import Image from "next/image";
 import { geschatteVerdiensten, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
 import { afstandLabel } from "@/lib/locatie/locatie-regels";
 import { reactiesLabel } from "@/lib/medewerker/ontdekken-regels";
+import { webFotoSrc, type DienstFoto } from "@/lib/sfeerfotos";
 
 interface ShiftCardProps {
   shift: {
@@ -18,6 +19,8 @@ interface ShiftCardProps {
     plekken_beschikbaar: number;
     plekken_totaal: number;
     afbeelding_url?: string | null;
+    /** Sfeerfoto (dienst → bedrijfsfoto → standaard per functie); ontbreekt bij een oudere backend. */
+    foto?: DienstFoto | null;
     klant: {
       bedrijfsnaam: string;
       bedrijf_foto_url?: string;
@@ -70,18 +73,22 @@ export default function ShiftCard({ shift, onApply, onOpen, onSave, saved = fals
   const verdiensten = schatting.bedrag;
   const afstand = afstandLabel(shift.afstand_km);
   const reacties = reactiesLabel(shift.aantal_reacties);
+  // Kleine versie van de sfeerfoto; zonder `foto` (oudere backend) zoals voorheen.
+  const fotoUrl = shift.foto?.klein || shift.afbeelding_url || shift.klant.bedrijf_foto_url || null;
+  const foto = fotoUrl ? webFotoSrc(fotoUrl, "klein") : null;
 
   return (
     <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] overflow-hidden shadow-[var(--mp-shadow)]">
-      {/* Dienst/bedrijfsfoto — dienst afbeelding heeft prioriteit. Tik = dienstdetail. */}
+      {/* Sfeerfoto: dienstfoto, anders bedrijfsfoto, anders een standaardfoto bij de functie. Tik = dienstdetail. */}
       <div
         className={`relative w-full aspect-[2/1] bg-[var(--mp-bg)] ${onOpen ? "cursor-pointer" : ""}`}
         onClick={onOpen ? () => onOpen(shift.id) : undefined}
       >
-        {(shift.afbeelding_url || shift.klant.bedrijf_foto_url) ? (
+        {foto ? (
           <Image
-            src={shift.afbeelding_url || shift.klant.bedrijf_foto_url!}
-            alt={shift.klant.bedrijfsnaam}
+            src={foto.src}
+            unoptimized={foto.unoptimized}
+            alt=""
             fill
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

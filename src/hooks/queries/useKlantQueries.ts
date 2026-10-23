@@ -17,6 +17,7 @@ export const klantKeys = {
   checkin: () => [...klantKeys.all, 'checkin'] as const,
   aanvraag: () => [...klantKeys.all, 'aanvraag'] as const,
   account: () => [...klantKeys.all, 'account'] as const,
+  bedrijfsfoto: () => [...klantKeys.all, 'bedrijfsfoto'] as const,
 };
 
 // === QUERIES ===
@@ -152,6 +153,25 @@ export function useKlantAccount() {
     queryFn: async () => {
       const res = await fetch('/api/klant/account');
       if (!res.ok) throw new Error('Failed to fetch account');
+      return res.json();
+    },
+  });
+}
+
+/** Bedrijfsfoto (GET /api/klant/bedrijfsfoto): de vaste sfeerfoto bij diensten zonder eigen foto. */
+export type KlantBedrijfsfoto = {
+  beschikbaar: boolean;
+  foto_url: string | null;
+  sfeerfoto_id: string | null;
+  foto: { groot: string; klein: string; bron: 'bedrijf' } | null;
+};
+
+export function useKlantBedrijfsfoto() {
+  return useQuery({
+    queryKey: klantKeys.bedrijfsfoto(),
+    queryFn: async (): Promise<KlantBedrijfsfoto> => {
+      const res = await fetch('/api/klant/bedrijfsfoto');
+      if (!res.ok) throw new Error('Failed to fetch bedrijfsfoto');
       return res.json();
     },
   });
