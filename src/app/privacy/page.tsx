@@ -175,6 +175,7 @@ export default function PrivacyPolicyPage() {
               <li>Planning en inzet van personeel bij opdrachtgevers</li>
               <li>Spoedplaatsingen en last-minute personeelsinzet</li>
               <li>Communicatie over werkzaamheden, roosters en wijzigingen</li>
+              <li>Tonen hoe ver een dienst ongeveer van u af ligt en u alleen meldingen sturen over nieuwe diensten die bij u passen (zie paragraaf 10d)</li>
             </ul>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">4.3 Verloning en salarisadministratie</h3>
@@ -268,6 +269,7 @@ export default function PrivacyPolicyPage() {
               <li>Opname in onze kandidatenpool voor toekomstige vacatures</li>
               <li>Versturen van nieuwsbrieven en marketingcommunicatie</li>
               <li>Plaatsing van niet-noodzakelijke cookies</li>
+              <li>Sessie-opnames in de TopTalent-app (zie paragraaf 10c)</li>
               <li>Delen van gegevens met derden buiten de directe dienstverlening</li>
             </ul>
             <p>U kunt een gegeven toestemming te allen tijde intrekken. Zie hiervoor paragraaf 12.</p>
@@ -331,6 +333,14 @@ export default function PrivacyPolicyPage() {
                     <td className="px-4 py-3">Website analytics</td>
                     <td className="px-4 py-3">26 maanden (geanonimiseerd)</td>
                   </tr>
+                  <tr className="border-b bg-neutral-50">
+                    <td className="px-4 py-3">Sessie-opnames in de app (alleen met toestemming)</td>
+                    <td className="px-4 py-3">30 dagen (de standaardtermijn van PostHog), daarna automatisch verwijderd</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Globale locatie op basis van uw postcode</td>
+                    <td className="px-4 py-3">Zolang u een account heeft; bij een nieuwe postcode wordt hij vervangen</td>
+                  </tr>
                   <tr>
                     <td className="px-4 py-3">Klachten en geschillen</td>
                     <td className="px-4 py-3">5 jaar na afhandeling</td>
@@ -376,7 +386,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Resend (VS):</strong> voor het verzenden van e-mails vanuit onze systemen</li>
               <li><strong>Mollie (Nederland):</strong> voor de betaling van boetes</li>
               <li><strong>Expo / 650 Industries (VS), Apple en Google:</strong> voor het bezorgen van pushmeldingen in de TopTalent-app</li>
-              <li><strong>PostHog (servers in Frankfurt, Duitsland):</strong> voor gebruiksstatistieken van de website, de portalen en de app, zonder naam, e-mailadres of schermopnames (op de website alleen met uw toestemming voor analytics)</li>
+              <li><strong>PostHog (servers in Frankfurt, Duitsland):</strong> voor gebruiksstatistieken van de website, de portalen en de app, zonder naam of e-mailadres (op de website alleen met uw toestemming voor analytics), en voor sessie-opnames in de app, alleen als u daar in de app toestemming voor geeft (zie paragraaf 10c). Op de website en in de portalen maken wij geen schermopnames.</li>
             </ul>
             <p>Met alle verwerkers hebben wij verwerkersovereenkomsten gesloten die voldoen aan de eisen van artikel 28 AVG.</p>
 
@@ -501,7 +511,7 @@ export default function PrivacyPolicyPage() {
                   </tr>
                   <tr className="bg-neutral-50">
                     <td className="px-4 py-3">PostHog</td>
-                    <td className="px-4 py-3">Gebruiksstatistieken van website, portalen en app</td>
+                    <td className="px-4 py-3">Gebruiksstatistieken van website, portalen en app; sessie-opnames in de app (alleen met toestemming)</td>
                   </tr>
                 </tbody>
               </table>
@@ -537,7 +547,7 @@ export default function PrivacyPolicyPage() {
             <p>De app is een andere toegang tot hetzelfde account als het werknemers- of werkgeversportaal op deze website. De gegevens worden bewaard op onze servers, niet in de app. Het gaat om:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Inloggen:</strong> uw e-mailadres en wachtwoord</li>
-              <li><strong>Werknemers:</strong> profielgegevens (naam, e-mail, telefoon, adres, geboortedatum, factuuradres, btw-nummer, IBAN en KOR-keuze), profielfoto, geüploade documenten (zoals identiteitsbewijs, werk- of verblijfsvergunning, VOG, KvK-uittreksel, loonheffingsverklaring en contract), diensten en aanmeldingen, beschikbaarheid, gewerkte uren en verdiensten, en berichten aan TopTalent. De app toont alleen óf uw BSN is gecontroleerd, niet het BSN zelf.</li>
+              <li><strong>Werknemers:</strong> profielgegevens (naam, e-mail, telefoon, adres, geboortedatum, factuuradres, btw-nummer, IBAN en KOR-keuze), profielfoto, geüploade documenten (zoals identiteitsbewijs, werk- of verblijfsvergunning, VOG, KvK-uittreksel, loonheffingsverklaring en contract), diensten en aanmeldingen, beschikbaarheid, de maximale afstand voor meldingen, werkgevers die u heeft bewaard of verborgen, gewerkte uren en verdiensten, en berichten aan TopTalent. De app toont alleen óf uw BSN is gecontroleerd, niet het BSN zelf.</li>
               <li><strong>Werkgevers:</strong> bedrijfsgegevens (contactpersoon, e-mail, telefoon, adres, KvK- en btw-nummer), personeelsaanvragen en diensten, goedgekeurde uren, facturen en beoordelingen die u over werknemers geeft</li>
               <li><strong>Pushmeldingen:</strong> een pushtoken van uw toestel en het platform (iOS of Android), zie hieronder</li>
             </ul>
@@ -562,7 +572,17 @@ export default function PrivacyPolicyPage() {
             <p>Bij het uitloggen wordt het pushtoken van dat toestel bij ons verwijderd. Werknemers kunnen meldingen in de app uitzetten onder Account &rarr; Meldingen en wachtwoord. Iedereen kan meldingen ook uitzetten in de instellingen van de telefoon.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Gebruiksstatistieken</h3>
-            <p>Om de app te verbeteren meten wij welke schermen worden geopend en welke stappen worden gezet, bijvoorbeeld een aanmelding voor een dienst of het indienen van uren. Wij sturen daarbij geen naam, e-mailadres of telefoonnummer mee en maken geen schermopnames. De gegevens gaan naar PostHog (servers in Frankfurt, Duitsland). Wij doen dit op basis van ons gerechtvaardigd belang om de app te verbeteren. U kunt het altijd uitzetten in de instellingen van de app, onder &ldquo;Gebruiksstatistieken delen&rdquo;.</p>
+            <p>Om de app te verbeteren meten wij welke schermen worden geopend en welke stappen worden gezet, bijvoorbeeld een aanmelding voor een dienst of het indienen van uren. Wij sturen daarbij geen naam, e-mailadres of telefoonnummer mee. De gegevens gaan naar PostHog (servers in Frankfurt, Duitsland). Wij doen dit op basis van ons gerechtvaardigd belang om de app te verbeteren. U kunt het altijd uitzetten in de instellingen van de app, onder &ldquo;Gebruiksstatistieken delen&rdquo;. Deze statistieken zijn geen schermopnames; die maken wij alleen als u daar apart toestemming voor geeft (zie hieronder).</p>
+
+            <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Sessie-opnames (alleen met uw toestemming)</h3>
+            <p>Als u daar uitdrukkelijk toestemming voor geeft, legt de app vast hoe u door de app gaat (een sessie-opname), zodat wij kunnen zien waar de app onduidelijk is of niet goed werkt. Dit staat standaard uit: zonder uw toestemming maakt de app geen sessie-opnames.</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Alle invoervelden en afbeeldingen worden in de opname gemaskeerd, zodat wat u invult of ziet aan foto&apos;s niet te lezen is.</li>
+              <li>Gevoelige schermen worden helemaal niet opgenomen: inloggen, registreren, profiel, documenten, financiële gegevens, betalen en inchecken.</li>
+              <li>Een opname hangt niet aan uw naam of account, alleen aan een willekeurig (anoniem) toestel-id.</li>
+              <li>Wij gebruiken de opnames alleen om de app te verbeteren.</li>
+            </ul>
+            <p>De opnames gaan naar PostHog (servers in Frankfurt, Duitsland) en worden na 30 dagen automatisch verwijderd; dat is de standaardtermijn van PostHog voor sessie-opnames. De grondslag is uw toestemming (artikel 6 lid 1 sub a AVG). U kunt de opnames altijd stoppen in de app onder Privacy; daarmee trekt u uw toestemming in.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Opslag op uw toestel</h3>
             <p>De app bewaart op uw toestel, in de beveiligde opslag van iOS (Keychain) of Android (Keystore):</p>
@@ -571,11 +591,11 @@ export default function PrivacyPolicyPage() {
               <li>voor werknemers een offline kopie van het QR-pasje (naam, id, functie en de eerstvolgende dienst), zodat het pasje ook zonder internet werkt;</li>
               <li>of u meldingen zelf heeft uitgezet.</li>
             </ul>
-            <p>Het sessietoken en het QR-pasje worden gewist als u uitlogt. Voor de gebruiksstatistieken bewaart de app daarnaast een willekeurig id en uw keuze om ze wel of niet te delen.</p>
+            <p>Het sessietoken en het QR-pasje worden gewist als u uitlogt. Voor de gebruiksstatistieken en sessie-opnames bewaart de app daarnaast een willekeurig id en uw keuzes daarover.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Wat de app niet doet</h3>
             <ul className="list-disc pl-6 space-y-2">
-              <li>De app gebruikt uw locatie niet.</li>
+              <li>De app gebruikt de locatie (gps) van uw toestel niet. Voor de afstand tot diensten gebruiken wij alleen uw postcode (zie paragraaf 10d).</li>
               <li>De app bevat geen advertenties, volgt u niet buiten de app en gebruikt geen advertentie-ID.</li>
               <li>De app gebruikt de microfoon, uw contacten en uw agenda niet.</li>
             </ul>
@@ -590,11 +610,26 @@ export default function PrivacyPolicyPage() {
               <li><strong>Resend (VS):</strong> verzending van e-mails, zoals wachtwoordherstel en meldingen</li>
               <li><strong>Mollie (Nederland):</strong> betaling van boetes</li>
               <li><strong>Expo, Apple en Google:</strong> bezorging van pushmeldingen (zie hierboven)</li>
-              <li><strong>PostHog:</strong> gebruiksstatistieken (zie hierboven; servers in Frankfurt, Duitsland)</li>
+              <li><strong>PostHog:</strong> gebruiksstatistieken en, alleen met uw toestemming, sessie-opnames (zie hierboven; servers in Frankfurt, Duitsland)</li>
+              <li><strong>PDOK Locatieserver (Nederlandse overheid):</strong> zet een postcode om in een globale locatie (zie paragraaf 10d); wij sturen alleen de postcode</li>
             </ul>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Account verwijderen</h3>
             <p>U kunt uw account in de app verwijderen. Werknemers gaan naar Account &rarr; Account verwijderen en sturen daarmee een verzoek, dat wij uiterlijk binnen één maand afhandelen. Werkgevers gaan naar Meer &rarr; Wachtwoord en account; het account wordt dan direct verwijderd. Zonder de app kunt u verwijdering aanvragen via <a href="mailto:info@toptalentjobs.nl" className="text-[#B85600] hover:underline">info@toptalentjobs.nl</a>. Op de pagina <Link href="/account-verwijderen/" className="text-[#B85600] hover:underline">Account verwijderen</Link> leest u precies hoe dat werkt en welke gegevens wij vanwege de wettelijke bewaarplicht bewaren (zie ook paragraaf 6).</p>
+
+            {/* 10d. Afstand en relevante diensten */}
+            <h2 id="afstand" className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
+              10d. Afstand tot diensten en relevante meldingen
+            </h2>
+            <p>In het werknemersportaal en in de app ziet u bij een open dienst ongeveer hoe ver die van u af ligt, en u kunt diensten filteren op afstand. Ook sturen wij meldingen over een nieuwe dienst alleen naar werknemers voor wie de dienst relevant is: de functie past, de dienst valt binnen de beschikbaarheid die u heeft opgegeven, u heeft de werkgever niet verborgen en, als u een maximale afstand heeft ingesteld, de dienst ligt binnen die afstand.</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Alleen uw postcode:</strong> om de afstand te kunnen berekenen sturen wij uw postcode (en voor een dienst de postcode van de werklocatie of de werkgever) naar de PDOK Locatieserver van de Nederlandse overheid. Wij sturen geen straat, huisnummer, naam of andere gegevens mee.</li>
+              <li><strong>Globale locatie:</strong> PDOK geeft het middelpunt van het postcodegebied terug. Wij bewaren dat afgerond (op ongeveer 100 meter), niet uw exacte adres.</li>
+              <li><strong>Hemelsbreed:</strong> de afstand is in een rechte lijn berekend, niet de reisafstand of reistijd.</li>
+              <li><strong>Zelf in de hand:</strong> u bepaalt zelf of u een maximale afstand instelt en welke werkgevers u bewaart of verbergt (in het werknemersportaal onder Instellingen en Account). Zonder postcode ziet u geen afstand en krijgt u meldingen ongeacht de afstand.</li>
+              <li><strong>Favorieten:</strong> u ziet bij welke werkgevers u als favoriet staat. Werkgevers zien niet welke werkgevers u heeft bewaard of verborgen.</li>
+            </ul>
+            <p>Wij doen dit om onze bemiddeling uit te voeren en u passende diensten aan te bieden (artikel 6 lid 1 sub b AVG). De globale locatie wordt vervangen als u uw postcode wijzigt en verwijderd met uw account.</p>
 
             {/* 11. Beveiliging */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
@@ -729,7 +764,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Utrecht, oktober 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 2.2
+                TopTalent B.V. - Privacy Policy versie 2.3
               </p>
             </div>
           </div>

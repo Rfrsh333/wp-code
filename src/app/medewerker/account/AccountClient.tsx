@@ -16,6 +16,7 @@ import {
   CalendarCheck,
   MessageSquare,
   FileSignature,
+  Heart,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -130,6 +131,7 @@ export default function AccountClient() {
       title: "Planning & contact",
       items: [
         { icon: CalendarCheck, label: "Beschikbaarheid", onClick: () => router.push("/medewerker/beschikbaarheid") },
+        { icon: Heart, label: "Werkgevers (bewaard en verborgen)", onClick: () => router.push("/medewerker/werkgevers") },
         { icon: MessageSquare, label: "Berichten", onClick: () => router.push("/medewerker/berichten") },
       ],
     },

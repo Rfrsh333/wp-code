@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { hasRequiredAdminRole, verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
@@ -7,6 +7,7 @@ import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admi
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { normaliseerEmail } from "@/lib/email-normalisatie";
+import { werkMedewerkerLocatieBij } from "@/lib/locatie/locatie-opslag";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -116,13 +117,15 @@ export async function POST(request: NextRequest) {
       delete payload.wachtwoord;
     }
 
+    let medewerkerId: string | null = action === "update" ? id : null;
     if (action === "create") {
-      const { error } = await supabaseAdmin.from("medewerkers").insert(payload);
+      const { data: nieuw, error } = await supabaseAdmin.from("medewerkers").insert(payload).select("id").maybeSingle();
       if (error) {
         captureRouteError(error, { route: "/api/admin/medewerkers", action: "POST" });
         // console.error("[MEDEWERKERS] Insert error:", error);
         return NextResponse.json({ error: error.message || "Er is een fout opgetreden" }, { status: 500 });
       }
+      medewerkerId = (nieuw?.id as string | undefined) ?? null;
     } else {
       const { error } = await supabaseAdmin.from("medewerkers").update(payload).eq("id", id);
       if (error) {
@@ -130,6 +133,17 @@ export async function POST(request: NextRequest) {
         // console.error("[MEDEWERKERS] Update error:", error);
         return NextResponse.json({ error: error.message || "Er is een fout opgetreden" }, { status: 500 });
       }
+    }
+
+    // Stap 3: postcode → globale locatie (PDOK, alleen de postcode), na het antwoord.
+    if (medewerkerId && "postcode" in payload) {
+      const doelId = medewerkerId;
+      const postcode = payload.postcode;
+      after(() =>
+        werkMedewerkerLocatieBij(doelId, postcode, { alleenBijWijziging: true }).catch((e) =>
+          captureRouteError(e, { route: "/api/admin/medewerkers", action: "LOCATIE" }),
+        ),
+      );
     }
 
     await logAuditEvent({
