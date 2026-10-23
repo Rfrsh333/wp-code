@@ -7,6 +7,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { isAanbiedingVerlopen } from "@/lib/medewerker/dienst-regels";
 import { isDemoMedewerker } from "@/lib/demo";
+import { GEEN_EXTRAS, haalDienstExtras } from "@/lib/medewerker/reactie-voorwaarden";
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
@@ -21,9 +22,12 @@ export async function GET(request: NextRequest) {
 
   // Een aanbieding is 48 uur geldig (verlopen_at). Een verlopen, onbeantwoorde aanbieding
   // tonen we als "verlopen", zodat er geen Accepteren-knop meer bij staat.
-  const aanbiedingen = (data || []).map((a) =>
-    a.status === "aangeboden" && isAanbiedingVerlopen(a.verlopen_at) ? { ...a, status: "verlopen" } : a,
-  );
+  // Kledingvoorschrift en pauze bij de dienst (leeg zolang de migratie niet gedraaid is).
+  const extras = await haalDienstExtras((data || []).map((a) => a.dienst_id as string));
+  const aanbiedingen = (data || []).map((a) => {
+    const metExtras = a.dienst ? { ...a, dienst: { ...a.dienst, ...(extras.get(a.dienst_id as string) ?? GEEN_EXTRAS) } } : a;
+    return a.status === "aangeboden" && isAanbiedingVerlopen(a.verlopen_at) ? { ...metExtras, status: "verlopen" } : metExtras;
+  });
 
   return NextResponse.json({ aanbiedingen });
 }

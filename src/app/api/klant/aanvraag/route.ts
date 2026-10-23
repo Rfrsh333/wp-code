@@ -18,6 +18,8 @@ import { isDemoKlant, medewerkersInWereld } from "@/lib/demo";
 import { laadOnboardingStand } from "@/lib/klant-onboarding";
 import { beoordeelDienstPlaatsen, DIENST_STATUS_IN_CONTROLE } from "@/lib/klant-controle-regels";
 import { meldDienstInControle, pushNieuweDienst } from "@/lib/klant-controle";
+import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
+import { parseKledingvoorschrift, parsePauzeMinuten } from "@/lib/medewerker/reactie-regels";
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 const TIJD = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
@@ -142,7 +144,7 @@ export async function POST(request: NextRequest) {
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 });
     }
-    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief, afbeelding_url } = body;
+    const { functie, categorie_id, functie_id, vereiste_taal, vereiste_vaardigheden, functies_met_aantal, datum, start_tijd, eind_tijd, aantal, locatie, opmerkingen, favoriet_medewerker_ids, uurtarief, afbeelding_url, kledingvoorschrift, pauze_minuten } = body;
 
     // Datum en tijden
     if (typeof datum !== "string" || !DATUM.test(datum) || typeof start_tijd !== "string" || !TIJD.test(start_tijd) || typeof eind_tijd !== "string" || !TIJD.test(eind_tijd)) {
@@ -162,6 +164,12 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // Kledingvoorschrift en pauze: eigen velden (uitgebreid reageren). `opmerkingen` blijft notities.
+    const kleding = parseKledingvoorschrift(kledingvoorschrift);
+    if (!kleding.ok) return NextResponse.json({ error: kleding.error }, { status: 400 });
+    const pauze = parsePauzeMinuten(pauze_minuten, { start_tijd, eind_tijd });
+    if (!pauze.ok) return NextResponse.json({ error: pauze.error }, { status: 400 });
 
     // Functies + tarieven normaliseren (nieuw formaat: meerdere functies met eigen tarief;
     // oud formaat: één functie + globaal tarief).
@@ -229,6 +237,10 @@ export async function POST(request: NextRequest) {
       gemeenschappelijk.vereiste_vaardigheden = vereiste_vaardigheden.filter((v: unknown) => typeof v === "string").slice(0, 30);
     }
     if (afbeelding) gemeenschappelijk.afbeelding_url = afbeelding;
+    // Alleen meesturen als ingevuld: zonder migratie 20261023_uitgebreid_reageren.sql bestaan de
+    // kolommen niet; dan opnieuw zonder (hieronder) en een waarschuwing in het antwoord.
+    if (kleding.waarde) gemeenschappelijk.kledingvoorschrift = kleding.waarde;
+    if (pauze.waarde != null) gemeenschappelijk.pauze_minuten = pauze.waarde;
 
     const nieuwFormaat = Array.isArray(functies_met_aantal) && functies_met_aantal.length > 0;
     const dienstenToCreate: Record<string, unknown>[] = [];
@@ -268,6 +280,21 @@ export async function POST(request: NextRequest) {
       .from("diensten")
       .insert(dienstenToCreate)
       .select("id, functie");
+
+    // Kledingvoorschrift/pauze nog niet gemigreerd: zonder die velden plaatsen (de dienst is
+    // belangrijker), en de klant laten weten dat ze niet zijn opgeslagen.
+    let extrasNietOpgeslagen = false;
+    if (isOntbrekendeKolom(error) && ("kledingvoorschrift" in gemeenschappelijk || "pauze_minuten" in gemeenschappelijk)) {
+      extrasNietOpgeslagen = true;
+      for (const d of dienstenToCreate) {
+        delete d.kledingvoorschrift;
+        delete d.pauze_minuten;
+      }
+      ({ data: diensten, error } = await supabaseAdmin.from("diensten").insert(dienstenToCreate).select("id, functie"));
+    }
+    const extrasWaarschuwing = extrasNietOpgeslagen
+      ? "Kledingvoorschrift en pauze konden nog niet worden opgeslagen. Zet ze voorlopig bij de opmerkingen."
+      : null;
 
     // 23514: de status-CHECK op diensten kent in_controle nog niet (migratie half gedraaid).
     // Dan zoals voorheen direct open, en een melding in Sentry zodat het opvalt.
@@ -328,6 +355,7 @@ export async function POST(request: NextRequest) {
         favorieten_uitgenodigd: 0,
         favorieten_overgeslagen: uitnodigingen.overgeslagen,
         tarief_waarschuwingen: tariefWaarschuwingen,
+        waarschuwing: extrasWaarschuwing,
       });
     }
 
@@ -356,6 +384,7 @@ export async function POST(request: NextRequest) {
       favorieten_uitgenodigd: uitnodigingen.uitgenodigd,
       favorieten_overgeslagen: uitnodigingen.overgeslagen,
       tarief_waarschuwingen: tariefWaarschuwingen,
+      waarschuwing: extrasWaarschuwing,
     });
   } catch (err) {
     captureRouteError(err, { route: "/api/klant/aanvraag", action: "POST" });
