@@ -8,9 +8,12 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { isOntbrekendeKolomFout, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
 import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
 import { DEMO_MELDINGEN, isDemoKlant } from "@/lib/demo";
+import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 type UrenRegistratie = {
   id: string;
+  aanmelding_id: string;
   gewerkte_uren: number;
   start_tijd: string;
   eind_tijd: string;
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
     const { data: uren } = await supabase
       .from("uren_registraties")
       .select(`
-        id, gewerkte_uren, start_tijd, eind_tijd, reiskosten_km,
+        id, aanmelding_id, gewerkte_uren, start_tijd, eind_tijd, reiskosten_km,
         aanmelding:dienst_aanmeldingen!inner(
           medewerker:medewerkers(naam),
           dienst:diensten!inner(datum, klant_naam, locatie, uurtarief, klant_id)
@@ -73,13 +76,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Geen goedgekeurde uren gevonden" }, { status: 404 });
     }
 
+    // Tarief per aanmelding: had de medewerker een tegenbod, dan betaalt de klant tegenbod + € 4
+    // (lib/medewerker/reactie-regels). Lukt het ophalen niet (anders dan een ontbrekende kolom),
+    // dan gooit haalVoorwaarden: liever geen factuur dan een factuur met het verkeerde tarief.
+    const voorwaarden = await haalVoorwaarden((uren || []).map((u) => (u as unknown as UrenRegistratie).aanmelding_id));
+
     // Bereken totalen
     let subtotaal = 0;
     const regels: FactuurRegel[] = [];
     for (const u of uren || []) {
       const typedU = u as unknown as UrenRegistratie;
       const dienst = typedU.aanmelding?.dienst;
-      const uurtarief = dienst?.uurtarief || 0;
+      const uurtarief = klantUurtariefVoorAanmelding(dienst?.uurtarief, voorwaarden.get(typedU.aanmelding_id)?.voorgesteld_uurtarief);
       const medewerkerNaam = typedU.aanmelding?.medewerker?.naam || '';
       const reiskostenKm = sanitizeKilometers(typedU.reiskosten_km);
       const reiskosten = calculateKlantReiskosten(reiskostenKm);

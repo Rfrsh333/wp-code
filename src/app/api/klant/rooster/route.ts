@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { isIngepland } from "@/lib/dienst-status";
+import { geldendeTijden } from "@/lib/medewerker/reactie-regels";
+import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -31,6 +33,14 @@ export async function GET(request: NextRequest) {
     .order("datum", { ascending: true })
     .order("start_tijd", { ascending: true });
 
+  // Per ingeplande medewerker de tijden die voor hem gelden (eigen tijden na acceptatie), en per
+  // dienst kledingvoorschrift en pauze (leeg zolang de migratie niet gedraaid is).
+  const alleAanmeldingIds = (diensten || []).flatMap((d) => (d.dienst_aanmeldingen || []).map((a: { id: string }) => a.id));
+  const [voorwaarden, extras] = await Promise.all([
+    haalVoorwaarden(alleAanmeldingIds),
+    haalDienstExtras((diensten || []).map((d) => d.id)),
+  ]);
+
   const rooster = (diensten || []).map((d) => ({
     id: d.id,
     datum: d.datum,
@@ -40,16 +50,21 @@ export async function GET(request: NextRequest) {
     functie: d.functie,
     status: d.status,
     aantal_nodig: d.aantal_nodig,
+    ...(extras.get(d.id) ?? GEEN_EXTRAS),
     medewerkers: (d.dienst_aanmeldingen || [])
       // Ingepland = geaccepteerd door de klant óf bevestigd door medewerker/admin.
       .filter((a: { status: string }) => isIngepland(a.status))
-      .map((a: { medewerker: unknown }) => {
+      .map((a: { id: string; medewerker: unknown }) => {
         const m = a.medewerker as { id: string; naam: string; functie: string | string[]; profile_photo_url: string | null } | null;
+        const tijden = geldendeTijden(d, voorwaarden.get(a.id));
         return {
           id: m?.id,
           naam: m?.naam,
           functie: m?.functie,
           profile_photo_url: m?.profile_photo_url,
+          start_tijd: tijden.start_tijd,
+          eind_tijd: tijden.eind_tijd,
+          eigen_tijden: tijden.eigen_tijden,
         };
       }),
   }));

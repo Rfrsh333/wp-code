@@ -4,7 +4,7 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
-import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
+import { stuurInplanBevestiging } from "@/lib/medewerker/inplan-bevestiging";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { notifyKlantUrenIngediend } from "@/lib/klant-push-triggers";
 import { notifyKlantNieuweAanmelding } from "@/lib/dienst-push-triggers";
@@ -12,6 +12,8 @@ import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { meldAan, meldAf, planVervangerIn, werkBezettingBij, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { beperkDiensten, haalDemoIds } from "@/lib/demo";
+import { effectieveAanmeldStatus, reactieUitBody } from "@/lib/medewerker/reactie-regels";
+import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 type UrenRegistratie = { status: string };
 
@@ -143,15 +145,32 @@ export async function GET(request: NextRequest) {
     .eq("medewerker_id", medewerker.id)
     .limit(100);
 
+  // Uitgebreid reageren: een reactie voorbij haar intrekmoment heeft status `geannuleerd` (lazy
+  // check), en kledingvoorschrift + pauze per dienst (leeg zolang de migratie niet gedraaid is).
+  const [voorwaarden, extras] = await Promise.all([
+    haalVoorwaarden((aanmeldingen ?? []).map((a) => a.id)),
+    haalDienstExtras((alleDienstenCompat || []).map((d) => d.id as string)),
+  ]);
+  const dienstInfo = new Map((alleDienstenCompat || []).map((d) => [d.id as string, d as { datum?: string; start_tijd?: string }]));
+
   const aanmeldMap = new Map(
     aanmeldingen?.map((a) => [
       a.dienst_id,
-      { id: a.id, status: a.status, check_in_at: a.check_in_at, uren_status: (a.uren_registraties as UrenRegistratie[])?.[0]?.status },
+      {
+        id: a.id,
+        status: effectieveAanmeldStatus(
+          { status: a.status, auto_intrekken_uren: voorwaarden.get(a.id)?.auto_intrekken_uren },
+          dienstInfo.get(a.dienst_id),
+        ),
+        check_in_at: a.check_in_at,
+        uren_status: (a.uren_registraties as UrenRegistratie[])?.[0]?.status,
+      },
     ]) || []
   );
 
   const baseDiensten = (alleDienstenCompat || []).map((d: Record<string, unknown>) => ({
     ...d,
+    ...(extras.get(d.id as string) ?? GEEN_EXTRAS),
     id: d.id as string,
     aantal_nodig: d.aantal_nodig as number | null,
     klant_naam: d.klant_naam as string | null,
@@ -308,11 +327,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
   if (!medewerker) return geenMedewerkerToegang(request);
-  const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
+  const body = await request.json();
+  const { action, dienst_id, aanmelding_id, uren_id, data } = body;
 
   if (action === "aanmelden") {
     if (!dienst_id) return NextResponse.json({ error: "Dienst ID is verplicht" }, { status: 400 });
-    const resultaat = await meldAan(medewerker.id, dienst_id, "aangemeld");
+    // Zelfde body als /api/medewerker/shifts/aanmelden; de reactievelden mogen ook in `data` staan.
+    const resultaat = await meldAan(medewerker.id, dienst_id, "aangemeld", { reactie: reactieUitBody(body) });
     if (!resultaat.ok) return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
 
     // Push notificatie naar klant: iemand heeft zich aangemeld
@@ -321,7 +342,7 @@ export async function POST(request: NextRequest) {
         captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" }),
       ),
     );
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, aanmelding_id: resultaat.aanmeldingId });
   }
 
   // Afmelden/annuleren: één flow voor beide acties (eigen aanmelding, statuscheck, 48-uurregel in NL-tijd).
@@ -385,32 +406,9 @@ export async function POST(request: NextRequest) {
     await werkBezettingBij(origAanmelding.dienst_id);
 
     // Stuur bevestigingsmail naar vervanger
-    const { data: fullVervanger } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select(`
-        id,
-        medewerker:medewerkers(naam, email),
-        dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie, notities)
-      `)
-      .eq("id", vervangingAanmeldingId)
-      .single();
-
-    const vervangerMw = Array.isArray(fullVervanger?.medewerker) ? fullVervanger?.medewerker[0] : fullVervanger?.medewerker;
-    const vervangerDienst = Array.isArray(fullVervanger?.dienst) ? fullVervanger?.dienst[0] : fullVervanger?.dienst;
-
-    if (vervangerMw?.email && vervangerDienst) {
-      await sendMedewerkerShiftConfirmationEmail({
-        medewerkerNaam: vervangerMw.naam,
-        medewerkerEmail: vervangerMw.email,
-        functie: vervangerDienst.functie,
-        datum: vervangerDienst.datum,
-        startTijd: vervangerDienst.start_tijd,
-        eindTijd: vervangerDienst.eind_tijd,
-        locatie: vervangerDienst.locatie,
-        klantNaam: vervangerDienst.klant_naam,
-        kledingvoorschrift: vervangerDienst.notities,
-      });
-    }
+    await stuurInplanBevestiging(vervangingAanmeldingId).catch((e) =>
+      captureRouteError(e, { route: "/api/medewerker/diensten", action: "bevestigingsmail" }),
+    );
 
     return NextResponse.json({ success: true });
   }

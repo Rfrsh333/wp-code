@@ -8,6 +8,8 @@ import { calculateKlantReiskosten, roundCurrency } from "@/lib/reiskosten";
 import { calculateVat } from "@/lib/factuur-config";
 import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
 import { isOntbrekendeKolomFout, maakKlantSnapshot, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
+import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
 import { DEMO_MELDINGEN, isDemoKlant } from "@/lib/demo";
 
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
     .from("uren_registraties")
     .select(`
       id,
+      aanmelding_id,
       gewerkte_uren,
       start_tijd,
       eind_tijd,
@@ -91,6 +94,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ongeautoriseerde uren" }, { status: 403 });
     }
   }
+
+  // Tarief per aanmelding (tegenbod + € 4, anders de dienst). Vóór het claimen ophalen: lukt dat
+  // niet, dan gooit haalVoorwaarden en blijven de uren onaangeroerd (geen factuur met een fout tarief).
+  let voorwaarden: Awaited<ReturnType<typeof haalVoorwaarden>>;
+  try {
+    voorwaarden = await haalVoorwaarden(urenRegistraties.map((u) => u.aanmelding_id as string));
+  } catch (e) {
+    captureRouteError(e, { route: "/api/klant/facturen", action: "TARIEVEN" });
+    return NextResponse.json({ error: "Factuur aanmaken mislukt" }, { status: 500 });
+  }
+  const tariefVan = (uren: { aanmelding_id?: unknown }, dienst: Record<string, unknown> | null) =>
+    klantUurtariefVoorAanmelding(
+      (dienst?.uurtarief as number) || 0,
+      voorwaarden.get(uren.aanmelding_id as string)?.voorgesteld_uurtarief,
+    );
 
   // Claim de uren vóór de factuur bestaat: alleen rijen die (nog) klant_goedgekeurd zijn en
   // hierboven als eigen uren zijn gecontroleerd. Voorheen ging de ruwe uren_ids-lijst de update
@@ -128,7 +146,8 @@ export async function POST(request: NextRequest) {
     const dienst = aanmelding?.dienst as Record<string, unknown> | null;
     const medewerker = aanmelding?.medewerker as Record<string, unknown> | null;
 
-    const urenBedrag = roundCurrency(uren.gewerkte_uren * ((dienst?.uurtarief as number) || 0));
+    const uurtarief = tariefVan(uren, dienst);
+    const urenBedrag = roundCurrency(uren.gewerkte_uren * uurtarief);
     // Reiskosten voor de KLANT-factuur op basis van km × klanttarief (€0,23),
     // niet het opgeslagen medewerkerbedrag (€0,21). Gelijk aan /api/facturen/generate.
     const reiskosten = calculateKlantReiskosten(uren.reiskosten_km);
@@ -141,7 +160,7 @@ export async function POST(request: NextRequest) {
       datum: (dienst?.datum as string) || '',
       medewerker_naam: (medewerker?.naam as string) || '',
       uren: uren.gewerkte_uren,
-      uurtarief: (dienst?.uurtarief as number) || 0,
+      uurtarief,
       reiskosten,
       bedrag,
     });
@@ -151,7 +170,7 @@ export async function POST(request: NextRequest) {
     const eindTijd = (uren as { eind_tijd?: string }).eind_tijd;
     const toeslag = berekenToeslagRegel(
       uren.gewerkte_uren,
-      (dienst?.uurtarief as number) || 0,
+      uurtarief,
       dienst?.datum as string,
       startTijd,
       eindTijd,

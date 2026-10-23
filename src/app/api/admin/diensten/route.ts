@@ -5,7 +5,36 @@ import { controleerInzetbaarheid } from "@/lib/medewerker/aanmelden";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { ensureKlantForDienst } from "@/lib/klanten-sync";
-import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
+import { stuurInplanBevestiging } from "@/lib/medewerker/inplan-bevestiging";
+import { schrijfMetKolomFallback } from "@/lib/db-kolom-fallback";
+import {
+  effectieveAanmeldStatus,
+  isAutomatischIngetrokken,
+  medewerkerUurtariefVoorAanmelding,
+  parseKledingvoorschrift,
+  parsePauzeMinuten,
+  REACTIE_FOUTCODES,
+  reactieVoorWerkgever,
+} from "@/lib/medewerker/reactie-regels";
+import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden, naarVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+
+/** Dienstvelden die pas met migratie 20261023_uitgebreid_reageren.sql bestaan. */
+const NIEUWE_DIENST_KOLOMMEN = ["kledingvoorschrift", "pauze_minuten"] as const;
+
+/** Kledingvoorschrift en pauze uit het admin-formulier controleren (zelfde regels als de aanvraag). */
+function dienstExtrasUitPayload(payload: Record<string, unknown>): string | null {
+  if ("kledingvoorschrift" in payload) {
+    const k = parseKledingvoorschrift(payload.kledingvoorschrift);
+    if (!k.ok) return k.error;
+    payload.kledingvoorschrift = k.waarde;
+  }
+  if ("pauze_minuten" in payload) {
+    const p = parsePauzeMinuten(payload.pauze_minuten);
+    if (!p.ok) return p.error;
+    payload.pauze_minuten = p.waarde;
+  }
+  return null;
+}
 import { dienstenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { notifyKlantMedewerkerAssigned } from "@/lib/klant-push-triggers";
 import { captureRouteError } from "@/lib/sentry-utils";
@@ -40,8 +69,10 @@ export async function GET(request: NextRequest) {
     yesterday.setDate(yesterday.getDate() - 1);
     query = query.gte("datum", yesterday.toISOString().split("T")[0]);
   }
-  const { data, error } = await query;
-  return NextResponse.json({ data });
+  const { data } = await query;
+  // Kledingvoorschrift en pauze apart (bestaan pas na de migratie; zonder migratie leeg).
+  const extras = await haalDienstExtras((data ?? []).map((d) => d.id as string));
+  return NextResponse.json({ data: (data ?? []).map((d) => ({ ...d, ...(extras.get(d.id as string) ?? GEEN_EXTRAS) })) });
 }
 
 export async function POST(request: NextRequest) {
@@ -76,11 +107,18 @@ export async function POST(request: NextRequest) {
       payload.spoeddienst_token = crypto.randomUUID().replace(/-/g, "").substring(0, 16);
       payload.spoeddienst_whatsapp_tekst = generateWhatsAppTekst(payload);
     }
-    const { error } = await supabaseAdmin.from("diensten").insert(payload);
+    const extrasFout = dienstExtrasUitPayload(payload);
+    if (extrasFout) return NextResponse.json({ error: extrasFout }, { status: 400 });
+    const { error, weggelaten } = await schrijfMetKolomFallback(payload, NIEUWE_DIENST_KOLOMMEN, (rij) =>
+      supabaseAdmin.from("diensten").insert(rij),
+    );
     if (error) {
       captureRouteError(error, { route: "/api/admin/diensten", action: "POST" });
       // console.error("[DIENSTEN] Insert error:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (weggelaten.some((k) => payload[k] != null)) {
+      return NextResponse.json({ success: true, waarschuwing: "Kledingvoorschrift en pauze zijn niet opgeslagen: de migratie is nog niet gedraaid." });
     }
   }
   if (action === "update") {
@@ -118,21 +156,66 @@ export async function POST(request: NextRequest) {
       payload.spoeddienst_token = null;
       payload.spoeddienst_whatsapp_tekst = null;
     }
-    await supabaseAdmin.from("diensten").update(payload).eq("id", id);
+    const extrasFout = dienstExtrasUitPayload(payload);
+    if (extrasFout) return NextResponse.json({ error: extrasFout }, { status: 400 });
+    const { weggelaten } = await schrijfMetKolomFallback(payload, NIEUWE_DIENST_KOLOMMEN, (rij) =>
+      supabaseAdmin.from("diensten").update(rij).eq("id", id),
+    );
+    if (weggelaten.some((k) => payload[k] != null)) {
+      return NextResponse.json({ success: true, waarschuwing: "Kledingvoorschrift en pauze zijn niet opgeslagen: de migratie is nog niet gedraaid." });
+    }
   }
   if (action === "delete") {
     await supabaseAdmin.from("diensten").delete().eq("id", id);
   }
   if (action === "get_aanmeldingen") {
-    const { data: aanmeldingen } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select("*, medewerker:medewerkers(naam, email, telefoon)")
-      .eq("dienst_id", dienst_id)
-      .order("aangemeld_at", { ascending: true })
-      .limit(100);
-    return NextResponse.json({ data: aanmeldingen });
+    const [{ data: aanmeldingen }, { data: dienst }, extras] = await Promise.all([
+      supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .select("*, medewerker:medewerkers(naam, email, telefoon, profile_photo_url, gemiddelde_score, aantal_beoordelingen)")
+        .eq("dienst_id", dienst_id)
+        .order("aangemeld_at", { ascending: true })
+        .limit(100),
+      supabaseAdmin.from("diensten").select("datum, start_tijd, eind_tijd, uurtarief").eq("id", dienst_id).maybeSingle(),
+      haalDienstExtras([dienst_id]),
+    ]);
+    // `*` bevat de reactievelden zodra de migratie gedraaid is. Per reactie dezelfde weergave als
+    // de werkgever ziet, plus voor TopTalent wat de medewerker zelf per uur krijgt.
+    const dienstInfo = {
+      datum: dienst?.datum ?? null,
+      start_tijd: dienst?.start_tijd ?? null,
+      eind_tijd: dienst?.eind_tijd ?? null,
+      uurtarief: (dienst?.uurtarief as number | null) ?? null,
+      pauze_minuten: extras.get(dienst_id)?.pauze_minuten ?? null,
+    };
+    const metReactie = (aanmeldingen ?? []).map((a: Record<string, unknown>) => {
+      const bron = { status: a.status as string, ...naarVoorwaarden(a) };
+      return {
+        ...a,
+        status: effectieveAanmeldStatus(bron, dienstInfo),
+        reactie: {
+          ...reactieVoorWerkgever(bron, dienstInfo),
+          medewerker_uurtarief: medewerkerUurtariefVoorAanmelding(dienstInfo.uurtarief, bron.voorgesteld_uurtarief),
+        },
+      };
+    });
+    return NextResponse.json({ data: metReactie });
   }
   if (action === "update_aanmelding") {
+    // Een open reactie voorbij haar intrekmoment kan ook TopTalent niet meer accepteren.
+    if (data.status === "geaccepteerd") {
+      const [{ data: huidig }, voorwaarden] = await Promise.all([
+        supabaseAdmin.from("dienst_aanmeldingen").select("status, dienst:diensten(datum, start_tijd)").eq("id", id).maybeSingle(),
+        haalVoorwaarden([id]),
+      ]);
+      const d = (Array.isArray(huidig?.dienst) ? huidig?.dienst[0] : huidig?.dienst) as { datum: string; start_tijd: string } | null | undefined;
+      if (huidig && isAutomatischIngetrokken({ status: huidig.status, ...(voorwaarden.get(id) ?? {}) }, d)) {
+        return NextResponse.json(
+          { error: "Deze reactie is automatisch ingetrokken en kan niet meer worden geaccepteerd.", code: REACTIE_FOUTCODES.reactieIngetrokken },
+          { status: 409 },
+        );
+      }
+    }
     await supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ status: data.status, beoordeeld_at: new Date().toISOString() })
@@ -148,32 +231,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (data.status === "geaccepteerd") {
-      const { data: aanmelding } = await supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .select(`
-          id,
-          medewerker:medewerkers(naam, email),
-          dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie, notities)
-        `)
-        .eq("id", id)
-        .single();
-
-      const medewerker = Array.isArray(aanmelding?.medewerker) ? aanmelding?.medewerker[0] : aanmelding?.medewerker;
-      const dienst = Array.isArray(aanmelding?.dienst) ? aanmelding?.dienst[0] : aanmelding?.dienst;
+      // Bevestigingsmail met de tijden die voor deze medewerker gelden (eigen tijden na acceptatie).
+      // De status is al gewijzigd: een mislukte mail mag geen 500 geven.
+      const ingepland = await stuurInplanBevestiging(id).catch((e) => {
+        captureRouteError(e, { route: "/api/admin/diensten", action: "bevestigingsmail" });
+        return null;
+      });
+      const medewerker = ingepland?.medewerker;
+      const dienst = ingepland?.dienst;
 
       if (medewerker?.email && dienst) {
-        await sendMedewerkerShiftConfirmationEmail({
-          medewerkerNaam: medewerker.naam,
-          medewerkerEmail: medewerker.email,
-          functie: dienst.functie,
-          datum: dienst.datum,
-          startTijd: dienst.start_tijd,
-          eindTijd: dienst.eind_tijd,
-          locatie: dienst.locatie,
-          klantNaam: dienst.klant_naam,
-          kledingvoorschrift: dienst.notities,
-        });
-
         // Push notificatie naar klant: medewerker toegewezen
         const { data: klantRecord } = await supabaseAdmin
           .from("klanten")

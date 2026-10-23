@@ -13,6 +13,8 @@ interface ShiftData {
   eind_tijd: string;
   uurtarief: number | null;
   notitie: string | null;
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
 }
 
 interface SwipeShiftCardProps {
@@ -111,8 +113,14 @@ export default function SwipeShiftCard({ shift, onAccept, onDecline, style, isTo
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span>{shift.start_tijd?.slice(0, 5)} - {shift.eind_tijd?.slice(0, 5)}</span>
+              <span>
+                {shift.start_tijd?.slice(0, 5)} - {shift.eind_tijd?.slice(0, 5)}
+                {shift.pauze_minuten ? ` · ${shift.pauze_minuten} min pauze` : ""}
+              </span>
             </div>
+            {shift.kledingvoorschrift && (
+              <p className="text-sm text-[var(--mp-text-secondary)]">Kleding: {shift.kledingvoorschrift}</p>
+            )}
           </div>
 
           {shift.notitie && (

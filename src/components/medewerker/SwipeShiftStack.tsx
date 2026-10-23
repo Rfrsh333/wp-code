@@ -18,6 +18,8 @@ interface Aanbieding {
     eind_tijd: string;
     functie: string;
     uurtarief: number | null;
+    kledingvoorschrift?: string | null;
+    pauze_minuten?: number | null;
   } | null;
 }
 
@@ -125,6 +127,8 @@ export default function SwipeShiftStack({ onAantalChange }: SwipeShiftStackProps
                     eind_tijd: aanbieding.dienst.eind_tijd,
                     uurtarief: aanbieding.dienst.uurtarief,
                     notitie: aanbieding.notitie,
+                    kledingvoorschrift: aanbieding.dienst.kledingvoorschrift ?? null,
+                    pauze_minuten: aanbieding.dienst.pauze_minuten ?? null,
                   }}
                   onAccept={(id) => reageer(id, "geaccepteerd")}
                   onDecline={(id) => reageer(id, "afgewezen")}

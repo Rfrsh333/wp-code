@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendPushToUser } from "@/lib/push-notifications";
 import { nlDatumKort } from "@/lib/nl-tijd";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 /**
  * Pushmeldingen rond een aanmelding voor een dienst. Op één plek, zodat elke route
@@ -39,8 +40,11 @@ export async function notifyMedewerkerAanmeldingBeslist(aanmeldingId: string, st
     | null);
   if (!aanmelding?.medewerker_id || !dienst) return { sent: 0, failed: 0 };
 
+  // Eigen tijden (uitgebreid reageren) gelden na acceptatie: noem dan de eigen begintijd.
+  const voorstel = (await haalVoorwaarden([aanmeldingId])).get(aanmeldingId);
+  const start = voorstel?.voorgestelde_start_tijd && voorstel.voorgestelde_eind_tijd ? voorstel.voorgestelde_start_tijd : dienst.start_tijd;
   const wat = `${dienst.functie || "de dienst"}${dienst.klant_naam ? ` bij ${dienst.klant_naam}` : ""}`;
-  const wanneer = `${nlDatumKort(dienst.datum)}${dienst.start_tijd ? ` om ${dienst.start_tijd.slice(0, 5)}` : ""}`;
+  const wanneer = `${nlDatumKort(dienst.datum)}${start ? ` om ${start.slice(0, 5)}` : ""}`;
   return sendPushToUser(aanmelding.medewerker_id, "medewerker", status === "geaccepteerd"
     ? {
         title: "Je bent ingepland!",
@@ -54,4 +58,22 @@ export async function notifyMedewerkerAanmeldingBeslist(aanmeldingId: string, st
         url: "/medewerker/diensten/",
         tag: `aanmelding-${aanmelding.dienst_id}`,
       });
+}
+
+/** Medewerker: zijn reactie is automatisch ingetrokken (cron reacties-intrekken). */
+export async function notifyMedewerkerReactieIngetrokken(input: {
+  medewerkerId: string;
+  dienstId: string;
+  datum: string;
+  functie: string | null;
+  klantNaam: string | null;
+  uren: number;
+}) {
+  const wat = `${input.functie || "de dienst"}${input.klantNaam ? ` bij ${input.klantNaam}` : ""}`;
+  return sendPushToUser(input.medewerkerId, "medewerker", {
+    title: "Reactie automatisch ingetrokken",
+    body: `Je reactie op ${wat} op ${nlDatumKort(input.datum)} is ingetrokken: je was ${input.uren} uur voor de start nog niet gekozen.`,
+    url: "/medewerker/shifts/",
+    tag: `aanmelding-${input.dienstId}`,
+  });
 }

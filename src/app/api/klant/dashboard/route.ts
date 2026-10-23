@@ -6,6 +6,8 @@ import { isIngepland } from "@/lib/dienst-status";
 import { maandGrenzen, nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { roundCurrency } from "@/lib/reiskosten";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { effectieveAanmeldStatus, klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 // Uren die voor de klant als "goedgekeurd" tellen (ook nadat er een factuur van is gemaakt).
 const GOEDGEKEURD = ["klant_goedgekeurd", "goedgekeurd", "gefactureerd"];
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
       .limit(1000),
     supabaseAdmin
       .from("uren_registraties")
-      .select("gewerkte_uren, aanmelding:dienst_aanmeldingen!inner(dienst:diensten!inner(klant_id, datum, uurtarief))")
+      .select("aanmelding_id, gewerkte_uren, aanmelding:dienst_aanmeldingen!inner(dienst:diensten!inner(klant_id, datum, uurtarief))")
       .eq("aanmelding.dienst.klant_id", klant.id)
       .gte("aanmelding.dienst.datum", maandStart)
       .lte("aanmelding.dienst.datum", maandEind)
@@ -71,28 +73,37 @@ export async function GET(request: NextRequest) {
 
   // Kosten deze maand: zelfde berekening als het kostenoverzicht (goedgekeurde uren × uurtarief van
   // de dienst), op dienstdatum in deze NL-kalendermaand. Geen toeslag/reiskosten: die staan pas op de factuur.
+  // Tarief per aanmelding: een tegenbod van de medewerker kost de klant tegenbod + € 4.
   let approvedHoursThisMonth = 0;
   let kostenDezeMaand = 0;
+  const voorwaarden = await haalVoorwaarden((maandUrenRes.data || []).map((u) => u.aanmelding_id as string));
   for (const u of maandUrenRes.data || []) {
     const dienst = eerste(eerste(u.aanmelding as { dienst?: unknown } | null)?.dienst as { uurtarief?: number } | null);
     const uren = u.gewerkte_uren || 0;
     approvedHoursThisMonth += uren;
-    kostenDezeMaand += uren * (dienst?.uurtarief || 0);
+    kostenDezeMaand += uren * klantUurtariefVoorAanmelding(dienst?.uurtarief, voorwaarden.get(u.aanmelding_id as string)?.voorgesteld_uurtarief);
   }
 
   // Aanmeldingen per dienst per status. `aanmeldingen_geaccepteerd` blijft (zoals altijd) het
   // aantal ingeplande medewerkers = geaccepteerd + bevestigd (lib/dienst-status); de losse
   // tellers en `aanmeldingen_per_status` zijn nieuw (3-10-2026) zodat het overzicht ook laat zien
   // dat er aanmeldingen op de klant wachten. Zelfde definities als GET /api/klant/diensten.
+  // Een reactie voorbij haar intrekmoment telt als `geannuleerd` (lazy check, cron nog niet gedraaid).
   const perDienst: Record<string, Record<string, number>> = {};
   if (diensten.length > 0) {
     const { data: aanmeldingen } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("dienst_id, status")
+      .select("id, dienst_id, status")
       .in("dienst_id", diensten.map((d) => d.id));
+    const reactieVoorwaarden = await haalVoorwaarden((aanmeldingen || []).map((a) => a.id));
+    const dienstPerId = new Map(diensten.map((d) => [d.id, d]));
     for (const a of aanmeldingen || []) {
+      const status = effectieveAanmeldStatus(
+        { status: a.status, auto_intrekken_uren: reactieVoorwaarden.get(a.id)?.auto_intrekken_uren },
+        dienstPerId.get(a.dienst_id),
+      );
       const telling = (perDienst[a.dienst_id] ??= {});
-      telling[a.status] = (telling[a.status] || 0) + 1;
+      telling[status] = (telling[status] || 0) + 1;
     }
   }
 

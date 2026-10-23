@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { valideerPauze, valideerDienstDuur, berekenToeslag } from "@/lib/compliance/arbeidstijden";
+import { geldendeTijden, klantUurtariefVoorAanmelding, medewerkerUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+
+type Een<T> = T | T[] | null | undefined;
+const een = <T,>(v: Een<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -33,7 +38,27 @@ export async function GET(request: NextRequest) {
     const urenSet = new Set((bestaandeUren || []).map(u => u.aanmelding_id));
     const zonderUren = (aanmeldingen || []).filter(a => !urenSet.has(a.id));
 
-    return NextResponse.json({ data: zonderUren });
+    // Per aanmelding de geldende tijden (vooringevuld bij handmatig registreren), pauze en tarief.
+    const [voorwaarden, extras] = await Promise.all([
+      haalVoorwaarden(zonderUren.map((a) => a.id)),
+      haalDienstExtras(zonderUren.map((a) => een(a.dienst as Een<{ id: string }>)?.id)),
+    ]);
+    const metVoorwaarden = zonderUren.map((a) => {
+      const dienst = een(a.dienst as Een<{ id: string; start_tijd: string; eind_tijd: string; uurtarief: number | null }>);
+      const v = voorwaarden.get(a.id);
+      const tijden = dienst ? geldendeTijden(dienst, v) : null;
+      return {
+        ...a,
+        start_tijd: tijden?.start_tijd ?? null,
+        eind_tijd: tijden?.eind_tijd ?? null,
+        eigen_tijden: tijden?.eigen_tijden ?? false,
+        pauze_minuten: dienst ? (extras.get(dienst.id)?.pauze_minuten ?? null) : null,
+        klant_uurtarief: klantUurtariefVoorAanmelding(dienst?.uurtarief, v?.voorgesteld_uurtarief),
+        medewerker_uurtarief: medewerkerUurtariefVoorAanmelding(dienst?.uurtarief, v?.voorgesteld_uurtarief),
+      };
+    });
+
+    return NextResponse.json({ data: metVoorwaarden });
   }
 
   let query = supabaseAdmin
@@ -46,7 +71,18 @@ export async function GET(request: NextRequest) {
   else if (filter === "ingediend") query = query.eq("status", "ingediend");
 
   const { data } = await query.limit(500);
-  return NextResponse.json({ data });
+  // Tarief per aanmelding (tegenbod + € 4, anders de dienst): `klant_uurtarief` per regel.
+  const voorwaarden = await haalVoorwaarden((data ?? []).map((u) => u.aanmelding_id as string));
+  const metTarief = (data ?? []).map((u) => {
+    const dienst = een(een(u.aanmelding as Een<{ dienst?: unknown }>)?.dienst as Een<{ uurtarief?: number | null }>);
+    const tegenbod = voorwaarden.get(u.aanmelding_id as string)?.voorgesteld_uurtarief;
+    return {
+      ...u,
+      klant_uurtarief: klantUurtariefVoorAanmelding(dienst?.uurtarief, tegenbod),
+      medewerker_uurtarief: medewerkerUurtariefVoorAanmelding(dienst?.uurtarief, tegenbod),
+    };
+  });
+  return NextResponse.json({ data: metTarief });
 }
 
 export async function POST(request: NextRequest) {

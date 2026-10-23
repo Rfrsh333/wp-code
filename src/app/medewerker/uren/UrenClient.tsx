@@ -39,6 +39,8 @@ interface TeRegistrerenDienst {
     bedrijfsnaam: string;
     bedrijf_foto_url?: string;
   };
+  /** Pauze van de dienst (vooringevuld); start/eind zijn al de tijden van deze aanmelding. */
+  pauze_minuten?: number | null;
 }
 
 interface KlantAanpassing {
@@ -332,7 +334,7 @@ export default function UrenClient() {
                     setUrenForm({
                       start: dienst.start_tijd?.slice(0, 5) || "",
                       eind: dienst.eind_tijd?.slice(0, 5) || "",
-                      pauze: "0",
+                      pauze: String(dienst.pauze_minuten ?? 0),
                       reiskosten_km: "0",
                     });
                   }}

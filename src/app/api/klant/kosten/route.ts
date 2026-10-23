@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 // Goedgekeurde uren tellen als kosten, ook nadat er een factuur van is gemaakt
 // (voorheen verdwenen gefactureerde uren uit het kostenoverzicht).
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
   const { data: uren, error } = await supabaseAdmin
     .from("uren_registraties")
     .select(`
-      gewerkte_uren, status,
+      aanmelding_id, gewerkte_uren, status,
       aanmelding:dienst_aanmeldingen!inner(
         medewerker_id,
         medewerker:medewerkers(naam),
@@ -44,6 +46,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Kosten ophalen mislukt" }, { status: 500 });
   }
 
+  // Tarief per aanmelding: tegenbod van de medewerker + € 4, anders het tarief van de dienst.
+  const voorwaarden = await haalVoorwaarden((uren || []).map((u) => u.aanmelding_id as string));
+
   const maandTotalen: Record<number, number> = {};
   const functieTotalen: Record<string, number> = {};
   const medewerkerTotalen: Record<string, { naam: string; totaal: number; uren: number }> = {};
@@ -55,7 +60,7 @@ export async function GET(request: NextRequest) {
     const med = eerste(aanmelding.medewerker as { naam?: string } | null);
 
     const gewerkt = ur.gewerkte_uren || 0;
-    const kosten = gewerkt * (dienst.uurtarief || 0);
+    const kosten = gewerkt * klantUurtariefVoorAanmelding(dienst.uurtarief, voorwaarden.get(ur.aanmelding_id as string)?.voorgesteld_uurtarief);
     const maand = Number(dienst.datum.slice(5, 7)) - 1;
 
     maandTotalen[maand] = (maandTotalen[maand] || 0) + kosten;

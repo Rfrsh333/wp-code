@@ -1,9 +1,10 @@
 "use client";
 
-import { MapPin, Clock, Euro, Calendar, Check, X, Briefcase, FileText, Car } from "lucide-react";
+import { MapPin, Clock, Euro, Calendar, Check, X, Briefcase, FileText, Car, Shirt } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { geschatteVerdiensten, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
 
 interface DienstCardProps {
   dienst: {
@@ -22,6 +23,18 @@ interface DienstCardProps {
       bedrijfsnaam: string;
       bedrijf_foto_url?: string;
     };
+    /**
+     * Uitgebreid reageren (api/medewerker/diensten/lijst): start/eind/uurtarief zijn al die van
+     * deze aanmelding (eigen tijden en tegenbod); dit zijn de extra's erbij.
+     */
+    medewerker_uurtarief?: number;
+    kledingvoorschrift?: string | null;
+    pauze_minuten?: number | null;
+    eigen_tijden?: boolean;
+    eigen_tarief?: boolean;
+    dienst_start_tijd?: string;
+    dienst_eind_tijd?: string;
+    voorstel?: { motivatie: string | null; auto_intrekken_uren: number | null; intrekken_op: string | null } | null;
   };
   type: "aangeboden" | "aangemeld" | "gepland" | "voltooid";
   onRefresh?: () => void;
@@ -40,10 +53,12 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   // Uren form state
   const [urenStart, setUrenStart] = useState(dienst.start_tijd?.slice(0, 5) || "");
   const [urenEind, setUrenEind] = useState(dienst.eind_tijd?.slice(0, 5) || "");
-  const [pauze, setPauze] = useState(0);
+  // Pauze van de dienst vooringevuld (uitgebreid reageren); de medewerker kan hem aanpassen.
+  const [pauze, setPauze] = useState(dienst.pauze_minuten ?? 0);
   const [reiskostenKm, setReiskostenKm] = useState(0);
 
-  const medewerkerUurtarief = dienst.uurtarief - 4; // €4 margin
+  // Tarief van deze aanmelding (tegenbod, anders klanttarief − € 4).
+  const medewerkerUurtarief = dienst.medewerker_uurtarief ?? medewerkerTariefVanDienst(dienst.uurtarief);
 
   const formatDatum = (datum: string) => {
     const d = new Date(datum);
@@ -63,14 +78,6 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
     return `${start.slice(0, 5)} - ${eind.slice(0, 5)}`;
   };
 
-  const berekenUren = (start: string, eind: string) => {
-    const [startH, startM] = start.split(":").map(Number);
-    const [eindH, eindM] = eind.split(":").map(Number);
-    let uren = eindH - startH + (eindM - startM) / 60;
-    // Nachtdienst: als eind eerder is dan start, gaat het over middernacht
-    if (uren <= 0) uren += 24;
-    return uren.toFixed(1);
-  };
 
   const berekenFormUren = () => {
     if (!urenStart || !urenEind) return 0;
@@ -82,8 +89,25 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
     return Math.max(0, totalMin / 60);
   };
 
-  const uren = berekenUren(dienst.start_tijd, dienst.eind_tijd);
-  const verdiensten = parseFloat(uren) * medewerkerUurtarief;
+  // ± verdiensten over de geldende tijden, pauze eraf (nachtdienst over middernacht gaat goed).
+  const schatting = geschatteVerdiensten({
+    start_tijd: dienst.start_tijd,
+    eind_tijd: dienst.eind_tijd,
+    pauze_minuten: dienst.pauze_minuten,
+    uurtarief: medewerkerUurtarief,
+  });
+  const uren = schatting.uren.toFixed(1);
+  const verdiensten = schatting.bedrag;
+  const intrekkenOp = dienst.voorstel?.intrekken_op
+    ? new Date(dienst.voorstel.intrekken_op).toLocaleString("nl-NL", {
+        timeZone: "Europe/Amsterdam",
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   const handleAccept = async () => {
     // Ref-guard: een dubbelklik komt vóór de re-render (disabled) binnen.
@@ -309,10 +333,13 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
             <span className="font-semibold">{formatDatum(dienst.datum)}</span>
           </div>
 
-          {/* Tijd */}
+          {/* Tijd (eigen tijden als die zijn voorgesteld/afgesproken) */}
           <div className="flex items-center gap-1.5 text-[var(--mp-text-secondary)] text-xs mb-0.5">
             <Clock className="w-3.5 h-3.5" />
-            <span>{formatTijd(dienst.start_tijd, dienst.eind_tijd)}</span>
+            <span>
+              {formatTijd(dienst.start_tijd, dienst.eind_tijd)}
+              {dienst.eigen_tijden ? (type === "aangemeld" ? " (jouw voorstel)" : " (jouw tijden)") : ""}
+            </span>
           </div>
 
           {/* Locatie */}
@@ -332,15 +359,23 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[var(--mp-accent)]/10 mb-2.5">
             <Euro className="w-4 h-4 text-[var(--mp-accent)]" />
             <div>
-              <div className="text-[10px] text-[var(--mp-text-tertiary)]">Verdiensten</div>
+              <div className="text-[10px] text-[var(--mp-text-tertiary)]">± Verdiensten</div>
               <div className="text-sm font-bold text-[var(--mp-accent)]">
                 €{verdiensten.toFixed(2)}
               </div>
               <div className="text-[10px] text-[var(--mp-text-secondary)]">
                 {uren}u × €{medewerkerUurtarief}
+                {dienst.eigen_tarief ? (type === "aangemeld" ? " (jouw voorstel)" : " (jouw tarief)") : ""}
               </div>
             </div>
           </div>
+
+          {/* Uitgebreid reageren: automatisch intrekken */}
+          {type === "aangemeld" && intrekkenOp && (
+            <p className="text-[11px] text-[var(--mp-text-secondary)] mb-2.5">
+              Trekt automatisch in op {intrekkenOp} als je dan nog niet gekozen bent.
+            </p>
+          )}
 
           {/* CTA Buttons op basis van type */}
           {type === "aangeboden" && (
@@ -476,16 +511,30 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <Euro className="w-4 h-4 text-[var(--mp-accent)]" />
-                  <span className="text-[var(--mp-text-primary)] font-medium">€{verdiensten.toFixed(2)} ({uren}u × €{medewerkerUurtarief})</span>
+                  <span className="text-[var(--mp-text-primary)] font-medium">± €{verdiensten.toFixed(2)} ({uren}u × €{medewerkerUurtarief})</span>
                 </div>
+                {dienst.pauze_minuten != null && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Clock className="w-4 h-4 text-[var(--mp-accent)]" />
+                    <span className="text-[var(--mp-text-primary)]">
+                      {dienst.pauze_minuten > 0 ? `${dienst.pauze_minuten} minuten pauze` : "Geen pauze"}
+                    </span>
+                  </div>
+                )}
+                {dienst.kledingvoorschrift && (
+                  <div className="flex items-start gap-3 text-sm">
+                    <Shirt className="w-4 h-4 mt-0.5 text-[var(--mp-accent)]" />
+                    <span className="text-[var(--mp-text-primary)]">{dienst.kledingvoorschrift}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Notities */}
+              {/* Opmerkingen van de werkgever (notities) */}
               {dienst.notities && (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[var(--mp-text-secondary)] mb-1.5">
                     <FileText className="w-3.5 h-3.5" />
-                    Notities
+                    Opmerkingen
                   </div>
                   <p className="text-sm text-[var(--mp-text-primary)] bg-[var(--mp-bg)] rounded-xl p-3">
                     {dienst.notities}

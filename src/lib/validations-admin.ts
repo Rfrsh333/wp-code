@@ -41,6 +41,8 @@ const dienstData = z.object({
   klant_email: z.string().email().max(255).optional().nullable(),
   klant_telefoon: z.string().max(20).optional().nullable(),
   afbeelding: z.string().max(500).optional().nullable(),
+  kledingvoorschrift: z.string().max(500).optional().nullable(),
+  pauze_minuten: z.number().int().min(0).max(240).optional().nullable(),
 });
 
 export const dienstenPostSchema = z.discriminatedUnion("action", [

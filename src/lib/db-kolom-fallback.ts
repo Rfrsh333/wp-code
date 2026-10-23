@@ -47,3 +47,17 @@ export async function schrijfMetKolomFallback<R>(
   }
   return { data: null, error: { code: "42703", message: "Te veel ontbrekende kolommen" }, weggelaten };
 }
+
+/**
+ * Lezen met kolommen die een migratie misschien nog niet heeft toegevoegd: eerst `lees(true)`
+ * (met de nieuwe kolommen); geeft dat 42703/PGRST204, dan opnieuw met `lees(false)` (zonder).
+ * `nieuweKolommen` zegt welke van de twee het antwoord is.
+ */
+export async function leesMetKolomFallback<R>(
+  lees: (metNieuweKolommen: boolean) => PromiseLike<SchrijfResultaat<R>>,
+): Promise<SchrijfResultaat<R> & { nieuweKolommen: boolean }> {
+  const eerste = await lees(true);
+  if (!isOntbrekendeKolom(eerste.error)) return { ...eerste, nieuweKolommen: true };
+  const tweede = await lees(false);
+  return { ...tweede, nieuweKolommen: false };
+}

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { isOntbrekendeKolom, ontbrekendeKolom, schrijfMetKolomFallback } from "../../src/lib/db-kolom-fallback";
+import { isOntbrekendeKolom, leesMetKolomFallback, ontbrekendeKolom, schrijfMetKolomFallback } from "../../src/lib/db-kolom-fallback";
 
 test.describe("db-kolom-fallback", () => {
   test("herkent Postgres- en PostgREST-meldingen", () => {
@@ -33,5 +33,30 @@ test.describe("db-kolom-fallback", () => {
     }));
     expect(r.error?.code).toBe("42703");
     expect(r.weggelaten).toEqual([]);
+  });
+});
+
+test.describe("leesMetKolomFallback", () => {
+  test("eerst met de nieuwe kolommen, bij 42703/PGRST204 opnieuw zonder", async () => {
+    const pogingen: boolean[] = [];
+    const r = await leesMetKolomFallback(async (metNieuw) => {
+      pogingen.push(metNieuw);
+      return metNieuw ? { data: null, error: { code: "42703", message: "column x does not exist" } } : { data: [1], error: null };
+    });
+    expect(pogingen).toEqual([true, false]);
+    expect(r).toEqual({ data: [1], error: null, nieuweKolommen: false });
+  });
+
+  test("met migratie: één poging; een andere fout wordt niet gemaskeerd", async () => {
+    let n = 0;
+    const ok = await leesMetKolomFallback(async () => {
+      n++;
+      return { data: { id: 1 }, error: null };
+    });
+    expect(n).toBe(1);
+    expect(ok.nieuweKolommen).toBe(true);
+    const fout = await leesMetKolomFallback(async () => ({ data: null, error: { code: "57014", message: "timeout" } }));
+    expect(fout.error?.code).toBe("57014");
+    expect(fout.nieuweKolommen).toBe(true);
   });
 });

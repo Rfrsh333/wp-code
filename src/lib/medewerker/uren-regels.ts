@@ -22,9 +22,12 @@ export function isVerdiend(status: string | null | undefined): boolean {
   return (VERDIEND_STATUSSEN as readonly string[]).includes(status ?? "");
 }
 
-/** Bestaande marge-regel: medewerkerloon = klanttarief − €4, nooit negatief. */
+/**
+ * Bestaande marge-regel: medewerkerloon = klanttarief − €4, nooit negatief. Op centen afgerond:
+ * bij een tegenbod is het klanttarief T + 4 en gaf T + 4 − 4 in floats bv. 15.100000000000001.
+ */
 export function medewerkerUurtarief(klantUurtarief: number | null | undefined): number {
-  return Math.max(0, (klantUurtarief || 0) - 4);
+  return Math.max(0, Math.round(((klantUurtarief || 0) - 4) * 100) / 100);
 }
 
 export type UrenRegel = {
