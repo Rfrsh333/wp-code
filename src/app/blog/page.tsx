@@ -10,7 +10,7 @@ import { createEditorialImageSignedUrl } from "@/lib/images/storage";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: "Horeca Blog — Tips over Personeel & Recruitment",
+  title: "Horeca Blog — Tips over Personeel",
   description: "Praktische tips over horecapersoneel inhuren, personeelstekorten oplossen en recruitment trends. Lees de nieuwste inzichten voor horeca-ondernemers.",
 };
 

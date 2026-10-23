@@ -2,7 +2,7 @@ import { Metadata } from "next";
 
 import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
-  title: "Blog - Tips & Nieuws over Horeca Personeel | TopTalent Jobs",
+  title: "Blog — Tips & Nieuws over Horecapersoneel",
   description: "Praktische tips en nieuws over horecapersoneel inhuren, recruitment trends en de uitzendbranche. Blijf op de hoogte met TopTalent Jobs.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/blog/",

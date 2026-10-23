@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Algemene Voorwaarden | TopTalent Jobs",
+  title: "Algemene Voorwaarden",
   description: "Lees de algemene voorwaarden van Toptalent voor bemiddeling van zelfstandige horecaprofessionals.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/voorwaarden/",

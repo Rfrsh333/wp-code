@@ -5,6 +5,7 @@ import { generateBreadcrumbSchema } from "@/components/Breadcrumbs";
 import { getLocationServiceFAQs } from "@/data/location-service-faqs";
 
 import { OG_IMAGE } from "@/lib/og-image";
+import { fitTitle, fitDescription } from "@/lib/seo-fit";
 interface Props {
   params: Promise<{ city: string; service: string }>;
   children: React.ReactNode;
@@ -77,7 +78,7 @@ const getServiceMetadata = (city: string, service: string, locationName: string)
     cityDescriptions[city] ||
     `Horeca ${service} in ${locationName}. TopTalent Jobs levert snel en betrouwbaar personeel.`;
 
-  return { title, description };
+  return { title: fitTitle(title), description: fitDescription(description) };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

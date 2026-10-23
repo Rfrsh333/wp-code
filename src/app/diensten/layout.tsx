@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
   title: {
-    absolute: "Diensten — Uitzenden, Detachering & Recruitment | TopTalent Jobs",
+    absolute: "Uitzenden, Detachering & Recruitment | TopTalent Jobs",
   },
   description: "Overzicht van de diensten van TopTalent Jobs: uitzenden, detachering en recruitment van horecapersoneel. Kies de oplossing die past bij uw situatie.",
   alternates: {

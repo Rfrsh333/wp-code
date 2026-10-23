@@ -5,6 +5,7 @@ import { Section, Container } from "@/components/Section";
 import { BlogContentRenderer } from "@/components/blog";
 import { blogArticles, getAllBlogSlugs, getBlogArticle } from "@/data/blogArticles";
 
+import { fitTitle, fitDescription } from "@/lib/seo-fit";
 export const revalidate = 3600;
 
 // Generate static params for all blog articles
@@ -28,8 +29,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const imageUrl = `https://www.toptalentjobs.nl${article.image}`;
 
   return {
-    title: article.metaTitle ?? `${article.title} | TopTalent Jobs Blog`,
-    description: article.excerpt,
+    title: { absolute: fitTitle((article.metaTitle ?? article.title).replace(/ \| TopTalent Jobs( Blog)?$/, "")) },
+    description: fitDescription(article.excerpt),
     alternates: {
       canonical: `https://www.toptalentjobs.nl/blog/${slug}/`,
     },

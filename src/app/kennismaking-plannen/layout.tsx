@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
-  title: "Kennismakingsgesprek Plannen | TopTalent Jobs",
+  title: "Kennismakingsgesprek Plannen",
   description:
     "Plan een gratis kennismakingsgesprek met TopTalent Jobs. Ontdek hoe wij uw horecabedrijf helpen met betrouwbaar en flexibel personeel.",
   alternates: {

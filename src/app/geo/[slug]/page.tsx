@@ -6,11 +6,20 @@ import { GEO_STEDEN, GEO_CONTENT_TYPES } from "@/lib/geo/types";
 import Link from "next/link";
 import Section from "@/components/Section";
 import { OG_IMAGE } from "@/lib/og-image";
+import { supabaseAdmin } from "@/lib/supabase";
+import { fitTitle, fitDescription } from "@/lib/seo-fit";
 import {
   ScrollReveal,
   FAQAccordion,
   FAQSchemaFallback,
 } from "@/components/geo/GeoAnimations";
+
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const { data } = await supabaseAdmin.from("geo_content").select("slug").eq("status", "gepubliceerd");
+  return (data ?? []).map((r: { slug: string }) => ({ slug: r.slug }));
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -27,8 +36,12 @@ export async function generateMetadata({
   }
 
   return {
-    title: content.seo_title || content.title,
-    description: content.meta_description || content.excerpt || undefined,
+    title: {
+      absolute: fitTitle(
+        `${(content.seo_title || content.title).replace(/ \| TopTalent( Jobs)?$/, "")} | TopTalent Jobs`,
+      ),
+    },
+    description: fitDescription(content.meta_description || content.excerpt || ""),
     keywords: [
       ...(content.primary_keywords || []),
       ...(content.secondary_keywords || []),

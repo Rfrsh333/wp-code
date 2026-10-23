@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/metadata";
 import CalculatorClient from "./CalculatorClient";
 
 export const metadata = buildPageMetadata({
-  title: "Kosten horecapersoneel berekenen | Gratis calculator | TopTalent",
+  title: "Kosten horecapersoneel berekenen",
   description:
     "Bereken in 2 minuten wat horecapersoneel écht kost. Vergelijk vast personeel, uitzendkrachten en ZZP'ers en ontvang een helder kostenoverzicht.",
   path: "/kosten-calculator/",

@@ -8,8 +8,8 @@ import PremiumImage from "@/components/PremiumImage";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Over TopTalent Jobs — Horeca Uitzendbureau Utrecht",
-  description: "Leer het team achter TopTalent Jobs kennen. Wij zijn gespecialiseerd in horeca uitzendwerk en helpen restaurants, hotels en evenementen met betrouwbaar personeel.",
+  title: "Over ons — Horeca Uitzendbureau Utrecht",
+  description: "Leer het team achter TopTalent Jobs kennen. Wij zijn gespecialiseerd in horeca uitzendwerk en helpen horecabedrijven en evenementen met betrouwbaar personeel.",
 };
 
 export default function OverOnsPage() {

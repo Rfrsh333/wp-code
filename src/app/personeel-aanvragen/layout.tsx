@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
-  title: "Horecapersoneel Aanvragen — Persoonlijke Matching",
+  title: "Personeel Aanvragen — Persoonlijke Match",
   description: "Vraag horecapersoneel aan via TopTalent Jobs. Persoonlijke matching, duidelijke afspraken en vaak binnen 24 uur een voorstel op maat voor uw zaak.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/personeel-aanvragen/",

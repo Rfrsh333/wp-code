@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Section, Container } from "@/components/Section";
 
 import { OG_IMAGE } from "@/lib/og-image";
+import { fitDescription } from "@/lib/seo-fit";
 interface FAQItem {
   id: string;
   question: string;
@@ -46,7 +47,7 @@ export async function generateMetadata({
 
   return {
     title: faq.question,
-    description: `${shortAnswer}... Lees het volledige antwoord van TopTalent Jobs.`,
+    description: fitDescription(faq.answer),
     alternates: {
       canonical: `https://www.toptalentjobs.nl/veelgestelde-vragen/${slug}/`,
     },

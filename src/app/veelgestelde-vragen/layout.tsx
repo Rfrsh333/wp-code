@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getFaqs } from "./getFaqs";
 
 export const metadata: Metadata = {
-  title: "Veelgestelde vragen over horecapersoneel inhuren | TopTalent",
+  title: "Veelgestelde vragen over horecapersoneel",
   description:
     "Antwoorden op veelgestelde vragen over horecapersoneel inhuren via TopTalent. Kosten, contracten, beschikbaarheid en meer.",
   alternates: {

@@ -56,9 +56,9 @@ const industries = [
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Horecapersoneel met Persoonlijke Aanpak | Binnen 24 uur | TopTalent",
+  title: "Horecapersoneel met persoonlijke aanpak | TopTalent",
   description:
-    "TopTalent levert zorgvuldig gescreend horecapersoneel met persoonlijke matching en duidelijke afspraken. Vaak binnen 24 uur inzetbaar voor restaurants, hotels en events.",
+    "TopTalent levert zorgvuldig gescreend horecapersoneel met persoonlijke matching en duidelijke afspraken. Vaak binnen 24 uur inzetbaar.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/",
   },
