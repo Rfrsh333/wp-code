@@ -2,7 +2,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { valideerLeeftijdVoorDienst, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
 import { normaliseerBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
 import { beschikbaarheidPerMedewerker } from "@/lib/medewerker/beschikbaarheid-bron";
-import { haalKritiekeDocumenten } from "@/lib/medewerker/aanmelden";
+import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
+import { haalChecklist } from "@/lib/medewerker/checklist";
 import { inzetbaarheidsMelding } from "@/lib/medewerker/dienst-regels";
 import { nlVandaag } from "@/lib/nl-tijd";
 
@@ -297,6 +298,16 @@ export async function inviteMedewerkersForDienst(
   let success = 0;
 
   for (const medewerkerId of medewerkerIds) {
+    // B1: een uitnodiging vanuit de matching zet direct een aanmelding neer; die mag de checklist
+    // (ID, KvK, btw, IBAN, akkoord overeenkomst) niet omzeilen.
+    const checklist = await haalChecklist(medewerkerId);
+    if (!checklist.compleet) {
+      errors.push(
+        `Medewerker ${medewerkerId} niet uitgenodigd: checklist onvolledig (${checklist.ontbrekend.map((p) => p.label).join(", ")})`,
+      );
+      continue;
+    }
+
     const { error } = await supabaseAdmin.from("dienst_aanmeldingen").insert({
       dienst_id: dienstId,
       medewerker_id: medewerkerId,

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { isGeldigIban, maskeerIban } from "@/lib/medewerker/iban";
+import { isGeldigBtwNummer, isGeldigKvkNummer } from "@/lib/medewerker/zzp-gegevens";
 
 interface ProfielData {
   naam: string;
@@ -27,6 +28,7 @@ interface ProfielData {
   factuurPostcode?: string;
   factuurStad?: string;
   btwNummer?: string;
+  kvkNummer?: string;
   iban?: string | null;
   korActief?: boolean;
 }
@@ -65,6 +67,7 @@ export default function ProfielClient() {
           factuurPostcode: p.factuur_postcode,
           factuurStad: p.factuur_stad,
           btwNummer: p.btw_nummer,
+          kvkNummer: p.kvk_nummer,
           iban: p.iban,
           korActief: p.kor_actief === true,
           opkomstPercentage: data.stats?.opkomst_percentage ?? null,
@@ -115,6 +118,15 @@ export default function ProfielClient() {
       toast.error("Dit IBAN klopt niet. Controleer het nummer.");
       return;
     }
+    // B1: KvK- en btw-nummer staan op de checklist vóór reageren; meteen hier controleren.
+    if (profiel.kvkNummer?.trim() && !isGeldigKvkNummer(profiel.kvkNummer)) {
+      toast.error("Een KvK-nummer bestaat uit 8 cijfers.");
+      return;
+    }
+    if (profiel.btwNummer?.trim() && !isGeldigBtwNummer(profiel.btwNummer)) {
+      toast.error("Dit btw-nummer klopt niet. Het ziet eruit als NL123456789B01.");
+      return;
+    }
 
     try {
       setSaving(true);
@@ -131,6 +143,7 @@ export default function ProfielClient() {
           factuur_postcode: profiel.factuurPostcode,
           factuur_stad: profiel.factuurStad,
           btw_nummer: profiel.btwNummer,
+          kvk_nummer: profiel.kvkNummer,
           // Alleen aanzetten wordt verstuurd; uitzetten kan alleen via support.
           ...(profiel.korActief && !korOpgeslagen ? { kor_actief: true } : {}),
           ...(ibanInvoer ? { iban: ibanInvoer } : {}),
@@ -399,6 +412,21 @@ export default function ProfielClient() {
                   className="w-full px-4 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] placeholder:text-[var(--mp-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
                 />
               </div>
+            </div>
+
+            {/* KvK-nummer (B1: nodig om te reageren op diensten) */}
+            <div>
+              <label className="block text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase mb-2">
+                KvK-nummer
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={profiel?.kvkNummer || ""}
+                onChange={(e) => setProfiel({ ...profiel!, kvkNummer: e.target.value })}
+                placeholder="12345678"
+                className="w-full px-4 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] placeholder:text-[var(--mp-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
+              />
             </div>
 
             {/* BTW-identificatienummer */}

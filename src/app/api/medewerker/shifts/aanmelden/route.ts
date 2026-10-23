@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { meldAan } from "@/lib/medewerker/aanmelden";
+import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     // zitten in één gedeelde functie; insert-fouten worden niet meer genegeerd.
     const resultaat = await meldAan(medewerker.id, dienst_id, "aangemeld");
     if (!resultaat.ok) {
-      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+      return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
     }
 
     return NextResponse.json({ success: true });

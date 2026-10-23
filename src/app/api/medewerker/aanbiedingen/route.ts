@@ -4,7 +4,7 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { sendShiftReactieEmail } from "@/lib/notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { meldAan } from "@/lib/medewerker/aanmelden";
+import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { isDemoMedewerker } from "@/lib/demo";
 
 export async function GET(request: NextRequest) {
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest) {
   if (status === "geaccepteerd") {
     const resultaat = await meldAan(medewerker.id, aanbieding.dienst_id, "geaccepteerd");
     if (!resultaat.ok) {
-      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+      return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
     }
   }
 

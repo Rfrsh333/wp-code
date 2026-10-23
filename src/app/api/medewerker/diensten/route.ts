@@ -10,7 +10,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { notifyKlantUrenIngediend } from "@/lib/klant-push-triggers";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
-import { meldAan, meldAf, planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
+import { meldAan, meldAf, planVervangerIn, werkBezettingBij, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { beperkDiensten, haalDemoIds } from "@/lib/demo";
 
 type UrenRegistratie = { status: string };
@@ -313,7 +313,7 @@ export async function POST(request: NextRequest) {
   if (action === "aanmelden") {
     if (!dienst_id) return NextResponse.json({ error: "Dienst ID is verplicht" }, { status: 400 });
     const resultaat = await meldAan(medewerker.id, dienst_id, "aangemeld");
-    if (!resultaat.ok) return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+    if (!resultaat.ok) return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
 
     // Push notificatie naar klant: iemand heeft zich aangemeld
     const { data: dienstDetails } = await supabaseAdmin
@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
   // Afmelden/annuleren: één flow voor beide acties (eigen aanmelding, statuscheck, 48-uurregel in NL-tijd).
   if (action === "afmelden" || action === "annuleer_geaccepteerd") {
     const resultaat = await meldAf(medewerker.id, { aanmeldingId: aanmelding_id, dienstId: dienst_id });
-    if (!resultaat.ok) return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+    if (!resultaat.ok) return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
     return NextResponse.json({
       success: true,
       uitkomst: resultaat.uitkomst,
