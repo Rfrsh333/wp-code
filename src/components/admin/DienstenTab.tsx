@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import ShiftAanbiedingenPanel from "./ShiftAanbiedingenPanelV2";
 import EersteDienstControlePanel from "./EersteDienstControlePanel";
+import Image from "next/image";
+import ReactieVoorstel, { type ReactieWeergave } from "@/components/reacties/ReactieVoorstel";
 
 interface Dienst {
   id: string;
@@ -25,6 +27,9 @@ interface Dienst {
   is_spoeddienst: boolean;
   spoeddienst_token: string | null;
   spoeddienst_whatsapp_tekst: string | null;
+  /** Uitgebreid reageren: eigen velden (leeg zolang de migratie niet gedraaid is). */
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
 }
 
 interface SpoedResponse {
@@ -42,14 +47,29 @@ interface Aanmelding {
   id: string;
   dienst_id: string;
   medewerker_id: string;
-  status: "aangemeld" | "geaccepteerd" | "afgewezen" | "geannuleerd";
+  status: "aangemeld" | "geaccepteerd" | "bevestigd" | "afgewezen" | "geannuleerd" | "uitgenodigd" | "vervanging_gezocht" | "vervangen";
   aangemeld_at: string;
   medewerker?: {
     naam: string;
     email: string;
     telefoon: string | null;
+    profile_photo_url?: string | null;
+    gemiddelde_score?: number | null;
+    aantal_beoordelingen?: number | null;
   };
+  /** Motivatie, tijden, tarief (werkgever en medewerker) en akkoord kleding. */
+  reactie?: ReactieWeergave;
 }
+
+const AANMELDING_LABELS: Record<string, string> = {
+  geaccepteerd: "Geaccepteerd",
+  bevestigd: "Bevestigd",
+  afgewezen: "Afgewezen",
+  geannuleerd: "Geannuleerd",
+  uitgenodigd: "Uitgenodigd",
+  vervanging_gezocht: "Zoekt vervanger",
+  vervangen: "Vervangen",
+};
 
 interface AanmeldingResponse extends Omit<Aanmelding, "medewerker"> {
   medewerker?: Aanmelding["medewerker"];
@@ -102,6 +122,8 @@ export default function DienstenTab() {
     uurtarief: "",
     afbeelding: "",
     notities: "",
+    kledingvoorschrift: "",
+    pauze_minuten: "",
     is_spoeddienst: false,
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -165,6 +187,8 @@ export default function DienstenTab() {
       uurtarief: "",
       afbeelding: "",
       notities: "",
+      kledingvoorschrift: "",
+      pauze_minuten: "",
       is_spoeddienst: false,
     });
     setShowModal(true);
@@ -185,6 +209,8 @@ export default function DienstenTab() {
       aantal_nodig: dienst.aantal_nodig.toString(),
       uurtarief: dienst.uurtarief?.toString() || "",
       notities: dienst.notities || "",
+      kledingvoorschrift: dienst.kledingvoorschrift || "",
+      pauze_minuten: dienst.pauze_minuten != null ? String(dienst.pauze_minuten) : "",
       is_spoeddienst: dienst.is_spoeddienst || false,
     });
     setShowModal(true);
@@ -214,6 +240,8 @@ export default function DienstenTab() {
       uurtarief: formData.uurtarief ? parseFloat(formData.uurtarief) : null,
       afbeelding: formData.afbeelding || null,
       notities: formData.notities || null,
+      kledingvoorschrift: formData.kledingvoorschrift.trim() || null,
+      pauze_minuten: formData.pauze_minuten !== "" ? parseInt(formData.pauze_minuten) : null,
       is_spoeddienst: formData.is_spoeddienst,
     };
 
@@ -241,6 +269,8 @@ export default function DienstenTab() {
       return;
     }
 
+    const resultaat = await res.json().catch(() => null);
+    if (resultaat?.waarschuwing) toast.warning(resultaat.waarschuwing);
     setIsSaving(false);
     setShowModal(false);
     fetchDiensten();
@@ -273,11 +303,18 @@ export default function DienstenTab() {
     status: Aanmelding["status"]
   ) => {
     const headers = await getAuthHeader();
-    await fetch("/api/admin/diensten", {
+    const res = await fetch("/api/admin/diensten", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ action: "update_aanmelding", id: aanmeldingId, data: { status } }),
     });
+    if (!res.ok) {
+      // Bv. een automatisch ingetrokken reactie (409, code reactie_ingetrokken).
+      const fout = await res.json().catch(() => null);
+      toast.error(fout?.error || "Bijwerken mislukt");
+      if (selectedDienst) await fetchAanmeldingen(selectedDienst.id);
+      return;
+    }
 
     if (selectedDienst) {
       await fetchAanmeldingen(selectedDienst.id);
@@ -491,6 +528,8 @@ export default function DienstenTab() {
                 <p>🕐 {formatDate(dienst.datum)} · {formatTime(dienst.start_tijd)} - {formatTime(dienst.eind_tijd)}</p>
                 {dienst.uurtarief && <p>💰 <span className="font-semibold text-neutral-900">€{dienst.uurtarief.toFixed(2)}/uur</span></p>}
                 <p>👥 {dienst.aantal_nodig} nodig</p>
+                {dienst.pauze_minuten != null && dienst.pauze_minuten > 0 && <p>☕ Pauze {dienst.pauze_minuten} min</p>}
+                {dienst.kledingvoorschrift && <p>👔 {dienst.kledingvoorschrift}</p>}
               </div>
 
               <div className="space-y-2">
@@ -697,6 +736,38 @@ export default function DienstenTab() {
                 </div>
 
                 <div className="col-span-2">
+                  <label htmlFor="dienst-kleding" className="block text-sm font-medium text-neutral-700 mb-1">
+                    Kledingvoorschrift
+                  </label>
+                  <input
+                    id="dienst-kleding"
+                    type="text"
+                    maxLength={500}
+                    value={formData.kledingvoorschrift}
+                    onChange={(e) => setFormData({ ...formData, kledingvoorschrift: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                    placeholder="Bijv. zwarte broek, wit overhemd"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="dienst-pauze" className="block text-sm font-medium text-neutral-700 mb-1">
+                    Pauze (minuten)
+                  </label>
+                  <input
+                    id="dienst-pauze"
+                    type="number"
+                    min={0}
+                    max={240}
+                    step={5}
+                    value={formData.pauze_minuten}
+                    onChange={(e) => setFormData({ ...formData, pauze_minuten: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
+                    placeholder="Bijv. 30"
+                  />
+                </div>
+
+                <div className="col-span-2">
                   <label className="block text-sm font-medium text-neutral-700 mb-1">
                     Notities
                   </label>
@@ -807,9 +878,22 @@ export default function DienstenTab() {
                       }`}
                     >
                       <div className="flex items-center justify-between">
+                        <div className="flex items-start gap-3">
+                          {aanmelding.medewerker?.profile_photo_url ? (
+                            <Image src={aanmelding.medewerker.profile_photo_url} alt="" width={40} height={40} className="w-10 h-10 rounded-full object-cover" unoptimized />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-neutral-200 text-neutral-600 flex items-center justify-center text-sm font-bold">
+                              {(aanmelding.medewerker?.naam || "?").charAt(0)}
+                            </div>
+                          )}
                         <div>
                           <p className="font-medium text-neutral-900">
                             {aanmelding.medewerker?.naam || "Onbekend"}
+                            {aanmelding.medewerker?.gemiddelde_score != null && (
+                              <span className="ml-2 text-xs font-normal text-amber-600">
+                                ★ {aanmelding.medewerker.gemiddelde_score.toFixed(1)} ({aanmelding.medewerker.aantal_beoordelingen || 0})
+                              </span>
+                            )}
                           </p>
                           <p className="text-sm text-neutral-500">
                             {aanmelding.medewerker?.email}
@@ -819,6 +903,7 @@ export default function DienstenTab() {
                               {aanmelding.medewerker.telefoon}
                             </p>
                           )}
+                        </div>
                         </div>
                         {aanmelding.status === "aangemeld" && (
                           <div className="flex gap-2">
@@ -839,15 +924,24 @@ export default function DienstenTab() {
                         {aanmelding.status !== "aangemeld" && (
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              aanmelding.status === "geaccepteerd"
+                              aanmelding.status === "geaccepteerd" || aanmelding.status === "bevestigd"
                                 ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
+                                : aanmelding.status === "afgewezen"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-neutral-200 text-neutral-600"
                             }`}
                           >
-                            {aanmelding.status === "geaccepteerd" ? "Geaccepteerd" : "Afgewezen"}
+                            {aanmelding.reactie?.automatisch_ingetrokken
+                              ? "Ingetrokken"
+                              : AANMELDING_LABELS[aanmelding.status] || aanmelding.status}
                           </span>
                         )}
                       </div>
+                      <ReactieVoorstel
+                        reactie={aanmelding.reactie}
+                        kledingvoorschrift={selectedDienst.kledingvoorschrift}
+                        toonMedewerkerTarief
+                      />
                     </div>
                   ))}
                 </div>

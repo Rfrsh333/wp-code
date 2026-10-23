@@ -28,6 +28,8 @@ import { parseCheckinQr } from "@/lib/checkin-qr";
 import { isIngepland } from "@/lib/dienst-status";
 import { parseUurtarief, valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
 import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
+import ReactieVoorstel, { type ReactieWeergave } from "@/components/reacties/ReactieVoorstel";
+import { PAUZE_MAX_MINUTEN, KLEDINGVOORSCHRIFT_MAX } from "@/lib/medewerker/reactie-regels";
 
 const KLANT_TAB_IDS = [
   "overzicht", "uren", "diensten", "rooster", "aanvragen", "favorieten",
@@ -102,6 +104,10 @@ interface UpcomingDienst {
   aanmeldingen_count?: number;
   aanmeldingen_aangemeld?: number;
   aanmeldingen_geaccepteerd?: number;
+  /** Uitgebreid reageren: eigen velden op de dienst (leeg zolang de migratie niet gedraaid is). */
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
+  notities?: string | null;
 }
 
 interface DienstAanmelding {
@@ -121,6 +127,8 @@ interface DienstAanmelding {
     admin_score_aanwezigheid: number | null;
     admin_score_vaardigheden: number | null;
   } | null;
+  /** Motivatie, tijden, wat u per uur betaalt en akkoord kleding (uitgebreid reageren). */
+  reactie?: ReactieWeergave;
 }
 
 interface Factuur {
@@ -178,7 +186,10 @@ interface RoosterItem {
   functie: string;
   status: string;
   aantal_nodig: number;
-  medewerkers: { id: string; naam: string; functie: string | string[]; profile_photo_url: string | null }[];
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
+  /** start_tijd/eind_tijd per medewerker: eigen tijden als die zijn afgesproken. */
+  medewerkers: { id: string; naam: string; functie: string | string[]; profile_photo_url: string | null; start_tijd?: string; eind_tijd?: string; eigen_tijden?: boolean }[];
 }
 
 interface KostenData {
@@ -427,8 +438,15 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
 
   const updateAanmelding = async (aanmeldingId: string, status: "geaccepteerd" | "afgewezen") => {
     setAanmeldingenActie(aanmeldingId);
+    // Bij accepteren gaat mee wat u zag (tarief en tijden): is de reactie intussen gewijzigd,
+    // dan weigert de server en ziet u eerst het nieuwe voorstel.
+    const reactie = aanmeldingen.find((a) => a.id === aanmeldingId)?.reactie;
+    const gezien =
+      status === "geaccepteerd" && reactie
+        ? { klant_uurtarief: reactie.klant_uurtarief, start_tijd: reactie.start_tijd, eind_tijd: reactie.eind_tijd }
+        : {};
     dienstenMutation.mutate(
-      { action: "update_aanmelding", id: aanmeldingId, data: { status } },
+      { action: "update_aanmelding", id: aanmeldingId, data: { status, ...gezien } },
       {
         onSuccess: () => {
           // Invalidate queries to refresh data (React Query v5)
@@ -441,8 +459,9 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
           }
           setAanmeldingenActie(null);
         },
-        onError: () => {
-          toast.error("Actie mislukt");
+        onError: (e) => {
+          toast.error(e instanceof Error ? e.message : "Actie mislukt");
+          if (aanmeldingenOpen) fetchAanmeldingen(aanmeldingenOpen);
           setAanmeldingenActie(null);
         },
       }
@@ -930,6 +949,14 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
                           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-600">
                             <span className="rounded-full bg-neutral-100 px-3 py-1">{dienst.functie}</span>
                             <span className="rounded-full bg-neutral-100 px-3 py-1">{dienst.aantal_nodig} medewerkers</span>
+                            {dienst.pauze_minuten != null && dienst.pauze_minuten > 0 && (
+                              <span className="rounded-full bg-neutral-100 px-3 py-1">Pauze {dienst.pauze_minuten} min</span>
+                            )}
+                            {dienst.kledingvoorschrift && (
+                              <span className="rounded-full bg-neutral-100 px-3 py-1" title={dienst.kledingvoorschrift}>
+                                Kleding: {dienst.kledingvoorschrift.length > 40 ? `${dienst.kledingvoorschrift.slice(0, 40)}…` : dienst.kledingvoorschrift}
+                              </span>
+                            )}
                             {(dienst.aanmeldingen_count || 0) > 0 && (
                               <button
                                 onClick={() => toggleAanmeldingen(dienst.id)}
@@ -1033,7 +1060,7 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
                                         </div>
                                         <div className="flex flex-col gap-2 items-end">
                                           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusKleur[a.status] || "bg-neutral-200 text-neutral-600"}`}>
-                                            {a.status}
+                                            {a.reactie?.automatisch_ingetrokken ? "ingetrokken" : a.status}
                                           </span>
                                           {isIngepland(a.status) && (
                                             a.check_in_at ? (
@@ -1072,6 +1099,10 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
                                           </div>
                                         )}
                                       </div>
+                                      {/* Uitgebreid reageren: tijden, wat u betaalt, motivatie en akkoord kleding */}
+                                      {(a.status === "aangemeld" || isIngepland(a.status) || a.reactie?.automatisch_ingetrokken) && (
+                                        <ReactieVoorstel reactie={a.reactie} kledingvoorschrift={dienst.kledingvoorschrift} />
+                                      )}
                                     </div>
                                   );
                                 })}
@@ -1659,6 +1690,9 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
     uurtarief: "",
     locatie: "",
     opmerkingen: "",
+    // Eigen velden (uitgebreid reageren): medewerkers gaan bij reageren akkoord met de kleding.
+    kledingvoorschrift: "",
+    pauze_minuten: "",
     // Via "Boek" bij een favoriet: die medewerker staat al aangevinkt in stap 4.
     favoriet_medewerker_ids: (voorkeurMedewerkerId ? [voorkeurMedewerkerId] : []) as string[],
   });
@@ -1743,6 +1777,7 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
         queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
 
         const uitgenodigd = Number(data?.favorieten_uitgenodigd) || 0;
+        if (data?.waarschuwing) toast.warning(String(data.waarschuwing));
         if (data?.in_controle) {
           // Eerste dienst van een nieuwe klant: eerst controle door TopTalent, nog geen push.
           setInControle(true);
@@ -1784,6 +1819,8 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
       uurtarief: template.uurtarief?.toString() || "",
       locatie: template.locatie,
       opmerkingen: template.beschrijving || "",
+      kledingvoorschrift: form.kledingvoorschrift,
+      pauze_minuten: form.pauze_minuten,
       favoriet_medewerker_ids: template.favoriet_medewerker_ids || [],
     });
     // Skip naar datum selectie; ontbreekt er een (geldig) tarief, dan eerst stap 1 om dat in te vullen.
@@ -2293,9 +2330,29 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
             </div>
 
             <div>
+              <label htmlFor="aanvraag-kleding" className="block text-sm font-medium text-neutral-700 mb-1">Kledingvoorschrift (optioneel)</label>
+              <textarea id="aanvraag-kleding" value={form.kledingvoorschrift} onChange={(e) => setForm({ ...form, kledingvoorschrift: e.target.value })}
+                rows={2} maxLength={KLEDINGVOORSCHRIFT_MAX} placeholder="Bijv. zwarte broek, wit overhemd, dichte schoenen"
+                className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
+              <p className="mt-1 text-xs text-neutral-500">Medewerkers gaan hier bij hun reactie akkoord mee.</p>
+            </div>
+
+            <div>
+              <label htmlFor="aanvraag-pauze" className="block text-sm font-medium text-neutral-700 mb-1">Pauze (optioneel)</label>
+              <select id="aanvraag-pauze" value={form.pauze_minuten} onChange={(e) => setForm({ ...form, pauze_minuten: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]">
+                <option value="">Niet opgegeven</option>
+                {[0, 15, 30, 45, 60, 90].filter((m) => m <= PAUZE_MAX_MINUTEN).map((m) => (
+                  <option key={m} value={String(m)}>{m === 0 ? "Geen pauze" : `${m} minuten`}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-neutral-500">Onbetaald; wordt vooringevuld als de medewerker zijn uren invult.</p>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Opmerkingen (optioneel)</label>
               <textarea value={form.opmerkingen} onChange={(e) => setForm({ ...form, opmerkingen: e.target.value })}
-                rows={3} placeholder="Bijzonderheden, kledingvoorschriften, etc."
+                rows={3} placeholder="Bijzonderheden, bijv. ingang, parkeren of aanspreekpunt"
                 className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]" />
             </div>
           </div>
@@ -2379,6 +2436,8 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
             {form.datum && <><span>Datum:</span><span className="font-medium">{new Date(form.datum).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })}</span></>}
             {form.start_tijd && <><span>Tijd:</span><span className="font-medium">{form.start_tijd} - {form.eind_tijd}</span></>}
             {form.locatie && form.locatie !== "__nieuw" && <><span>Locatie:</span><span className="font-medium">{form.locatie}</span></>}
+            {form.pauze_minuten !== "" && <><span>Pauze:</span><span className="font-medium">{form.pauze_minuten === "0" ? "Geen" : `${form.pauze_minuten} min`}</span></>}
+            {form.kledingvoorschrift.trim() && <><span>Kleding:</span><span className="font-medium">{form.kledingvoorschrift.trim()}</span></>}
           </div>
         </div>
       )}
@@ -2612,7 +2671,11 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
                       <div className={`w-2 h-2 rounded-full ${statusColor[item.status] || "bg-neutral-400"}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-neutral-900">{item.locatie || item.functie}</p>
-                        <p className="text-xs text-neutral-500">{formatTime(item.start_tijd)} - {formatTime(item.eind_tijd)} · {item.functie}</p>
+                        <p className="text-xs text-neutral-500">
+                          {formatTime(item.start_tijd)} - {formatTime(item.eind_tijd)} · {item.functie}
+                          {item.pauze_minuten ? ` · pauze ${item.pauze_minuten} min` : ""}
+                        </p>
+                        {item.kledingvoorschrift && <p className="text-xs text-neutral-500">Kleding: {item.kledingvoorschrift}</p>}
                         {item.medewerkers.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {item.medewerkers.map((mw) => (
@@ -2625,6 +2688,9 @@ function RoosterTab({ formatTime, statusTone }: { formatTime: (v: string) => str
                                   </span>
                                 )}
                                 {mw.naam}
+                                {mw.eigen_tijden && mw.start_tijd && mw.eind_tijd && (
+                                  <span className="text-neutral-500">({formatTime(mw.start_tijd)}–{formatTime(mw.eind_tijd)})</span>
+                                )}
                               </span>
                             ))}
                           </div>
