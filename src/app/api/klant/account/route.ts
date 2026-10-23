@@ -30,10 +30,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Account niet gevonden" }, { status: 404 });
   }
 
-  const [stand, demo] = await Promise.all([laadOnboardingStand(klant.id), isDemoKlant(klant.id)]);
+  // Lukt het laden van de onboardingstand niet, dan alleen de gegevens (Instellingen blijft werken).
+  const [stand, demo] = await Promise.all([
+    laadOnboardingStand(klant.id).catch((e) => {
+      captureRouteError(e, { route: "/api/klant/account", action: "ONBOARDING" });
+      return null;
+    }),
+    isDemoKlant(klant.id).catch(() => false),
+  ]);
   return NextResponse.json({
     account: res.data,
-    onboarding: { email_bevestigd: stand.emailBevestigd || demo, gecontroleerd: stand.gecontroleerd || demo },
+    ...(stand ? { onboarding: { email_bevestigd: stand.emailBevestigd || demo, gecontroleerd: stand.gecontroleerd || demo } } : {}),
   });
 }
 
