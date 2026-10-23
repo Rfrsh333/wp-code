@@ -61,6 +61,15 @@ const PAD_ACCOUNT = [
 const TAB_UREN_GELD = ["uren", "facturen", "kosten"];
 const TAB_ACCOUNT = ["instellingen"];
 
+/** decodeURIComponent gooit bij een kapotte %-reeks; dan de ruwe waarde. */
+function veiligDecoderen(v: string): string {
+  try {
+    return decodeURIComponent(v);
+  } catch {
+    return v;
+  }
+}
+
 /** Pad en `tab`-parameter uit een relatieve url (zonder URL-API, die in tests en oude webviews ontbreekt). */
 function padEnTab(url: string): { pad: string; tab: string | null } {
   const [voorHash] = url.split("#");
@@ -69,7 +78,7 @@ function padEnTab(url: string): { pad: string; tab: string | null } {
     .split("&")
     .map((p) => p.split("="))
     .find(([k]) => k === "tab")?.[1];
-  return { pad: pad || "/", tab: tab ? decodeURIComponent(tab) : null };
+  return { pad: pad || "/", tab: tab ? veiligDecoderen(tab) : null };
 }
 
 /** Categorie van een melding: meegegeven, anders uit de tag, anders uit het pad, anders diensten. */
@@ -103,9 +112,13 @@ export function veiligeMeldingUrl(url: string | null | undefined): string | null
   return u;
 }
 
+// Losse surrogaten (half emoji-teken) en \0 weigert Postgres; dan zou een heel blok mislukken.
+const LOSSE_SURROGAAT = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+
+/** Inkorten op tekens (code points, zoals char_length in Postgres), nooit midden in een emoji. */
 function knip(tekst: string, max: number): string {
-  const t = tekst.trim();
-  return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
+  const tekens = Array.from(tekst.replace(/\u0000/g, "").replace(LOSSE_SURROGAAT, "").trim());
+  return tekens.length <= max ? tekens.join("") : `${tekens.slice(0, max - 1).join("").trimEnd()}…`;
 }
 
 /** Eén rij per (unieke, geldige) ontvanger. Zonder titel geen melding. */

@@ -14,7 +14,8 @@ export default function MeldingenClient() {
         <div className="max-w-2xl mx-auto px-4 pt-4 pb-8">
           <button
             type="button"
-            onClick={() => router.back()}
+            // Via een deeplink (push, mail) is er geen vorige pagina: dan naar Ontdekken.
+            onClick={() => (window.history.length > 1 ? router.back() : router.push("/medewerker/shifts/"))}
             className="md:hidden flex items-center gap-2 text-[var(--mp-text-secondary)] mb-3 transition-opacity active:opacity-70"
           >
             <ArrowLeft className="w-5 h-5" aria-hidden />

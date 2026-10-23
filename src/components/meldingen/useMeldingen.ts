@@ -40,11 +40,14 @@ export function useMeldingenAantal(rol: MeldingUserType) {
     queryKey: meldingenKeys.aantal(rol),
     queryFn: async (): Promise<{ totaal: number; beschikbaar: boolean }> => {
       const res = await fetch(`/api/meldingen/aantal/?rol=${rol}`, { cache: "no-store" });
-      if (!res.ok) return { totaal: 0, beschikbaar: false };
+      // Geen sessie (of geen rechten): geen bel. Een serverfout gooit, zodat de vorige stand blijft.
+      if (res.status === 401 || res.status === 403) return { totaal: 0, beschikbaar: false };
+      if (!res.ok) throw new Error(`Aantal meldingen ophalen mislukt (${res.status})`);
       return res.json();
     },
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    // Alleen pollen als het meldingencentrum er is (anders zou elke open tab elke minuut vergeefs vragen).
+    refetchInterval: (query) => (query.state.data?.beschikbaar ? 60_000 : false),
     refetchOnWindowFocus: true,
     retry: false,
   });
@@ -83,7 +86,9 @@ export function useMarkeerGelezen(rol: MeldingUserType) {
       return res.json() as Promise<{ bijgewerkt: number; ongelezen: OngelezenTelling }>;
     },
     onMutate: async (wat) => {
-      // Direct zichtbaar: kaart(en) als gelezen tonen en de badge bijwerken.
+      // Direct zichtbaar: kaart(en) als gelezen tonen. Lopende verversingen eerst stoppen, anders
+      // overschrijven die de optimistische stand.
+      await queryClient.cancelQueries({ queryKey: [...meldingenKeys.alles(rol), "lijst"] });
       const nu = new Date().toISOString();
       const raakt = (m: Melding) => !m.gelezen && ("id" in wat ? m.id === wat.id : !wat.categorie || m.categorie === wat.categorie);
       queryClient.setQueriesData<{ pages: LijstAntwoord[]; pageParams: unknown[] }>({ queryKey: [...meldingenKeys.alles(rol), "lijst"] }, (oud) =>
@@ -93,12 +98,15 @@ export function useMarkeerGelezen(rol: MeldingUserType) {
       );
     },
     onSuccess: (data) => {
-      if (data?.ongelezen) {
-        queryClient.setQueryData(meldingenKeys.aantal(rol), (oud: { beschikbaar: boolean } | undefined) => ({
-          beschikbaar: oud?.beschikbaar ?? true,
-          totaal: data.ongelezen.totaal,
-        }));
-      }
+      if (!data?.ongelezen) return;
+      // Badge en tab-tellers meteen op de nieuwe stand van de server.
+      queryClient.setQueryData(meldingenKeys.aantal(rol), (oud: { beschikbaar: boolean } | undefined) => ({
+        beschikbaar: oud?.beschikbaar ?? true,
+        totaal: data.ongelezen.totaal,
+      }));
+      queryClient.setQueriesData<{ pages: LijstAntwoord[]; pageParams: unknown[] }>({ queryKey: [...meldingenKeys.alles(rol), "lijst"] }, (oud) =>
+        oud?.pages.length ? { ...oud, pages: [{ ...oud.pages[0], ongelezen: data.ongelezen }, ...oud.pages.slice(1)] } : oud,
+      );
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: meldingenKeys.alles(rol) });

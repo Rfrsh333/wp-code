@@ -11,6 +11,7 @@ import {
   type MeldingCategorie,
   type MeldingenVraag,
   type MeldingInvoer,
+  type MeldingRij,
   type MeldingUserType,
   type OngelezenTelling,
 } from "@/lib/meldingen/meldingen-regels";
@@ -49,8 +50,58 @@ const ONTBREEKT_TTL_MS = 5 * 60_000;
 let ontbreektTot = 0;
 
 const ROUTE = "lib/meldingen";
+/** Ontvangers ophalen per pagina (Supabase geeft er hooguit max_rows tegelijk, standaard 1000). */
 const PAGINA = 1000;
 const MAX_PAGINAS = 100;
+/** .in()-lijsten klein houden (URL-lengte), zoals in medewerker/push-doelgroep.ts. */
+const IN_BLOK = 150;
+/**
+ * Accounts met deze status kunnen niet inloggen en krijgen geen nieuwe meldingen (een verwijderd
+ * klantaccount wordt geanonimiseerd naar `verwijderd`, of `inactief` als die waarde niet mag).
+ */
+const GEEN_MELDINGEN_BIJ_STATUS = ["verwijderd", "inactief"];
+
+function tabelVan(userType: MeldingUserType): "medewerkers" | "klanten" {
+  return userType === "medewerker" ? "medewerkers" : "klanten";
+}
+
+/** Rijen in blokken van 500 wegschrijven. Gooit nooit (aanroeper vangt alles af). */
+async function schrijfRijen(rijen: MeldingRij[]): Promise<number> {
+  let opgeslagen = 0;
+  for (const blok of inBlokken(rijen)) {
+    const { error } = await supabaseAdmin.from("meldingen").insert(blok);
+    if (!error) {
+      opgeslagen += blok.length;
+      continue;
+    }
+    if (tabelOntbreekt(error)) {
+      ontbreektTot = Date.now() + ONTBREEKT_TTL_MS;
+      return opgeslagen;
+    }
+    captureRouteError(error, { route: ROUTE, action: "OPSLAAN" });
+  }
+  return opgeslagen;
+}
+
+/**
+ * Alleen ontvangers met een bestaand account dat niet verwijderd of inactief is (privacy: na het
+ * verwijderen van een account geen nieuwe meldingen meer). Lukt de controle niet, dan liever een
+ * melding te veel dan een gemiste: de rijen gaan dan ongefilterd door (fout naar Sentry).
+ */
+async function alleenBestaandeAccounts(rijen: MeldingRij[], userType: MeldingUserType): Promise<MeldingRij[]> {
+  const toegestaan = new Set<string>();
+  for (const blok of inBlokken(rijen.map((r) => r.user_id), IN_BLOK)) {
+    const { data, error } = await supabaseAdmin.from(tabelVan(userType)).select("id, status").in("id", blok);
+    if (error) {
+      captureRouteError(error, { route: ROUTE, action: "ONTVANGERS_CONTROLE" });
+      return rijen;
+    }
+    for (const r of (data ?? []) as { id: string; status: string | null }[]) {
+      if (!GEEN_MELDINGEN_BIJ_STATUS.includes(r.status ?? "")) toegestaan.add(String(r.id).toLowerCase());
+    }
+  }
+  return rijen.filter((r) => toegestaan.has(r.user_id));
+}
 
 /**
  * Sla één melding op voor elke ontvanger, in blokken van 500 rijen. Gooit nooit; geeft het aantal
@@ -64,20 +115,8 @@ export async function bewaarMeldingen(
   try {
     if (ontbreektTot > Date.now()) return 0;
     const rijen = maakMeldingRijen(userIds, userType, invoer);
-    let opgeslagen = 0;
-    for (const blok of inBlokken(rijen)) {
-      const { error } = await supabaseAdmin.from("meldingen").insert(blok);
-      if (!error) {
-        opgeslagen += blok.length;
-        continue;
-      }
-      if (tabelOntbreekt(error)) {
-        ontbreektTot = Date.now() + ONTBREEKT_TTL_MS;
-        return opgeslagen;
-      }
-      captureRouteError(error, { route: ROUTE, action: "OPSLAAN" });
-    }
-    return opgeslagen;
+    if (rijen.length === 0) return 0;
+    return await schrijfRijen(await alleenBestaandeAccounts(rijen, userType));
   } catch (e) {
     captureRouteError(e, { route: ROUTE, action: "OPSLAAN" });
     return 0;
@@ -96,12 +135,11 @@ export async function bewaarMeldingenVoorIedereen(
 ): Promise<number> {
   try {
     if (ontbreektTot > Date.now()) return 0;
-    const tabel = userType === "medewerker" ? "medewerkers" : "klanten";
     const ids: string[] = [];
-    for (let pagina = 0; pagina < MAX_PAGINAS; pagina++) {
-      const van = pagina * PAGINA;
+    // Doorgaan tot een lege pagina: zo valt niemand weg als max_rows lager staat dan PAGINA.
+    for (let pagina = 0, van = 0; pagina < MAX_PAGINAS; pagina++) {
       const { data, error } = await supabaseAdmin
-        .from(tabel)
+        .from(tabelVan(userType))
         .select("id")
         .eq("status", "actief")
         .order("id", { ascending: true })
@@ -111,14 +149,13 @@ export async function bewaarMeldingenVoorIedereen(
         return 0;
       }
       const rijen = (data ?? []) as { id: string }[];
+      if (rijen.length === 0) break;
       ids.push(...rijen.map((r) => r.id));
-      if (rijen.length < PAGINA) break;
+      van += rijen.length;
     }
-    return bewaarMeldingen(
-      ids.filter((id) => wereld.demoIds.has(id) === wereld.demo),
-      userType,
-      invoer,
-    );
+    // Al gefilterd op status 'actief': geen extra accountcontrole nodig.
+    const wereldIds = ids.filter((id) => wereld.demoIds.has(id) === wereld.demo);
+    return await schrijfRijen(maakMeldingRijen(wereldIds, userType, invoer));
   } catch (e) {
     captureRouteError(e, { route: ROUTE, action: "ONTVANGERS" });
     return 0;

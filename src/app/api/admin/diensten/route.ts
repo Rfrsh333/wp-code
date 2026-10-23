@@ -259,15 +259,21 @@ export async function POST(request: NextRequest) {
       const dienst = ingepland?.dienst;
 
       if (medewerker?.email && dienst) {
-        // Push notificatie naar klant: medewerker toegewezen
-        const { data: klantRecord } = await supabaseAdmin
-          .from("klanten")
-          .select("id")
-          .eq("bedrijfsnaam", dienst.klant_naam)
-          .maybeSingle();
-        if (klantRecord) {
+        // Push (en melding) naar de klant van DEZE dienst: op klant_id. Voorheen op bedrijfsnaam, waardoor
+        // een andere klant met dezelfde naam (of een demo-klant) de melding kon krijgen. Alleen zonder
+        // klant_id (oude diensten) nog op naam.
+        let klantId = dienst.klant_id;
+        if (!klantId) {
+          const { data: klantRecord } = await supabaseAdmin
+            .from("klanten")
+            .select("id")
+            .eq("bedrijfsnaam", dienst.klant_naam)
+            .maybeSingle();
+          klantId = klantRecord?.id ?? null;
+        }
+        if (klantId) {
           const formattedDate = new Date(dienst.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
-          void notifyKlantMedewerkerAssigned(klantRecord.id, medewerker.naam, dienst.functie, formattedDate);
+          void notifyKlantMedewerkerAssigned(klantId, medewerker.naam, dienst.functie, formattedDate);
         }
       }
     }

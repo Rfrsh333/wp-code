@@ -21,7 +21,7 @@ export default function MeldingenBel() {
     >
       <Bell className="w-5 h-5" aria-hidden />
       {totaal > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-[var(--mp-danger)] text-white text-[10px] font-bold flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-[#D70015] text-white text-[10px] font-bold flex items-center justify-center">
           {totaal > 99 ? "99+" : totaal}
         </span>
       )}

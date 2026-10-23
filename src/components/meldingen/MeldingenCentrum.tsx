@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCheck, ChevronRight } from "lucide-react";
 import * as Sentry from "@sentry/nextjs";
@@ -45,6 +45,7 @@ type Thema = {
   segmentActief: string;
   stip: string;
   badge: string;
+  badgeActief: string;
   actie: string;
   knop: string;
 };
@@ -60,7 +61,9 @@ const THEMA: Record<MeldingUserType, Thema> = {
     segment: "bg-[var(--mp-card)] shadow-[var(--mp-shadow)]",
     segmentActief: "bg-[var(--mp-accent)] text-[#1D1B19]",
     stip: "bg-[var(--mp-accent)]",
-    badge: "bg-[var(--mp-danger)] text-white",
+    // #D70015 i.p.v. --mp-danger: wit op kleine cijfers haalt dan 5,4:1 (AA).
+    badge: "bg-[#D70015] text-white",
+    badgeActief: "bg-[#1D1B19] text-white",
     actie: "bg-[var(--mp-accent)] text-[#1D1B19]",
     knop: "text-[var(--mp-text-primary)] bg-[var(--mp-card)] shadow-[var(--mp-shadow)]",
   },
@@ -75,6 +78,7 @@ const THEMA: Record<MeldingUserType, Thema> = {
     segmentActief: "bg-[var(--kp-primary)] text-white",
     stip: "bg-[var(--kp-accent)]",
     badge: "bg-[var(--kp-accent)] text-[#1D1B19]",
+    badgeActief: "bg-white text-[var(--kp-primary)]",
     actie: "bg-[var(--kp-primary)] text-white",
     knop: "text-[var(--kp-text-primary)] bg-white border border-[var(--kp-border)]",
   },
@@ -96,6 +100,24 @@ export default function MeldingenCentrum({
   const gelezen = useMarkeerGelezen(rol);
   const t = THEMA[rol];
   const Titel = titelNiveau;
+  const basisId = useId();
+  const tabKnoppen = useRef<(HTMLButtonElement | null)[]>([]);
+  const paneelId = `${basisId}-paneel`;
+  const tabId = (id: MeldingTab) => `${basisId}-tab-${id}`;
+
+  // Pijltjes, Home en End wisselen van tab (WAI-ARIA tabs-patroon).
+  const tabToets = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const naar =
+      e.key === "ArrowRight" ? (index + 1) % TABS.length
+      : e.key === "ArrowLeft" ? (index - 1 + TABS.length) % TABS.length
+      : e.key === "Home" ? 0
+      : e.key === "End" ? TABS.length - 1
+      : null;
+    if (naar === null) return;
+    e.preventDefault();
+    setTab(TABS[naar].id);
+    tabKnoppen.current[naar]?.focus();
+  };
 
   const pagina0 = lijst.data?.pages[0];
   const ongelezen = pagina0?.ongelezen;
@@ -135,7 +157,7 @@ export default function MeldingenCentrum({
       </div>
 
       <div role="tablist" aria-label="Soort meldingen" className={`flex gap-1 p-1 rounded-xl ${t.segment}`}>
-        {TABS.map((item) => {
+        {TABS.map((item, index) => {
           const actief = tab === item.id;
           const aantal = !ongelezen ? 0 : item.id === "alles" ? ongelezen.totaal : ongelezen.per_categorie[item.id];
           return (
@@ -143,8 +165,15 @@ export default function MeldingenCentrum({
               key={item.id}
               type="button"
               role="tab"
+              id={tabId(item.id)}
+              ref={(el) => {
+                tabKnoppen.current[index] = el;
+              }}
               aria-selected={actief}
+              aria-controls={paneelId}
+              tabIndex={actief ? 0 : -1}
               onClick={() => setTab(item.id)}
+              onKeyDown={(e) => tabToets(e, index)}
               className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 actief ? t.segmentActief : t.tekst2
               }`}
@@ -152,7 +181,11 @@ export default function MeldingenCentrum({
               <span className="truncate">{item.label}</span>
               {/* Elke lijst-respons telt alle categorieën, dus de tellers kloppen op elke tab. */}
               {aantal > 0 && (
-                <span className={`shrink-0 min-w-5 h-5 px-1 rounded-full text-[11px] font-bold flex items-center justify-center ${t.badge}`}>
+                <span
+                  className={`shrink-0 min-w-5 h-5 px-1 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                    actief ? t.badgeActief : t.badge
+                  }`}
+                >
                   {aantal > 99 ? "99+" : aantal}
                 </span>
               )}
@@ -161,9 +194,11 @@ export default function MeldingenCentrum({
         })}
       </div>
 
+      <div role="tabpanel" id={paneelId} aria-labelledby={tabId(tab)} className="space-y-4">
       {lijst.isLoading ? (
-        <div className="flex justify-center py-12" aria-label="Meldingen laden">
-          <div className="w-8 h-8 border-[3px] border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" />
+        <div className="flex justify-center py-12" role="status">
+          <span className="sr-only">Meldingen laden</span>
+          <div className="w-8 h-8 border-[3px] border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" aria-hidden />
         </div>
       ) : lijst.isError ? (
         <div className={`${t.kaart} p-4 text-sm ${t.tekst2}`}>
@@ -199,7 +234,7 @@ export default function MeldingenCentrum({
                         {m.titel}
                         {!m.gelezen && <span className="sr-only"> (ongelezen)</span>}
                       </span>
-                      <time dateTime={m.created_at} className={`shrink-0 text-xs ${t.tekst3}`}>
+                      <time dateTime={m.created_at} className={`shrink-0 text-xs ${t.tekst2}`}>
                         {meldingTijd(m.created_at, nu)}
                       </time>
                     </span>
@@ -230,7 +265,8 @@ export default function MeldingenCentrum({
           </button>
         </div>
       )}
-      <p className={`text-xs text-center ${t.tekst3}`}>Meldingen worden 90 dagen bewaard.</p>
+      </div>
+      <p className={`text-xs text-center ${t.tekst2}`}>Meldingen worden 90 dagen bewaard.</p>
     </div>
   );
 }

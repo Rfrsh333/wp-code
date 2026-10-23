@@ -127,6 +127,16 @@ test.describe("maakMeldingRijen", () => {
     expect(maakMeldingRijen([], "klant", invoer)).toEqual([]);
   });
 
+  test("inkorten breekt geen emoji en haalt \\0 en losse surrogaten weg", () => {
+    const emoji = "🎉".repeat(300); // 300 tekens, 600 UTF-16-eenheden
+    const [rij] = maakMeldingRijen([ID1], "klant", { title: emoji, body: `a\u0000b\uD83Dc` });
+    const tekens = Array.from(rij.titel);
+    expect(tekens.length).toBe(MELDING_TITEL_MAX);
+    expect(tekens.slice(0, -1).every((c) => c === "🎉")).toBe(true);
+    expect(rij.titel.isWellFormed?.() ?? true).toBe(true);
+    expect(rij.tekst).toBe("abc");
+  });
+
   test("lege body mag", () => {
     expect(maakMeldingRijen([ID1], "klant", { title: "T", body: "" })[0].tekst).toBe("");
   });
@@ -234,6 +244,10 @@ test("klantTabUitUrl: tab-urls worden een tabwissel", () => {
   expect(klantTabUitUrl("/klant/login")).toBeNull();
   expect(klantTabUitUrl("/medewerker/diensten/")).toBeNull();
   expect(klantTabUitUrl("https://evil.nl/klant/uren?tab=uren")).toBeNull();
+  // kapotte %-reeks: niet gooien
+  expect(klantTabUitUrl("/klant/uren?tab=%E0%A4%A")).toBe("%E0%A4%A");
+  expect(actieLabel("/klant/uren?tab=%E0%A4%A")).toBe("Bekijken");
+  expect(categorieVoorMelding({ url: "/klant/uren?tab=%zz" })).toBe("diensten");
 });
 
 test("actieLabel", () => {

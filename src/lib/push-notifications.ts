@@ -31,6 +31,12 @@ function pushDeel(payload: PushPayload): PushPayload {
   return rest;
 }
 
+/**
+ * Hoe lang de push na afloop nog op de melding wacht. Daarna gaat de aanroeper door (routes hebben
+ * 10 s); het opslaan loopt dan op de achtergrond verder.
+ */
+const MELDING_WACHT_MS = 3000;
+
 /** Push en melding naast elkaar; de push bepaalt het resultaat (en een eventuele fout). */
 async function metMelding(
   melding: Promise<unknown>,
@@ -39,7 +45,15 @@ async function metMelding(
   try {
     return await push();
   } finally {
-    await melding;
+    let klok: ReturnType<typeof setTimeout> | undefined;
+    const teLaat = new Promise<"te_laat">((klaar) => {
+      klok = setTimeout(() => klaar("te_laat"), MELDING_WACHT_MS);
+    });
+    // bewaarMeldingen* gooit nooit, dus dit kan de push niet laten falen.
+    if ((await Promise.race([melding, teLaat])) === "te_laat") {
+      console.warn(`[Push] melding na ${MELDING_WACHT_MS} ms nog niet opgeslagen; loopt op de achtergrond door`);
+    }
+    clearTimeout(klok);
   }
 }
 
