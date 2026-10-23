@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { ensureKlantForDienst } from "@/lib/klanten-sync";
@@ -6,6 +6,7 @@ import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-ema
 import { dienstenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { notifyKlantMedewerkerAssigned } from "@/lib/klant-push-triggers";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { notifyMedewerkerAanmeldingBeslist } from "@/lib/dienst-push-triggers";
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -133,6 +134,15 @@ export async function POST(request: NextRequest) {
       .from("dienst_aanmeldingen")
       .update({ status: data.status, beoordeeld_at: new Date().toISOString() })
       .eq("id", id);
+
+    if (data.status === "geaccepteerd" || data.status === "afgewezen") {
+      const status: "geaccepteerd" | "afgewezen" = data.status;
+      after(() =>
+        notifyMedewerkerAanmeldingBeslist(id, status).catch((e) =>
+          captureRouteError(e, { route: "/api/admin/diensten", action: "PUSH" }),
+        ),
+      );
+    }
 
     if (data.status === "geaccepteerd") {
       const { data: aanmelding } = await supabaseAdmin

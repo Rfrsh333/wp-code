@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { dienstUren, maandGrenzen, nlDatum, nlMoment, plusDagen } from "../../src/lib/nl-tijd";
+import { dienstUren, maandGrenzen, nlDatum, nlDatumKort, nlMoment, plusDagen } from "../../src/lib/nl-tijd";
 
 test.describe("nl-tijd", () => {
   test("nlDatum: 00:30 NL is al de volgende dag, terwijl UTC nog gisteren is", () => {
@@ -27,5 +27,11 @@ test.describe("nl-tijd", () => {
     expect(maandGrenzen(2026, 2)).toEqual({ start: "2026-02-01", eind: "2026-02-28" });
     expect(maandGrenzen(2028, 2).eind).toBe("2028-02-29");
     expect(plusDagen("2026-10-31", 1)).toBe("2026-11-01");
+  });
+
+  test("nlDatumKort: korte Nederlandse datum, dag schuift niet door de tijdzone", () => {
+    expect(nlDatumKort("2026-10-24")).toBe("za 24 okt");
+    expect(nlDatumKort("2026-03-29")).toBe("zo 29 mrt");
+    expect(nlDatumKort("onzin")).toBe("onzin");
   });
 });
