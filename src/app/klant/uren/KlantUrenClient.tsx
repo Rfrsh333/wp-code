@@ -14,6 +14,9 @@ import {
 import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import KlantPushNotificationBanner from "../components/PushNotificationBanner";
 import KlantOnboardingMelding from "@/components/klant/KlantOnboardingMelding";
+import MeldingenCentrum from "@/components/meldingen/MeldingenCentrum";
+import { useMeldingenAantal } from "@/components/meldingen/useMeldingen";
+import { klantTabUitUrl } from "@/lib/meldingen/meldingen-regels";
 import { euro, richtlijnBereikTekst, richtlijnVoorFunctie, tariefAdvies } from "@/lib/pricing/richtlijntarieven";
 import QuickActions from "@/components/klant/QuickActions";
 import KlantInstellingen from "@/components/klant/KlantInstellingen";
@@ -32,9 +35,6 @@ import ReactieVoorstel, { type ReactieWeergave } from "@/components/reacties/Rea
 import { PAUZE_MAX_MINUTEN, KLEDINGVOORSCHRIFT_MAX } from "@/lib/medewerker/reactie-regels";
 import { sfeerCategorieVoorFunctie, webFotoSrc, type DienstFoto } from "@/lib/sfeerfotos";
 import SfeerfotoKiezer from "@/components/klant/SfeerfotoKiezer";
-import MeldingenCentrum from "@/components/meldingen/MeldingenCentrum";
-import { useMeldingenAantal } from "@/components/meldingen/useMeldingen";
-import { klantTabUitUrl } from "@/lib/meldingen/meldingen-regels";
 
 const KLANT_TAB_IDS = [
   "overzicht", "meldingen", "uren", "diensten", "rooster", "aanvragen", "favorieten",
