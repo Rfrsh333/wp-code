@@ -32,7 +32,7 @@ export default function RelatedLocations({ currentSlug }: RelatedLocationsProps)
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                   {location.name}
                 </h4>
                 <p className="text-neutral-600 text-sm mb-3">
@@ -50,7 +50,7 @@ export default function RelatedLocations({ currentSlug }: RelatedLocationsProps)
                 </div>
               </div>
               <svg
-                className="w-6 h-6 text-[#F97316] flex-shrink-0 group-hover:translate-x-1 transition-transform"
+                className="w-6 h-6 text-[#B85600] flex-shrink-0 group-hover:translate-x-1 transition-transform"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -78,7 +78,7 @@ export default function RelatedLocations({ currentSlug }: RelatedLocationsProps)
       <div className="text-center mt-8">
         <Link
           href="/locaties/"
-          className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:underline"
+          className="inline-flex items-center gap-2 text-[#B85600] font-semibold hover:underline"
         >
           Bekijk alle locaties
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

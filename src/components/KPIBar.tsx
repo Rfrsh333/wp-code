@@ -38,13 +38,13 @@ export default function KPIBar() {
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
             {kpis.map((kpi, index) => (
               <div key={index} className="flex items-center gap-3 text-sm font-medium text-neutral-900">
-                <span className="text-[#F97316] flex-shrink-0">
+                <span className="text-[#B85600] flex-shrink-0">
                   {kpi.icon}
                 </span>
                 <span>
                   {kpi.text}
                   {kpi.rating && (
-                    <span className="ml-2 font-bold text-[#F97316]">★ 4.8/5</span>
+                    <span className="ml-2 font-bold text-[#B85600]">★ 4.8/5</span>
                   )}
                 </span>
               </div>

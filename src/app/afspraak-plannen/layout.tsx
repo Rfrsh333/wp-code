@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
   title: "Afspraak Plannen | Vrijblijvend Gesprek | TopTalent Jobs",
   description:
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     canonical: "https://www.toptalentjobs.nl/afspraak-plannen/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Afspraak Plannen | TopTalent Jobs",
     description:
       "Plan een vrijblijvende afspraak met TopTalent Jobs. Bespreek uw personeelsbehoefte en ontvang advies op maat.",

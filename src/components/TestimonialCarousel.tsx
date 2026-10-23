@@ -20,7 +20,7 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
       <Container>
         <FadeIn>
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+            <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
               Ervaringen uit de praktijk
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 leading-tight">
@@ -51,7 +51,7 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
                   {/* Context tag */}
                   <div className="inline-flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full mb-3 border border-orange-100 self-start">
                     <span className="w-1.5 h-1.5 bg-[#F97316] rounded-full"></span>
-                    <span className="text-[11px] font-medium text-[#F97316] uppercase tracking-wide">
+                    <span className="text-[11px] font-medium text-[#B85600] uppercase tracking-wide">
                       {item.context}
                     </span>
                   </div>
@@ -80,7 +80,7 @@ export default function TestimonialCarousel({ testimonials }: TestimonialCarouse
           <div className="text-center mt-12 lg:mt-16">
             <Link
               href="/testimonials/"
-              className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#F97316] transition-colors font-medium group"
+              className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#B85600] transition-colors font-medium group"
             >
               Bekijk alle ervaringen
               <svg

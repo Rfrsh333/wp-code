@@ -143,7 +143,7 @@ export default function KandidaatDocumentenClient({ token }: { token: string }) 
             type="button"
             onClick={handleUpload}
             disabled={uploading}
-            className="w-full bg-[#F27501] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#d96800] disabled:opacity-60 transition-colors"
+            className="w-full bg-[#B85600] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#9a4700] disabled:opacity-60 transition-colors"
           >
             {uploading ? "Uploaden..." : "Document uploaden"}
           </button>

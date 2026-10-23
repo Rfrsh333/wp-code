@@ -39,7 +39,7 @@ export default async function GeoIndexPage() {
   const steden = Object.entries(GEO_STEDEN);
 
   return (
-    <main className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
       <section className="bg-white border-b border-neutral-200">
         <div className="max-w-5xl mx-auto px-4 py-12">
@@ -150,6 +150,6 @@ export default async function GeoIndexPage() {
           }),
         }}
       />
-    </main>
+    </div>
   );
 }

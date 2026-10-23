@@ -20,11 +20,11 @@ export default function KostenCalculatorPage() {
         }}
       >
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
-          <span className="inline-block bg-orange-100 text-[#F97316] text-xs font-semibold px-3 py-1.5 md:px-4 md:py-2 rounded-full uppercase tracking-wide mb-4 md:mb-6">
+          <span className="inline-block bg-orange-100 text-[#9a4700] text-xs font-semibold px-3 py-1.5 md:px-4 md:py-2 rounded-full uppercase tracking-wide mb-4 md:mb-6">
             Gratis tool
           </span>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-4 md:mb-6 leading-tight">
-            Wat kost horecapersoneel <span className="text-[#F97316]">écht</span>?
+            Wat kost horecapersoneel <span className="text-[#B85600]">écht</span>?
           </h1>
           <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto">
             Bereken in 2 minuten uw personeelskosten. Vergelijk vast personeel,
@@ -78,7 +78,7 @@ export default function KostenCalculatorPage() {
                 className="bg-white rounded-2xl p-8 text-center shadow-sm border border-neutral-100
                   hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="w-16 h-16 bg-[#FFF7F1] rounded-2xl flex items-center justify-center mx-auto mb-6 text-[#F97316]">
+                <div className="w-16 h-16 bg-[#FFF7F1] rounded-2xl flex items-center justify-center mx-auto mb-6 text-[#B85600]">
                   {item.icon}
                 </div>
                 <h3 className="text-lg font-bold text-neutral-900 mb-3">{item.title}</h3>
@@ -107,16 +107,16 @@ export default function KostenCalculatorPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/contact/"
-                className="bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                className="bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                  hover:bg-[#EA580C] hover:-translate-y-0.5 transition-all duration-300 text-center"
+                  hover:bg-[#9a4700] hover:-translate-y-0.5 transition-all duration-300 text-center"
               >
                 Neem contact op
               </Link>
               <Link
                 href="/diensten/"
                 className="border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
-                  hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300 text-center"
+                  hover:border-[#F97316] hover:text-[#B85600] transition-all duration-300 text-center"
               >
                 Bekijk onze diensten
               </Link>

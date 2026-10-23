@@ -69,7 +69,7 @@
 /* Eyebrow */
 .eyebrow {
   display: inline-block;
-  color: #F27501;
+  color: #B85600;
   font-weight: 600;
   font-size: 0.75rem;
   letter-spacing: 0.15em;
@@ -176,7 +176,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #F27501;
+  color: #B85600;
   font-weight: 600;
   font-size: 0.9375rem;
   text-decoration: none;

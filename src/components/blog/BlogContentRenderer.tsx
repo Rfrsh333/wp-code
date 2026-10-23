@@ -44,7 +44,7 @@ interface BlogContentRendererProps {
 
 export function BlogContentRenderer({ blocks }: BlogContentRendererProps) {
   return (
-    <div className="prose prose-lg prose-neutral max-w-none prose-headings:text-neutral-900 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-p:text-neutral-600 prose-p:leading-relaxed prose-li:text-neutral-600 prose-strong:text-neutral-900 prose-a:text-[#F97316] prose-a:no-underline hover:prose-a:underline">
+    <div className="prose prose-lg prose-neutral max-w-none prose-headings:text-neutral-900 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-p:text-neutral-600 prose-p:leading-relaxed prose-li:text-neutral-600 prose-strong:text-neutral-900 prose-a:text-[#B85600] prose-a:no-underline hover:prose-a:underline">
       {blocks.map((block, index) => renderBlock(block, index))}
     </div>
   );
@@ -177,7 +177,7 @@ function renderBlock(block: ContentBlock, key: number): ReactNode {
         <div key={key} className="my-4 p-4 bg-neutral-50 rounded-lg border border-neutral-100">
           <Link
             href={block.href}
-            className="inline-flex items-center gap-2 text-[#F97316] font-medium hover:underline group"
+            className="inline-flex items-center gap-2 text-[#B85600] font-medium hover:underline group"
           >
             <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -221,7 +221,7 @@ function formatInlineContent(content: string): string {
     // Italic
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     // Links - already in HTML format
-    .replace(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g, '<a href="$1" class="text-[#F97316] hover:underline">$2</a>');
+    .replace(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g, '<a href="$1" class="text-[#B85600] hover:underline">$2</a>');
   return sanitizeHtml(formatted);
 }
 

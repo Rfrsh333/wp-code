@@ -21,7 +21,7 @@ export default function RecruitmentPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <FadeIn direction="left">
               <div>
-                <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+                <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                   <Link href="/diensten/">Diensten</Link> › Recruitment
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
@@ -34,9 +34,9 @@ export default function RecruitmentPage() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href="/contact/"
-                    className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                    className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#EA580C] transition-all duration-300"
+                    hover:bg-[#9a4700] transition-all duration-300"
                   >
                     Start recruitment
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,7 +46,7 @@ export default function RecruitmentPage() {
                   <Link
                     href="tel:+31617889189"
                     className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
-                    hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
+                    hover:border-[#F97316] hover:text-[#B85600] transition-all duration-300"
                   >
                     Direct overleggen
                   </Link>
@@ -115,7 +115,7 @@ export default function RecruitmentPage() {
               ].map((item, i) => (
                 <FadeIn key={i} delay={0.1 * i}>
                   <div className="bg-white rounded-2xl p-6 border border-neutral-100 h-full relative group hover:shadow-lg transition-all duration-300">
-                    <div className="text-4xl font-bold text-[#F97316]/20 mb-3 group-hover:text-[#F97316]/40 transition-colors duration-300">
+                    <div className="text-4xl font-bold text-[#B85600]/20 mb-3 group-hover:text-[#B85600]/40 transition-colors duration-300">
                       {item.step}
                     </div>
                     <h3 className="text-lg font-bold text-neutral-900 mb-2">{item.title}</h3>
@@ -181,7 +181,7 @@ export default function RecruitmentPage() {
             <FadeIn direction="right" delay={0.2}>
               <div className="bg-gradient-to-br from-[#F97316]/5 to-orange-100/30 rounded-3xl p-10 lg:p-12">
                 <div className="text-center">
-                  <div className="text-6xl font-bold text-[#F97316] mb-4">Hoog</div>
+                  <div className="text-6xl font-bold text-[#B85600] mb-4">Hoog</div>
                   <p className="text-xl text-neutral-700 font-medium mb-6">
                     retentiepercentage na plaatsing
                   </p>
@@ -269,7 +269,7 @@ export default function RecruitmentPage() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-[#FEF3E7] text-neutral-700 hover:text-[#F97316] font-medium text-sm text-center transition-all duration-200"
+                    className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-[#FEF3E7] text-neutral-700 hover:text-[#B85600] font-medium text-sm text-center transition-all duration-200"
                   >
                     {item.label}
                   </Link>
@@ -286,7 +286,7 @@ export default function RecruitmentPage() {
           <FadeIn>
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Recruitment in <span className="text-[#F97316]">uw regio</span>
+                Recruitment in <span className="text-[#B85600]">uw regio</span>
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
                 TopTalent Jobs werft vast horecapersoneel in heel Nederland. Bekijk de mogelijkheden in uw regio.
@@ -298,13 +298,13 @@ export default function RecruitmentPage() {
                 href="/locaties/utrecht/"
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
               >
-                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                   Utrecht
                 </h3>
                 <p className="text-sm text-neutral-600 mb-3">
                   Horeca recruitment in Utrecht en omstreken
                 </p>
-                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                <span className="text-[#B85600] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                   Meer informatie
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -316,13 +316,13 @@ export default function RecruitmentPage() {
                 href="/locaties/amsterdam/"
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
               >
-                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                   Amsterdam
                 </h3>
                 <p className="text-sm text-neutral-600 mb-3">
                   Horeca recruitment in Amsterdam en regio
                 </p>
-                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                <span className="text-[#B85600] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                   Meer informatie
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -334,13 +334,13 @@ export default function RecruitmentPage() {
                 href="/locaties/rotterdam/"
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
               >
-                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                   Rotterdam
                 </h3>
                 <p className="text-sm text-neutral-600 mb-3">
                   Horeca recruitment in Rotterdam en Zuid-Holland
                 </p>
-                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                <span className="text-[#B85600] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                   Meer informatie
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -352,7 +352,7 @@ export default function RecruitmentPage() {
             <div className="text-center mt-8">
               <Link
                 href="/locaties/"
-                className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all duration-300"
+                className="inline-flex items-center gap-2 text-[#B85600] font-semibold hover:gap-3 transition-all duration-300"
               >
                 Bekijk alle locaties
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -385,7 +385,7 @@ export default function RecruitmentPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/contact/"
-                    className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
+                    className="bg-white text-[#B85600] px-8 py-4 rounded-xl text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >
                     Start zoekopdracht

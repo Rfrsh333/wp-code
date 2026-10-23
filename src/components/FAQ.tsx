@@ -32,7 +32,7 @@ export default function FAQ({ items, title = "Veelgestelde vragen" }: FAQProps) 
             >
               <span className="font-semibold text-neutral-900">{item.question}</span>
               <svg
-                className={`w-5 h-5 text-[#F97316] flex-shrink-0 transition-transform ${
+                className={`w-5 h-5 text-[#B85600] flex-shrink-0 transition-transform ${
                   openIndex === index ? "rotate-180" : ""
                 }`}
                 fill="none"

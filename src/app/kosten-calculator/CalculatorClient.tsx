@@ -100,9 +100,9 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
             className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-semibold text-sm
               transition-all duration-500 ${
               currentStep === step
-                ? "bg-[#F97316] text-white scale-110 shadow-lg shadow-orange-500/30"
+                ? "bg-[#B85600] text-white scale-110 shadow-lg shadow-orange-500/30"
                 : currentStep > step
-                ? "bg-[#F97316] text-white"
+                ? "bg-[#B85600] text-white"
                 : "bg-neutral-100 text-neutral-400"
             }`}
           >
@@ -347,12 +347,13 @@ export default function CalculatorClient() {
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-3">
                         Aantal medewerkers per dienst:{" "}
-                        <span className="text-[#F97316] font-bold text-lg">
+                        <span className="text-[#B85600] font-bold text-lg">
                           {inputs.aantalMedewerkers}
                         </span>
                       </label>
                       <input
                         type="range"
+                        aria-label="Aantal medewerkers"
                         min="1"
                         max="20"
                         value={inputs.aantalMedewerkers}
@@ -404,9 +405,9 @@ export default function CalculatorClient() {
                     {/* Next Button - Mobile Optimized */}
                     <button
                       onClick={() => setCurrentStep(2)}
-                      className="w-full bg-[#F97316] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                      className="w-full bg-[#B85600] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                         shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                        hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
+                        hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
                         transition-all duration-300 flex items-center justify-center gap-2"
                     >
                       Volgende
@@ -431,12 +432,13 @@ export default function CalculatorClient() {
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-3">
                         Uren per dienst:{" "}
-                        <span className="text-[#F97316] font-bold text-lg">
+                        <span className="text-[#B85600] font-bold text-lg">
                           {inputs.urenPerDienst}
                         </span>
                       </label>
                       <input
                         type="range"
+                        aria-label="Aantal uren per dienst"
                         min="4"
                         max="12"
                         step="0.5"
@@ -474,7 +476,7 @@ export default function CalculatorClient() {
                             }}
                             className={`flex-1 min-w-[3rem] py-3 rounded-xl font-medium transition-all duration-300 ${
                               inputs.dagenPerWeek.includes(index)
-                                ? "bg-[#F97316] text-white shadow-md"
+                                ? "bg-[#B85600] text-white shadow-md"
                                 : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                             }`}
                           >
@@ -533,9 +535,9 @@ export default function CalculatorClient() {
                       <button
                         onClick={() => setCurrentStep(3)}
                         disabled={inputs.dagenPerWeek.length === 0}
-                        className="flex-1 bg-[#F97316] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                        className="flex-1 bg-[#B85600] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                          hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
+                          hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
                           transition-all duration-300 flex items-center justify-center gap-2
                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                       >
@@ -627,9 +629,9 @@ export default function CalculatorClient() {
                       <button
                         onClick={handleCalculate}
                         disabled={inputs.vergelijkingen.length === 0 || isCalculating}
-                        className="flex-1 bg-[#F97316] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                        className="flex-1 bg-[#B85600] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                          hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
+                          hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
                           transition-all duration-300 flex items-center justify-center gap-2
                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                       >
@@ -701,7 +703,7 @@ export default function CalculatorClient() {
                       style={{ animationDelay: `${index * 150}ms` }}
                     >
                       {isUitzend && (
-                        <span className="inline-block bg-[#F97316] text-white text-xs font-semibold px-3 py-1 rounded-full mb-4">
+                        <span className="inline-block bg-[#B85600] text-white text-xs font-semibold px-3 py-1 rounded-full mb-4">
                           Aanbevolen
                         </span>
                       )}
@@ -729,7 +731,7 @@ export default function CalculatorClient() {
                         </div>
                         <div>
                           <p className="text-sm text-neutral-500 mb-1">Per maand <span className="text-neutral-400">excl. btw</span></p>
-                          <p className="text-3xl font-bold text-[#F97316]">
+                          <p className="text-3xl font-bold text-[#B85600]">
                             <AnimatedCounter value={result?.perMaand || 0} duration={1400} />
                           </p>
                         </div>
@@ -802,9 +804,9 @@ export default function CalculatorClient() {
                   <button
                     onClick={handleDownloadPdf}
                     disabled={isPdfDownloading}
-                    className="bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                    className="bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                       shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                      hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
+                      hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
                       transition-all duration-300 flex items-center justify-center gap-2
                       disabled:opacity-50"
                   >
@@ -828,9 +830,9 @@ export default function CalculatorClient() {
                 ) : (
                   <button
                     onClick={() => setShowLeadModal(true)}
-                    className="bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                    className="bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                       shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                      hover:bg-[#EA580C] hover:-translate-y-0.5 active:translate-y-0
+                      hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
                       transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -876,7 +878,7 @@ export default function CalculatorClient() {
 
             <div className="text-center mb-6 md:mb-8">
               <div className="w-14 h-14 md:w-16 md:h-16 bg-[#FFF7F1] rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
-                <svg className="w-7 h-7 md:w-8 md:h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-7 h-7 md:w-8 md:h-8 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -942,9 +944,9 @@ export default function CalculatorClient() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#F97316] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                className="w-full bg-[#B85600] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                  hover:bg-[#EA580C] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Versturen..." : "Verstuur mijn kostenoverzicht"}
               </button>
@@ -952,7 +954,7 @@ export default function CalculatorClient() {
 
             <p className="text-center text-sm text-neutral-500 mt-6">
               Wij delen uw gegevens niet met derden.{" "}
-              <Link href="/privacy/" className="text-[#F97316] hover:underline">
+              <Link href="/privacy/" className="text-[#B85600] hover:underline">
                 Privacybeleid
               </Link>
             </p>

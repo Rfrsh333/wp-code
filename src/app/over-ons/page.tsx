@@ -25,7 +25,7 @@ export default function OverOnsPage() {
         <Section.Container>
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto">
-              <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+              <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                 Over Ons
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
@@ -58,7 +58,7 @@ export default function OverOnsPage() {
                     href="https://www.kvk.nl/zoeken/?source=all&q=73401161"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#F97316] hover:underline inline-flex items-center gap-1"
+                    className="text-[#B85600] hover:underline inline-flex items-center gap-1"
                   >
                     73401161
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +79,7 @@ export default function OverOnsPage() {
           <div className="max-w-4xl mx-auto">
             <FadeIn>
               <div className="text-center mb-12">
-                <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+                <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                   Waarom Wij Bestaan
                 </span>
                 <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">
@@ -126,7 +126,7 @@ export default function OverOnsPage() {
             {/* Tekst - Links */}
             <FadeIn direction="left">
               <div className="order-2 lg:order-1 text-center lg:text-left">
-                <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+                <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                   Ons Verhaal
                 </span>
                 <h2 className="text-3xl lg:text-4xl font-bold text-neutral-900 mb-6">
@@ -167,7 +167,7 @@ export default function OverOnsPage() {
         <Section.Container>
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+              <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                 Onze Waarden
               </span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
@@ -183,7 +183,7 @@ export default function OverOnsPage() {
             {[
               {
                 icon: (
-                  <svg className="w-8 h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 ),
@@ -192,7 +192,7 @@ export default function OverOnsPage() {
               },
               {
                 icon: (
-                  <svg className="w-8 h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                   </svg>
                 ),
@@ -201,7 +201,7 @@ export default function OverOnsPage() {
               },
               {
                 icon: (
-                  <svg className="w-8 h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 ),
@@ -210,7 +210,7 @@ export default function OverOnsPage() {
               },
               {
                 icon: (
-                  <svg className="w-8 h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 ),
@@ -281,7 +281,7 @@ export default function OverOnsPage() {
               ].map((stat, i) => (
                 <StaggerItem key={i}>
                   <div className="text-center p-8">
-                    <div className="text-5xl md:text-6xl font-bold text-[#F97316] mb-4">{stat.value}</div>
+                    <div className="text-5xl md:text-6xl font-bold text-[#B85600] mb-4">{stat.value}</div>
                     <p className="text-neutral-400">{stat.label}</p>
                   </div>
                 </StaggerItem>
@@ -312,7 +312,7 @@ export default function OverOnsPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/personeel-aanvragen/"
-                    className="bg-white text-[#F97316] px-8 py-4 rounded-lg text-base font-semibold
+                    className="bg-white text-[#B85600] px-8 py-4 rounded-lg text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >
                     Bekijk beschikbaarheid

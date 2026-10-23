@@ -276,7 +276,7 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect, forceVisi
             className="shrink-0"
           />
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F27501]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#B85600]">
               TopTalent
             </p>
             <h1 className="mt-1 truncate text-lg font-semibold text-neutral-950">Admin navigation</h1>
@@ -390,7 +390,7 @@ export default function Sidebar({ activeTab, badges = {}, onTabSelect, forceVisi
               />
               {/* User info + logout */}
               <div className="mt-2 flex items-center gap-2 rounded-2xl bg-neutral-50 px-3 py-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F27501]/10 text-[#F27501]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F27501]/10 text-[#B85600]">
                   <User className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">

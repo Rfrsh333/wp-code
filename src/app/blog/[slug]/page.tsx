@@ -140,14 +140,14 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
       <section className="pt-28 pb-12 bg-gradient-to-b from-white to-neutral-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-6">
-            <Link href="/" className="hover:text-[#F97316] transition-colors">Home</Link>
+            <Link href="/" className="hover:text-[#B85600] transition-colors">Home</Link>
             <span>/</span>
-            <Link href="/blog/" className="hover:text-[#F97316] transition-colors">Blog</Link>
+            <Link href="/blog/" className="hover:text-[#B85600] transition-colors">Blog</Link>
             <span>/</span>
             <span className="text-neutral-700">{article.category}</span>
           </nav>
 
-          <span className="inline-block bg-[#F97316] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide mb-4">
+          <span className="inline-block bg-[#B85600] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide mb-4">
             {article.category}
           </span>
 
@@ -199,7 +199,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
               <p className="text-sm font-medium text-neutral-600 mb-4">Deel dit artikel:</p>
               <div className="flex gap-3">
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=https://www.toptalentjobs.nl/blog/${slug}`}
+                  aria-label="Deel op LinkedIn" href={`https://www.linkedin.com/sharing/share-offsite/?url=https://www.toptalentjobs.nl/blog/${slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 bg-[#0077B5] text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -209,7 +209,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                   </svg>
                 </a>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(article.title + ' - https://www.toptalentjobs.nl/blog/' + slug)}`}
+                  aria-label="Deel via WhatsApp" href={`https://wa.me/?text=${encodeURIComponent(article.title + ' - https://www.toptalentjobs.nl/blog/' + slug)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -219,7 +219,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                   </svg>
                 </a>
                 <a
-                  href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://www.toptalentjobs.nl/blog/' + slug)}`}
+                  aria-label="Deel via e-mail" href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://www.toptalentjobs.nl/blog/' + slug)}`}
                   className="w-10 h-10 bg-neutral-600 text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,10 +256,10 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                     />
                   </div>
                   <div className="p-6">
-                    <span className="text-xs font-semibold text-[#F97316] uppercase tracking-wide">
+                    <span className="text-xs font-semibold text-[#B85600] uppercase tracking-wide">
                       {related.category}
                     </span>
-                    <h3 className="font-bold text-lg text-neutral-900 mt-2 group-hover:text-[#F97316] transition-colors">
+                    <h3 className="font-bold text-lg text-neutral-900 mt-2 group-hover:text-[#B85600] transition-colors">
                       {related.title}
                     </h3>
                   </div>

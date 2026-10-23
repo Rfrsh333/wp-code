@@ -4,6 +4,7 @@ import { getLocation, cityOrder } from "@/data/locations";
 import { generateBreadcrumbSchema } from "@/components/Breadcrumbs";
 import { getLocationServiceFAQs } from "@/data/location-service-faqs";
 
+import { OG_IMAGE } from "@/lib/og-image";
 interface Props {
   params: Promise<{ city: string; service: string }>;
   children: React.ReactNode;
@@ -98,6 +99,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `https://www.toptalentjobs.nl/locaties/${city}/${service}/`
     },
     openGraph: {
+    images: [OG_IMAGE],
       title,
       description,
       url: `https://www.toptalentjobs.nl/locaties/${city}/${service}`,

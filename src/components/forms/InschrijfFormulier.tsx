@@ -99,7 +99,7 @@ function FormInput({
   return (
     <div className={className}>
       <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-2">
-        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
+        {label} {required ? <><span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <div className="relative">
         <input
@@ -158,7 +158,7 @@ function FormSelect({
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-2">
-        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
+        {label} {required ? <><span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <div className="relative">
         <select
@@ -227,7 +227,7 @@ function FormTextarea({
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-2">
-        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
+        {label} {required ? <><span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <textarea
         id={id}
@@ -281,7 +281,7 @@ function ToggleGroup({
   return (
     <div role="group" aria-labelledby={`${id}-label`}>
       <label id={`${id}-label`} className="block text-sm font-medium text-neutral-700 mb-3">
-        {label} {required ? <><span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
+        {label} {required ? <><span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span></> : null}
       </label>
       <div className="flex flex-wrap gap-3">
         {options.map((option) => {
@@ -294,7 +294,7 @@ function ToggleGroup({
               aria-pressed={active}
               className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors focus:outline-2 focus:outline-[#F27501] focus:ring-4 focus:ring-[#F27501]/30 ${
                 active
-                  ? "border-[#F27501] bg-[#F27501] text-white"
+                  ? "border-[#F27501] bg-[#B85600] text-white"
                   : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
               }`}
             >
@@ -572,7 +572,7 @@ export default function InschrijfFormulier() {
                   aria-label={`Stap ${index + 1}: ${title}${index < currentStep ? " (voltooid)" : index === currentStep ? " (huidige stap)" : ""}`}
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
                     index <= currentStep
-                      ? "bg-[#F27501] text-white"
+                      ? "bg-[#B85600] text-white"
                       : "bg-neutral-200 text-neutral-500"
                   }`}
                 >
@@ -612,7 +612,7 @@ export default function InschrijfFormulier() {
 
       {/* Step header */}
       <div className="mb-6">
-        <h3 ref={stepHeadingRef} tabIndex={-1} className="text-xl font-bold text-neutral-900 outline-none">{stepTitles[currentStep]}</h3>
+        <h2 ref={stepHeadingRef} tabIndex={-1} className="text-xl font-bold text-neutral-900 outline-none">{stepTitles[currentStep]}</h2>
         <p className="text-sm text-neutral-500 mt-1">{stepDescriptions[currentStep]}</p>
       </div>
 
@@ -727,7 +727,7 @@ export default function InschrijfFormulier() {
                   type="checkbox"
                   checked={formData.eigenVervoer}
                   onChange={(e) => updateField("eigenVervoer", e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-neutral-300 text-[#F27501] focus:ring-[#F27501]"
+                  className="mt-1 h-4 w-4 rounded border-neutral-300 text-[#B85600] focus:ring-[#F27501]"
                 />
                 <div>
                   <p className="font-medium text-neutral-800">Ik heb eigen vervoer</p>
@@ -848,7 +848,7 @@ export default function InschrijfFormulier() {
           <button
             type="button"
             onClick={nextStep}
-            className="inline-flex items-center gap-2 bg-[#F27501] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors"
+            className="inline-flex items-center gap-2 bg-[#B85600] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors"
           >
             Volgende
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -860,7 +860,7 @@ export default function InschrijfFormulier() {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 bg-[#F27501] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#d96800] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-2 bg-[#B85600] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#9a4700] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? "Bezig met versturen..." : "Inschrijving versturen"}
           </button>

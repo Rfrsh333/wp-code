@@ -21,7 +21,7 @@ export function HighlightBox({ title, children, variant = "info" }: HighlightBox
       bg: "bg-gradient-to-br from-[#FEF3E7] to-[#FFF7ED]",
       border: "border-[#F97316]/20",
       icon: (
-        <svg className="w-5 h-5 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
@@ -66,7 +66,7 @@ export function HighlightBox({ title, children, variant = "info" }: HighlightBox
       {title && (
         <div className="flex items-center gap-2 mb-3">
           {style.icon}
-          <h4 className={`font-semibold ${style.titleColor}`}>{title}</h4>
+          <h2 className={`font-semibold ${style.titleColor}`}>{title}</h2>
         </div>
       )}
       <div className="text-neutral-700 leading-relaxed">{children}</div>
@@ -92,7 +92,7 @@ export function ChecklistBlock({ title, items, variant = "checklist" }: Checklis
   const icons = {
     checklist: (checked: boolean) => (
       <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
-        checked ? "bg-[#F97316] text-white" : "border-2 border-neutral-300"
+        checked ? "bg-[#B85600] text-white" : "border-2 border-neutral-300"
       }`}>
         {checked && (
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +102,7 @@ export function ChecklistBlock({ title, items, variant = "checklist" }: Checklis
       </div>
     ),
     steps: (index: number) => (
-      <div className="w-7 h-7 rounded-full bg-[#F97316] text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
+      <div className="w-7 h-7 rounded-full bg-[#B85600] text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
         {index + 1}
       </div>
     ),
@@ -118,7 +118,7 @@ export function ChecklistBlock({ title, items, variant = "checklist" }: Checklis
   return (
     <div className="bg-white rounded-xl border border-neutral-100 p-6 my-8 shadow-sm">
       {title && (
-        <h4 className="font-semibold text-neutral-900 mb-4 text-lg">{title}</h4>
+        <h2 className="font-semibold text-neutral-900 mb-4 text-lg">{title}</h2>
       )}
       <ul className="space-y-3">
         {items.map((item, index) => (
@@ -154,7 +154,7 @@ export function QuoteBlock({ quote, author, role, variant = "insight" }: QuoteBl
         </blockquote>
         {(author || role) && (
           <div className="flex items-center gap-3 mt-6">
-            <div className="w-10 h-10 rounded-full bg-[#F97316] flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full bg-[#B85600] flex items-center justify-center text-white font-semibold">
               {author ? author.charAt(0) : "T"}
             </div>
             <div>
@@ -179,7 +179,7 @@ export function QuoteBlock({ quote, author, role, variant = "insight" }: QuoteBl
   return (
     <div className="bg-neutral-50 rounded-xl p-6 my-8 border-l-4 border-[#F97316]">
       <div className="flex items-start gap-3">
-        <svg className="w-6 h-6 text-[#F97316] flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-[#B85600] flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
         <p className="text-neutral-700 leading-relaxed">{quote}</p>
@@ -223,7 +223,7 @@ export function ComparisonTable({ title, headers, rows }: ComparisonTableProps) 
     <div className="my-8 overflow-hidden rounded-xl border border-neutral-200">
       {title && (
         <div className="bg-neutral-900 text-white px-6 py-4">
-          <h4 className="font-semibold">{title}</h4>
+          <h2 className="font-semibold">{title}</h2>
         </div>
       )}
       <table className="w-full">
@@ -265,7 +265,7 @@ export function StatCard({ stats }: StatCardProps) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
       {stats.map((stat, i) => (
         <div key={i} className="bg-gradient-to-br from-[#F97316]/5 to-[#F97316]/10 rounded-xl p-5 text-center border border-[#F97316]/10">
-          <div className="text-3xl font-bold text-[#F97316] mb-1">{stat.value}</div>
+          <div className="text-3xl font-bold text-[#B85600] mb-1">{stat.value}</div>
           <div className="text-sm text-neutral-600">{stat.label}</div>
         </div>
       ))}
@@ -290,12 +290,12 @@ export function SummaryCard({ title = "Samenvatting", points }: SummaryCardProps
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
         </div>
-        <h4 className="text-xl font-bold">{title}</h4>
+        <h2 className="text-xl font-bold">{title}</h2>
       </div>
       <ul className="space-y-3">
         {points.map((point, i) => (
           <li key={i} className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-[#F97316] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-[#B85600] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
             </svg>
             <span className="text-neutral-300 leading-relaxed">{point}</span>
@@ -323,14 +323,14 @@ export function CTABox({ title, description, primaryLink, secondaryLink, variant
       bg: "bg-gradient-to-br from-[#F97316] to-[#EA580C]",
       text: "text-white",
       subtext: "text-white/90",
-      primaryBtn: "bg-white text-[#F97316] hover:bg-neutral-100",
+      primaryBtn: "bg-white text-[#B85600] hover:bg-neutral-100",
       secondaryBtn: "border-2 border-white/30 text-white hover:bg-white/10",
     },
     dark: {
       bg: "bg-gradient-to-br from-neutral-900 to-neutral-800",
       text: "text-white",
       subtext: "text-neutral-300",
-      primaryBtn: "bg-[#F97316] text-white hover:bg-[#EA580C]",
+      primaryBtn: "bg-[#B85600] text-white hover:bg-[#9a4700]",
       secondaryBtn: "border-2 border-neutral-600 text-white hover:border-neutral-400",
     },
   };
@@ -344,7 +344,7 @@ export function CTABox({ title, description, primaryLink, secondaryLink, variant
         <div className="absolute bottom-0 left-0 w-32 h-32 border border-white/20 rounded-full -translate-x-1/3 translate-y-1/3" />
       </div>
       <div className="relative z-10">
-        <h4 className="text-xl font-bold mb-3">{title}</h4>
+        <h2 className="text-xl font-bold mb-3">{title}</h2>
         <p className={`${style.subtext} mb-6`}>{description}</p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
@@ -379,7 +379,7 @@ export function RelatedLink({ href, text }: RelatedLinkProps) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 text-[#F97316] font-medium hover:underline group"
+      className="inline-flex items-center gap-2 text-[#B85600] font-medium hover:underline group"
     >
       <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -407,7 +407,7 @@ export function ProcessTimeline({ title, steps }: ProcessTimelineProps) {
   return (
     <div className="my-8">
       {title && (
-        <h4 className="font-semibold text-neutral-900 mb-6 text-lg">{title}</h4>
+        <h2 className="font-semibold text-neutral-900 mb-6 text-lg">{title}</h2>
       )}
       <div className="relative">
         {/* Connecting line */}
@@ -416,11 +416,11 @@ export function ProcessTimeline({ title, steps }: ProcessTimelineProps) {
         <div className="space-y-6">
           {steps.map((step, i) => (
             <div key={i} className="flex gap-4 relative">
-              <div className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center flex-shrink-0 text-sm font-bold relative z-10">
+              <div className="w-8 h-8 rounded-full bg-[#B85600] text-white flex items-center justify-center flex-shrink-0 text-sm font-bold relative z-10">
                 {i + 1}
               </div>
               <div className="bg-white rounded-xl border border-neutral-100 p-5 flex-1 shadow-sm">
-                <h5 className="font-semibold text-neutral-900 mb-2">{step.title}</h5>
+                <h3 className="font-semibold text-neutral-900 mb-2">{step.title}</h3>
                 <p className="text-neutral-600 text-sm leading-relaxed">{step.description}</p>
               </div>
             </div>
@@ -450,8 +450,8 @@ export function PriceTable({ title, rows, footer }: PriceTableProps) {
   return (
     <div className="my-8 overflow-hidden rounded-xl border border-neutral-200">
       {title && (
-        <div className="bg-[#F97316] text-white px-6 py-4">
-          <h4 className="font-semibold">{title}</h4>
+        <div className="bg-[#B85600] text-white px-6 py-4">
+          <h2 className="font-semibold">{title}</h2>
         </div>
       )}
       <table className="w-full">

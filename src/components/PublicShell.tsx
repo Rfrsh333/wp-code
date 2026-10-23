@@ -24,7 +24,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
     <>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#F27501] focus:text-white focus:rounded-lg focus:text-sm focus:font-medium"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#B85600] focus:text-white focus:rounded-lg focus:text-sm focus:font-medium"
       >
         Ga naar inhoud
       </a>
@@ -34,7 +34,9 @@ export default function PublicShell({ children }: { children: React.ReactNode })
         <main id="main-content">{children}</main>
         <Footer />
       </ClickSparkWrapper>
-      <WhatsAppButton />
+      <aside aria-label="WhatsApp">
+        <WhatsAppButton />
+      </aside>
       <StickyMobileCTA />
     </>
   );

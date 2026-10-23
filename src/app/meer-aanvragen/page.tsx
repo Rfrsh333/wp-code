@@ -24,7 +24,7 @@ export default function MeerAanvragenPage() {
 
         <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6">
           <FadeIn>
-            <span className="mb-6 inline-block rounded-full border border-[#F27501]/30 bg-[#F27501]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#F27501]">
+            <span className="mb-6 inline-block rounded-full border border-[#F27501]/30 bg-[#F27501]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#B85600]">
               Voor installatie- & servicebedrijven
             </span>
           </FadeIn>
@@ -32,7 +32,7 @@ export default function MeerAanvragenPage() {
           <FadeIn delay={0.1}>
             <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
               Binnen 30 dagen meer aanvragen voor jouw servicebedrijf{" "}
-              <span className="text-[#F27501]">
+              <span className="text-[#B85600]">
                 — zonder dat jij iets aan marketing hoeft te doen
               </span>
             </h1>
@@ -48,7 +48,7 @@ export default function MeerAanvragenPage() {
           <FadeIn delay={0.3}>
             <button
               onClick={scrollToForm}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#F27501] px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-[#F27501]/25 transition-all hover:bg-[#d96800] hover:shadow-xl hover:shadow-[#F27501]/30"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#B85600] px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-[#F27501]/25 transition-all hover:bg-[#9a4700] hover:shadow-xl hover:shadow-[#F27501]/30"
             >
               Ontvang gratis analyse
               <svg
@@ -78,7 +78,7 @@ export default function MeerAanvragenPage() {
         <Section.Container>
           <FadeIn>
             <div className="mx-auto max-w-3xl">
-              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#F97316]">
+              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#B85600]">
                 Herkenbaar?
               </span>
               <h2 className="mb-8 text-3xl font-bold text-neutral-900 md:text-4xl">
@@ -119,7 +119,7 @@ export default function MeerAanvragenPage() {
               <FadeIn delay={0.3}>
                 <p className="mt-8 text-center text-lg font-semibold text-neutral-900">
                   Het probleem is niet jouw vakmanschap.{" "}
-                  <span className="text-[#F27501]">
+                  <span className="text-[#B85600]">
                     Het probleem is dat niemand je kan vinden.
                   </span>
                 </p>
@@ -134,7 +134,7 @@ export default function MeerAanvragenPage() {
         <Section.Container>
           <FadeIn>
             <div className="mx-auto max-w-3xl text-center">
-              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#F97316]">
+              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#B85600]">
                 De oplossing
               </span>
               <h2 className="mb-4 text-3xl font-bold text-neutral-900 md:text-4xl">
@@ -190,7 +190,7 @@ export default function MeerAanvragenPage() {
                 <div className="rounded-2xl border border-neutral-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#FEF3E7]">
                     <svg
-                      className="h-6 w-6 text-[#F27501]"
+                      className="h-6 w-6 text-[#B85600]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -212,7 +212,7 @@ export default function MeerAanvragenPage() {
           <FadeIn delay={0.4}>
             <p className="mt-10 text-center text-lg text-neutral-700">
               Jij doet waar je goed in bent.{" "}
-              <span className="font-semibold text-[#F27501]">
+              <span className="font-semibold text-[#B85600]">
                 Wij zorgen dat de telefoon blijft gaan.
               </span>
             </p>
@@ -225,7 +225,7 @@ export default function MeerAanvragenPage() {
         <Section.Container>
           <div className="mx-auto max-w-3xl">
             <FadeIn>
-              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#F97316]">
+              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#B85600]">
                 Resultaten
               </span>
               <h2 className="mb-10 text-3xl font-bold text-neutral-900 md:text-4xl">
@@ -288,7 +288,7 @@ export default function MeerAanvragenPage() {
         <Section.Container>
           <FadeIn>
             <div className="text-center">
-              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#F97316]">
+              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#B85600]">
                 Hoe het werkt
               </span>
               <h2 className="mb-12 text-3xl font-bold text-neutral-900 md:text-4xl">
@@ -317,7 +317,7 @@ export default function MeerAanvragenPage() {
             ].map((item, i) => (
               <FadeIn key={i} delay={0.1 * i}>
                 <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F27501] text-2xl font-bold text-white shadow-lg shadow-[#F27501]/25">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B85600] text-2xl font-bold text-white shadow-lg shadow-[#F27501]/25">
                     {item.step}
                   </div>
                   <h3 className="mb-2 text-lg font-bold text-neutral-900">
@@ -338,7 +338,7 @@ export default function MeerAanvragenPage() {
         <Section.Container>
           <FadeIn>
             <div className="text-center">
-              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#F97316]">
+              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#B85600]">
                 Resultaten van onze klanten
               </span>
               <h2 className="mb-12 text-3xl font-bold text-neutral-900 md:text-4xl">
@@ -365,7 +365,7 @@ export default function MeerAanvragenPage() {
               <FadeIn key={i} delay={0.1 * i}>
                 <div className="rounded-2xl border border-neutral-100 bg-neutral-50 p-8">
                   <svg
-                    className="mb-4 h-8 w-8 text-[#F27501]/30"
+                    className="mb-4 h-8 w-8 text-[#B85600]/30"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -393,7 +393,7 @@ export default function MeerAanvragenPage() {
                 { value: "93%", label: "blijft na de eerste 3 maanden" },
               ].map((stat, i) => (
                 <div key={i}>
-                  <p className="text-3xl font-extrabold text-[#F27501] md:text-4xl">
+                  <p className="text-3xl font-extrabold text-[#B85600] md:text-4xl">
                     {stat.value}
                   </p>
                   <p className="mt-1 text-sm text-neutral-600">{stat.label}</p>
@@ -411,7 +411,7 @@ export default function MeerAanvragenPage() {
             <div className="mx-auto max-w-2xl">
               <FadeIn>
                 <div className="text-center">
-                  <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#F97316]">
+                  <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#B85600]">
                     Gratis analyse
                   </span>
                   <h2 className="mb-4 text-3xl font-bold text-neutral-900 md:text-4xl">
@@ -437,7 +437,7 @@ export default function MeerAanvragenPage() {
         <Section.Container>
           <FadeIn>
             <div className="mx-auto max-w-3xl">
-              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#F97316]">
+              <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-wider text-[#B85600]">
                 Veelgestelde vragen
               </span>
               <h2 className="mb-10 text-3xl font-bold text-neutral-900 md:text-4xl">
@@ -490,7 +490,7 @@ export default function MeerAanvragenPage() {
             </p>
             <button
               onClick={scrollToForm}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#F27501] px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-[#F27501]/25 transition-all hover:bg-[#d96800] hover:shadow-xl hover:shadow-[#F27501]/30"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#B85600] px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-[#F27501]/25 transition-all hover:bg-[#9a4700] hover:shadow-xl hover:shadow-[#F27501]/30"
             >
               Start mijn gratis analyse
               <svg
@@ -710,7 +710,7 @@ function LeadForm() {
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="mt-6 w-full rounded-xl bg-[#F27501] px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-[#F27501]/20 transition-all hover:bg-[#d96800] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-6 w-full rounded-xl bg-[#B85600] px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-[#F27501]/20 transition-all hover:bg-[#9a4700] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
       >
         {status === "submitting"
           ? "Versturen..."
@@ -750,8 +750,8 @@ function FAQItem({
         <div
           className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-all ${
             open
-              ? "bg-[#F27501] text-white"
-              : "bg-[#FEF3E7] text-[#F27501]"
+              ? "bg-[#B85600] text-white"
+              : "bg-[#FEF3E7] text-[#B85600]"
           }`}
         >
           <svg
@@ -770,7 +770,7 @@ function FAQItem({
         </div>
         <h3
           className={`text-lg font-semibold transition-colors ${
-            open ? "text-[#F27501]" : "text-neutral-900"
+            open ? "text-[#B85600]" : "text-neutral-900"
           }`}
         >
           {question}

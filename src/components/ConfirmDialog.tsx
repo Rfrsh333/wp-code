@@ -59,7 +59,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                 className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition-colors ${
                   options.variant === "danger"
                     ? "bg-red-600 text-white hover:bg-red-700"
-                    : "bg-[#F27501] text-white hover:bg-[#d96800]"
+                    : "bg-[#B85600] text-white hover:bg-[#9a4700]"
                 }`}
               >
                 {options.confirmLabel || "Bevestigen"}

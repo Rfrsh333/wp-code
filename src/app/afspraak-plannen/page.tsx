@@ -545,7 +545,7 @@ function AfspraakPlannenContent() {
               <div>
                 <p className="text-sm text-neutral-500">{selectedEventType?.name || "Gesprek"}</p>
                 <p className="font-semibold text-neutral-900 text-lg">{bookingResult.datum_formatted}</p>
-                <p className="text-[#F97316] font-bold text-lg">{bookingResult.start_time} - {bookingResult.end_time}</p>
+                <p className="text-[#B85600] font-bold text-lg">{bookingResult.start_time} - {bookingResult.end_time}</p>
               </div>
             </div>
 
@@ -559,7 +559,7 @@ function AfspraakPlannenContent() {
                 href={googleCalendarUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#F97316] text-white rounded-xl hover:bg-[#EA580C] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#B85600] text-white rounded-xl hover:bg-[#9a4700] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V8h15v11.5z" />
@@ -581,7 +581,7 @@ function AfspraakPlannenContent() {
               <div className="mt-6 pt-6 border-t border-neutral-100 text-center">
                 <a
                   href={bookingResult.manage_url}
-                  className="text-sm text-neutral-500 hover:text-[#F97316] transition-colors"
+                  className="text-sm text-neutral-500 hover:text-[#B85600] transition-colors"
                 >
                   Afspraak wijzigen of annuleren &rarr;
                 </a>
@@ -590,8 +590,8 @@ function AfspraakPlannenContent() {
           </div>
 
           <div className="text-center mt-8 pb-8">
-            <p className="text-sm text-neutral-400">
-              <a href="https://www.toptalentjobs.nl" className="text-[#F97316] hover:underline font-medium">TopTalent Jobs</a>
+            <p className="text-sm text-neutral-500">
+              <a href="https://www.toptalentjobs.nl" className="text-[#B85600] hover:underline font-medium">TopTalent Jobs</a>
               {" "}&mdash; Specialist in horeca personeel
             </p>
           </div>
@@ -655,7 +655,7 @@ function AfspraakPlannenContent() {
                   {et.description && (
                     <p className="text-sm text-neutral-500 mb-3 line-clamp-2">{et.description}</p>
                   )}
-                  <div className="flex items-center gap-1.5 text-sm text-neutral-400 group-hover:text-[#F97316] transition-colors">
+                  <div className="flex items-center gap-1.5 text-sm text-neutral-500 group-hover:text-[#B85600] transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -681,7 +681,7 @@ function AfspraakPlannenContent() {
             </p>
             <a
               href="mailto:info@toptalentjobs.nl"
-              className="inline-flex items-center gap-2 text-[#F97316] hover:underline font-medium"
+              className="inline-flex items-center gap-2 text-[#B85600] hover:underline font-medium"
             >
               Neem contact op
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -716,7 +716,7 @@ function AfspraakPlannenContent() {
                     setSelectedSlot(null);
                     setDays([]);
                   }}
-                  className="text-sm text-[#F97316] hover:underline font-medium"
+                  className="text-sm text-[#B85600] hover:underline font-medium"
                 >
                   Wijzig
                 </button>
@@ -740,7 +740,7 @@ function AfspraakPlannenContent() {
                 <h2 className="text-lg font-semibold text-neutral-900 mb-2">Geen tijdslots beschikbaar</h2>
                 <p className="text-neutral-500">
                   Neem contact op via{" "}
-                  <a href="mailto:info@toptalentjobs.nl" className="text-[#F97316] hover:underline">info@toptalentjobs.nl</a>
+                  <a href="mailto:info@toptalentjobs.nl" className="text-[#B85600] hover:underline">info@toptalentjobs.nl</a>
                 </p>
               </div>
             ) : (
@@ -784,7 +784,7 @@ function AfspraakPlannenContent() {
                     {/* Day headers */}
                     <div className="grid grid-cols-7 mb-1">
                       {DAY_HEADERS.map((d) => (
-                        <div key={d} className="text-center text-xs font-medium text-neutral-400 py-2">
+                        <div key={d} className="text-center text-xs font-medium text-neutral-500 py-2">
                           {d}
                         </div>
                       ))}
@@ -799,7 +799,7 @@ function AfspraakPlannenContent() {
                             ? "opacity-0 translate-x-4"
                             : "opacity-100 translate-x-0"
                       }`}
-                      role="grid"
+                      role="group"
                       aria-label="Kalender"
                     >
                       {calendarCells.map((cell, idx) => {
@@ -822,12 +822,11 @@ function AfspraakPlannenContent() {
                               ${!cell.isCurrentMonth ? "text-neutral-300" : ""}
                               ${cell.isCurrentMonth && !canSelect ? "text-neutral-300 cursor-default" : ""}
                               ${canSelect && !isSelected ? "text-neutral-900 hover:bg-[#FEF3E7] cursor-pointer" : ""}
-                              ${isSelected ? "bg-[#F97316] text-white shadow-md shadow-orange-500/20" : ""}
+                              ${isSelected ? "bg-[#B85600] text-white shadow-md shadow-orange-500/20" : ""}
                               ${cell.isToday && !isSelected ? "ring-2 ring-[#F97316]/30" : ""}
                             `}
                             aria-label={`${cell.day} ${MONTH_NAMES[viewMonth]}${cell.hasSlots ? ", beschikbaar" : ""}${isSelected ? ", geselecteerd" : ""}`}
-                            aria-selected={isSelected}
-                            role="gridcell"
+                            aria-pressed={isSelected}
                           >
                             {cell.day}
                             {cell.hasSlots && !isSelected && cell.isCurrentMonth && (
@@ -839,7 +838,7 @@ function AfspraakPlannenContent() {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex items-center gap-4 mt-4 text-xs text-neutral-400">
+                    <div className="flex items-center gap-4 mt-4 text-xs text-neutral-500">
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-[#F97316]" />
                         Beschikbaar
@@ -861,7 +860,7 @@ function AfspraakPlannenContent() {
                           </svg>
                         </div>
                         <p className="text-neutral-500 text-sm">Kies een datum in de kalender</p>
-                        <p className="text-neutral-400 text-xs mt-1">Oranje stippen = beschikbaar</p>
+                        <p className="text-neutral-500 text-xs mt-1">Oranje stippen = beschikbaar</p>
                       </div>
                     ) : selectedDag ? (
                       <div>
@@ -869,7 +868,7 @@ function AfspraakPlannenContent() {
                           {selectedDag.dag}{" "}
                           {new Date(selectedDatum).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
                         </h3>
-                        <p className="text-xs text-neutral-400 mb-4">
+                        <p className="text-xs text-neutral-500 mb-4">
                           {selectedDag.slots.length} {selectedDag.slots.length === 1 ? "tijdstip" : "tijdstippen"} beschikbaar
                         </p>
                         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
@@ -884,7 +883,7 @@ function AfspraakPlannenContent() {
                                   focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-1 outline-none
                                   motion-reduce:transition-none
                                   ${isSelected
-                                    ? "border-[#F97316] bg-[#F97316] text-white shadow-md shadow-orange-500/20"
+                                    ? "border-[#F97316] bg-[#B85600] text-white shadow-md shadow-orange-500/20"
                                     : "border-neutral-200 hover:border-[#F97316] hover:bg-[#FEF3E7]"
                                   }
                                 `}
@@ -938,12 +937,12 @@ function AfspraakPlannenContent() {
                       <p className="font-medium text-neutral-900">
                         {selectedDag?.dag} {new Date(selectedDatum!).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
                       </p>
-                      <p className="text-[#F97316] font-bold">{selectedSlot.start} - {selectedSlot.eind}</p>
+                      <p className="text-[#B85600] font-bold">{selectedSlot.start} - {selectedSlot.eind}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedSlot(null)}
-                    className="text-sm text-neutral-400 hover:text-neutral-600 transition-colors"
+                    className="text-sm text-neutral-500 hover:text-neutral-600 transition-colors"
                     aria-label="Wijzig datum en tijd"
                   >
                     Wijzig
@@ -1021,7 +1020,7 @@ function AfspraakPlannenContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="booking-telefoon" className="block text-sm font-medium text-neutral-700 mb-1">
-                        Telefoonnummer <span className="text-neutral-400 text-xs font-normal">optioneel</span>
+                        Telefoonnummer <span className="text-neutral-500 text-xs font-normal">optioneel</span>
                       </label>
                       <input
                         id="booking-telefoon"
@@ -1035,7 +1034,7 @@ function AfspraakPlannenContent() {
                     </div>
                     <div>
                       <label htmlFor="booking-bedrijf" className="block text-sm font-medium text-neutral-700 mb-1">
-                        Bedrijfsnaam <span className="text-neutral-400 text-xs font-normal">optioneel</span>
+                        Bedrijfsnaam <span className="text-neutral-500 text-xs font-normal">optioneel</span>
                       </label>
                       <input
                         id="booking-bedrijf"
@@ -1050,7 +1049,7 @@ function AfspraakPlannenContent() {
                   </div>
                   <div>
                     <label htmlFor="booking-notes" className="block text-sm font-medium text-neutral-700 mb-1">
-                      Waar gaat het gesprek over? <span className="text-neutral-400 text-xs font-normal">optioneel</span>
+                      Waar gaat het gesprek over? <span className="text-neutral-500 text-xs font-normal">optioneel</span>
                     </label>
                     <textarea
                       id="booking-notes"
@@ -1067,7 +1066,7 @@ function AfspraakPlannenContent() {
                 <button
                   onClick={handleBook}
                   disabled={submitting}
-                  className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#EA580C] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>
@@ -1090,8 +1089,8 @@ function AfspraakPlannenContent() {
 
         {/* Footer */}
         <div className="text-center mt-8 pb-4">
-          <p className="text-sm text-neutral-400">
-            <a href="https://www.toptalentjobs.nl" className="text-[#F97316] hover:underline font-medium">TopTalent Jobs</a>
+          <p className="text-sm text-neutral-500">
+            <a href="https://www.toptalentjobs.nl" className="text-[#B85600] hover:underline font-medium">TopTalent Jobs</a>
             {" "}&mdash; Specialist in horeca personeel
           </p>
         </div>
@@ -1103,7 +1102,7 @@ function AfspraakPlannenContent() {
           <button
             onClick={handleBook}
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>

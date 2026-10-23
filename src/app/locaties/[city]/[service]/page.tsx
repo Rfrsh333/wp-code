@@ -303,7 +303,7 @@ export default async function CityServicePage({ params }: PageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <FadeIn direction="left">
               <div>
-                <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+                <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                   <Link href="/locaties/">Locaties</Link> › <Link href={`/locaties/${city}`}>{location.name}</Link> › {serviceLabels[service as keyof typeof serviceLabels]}
                 </span>
 
@@ -319,9 +319,9 @@ export default async function CityServicePage({ params }: PageProps) {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href="/personeel-aanvragen/"
-                    className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                    className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#EA580C] transition-all duration-300"
+                    hover:bg-[#9a4700] transition-all duration-300"
                   >
                     Direct personeel aanvragen
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -331,7 +331,7 @@ export default async function CityServicePage({ params }: PageProps) {
                   <Link
                     href="tel:+31617889189"
                     className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
-                    hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
+                    hover:border-[#F97316] hover:text-[#B85600] transition-all duration-300"
                   >
                     Bel direct
                   </Link>
@@ -376,7 +376,7 @@ export default async function CityServicePage({ params }: PageProps) {
                     <FadeIn key={i} delay={0.1 * i}>
                       <div className="bg-white rounded-xl p-6 border border-neutral-100">
                         <div className="flex items-start gap-3">
-                          <span className="text-[#F97316] text-xl mt-1">✓</span>
+                          <span className="text-[#B85600] text-xl mt-1">✓</span>
                           <p className="text-neutral-700">{example}</p>
                         </div>
                       </div>
@@ -386,7 +386,7 @@ export default async function CityServicePage({ params }: PageProps) {
                     <FadeIn key={i} delay={0.1 * i}>
                       <div className="bg-white rounded-xl p-6 border border-neutral-100">
                         <div className="flex items-start gap-3">
-                          <span className="text-[#F97316] text-xl mt-1">✓</span>
+                          <span className="text-[#B85600] text-xl mt-1">✓</span>
                           <p className="text-neutral-700">{benefit}</p>
                         </div>
                       </div>
@@ -459,7 +459,7 @@ export default async function CityServicePage({ params }: PageProps) {
                 ].map((item, i) => (
                   <FadeIn key={i} delay={0.15 * i}>
                     <div className="text-center relative">
-                      <div className="w-14 h-14 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 relative z-10">
+                      <div className="w-14 h-14 bg-[#B85600] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 relative z-10">
                         {item.step}
                       </div>
                       <h3 className="font-bold text-neutral-900 mb-2">{item.title}</h3>
@@ -509,7 +509,7 @@ export default async function CityServicePage({ params }: PageProps) {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/personeel-aanvragen/"
-                    className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
+                    className="bg-white text-[#B85600] px-8 py-4 rounded-xl text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >
                     Personeel aanvragen
@@ -549,7 +549,7 @@ export default async function CityServicePage({ params }: PageProps) {
                         href={`/locaties/${otherCity}/${service}`}
                         className="group bg-white rounded-xl p-6 border border-neutral-200 hover:border-[#F97316] hover:shadow-lg transition-all"
                       >
-                        <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316]">
+                        <h4 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600]">
                           {otherLocation.name}
                         </h4>
                         <p className="text-neutral-600 text-sm">
@@ -564,7 +564,7 @@ export default async function CityServicePage({ params }: PageProps) {
               <div className="text-center">
                 <Link
                   href="/locaties/"
-                  className="inline-block text-[#F97316] font-semibold hover:underline"
+                  className="inline-block text-[#B85600] font-semibold hover:underline"
                 >
                   Bekijk alle locaties →
                 </Link>

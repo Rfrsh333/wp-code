@@ -34,8 +34,8 @@ export default function LocatieSubNav({ city }: LocatieSubNavProps) {
               inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition
               ${
                 isActive
-                  ? "bg-orange-50 border-[#F97316] text-[#EA580C]"
-                  : "border-neutral-200 bg-white text-neutral-700 hover:border-[#F97316] hover:text-[#F97316] hover:shadow-sm"
+                  ? "bg-orange-50 border-[#F97316] text-[#B85600]"
+                  : "border-neutral-200 bg-white text-neutral-700 hover:border-[#F97316] hover:text-[#9a4700] hover:shadow-sm"
               }
             `}
           >

@@ -43,9 +43,9 @@ export default function PrivacyPolicyPage() {
             <div className="bg-neutral-50 rounded-xl p-6 my-6">
               <p className="mb-2"><strong>TopTalent B.V.</strong></p>
               <p className="mb-2">Gevestigd te Utrecht, Nederland</p>
-              <p className="mb-2">E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a></p>
-              <p className="mb-2">Telefoon: <a href="tel:+31617889189" className="text-[#FF7A00] hover:underline">+31617889189</a></p>
-              <p className="mb-0">Website: <a href="https://www.toptalentjobs.nl" className="text-[#FF7A00] hover:underline">www.toptalentjobs.nl</a></p>
+              <p className="mb-2">E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#B85600] hover:underline">info@toptalentjobs.nl</a></p>
+              <p className="mb-2">Telefoon: <a href="tel:+31617889189" className="text-[#B85600] hover:underline">+31617889189</a></p>
+              <p className="mb-0">Website: <a href="https://www.toptalentjobs.nl" className="text-[#B85600] hover:underline">www.toptalentjobs.nl</a></p>
             </div>
             <p>Voor vragen over deze privacy policy of over de verwerking van uw persoonsgegevens kunt u contact opnemen via bovenstaande contactgegevens.</p>
 
@@ -276,7 +276,7 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p>Wij bewaren uw persoonsgegevens niet langer dan noodzakelijk voor de doeleinden waarvoor ze zijn verzameld, of zolang wettelijk vereist. Hieronder vindt u een overzicht van de bewaartermijnen per categorie:</p>
 
-            <div className="overflow-x-auto my-6">
+            <div className="overflow-x-auto my-6" tabIndex={0} role="region" aria-label="Tabel bewaartermijnen">
               <table className="min-w-full border border-neutral-200 rounded-lg">
                 <thead className="bg-neutral-50">
                   <tr>
@@ -446,7 +446,7 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p>Voor onze bedrijfsvoering maken wij gebruik van diverse externe systemen en software:</p>
 
-            <div className="overflow-x-auto my-6">
+            <div className="overflow-x-auto my-6" tabIndex={0} role="region" aria-label="Tabel externe systemen">
               <table className="min-w-full border border-neutral-200 rounded-lg">
                 <thead className="bg-neutral-50">
                   <tr>
@@ -588,7 +588,7 @@ export default function PrivacyPolicyPage() {
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">12.8 Uitoefening van uw rechten</h3>
             <p>Om uw rechten uit te oefenen kunt u contact met ons opnemen via:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a></li>
+              <li>E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#B85600] hover:underline">info@toptalentjobs.nl</a></li>
               <li>Post: TopTalent B.V., t.a.v. Privacy, Utrecht</li>
             </ul>
             <p>Wij zullen uw verzoek binnen één maand behandelen. In complexe gevallen kan deze termijn met twee maanden worden verlengd, waarvan wij u tijdig op de hoogte stellen. Om uw identiteit te verifiëren kunnen wij u vragen om aanvullende informatie te verstrekken.</p>
@@ -600,7 +600,7 @@ export default function PrivacyPolicyPage() {
             <p>Wanneer de verwerking van uw persoonsgegevens gebaseerd is op uw toestemming, heeft u te allen tijde het recht om deze toestemming in te trekken. Het intrekken van uw toestemming heeft geen invloed op de rechtmatigheid van de verwerking vóór de intrekking.</p>
             <p>U kunt uw toestemming intrekken door:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Contact met ons op te nemen via <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a></li>
+              <li>Contact met ons op te nemen via <a href="mailto:info@toptalentjobs.nl" className="text-[#B85600] hover:underline">info@toptalentjobs.nl</a></li>
               <li>De afmeldlink in onze e-mails te gebruiken (voor nieuwsbrieven)</li>
               <li>Uw cookievoorkeuren aan te passen via de cookie-instellingen op onze website</li>
             </ul>
@@ -616,7 +616,7 @@ export default function PrivacyPolicyPage() {
               <p className="mb-2">Postbus 93374</p>
               <p className="mb-2">2509 AJ Den Haag</p>
               <p className="mb-2">Telefoon: 088 - 1805 250</p>
-              <p className="mb-0">Website: <a href="https://autoriteitpersoonsgegevens.nl" target="_blank" rel="noopener noreferrer" className="text-[#FF7A00] hover:underline">www.autoriteitpersoonsgegevens.nl</a></p>
+              <p className="mb-0">Website: <a href="https://autoriteitpersoonsgegevens.nl" target="_blank" rel="noopener noreferrer" className="text-[#B85600] hover:underline">www.autoriteitpersoonsgegevens.nl</a></p>
             </div>
 
             {/* 15. Wijzigingen */}
@@ -636,8 +636,8 @@ export default function PrivacyPolicyPage() {
               <p className="mb-2"><strong>TopTalent B.V.</strong></p>
               <p className="mb-2">T.a.v. Privacyzaken</p>
               <p className="mb-2">Utrecht, Nederland</p>
-              <p className="mb-2">E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#FF7A00] hover:underline">info@toptalentjobs.nl</a></p>
-              <p className="mb-0">Telefoon: <a href="tel:+31617889189" className="text-[#FF7A00] hover:underline">+31617889189</a></p>
+              <p className="mb-2">E-mail: <a href="mailto:info@toptalentjobs.nl" className="text-[#B85600] hover:underline">info@toptalentjobs.nl</a></p>
+              <p className="mb-0">Telefoon: <a href="tel:+31617889189" className="text-[#B85600] hover:underline">+31617889189</a></p>
             </div>
             <p>Wij streven ernaar om uw vragen en verzoeken zo spoedig mogelijk, maar in ieder geval binnen de wettelijke termijnen, te beantwoorden.</p>
 
@@ -665,7 +665,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <a
             href="mailto:info@toptalentjobs.nl"
-            className="inline-flex items-center justify-center bg-[#FF7A00] text-white px-8 py-4 rounded-xl font-semibold
+            className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
             shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
             hover:bg-[#E66E00] hover:-translate-y-0.5 active:scale-[0.98]
             transition-all duration-300"

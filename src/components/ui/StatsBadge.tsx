@@ -6,7 +6,7 @@ interface StatsBadgeProps {
 }
 
 const colorMap = {
-  orange: "bg-[#F27501]/10 text-[#F27501]",
+  orange: "bg-[#F27501]/10 text-[#B85600]",
   green: "bg-green-50 text-green-700",
   blue: "bg-blue-50 text-blue-700",
   yellow: "bg-yellow-50 text-yellow-700",

@@ -5,6 +5,7 @@ import { getAllFunctieSlugs, getFunctie, getAllFuncties } from "@/data/functies"
 import { getPublishedGeoContentForFunctie } from "@/lib/geo/engine";
 import { GEO_STEDEN } from "@/lib/geo/types";
 
+import { OG_IMAGE } from "@/lib/og-image";
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -30,6 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       canonical: `https://www.toptalentjobs.nl/functies/${functie.slug}/`,
     },
     openGraph: {
+    images: [OG_IMAGE],
       title: `${functie.title} | TopTalent Jobs`,
       description: functie.metaDescription,
       type: "website",
@@ -148,16 +150,16 @@ export default async function FunctiePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      <main className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white">
         {/* Breadcrumbs */}
         <nav className="max-w-4xl mx-auto px-4 pt-6 pb-2" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-sm text-neutral-500">
             <li>
-              <Link href="/" className="hover:text-[#F97316]">Home</Link>
+              <Link href="/" className="hover:text-[#B85600]">Home</Link>
             </li>
             <li>/</li>
             <li>
-              <Link href="/functies/" className="hover:text-[#F97316]">Functies</Link>
+              <Link href="/functies/" className="hover:text-[#B85600]">Functies</Link>
             </li>
             <li>/</li>
             <li className="text-neutral-900 font-medium truncate max-w-[250px]">
@@ -173,7 +175,7 @@ export default async function FunctiePage({ params }: PageProps) {
               <Link
                 key={dienst}
                 href={`/diensten/${dienst}/`}
-                className="px-2.5 py-1 rounded-full bg-orange-50 text-[#EA580C] text-xs font-semibold hover:bg-orange-100 transition-colors"
+                className="px-2.5 py-1 rounded-full bg-orange-50 text-[#B85600] text-xs font-semibold hover:bg-orange-100 transition-colors"
               >
                 {dienstLabels[dienst]}
               </Link>
@@ -199,7 +201,7 @@ export default async function FunctiePage({ params }: PageProps) {
             <ul className="mt-3 space-y-1">
               {functie.keyFacts.map((fact, i) => (
                 <li key={i} className="text-sm text-neutral-600 flex items-start gap-2">
-                  <span className="text-[#F97316] mt-0.5 shrink-0">&#10003;</span>
+                  <span className="text-[#B85600] mt-0.5 shrink-0">&#10003;</span>
                   {fact}
                 </li>
               ))}
@@ -216,7 +218,7 @@ export default async function FunctiePage({ params }: PageProps) {
             <ul className="space-y-3">
               {functie.whenToHire.map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-neutral-700">
-                  <span className="mt-1 w-5 h-5 rounded-full bg-orange-100 text-[#F97316] flex items-center justify-center text-xs font-bold shrink-0">
+                  <span className="mt-1 w-5 h-5 rounded-full bg-orange-100 text-[#9a4700] flex items-center justify-center text-xs font-bold shrink-0">
                     {i + 1}
                   </span>
                   {item}
@@ -237,7 +239,7 @@ export default async function FunctiePage({ params }: PageProps) {
                 key={i}
                 className="flex items-start gap-3 p-4 bg-white rounded-xl border border-neutral-200"
               >
-                <svg className="w-5 h-5 text-[#F97316] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-[#B85600] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span className="text-neutral-700 text-sm">{item}</span>
@@ -255,7 +257,7 @@ export default async function FunctiePage({ params }: PageProps) {
             <ul className="space-y-2">
               {functie.skills.map((skill, i) => (
                 <li key={i} className="flex items-start gap-2 text-neutral-700">
-                  <span className="text-[#F97316] mt-1">&#8226;</span>
+                  <span className="text-[#B85600] mt-1">&#8226;</span>
                   {skill}
                 </li>
               ))}
@@ -271,16 +273,16 @@ export default async function FunctiePage({ params }: PageProps) {
           <h2 className="text-2xl font-bold text-neutral-900 mb-4">
             Wat kost {naam} inhuren?
           </h2>
-          <div className="bg-[#F97316] text-white rounded-2xl p-6 md:p-8">
+          <div className="bg-[#B85600] text-white rounded-2xl p-6 md:p-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <p className="text-orange-100 text-sm mb-1">Uurtarief indicatie</p>
+                <p className="text-white text-sm mb-1">Uurtarief indicatie</p>
                 <p className="text-3xl font-bold">{functie.hourlyRateRange}</p>
-                <p className="text-orange-200 text-sm mt-1">Per uur, inclusief werkgeverslasten</p>
+                <p className="text-white text-sm mt-1">Per uur, inclusief werkgeverslasten</p>
               </div>
               <Link
                 href="/kosten-calculator/"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#EA580C] font-semibold rounded-xl hover:bg-orange-50 transition-colors text-center"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#B85600] font-semibold rounded-xl hover:bg-orange-50 transition-colors text-center"
               >
                 Bereken exacte kosten
               </Link>
@@ -300,7 +302,7 @@ export default async function FunctiePage({ params }: PageProps) {
                 href={`/diensten/${dienst}/`}
                 className="p-5 bg-white rounded-xl border border-neutral-200 hover:border-orange-300 hover:shadow-sm transition-all group"
               >
-                <h3 className="font-semibold text-neutral-900 group-hover:text-[#F97316] transition-colors mb-2">
+                <h3 className="font-semibold text-neutral-900 group-hover:text-[#B85600] transition-colors mb-2">
                   {dienstLabels[dienst]}
                 </h3>
                 <p className="text-sm text-neutral-500">
@@ -349,14 +351,14 @@ export default async function FunctiePage({ params }: PageProps) {
             <h2 className="text-2xl md:text-3xl font-bold mb-3">
               Direct een {naam} inhuren?
             </h2>
-            <p className="text-orange-100 mb-6 max-w-xl mx-auto">
+            <p className="text-white mb-6 max-w-xl mx-auto">
               TopTalent Jobs levert ervaren horecapersoneel, meestal binnen 24 uur.
               Vraag vandaag nog vrijblijvend personeel aan.
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link
                 href="/personeel-aanvragen/"
-                className="px-6 py-3 bg-white text-[#EA580C] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
+                className="px-6 py-3 bg-white text-[#B85600] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
               >
                 Personeel aanvragen
               </Link>
@@ -368,7 +370,7 @@ export default async function FunctiePage({ params }: PageProps) {
               </Link>
             </div>
             {/* Trust signals */}
-            <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-white/20 text-sm text-orange-100 flex-wrap">
+            <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-white/20 text-sm text-white flex-wrap">
               <span>WAADI-geregistreerd</span>
               <span>Vertrouwd door horecaondernemers</span>
               <span>We denken snel mee over passende vervanging</span>
@@ -389,7 +391,7 @@ export default async function FunctiePage({ params }: PageProps) {
                   href={`/functies/${rel.slug}/`}
                   className="p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-orange-300 hover:bg-orange-50 transition-colors group"
                 >
-                  <span className="font-semibold text-sm text-[#F97316] group-hover:text-[#EA580C]">
+                  <span className="font-semibold text-sm text-[#B85600] group-hover:text-[#B85600]">
                     {rel.title.split(" — ")[0]}
                   </span>
                   <p className="text-xs text-neutral-500 mt-1">{rel.hourlyRateRange} / uur</p>
@@ -420,7 +422,7 @@ export default async function FunctiePage({ params }: PageProps) {
                     href={`/geo/${geo.slug}/`}
                     className="flex items-center gap-3 p-4 bg-orange-50 rounded-xl border border-orange-200 hover:border-orange-400 hover:bg-orange-100 transition-colors group"
                   >
-                    <span className="text-[#F97316] font-semibold text-sm group-hover:text-[#EA580C]">
+                    <span className="text-[#B85600] font-semibold text-sm group-hover:text-[#B85600]">
                       {naam.charAt(0).toUpperCase() + naam.slice(1)} inhuren in {stadNaam}
                     </span>
                     <svg className="w-4 h-4 text-orange-400 ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,7 +448,7 @@ export default async function FunctiePage({ params }: PageProps) {
                 href={loc.href}
                 className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 hover:border-orange-300 hover:bg-orange-50 transition-colors text-center"
               >
-                <span className="text-sm font-medium text-neutral-700 hover:text-[#F97316]">
+                <span className="text-sm font-medium text-neutral-700 hover:text-[#B85600]">
                   {naam.charAt(0).toUpperCase() + naam.slice(1)} in {loc.city}
                 </span>
               </Link>
@@ -464,25 +466,25 @@ export default async function FunctiePage({ params }: PageProps) {
               href="/diensten/"
               className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
             >
-              <span className="text-[#F97316] font-semibold text-sm">Alle diensten</span>
+              <span className="text-[#B85600] font-semibold text-sm">Alle diensten</span>
             </Link>
             <Link
               href="/locaties/"
               className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
             >
-              <span className="text-[#F97316] font-semibold text-sm">Locaties in Nederland</span>
+              <span className="text-[#B85600] font-semibold text-sm">Locaties in Nederland</span>
             </Link>
             <Link
               href="/kosten-calculator/"
               className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
             >
-              <span className="text-[#F97316] font-semibold text-sm">Kosten berekenen</span>
+              <span className="text-[#B85600] font-semibold text-sm">Kosten berekenen</span>
             </Link>
             <Link
               href="/veelgestelde-vragen/"
               className="flex items-center gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
             >
-              <span className="text-[#F97316] font-semibold text-sm">Veelgestelde vragen</span>
+              <span className="text-[#B85600] font-semibold text-sm">Veelgestelde vragen</span>
             </Link>
           </div>
         </section>
@@ -499,8 +501,8 @@ export default async function FunctiePage({ params }: PageProps) {
                 href={`/functies/${f.slug}/`}
                 className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
                   f.slug === functie.slug
-                    ? "bg-orange-50 border-orange-300 text-[#EA580C]"
-                    : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-orange-300 hover:text-[#F97316]"
+                    ? "bg-orange-50 border-orange-300 text-[#B85600]"
+                    : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-orange-300 hover:text-[#9a4700]"
                 }`}
               >
                 {f.title.split(" — ")[0]}
@@ -508,7 +510,7 @@ export default async function FunctiePage({ params }: PageProps) {
             ))}
           </div>
         </section>
-      </main>
+      </div>
     </>
   );
 }

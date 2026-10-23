@@ -168,7 +168,7 @@ export default function TestimonialsPage() {
 
               {/* Headline - Positioning as proven solution */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
-                Horeca-ondernemers die <span className="text-[#F97316]">meer grip</span> hebben op hun personeel
+                Horeca-ondernemers die <span className="text-[#B85600]">meer grip</span> hebben op hun personeel
               </h1>
 
               {/* Subheadline with credibility */}
@@ -197,7 +197,7 @@ export default function TestimonialsPage() {
               {/* Soft CTA */}
               <Link
                 href="#featured-cases"
-                className="inline-flex items-center gap-2 bg-white text-neutral-700 px-8 py-4 rounded-xl font-semibold border-2 border-neutral-200 hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300 shadow-sm hover:shadow-md"
+                className="inline-flex items-center gap-2 bg-white text-neutral-700 px-8 py-4 rounded-xl font-semibold border-2 border-neutral-200 hover:border-[#F97316] hover:text-[#B85600] transition-all duration-300 shadow-sm hover:shadow-md"
               >
                 Bekijk hoe wij horeca helpen
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,7 +222,7 @@ export default function TestimonialsPage() {
                   onClick={() => setActiveSegment(segment.id)}
                   className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                     activeSegment === segment.id
-                      ? "bg-[#F97316] text-white shadow-lg shadow-orange-500/25"
+                      ? "bg-[#B85600] text-white shadow-lg shadow-orange-500/25"
                       : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                   }`}
                 >
@@ -242,7 +242,7 @@ export default function TestimonialsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="text-center mb-16">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+              <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
                 Bewezen resultaten
               </span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-4">
@@ -268,9 +268,9 @@ export default function TestimonialsPage() {
 
                   {/* Challenge */}
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-[#F97316] uppercase tracking-wider mb-2">
+                    <h3 className="text-sm font-semibold text-[#B85600] uppercase tracking-wider mb-2">
                       Situatie
-                    </h4>
+                    </h3>
                     <p className="text-neutral-700 leading-relaxed">
                       {testimonial.challenge}
                     </p>
@@ -278,9 +278,9 @@ export default function TestimonialsPage() {
 
                   {/* Solution */}
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-[#F97316] uppercase tracking-wider mb-2">
+                    <h3 className="text-sm font-semibold text-[#B85600] uppercase tracking-wider mb-2">
                       Aanpak
-                    </h4>
+                    </h3>
                     <p className="text-neutral-700 leading-relaxed">
                       {testimonial.solution}
                     </p>
@@ -288,9 +288,9 @@ export default function TestimonialsPage() {
 
                   {/* Outcome */}
                   <div className="mb-8">
-                    <h4 className="text-sm font-semibold text-green-600 uppercase tracking-wider mb-2">
+                    <h3 className="text-sm font-semibold text-green-600 uppercase tracking-wider mb-2">
                       Resultaat
-                    </h4>
+                    </h3>
                     <p className="text-neutral-900 font-medium leading-relaxed">
                       {testimonial.outcome}
                     </p>
@@ -397,7 +397,7 @@ export default function TestimonialsPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/personeel-aanvragen/"
-                    className="inline-flex items-center justify-center bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
+                    className="inline-flex items-center justify-center bg-white text-[#B85600] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
                   >
                     Vraag nu personeel aan
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -72,7 +72,7 @@ export default function MarketingSidebar({
         />
         <div>
           <h1 className="text-lg font-bold text-neutral-900">TopTalent</h1>
-          <p className="text-xs text-[#F27501] font-medium">Marketing</p>
+          <p className="text-xs text-[#B85600] font-medium">Marketing</p>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export default function MarketingSidebar({
                         className={cn(
                           "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                           isActive
-                            ? "bg-[#F27501] text-white shadow-md"
+                            ? "bg-[#B85600] text-white shadow-md"
                             : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900"
                         )}
                       >
@@ -127,7 +127,7 @@ export default function MarketingSidebar({
                               "flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold",
                               isActive
                                 ? "bg-white/20 text-white"
-                                : "bg-[#F27501] text-white"
+                                : "bg-[#B85600] text-white"
                             )}
                           >
                             {badge > 99 ? "99+" : badge}
@@ -146,7 +146,7 @@ export default function MarketingSidebar({
       {/* User Section */}
       <div className="border-t border-neutral-100 p-4">
         <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-neutral-50">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#F27501] text-white text-sm font-bold">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#B85600] text-white text-sm font-bold">
             {userEmail?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
           </div>
           <div className="flex-1 min-w-0">

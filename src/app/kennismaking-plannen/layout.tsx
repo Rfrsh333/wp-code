@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
   title: "Kennismakingsgesprek Plannen | TopTalent Jobs",
   description:
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     canonical: "https://www.toptalentjobs.nl/kennismaking-plannen/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Kennismakingsgesprek Plannen | TopTalent Jobs",
     description:
       "Plan een gratis kennismakingsgesprek met TopTalent Jobs. Ontdek hoe wij uw horecabedrijf helpen met betrouwbaar personeel.",

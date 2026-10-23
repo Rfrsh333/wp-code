@@ -39,11 +39,11 @@ export default function LocatiesPage() {
               className="group rounded-2xl border border-neutral-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-[#F97316]/40 hover:shadow-lg"
             >
               <div className="flex items-start justify-between mb-4">
-                <h2 className="text-2xl font-bold text-neutral-900 group-hover:text-[#F97316] transition-colors">
+                <h2 className="text-2xl font-bold text-neutral-900 group-hover:text-[#B85600] transition-colors">
                   {location.name}
                 </h2>
                 <svg
-                  className="w-6 h-6 text-[#F97316] flex-shrink-0 group-hover:translate-x-1 transition-transform"
+                  className="w-6 h-6 text-[#B85600] flex-shrink-0 group-hover:translate-x-1 transition-transform"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -98,13 +98,13 @@ export default function LocatiesPage() {
             {locations.map((location) => (
               <div key={location.slug}>
                 <h3 className="font-bold text-neutral-900 mb-2 flex items-center gap-2">
-                  <span className="text-[#F97316]">📍</span>
+                  <span className="text-[#B85600]">📍</span>
                   {location.name}
                 </h3>
                 <ul className="text-sm text-neutral-600 space-y-1">
                   {location.serviceAreas.slice(0, 5).map((area, index) => (
                     <li key={index} className="flex items-start gap-1">
-                      <span className="text-[#F97316] font-bold">•</span>
+                      <span className="text-[#B85600] font-bold">•</span>
                       <span>{area}</span>
                     </li>
                   ))}
@@ -138,7 +138,7 @@ export default function LocatiesPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-orange-50 text-neutral-700 hover:text-[#F97316] font-medium text-sm text-center transition-all duration-200"
+                className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-orange-50 text-neutral-700 hover:text-[#9a4700] font-medium text-sm text-center transition-all duration-200"
               >
                 {item.label}
               </Link>
@@ -157,7 +157,7 @@ export default function LocatiesPage() {
           </p>
           <Link
             href="/contact/"
-            className="inline-block bg-white text-[#F97316] px-8 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-colors"
+            className="inline-block bg-white text-[#B85600] px-8 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-colors"
           >
             Neem contact op
           </Link>

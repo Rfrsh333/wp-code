@@ -251,7 +251,7 @@ export default function ContractOndertekeningClient() {
               type="checkbox"
               checked={akkoord}
               onChange={(e) => setAkkoord(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#F27501] focus:ring-[#F27501]"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#B85600] focus:ring-[#F27501]"
             />
             <span className="text-sm text-gray-600">
               Ik heb het contract gelezen en ga akkoord met de inhoud en voorwaarden.
@@ -268,7 +268,7 @@ export default function ContractOndertekeningClient() {
           <button
             onClick={handleSubmit}
             disabled={!handtekeningData || !akkoord || isSubmitting}
-            className="w-full py-3 px-6 bg-[#F27501] text-white font-bold rounded-xl hover:bg-[#d96800] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 px-6 bg-[#B85600] text-white font-bold rounded-xl hover:bg-[#9a4700] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? 'Bezig met ondertekenen...' : 'Contract ondertekenen'}
           </button>

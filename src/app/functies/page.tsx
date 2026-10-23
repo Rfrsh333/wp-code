@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getAllFuncties } from "@/data/functies";
 
+import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
   title: {
     absolute: "Horecapersoneel Inhuren per Functie | TopTalent Jobs",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
     canonical: "https://www.toptalentjobs.nl/functies/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Horecapersoneel Inhuren per Functie | TopTalent Jobs",
     description:
       "Alle horecafuncties van TopTalent Jobs: koks, bediening, barista's, barmannen, catering en event managers. Binnen 24 uur beschikbaar.",
@@ -59,12 +61,12 @@ export default function FunctiesOverzichtPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      <main className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white">
         {/* Breadcrumbs */}
         <nav className="max-w-4xl mx-auto px-4 pt-6 pb-2" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-sm text-neutral-500">
             <li>
-              <Link href="/" className="hover:text-[#F97316]">Home</Link>
+              <Link href="/" className="hover:text-[#B85600]">Home</Link>
             </li>
             <li>/</li>
             <li className="text-neutral-900 font-medium">Functies</li>
@@ -91,7 +93,7 @@ export default function FunctiesOverzichtPage() {
                 href={`/functies/${functie.slug}/`}
                 className="p-6 bg-white rounded-2xl border border-neutral-200 hover:border-orange-300 hover:shadow-md transition-all group"
               >
-                <h2 className="text-lg font-bold text-neutral-900 group-hover:text-[#F97316] transition-colors mb-2">
+                <h2 className="text-lg font-bold text-neutral-900 group-hover:text-[#B85600] transition-colors mb-2">
                   {functie.title.split(" — ")[0]}
                 </h2>
                 <p className="text-sm text-neutral-600 leading-relaxed mb-3 line-clamp-2">
@@ -104,7 +106,7 @@ export default function FunctiesOverzichtPage() {
                   {functie.availableVia.map((dienst) => (
                     <span
                       key={dienst}
-                      className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500 text-xs"
+                      className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-xs"
                     >
                       {dienstLabels[dienst]}
                     </span>
@@ -128,7 +130,7 @@ export default function FunctiesOverzichtPage() {
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link
                 href="/personeel-aanvragen/"
-                className="px-6 py-3 bg-white text-[#EA580C] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
+                className="px-6 py-3 bg-white text-[#B85600] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
               >
                 Personeel aanvragen
               </Link>
@@ -141,7 +143,7 @@ export default function FunctiesOverzichtPage() {
             </div>
           </div>
         </section>
-      </main>
+      </div>
     </>
   );
 }

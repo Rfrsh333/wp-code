@@ -38,7 +38,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           aria-label="Vorige pagina"
-          className="p-2 rounded-lg text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-2 rounded-lg text-neutral-600 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -55,7 +55,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
               aria-current={currentPage === page ? "page" : undefined}
               className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                 currentPage === page
-                  ? "bg-[#F27501] text-white"
+                  ? "bg-[#B85600] text-white"
                   : "text-neutral-600 hover:bg-neutral-100"
               }`}
             >
@@ -67,7 +67,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           aria-label="Volgende pagina"
-          className="p-2 rounded-lg text-neutral-500 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-2 rounded-lg text-neutral-600 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

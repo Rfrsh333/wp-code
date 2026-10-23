@@ -21,7 +21,7 @@ export default function DetacheringPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <FadeIn direction="left">
               <div>
-                <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+                <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                   <Link href="/diensten/">Diensten</Link> › Detachering
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-[1.1]">
@@ -34,9 +34,9 @@ export default function DetacheringPage() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href="/contact/"
-                    className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                    className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#EA580C] transition-all duration-300"
+                    hover:bg-[#9a4700] transition-all duration-300"
                   >
                     Meer informatie aanvragen
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,7 +46,7 @@ export default function DetacheringPage() {
                   <Link
                     href="tel:+31617889189"
                     className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
-                    hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
+                    hover:border-[#F97316] hover:text-[#B85600] transition-all duration-300"
                   >
                     Bel voor advies
                   </Link>
@@ -89,7 +89,7 @@ export default function DetacheringPage() {
                 </p>
                 <div className="bg-white rounded-xl p-6 border border-neutral-100">
                   <p className="text-neutral-700 font-medium">
-                    <span className="text-[#F97316]">Het verschil met uitzenden:</span> Bij detachering gaat het om
+                    <span className="text-[#B85600]">Het verschil met uitzenden:</span> Bij detachering gaat het om
                     langdurige, structurele personele bezetting. Bij uitzenden om tijdelijke, flexibele inzet.
                   </p>
                 </div>
@@ -105,7 +105,7 @@ export default function DetacheringPage() {
                   { value: "Snel", label: "bereikbaar voor ondersteuning" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white rounded-2xl p-6 text-center border border-neutral-100">
-                    <div className="text-3xl font-bold text-[#F97316] mb-1">{stat.value}</div>
+                    <div className="text-3xl font-bold text-[#B85600] mb-1">{stat.value}</div>
                     <div className="text-neutral-600 text-sm">{stat.label}</div>
                   </div>
                 ))}
@@ -193,7 +193,7 @@ export default function DetacheringPage() {
             ].map((item, i) => (
               <FadeIn key={i} delay={0.1 * i}>
                 <div className="group p-6 rounded-2xl border border-neutral-100 hover:border-[#F97316]/20 hover:shadow-lg transition-all duration-300 h-full">
-                  <div className="w-12 h-12 bg-[#FEF3E7] rounded-xl flex items-center justify-center text-[#F97316] mb-4 group-hover:bg-[#F97316] group-hover:text-white transition-all duration-300">
+                  <div className="w-12 h-12 bg-[#FEF3E7] rounded-xl flex items-center justify-center text-[#B85600] mb-4 group-hover:bg-[#B85600] group-hover:text-white transition-all duration-300">
                     {item.icon}
                   </div>
                   <h3 className="text-lg font-bold text-neutral-900 mb-2">{item.title}</h3>
@@ -218,7 +218,7 @@ export default function DetacheringPage() {
                   </blockquote>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-[#F97316]/10 rounded-full flex items-center justify-center">
-                      <span className="text-[#F97316] font-bold">HR</span>
+                      <span className="text-[#B85600] font-bold">HR</span>
                     </div>
                     <div>
                       <p className="font-semibold text-neutral-900">HR Manager</p>
@@ -254,7 +254,7 @@ export default function DetacheringPage() {
           <FadeIn>
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Horecapersoneel detacheren in <span className="text-[#F97316]">jouw regio</span>
+                Horecapersoneel detacheren in <span className="text-[#B85600]">jouw regio</span>
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
                 TopTalent Jobs levert detacheringspersoneel in heel Nederland. Ontdek wat wij betekenen voor jouw stad.
@@ -266,13 +266,13 @@ export default function DetacheringPage() {
                 href="/locaties/utrecht/detachering/"
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
               >
-                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                   Utrecht
                 </h3>
                 <p className="text-sm text-neutral-600 mb-3">
                   Horecapersoneel detacheren in Utrecht en omstreken
                 </p>
-                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                <span className="text-[#B85600] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                   Meer informatie
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -284,13 +284,13 @@ export default function DetacheringPage() {
                 href="/locaties/den-haag/detachering/"
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
               >
-                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                   Den Haag
                 </h3>
                 <p className="text-sm text-neutral-600 mb-3">
                   Horecapersoneel detacheren in Den Haag en regio
                 </p>
-                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                <span className="text-[#B85600] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                   Meer informatie
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -302,13 +302,13 @@ export default function DetacheringPage() {
                 href="/locaties/eindhoven/detachering/"
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group border border-neutral-100"
               >
-                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                <h3 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                   Eindhoven
                 </h3>
                 <p className="text-sm text-neutral-600 mb-3">
                   Horecapersoneel detacheren in Eindhoven en Brabant
                 </p>
-                <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                <span className="text-[#B85600] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                   Meer informatie
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -320,7 +320,7 @@ export default function DetacheringPage() {
             <div className="text-center mt-8">
               <Link
                 href="/locaties/"
-                className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all duration-300"
+                className="inline-flex items-center gap-2 text-[#B85600] font-semibold hover:gap-3 transition-all duration-300"
               >
                 Bekijk alle locaties
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,7 +357,7 @@ export default function DetacheringPage() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-[#FEF3E7] text-neutral-700 hover:text-[#F97316] font-medium text-sm text-center transition-all duration-200"
+                    className="p-3 rounded-xl border border-neutral-100 bg-neutral-50 hover:border-[#F97316]/30 hover:bg-[#FEF3E7] text-neutral-700 hover:text-[#B85600] font-medium text-sm text-center transition-all duration-200"
                   >
                     {item.label}
                   </Link>
@@ -389,8 +389,8 @@ export default function DetacheringPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/contact/"
-                    className="bg-[#F97316] text-white px-8 py-4 rounded-xl text-base font-semibold
-                    hover:bg-[#EA580C] transition-all duration-300 shadow-lg shadow-orange-500/20"
+                    className="bg-[#B85600] text-white px-8 py-4 rounded-xl text-base font-semibold
+                    hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/20"
                   >
                     Gesprek inplannen
                   </Link>

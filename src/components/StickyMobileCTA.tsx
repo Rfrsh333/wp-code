@@ -46,6 +46,8 @@ export default function StickyMobileCTA() {
 
   return (
     <div
+      role="complementary"
+      aria-label="Snelle actie"
       className={`
         fixed bottom-0 left-0 right-0 z-40
         md:hidden

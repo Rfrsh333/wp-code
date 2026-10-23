@@ -60,7 +60,7 @@ export default async function CityPage({ params }: PageProps) {
         <Section.Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
-              <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+              <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                 <Link href="/locaties/">Locaties</Link> › {location.name}
               </span>
 
@@ -76,9 +76,9 @@ export default async function CityPage({ params }: PageProps) {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/personeel-aanvragen/"
-                  className="inline-flex items-center justify-center bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                  className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                  hover:bg-[#EA580C] transition-all duration-300"
+                  hover:bg-[#9a4700] transition-all duration-300"
                 >
                   Personeel aanvragen
                   <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ export default async function CityPage({ params }: PageProps) {
                 <Link
                   href="/contact/"
                   className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
-                  hover:border-[#F97316] hover:text-[#F97316] transition-all duration-300"
+                  hover:border-[#F97316] hover:text-[#B85600] transition-all duration-300"
                 >
                   Neem contact op
                 </Link>
@@ -141,7 +141,7 @@ export default async function CityPage({ params }: PageProps) {
                     <li key={index}>
                       <Link
                         href={service.href}
-                        className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
+                        className="text-neutral-700 hover:text-[#B85600] transition-colors inline-flex items-center gap-2 group"
                       >
                         <span>•</span>
                         <span className="group-hover:underline">{service.label}</span>
@@ -152,13 +152,13 @@ export default async function CityPage({ params }: PageProps) {
                 <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4">
                   <Link
                     href="/diensten/"
-                    className="text-[#F97316] font-semibold hover:underline"
+                    className="text-[#B85600] font-semibold hover:underline"
                   >
                     Bekijk alle diensten →
                   </Link>
                   <Link
                     href="/kosten-calculator/"
-                    className="text-[#F97316] font-semibold hover:underline"
+                    className="text-[#B85600] font-semibold hover:underline"
                   >
                     Kosten berekenen →
                   </Link>
@@ -180,7 +180,7 @@ export default async function CityPage({ params }: PageProps) {
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        className="text-neutral-700 hover:text-[#F97316] transition-colors inline-flex items-center gap-2 group"
+                        className="text-neutral-700 hover:text-[#B85600] transition-colors inline-flex items-center gap-2 group"
                       >
                         <span>•</span>
                         <span className="group-hover:underline">{item.label}</span>
@@ -190,7 +190,7 @@ export default async function CityPage({ params }: PageProps) {
                 </ul>
                 <Link
                   href="/functies/"
-                  className="inline-block mt-4 text-[#F97316] font-semibold hover:underline"
+                  className="inline-block mt-4 text-[#B85600] font-semibold hover:underline"
                 >
                   Alle functies bekijken →
                 </Link>
@@ -209,7 +209,7 @@ export default async function CityPage({ params }: PageProps) {
                 {location.serviceAreas.map((area, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1 bg-orange-50 text-[#F97316] px-3 py-1 rounded-full text-sm border border-orange-100"
+                    className="inline-flex items-center gap-1 bg-orange-50 text-[#9a4700] px-3 py-1 rounded-full text-sm border border-orange-100"
                   >
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path
@@ -233,7 +233,7 @@ export default async function CityPage({ params }: PageProps) {
                 <ul className="space-y-2 text-neutral-700">
                   {location.localEvents.map((event, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <span className="text-[#F97316] font-bold">•</span>
+                      <span className="text-[#B85600] font-bold">•</span>
                       <span>{event}</span>
                     </li>
                   ))}
@@ -247,7 +247,7 @@ export default async function CityPage({ params }: PageProps) {
                 <ul className="space-y-2 text-neutral-700 text-sm">
                   {location.uniqueSellingPoints.map((point, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <span className="text-[#F97316] font-bold">✓</span>
+                      <span className="text-[#B85600] font-bold">✓</span>
                       <span>{point}</span>
                     </li>
                   ))}
@@ -281,7 +281,7 @@ export default async function CityPage({ params }: PageProps) {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/personeel-aanvragen/"
-                  className="bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold
+                  className="bg-white text-[#B85600] px-8 py-4 rounded-xl text-base font-semibold
                   hover:bg-neutral-100 transition-all duration-300"
                 >
                   Personeel aanvragen

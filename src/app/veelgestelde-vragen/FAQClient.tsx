@@ -76,12 +76,12 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
         <Container>
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
+              <span className="inline-block text-[#B85600] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
                 FAQ
               </span>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-900 mb-6">
                 Veelgestelde vragen over{" "}
-                <span className="text-[#F97316]">horecapersoneel</span> inhuren
+                <span className="text-[#B85600]">horecapersoneel</span> inhuren
               </h1>
               <p className="text-neutral-600 text-lg leading-relaxed mb-8">
                 Alles wat je wilt weten over uitzendwerk in de horeca — van
@@ -140,13 +140,13 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
                   onClick={() => scrollToCategory(cat)}
                   className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     activeCategory === cat
-                      ? "bg-[#F97316] text-white"
-                      : "bg-neutral-100 text-neutral-700 hover:bg-orange-50 hover:text-[#F97316]"
+                      ? "bg-[#B85600] text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-orange-50 hover:text-[#9a4700]"
                   }`}
                 >
                   {cat}
                   {count > 0 && (
-                    <span className="ml-1.5 text-xs opacity-70">({count})</span>
+                    <span className="ml-1.5 text-xs opacity-90">({count})</span>
                   )}
                 </button>
               );
@@ -168,7 +168,7 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
                     voor &ldquo;{searchQuery}&rdquo;.{" "}
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="text-[#F97316] font-medium hover:underline"
+                      className="text-[#B85600] font-medium hover:underline"
                     >
                       Wis zoekopdracht
                     </button>
@@ -205,7 +205,7 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
                             {faq.question}
                           </span>
                           <svg
-                            className={`w-5 h-5 text-[#F97316] flex-shrink-0 transition-transform ${
+                            className={`w-5 h-5 text-[#B85600] flex-shrink-0 transition-transform ${
                               openItems.has(faq.id) ? "rotate-180" : ""
                             }`}
                             fill="none"
@@ -228,7 +228,7 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
                             <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
                               <Link
                                 href={`/veelgestelde-vragen/${faq.slug}`}
-                                className="text-sm text-[#F97316] hover:underline font-medium"
+                                className="text-sm text-[#B85600] hover:underline font-medium"
                               >
                                 Lees meer over dit onderwerp →
                               </Link>
@@ -264,7 +264,7 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
                 </p>
                 <Link
                   href="/personeel-aanvragen/"
-                  className="inline-flex items-center justify-center bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
+                  className="inline-flex items-center justify-center bg-white text-[#B85600] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
                 >
                   Personeel aanvragen
                   <svg
@@ -355,7 +355,7 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
             <span className="text-sm font-medium text-neutral-900 hidden sm:block">
               Staat jouw vraag er niet bij?
             </span>
-            <span className="bg-[#F97316] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#EA580C] transition-all duration-300 flex items-center gap-2 whitespace-nowrap">
+            <span className="bg-[#B85600] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#9a4700] transition-all duration-300 flex items-center gap-2 whitespace-nowrap">
               Stel je vraag
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -409,7 +409,7 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
                 </p>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="bg-[#F27501] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#d96800] transition-colors"
+                  className="bg-[#B85600] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors"
                 >
                   Sluiten
                 </button>
@@ -484,7 +484,7 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#F27501] text-white py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#B85600] text-white py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Versturen..." : "Vraag insturen"}
                   </button>

@@ -144,7 +144,7 @@ export default function ConfirmationModal({
             <Link
               href={primaryAction.href}
               onClick={onClose}
-              className="inline-flex items-center justify-center bg-[#FF7A00] text-white px-6 py-3.5 rounded-xl font-semibold
+              className="inline-flex items-center justify-center bg-[#B85600] text-white px-6 py-3.5 rounded-xl font-semibold
               shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
               hover:bg-[#E66E00] hover:-translate-y-0.5 active:scale-[0.98]
               transition-all duration-300"
@@ -157,7 +157,7 @@ export default function ConfirmationModal({
               href={secondaryAction.href}
               onClick={onClose}
               className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-6 py-3.5 rounded-xl font-semibold
-              hover:border-[#FF7A00] hover:text-[#FF7A00] hover:-translate-y-0.5 active:scale-[0.98]
+              hover:border-[#FF7A00] hover:text-[#B85600] hover:-translate-y-0.5 active:scale-[0.98]
               transition-all duration-300"
             >
               {secondaryAction.label}
@@ -168,7 +168,7 @@ export default function ConfirmationModal({
               <Link
                 href={tertiaryAction.href}
                 onClick={onClose}
-                className="inline-flex items-center justify-center gap-2 text-neutral-500 hover:text-[#FF7A00] transition-colors duration-300 font-medium py-2 group"
+                className="inline-flex items-center justify-center gap-2 text-neutral-500 hover:text-[#B85600] transition-colors duration-300 font-medium py-2 group"
               >
                 {tertiaryAction.label}
                 <svg

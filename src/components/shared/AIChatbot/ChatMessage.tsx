@@ -13,7 +13,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   if (isSystem) {
     return (
       <div className="flex justify-center px-4 py-2">
-        <div className="bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-xs px-3 py-1.5 rounded-full text-center max-w-[80%]">
+        <div className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-xs px-3 py-1.5 rounded-full text-center max-w-[80%]">
           {message.content}
         </div>
       </div>
@@ -31,7 +31,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         <div
           className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
             isUser
-              ? "bg-[#F27501] text-white rounded-br-md"
+              ? "bg-[#B85600] text-white rounded-br-md"
               : message.sender_type === "admin"
               ? "bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100 rounded-bl-md"
               : "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-bl-md"

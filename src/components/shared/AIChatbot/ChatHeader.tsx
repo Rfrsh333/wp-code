@@ -26,7 +26,7 @@ const statusColors: Record<ConversationStatus, string> = {
 
 export default function ChatHeader({ status, onMinimize, onClose, onReset }: ChatHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-[#F27501] text-white rounded-t-2xl">
+    <div className="flex items-center justify-between px-4 py-3 bg-[#B85600] text-white rounded-t-2xl">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold">
           TT
