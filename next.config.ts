@@ -94,6 +94,11 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
+        // Universal links van de app (ios.associatedDomains); Apple leest dit bestand als JSON.
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
+      {
         // De klant scant de QR-code van de medewerker bij check-in; camera alleen hier toestaan.
         // Staat ná de globale regel zodat deze Permissions-Policy wint.
         source: '/klant/:path*',
