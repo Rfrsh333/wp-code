@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { KANDIDAAT_UPLOAD_TYPES } from "@/lib/kandidaat-documenten";
+import { isKandidaatUploadType } from "@/lib/kandidaat-documenten";
+import { bepaalDocumentFormaat, valideerDocument } from "@/lib/medewerker/documenten";
 
 // 🚀 Optimized: O(1) token validation via database lookup
 async function validateUploadToken(token: string): Promise<{ valid: boolean; kandidaatId?: string }> {
@@ -80,11 +81,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const token = formData.get("token") as string;
     const file = formData.get("file");
-    // Alleen bekende types: de waarde komt ook in het opslagpad terecht.
-    const gevraagdType = String(formData.get("document_type") || formData.get("type") || "overig");
-    const documentType = (KANDIDAAT_UPLOAD_TYPES as readonly string[]).includes(gevraagdType)
-      ? gevraagdType
-      : "overig";
+    // B6: de kandidaat kiest het type zelf (niet meer geraden uit de bestandsnaam). Alleen
+    // bekende types: de waarde komt ook in het opslagpad terecht.
+    const gevraagdType = formData.get("document_type") || formData.get("type");
+    if (!isKandidaatUploadType(gevraagdType)) {
+      return NextResponse.json({ error: "Kies eerst wat voor document je uploadt" }, { status: 400 });
+    }
+    const documentType = gevraagdType;
 
     // Validate token
     if (!token) {
@@ -102,17 +105,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Geen bestand geselecteerd" }, { status: 400 });
     }
 
-    // File type validation
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Alleen PDF, JPG of PNG bestanden toegestaan" }, { status: 400 });
-    }
-
-    // File size validation (10MB max)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: "Bestand te groot (max 10MB)" }, { status: 400 });
-    }
+    // B7: zelfde regels als medewerkerdocumenten: PDF/JPG/PNG/HEIC tot 4 MB. Groter haalt de
+    // route niet eens (Vercel weigert bodies boven ~4,5 MB met een 413).
+    const fout = valideerDocument(file);
+    if (fout) return NextResponse.json({ error: fout }, { status: 400 });
+    const formaat = bepaalDocumentFormaat(file)!;
 
     // Rate limiting check - max 20 uploads per kandidaat total
     const { data: existingDocs, error: countError } = await supabaseAdmin
@@ -135,16 +132,15 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const timestamp = Date.now();
-    // Extensie uit het (al gecontroleerde) mime-type, niet uit de bestandsnaam.
-    const fileExt = file.type === "application/pdf" ? "pdf" : file.type === "image/png" ? "png" : "jpg";
-    const fileName = `${validation.kandidaatId}/${documentType}_${timestamp}.${fileExt}`;
+    // Extensie uit het (al gecontroleerde) formaat, niet uit de bestandsnaam.
+    const fileName = `${validation.kandidaatId}/${documentType}_${timestamp}.${formaat.ext}`;
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabaseAdmin
       .storage
       .from('kandidaat-documenten')
       .upload(fileName, buffer, {
-        contentType: file.type,
+        contentType: formaat.mime,
         upsert: false,
       });
 
@@ -163,7 +159,7 @@ export async function POST(request: NextRequest) {
         type: documentType,
         bestandsnaam: file.name.slice(0, 255),
         bestand_pad: fileName,
-        mime_type: file.type,
+        mime_type: formaat.mime,
         bestand_grootte: file.size,
         status: "ontvangen",
         uploaded_at: new Date().toISOString(),

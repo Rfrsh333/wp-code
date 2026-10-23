@@ -5,6 +5,7 @@ import { kandidaatDocumentenPatchSchema, validateAdminBody } from "@/lib/validat
 import { captureRouteError } from "@/lib/sentry-utils";
 import {
   KANDIDAAT_DOCUMENT_KOLOMMEN,
+  isKandidaatDocumentType,
   naarAdminDocument,
   type KandidaatDocumentRij,
 } from "@/lib/kandidaat-documenten";
@@ -78,6 +79,9 @@ export async function POST(request: NextRequest) {
   if (!inschrijvingId || !type || !(file instanceof File)) {
     return NextResponse.json({ error: "inschrijvingId, type en file zijn verplicht" }, { status: 400 });
   }
+  if (!isKandidaatDocumentType(type)) {
+    return NextResponse.json({ error: "Onbekend documenttype" }, { status: 400 });
+  }
 
   const safeFilename = sanitizeFilename(file.name);
   const path = `${inschrijvingId}/${Date.now()}-${safeFilename}`;
@@ -140,15 +144,26 @@ export async function PATCH(request: NextRequest) {
   if (!validation.success) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
-  const { id, status, notitie } = validation.data;
+  const { id, status, notitie, type } = validation.data;
 
-  const updateData: Record<string, string | null> = {
-    notitie: typeof notitie === "string" ? notitie : null,
-  };
+  // Alleen meegestuurde velden bijwerken: voorheen wiste elke PATCH zonder notitie de notitie.
+  const updateData: Record<string, string | null> = {};
+  if (notitie !== undefined) updateData.notitie = typeof notitie === "string" ? notitie : null;
+
+  if (type !== undefined) {
+    if (!isKandidaatDocumentType(type)) {
+      return NextResponse.json({ error: "Onbekend documenttype" }, { status: 400 });
+    }
+    updateData.type = type;
+  }
 
   if (status) {
     updateData.status = status;
     updateData.reviewed_at = new Date().toISOString();
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: "Niets om bij te werken" }, { status: 400 });
   }
 
   const { error } = await supabaseAdmin

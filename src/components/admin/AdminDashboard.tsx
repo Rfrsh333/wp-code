@@ -15,6 +15,7 @@ import DashboardOverzicht from "@/components/admin/dashboard/DashboardOverzicht"
 import { BriefcaseBusiness, Inbox, Users } from "lucide-react";
 import { isAdminTab } from "@/lib/navigation/sidebar-config";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
+import { KANDIDAAT_DOCUMENT_TYPES } from "@/lib/kandidaat-documenten";
 
 const TabSkeleton = () => (
   <div className="space-y-4 animate-pulse">
@@ -281,15 +282,8 @@ const onboardingChecklistItems: { key: ChecklistKey; label: string }[] = [
   { key: "klaar_voor_inzet", label: "Klaar voor inzet" },
 ];
 
-const kandidaatDocumentTypeOptions = [
-  { value: "id", label: "ID" },
-  { value: "cv", label: "CV" },
-  { value: "kvk", label: "KvK" },
-  { value: "btw", label: "BTW" },
-  { value: "certificaat", label: "Certificaat" },
-  { value: "contract", label: "Contract" },
-  { value: "bankbewijs", label: "Bankbewijs" },
-] as const;
+// Zelfde lijst als de server controleert (lib/kandidaat-documenten), incl. "overig" (B6).
+const kandidaatDocumentTypeOptions = KANDIDAAT_DOCUMENT_TYPES;
 
 const kandidaatDocumentStatusLabels: Record<KandidaatDocumentStatus, string> = {
   ontvangen: "Ontvangen",
@@ -627,7 +621,7 @@ export default function AdminDashboard() {
   const updateKandidaatDocument = async (
     inschrijving: Inschrijving,
     documentId: string,
-    data: { status?: KandidaatDocumentStatus; notitie?: string }
+    data: { status?: KandidaatDocumentStatus; notitie?: string; type?: string }
   ) => {
     const response = await fetch("/api/admin/kandidaat-documenten", {
       method: "PATCH",
@@ -2169,9 +2163,24 @@ export default function AdminDashboard() {
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${kandidaatDocumentStatusColors[document.status]}`}>
                                     {kandidaatDocumentStatusLabels[document.status]}
                                   </span>
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-white border border-neutral-200 text-neutral-600">
-                                    {document.type}
-                                  </span>
+                                  {/* B6: type corrigeren (de kandidaat kan het verkeerde type hebben gekozen) */}
+                                  <select
+                                    value={document.type}
+                                    onChange={(e) =>
+                                      updateKandidaatDocument(selectedItem as Inschrijving, document.id, { type: e.target.value })
+                                    }
+                                    aria-label="Documenttype"
+                                    className="px-2 py-1 rounded-full text-xs font-medium bg-white border border-neutral-200 text-neutral-600"
+                                  >
+                                    {!kandidaatDocumentTypeOptions.some((o) => o.value === document.type) && (
+                                      <option value={document.type}>{document.type}</option>
+                                    )}
+                                    {kandidaatDocumentTypeOptions.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </div>
                                 <p className="text-sm text-neutral-500">
                                   Geupload op {formatDate(document.uploaded_at)}

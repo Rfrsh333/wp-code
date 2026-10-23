@@ -3,6 +3,14 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { compressImage } from "@/lib/image-compress";
+import { DOCUMENT_ACCEPT, MAX_DOCUMENT_BYTES } from "@/lib/medewerker/documenten";
+import {
+  kandidaatDocumentLabel,
+  kandidaatUploadPlan,
+  uploadFoutmelding,
+  type KandidaatUploadType,
+} from "@/lib/kandidaat-documenten";
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +29,7 @@ function DocumentenUploadContent() {
   const [uploading, setUploading] = useState(false);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [gekozenType, setGekozenType] = useState<KandidaatUploadType | "">("");
   const toast = useToast();
 
   useEffect(() => {
@@ -53,67 +62,84 @@ function DocumentenUploadContent() {
     void validateToken();
   }, [searchParams]);
 
+  // B7: verklein foto's (en zet HEIC om naar JPEG) vóór het versturen. Vercel weigert bodies
+  // boven ~4,5 MB met een 413 voordat de route draait.
+  const bereidVoor = async (file: File): Promise<File> => {
+    const plan = kandidaatUploadPlan(file);
+    if (plan.soort === "fout") throw new Error(plan.melding);
+    if (plan.soort === "direct") return file;
+    try {
+      const blob = await compressImage(file, {
+        maxWidth: 2400,
+        maxHeight: 2400,
+        quality: 0.85,
+        maxSizeBytes: 3 * 1024 * 1024,
+      });
+      if (blob.size > MAX_DOCUMENT_BYTES) throw new Error("te groot");
+      const naam = file.name.replace(/\.[^.]+$/, "") || "foto";
+      return new File([blob], `${naam}.jpg`, { type: "image/jpeg" });
+    } catch {
+      // Niet te verkleinen (bv. HEIC in een browser die het niet kan lezen): klein genoeg mag
+      // ongewijzigd mee, anders een nette melding.
+      if (!plan.verplicht) return file;
+      throw new Error(
+        "Deze foto is te groot (maximaal 4 MB) en kon niet worden verkleind. Maak een foto met een lagere resolutie of upload een PDF.",
+      );
+    }
+  };
+
   const handleFileUpload = async (files: FileList | File[]) => {
     if (!token) return;
-
-    const fileArray = Array.from(files);
-
-    // Validatie
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-
-    for (const file of fileArray) {
-      if (!allowedTypes.includes(file.type)) {
-        toast.warning(`${file.name}: Alleen PDF, JPG of PNG bestanden toegestaan`);
-        return;
-      }
-      if (file.size > maxSize) {
-        toast.warning(`${file.name}: Bestand te groot (max 10MB)`);
-        return;
-      }
+    // B6: de kandidaat kiest zelf het type; niet meer raden uit de bestandsnaam.
+    if (!gekozenType) {
+      toast.warning("Kies eerst wat je uploadt (bijvoorbeeld ID-bewijs of CV).");
+      return;
     }
 
+    const fileArray = Array.from(files);
     setUploading(true);
+    let gelukt = 0;
 
     try {
-      for (const file of fileArray) {
+      for (const origineel of fileArray) {
+        let file: File;
+        try {
+          file = await bereidVoor(origineel);
+        } catch (err) {
+          toast.warning(`${origineel.name}: ${err instanceof Error ? err.message : "Bestand niet toegestaan"}`);
+          continue;
+        }
+
         const formData = new FormData();
         formData.append("file", file);
         formData.append("token", token);
+        formData.append("document_type", gekozenType);
 
-        // Auto-detect document type based on filename
-        let docType = "overig";
-        const fileName = file.name.toLowerCase();
-        if (fileName.includes("id") || fileName.includes("paspoort") || fileName.includes("identiteit")) {
-          docType = "id";
-        } else if (fileName.includes("cv") || fileName.includes("resume")) {
-          docType = "cv";
-        } else if (fileName.includes("kvk")) {
-          docType = "kvk";
+        let response: Response;
+        try {
+          response = await fetch("/api/kandidaat/documenten", { method: "POST", body: formData });
+        } catch {
+          toast.error(`${origineel.name}: geen verbinding. Controleer je internet en probeer het opnieuw.`);
+          continue;
         }
-        formData.append("document_type", docType);
-
-        const response = await fetch("/api/kandidaat/documenten", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const result = await response.json();
-          throw new Error(result.error || "Upload mislukt");
+        // Een 413 of 502 van Vercel is geen JSON; dan niet "Unexpected token" tonen.
+        const result = await response.json().catch(() => null);
+        if (!response.ok || !result) {
+          toast.error(`${origineel.name}: ${uploadFoutmelding(response.status, result)}`);
+          continue;
         }
 
-        const result = await response.json();
+        gelukt += 1;
         setUploadedDocs(prev => [...prev, {
           document_type: result.document_type,
-          file_name: file.name,
-          file_size: file.size
+          file_name: origineel.name,
+          file_size: file.size,
         }]);
       }
 
-      toast.success(`${fileArray.length} bestand(en) succesvol geüpload!`);
-    } catch (err) {
-      toast.error(`Upload fout: ${err instanceof Error ? err.message : 'Onbekende fout'}`);
+      if (gelukt > 0) {
+        toast.success(`${gelukt} bestand(en) geüpload als ${kandidaatDocumentLabel(gekozenType)}.`);
+      }
     } finally {
       setUploading(false);
     }
@@ -158,6 +184,13 @@ function DocumentenUploadContent() {
   }
 
   const isDocUploaded = (type: string) => uploadedDocs.some(doc => doc.document_type === type);
+
+  const uploadOpties: { type: KandidaatUploadType; label: string }[] = [
+    { type: "id", label: kandidaatDocumentLabel("id") },
+    { type: "cv", label: kandidaatDocumentLabel("cv") },
+    ...(kandidaat.uitbetalingswijze === "zzp" ? [{ type: "kvk" as const, label: kandidaatDocumentLabel("kvk") }] : []),
+    { type: "overig", label: "Iets anders" },
+  ];
   const allDocsUploaded = requiredDocs.every(doc => isDocUploaded(doc.type));
 
   return (
@@ -200,6 +233,35 @@ function DocumentenUploadContent() {
             </div>
           </div>
 
+          {/* B6: typekeuze; elk bestand krijgt het gekozen type mee */}
+          <div className="mb-4">
+            <p className="font-semibold text-neutral-900 mb-2">Wat upload je?</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {uploadOpties.map((optie) => (
+                <label
+                  key={optie.type}
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
+                    gekozenType === optie.type ? "border-[#F27501] bg-orange-50" : "border-neutral-200 hover:border-[#F27501]/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="document_type"
+                    value={optie.type}
+                    checked={gekozenType === optie.type}
+                    onChange={() => setGekozenType(optie.type)}
+                    className="accent-[#F27501]"
+                  />
+                  <span className="font-medium text-neutral-900">{optie.label}</span>
+                  {isDocUploaded(optie.type) && <span className="ml-auto text-xs text-green-600">✓ al geüpload</span>}
+                </label>
+              ))}
+            </div>
+            <p className="text-sm text-neutral-500 mt-2">
+              Voor- en achterkant van je ID? Kies &quot;ID-bewijs&quot; en upload beide foto&apos;s.
+            </p>
+          </div>
+
           {/* Upload Zone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -226,7 +288,7 @@ function DocumentenUploadContent() {
               <input
                 type="file"
                 multiple
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept={DOCUMENT_ACCEPT}
                 onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
                 className="hidden"
                 disabled={uploading}
@@ -238,7 +300,7 @@ function DocumentenUploadContent() {
               </span>
             </label>
             <p className="text-sm text-neutral-500 mt-4">
-              PDF, JPG of PNG • Max 10MB per bestand
+              PDF, JPG, PNG of HEIC • maximaal 4 MB per bestand (foto&apos;s verkleinen we automatisch)
             </p>
           </div>
 
@@ -253,7 +315,7 @@ function DocumentenUploadContent() {
                     <div className="flex-1">
                       <p className="font-medium text-neutral-900">{doc.file_name}</p>
                       <p className="text-sm text-neutral-500">
-                        {doc.document_type.toUpperCase()} • {(doc.file_size / 1024).toFixed(0)} KB
+                        {kandidaatDocumentLabel(doc.document_type)} • {(doc.file_size / 1024).toFixed(0)} KB
                       </p>
                     </div>
                   </div>

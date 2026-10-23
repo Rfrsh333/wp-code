@@ -1,3 +1,5 @@
+import { bepaalDocumentFormaat, MAX_DOCUMENT_BYTES } from "@/lib/medewerker/documenten";
+
 /**
  * Vertaling tussen de live tabel `kandidaat_documenten` en de vormen die de
  * frontends verwachten.
@@ -21,6 +23,77 @@ export type ReviewStatus = "in_review" | "approved" | "rejected";
 
 /** Documenttypes die een kandidaat zelf via de uploadlink mag aanleveren. */
 export const KANDIDAAT_UPLOAD_TYPES = ["id", "cv", "kvk", "overig"] as const;
+export type KandidaatUploadType = (typeof KANDIDAAT_UPLOAD_TYPES)[number];
+
+/**
+ * Alle types die een kandidaatdocument kan hebben (admin-upload en typecorrectie, B6).
+ * Labels zijn wat kandidaat en admin te zien krijgen.
+ */
+export const KANDIDAAT_DOCUMENT_TYPES = [
+  { value: "id", label: "ID-bewijs (paspoort of ID-kaart)" },
+  { value: "cv", label: "CV" },
+  { value: "kvk", label: "KvK-uittreksel" },
+  { value: "btw", label: "Btw-nummer / btw-bewijs" },
+  { value: "certificaat", label: "Certificaat" },
+  { value: "contract", label: "Contract" },
+  { value: "bankbewijs", label: "Bankbewijs" },
+  { value: "overig", label: "Overig" },
+] as const;
+export type KandidaatDocumentType = (typeof KANDIDAAT_DOCUMENT_TYPES)[number]["value"];
+
+export function isKandidaatDocumentType(waarde: unknown): waarde is KandidaatDocumentType {
+  return typeof waarde === "string" && KANDIDAAT_DOCUMENT_TYPES.some((t) => t.value === waarde);
+}
+
+export function isKandidaatUploadType(waarde: unknown): waarde is KandidaatUploadType {
+  return typeof waarde === "string" && (KANDIDAAT_UPLOAD_TYPES as readonly string[]).includes(waarde);
+}
+
+export function kandidaatDocumentLabel(type: string | null | undefined): string {
+  return KANDIDAAT_DOCUMENT_TYPES.find((t) => t.value === type)?.label ?? (type || "Document");
+}
+
+/** Vanaf deze grootte comprimeert de uploadpagina een foto eerst in de browser. */
+export const COMPRIMEER_VANAF_BYTES = 1.5 * 1024 * 1024;
+
+export type UploadPlan =
+  | { soort: "direct" }
+  /** `verplicht`: zonder compressie wordt het bestand geweigerd (te groot) of is het HEIC. */
+  | { soort: "comprimeren"; verplicht: boolean }
+  | { soort: "fout"; melding: string };
+
+/**
+ * B7: wat de uploadpagina met een bestand doet. Vercel weigert request bodies boven ~4,5 MB
+ * vóórdat de route draait (413), dus de grens is 4 MB (zoals bij medewerkerdocumenten).
+ * Foto's worden in de browser verkleind tot JPEG; HEIC (iPhone) ook, zodat de admin het kan
+ * openen. Lukt verkleinen niet, dan gaat een HEIC tot 4 MB ongewijzigd mee (de server
+ * accepteert HEIC) en volgt bij een te groot bestand een nette melding.
+ */
+export function kandidaatUploadPlan(bestand: { name: string; type: string; size: number }): UploadPlan {
+  if (!bestand.size) return { soort: "fout", melding: "Het bestand is leeg." };
+  const formaat = bepaalDocumentFormaat(bestand);
+  if (!formaat) return { soort: "fout", melding: "Alleen PDF, JPG, PNG of HEIC is toegestaan." };
+
+  const teGroot = bestand.size > MAX_DOCUMENT_BYTES;
+  if (formaat.mime === "application/pdf") {
+    return teGroot
+      ? { soort: "fout", melding: "Deze PDF is te groot (maximaal 4 MB). Verklein de PDF of maak een foto van het document." }
+      : { soort: "direct" };
+  }
+  if (formaat.ext === "heic") return { soort: "comprimeren", verplicht: teGroot };
+  if (teGroot) return { soort: "comprimeren", verplicht: true };
+  if (bestand.size > COMPRIMEER_VANAF_BYTES) return { soort: "comprimeren", verplicht: false };
+  return { soort: "direct" };
+}
+
+/** Melding na een mislukte upload; ook als het antwoord geen JSON is (413/502 van Vercel). */
+export function uploadFoutmelding(status: number, body: unknown): string {
+  if (status === 413) return "Dit bestand is te groot om te versturen (maximaal 4 MB). Maak een kleinere foto of verklein de PDF.";
+  const fout = body && typeof body === "object" ? (body as { error?: unknown }).error : undefined;
+  if (typeof fout === "string" && fout) return fout;
+  if (status === 403) return "Je uploadlink is ongeldig of verlopen. Vraag ons om een nieuwe link.";
+  return "Uploaden lukte niet. Probeer het opnieuw, of mail je document naar info@toptalentjobs.nl.";
+}
 
 /** Kolommen die we standaard selecteren (live schema). */
 export const KANDIDAAT_DOCUMENT_KOLOMMEN =
