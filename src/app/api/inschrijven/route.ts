@@ -6,9 +6,13 @@ import { verifyRecaptcha } from "@/lib/recaptcha";
 import { escapeHtml } from "@/lib/sanitize";
 import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { ontbrekendeInschrijfVelden, inschrijfFoutmelding } from "@/lib/inschrijving-regels";
-import { normaliseerEmail } from "@/lib/email-normalisatie";
-import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
+import {
+  HERINSCHRIJVING_RESET,
+  herinschrijvingKeuze,
+  ontbrekendeInschrijfVelden,
+  inschrijfFoutmelding,
+} from "@/lib/inschrijving-regels";
+import { emailIlikePatroon, normaliseerEmail } from "@/lib/email-normalisatie";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -139,13 +143,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // H-2: Duplicate email check
-    // Hoofdletterongevoelig: oudere inschrijvingen bewaren het adres zoals het werd getypt.
-    const existingKandidaat = await zoekOpEmail<{ id: string; email: string }>("inschrijvingen", "id, email", email);
+    // H-2: Duplicate email check, hoofdletterongevoelig (oudere inschrijvingen bewaren het adres
+    // zoals het werd getypt). B13: na een afwijzing mag je je opnieuw inschrijven; dan wordt de
+    // afgewezen inschrijving hergebruikt.
+    const patroon = emailIlikePatroon(email);
+    const bestaandBasis = supabase.from("inschrijvingen").select("id, email, onboarding_status, created_at");
+    const { data: bestaandeRijen } = await (patroon ? bestaandBasis.ilike("email", patroon) : bestaandBasis.eq("email", email)).limit(20);
+    const keuze = herinschrijvingKeuze(
+      ((bestaandeRijen ?? []) as { id: string; email: string; onboarding_status: string | null; created_at: string | null }[])
+        .filter((r) => normaliseerEmail(r.email) === email),
+    );
 
-    if (existingKandidaat) {
+    if (keuze.soort === "bestaat") {
       return NextResponse.json(
-        { error: "Er bestaat al een inschrijving met dit e-mailadres" },
+        { error: "Er bestaat al een inschrijving met dit e-mailadres. Je status staat in de bevestigingsmail; vragen? Mail info@toptalentjobs.nl." },
         { status: 409 }
       );
     }
@@ -250,11 +261,23 @@ export async function POST(request: NextRequest) {
     // moeten eerst aan de inschrijvingen tabel worden toegevoegd via een migratie.
     // Zie personeel_aanvragen voor referentie-implementatie.
 
-    const { data: insertedData, error: dbError } = await supabase
-      .from("inschrijvingen")
-      .insert(insertPayload)
-      .select()
-      .single();
+    let insertedData: { id: string } | null = null;
+    let dbError: unknown = null;
+    if (keuze.soort === "hergebruik") {
+      // Afgewezen inschrijving opnieuw gebruiken: nieuwe gegevens, onboarding terug naar het begin.
+      const herstart = { ...insertPayload, ...HERINSCHRIJVING_RESET, laatste_onboarding_actie: new Date().toISOString() };
+      let resultaat = await supabase.from("inschrijvingen").update(herstart).eq("id", keuze.id).select("id").single();
+      if (resultaat.error?.code === "PGRST204") {
+        // Een resetkolom bestaat (nog) niet in deze database: dan alleen de formuliervelden.
+        resultaat = await supabase.from("inschrijvingen").update(insertPayload).eq("id", keuze.id).select("id").single();
+      }
+      insertedData = resultaat.data;
+      dbError = resultaat.error;
+    } else {
+      const resultaat = await supabase.from("inschrijvingen").insert(insertPayload).select().single();
+      insertedData = resultaat.data;
+      dbError = resultaat.error;
+    }
 
     if (dbError) {
       captureRouteError(dbError, { route: "/api/inschrijven", action: "POST" });

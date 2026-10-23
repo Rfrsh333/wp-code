@@ -46,3 +46,43 @@ export function inschrijfFoutmelding(ontbrekend: VerplichtInschrijfVeld[]): stri
   if (labels.length === 1) return `Vul het verplichte veld in: ${labels[0]}`;
   return `Vul de verplichte velden in: ${labels.join(", ")}`;
 }
+
+export type HerinschrijvingKeuze =
+  | { soort: "nieuw" }
+  | { soort: "hergebruik"; id: string }
+  | { soort: "bestaat" };
+
+/**
+ * B13: wat er gebeurt als iemand zich inschrijft met een adres dat al bekend is.
+ * De afwijzingsmail zegt "je bent altijd welkom om je opnieuw in te schrijven", maar de route
+ * gaf dan 409. Nu: zijn alle bestaande inschrijvingen afgewezen, dan wordt de nieuwste
+ * hergebruikt (zelfde id, gegevens en onboarding opnieuw); loopt er nog een, dan blijft het 409.
+ */
+export function herinschrijvingKeuze(
+  bestaand: readonly { id: string; onboarding_status?: string | null; created_at?: string | null }[],
+): HerinschrijvingKeuze {
+  if (bestaand.length === 0) return { soort: "nieuw" };
+  if (bestaand.some((r) => r.onboarding_status !== "afgewezen")) return { soort: "bestaat" };
+  const nieuwste = [...bestaand].sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))[0];
+  return { soort: "hergebruik", id: nieuwste.id };
+}
+
+/**
+ * Velden die bij hergebruik van een afgewezen inschrijving terug naar de beginstand gaan, zodat
+ * de nieuwe inschrijving niet de status, links of datums van de oude erft.
+ */
+export const HERINSCHRIJVING_RESET = {
+  onboarding_status: "nieuw",
+  onboarding_step: 0,
+  onboarding_auto: true,
+  documenten_compleet: false,
+  goedgekeurd_op: null,
+  inzetbaar_op: null,
+  onboarding_portal_token: null,
+  onboarding_portal_token_expires_at: null,
+  documenten_verzoek_verstuurd_op: null,
+  documenten_reminder_verstuurd_op: null,
+  intake_bevestiging_verstuurd_op: null,
+  welkom_mail_verstuurd_op: null,
+  ai_screening_score: null,
+} as const;
