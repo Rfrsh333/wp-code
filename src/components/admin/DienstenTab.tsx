@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import ShiftAanbiedingenPanel from "./ShiftAanbiedingenPanelV2";
+import EersteDienstControlePanel from "./EersteDienstControlePanel";
 
 interface Dienst {
   id: string;
@@ -18,7 +19,7 @@ interface Dienst {
   aantal_nodig: number;
   uurtarief: number | null;
   afbeelding: string | null;
-  status: "open" | "vol" | "bezig" | "afgerond" | "geannuleerd";
+  status: "open" | "vol" | "bezig" | "afgerond" | "geannuleerd" | "in_controle";
   notities: string | null;
   created_at: string;
   is_spoeddienst: boolean;
@@ -67,6 +68,7 @@ const statusColors: Record<string, string> = {
   bezig: "bg-yellow-100 text-yellow-700",
   afgerond: "bg-neutral-100 text-neutral-600",
   geannuleerd: "bg-red-100 text-red-700",
+  in_controle: "bg-amber-100 text-amber-800",
 };
 
 const statusLabels: Record<string, string> = {
@@ -75,6 +77,7 @@ const statusLabels: Record<string, string> = {
   bezig: "Bezig",
   afgerond: "Afgerond",
   geannuleerd: "Geannuleerd",
+  in_controle: "In controle",
 };
 
 export default function DienstenTab() {
@@ -389,6 +392,9 @@ export default function DienstenTab() {
           Nieuwe dienst
         </button>
       </div>
+
+      {/* Eerste diensten van nieuwe klanten die op goedkeuring wachten */}
+      <EersteDienstControlePanel onGewijzigd={fetchDiensten} />
 
       {/* Filter tabs + zoek */}
       <div className="flex items-center gap-4 mb-6">

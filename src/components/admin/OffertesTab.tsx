@@ -44,6 +44,7 @@ export default function OffertesTab() {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [view, setView] = useState<"offertes" | "genereren">("offertes");
   const [copied, setCopied] = useState<string | null>(null);
+  const [melding, setMelding] = useState<{ type: "ok" | "fout"; tekst: string } | null>(null);
 
   const getToken = async () => {
     const { supabase } = await import("@/lib/supabase");
@@ -110,24 +111,40 @@ export default function OffertesTab() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ aanvraagId: offerte.aanvraag_id, offerteId: offerte.id }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
+        setMelding({ type: "ok", tekst: data.message || "Offerte verzonden" });
         await fetchData();
+      } else {
+        setMelding({ type: "fout", tekst: data.error || "Versturen mislukt" });
       }
     } catch (err) {
       console.error("Send error:", err);
+      setMelding({ type: "fout", tekst: "Versturen mislukt" });
     } finally {
       setSendingId(null);
     }
   };
 
+  // Via de server (service role): met de browserclient blokkeerde RLS de update stil.
   const rejectOfferte = async (offerteId: string) => {
     setRejectingId(offerteId);
     try {
-      const { supabase } = await import("@/lib/supabase");
-      await supabase.from("offertes").update({ status: "afgewezen" }).eq("id", offerteId);
-      await fetchData();
+      const token = await getToken();
+      const res = await fetch(`/api/admin/offertes/${offerteId}/afwijzen`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMelding({ type: "ok", tekst: "Offerte afgewezen. De klant kan hem niet meer online accepteren." });
+        await fetchData();
+      } else {
+        setMelding({ type: "fout", tekst: data.error || "Afwijzen mislukt" });
+      }
     } catch (err) {
       console.error("Reject error:", err);
+      setMelding({ type: "fout", tekst: "Afwijzen mislukt" });
     } finally {
       setRejectingId(null);
     }
@@ -182,6 +199,12 @@ export default function OffertesTab() {
           </button>
         </div>
       </div>
+
+      {melding && (
+        <div role="status" className={`rounded-xl px-4 py-3 text-sm ${melding.type === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+          {melding.tekst}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-5 gap-4">

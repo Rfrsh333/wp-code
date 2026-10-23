@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { INGEPLAND_STATUSSEN, isIngepland } from "@/lib/dienst-status";
+import { DIENST_STATUS_IN_CONTROLE } from "@/lib/klant-controle-regels";
 import { herberekenPlekken } from "@/lib/plekken";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { haalDemoIds, zelfdeWereld } from "@/lib/demo";
@@ -119,6 +120,9 @@ export async function meldAan(
     .eq("id", dienstId)
     .maybeSingle();
   if (!dienst) return { ok: false, status: 404, error: "Dienst niet gevonden" };
+  // Eerste dienst van een nieuwe klant die TopTalent nog controleert (lib/klant-controle-regels):
+  // voor medewerkers bestaat hij nog niet.
+  if (dienst.status === DIENST_STATUS_IN_CONTROLE) return { ok: false, status: 404, error: "Dienst niet gevonden" };
   // Demo-medewerkers alleen op diensten van demo-klanten en andersom (lib/demo.ts). Zelfde
   // antwoord als een onbekende dienst: de andere wereld bestaat voor deze medewerker niet.
   if (!zelfdeWereld(await haalDemoIds(), medewerkerId, dienst.klant_id as string | null)) {

@@ -6,7 +6,13 @@ const KLANT_LOGIN = "/klant/login";
 const MEDEWERKER_LOGIN = "/medewerker/login";
 // Pagina's die zonder sessie bereikbaar moeten zijn: e-maillinks (activatie, reset)
 // dragen hun token in de URL en zouden anders bij de login stranden.
-const KLANT_PUBLIC_PAGES = [KLANT_LOGIN, "/klant/registreren", "/klant/wachtwoord-vergeten", "/klant/wachtwoord-reset"];
+const KLANT_PUBLIC_PAGES = [
+  KLANT_LOGIN,
+  "/klant/registreren",
+  "/klant/wachtwoord-vergeten",
+  "/klant/wachtwoord-reset",
+  "/klant/email-bevestigen",
+];
 const MEDEWERKER_PUBLIC_PAGES = [
   MEDEWERKER_LOGIN,
   "/medewerker/activeren",

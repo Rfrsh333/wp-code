@@ -48,10 +48,14 @@ export default function KlantLogin() {
 
   // Melding na een geslaagde wachtwoordreset (/klant/login?reset=1).
   // (Na mount gelezen: tijdens SSR is er geen URL, anders hydration-verschil.)
-  const [resetGelukt, setResetGelukt] = useState(false);
+  // Na een uitnodiging (/klant/login?welkom=1) een eigen tekst.
+  const [resetGelukt, setResetGelukt] = useState<"reset" | "welkom" | null>(null);
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("reset") === "1") {
-      queueMicrotask(() => setResetGelukt(true));
+    const zoek = new URLSearchParams(window.location.search);
+    if (zoek.get("welkom") === "1") {
+      queueMicrotask(() => setResetGelukt("welkom"));
+    } else if (zoek.get("reset") === "1") {
+      queueMicrotask(() => setResetGelukt("reset"));
     }
   }, []);
 
@@ -119,7 +123,9 @@ export default function KlantLogin() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {resetGelukt && !error && (
                 <div role="status" className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm">
-                  Uw wachtwoord is gewijzigd. Log in met uw nieuwe wachtwoord.
+                  {resetGelukt === "welkom"
+                    ? "Uw wachtwoord is ingesteld. Log in om te beginnen."
+                    : "Uw wachtwoord is gewijzigd. Log in met uw nieuwe wachtwoord."}
                 </div>
               )}
               {error && <div role="alert" className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}

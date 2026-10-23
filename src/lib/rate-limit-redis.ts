@@ -73,6 +73,17 @@ export const contractSignRateLimit = redis
     })
   : null;
 
+// Diensten plaatsen door een klant (POST /api/klant/aanvraag), per klantaccount. Elke aanvraag
+// kan een push naar alle medewerkers geven; 20 per uur laat een week inplannen ruim toe.
+export const klantAanvraagRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(20, "1 h"),
+      analytics: true,
+      prefix: "ratelimit:klant-aanvraag",
+    })
+  : null;
+
 // Striktere rate limit voor AI endpoints (kostbaar + misbruikgevoelig)
 export const aiRateLimit = redis
   ? new Ratelimit({
@@ -167,6 +178,10 @@ function inferFallbackRateLimitOptions(identifier: string): FallbackRateLimitOpt
 
   if (identifier.startsWith("klant-register:")) {
     return { windowMs: 15 * 60 * 1000, maxRequests: 3 };
+  }
+
+  if (identifier.startsWith("klant-aanvraag:")) {
+    return { windowMs: 60 * 60 * 1000, maxRequests: 20 };
   }
 
   if (identifier.startsWith("calculator-lead:")) {

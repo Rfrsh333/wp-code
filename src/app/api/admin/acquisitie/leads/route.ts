@@ -6,6 +6,8 @@ import { scoreLead } from "@/lib/agents/lead-scoring";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { buildLeadIdentityFields, normalizeCompanyName } from "@/lib/acquisitie/identity";
+import { stuurKlantUitnodiging } from "@/lib/klant-uitnodiging";
+import { markeerGecontroleerd } from "@/lib/klant-onboarding";
 
 type LeadIdentityCandidate = {
   id: string;
@@ -219,15 +221,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Lead niet gevonden" }, { status: 404 });
       }
 
-      // Create klant record
+      // Klant aanmaken. TopTalent zet de klant zelf aan, dus status `actief` (voorheen gold de
+      // database-standaard) en het e-mailadres in kleine letters: inloggen en "wachtwoord
+      // vergeten" zoeken op het e-mailadres in kleine letters.
+      const leadEmail = typeof lead.email === "string" && lead.email.trim() ? lead.email.trim().toLowerCase() : null;
       const { data: klant, error: klantError } = await supabaseAdmin
         .from("klanten")
         .insert({
           bedrijfsnaam: lead.bedrijfsnaam,
           contactpersoon: lead.contactpersoon,
-          email: lead.email,
+          email: leadEmail,
           telefoon: lead.telefoon,
           adres: lead.adres,
+          status: "actief",
         })
         .select()
         .single();
@@ -246,7 +252,21 @@ export async function POST(request: NextRequest) {
         })
         .eq("id", id);
 
-      return NextResponse.json({ success: true, klant_id: klant.id });
+      // Door TopTalent aangemaakt = gecontroleerd (geen eerste-dienstcontrole).
+      await markeerGecontroleerd(klant.id, "/api/admin/acquisitie/leads");
+
+      // Uitnodiging "wachtwoord instellen" (7 dagen geldig), zodat de klant zelf kan inloggen.
+      let uitnodiging: { verstuurd: boolean; melding: string };
+      if (leadEmail) {
+        const resultaat = await stuurKlantUitnodiging(klant.id, { route: "/api/admin/acquisitie/leads" });
+        uitnodiging = resultaat.ok
+          ? { verstuurd: true, melding: `Uitnodiging verstuurd naar ${resultaat.email}.` }
+          : { verstuurd: false, melding: resultaat.melding };
+      } else {
+        uitnodiging = { verstuurd: false, melding: "Geen e-mailadres bij deze lead: er is geen uitnodiging verstuurd." };
+      }
+
+      return NextResponse.json({ success: true, klant_id: klant.id, uitnodiging });
     }
 
     // Create new lead

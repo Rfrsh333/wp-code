@@ -2,27 +2,34 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
-import { sendPushToAllOfType, sendPushToUser } from "@/lib/push-notifications";
+import { sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { laagsteBasistarief } from "@/lib/pricing/ondergrens";
-import { haalTariefOverzicht } from "@/lib/pricing/tarief-overzicht";
+import {
+  alleRichtlijnen,
+  MARGE_PER_UUR,
+  tariefAdvies,
+  WETTELIJK_MINIMUMUURLOON,
+  WETTELIJK_MINIMUMUURLOON_PEILDATUM,
+} from "@/lib/pricing/richtlijntarieven";
 import { nlVandaag } from "@/lib/nl-tijd";
-import { kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
+import { begintijdVoorbij, kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
+import { checkRedisRateLimit, klantAanvraagRateLimit } from "@/lib/rate-limit-redis";
 import { isDemoKlant, medewerkersInWereld } from "@/lib/demo";
+import { laadOnboardingStand } from "@/lib/klant-onboarding";
+import { beoordeelDienstPlaatsen, DIENST_STATUS_IN_CONTROLE } from "@/lib/klant-controle-regels";
+import { meldDienstInControle, pushNieuweDienst } from "@/lib/klant-controle";
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 const TIJD = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Ondergrens voor het uurtarief bij self-service aanvragen: het laagste basistarief uit de
- * bestaande prijsbron (lib/pricing/smart-pricing, BASIS_TARIEVEN). Zo kan een klant geen
- * dienst plaatsen onder het laagste tarief dat TopTalent zelf hanteert.
- * Lukt het ophalen niet, dan geen ondergrens (0) i.p.v. alle aanvragen te blokkeren.
+ * Uurtarief: geen minimum of maximum (besluit Rachid 23-10-2026), wel richtlijnen per functie
+ * (lib/pricing/richtlijntarieven.ts). Een tarief onder de richtlijn, of waarbij de medewerker
+ * (klanttarief − € 4) onder het wettelijk minimumloon uitkomt, geeft een zachte waarschuwing in
+ * het antwoord (`tarief_waarschuwingen`), geen blokkade. Alleen een ongeldig bedrag (≤ 0) of een
+ * kennelijke tikfout (> € 1000) wordt geweigerd.
  */
-async function minimaalUurtarief(): Promise<number> {
-  return laagsteBasistarief(await haalTariefOverzicht("/api/klant/aanvraag"));
-}
 
 type FunctieRegel = { functie: string; aantal: number; tarief: number };
 
@@ -96,6 +103,15 @@ export async function POST(request: NextRequest) {
     const klant = await getKlantSession(request);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Per klantaccount begrenzen: elke aanvraag kan een push naar alle medewerkers geven.
+    const limiet = await checkRedisRateLimit(`klant-aanvraag:${klant.id}`, klantAanvraagRateLimit);
+    if (!limiet.success) {
+      return NextResponse.json(
+        { error: "U heeft in korte tijd veel aanvragen geplaatst. Probeer het over een uur opnieuw of neem contact op met TopTalent." },
+        { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((limiet.reset - Date.now()) / 1000))) } },
+      );
+    }
+
     // Verify klant exists in database
     const { data: klantData, error: klantError } = await supabaseAdmin
       .from("klanten")
@@ -111,6 +127,16 @@ export async function POST(request: NextRequest) {
     // Demo-account (reviewer): dienst wel aanmaken, maar alleen zichtbaar voor demo-medewerkers
     // en geen Telegram of push naar echte mensen (lib/demo.ts).
     const demo = await isDemoKlant(klantData.id);
+
+    // E-mailadres bevestigd? En is de klant al door TopTalent gecontroleerd? Zo niet, dan gaan
+    // de diensten eerst langs TopTalent (status in_controle, geen push). Zonder migratie
+    // 20261023_klant_onboarding.sql geldt iedereen als bevestigd en gecontroleerd.
+    const stand = await laadOnboardingStand(klantData.id);
+    const plaatsen = beoordeelDienstPlaatsen({ emailBevestigd: stand.emailBevestigd, gecontroleerd: stand.gecontroleerd, demo });
+    if (!plaatsen.ok) {
+      return NextResponse.json({ error: plaatsen.error, code: plaatsen.code }, { status: plaatsen.status });
+    }
+    const inControle = plaatsen.dienstStatus === DIENST_STATUS_IN_CONTROLE;
 
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -129,10 +155,16 @@ export async function POST(request: NextRequest) {
     if (datum < nlVandaag()) {
       return NextResponse.json({ error: "Datum moet in de toekomst liggen" }, { status: 400 });
     }
+    // Vandaag met een begintijd die al voorbij is (NL-tijd)
+    if (begintijdVoorbij(datum, start_tijd)) {
+      return NextResponse.json(
+        { error: "De begintijd ligt al in het verleden. Kies een latere begintijd of een andere datum." },
+        { status: 400 },
+      );
+    }
 
     // Functies + tarieven normaliseren (nieuw formaat: meerdere functies met eigen tarief;
     // oud formaat: één functie + globaal tarief).
-    const minimum = await minimaalUurtarief();
     const globaalTarief = parseUurtarief(uurtarief);
     const regels: FunctieRegel[] = [];
 
@@ -148,8 +180,8 @@ export async function POST(request: NextRequest) {
         }
         const eigen = parseUurtarief(f?.uurtarief);
         const tarief = Number.isFinite(eigen) && eigen > 0 ? eigen : globaalTarief;
-        const fout = uurtariefFout(tarief, minimum);
-        if (fout) return NextResponse.json({ error: `${naam}: ${fout}`, min_uurtarief: minimum }, { status: 400 });
+        const fout = uurtariefFout(tarief, 0);
+        if (fout) return NextResponse.json({ error: `${naam}: ${fout}` }, { status: 400 });
         regels.push({ functie: naam, aantal: n, tarief });
       }
     } else {
@@ -158,10 +190,23 @@ export async function POST(request: NextRequest) {
       }
       const n = parseInt(aantal) || 1;
       if (n < 1 || n > 50) return NextResponse.json({ error: "Aantal moet tussen 1 en 50 liggen" }, { status: 400 });
-      const fout = uurtariefFout(globaalTarief, minimum);
-      if (fout) return NextResponse.json({ error: fout, min_uurtarief: minimum }, { status: 400 });
+      const fout = uurtariefFout(globaalTarief, 0);
+      if (fout) return NextResponse.json({ error: fout }, { status: 400 });
       regels.push({ functie: functie.trim().slice(0, 100), aantal: n, tarief: globaalTarief });
     }
+
+    // Zachte waarschuwingen per functie (geen blokkade): onder de richtlijn / onder het minimumloon.
+    const tariefWaarschuwingen = regels
+      .map((r) => ({ functie: r.functie, uurtarief: r.tarief, ...tariefAdvies(r.tarief, r.functie) }))
+      .filter((a) => a.waarschuwing)
+      .map((a) => ({
+        functie: a.functie,
+        uurtarief: a.uurtarief,
+        medewerker_uurloon: a.medewerkerUurloon,
+        onder_richtlijn: a.onderRichtlijn,
+        onder_minimumloon: a.onderMinimumloon,
+        tekst: a.waarschuwing as string,
+      }));
 
     // Alleen een afbeelding die via /api/klant/dienst-afbeelding voor déze klant is geüpload.
     const afbeelding =
@@ -176,7 +221,7 @@ export async function POST(request: NextRequest) {
       start_tijd,
       eind_tijd,
       locatie: typeof locatie === "string" && locatie.trim() ? locatie.trim().slice(0, 300) : null,
-      status: "open",
+      status: plaatsen.dienstStatus,
       notities: typeof opmerkingen === "string" && opmerkingen.trim() ? opmerkingen.trim().slice(0, 2000) : null,
     };
     if (["nl", "en", "nl_en"].includes(vereiste_taal)) gemeenschappelijk.vereiste_taal = vereiste_taal;
@@ -219,10 +264,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert all diensten
-    const { data: diensten, error } = await supabaseAdmin
+    let { data: diensten, error } = await supabaseAdmin
       .from("diensten")
       .insert(dienstenToCreate)
       .select("id, functie");
+
+    // 23514: de status-CHECK op diensten kent in_controle nog niet (migratie half gedraaid).
+    // Dan zoals voorheen direct open, en een melding in Sentry zodat het opvalt.
+    let statusGeplaatst = plaatsen.dienstStatus as string;
+    if (error?.code === "23514" && inControle) {
+      captureRouteError(error, { route: "/api/klant/aanvraag", action: "IN_CONTROLE_CONSTRAINT" });
+      statusGeplaatst = "open";
+      ({ data: diensten, error } = await supabaseAdmin
+        .from("diensten")
+        .insert(dienstenToCreate.map((d) => ({ ...d, status: "open" })))
+        .select("id, functie"));
+    }
+    const wachtOpControle = statusGeplaatst === DIENST_STATUS_IN_CONTROLE;
 
     if (error) {
       captureRouteError(error, { route: "/api/klant/aanvraag", action: "POST" });
@@ -234,10 +292,44 @@ export async function POST(request: NextRequest) {
     const omschrijving = `${functieSummary} op ${datum} (${start_tijd.slice(0, 5)} - ${eind_tijd.slice(0, 5)})${gemeenschappelijk.locatie ? ` in ${gemeenschappelijk.locatie}` : ""}`;
 
     // Favorieten uit stap 4 daadwerkelijk uitnodigen (voorheen werd de keuze genegeerd).
+    // Niet zolang de dienst in controle is: medewerkers zien hem dan nog niet.
     const favorietIds = Array.isArray(favoriet_medewerker_ids)
       ? [...new Set(favoriet_medewerker_ids.filter((i: unknown): i is string => typeof i === "string" && UUID.test(i)))].slice(0, 50)
       : [];
-    const uitnodigingen = await nodigFavorietenUit(klantData.id, favorietIds, diensten || [], omschrijving, demo);
+    const uitnodigingen = wachtOpControle
+      ? { uitgenodigd: 0, overgeslagen: favorietIds.length }
+      : await nodigFavorietenUit(klantData.id, favorietIds, diensten || [], omschrijving, demo);
+
+    if (wachtOpControle) {
+      // Eerste dienst(en) van een nog niet gecontroleerde klant: geen push, wel een melding aan
+      // TopTalent (Telegram + mail). Goedkeuren in admin > Diensten zet ze open en pusht dan.
+      const controleDiensten = dienstenToCreate.map((d) => ({
+        functie: (d.functie as string) ?? null,
+        aantal_nodig: (d.aantal_nodig as number) ?? null,
+        datum,
+        start_tijd,
+        eind_tijd,
+        locatie: (gemeenschappelijk.locatie as string | null) ?? null,
+        uurtarief: (d.uurtarief as number) ?? null,
+      }));
+      after(() =>
+        meldDienstInControle(klantData.id, controleDiensten).catch((e) =>
+          captureRouteError(e, { route: "/api/klant/aanvraag", action: "MELDING_CONTROLE" }),
+        ),
+      );
+      return NextResponse.json({
+        success: true,
+        dienst_ids: diensten?.map((d) => d.id) || [],
+        count: diensten?.length || 0,
+        status: DIENST_STATUS_IN_CONTROLE,
+        in_controle: true,
+        melding:
+          "Uw aanvraag is ontvangen. Omdat dit uw eerste dienst is, controleert TopTalent hem eerst. Na goedkeuring zien medewerkers de dienst en kunnen ze reageren; volgende diensten gaan direct live.",
+        favorieten_uitgenodigd: 0,
+        favorieten_overgeslagen: uitnodigingen.overgeslagen,
+        tarief_waarschuwingen: tariefWaarschuwingen,
+      });
+    }
 
     // Telegram notification (geen PII — AVG compliance); niet voor demo-aanvragen.
     if (!demo) after(() =>
@@ -252,20 +344,18 @@ export async function POST(request: NextRequest) {
     // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar. Bij een demo-klant
     // alleen naar demo-medewerkers (sendPushToAllOfType filtert op de wereld).
     after(() =>
-      sendPushToAllOfType("medewerker", {
-        title: "Nieuwe dienst beschikbaar!",
-        body: omschrijving,
-        url: "/medewerker/diensten/",
-        tag: `nieuwe-dienst-${datum}`,
-      }, { demo }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
+      pushNieuweDienst(omschrijving, datum, demo).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
     );
 
     return NextResponse.json({
       success: true,
       dienst_ids: diensten?.map(d => d.id) || [],
       count: diensten?.length || 0,
+      status: "open",
+      in_controle: false,
       favorieten_uitgenodigd: uitnodigingen.uitgenodigd,
       favorieten_overgeslagen: uitnodigingen.overgeslagen,
+      tarief_waarschuwingen: tariefWaarschuwingen,
     });
   } catch (err) {
     captureRouteError(err, { route: "/api/klant/aanvraag", action: "POST" });
@@ -279,25 +369,31 @@ export async function GET(request: NextRequest) {
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Get previous locations for this klant
-    const [{ data: locaties, error }, minimum] = await Promise.all([
-      supabaseAdmin
-        .from("diensten")
-        .select("locatie")
-        .eq("klant_id", klant.id)
-        .not("locatie", "is", null)
-        .order("datum", { ascending: false })
-        .limit(50),
-      minimaalUurtarief(),
-    ]);
+    const { data: locaties, error } = await supabaseAdmin
+      .from("diensten")
+      .select("locatie")
+      .eq("klant_id", klant.id)
+      .not("locatie", "is", null)
+      .order("datum", { ascending: false })
+      .limit(50);
+
+    // Geen ondergrens meer: min_uurtarief blijft 0 voor oudere clients; `tarieven` geeft de
+    // richtlijnen per functie, het minimumloon en de marge voor de zachte waarschuwing.
+    const tarieven = {
+      richtlijnen: alleRichtlijnen(),
+      wettelijk_minimumuurloon: WETTELIJK_MINIMUMUURLOON,
+      minimumloon_peildatum: WETTELIJK_MINIMUMUURLOON_PEILDATUM,
+      marge_per_uur: MARGE_PER_UUR,
+    };
 
     if (error) {
       captureRouteError(error, { route: "/api/klant/aanvraag", action: "GET" });
-      return NextResponse.json({ locaties: [], min_uurtarief: minimum });
+      return NextResponse.json({ locaties: [], min_uurtarief: 0, tarieven });
     }
 
     const uniqueLocaties = [...new Set((locaties || []).map((l) => l.locatie).filter(Boolean))];
 
-    return NextResponse.json({ locaties: uniqueLocaties, min_uurtarief: minimum });
+    return NextResponse.json({ locaties: uniqueLocaties, min_uurtarief: 0, tarieven });
   } catch (err) {
     captureRouteError(err, { route: "/api/klant/aanvraag", action: "GET" });
     return NextResponse.json({ locaties: [] });

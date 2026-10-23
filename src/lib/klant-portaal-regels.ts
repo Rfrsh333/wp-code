@@ -1,4 +1,4 @@
-import { dienstUren } from "@/lib/nl-tijd";
+import { dienstUren, nlMoment } from "@/lib/nl-tijd";
 
 /**
  * Pure regels voor het klantportaal (geen database, geen Next): los testbaar in tests/unit.
@@ -148,4 +148,16 @@ export function schoonProfielUpdate(
   if (update.postcode) update.postcode = update.postcode.toUpperCase().replace(/^(\d{4})\s?/, "$1 ");
   if (Object.keys(update).length === 0) return { ok: false, error: "Geen wijzigingen" };
   return { ok: true, update };
+}
+
+// --- Dienst plaatsen: begintijd ---------------------------------------------------------------
+
+/**
+ * Ligt de begintijd van een dienst (NL-wandkloktijd) al in het verleden? De route controleerde
+ * alleen de datum, dus vandaag 08:00 plaatsen om 14:00 lukte. Nachtdienst die na middernacht
+ * begint: kies de datum van die nacht (de dag waarop de dienst begint).
+ */
+export function begintijdVoorbij(datum: string, startTijd: string, nu: Date = new Date()): boolean {
+  const start = nlMoment(datum, startTijd.slice(0, 5));
+  return Number.isFinite(start.getTime()) && start.getTime() <= nu.getTime();
 }
