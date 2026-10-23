@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
-import { supabaseAdmin } from "@/lib/supabase";
+import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
 import { sendMedewerkerPasswordResetEmail } from "@/lib/medewerker-password-reset";
 import { captureRouteError } from "@/lib/sentry-utils";
 
@@ -22,11 +22,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "E-mail is verplicht" }, { status: 400 });
     }
 
-    const { data: medewerker } = await supabaseAdmin
-      .from("medewerkers")
-      .select("id, naam, email, status")
-      .eq("email", String(email).toLowerCase())
-      .maybeSingle();
+    // Hoofdletterongevoelig: oude rijen kunnen nog "Jan@Gmail.com" bevatten (B4).
+    const medewerker = await zoekOpEmail<{ id: string; naam: string; email: string; status: string | null }>(
+      "medewerkers",
+      "id, naam, email, status",
+      String(email),
+    );
 
     if (medewerker && medewerker.status === "actief") {
       await sendMedewerkerPasswordResetEmail({

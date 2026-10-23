@@ -7,6 +7,8 @@ import { escapeHtml } from "@/lib/sanitize";
 import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { ontbrekendeInschrijfVelden, inschrijfFoutmelding } from "@/lib/inschrijving-regels";
+import { normaliseerEmail } from "@/lib/email-normalisatie";
+import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -75,7 +77,8 @@ export async function POST(request: NextRequest) {
     const voornaam = (formData.get("voornaam") as string) || "";
     const tussenvoegsel = (formData.get("tussenvoegsel") as string) || "";
     const achternaam = (formData.get("achternaam") as string) || "";
-    const email = (formData.get("email") as string) || "";
+    // Klein en getrimd opslaan: login en reset zoeken op dit adres (B4).
+    const email = normaliseerEmail(formData.get("email"));
     const telefoon = (formData.get("telefoon") as string) || "";
     const stad = (formData.get("stad") as string) || "";
     const geboortedatum = (formData.get("geboortedatum") as string) || "";
@@ -137,12 +140,8 @@ export async function POST(request: NextRequest) {
     }
 
     // H-2: Duplicate email check
-    const { data: existingKandidaat } = await supabase
-      .from("inschrijvingen")
-      .select("id")
-      .eq("email", email)
-      .limit(1)
-      .maybeSingle();
+    // Hoofdletterongevoelig: oudere inschrijvingen bewaren het adres zoals het werd getypt.
+    const existingKandidaat = await zoekOpEmail<{ id: string; email: string }>("inschrijvingen", "id, email", email);
 
     if (existingKandidaat) {
       return NextResponse.json(

@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { normaliseerEmail } from "@/lib/email-normalisatie";
+import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
 
 interface CandidateRecord {
   id: string;
@@ -36,19 +38,17 @@ function mapFuncties(gewensteFuncties?: string[] | null) {
 }
 
 export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord) {
-  const existingByEmail = await supabaseAdmin
-    .from("medewerkers")
-    .select("id")
-    .eq("email", candidate.email)
-    .maybeSingle();
+  // Hoofdletterongevoelig zoeken en klein opslaan: anders kan de medewerker nooit inloggen (B4).
+  const email = normaliseerEmail(candidate.email);
+  const existingByEmail = await zoekOpEmail<{ id: string; email: string }>("medewerkers", "id, email", email);
 
-  if (existingByEmail.data?.id) {
-    return existingByEmail.data.id;
+  if (existingByEmail?.id) {
+    return existingByEmail.id;
   }
 
   const payload = {
     naam: buildNaam(candidate),
-    email: candidate.email,
+    email,
     telefoon: candidate.telefoon || null,
     functie: mapFuncties(candidate.gewenste_functies),
     uurtarief: 15,

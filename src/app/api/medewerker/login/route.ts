@@ -5,6 +5,8 @@ import { checkRedisRateLimit, getClientIP, loginRateLimit, medewerkerLoginPerAcc
 import bcrypt from "bcryptjs";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { normaliseerEmail } from "@/lib/email-normalisatie";
+import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
 
 // Constant-time dummy hash so timing is identical whether or not the account exists.
 const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting: per-account (prevents credential stuffing on known emails)
-    const acctLimit = await checkRedisRateLimit(`medewerker-login-acct:${email.toLowerCase()}`, medewerkerLoginPerAccountRateLimit, { failClosed: true });
+    const acctLimit = await checkRedisRateLimit(`medewerker-login-acct:${normaliseerEmail(email)}`, medewerkerLoginPerAccountRateLimit, { failClosed: true });
     if (!acctLimit.success) {
       const retryAfter = Math.max(1, Math.ceil((acctLimit.reset - Date.now()) / 1000));
       return NextResponse.json(
@@ -42,11 +44,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: medewerker } = await supabase
-      .from("medewerkers")
-      .select("id, naam, email, functie, wachtwoord, status")
-      .eq("email", email.toLowerCase())
-      .single();
+    // Hoofdletterongevoelig: oude rijen kunnen nog "Jan@Gmail.com" bevatten (B4).
+    const medewerker = await zoekOpEmail<{
+      id: string; naam: string; email: string; functie: string | string[]; wachtwoord: string | null; status: string | null;
+    }>("medewerkers", "id, naam, email, functie, wachtwoord, status", email);
 
     // Always run bcrypt to prevent timing-based user enumeration.
     const hashToCompare = medewerker?.wachtwoord || DUMMY_HASH;

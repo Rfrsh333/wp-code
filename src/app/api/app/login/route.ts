@@ -13,6 +13,8 @@ import {
 import { signKlantSession, signMedewerkerSession } from "@/lib/session";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { APP_TOKEN_GELDIGHEID } from "@/lib/klant-sessie-cookie";
+import { normaliseerEmail } from "@/lib/email-normalisatie";
+import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
 
 // Login voor de native app (één app, rolkeuze bij inloggen).
 // Zelfde controles als de web-logins, maar het token komt in de body: de app bewaart het in
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Vul je e-mailadres en wachtwoord in" }, { status: 400 });
   }
   const { rol, wachtwoord } = parsed.data;
-  const email = parsed.data.email.toLowerCase();
+  const email = normaliseerEmail(parsed.data.email);
   const clientIP = getClientIP(request);
 
   // Zelfde rate-limit-sleutels als de web-logins: de app is geen omweg om limieten te ontlopen.
@@ -61,11 +63,10 @@ export async function POST(request: NextRequest) {
 
   try {
     if (rol === "medewerker") {
-      const { data: m } = await supabase
-        .from("medewerkers")
-        .select("id, naam, email, functie, wachtwoord, status")
-        .eq("email", email)
-        .maybeSingle();
+      // Hoofdletterongevoelig: oude rijen kunnen nog "Jan@Gmail.com" bevatten (B4).
+      const m = await zoekOpEmail<{
+        id: string; naam: string; email: string; functie: string | string[]; wachtwoord: string | null; status: string | null;
+      }>("medewerkers", "id, naam, email, functie, wachtwoord, status", email);
 
       const valid = await bcrypt.compare(wachtwoord, m?.wachtwoord || DUMMY_HASH);
       if (!m || !valid || m.status !== "actief") {
