@@ -7,7 +7,7 @@ import { naarCoordinaat } from "@/lib/locatie/locatie-regels";
 import { beschikbaarheidPerMedewerker, type BeschikbaarheidVelden } from "@/lib/medewerker/beschikbaarheid-bron";
 import { maandagVan } from "@/lib/medewerker/beschikbaarheid";
 import { isOntbrekendeTabel } from "@/lib/medewerker/werkgever-voorkeuren";
-import { redenGeenPush, type GeenPushReden, type PushDienst, type PushMedewerker } from "@/lib/medewerker/push-doelgroep-regels";
+import { kiesOntvangers, type GeenPushReden, type PushDienst, type PushMedewerker } from "@/lib/medewerker/push-doelgroep-regels";
 
 /**
  * DB-kant van de gerichte push bij een nieuwe dienst (regels: push-doelgroep-regels.ts).
@@ -21,7 +21,7 @@ import { redenGeenPush, type GeenPushReden, type PushDienst, type PushMedewerker
  */
 
 export type PushDoelgroep =
-  | { modus: "gericht"; ids: string[]; kandidaten: number; redenen: Partial<Record<GeenPushReden, number>> }
+  | { modus: "gericht"; ids: string[]; kandidaten: number; redenen: Partial<Record<GeenPushReden, number>>; functieTerugval: number }
   | { modus: "iedereen"; reden: "geen_diensten" | "migratie_ontbreekt" | "databasefout" };
 
 type DienstRij = {
@@ -99,7 +99,7 @@ export async function bepaalPushDoelgroep(dienstIds: readonly string[], demo: bo
 
   // Alleen medewerkers uit de wereld van de klant (demo blijft gescheiden, zoals voorheen).
   const kandidaten = mw.data.filter((m) => demoIds.medewerkers.has(m.id) === demo);
-  if (kandidaten.length === 0) return { modus: "gericht", ids: [], kandidaten: 0, redenen: {} };
+  if (kandidaten.length === 0) return { modus: "gericht", ids: [], kandidaten: 0, redenen: {}, functieTerugval: 0 };
 
   const klantIds = [...new Set(diensten.map((d) => d.klantId).filter((k): k is string => !!k))];
   const weken = [...new Set(diensten.map((d) => d.weekStart).filter((w): w is string => !!w))];
@@ -151,11 +151,9 @@ export async function bepaalPushDoelgroep(dienstIds: readonly string[], demo: bo
   }
 
   const leeg = new Set<string>();
-  const redenen: Partial<Record<GeenPushReden, number>> = {};
-  const ids: string[] = [];
-  for (const m of kandidaten) {
+  const medewerkers: PushMedewerker[] = kandidaten.map((m) => {
     const b = rooster.get(m.id);
-    const medewerker: PushMedewerker = {
+    return {
       id: m.id,
       status: m.status,
       functie: m.functie,
@@ -167,17 +165,11 @@ export async function bepaalPushDoelgroep(dienstIds: readonly string[], demo: bo
       maxAfstandKm: m.max_afstand_km ?? null,
       verborgenKlantIds: verborgen.get(m.id) ?? leeg,
     };
-    // Eén aanvraag kan meerdere diensten (functies) hebben: een push als er minstens één past.
-    const per = diensten.map((d) => redenGeenPush(medewerker, d));
-    if (per.some((r) => r === null)) {
-      ids.push(m.id);
-    } else {
-      const reden = per[0] as GeenPushReden;
-      redenen[reden] = (redenen[reden] ?? 0) + 1;
-    }
-  }
+  });
+  // Per dienst iedereen die past; past er niemand op functie, dan de terugval (kiesOntvangers).
+  const { ids, functieTerugval, redenen } = kiesOntvangers(medewerkers, diensten);
 
-  return { modus: "gericht", ids, kandidaten: kandidaten.length, redenen };
+  return { modus: "gericht", ids, kandidaten: kandidaten.length, redenen, functieTerugval };
 }
 
 /** Push naar een lijst medewerkers, in blokken (lange .in()-lijsten lopen tegen de URL-limiet aan). */

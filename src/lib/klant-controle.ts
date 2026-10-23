@@ -50,7 +50,11 @@ export async function pushNieuweDienst(
   }
   if (doelgroep.modus === "iedereen") return sendPushToAllOfType("medewerker", payload, { demo });
   // Alleen aantallen in de log (geen ids of namen).
-  console.info(`[push] nieuwe dienst: ${doelgroep.ids.length} van ${doelgroep.kandidaten} actieve medewerkers`, doelgroep.redenen);
+  console.info(
+    `[push] nieuwe dienst: ${doelgroep.ids.length} van ${doelgroep.kandidaten} actieve medewerkers` +
+      (doelgroep.functieTerugval ? ` (functie-terugval voor ${doelgroep.functieTerugval} dienst(en))` : ""),
+    doelgroep.redenen,
+  );
   if (doelgroep.kandidaten > 0 && doelgroep.ids.length === 0) {
     // Niemand past: geen fout, maar wel opvallend (bv. functienamen die niet aansluiten).
     captureRouteError(new Error(`Gerichte push zonder ontvangers (${doelgroep.kandidaten} kandidaten): ${JSON.stringify(doelgroep.redenen)}`), {

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import {
   functiePast,
+  kiesOntvangers,
   moetPushKrijgen,
   moetPushKrijgenVoorEen,
   redenGeenPush,
@@ -134,10 +135,15 @@ test.describe("functiePast", () => {
     expect(functiePast(["  keuken "], "KEUKEN")).toBe(true);
   });
 
+  test("barista hoort bij bar én bediening", () => {
+    expect(functiePast(["bar"], "barista")).toBe(true);
+    expect(functiePast(["bediening"], "barista")).toBe(true);
+    expect(functiePast(["keuken"], "barista")).toBe(false);
+  });
+
   test("hoofdfunctie van de medewerker tegen de functies uit platform_options", () => {
     // Medewerkers: bediening | bar | keuken | afwas (candidate-to-medewerker, admin-formulier).
     expect(functiePast(["bar"], "bartending")).toBe(true);
-    expect(functiePast(["bar"], "barista")).toBe(true);
     expect(functiePast(["keuken"], "hulpkok")).toBe(true);
     expect(functiePast(["keuken"], "zelfstandig werkend kok")).toBe(true);
     expect(functiePast(["afwas"], "spoelkeuken medewerker")).toBe(true);
@@ -168,5 +174,75 @@ test.describe("functiePast", () => {
     expect(functiePast(["bar"], "  ")).toBe(true);
     expect(functiePast([], "bar")).toBe(true);
     expect(functiePast(undefined, "bar")).toBe(true);
+  });
+});
+
+test.describe("kiesOntvangers (met de functienamen van prod, 23-10-2026)", () => {
+  // medewerkers.functie op prod: bar (1), bediening (3).
+  const team = [
+    medewerker({ id: "bar1", functie: ["bar"] }),
+    medewerker({ id: "bed1", functie: ["bediening"] }),
+    medewerker({ id: "bed2", functie: ["bediening"] }),
+    medewerker({ id: "bed3", functie: ["bediening"] }),
+  ];
+  const ids = (r: { ids: string[] }) => [...r.ids].sort();
+
+  test("barista: bar én bediening", () => {
+    const r = kiesOntvangers(team, [dienst({ functie: "barista" })]);
+    expect(ids(r)).toEqual(["bar1", "bed1", "bed2", "bed3"]);
+    expect(r.functieTerugval).toBe(0);
+  });
+
+  test("bediening: alleen bediening", () => {
+    const r = kiesOntvangers(team, [dienst({ functie: "bediening" })]);
+    expect(ids(r)).toEqual(["bed1", "bed2", "bed3"]);
+    expect(r.redenen).toEqual({ functie: 1 });
+  });
+
+  test("catering, sitecrew - hospitality en schoonmaak: buiten de groepen, dus iedereen", () => {
+    for (const functie of ["catering", "sitecrew - hospitality", "schoonmaak", "Sitecrew - Hospitality"]) {
+      expect(ids(kiesOntvangers(team, [dienst({ functie })]))).toEqual(["bar1", "bed1", "bed2", "bed3"]);
+    }
+  });
+
+  test("terugval: past op functie niemand, dan iedereen die de andere filters doorstaat", () => {
+    // Geen keukenmedewerkers op prod: een hulpkok-dienst zou anders stil blijven.
+    const r = kiesOntvangers(team, [dienst({ functie: "hulpkok" })]);
+    expect(ids(r)).toEqual(["bar1", "bed1", "bed2", "bed3"]);
+    expect(r.functieTerugval).toBe(1);
+  });
+
+  test("terugval houdt verborgen, beschikbaarheid, afstand, wereld en actief aan", () => {
+    const anders = [
+      medewerker({ id: "bar1", functie: ["bar"], verborgenKlantIds: new Set(["k1"]) }),
+      medewerker({ id: "bed1", functie: ["bediening"], rooster: { za: ["ochtend"] } }),
+      medewerker({ id: "bed2", functie: ["bediening"], maxAfstandKm: 5 }),
+      medewerker({ id: "bed3", functie: ["bediening"] }),
+      medewerker({ id: "demo1", functie: ["bediening"], demo: true }),
+      medewerker({ id: "weg1", functie: ["bediening"], status: "inactief" }),
+    ];
+    const r = kiesOntvangers(anders, [dienst({ functie: "hulpkok" })]);
+    expect(ids(r)).toEqual(["bed3"]);
+    expect(r.functieTerugval).toBe(1);
+  });
+
+  test("geen terugval als er wel iemand op functie past", () => {
+    const r = kiesOntvangers(team, [dienst({ functie: "bartending" })]);
+    expect(ids(r)).toEqual(["bar1"]);
+    expect(r.functieTerugval).toBe(0);
+  });
+
+  test("past niemand, ook niet zonder functiefilter, dan niemand", () => {
+    const allemaalVerborgen = team.map((m) => ({ ...m, verborgenKlantIds: new Set(["k1"]) }));
+    const r = kiesOntvangers(allemaalVerborgen, [dienst({ functie: "hulpkok" })]);
+    expect(r.ids).toEqual([]);
+    expect(r.functieTerugval).toBe(0);
+    expect(r.redenen).toEqual({ functie: 4 });
+  });
+
+  test("meerdere diensten in één aanvraag: per dienst, samengevoegd", () => {
+    const r = kiesOntvangers(team, [dienst({ functie: "bartending" }), dienst({ functie: "hulpkok" })]);
+    expect(ids(r)).toEqual(["bar1", "bed1", "bed2", "bed3"]);
+    expect(r.functieTerugval).toBe(1);
   });
 });
