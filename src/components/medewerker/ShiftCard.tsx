@@ -1,7 +1,8 @@
 "use client";
 
-import { MapPin, Star, Clock, Euro } from "lucide-react";
+import { MapPin, Star, Clock, Euro, Shirt } from "lucide-react";
 import Image from "next/image";
+import { geschatteVerdiensten, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
 
 interface ShiftCardProps {
   shift: {
@@ -22,16 +23,21 @@ interface ShiftCardProps {
     };
     tags?: string[];
     is_speciaal?: boolean;
+    kledingvoorschrift?: string | null;
+    pauze_minuten?: number | null;
+    medewerker_uurtarief?: number;
   };
+  /** Opent het reageerscherm (uitgebreid reageren). */
   onApply: (shiftId: string) => void;
   onSave?: (shiftId: string) => void;
   saved?: boolean;
-  /** Aanmelding loopt: knop uitgeschakeld (geen dubbele aanmelding door dubbelklikken). */
+  /** Reageerscherm voor deze dienst staat open: knop uitgeschakeld. */
   bezig?: boolean;
 }
 
 export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig = false }: ShiftCardProps) {
-  const medewerkerUurtarief = shift.uurtarief - 4; // €4 margin voor TopTalent
+  // Klanttarief min € 4 (lib/medewerker/reactie-regels), nooit negatief.
+  const medewerkerUurtarief = shift.medewerker_uurtarief ?? medewerkerTariefVanDienst(shift.uurtarief);
 
   const formatDatum = (datum: string) => {
     const d = new Date(datum);
@@ -44,15 +50,15 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
     return `${start.slice(0, 5)} - ${eind.slice(0, 5)}`;
   };
 
-  const berekenUren = (start: string, eind: string) => {
-    const [startH, startM] = start.split(":").map(Number);
-    const [eindH, eindM] = eind.split(":").map(Number);
-    const uren = eindH - startH + (eindM - startM) / 60;
-    return uren.toFixed(1);
-  };
-
-  const uren = berekenUren(shift.start_tijd, shift.eind_tijd);
-  const verdiensten = parseFloat(uren) * medewerkerUurtarief;
+  // ± verdiensten: pauze eraf, nachtdiensten over middernacht goed (voorheen negatief).
+  const schatting = geschatteVerdiensten({
+    start_tijd: shift.start_tijd,
+    eind_tijd: shift.eind_tijd,
+    pauze_minuten: shift.pauze_minuten,
+    uurtarief: medewerkerUurtarief,
+  });
+  const uren = schatting.uren.toFixed(1);
+  const verdiensten = schatting.bedrag;
 
   return (
     <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] overflow-hidden shadow-[var(--mp-shadow)]">
@@ -174,7 +180,7 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
               <Euro className="w-4 h-4 text-[var(--mp-accent)]" />
             </div>
             <div className="min-w-0">
-              <div className="text-[10px] text-[var(--mp-text-tertiary)]">Verdiensten</div>
+              <div className="text-[10px] text-[var(--mp-text-tertiary)]">± Verdiensten</div>
               <div className="text-xs font-bold text-[var(--mp-accent)] leading-tight">
                 €{verdiensten.toFixed(2)}
               </div>
@@ -184,6 +190,19 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
             </div>
           </div>
         </div>
+
+        {/* Pauze en kledingvoorschrift (uitgebreid reageren) */}
+        {(shift.kledingvoorschrift || (shift.pauze_minuten ?? 0) > 0) && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2 text-[10px] text-[var(--mp-text-secondary)]">
+            {(shift.pauze_minuten ?? 0) > 0 && <span>{shift.pauze_minuten} min pauze</span>}
+            {shift.kledingvoorschrift && (
+              <span className="flex items-center gap-1 min-w-0">
+                <Shirt className="w-3 h-3 shrink-0" />
+                <span className="truncate">{shift.kledingvoorschrift}</span>
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Omschrijving */}
         {shift.omschrijving && (
@@ -199,7 +218,7 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
           aria-busy={bezig}
           className="w-full py-2.5 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-xs transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)] disabled:opacity-50"
         >
-          {bezig ? "Bezig met aanmelden…" : "Direct aanmelden"}
+          {bezig ? "Reageren…" : "Reageren"}
         </button>
       </div>
     </div>

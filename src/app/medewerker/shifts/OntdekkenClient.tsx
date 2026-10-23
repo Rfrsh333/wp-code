@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { SlidersHorizontal, Search } from "lucide-react";
 import ShiftCard from "@/components/medewerker/ShiftCard";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import ReageerChecklistBlok from "@/components/medewerker/ReageerChecklistBlok";
+import ReageerDialoog from "@/components/medewerker/ReageerDialoog";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
@@ -25,6 +26,11 @@ interface Shift {
   };
   tags?: string[];
   is_speciaal?: boolean;
+  functie?: string | null;
+  opmerkingen?: string | null;
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
+  medewerker_uurtarief?: number;
 }
 
 export default function OntdekkenClient() {
@@ -32,10 +38,9 @@ export default function OntdekkenClient() {
   const [loading, setLoading] = useState(true);
   const [savedShifts, setSavedShifts] = useState<Set<string>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
-  const [aanmeldenBezig, setAanmeldenBezig] = useState<string | null>(null);
   const [checklistVersie, setChecklistVersie] = useState(0);
-  // Ref i.p.v. alleen state: een snelle dubbelklik komt vóór de re-render binnen.
-  const aanmeldenLoopt = useRef(false);
+  // Uitgebreid reageren: de dialoog met tijden, tarief, motivatie, kleding en intrekken.
+  const [reageerOp, setReageerOp] = useState<Shift | null>(null);
 
   useEffect(() => {
     fetchShifts();
@@ -59,34 +64,9 @@ export default function OntdekkenClient() {
     }
   };
 
-  const handleApply = async (shiftId: string) => {
-    if (aanmeldenLoopt.current) return;
-    aanmeldenLoopt.current = true;
-    setAanmeldenBezig(shiftId);
-    try {
-      const res = await fetch("/api/medewerker/shifts/aanmelden", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dienst_id: shiftId }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Aanmelden mislukt");
-        // B1: checklist onvolledig → blok bovenaan opnieuw laden zodat zichtbaar is wat ontbreekt.
-        if (data.code === "checklist_onvolledig") setChecklistVersie((v) => v + 1);
-        return;
-      }
-
-      toast.success("Aanmelding geslaagd! 🎉 Je vindt hem bij Mijn diensten onder Aangemeld.");
-      await fetchShifts(); // Refresh om beschikbare plekken te updaten
-    } catch (err) {
-      Sentry.captureException(err);
-      toast.error("Er ging iets mis");
-    } finally {
-      aanmeldenLoopt.current = false;
-      setAanmeldenBezig(null);
-    }
+  const handleApply = (shiftId: string) => {
+    const shift = shifts.find((s) => s.id === shiftId);
+    if (shift) setReageerOp(shift);
   };
 
   const handleSave = (shiftId: string) => {
@@ -163,12 +143,21 @@ export default function OntdekkenClient() {
                 onApply={handleApply}
                 onSave={handleSave}
                 saved={savedShifts.has(shift.id)}
-                bezig={aanmeldenBezig !== null}
+                bezig={reageerOp?.id === shift.id}
               />
             ))}
           </div>
         )}
       </div>
+
+      {reageerOp && (
+        <ReageerDialoog
+          dienst={reageerOp}
+          onSluit={() => setReageerOp(null)}
+          onVerstuurd={() => void fetchShifts()}
+          onChecklistOnvolledig={() => setChecklistVersie((v) => v + 1)}
+        />
+      )}
 
       {/* Filter Bottom Sheet */}
       {filterOpen && (

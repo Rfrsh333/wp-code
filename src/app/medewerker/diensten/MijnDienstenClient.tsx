@@ -26,6 +26,13 @@ interface Dienst {
     bedrijfsnaam: string;
     bedrijf_foto_url?: string;
   };
+  // Uitgebreid reageren (tarief/tijden per aanmelding, kleding en pauze van de dienst)
+  medewerker_uurtarief?: number;
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
+  eigen_tijden?: boolean;
+  eigen_tarief?: boolean;
+  voorstel?: { motivatie: string | null; auto_intrekken_uren: number | null; intrekken_op: string | null } | null;
 }
 
 interface VervangingVerzoek {
