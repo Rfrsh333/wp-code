@@ -5,6 +5,7 @@ import {
   inzetbaarheidsMelding,
   kiesTeHoudenAanmelding,
   nieuwstePerType,
+  teltVoorVerloop,
   plekkenTotaal,
   telVerlopendeDocumenten,
   urenTotDienststart,
@@ -119,5 +120,35 @@ test.describe("medewerker dienst-regels", () => {
       ]),
     ).toBe("x");
     expect(kiesTeHoudenAanmelding([{ id: "z", aangemeld_at: null }, { id: "q" }])).toBe("q");
+  });
+});
+
+test.describe("verloopblokkade telt alleen goedgekeurde documenten (B10)", () => {
+  const vandaag = "2026-10-01";
+  const goedVerlopen = {
+    document_type: "id_bewijs",
+    expiry_date: "2026-01-01",
+    uploaded_at: "2025-01-01T00:00:00Z",
+    review_status: "goedgekeurd",
+  };
+
+  test("een nieuw, nog niet beoordeeld ID heft de blokkade niet op", () => {
+    const nieuwOngezien = { document_type: "id_bewijs", expiry_date: null, uploaded_at: "2026-09-30T00:00:00Z", review_status: "pending" };
+    expect(inzetbaarheidsMelding({ vandaag, documenten: [goedVerlopen, nieuwOngezien] })).toContain("ID-bewijs");
+  });
+
+  test("pas na goedkeuring van het nieuwe ID is de blokkade weg", () => {
+    const nieuwGoed = { document_type: "id_bewijs", expiry_date: "2031-01-01", uploaded_at: "2026-09-30T00:00:00Z", review_status: "goedgekeurd" };
+    expect(inzetbaarheidsMelding({ vandaag, documenten: [goedVerlopen, nieuwGoed] })).toBeNull();
+  });
+
+  test("afgekeurde of ongeziene documenten tellen niet mee, ook niet als ze verlopen zijn", () => {
+    const afgekeurdVerlopen = { ...goedVerlopen, review_status: "afgekeurd" };
+    expect(inzetbaarheidsMelding({ vandaag, documenten: [afgekeurdVerlopen] })).toBeNull();
+    expect(teltVoorVerloop({ review_status: null })).toBe(false);
+    expect(teltVoorVerloop({ review_status: "pending" })).toBe(false);
+    expect(teltVoorVerloop({ review_status: "goedgekeurd" })).toBe(true);
+    // Oude database zonder kolom: alles telt, zoals voorheen.
+    expect(teltVoorVerloop({})).toBe(true);
   });
 });

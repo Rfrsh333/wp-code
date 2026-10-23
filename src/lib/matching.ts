@@ -2,6 +2,9 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { valideerLeeftijdVoorDienst, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
 import { normaliseerBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
 import { beschikbaarheidPerMedewerker } from "@/lib/medewerker/beschikbaarheid-bron";
+import { haalKritiekeDocumenten } from "@/lib/medewerker/aanmelden";
+import { inzetbaarheidsMelding } from "@/lib/medewerker/dienst-regels";
+import { nlVandaag } from "@/lib/nl-tijd";
 
 interface Medewerker {
   id: string;
@@ -229,29 +232,36 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
 
   const alAangemeldIds = new Set((bestaandeAanmeldingen || []).map((a) => a.medewerker_id));
 
-  // C-23: Haal verlopen ID-bewijzen, werkvergunningen en verblijfsvergunningen op voor blokkering
-  const today = new Date().toISOString().split("T")[0];
-  const { data: verlopenDocs } = await supabaseAdmin
-    .from("medewerker_documenten")
-    .select("medewerker_id, expiry_date")
-    .in("document_type", ["id_bewijs", "werkvergunning", "verblijfsvergunning"])
-    .lt("expiry_date", today);
-
-  const verlopenIDSet = new Set((verlopenDocs || []).map((d) => d.medewerker_id));
-
-  // Check werkvergunning_geldig_tot op medewerker-niveau
-  const { data: verlopenWerkvergunning } = await supabaseAdmin
-    .from("medewerkers")
-    .select("id")
-    .lt("werkvergunning_geldig_tot", today)
-    .not("werkvergunning_geldig_tot", "is", null);
-
-  for (const mw of verlopenWerkvergunning || []) {
-    verlopenIDSet.add(mw.id);
-  }
+  // C-23 / B10: verlopen ID-bewijs, werkvergunning of verblijfsvergunning blokkeert. Zelfde regel
+  // als meldAan (inzetbaarheidsMelding): per type alleen het nieuwste goedgekeurde document.
+  // Voorheen telde hier elke verlopen versie, ook als er al een nieuw, geldig document was.
+  const today = nlVandaag();
+  const medewerkerIds = medewerkers.map((m) => m.id);
+  const [kritiekeDocumenten, { data: werkvergunningen }] = await Promise.all([
+    haalKritiekeDocumenten(medewerkerIds),
+    supabaseAdmin
+      .from("medewerkers")
+      .select("id, werkvergunning_geldig_tot")
+      .not("werkvergunning_geldig_tot", "is", null),
+  ]);
+  const werkvergunningPerId = new Map(
+    ((werkvergunningen ?? []) as { id: string; werkvergunning_geldig_tot: string | null }[]).map((w) => [
+      w.id,
+      w.werkvergunning_geldig_tot,
+    ]),
+  );
+  const verlopenIDSet = new Set(
+    medewerkerIds.filter(
+      (id) =>
+        inzetbaarheidsMelding({
+          vandaag: today,
+          documenten: kritiekeDocumenten.get(id) ?? [],
+          werkvergunningGeldigTot: werkvergunningPerId.get(id) ?? null,
+        }) !== null,
+    ),
+  );
 
   // C-13: Haal geldige VSH-certificeringen op
-  const medewerkerIds = medewerkers.map((m) => m.id);
   const { data: vshCerts } = await supabaseAdmin
     .from("certificeringen")
     .select("medewerker_id")

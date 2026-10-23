@@ -97,16 +97,26 @@ export function nieuwstePerType<T extends DocumentVersie>(documenten: readonly T
 }
 
 /**
+ * Telt dit document mee voor de verloopblokkade? Alleen goedgekeurde documenten (B10): voorheen
+ * hief elk nieuw bestand als `id_bewijs` (ongezien, zonder datum) de blokkade op. Zonder kolom
+ * `review_status` (oude database, waarde undefined) telt alles, zoals voorheen.
+ */
+export function teltVoorVerloop(doc: { review_status?: string | null }): boolean {
+  return doc.review_status === undefined || doc.review_status === "goedgekeurd";
+}
+
+/**
  * Melding als de medewerker niet ingezet mag worden (verlopen ID/werkvergunning), anders null.
  * `vandaag` is YYYY-MM-DD (NL); datums vóór vandaag zijn verlopen. Per documenttype telt alleen
- * het nieuwste document (zie nieuwstePerType).
+ * het nieuwste goedgekeurde document (zie teltVoorVerloop en nieuwstePerType). Dezelfde regel
+ * geldt voor `meldAan` en voor de admin-matching (lib/matching.ts).
  */
 export function inzetbaarheidsMelding(input: {
   vandaag: string;
-  documenten: { document_type: string; expiry_date: string | null; uploaded_at?: string | null }[];
+  documenten: { document_type: string; expiry_date: string | null; uploaded_at?: string | null; review_status?: string | null }[];
   werkvergunningGeldigTot?: string | null;
 }): string | null {
-  const verlopen = nieuwstePerType(input.documenten)
+  const verlopen = nieuwstePerType(input.documenten.filter(teltVoorVerloop))
     .filter((d) => (KRITIEKE_DOCUMENTEN as readonly string[]).includes(d.document_type))
     .filter((d) => !!d.expiry_date && d.expiry_date < input.vandaag)
     .map((d) => DOCUMENT_LABELS[d.document_type] ?? d.document_type);
