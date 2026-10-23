@@ -26,6 +26,10 @@
       "schedule": "30 4 * * *"
     },
     {
+      "path": "/api/cron/meldingen-opruimen",
+      "schedule": "45 4 * * *"
+    },
+    {
       "path": "/api/cron/onboarding-cleanup",
       "schedule": "0 5 * * *"
     },

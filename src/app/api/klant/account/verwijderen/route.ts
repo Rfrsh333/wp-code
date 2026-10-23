@@ -11,6 +11,7 @@ import { sendTelegramAlert } from "@/lib/telegram";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isDemoKlant } from "@/lib/demo";
 import { wisOntdekGegevensKlant } from "@/lib/locatie/locatie-opslag";
+import { wisMeldingen } from "@/lib/meldingen/meldingen-opslag";
 import { leesBedrijfsfoto, verwijderBedrijfsfotoBestand } from "@/lib/sfeerfotos-opslag";
 
 /**
@@ -191,6 +192,8 @@ export async function POST(request: NextRequest) {
       supabaseAdmin.from("klant_favoriete_medewerkers").delete().eq("klant_id", klant.id),
       supabaseAdmin.from("dienst_templates").delete().eq("klant_id", klant.id),
       supabaseAdmin.from("push_subscriptions").delete().eq("user_id", klant.id).eq("user_type", "klant"),
+      // Meldingencentrum (gooit nooit; zonder migratie een no-op).
+      wisMeldingen("klant", klant.id),
       // Globale locatie van zijn diensten en bewaar-/verbergkeuzes van medewerkers voor deze werkgever.
       wisOntdekGegevensKlant(klant.id).catch((e) => captureRouteError(e, { route: "/api/klant/account/verwijderen", action: "ONTDEKKEN_WISSEN" })),
       verwijderBedrijfsfotoBestand(klant.id, bedrijfsfoto.fotoUrl).catch((e) =>

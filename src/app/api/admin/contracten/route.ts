@@ -4,6 +4,8 @@ import { hasRequiredAdminRole, verifyAdmin } from "@/lib/admin-auth";
 import { contractenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { createHash } from "crypto";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { bewaarMeldingen } from "@/lib/meldingen/meldingen-opslag";
+import { meldingContractTerOndertekening } from "@/lib/meldingen/meldingen-teksten";
 
 // Contract nummer generator: TT-2026-0001
 async function generateContractNummer(): Promise<string> {
@@ -202,7 +204,7 @@ export async function POST(request: NextRequest) {
       const { data: contract } = await supabaseAdmin
         .from("contracten")
         .select(`
-          id, contract_nummer, titel, type,
+          id, contract_nummer, titel, type, medewerker_id,
           medewerker:medewerkers(naam, email)
         `)
         .eq("id", id)
@@ -211,6 +213,11 @@ export async function POST(request: NextRequest) {
       const medewerker = Array.isArray(contract?.medewerker)
         ? contract?.medewerker[0]
         : contract?.medewerker;
+
+      // Meldingencentrum: ook in het portaal en de app (dit contract had alleen een mail). Gooit nooit.
+      if (contract?.medewerker_id) {
+        await bewaarMeldingen([contract.medewerker_id], "medewerker", meldingContractTerOndertekening(contract.titel));
+      }
 
       if (contract && medewerker?.email) {
         // Email verzenden via Resend

@@ -4,6 +4,8 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { stuurInplanBevestiging } from "@/lib/medewerker/inplan-bevestiging";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { bewaarMeldingen } from "@/lib/meldingen/meldingen-opslag";
+import { meldingVervangerIngepland } from "@/lib/meldingen/meldingen-teksten";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
 import { annuleerUitkomst, urenTotDienststart } from "@/lib/medewerker/dienst-regels";
@@ -140,9 +142,12 @@ export async function PATCH(request: NextRequest) {
     await werkBezettingBij(vervanging.dienst_id);
 
     // Bevestigingsmail naar vervanger
-    await stuurInplanBevestiging(vervanger_aanmelding_id).catch((e) =>
-      captureRouteError(e, { route: "/api/medewerker/vervanging", action: "bevestigingsmail" }),
-    );
+    const inplan = await stuurInplanBevestiging(vervanger_aanmelding_id).catch((e) => {
+      captureRouteError(e, { route: "/api/medewerker/vervanging", action: "bevestigingsmail" });
+      return null;
+    });
+    // Meldingencentrum: de vervanger kreeg alleen een mail. Gooit nooit.
+    await bewaarMeldingen([vervanger.medewerker_id], "medewerker", meldingVervangerIngepland(inplan?.dienst));
 
     return NextResponse.json({ success: true });
   }

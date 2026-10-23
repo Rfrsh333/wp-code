@@ -17,6 +17,7 @@ import {
   MessageSquare,
   FileSignature,
   Heart,
+  Bell,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -26,6 +27,7 @@ import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
 import { buildCheckinQr } from "@/lib/checkin-qr";
 import ThemeToggle from "@/components/medewerker/ThemeToggle";
+import { useMeldingenAantal } from "@/components/meldingen/useMeldingen";
 
 interface MedewerkerProfile {
   id?: string;
@@ -40,6 +42,8 @@ interface MedewerkerProfile {
 
 export default function AccountClient() {
   const router = useRouter();
+  // Meldingencentrum: alleen tonen als het er is (migratie gedraaid).
+  const { data: meldingen } = useMeldingenAantal("medewerker");
   const [profile, setProfile] = useState<MedewerkerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -133,6 +137,15 @@ export default function AccountClient() {
         { icon: CalendarCheck, label: "Beschikbaarheid", onClick: () => router.push("/medewerker/beschikbaarheid") },
         { icon: Heart, label: "Werkgevers (bewaard en verborgen)", onClick: () => router.push("/medewerker/werkgevers") },
         { icon: MessageSquare, label: "Berichten", onClick: () => router.push("/medewerker/berichten") },
+        ...(meldingen?.beschikbaar
+          ? [
+              {
+                icon: Bell,
+                label: meldingen.totaal > 0 ? `Meldingen (${meldingen.totaal > 99 ? "99+" : meldingen.totaal} ongelezen)` : "Meldingen",
+                onClick: () => router.push("/medewerker/meldingen"),
+              },
+            ]
+          : []),
       ],
     },
     {

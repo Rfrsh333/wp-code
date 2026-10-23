@@ -1,13 +1,46 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { haalDemoIds } from "@/lib/demo";
 import { NIL_UUID } from "@/lib/demo-regels";
+import { bewaarMeldingen, bewaarMeldingenVoorIedereen } from "@/lib/meldingen/meldingen-opslag";
+import type { MeldingCategorie } from "@/lib/meldingen/meldingen-regels";
 
-interface PushPayload {
+/**
+ * Meldingencentrum (stap 5): elke push hieronder wordt per ontvanger ook een melding (tabel
+ * `meldingen`), ook voor wie geen pushabonnement heeft. Dat gebeurt naast de push en kan hem
+ * nooit breken: een mislukte insert gaat naar Sentry, zonder tabel (migratie
+ * 20261023_meldingencentrum.sql) wordt er niets opgeslagen. De push zelf is ongewijzigd.
+ */
+export interface PushPayload {
   title: string;
   body: string;
   url?: string;
   tag?: string;
   actions?: Array<{ action: string; title: string }>;
+  /**
+   * Tab in het meldingencentrum. Zonder: afgeleid uit tag en url
+   * (lib/meldingen/meldingen-regels.ts → categorieVoorMelding). Gaat niet mee in de push.
+   */
+  categorie?: MeldingCategorie;
+}
+
+/** Wat er naar Expo en web-push gaat: de payload zonder de categorie (de push blijft gelijk). */
+function pushDeel(payload: PushPayload): PushPayload {
+  if (!("categorie" in payload)) return payload;
+  const rest = { ...payload };
+  delete rest.categorie;
+  return rest;
+}
+
+/** Push en melding naast elkaar; de push bepaalt het resultaat (en een eventuele fout). */
+async function metMelding(
+  melding: Promise<unknown>,
+  push: () => Promise<{ sent: number; failed: number }>,
+): Promise<{ sent: number; failed: number }> {
+  try {
+    return await push();
+  } finally {
+    await melding;
+  }
 }
 
 interface PushSubscriptionRecord {
@@ -42,14 +75,16 @@ export async function sendPushToUser(
   userType: "medewerker" | "klant",
   payload: PushPayload
 ): Promise<{ sent: number; failed: number }> {
-  // Haal alle subscriptions op voor deze user
-  const subscriptions = await selectSubscriptions((q) => q.eq("user_id", userId).eq("user_type", userType));
+  return metMelding(bewaarMeldingen([userId], userType, payload), async () => {
+    // Haal alle subscriptions op voor deze user
+    const subscriptions = await selectSubscriptions((q) => q.eq("user_id", userId).eq("user_type", userType));
 
-  if (!subscriptions.length) {
-    return { sent: 0, failed: 0 };
-  }
+    if (!subscriptions.length) {
+      return { sent: 0, failed: 0 };
+    }
 
-  return sendPushToSubscriptions(subscriptions, payload);
+    return sendPushToSubscriptions(subscriptions, pushDeel(payload));
+  });
 }
 
 /**
@@ -58,6 +93,7 @@ export async function sendPushToUser(
  * Demo-accounts (lib/demo.ts) vormen een eigen wereld: standaard (`demo: false`) gaat een
  * broadcast alleen naar echte gebruikers; met `demo: true` (actie van een demo-account) alleen
  * naar demo-gebruikers, zodat een reviewer nooit een push naar echte medewerkers veroorzaakt.
+ * De melding gaat naar alle actieve accounts van die wereld, ook zonder pushabonnement.
  */
 export async function sendPushToAllOfType(
   userType: "medewerker" | "klant",
@@ -68,17 +104,19 @@ export async function sendPushToAllOfType(
   const ids = await haalDemoIds();
   const demoSet = userType === "medewerker" ? ids.medewerkers : ids.klanten;
   const demoLijst = [...demoSet];
-  const subscriptions = await selectSubscriptions((q) => {
-    const basis = q.eq("user_type", userType);
-    if (demo) return basis.in("user_id", demoLijst.length > 0 ? demoLijst : [NIL_UUID]);
-    return demoLijst.length > 0 ? basis.not("user_id", "in", `(${demoLijst.join(",")})`) : basis;
+  return metMelding(bewaarMeldingenVoorIedereen(userType, payload, { demo, demoIds: demoSet }), async () => {
+    const subscriptions = await selectSubscriptions((q) => {
+      const basis = q.eq("user_type", userType);
+      if (demo) return basis.in("user_id", demoLijst.length > 0 ? demoLijst : [NIL_UUID]);
+      return demoLijst.length > 0 ? basis.not("user_id", "in", `(${demoLijst.join(",")})`) : basis;
+    });
+
+    if (!subscriptions.length) {
+      return { sent: 0, failed: 0 };
+    }
+
+    return sendPushToSubscriptions(subscriptions, pushDeel(payload));
   });
-
-  if (!subscriptions.length) {
-    return { sent: 0, failed: 0 };
-  }
-
-  return sendPushToSubscriptions(subscriptions, payload);
 }
 
 /**
@@ -91,13 +129,16 @@ export async function sendPushToUsers(
 ): Promise<{ sent: number; failed: number }> {
   if (!userIds.length) return { sent: 0, failed: 0 };
 
-  const subscriptions = await selectSubscriptions((q) => q.in("user_id", userIds).eq("user_type", userType));
+  // Gerichte broadcast (pushNaarMedewerkers): per blok één melding per ontvanger.
+  return metMelding(bewaarMeldingen(userIds, userType, payload), async () => {
+    const subscriptions = await selectSubscriptions((q) => q.in("user_id", userIds).eq("user_type", userType));
 
-  if (!subscriptions.length) {
-    return { sent: 0, failed: 0 };
-  }
+    if (!subscriptions.length) {
+      return { sent: 0, failed: 0 };
+    }
 
-  return sendPushToSubscriptions(subscriptions, payload);
+    return sendPushToSubscriptions(subscriptions, pushDeel(payload));
+  });
 }
 
 /**
