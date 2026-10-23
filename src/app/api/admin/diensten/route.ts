@@ -7,6 +7,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { ensureKlantForDienst } from "@/lib/klanten-sync";
 import { stuurInplanBevestiging } from "@/lib/medewerker/inplan-bevestiging";
 import { schrijfMetKolomFallback } from "@/lib/db-kolom-fallback";
+import { werkDienstLocatiesBij } from "@/lib/locatie/locatie-opslag";
 import {
   effectieveAanmeldStatus,
   isAutomatischIngetrokken,
@@ -109,14 +110,21 @@ export async function POST(request: NextRequest) {
     }
     const extrasFout = dienstExtrasUitPayload(payload);
     if (extrasFout) return NextResponse.json({ error: extrasFout }, { status: 400 });
-    const { error, weggelaten } = await schrijfMetKolomFallback(payload, NIEUWE_DIENST_KOLOMMEN, (rij) =>
-      supabaseAdmin.from("diensten").insert(rij),
+    const { data: aangemaakt, error, weggelaten } = await schrijfMetKolomFallback(payload, NIEUWE_DIENST_KOLOMMEN, (rij) =>
+      supabaseAdmin.from("diensten").insert(rij).select("id"),
     );
     if (error) {
       captureRouteError(error, { route: "/api/admin/diensten", action: "POST" });
       // console.error("[DIENSTEN] Insert error:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+    // Stap 3: globale locatie (postcode uit de locatie, anders die van de klant) na het antwoord.
+    const nieuweIds = ((aangemaakt ?? []) as { id: string }[]).map((d) => d.id);
+    after(() =>
+      werkDienstLocatiesBij(nieuweIds, { locatie: payload.locatie, klantId: payload.klant_id as string | null | undefined }).catch((e) =>
+        captureRouteError(e, { route: "/api/admin/diensten", action: "LOCATIE" }),
+      ),
+    );
     if (weggelaten.some((k) => payload[k] != null)) {
       return NextResponse.json({ success: true, waarschuwing: "Kledingvoorschrift en pauze zijn niet opgeslagen: de migratie is nog niet gedraaid." });
     }
@@ -161,6 +169,16 @@ export async function POST(request: NextRequest) {
     const { weggelaten } = await schrijfMetKolomFallback(payload, NIEUWE_DIENST_KOLOMMEN, (rij) =>
       supabaseAdmin.from("diensten").update(rij).eq("id", id),
     );
+    // Locatie of klant gewijzigd: globale locatie opnieuw bepalen (na het antwoord).
+    if ("locatie" in payload || "klant_id" in payload) {
+      after(async () => {
+        const { data: dienst } = await supabaseAdmin.from("diensten").select("locatie, klant_id").eq("id", id).maybeSingle();
+        if (!dienst) return;
+        await werkDienstLocatiesBij([id], { locatie: dienst.locatie, klantId: dienst.klant_id }).catch((e) =>
+          captureRouteError(e, { route: "/api/admin/diensten", action: "LOCATIE" }),
+        );
+      });
+    }
     if (weggelaten.some((k) => payload[k] != null)) {
       return NextResponse.json({ success: true, waarschuwing: "Kledingvoorschrift en pauze zijn niet opgeslagen: de migratie is nog niet gedraaid." });
     }

@@ -19,6 +19,7 @@ import { laadOnboardingStand } from "@/lib/klant-onboarding";
 import { beoordeelDienstPlaatsen, DIENST_STATUS_IN_CONTROLE } from "@/lib/klant-controle-regels";
 import { meldDienstInControle, pushNieuweDienst } from "@/lib/klant-controle";
 import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
+import { werkDienstLocatiesBij } from "@/lib/locatie/locatie-opslag";
 import { parseKledingvoorschrift, parsePauzeMinuten } from "@/lib/medewerker/reactie-regels";
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     const klant = await getKlantSession(request);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Per klantaccount begrenzen: elke aanvraag kan een push naar alle medewerkers geven.
+    // Per klantaccount begrenzen: elke aanvraag kan een push naar (veel) medewerkers geven.
     const limiet = await checkRedisRateLimit(`klant-aanvraag:${klant.id}`, klantAanvraagRateLimit);
     if (!limiet.success) {
       return NextResponse.json(
@@ -314,6 +315,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Aanvraag opslaan mislukt. Probeer het opnieuw." }, { status: 500 });
     }
 
+    // Globale locatie (postcode → PDOK) op de diensten, voor afstand in Ontdekken en de gerichte
+    // push. Na het antwoord en met een korte time-out: een fout of geen resultaat blokkeert niets.
+    const dienstIds = (diensten ?? []).map((d) => d.id as string);
+    const geocodeer = () =>
+      werkDienstLocatiesBij(dienstIds, { locatie: gemeenschappelijk.locatie, klantId: klantData.id }).catch((e) => {
+        captureRouteError(e, { route: "/api/klant/aanvraag", action: "LOCATIE" });
+        return null;
+      });
+
     const functieSummary = regels.map((r) => `${r.functie} (${r.aantal}x)`).join(", ");
     const totaalPersoneel = regels.reduce((sum, r) => sum + r.aantal, 0);
     const omschrijving = `${functieSummary} op ${datum} (${start_tijd.slice(0, 5)} - ${eind_tijd.slice(0, 5)})${gemeenschappelijk.locatie ? ` in ${gemeenschappelijk.locatie}` : ""}`;
@@ -344,6 +354,8 @@ export async function POST(request: NextRequest) {
           captureRouteError(e, { route: "/api/klant/aanvraag", action: "MELDING_CONTROLE" }),
         ),
       );
+      // Locatie nu al, zodat de push na goedkeuring (keurKlantGoed) gericht kan.
+      after(geocodeer);
       return NextResponse.json({
         success: true,
         dienst_ids: diensten?.map((d) => d.id) || [],
@@ -369,11 +381,15 @@ export async function POST(request: NextRequest) {
       ).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "TELEGRAM" })),
     );
 
-    // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar. Bij een demo-klant
-    // alleen naar demo-medewerkers (sendPushToAllOfType filtert op de wereld).
-    after(() =>
-      pushNieuweDienst(omschrijving, datum, demo).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
-    );
+    // Push "nieuwe dienst beschikbaar", gericht (functie, beschikbaarheid, afstand, niet verborgen;
+    // lib/klant-controle.ts). Eerst de locatie, zodat de afstand meetelt. Bij een demo-klant alleen
+    // demo-medewerkers; zonder migratie zoals voorheen naar alle medewerkers van die wereld.
+    after(async () => {
+      await geocodeer();
+      await pushNieuweDienst(omschrijving, datum, demo, dienstIds).catch((e) =>
+        captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" }),
+      );
+    });
 
     return NextResponse.json({
       success: true,

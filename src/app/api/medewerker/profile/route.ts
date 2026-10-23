@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
@@ -13,6 +13,7 @@ import {
   normaliseerBtwNummer,
   normaliseerKvkNummer,
 } from "@/lib/medewerker/zzp-gegevens";
+import { werkMedewerkerLocatieBij } from "@/lib/locatie/locatie-opslag";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 // Vercel weigert bodies boven ~4,5 MB al vóór de route; 4 MB is de eerlijke grens.
@@ -221,6 +222,17 @@ export async function PUT(request: NextRequest) {
     if (error) {
       captureRouteError(error, { route: "/api/medewerker/profile", action: "PUT" });
       return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
+    }
+
+    // Stap 3: postcode → globale locatie (alleen de postcode naar PDOK) voor afstand in Ontdekken en
+    // de gerichte push. Na het antwoord, alleen als de postcode echt anders is; een fout blokkeert niets.
+    if ("postcode" in updateData) {
+      const postcode = updateData.postcode;
+      after(() =>
+        werkMedewerkerLocatieBij(medewerker.id, postcode, { alleenBijWijziging: true }).catch((e) =>
+          captureRouteError(e, { route: "/api/medewerker/profile", action: "LOCATIE" }),
+        ),
+      );
     }
 
     return NextResponse.json({ success: true });

@@ -1,7 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { sendTelegramAlert } from "@/lib/telegram";
-import { sendPushToAllOfType } from "@/lib/push-notifications";
+import { sendPushToAllOfType, sendPushToUsers } from "@/lib/push-notifications";
+import { bepaalPushDoelgroep, pushNaarMedewerkers } from "@/lib/medewerker/push-doelgroep";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
 import { isDemoKlant } from "@/lib/demo";
@@ -21,18 +22,47 @@ import {
  * - wijsKlantDienstenAf: diensten in_controle → geannuleerd (geen push); klant blijft ongecontroleerd.
  */
 
-/** Push "Nieuwe dienst beschikbaar!" naar alle medewerkers (bij een demo-klant alleen demo-medewerkers). */
-export function pushNieuweDienst(omschrijving: string, datum: string, demo: boolean) {
-  return sendPushToAllOfType(
-    "medewerker",
-    {
-      title: "Nieuwe dienst beschikbaar!",
-      body: omschrijving,
-      url: "/medewerker/diensten/",
-      tag: `nieuwe-dienst-${datum}`,
-    },
-    { demo },
+/**
+ * Push "Nieuwe dienst beschikbaar!" (stap 3: gericht). Alleen naar actieve medewerkers uit de wereld
+ * van de klant (demo blijft gescheiden) bij wie functie, beschikbaarheid, afstand en "werkgever niet
+ * verborgen" kloppen (lib/medewerker/push-doelgroep-regels.ts). Zonder migratie, zonder dienst-ids of
+ * bij een databasefout bij het bepalen van de doelgroep: zoals voorheen naar alle medewerkers van die
+ * wereld (sendPushToAllOfType).
+ */
+export async function pushNieuweDienst(
+  omschrijving: string,
+  datum: string,
+  demo: boolean,
+  dienstIds: readonly string[] = [],
+): Promise<{ sent: number; failed: number }> {
+  const payload = {
+    title: "Nieuwe dienst beschikbaar!",
+    body: omschrijving,
+    url: "/medewerker/diensten/",
+    tag: `nieuwe-dienst-${datum}`,
+  };
+  let doelgroep: Awaited<ReturnType<typeof bepaalPushDoelgroep>>;
+  try {
+    doelgroep = await bepaalPushDoelgroep(dienstIds, demo);
+  } catch (e) {
+    captureRouteError(e, { route: "lib/klant-controle", action: "PUSH_DOELGROEP" });
+    doelgroep = { modus: "iedereen", reden: "databasefout" };
+  }
+  if (doelgroep.modus === "iedereen") return sendPushToAllOfType("medewerker", payload, { demo });
+  // Alleen aantallen in de log (geen ids of namen).
+  console.info(
+    `[push] nieuwe dienst: ${doelgroep.ids.length} van ${doelgroep.kandidaten} actieve medewerkers` +
+      (doelgroep.functieTerugval ? ` (functie-terugval voor ${doelgroep.functieTerugval} dienst(en))` : ""),
+    doelgroep.redenen,
   );
+  if (doelgroep.kandidaten > 0 && doelgroep.ids.length === 0) {
+    // Niemand past: geen fout, maar wel opvallend (bv. functienamen die niet aansluiten).
+    captureRouteError(new Error(`Gerichte push zonder ontvangers (${doelgroep.kandidaten} kandidaten): ${JSON.stringify(doelgroep.redenen)}`), {
+      route: "lib/klant-controle",
+      action: "PUSH_GEEN_ONTVANGERS",
+    });
+  }
+  return pushNaarMedewerkers(doelgroep.ids, (blok) => sendPushToUsers(blok, "medewerker", payload));
 }
 
 async function laadControleKlant(klantId: string): Promise<ControleKlant> {
@@ -119,7 +149,7 @@ export async function keurKlantGoed(klantId: string): Promise<number> {
       groep.length === 1
         ? dienstRegel(eerste)
         : `${functies} op ${eerste.datum} (${eerste.start_tijd.slice(0, 5)} - ${eerste.eind_tijd.slice(0, 5)})${eerste.locatie ? ` in ${eerste.locatie}` : ""}`;
-    await pushNieuweDienst(omschrijving, eerste.datum, demo).catch((e) =>
+    await pushNieuweDienst(omschrijving, eerste.datum, demo, groep.map((d) => d.id)).catch((e) =>
       captureRouteError(e, { route: "lib/klant-controle", action: "PUSH" }),
     );
   }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Lock, Moon, Trash2 } from "lucide-react";
+import { ArrowLeft, Lock, MapPin, Moon, Trash2 } from "lucide-react";
+import { MAX_AFSTAND_OPTIES_KM } from "@/lib/locatie/locatie-regels";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { PushNotificationToggle } from "@/components/medewerker/PushNotificationBanner";
 import ThemeToggle from "@/components/medewerker/ThemeToggle";
@@ -248,6 +250,106 @@ function AccountVerwijderen() {
   );
 }
 
+type AfstandInstelling = {
+  beschikbaar: boolean;
+  max_afstand_km: number | null;
+  postcode_ingevuld: boolean;
+  locatie_bekend: boolean;
+};
+
+/**
+ * Maximale afstand voor meldingen over nieuwe diensten (stap 3). Hemelsbreed vanaf het midden van
+ * het eigen postcodegebied (PDOK); zonder postcode of grens krijg je ze ongeacht de afstand.
+ */
+function MaxAfstand() {
+  const [stand, setStand] = useState<AfstandInstelling | null>(null);
+  const [bezig, setBezig] = useState(false);
+
+  useEffect(() => {
+    let actief = true;
+    fetch("/api/medewerker/afstand")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: AfstandInstelling | null) => {
+        if (actief) setStand(d);
+      })
+      .catch((err) => Sentry.captureException(err));
+    return () => {
+      actief = false;
+    };
+  }, []);
+
+  if (!stand || !stand.beschikbaar) return null;
+
+  const wijzig = async (waarde: number | null) => {
+    setBezig(true);
+    try {
+      const res = await fetch("/api/medewerker/afstand", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ max_afstand_km: waarde }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Opslaan mislukt");
+        return;
+      }
+      setStand({ ...stand, max_afstand_km: data.max_afstand_km ?? null });
+      toast.success(waarde == null ? "Je krijgt meldingen ongeacht de afstand" : `Meldingen voor diensten binnen ${waarde} km`);
+    } catch (err) {
+      Sentry.captureException(err);
+      toast.error("Er ging iets mis");
+    } finally {
+      setBezig(false);
+    }
+  };
+
+  return (
+    <Sectie titel="Afstand">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center flex-shrink-0">
+          <MapPin className="w-5 h-5 text-[var(--mp-text-secondary)]" />
+        </div>
+        <div className="flex-1 min-w-0 space-y-2">
+          <label htmlFor="max-afstand" className="block font-medium text-[var(--mp-text-primary)]">
+            Meldingen over nieuwe diensten
+          </label>
+          <select
+            id="max-afstand"
+            value={stand.max_afstand_km ?? ""}
+            disabled={bezig}
+            onChange={(e) => wijzig(e.target.value ? Number(e.target.value) : null)}
+            className={invoerKlasse}
+          >
+            <option value="">Geen grens</option>
+            {/* Een eerder via de app gekozen waarde die niet in de lijst staat, blijft zichtbaar. */}
+            {stand.max_afstand_km != null && !(MAX_AFSTAND_OPTIES_KM as readonly number[]).includes(stand.max_afstand_km) && (
+              <option value={stand.max_afstand_km}>Binnen {stand.max_afstand_km} km</option>
+            )}
+            {MAX_AFSTAND_OPTIES_KM.map((km) => (
+              <option key={km} value={km}>
+                Binnen {km} km
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-[var(--mp-text-tertiary)]">
+            Hemelsbreed, vanaf het midden van je postcodegebied. Daarvoor sturen we alleen je postcode naar de Locatieserver van de
+            overheid (PDOK).
+          </p>
+          {!stand.postcode_ingevuld && (
+            <p className="text-xs text-[var(--mp-text-secondary)]">
+              We kennen je postcode nog niet, dus de grens telt nog niet.{" "}
+              <Link href="/medewerker/profiel" className="font-semibold text-[var(--mp-accent)]">
+                Vul je postcode in
+              </Link>
+              .
+            </p>
+          )}
+        </div>
+      </div>
+    </Sectie>
+  );
+}
+
 export default function InstellingenClient() {
   const router = useRouter();
 
@@ -273,6 +375,8 @@ export default function InstellingenClient() {
           <Sectie titel="Notificaties">
             <PushNotificationToggle />
           </Sectie>
+
+          <MaxAfstand />
 
           <Sectie titel="Weergave">
             <div className="flex items-center gap-3">

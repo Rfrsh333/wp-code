@@ -1,8 +1,10 @@
 "use client";
 
-import { MapPin, Star, Clock, Euro, Shirt } from "lucide-react";
+import { MapPin, Star, Clock, Euro, Shirt, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { geschatteVerdiensten, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
+import { afstandLabel } from "@/lib/locatie/locatie-regels";
+import { reactiesLabel } from "@/lib/medewerker/ontdekken-regels";
 
 interface ShiftCardProps {
   shift: {
@@ -26,16 +28,23 @@ interface ShiftCardProps {
     kledingvoorschrift?: string | null;
     pauze_minuten?: number | null;
     medewerker_uurtarief?: number;
+    // Stap 3 (Ontdekken): ontbreken bij een oudere backend.
+    afstand_km?: number | null;
+    aantal_reacties?: number;
+    werkgever_favoriet?: boolean;
+    ik_ben_favoriet?: boolean;
   };
   /** Opent het reageerscherm (uitgebreid reageren). */
   onApply: (shiftId: string) => void;
+  /** Opent het dienstdetail (tik op de kaart). */
+  onOpen?: (shiftId: string) => void;
   onSave?: (shiftId: string) => void;
   saved?: boolean;
   /** Reageerscherm voor deze dienst staat open: knop uitgeschakeld. */
   bezig?: boolean;
 }
 
-export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig = false }: ShiftCardProps) {
+export default function ShiftCard({ shift, onApply, onOpen, onSave, saved = false, bezig = false }: ShiftCardProps) {
   // Klanttarief min € 4 (lib/medewerker/reactie-regels), nooit negatief.
   const medewerkerUurtarief = shift.medewerker_uurtarief ?? medewerkerTariefVanDienst(shift.uurtarief);
 
@@ -59,11 +68,16 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
   });
   const uren = schatting.uren.toFixed(1);
   const verdiensten = schatting.bedrag;
+  const afstand = afstandLabel(shift.afstand_km);
+  const reacties = reactiesLabel(shift.aantal_reacties);
 
   return (
     <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] overflow-hidden shadow-[var(--mp-shadow)]">
-      {/* Dienst/bedrijfsfoto — dienst afbeelding heeft prioriteit */}
-      <div className="relative w-full aspect-[2/1] bg-[var(--mp-bg)]">
+      {/* Dienst/bedrijfsfoto — dienst afbeelding heeft prioriteit. Tik = dienstdetail. */}
+      <div
+        className={`relative w-full aspect-[2/1] bg-[var(--mp-bg)] ${onOpen ? "cursor-pointer" : ""}`}
+        onClick={onOpen ? () => onOpen(shift.id) : undefined}
+      >
         {(shift.afbeelding_url || shift.klant.bedrijf_foto_url) ? (
           <Image
             src={shift.afbeelding_url || shift.klant.bedrijf_foto_url!}
@@ -80,12 +94,16 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
           </div>
         )}
 
-        {/* Speciaal voor jou badge */}
-        {shift.is_speciaal && (
+        {/* Jij staat bij deze werkgever in de favorieten; anders "Speciaal voor jou" */}
+        {shift.ik_ben_favoriet ? (
+          <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-[var(--mp-tag-special)] text-white text-[10px] font-semibold shadow-lg">
+            ⭐️ Jij bent favoriet
+          </div>
+        ) : shift.is_speciaal ? (
           <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-[var(--mp-tag-special)] text-white text-[10px] font-semibold shadow-lg">
             ⭐️ Speciaal voor jou
           </div>
-        )}
+        ) : null}
 
         {/* Plekken beschikbaar badge */}
         <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] font-semibold">
@@ -123,8 +141,17 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
       <div className="px-3 py-2.5">
         {/* Bedrijfsnaam + Rating */}
         <div className="flex items-start justify-between mb-1">
-          <h3 className="text-sm font-bold text-[var(--mp-text-primary)] leading-tight">
-            {shift.klant.bedrijfsnaam}
+          <h3 className="text-sm font-bold text-[var(--mp-text-primary)] leading-tight flex items-center gap-1 min-w-0">
+            {onOpen ? (
+              <button onClick={() => onOpen(shift.id)} className="text-left truncate hover:underline">
+                {shift.klant.bedrijfsnaam}
+              </button>
+            ) : (
+              <span className="truncate">{shift.klant.bedrijfsnaam}</span>
+            )}
+            {shift.werkgever_favoriet && (
+              <Heart className="w-3.5 h-3.5 shrink-0 fill-[var(--mp-accent)] text-[var(--mp-accent)]" aria-label="Favoriete werkgever" />
+            )}
           </h3>
           {shift.klant.rating && (
             <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[var(--mp-stars)]/10 shrink-0 ml-2">
@@ -137,9 +164,10 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
         </div>
 
         {/* Locatie */}
-        <div className="flex items-center gap-1 text-[var(--mp-text-secondary)] text-xs mb-1.5">
+        <div className="flex items-center gap-1 text-[var(--mp-text-secondary)] text-xs mb-1.5 min-w-0">
           <MapPin className="w-3 h-3 shrink-0" />
           <span className="truncate">{shift.locatie}</span>
+          {afstand && <span className="shrink-0 text-[var(--mp-text-tertiary)]">· {afstand}</span>}
         </div>
 
         {/* Tags */}
@@ -208,6 +236,12 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig
         {shift.omschrijving && (
           <p className="text-xs text-[var(--mp-text-secondary)] mb-2 line-clamp-1">
             {shift.omschrijving}
+          </p>
+        )}
+
+        {reacties && (
+          <p className="flex items-center gap-1 text-[10px] font-medium text-[var(--mp-text-secondary)] mb-2">
+            <MessageCircle className="w-3 h-3" /> {reacties}
           </p>
         )}
 
