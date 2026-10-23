@@ -11,7 +11,7 @@ import {
   reactieVoorWerkgever,
   wijktAfVanGezien,
 } from "@/lib/medewerker/reactie-regels";
-import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden, type AanmeldingVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { herberekenPlekken } from "@/lib/plekken";
 import { magKlantAanmeldingWijzigen } from "@/lib/klant-portaal-regels";
@@ -186,6 +186,8 @@ export async function POST(request: NextRequest) {
     }
 
     const totaal = dienstData.plekken_totaal ?? dienstData.aantal_nodig ?? 1;
+    // Het voorstel dat bij accepteren gold (alleen gevuld als de reactiekolommen bestaan).
+    let voorstel: AanmeldingVoorwaarden | undefined;
 
     // Capaciteit vóór accepteren: een volle dienst krijgt geen extra medewerker.
     if (naar === "geaccepteerd") {
@@ -195,7 +197,7 @@ export async function POST(request: NextRequest) {
       // Uitgebreid reageren: een reactie voorbij haar intrekmoment is niet meer te accepteren
       // (ook als de cron nog niet draaide), en accepteren neemt tijden en tarief over zoals de
       // werkgever ze zag. Die gelden daarna per aanmelding (lib/medewerker/reactie-regels).
-      const voorstel = (await haalVoorwaarden([aanmelding.id])).get(aanmelding.id);
+      voorstel = (await haalVoorwaarden([aanmelding.id])).get(aanmelding.id);
       const bron = { status: aanmelding.status, ...(voorstel ?? {}) };
       if (isAutomatischIngetrokken(bron, dienstData)) {
         return NextResponse.json(
@@ -217,13 +219,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Conditioneel op de oude status, zodat twee gelijktijdige klikken niet allebei slagen.
-    const { data: bijgewerkt, error: updateError } = await supabaseAdmin
+    // Conditioneel op de oude status, zodat twee gelijktijdige klikken niet allebei slagen. Bij
+    // accepteren ook op het voorstel dat hierboven is gecontroleerd: trekt de medewerker in dat
+    // venster in en reageert hij opnieuw met een ander voorstel, dan slaagt de update niet (409).
+    let bijwerken = supabaseAdmin
       .from("dienst_aanmeldingen")
       .update({ status: naar, beoordeeld_at: new Date().toISOString() })
       .eq("id", id)
-      .eq("status", aanmelding.status)
-      .select("id");
+      .eq("status", aanmelding.status);
+    if (naar === "geaccepteerd" && voorstel) {
+      const zelfde = (kolom: string, waarde: string | number | null) =>
+        (bijwerken = waarde == null ? bijwerken.is(kolom, null) : bijwerken.eq(kolom, waarde));
+      zelfde("voorgesteld_uurtarief", voorstel.voorgesteld_uurtarief);
+      zelfde("voorgestelde_start_tijd", voorstel.voorgestelde_start_tijd);
+      zelfde("voorgestelde_eind_tijd", voorstel.voorgestelde_eind_tijd);
+    }
+    const { data: bijgewerkt, error: updateError } = await bijwerken.select("id");
 
     if (updateError) {
       captureRouteError(updateError, { route: "/api/klant/diensten", action: "update_aanmelding" });

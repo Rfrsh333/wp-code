@@ -32,6 +32,8 @@ export type DienstExtras = { kledingvoorschrift: string | null; pauze_minuten: n
 
 /** PostgREST-blokken klein houden: lange .in()-lijsten lopen tegen de URL-limiet aan. */
 const BLOK = 150;
+/** Zoveel blokken tegelijk (een kostenoverzicht kan duizenden uren hebben; functies max. 10 s). */
+const TEGELIJK = 4;
 
 const getal = (v: unknown): number | null => {
   if (v == null || v === "") return null;
@@ -46,14 +48,19 @@ async function inBlokken<T>(
   zet: (rij: Record<string, unknown>) => [string, T],
 ): Promise<Map<string, T>> {
   const uniek = [...new Set(ids.filter((id): id is string => typeof id === "string" && id.length > 0))];
+  const blokken: string[][] = [];
+  for (let i = 0; i < uniek.length; i += BLOK) blokken.push(uniek.slice(i, i + BLOK));
+
   const resultaat = new Map<string, T>();
-  for (let i = 0; i < uniek.length; i += BLOK) {
-    const { data, error } = await haal(uniek.slice(i, i + BLOK));
-    if (isOntbrekendeKolom(error)) return new Map(); // migratie nog niet gedraaid
-    if (error) throw error;
-    for (const rij of (data ?? []) as Record<string, unknown>[]) {
-      const [id, waarde] = zet(rij);
-      resultaat.set(id, waarde);
+  for (let i = 0; i < blokken.length; i += TEGELIJK) {
+    const antwoorden = await Promise.all(blokken.slice(i, i + TEGELIJK).map((blok) => haal(blok)));
+    for (const { data, error } of antwoorden) {
+      if (isOntbrekendeKolom(error)) return new Map(); // migratie nog niet gedraaid
+      if (error) throw error;
+      for (const rij of (data ?? []) as Record<string, unknown>[]) {
+        const [id, waarde] = zet(rij);
+        resultaat.set(id, waarde);
+      }
     }
   }
   return resultaat;

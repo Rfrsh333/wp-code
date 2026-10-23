@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       // console.error("[DIENSTEN] Insert error:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    if (weggelaten.length > 0) {
+    if (weggelaten.some((k) => payload[k] != null)) {
       return NextResponse.json({ success: true, waarschuwing: "Kledingvoorschrift en pauze zijn niet opgeslagen: de migratie is nog niet gedraaid." });
     }
   }
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
     const { weggelaten } = await schrijfMetKolomFallback(payload, NIEUWE_DIENST_KOLOMMEN, (rij) =>
       supabaseAdmin.from("diensten").update(rij).eq("id", id),
     );
-    if (weggelaten.length > 0) {
+    if (weggelaten.some((k) => payload[k] != null)) {
       return NextResponse.json({ success: true, waarschuwing: "Kledingvoorschrift en pauze zijn niet opgeslagen: de migratie is nog niet gedraaid." });
     }
   }
@@ -232,7 +232,11 @@ export async function POST(request: NextRequest) {
 
     if (data.status === "geaccepteerd") {
       // Bevestigingsmail met de tijden die voor deze medewerker gelden (eigen tijden na acceptatie).
-      const ingepland = await stuurInplanBevestiging(id);
+      // De status is al gewijzigd: een mislukte mail mag geen 500 geven.
+      const ingepland = await stuurInplanBevestiging(id).catch((e) => {
+        captureRouteError(e, { route: "/api/admin/diensten", action: "bevestigingsmail" });
+        return null;
+      });
       const medewerker = ingepland?.medewerker;
       const dienst = ingepland?.dienst;
 

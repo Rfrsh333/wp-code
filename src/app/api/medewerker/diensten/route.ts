@@ -406,7 +406,9 @@ export async function POST(request: NextRequest) {
     await werkBezettingBij(origAanmelding.dienst_id);
 
     // Stuur bevestigingsmail naar vervanger
-    await stuurInplanBevestiging(vervangingAanmeldingId);
+    await stuurInplanBevestiging(vervangingAanmeldingId).catch((e) =>
+      captureRouteError(e, { route: "/api/medewerker/diensten", action: "bevestigingsmail" }),
+    );
 
     return NextResponse.json({ success: true });
   }

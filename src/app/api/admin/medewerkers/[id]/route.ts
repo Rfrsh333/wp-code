@@ -4,6 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { decryptField } from "@/lib/encryption";
 import { documentOpslagPad, MEDEWERKER_DOCUMENTEN_BUCKET } from "@/lib/medewerker/documenten";
 import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { verdienstenVanRegel } from "@/lib/medewerker/uren-regels";
 import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 /** Signed URL's voor documenten (privé bucket) zijn 10 minuten geldig. */
@@ -71,7 +72,7 @@ export async function GET(
     supabaseAdmin
       .from("uren_registraties")
       .select(`
-        id, aanmelding_id, gewerkte_uren, status, created_at,
+        id, aanmelding_id, gewerkte_uren, start_tijd, eind_tijd, status, created_at,
         dienst_aanmeldingen!inner (
           medewerker_id,
           diensten!inner (
@@ -113,7 +114,10 @@ export async function GET(
   const totalUren = goedgekeurdeUren.reduce((sum, u) => sum + (u.gewerkte_uren || 0), 0);
   const opkomstPct = totalAanmeldingen > 0 ? Math.round((goedgekeurdeUren.length / totalAanmeldingen) * 100) : 0;
 
-  // Monthly financials (tarief per aanmelding: tegenbod + € 4, anders het tarief van de dienst)
+  // Monthly financials. "Verdiensten" = wat de medewerker verdiende, met dezelfde formule als zijn
+  // eigen dashboard (verdienstenVanRegel: uren × (klanttarief − € 4) + toeslag), over het tarief van
+  // de aanmelding (tegenbod + € 4, anders de dienst). Voorheen uren × klanttarief, dus mét marge;
+  // dat was nooit zichtbaar omdat de lijst door het medewerker_id-filter altijd leeg bleef.
   const voorwaarden = await haalVoorwaarden(goedgekeurdeUren.map((u) => u.aanmelding_id as string));
   const maandMap = new Map<string, { uren: number; verdiensten: number; diensten: number }>();
   for (const u of goedgekeurdeUren) {
@@ -126,9 +130,14 @@ export async function GET(
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const existing = maandMap.get(key) || { uren: 0, verdiensten: 0, diensten: 0 };
     existing.uren += u.gewerkte_uren || 0;
-    existing.verdiensten +=
-      (u.gewerkte_uren || 0) *
-      klantUurtariefVoorAanmelding(dienst.uurtarief, voorwaarden.get(u.aanmelding_id as string)?.voorgesteld_uurtarief);
+    existing.verdiensten += verdienstenVanRegel({
+      status: u.status,
+      gewerkte_uren: u.gewerkte_uren,
+      start_tijd: u.start_tijd,
+      eind_tijd: u.eind_tijd,
+      datum: dienst.datum,
+      klant_uurtarief: klantUurtariefVoorAanmelding(dienst.uurtarief, voorwaarden.get(u.aanmelding_id as string)?.voorgesteld_uurtarief),
+    });
     existing.diensten += 1;
     maandMap.set(key, existing);
   }

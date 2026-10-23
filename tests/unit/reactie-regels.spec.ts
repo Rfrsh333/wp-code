@@ -3,6 +3,7 @@ import {
   AUTO_INTREKKEN_OPTIES,
   binnenDienst,
   effectieveAanmeldStatus,
+  eigenTijdenToegestaan,
   geldendeTijden,
   geschatteVerdiensten,
   heeftVoorwaarden,
@@ -61,7 +62,8 @@ test.describe("tarief per aanmelding (tegenbod)", () => {
   test("verdiensten via de bestaande formule komen uit op het tegenbod", () => {
     // haalUrenRegistraties zet klant_uurtarief = tegenbod + 4; verdienstenVanRegel trekt 4 eraf.
     const klant = klantUurtariefVoorAanmelding(22, 15.1);
-    expect(medewerkerUurtarief(klant)).toBeCloseTo(15.1, 10);
+    // Op centen, zodat het scherm nooit "× €15.100000000000001" toont.
+    expect(medewerkerUurtarief(klant)).toBe(15.1);
     const bedrag = verdienstenVanRegel({
       status: "klant_goedgekeurd",
       gewerkte_uren: 4,
@@ -104,6 +106,24 @@ test.describe("tijden per aanmelding", () => {
     expect(binnenDienst("22:00", "06:00", "01:00", "06:00")).toBe(true);
     expect(binnenDienst("22:00", "06:00", "21:00", "23:00")).toBe(false);
     expect(binnenDienst("22:00", "06:00", "05:00", "07:00")).toBe(false);
+  });
+
+  test("eigen begintijd na middernacht niet toegestaan (datum, check-in en toeslag rekenen met de dienstdatum)", () => {
+    expect(eigenTijdenToegestaan("22:00", "06:00", "23:00", "04:00")).toBe(true);
+    expect(eigenTijdenToegestaan("22:00", "06:00", "00:30", "04:00")).toBe(false);
+    expect(eigenTijdenToegestaan("14:00", "22:00", "16:00", "20:00")).toBe(true);
+    const r = valideerReactie(
+      { voorgestelde_start_tijd: "01:00", voorgestelde_eind_tijd: "05:00" },
+      dienst({ start_tijd: "22:00", eind_tijd: "06:00" }),
+      NU,
+    );
+    expect(!r.ok && r.code).toBe(REACTIE_FOUTCODES.ongeldigeTijden);
+    const ok = valideerReactie(
+      { voorgestelde_start_tijd: "23:00", voorgestelde_eind_tijd: "03:00" },
+      dienst({ start_tijd: "22:00", eind_tijd: "06:00" }),
+      NU,
+    );
+    expect(ok.ok).toBe(true);
   });
 
   test("± verdiensten: pauze eraf, nachtdienst goed", () => {
@@ -163,7 +183,7 @@ test.describe("valideerReactie", () => {
     expect(met.ok && met.voorwaarden.voorgesteld_uurtarief).toBe(19.96);
     const gelijk = valideerReactie({ voorgesteld_uurtarief: 18 }, dienst(), NU);
     expect(gelijk.ok && gelijk.voorwaarden.voorgesteld_uurtarief).toBeNull();
-    for (const fout of [0, -1, "abc", 1000.01]) {
+    for (const fout of [0, -1, "abc", 1000.01, 0.004, "0,001"]) {
       const r = valideerReactie({ voorgesteld_uurtarief: fout }, dienst(), NU);
       expect(r.ok).toBe(false);
       if (!r.ok) expect(r.code).toBe(REACTIE_FOUTCODES.ongeldigUurtarief);

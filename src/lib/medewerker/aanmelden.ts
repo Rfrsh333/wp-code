@@ -239,6 +239,12 @@ export async function meldAan(
   const hergebruik = eigenRij ?? rijen.find(heractiveerbaar);
   const metVoorwaarden = heeftVoorwaarden(voorwaarden);
 
+  // Direct inplannen wist een eerder voorstel op dezelfde rij. Onthoud het, zodat het bij
+  // terugdraaien (overboeking hieronder) weer terugkomt: anders kon de werkgever die reactie daarna
+  // accepteren tegen voorwaarden die de medewerker nooit had aangeboden.
+  const oudVoorstel =
+    hergebruik && status !== "aangemeld" ? (await haalVoorwaarden([hergebruik.id])).get(hergebruik.id) : undefined;
+
   let aanmeldingId: string;
   if (hergebruik) {
     // Hergebruikte rij: de voorwaarden van een eerdere reactie worden altijd overschreven (null
@@ -294,10 +300,15 @@ export async function meldAan(
   if (status !== "aangemeld") {
     const naInplannen = await telIngepland(dienstId);
     if (naInplannen > (dienst.plekken_totaal ?? dienst.aantal_nodig ?? 1)) {
-      await supabaseAdmin
-        .from("dienst_aanmeldingen")
-        .update({ status: hergebruik?.status ?? "geannuleerd" })
-        .eq("id", aanmeldingId);
+      const terug: Record<string, unknown> = { status: hergebruik?.status ?? "geannuleerd" };
+      if (oudVoorstel) {
+        terug.voorgesteld_uurtarief = oudVoorstel.voorgesteld_uurtarief;
+        terug.voorgestelde_start_tijd = oudVoorstel.voorgestelde_start_tijd;
+        terug.voorgestelde_eind_tijd = oudVoorstel.voorgestelde_eind_tijd;
+        terug.auto_intrekken_uren = oudVoorstel.auto_intrekken_uren;
+        terug.annuleer_reden = oudVoorstel.annuleer_reden;
+      }
+      await supabaseAdmin.from("dienst_aanmeldingen").update(terug).eq("id", aanmeldingId);
       await werkBezettingBij(dienstId);
       return { ok: false, status: 409, error: "Deze dienst zit vol" };
     }

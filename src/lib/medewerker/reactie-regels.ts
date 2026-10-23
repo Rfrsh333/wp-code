@@ -143,6 +143,16 @@ export function binnenDienst(dienstStart: string, dienstEind: string, start: str
   return van < tot && tot <= duur;
 }
 
+/**
+ * Mogen deze eigen tijden worden voorgesteld? Binnen de dienst, én de begintijd op dezelfde
+ * kalenderdag als de dienststart. Bij een nachtdienst (22:00–06:00) kan 23:00–04:00 wel, 00:30–04:00
+ * niet: die uren vallen op de volgende dag, terwijl datum, check-in (op de dienstdatum) en toeslag
+ * met de dienstdatum rekenen. Een eindtijd na middernacht is gewoon een nachtdienst, net als bij de dienst.
+ */
+export function eigenTijdenToegestaan(dienstStart: string, dienstEind: string, start: string, eind: string): boolean {
+  return binnenDienst(dienstStart, dienstEind, start, eind) && naarMinuten(start) >= naarMinuten(dienstStart);
+}
+
 /** Uren en ± verdiensten voor een tijdvak (pauze eraf), zonder toeslag: een schatting. */
 export function geschatteVerdiensten(input: {
   start_tijd: string;
@@ -316,9 +326,10 @@ export function valideerReactie(
   let tarief: number | null = null;
   if (invoer.voorgesteld_uurtarief != null && invoer.voorgesteld_uurtarief !== "") {
     const n = parseBedrag(invoer.voorgesteld_uurtarief);
-    if (!Number.isFinite(n) || n <= 0) return fout(400, REACTIE_FOUTCODES.ongeldigUurtarief, "Vul een geldig uurtarief in");
-    if (n > TEGENBOD_TIKFOUT_GRENS) return fout(400, REACTIE_FOUTCODES.ongeldigUurtarief, "Dit uurtarief is onrealistisch hoog");
-    const bedrag = rond(n);
+    // Eerst op centen afronden: 0,004 wordt 0 en is dus geen geldig bedrag (de DB eist > 0).
+    const bedrag = Number.isFinite(n) ? rond(n) : NaN;
+    if (!Number.isFinite(bedrag) || bedrag <= 0) return fout(400, REACTIE_FOUTCODES.ongeldigUurtarief, "Vul een geldig uurtarief in");
+    if (bedrag > TEGENBOD_TIKFOUT_GRENS) return fout(400, REACTIE_FOUTCODES.ongeldigUurtarief, "Dit uurtarief is onrealistisch hoog");
     tarief = Math.abs(bedrag - medewerkerTariefVanDienst(dienst.uurtarief)) < 0.005 ? null : bedrag;
   }
 
@@ -338,6 +349,13 @@ export function valideerReactie(
         400,
         REACTIE_FOUTCODES.ongeldigeTijden,
         `Je tijden moeten binnen de dienst vallen (${dStart ?? "?"}–${dEind ?? "?"}) en de begintijd moet vóór de eindtijd liggen`,
+      );
+    }
+    if (!eigenTijdenToegestaan(dStart, dEind, start, eind)) {
+      return fout(
+        400,
+        REACTIE_FOUTCODES.ongeldigeTijden,
+        `Een eigen begintijd na middernacht kan niet; kies een begintijd vanaf ${dStart} of reageer op de hele dienst`,
       );
     }
     if (start === dStart && eind === dEind) {

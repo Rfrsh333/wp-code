@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import {
   AUTO_INTREKKEN_OPTIES,
-  binnenDienst,
+  eigenTijdenToegestaan,
   geschatteVerdiensten,
   intrekMoment,
   korteTijd,
@@ -88,7 +88,8 @@ export default function ReageerDialoog({
   const tariefGetal = parseBedrag(tarief);
   const tariefGeldig = Number.isFinite(tariefGetal) && tariefGetal > 0 && tariefGetal <= 1000;
   const advies = tariefGeldig ? tegenbodAdvies(tariefGetal, { functie: dienst.functie, dienstUurtarief: dienst.uurtarief }) : null;
-  const eigenTijdenGeldig = tijden === "heel" || (!!korteTijd(start) && !!korteTijd(eind) && binnenDienst(dienstStart, dienstEind, start, eind));
+  const eigenTijdenGeldig =
+    tijden === "heel" || (!!korteTijd(start) && !!korteTijd(eind) && eigenTijdenToegestaan(dienstStart, dienstEind, start, eind));
   const motivatieTeLang = motivatie.trim().length > MOTIVATIE_MAX;
 
   // Alleen intrekmomenten die nog in de toekomst liggen (anders weigert de server ze). "Nu" één keer
@@ -234,7 +235,7 @@ export default function ReageerDialoog({
                 </div>
                 {!eigenTijdenGeldig && (
                   <p className="col-span-2 text-xs text-[var(--mp-danger)]" role="alert">
-                    Kies tijden binnen de dienst ({dienstStart}–{dienstEind}), met de begintijd vóór de eindtijd.
+                    Kies tijden binnen de dienst ({dienstStart}–{dienstEind}), met de begintijd vóór de eindtijd en niet na middernacht.
                   </p>
                 )}
               </div>

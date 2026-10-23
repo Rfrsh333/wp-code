@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
 import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
-import { nlMoment } from "@/lib/nl-tijd";
+import { nlMoment, nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { ANNULEER_REDEN_AUTOMATISCH, isAutomatischIngetrokken } from "@/lib/medewerker/reactie-regels";
 import { notifyMedewerkerReactieIngetrokken } from "@/lib/dienst-push-triggers";
 
@@ -42,6 +42,9 @@ export async function GET(request: NextRequest) {
       .select("id, medewerker_id, dienst_id, status, auto_intrekken_uren, dienst:diensten!inner(datum, start_tijd, functie, klant_naam)")
       .eq("status", "aangemeld")
       .not("auto_intrekken_uren", "is", null)
+      // Max. 48 uur vooraf intrekken: alleen diensten die uiterlijk over 3 dagen beginnen (of al
+      // voorbij zijn) kunnen verlopen zijn. Zo vallen verlopen reacties niet buiten de limiet.
+      .lte("dienst.datum", plusDagen(nlVandaag(), 3))
       .limit(1000);
 
     // Migratie 20261023_uitgebreid_reageren.sql nog niet gedraaid: niets te doen.
