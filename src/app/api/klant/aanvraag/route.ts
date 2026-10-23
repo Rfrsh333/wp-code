@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { sendPushToUser } from "@/lib/push-notifications";
+import { dienstSleutel } from "@/lib/meldingen/meldingen-regels";
 import { captureRouteError } from "@/lib/sentry-utils";
 import {
   alleRichtlijnen,
@@ -95,6 +96,9 @@ async function nodigFavorietenUit(
         body: omschrijving,
         url: "/medewerker/diensten/",
         tag: `uitnodiging-${dienstId}`,
+        // Meldingencentrum: vervangt een kaart "Nieuwe dienst beschikbaar" over deze dienst.
+        sleutels: [dienstSleutel(dienstId)],
+        ontdubbel: "vervangen",
       }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH_UITNODIGING" })),
     );
   }

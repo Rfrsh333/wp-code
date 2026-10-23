@@ -4,6 +4,8 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { sendShiftAanbiedingEmail } from "@/lib/notifications";
 import { aanbiedingenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { bewaarMeldingen } from "@/lib/meldingen/meldingen-opslag";
+import { meldingDienstAangeboden } from "@/lib/meldingen/meldingen-teksten";
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -70,6 +72,9 @@ export async function POST(request: NextRequest) {
       .select("klant_naam, locatie, datum, start_tijd, eind_tijd, functie")
       .eq("id", dienst_id)
       .single();
+
+    // Meldingencentrum: ook in het portaal en de app (deze aanbieding had alleen een mail). Gooit nooit.
+    await bewaarMeldingen(medewerker_ids, "medewerker", meldingDienstAangeboden(dienst, dienst_id));
 
     if (dienst) {
       const { data: medewerkersList } = await supabaseAdmin

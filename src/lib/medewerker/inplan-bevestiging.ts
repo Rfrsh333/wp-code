@@ -8,7 +8,16 @@ const een = <T,>(v: Een<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v
 
 export type InplanGegevens = {
   medewerker: { naam: string; email: string | null };
-  dienst: { id: string; klant_naam: string; locatie: string; datum: string; functie: string; start_tijd: string; eind_tijd: string };
+  dienst: {
+    id: string;
+    klant_id: string | null;
+    klant_naam: string;
+    locatie: string;
+    datum: string;
+    functie: string;
+    start_tijd: string;
+    eind_tijd: string;
+  };
 };
 
 /**
@@ -24,7 +33,7 @@ export async function stuurInplanBevestiging(aanmeldingId: string): Promise<Inpl
     .select(`
       id,
       medewerker:medewerkers(naam, email),
-      dienst:diensten(id, klant_naam, locatie, datum, start_tijd, eind_tijd, functie, notities)
+      dienst:diensten(id, klant_id, klant_naam, locatie, datum, start_tijd, eind_tijd, functie, notities)
     `)
     .eq("id", aanmeldingId)
     .maybeSingle();
@@ -33,6 +42,7 @@ export async function stuurInplanBevestiging(aanmeldingId: string): Promise<Inpl
   const dienst = een(
     data?.dienst as Een<{
       id: string;
+      klant_id: string | null;
       klant_naam: string;
       locatie: string;
       datum: string;

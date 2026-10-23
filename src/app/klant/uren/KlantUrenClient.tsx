@@ -14,6 +14,9 @@ import {
 import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import KlantPushNotificationBanner from "../components/PushNotificationBanner";
 import KlantOnboardingMelding from "@/components/klant/KlantOnboardingMelding";
+import MeldingenCentrum from "@/components/meldingen/MeldingenCentrum";
+import { useMeldingenAantal } from "@/components/meldingen/useMeldingen";
+import { klantTabUitUrl } from "@/lib/meldingen/meldingen-regels";
 import { euro, richtlijnBereikTekst, richtlijnVoorFunctie, tariefAdvies } from "@/lib/pricing/richtlijntarieven";
 import QuickActions from "@/components/klant/QuickActions";
 import KlantInstellingen from "@/components/klant/KlantInstellingen";
@@ -35,7 +38,7 @@ import SfeerfotoKiezer from "@/components/klant/SfeerfotoKiezer";
 import WerkgeverScoreKaart from "@/components/klant/WerkgeverScoreKaart";
 
 const KLANT_TAB_IDS = [
-  "overzicht", "uren", "diensten", "rooster", "aanvragen", "favorieten",
+  "overzicht", "meldingen", "uren", "diensten", "rooster", "aanvragen", "favorieten",
   "facturen", "kosten", "beoordelingen", "qr-scanner", "instellingen",
 ] as const;
 
@@ -250,6 +253,10 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
 
   // Realtime subscriptions
   useKlantRealtime(klant.id);
+
+  // Meldingencentrum (stap 5). Zonder migratie (beschikbaar: false) blijven de bel en de tabs zoals voorheen.
+  const { data: meldingenAantal } = useMeldingenAantal("klant");
+  const meldingenAan = meldingenAantal?.beschikbaar === true;
 
   // Mutations
   const urenAction = useUrenAction();
@@ -568,6 +575,20 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
         </svg>
       ),
     },
+    ...(meldingenAan
+      ? [
+          {
+            id: "meldingen",
+            label: "Meldingen",
+            icon: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            ),
+            badge: (meldingenAantal?.totaal ?? 0) > 0 ? meldingenAantal?.totaal : undefined,
+          },
+        ]
+      : []),
     {
       id: "uren",
       label: "Uren beoordelen",
@@ -679,10 +700,13 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
       <KlantMobileHeader
         bedrijfsnaam={klant.bedrijfsnaam}
         contactpersoon={klant.contactpersoon}
-        ongelezen={totalNotifCount}
+        ongelezen={meldingenAan ? (meldingenAantal?.totaal ?? 0) : totalNotifCount}
+        belLabel={meldingenAan ? "ongelezen meldingen" : undefined}
         onBellClick={() =>
           setActiveTab(
-            (dashboardStats?.pendingHoursCount ?? 0) > 0 ? "uren" : teBeoordeelen.length > 0 ? "beoordelingen" : "overzicht"
+            meldingenAan
+              ? "meldingen"
+              : (dashboardStats?.pendingHoursCount ?? 0) > 0 ? "uren" : teBeoordeelen.length > 0 ? "beoordelingen" : "overzicht"
           )
         }
         onInstellingen={() => setActiveTab("instellingen")}
@@ -1269,6 +1293,20 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
 
             {/* Tab: Instellingen (bedrijfsgegevens, wachtwoord, meldingen, account verwijderen) */}
             {activeTab === "instellingen" && <KlantInstellingen onLogout={handleLogout} />}
+
+            {/* Tab: Meldingen (stap 5). Tab-urls (/klant/uren?tab=…) worden een tabwissel. */}
+            {activeTab === "meldingen" && (
+              <MeldingenCentrum
+                rol="klant"
+                titelNiveau="h2"
+                onOpenUrl={(url) => {
+                  const doel = klantTabUitUrl(url);
+                  if (!doel || !(KLANT_TAB_IDS as readonly string[]).includes(doel)) return false;
+                  setActiveTab(doel);
+                  return true;
+                }}
+              />
+            )}
           </>
         )}
       </KlantPortalLayout>

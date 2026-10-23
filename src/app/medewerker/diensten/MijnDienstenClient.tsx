@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Calendar, Check, Clock, Send, WifiOff } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
+import MeldingenBel from "@/components/meldingen/MeldingenBel";
 import DienstCard from "@/components/medewerker/DienstCard";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import OpenstaandeBeoordelingen from "@/components/medewerker/OpenstaandeBeoordelingen";
@@ -196,9 +197,12 @@ export default function MijnDienstenClient() {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-[var(--mp-card)] border-b border-[var(--mp-separator)]">
         <div className="px-4 pt-3 pb-0">
-          <h1 className="text-2xl font-bold text-[var(--mp-text-primary)] mb-4">
-            Mijn diensten
-          </h1>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h1 className="text-2xl font-bold text-[var(--mp-text-primary)]">
+              Mijn diensten
+            </h1>
+            <MeldingenBel />
+          </div>
 
           {/* Sub-tabs met oranje indicator */}
           <div className="flex gap-6 relative overflow-x-auto">

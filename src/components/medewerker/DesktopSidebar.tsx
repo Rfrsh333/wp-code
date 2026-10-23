@@ -15,10 +15,12 @@ import {
   Compass,
   MessageSquare,
   FileSignature,
+  Bell,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
+import { useMeldingenAantal } from "@/components/meldingen/useMeldingen";
 
 interface MenuItem {
   id: string;
@@ -71,6 +73,21 @@ export default function DesktopSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  // Meldingencentrum: menu-item met badge, alleen als het er is (migratie gedraaid).
+  const { data: meldingen } = useMeldingenAantal("medewerker");
+  const secties = meldingen?.beschikbaar
+    ? menuSections.map((sectie, i) =>
+        i === 0
+          ? {
+              ...sectie,
+              items: [
+                ...sectie.items,
+                { id: "meldingen", label: "Meldingen", icon: Bell, href: "/medewerker/meldingen", badge: meldingen.totaal },
+              ],
+            }
+          : sectie,
+      )
+    : menuSections;
 
   const isActive = (href: string) => {
     if (href === "/medewerker/shifts") {
@@ -156,7 +173,7 @@ export default function DesktopSidebar({
 
       {/* Menu secties */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-        {menuSections.map((section, idx) => (
+        {secties.map((section, idx) => (
           <div key={idx}>
             {!isCollapsed && (
               <h3 className="text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase tracking-wider mb-2 px-3">
@@ -172,7 +189,7 @@ export default function DesktopSidebar({
                   <button
                     key={item.id}
                     onClick={() => router.push(item.href)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                    className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                       active
                         ? "bg-[var(--mp-accent)] text-white shadow-lg shadow-[var(--mp-accent)]/20"
                         : "text-[var(--mp-text-secondary)] hover:bg-[var(--mp-bg)] hover:text-[var(--mp-text-primary)]"
@@ -193,7 +210,9 @@ export default function DesktopSidebar({
                       </>
                     )}
                     {isCollapsed && item.badge !== undefined && item.badge > 0 && (
-                      <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--mp-danger)]" />
+                      <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--mp-danger)]">
+                        <span className="sr-only">{item.badge} nieuw</span>
+                      </span>
                     )}
                   </button>
                 );

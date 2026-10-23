@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Euro, Clock, Calendar, TrendingUp } from "lucide-react";
 import Image from "next/image";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
+import MeldingenBel from "@/components/meldingen/MeldingenBel";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import { dienstUren } from "@/lib/nl-tijd";
@@ -227,7 +228,10 @@ export default function UrenClient() {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-[var(--mp-card)] border-b border-[var(--mp-separator)]">
         <div className="px-4 py-3">
-          <h1 className="text-2xl font-bold text-[var(--mp-text-primary)] mb-4">Uren</h1>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h1 className="text-2xl font-bold text-[var(--mp-text-primary)]">Uren</h1>
+            <MeldingenBel />
+          </div>
 
           {/* Summary Card */}
           <div className="bg-gradient-to-br from-[var(--mp-accent)] to-[var(--mp-accent-dark)] rounded-[var(--mp-radius)] p-4 mb-4">

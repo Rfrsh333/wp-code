@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { meldUrenBeoordeeld } from "@/lib/meldingen/uren-meldingen";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
 import { haalVoorwaarden, type AanmeldingVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
@@ -212,6 +213,9 @@ export async function POST(request: NextRequest) {
       .update({ eerste_goedkeuring: nlVandaag() })
       .eq("id", klant.id)
       .is("eerste_goedkeuring", null);
+
+    // Push + melding aan de medewerker (gebundeld bij "Alles goedkeuren"), na het antwoord.
+    after(() => meldUrenBeoordeeld(id, "goedgekeurd", "klant"));
   } else if (action === "adjust") {
     if (!["ingediend", "klant_aangepast"].includes(urenRow.status)) {
       return NextResponse.json({ error: "Status staat wijziging niet toe" }, { status: 409 });
@@ -233,7 +237,7 @@ export async function POST(request: NextRequest) {
     const km = data.reiskostenKm as number | string | null | undefined;
     const opmerking = typeof data.opmerking === "string" ? data.opmerking.trim().slice(0, 1000) : "";
 
-    const { error } = await supabaseAdmin
+    const { data: aangepast, error } = await supabaseAdmin
       .from("uren_registraties")
       .update({
         status: "klant_aangepast",
@@ -246,12 +250,15 @@ export async function POST(request: NextRequest) {
         klant_opmerking: opmerking || null,
       })
       .eq("id", id)
-      .eq("status", urenRow.status);
+      .eq("status", urenRow.status)
+      .select("id");
 
     if (error) {
       captureRouteError(error, { route: "/api/klant/uren", action: "adjust" });
       return NextResponse.json({ error: "Aanpassing opslaan mislukt" }, { status: 500 });
     }
+    // De medewerker moet akkoord geven of weigeren: laat het hem weten (push + melding).
+    if (aangepast && aangepast.length > 0) after(() => meldUrenBeoordeeld(id, "aangepast", "klant"));
   } else if (action === "reject") {
     // Zelfde status als de admin-afwijzing (admin/uren update_status → "afgewezen"). Alleen uren
     // die nog bij de klant liggen; goedgekeurde of gefactureerde uren lopen via TopTalent.
@@ -279,6 +286,7 @@ export async function POST(request: NextRequest) {
     if (!bijgewerkt || bijgewerkt.length === 0) {
       return NextResponse.json({ error: "Deze uren zijn intussen al verwerkt" }, { status: 409 });
     }
+    after(() => meldUrenBeoordeeld(id, "afgewezen", "klant"));
   } else {
     return NextResponse.json({ error: "Ongeldige actie" }, { status: 400 });
   }

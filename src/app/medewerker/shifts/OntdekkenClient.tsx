@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SlidersHorizontal, Search, X } from "lucide-react";
 import ShiftCard from "@/components/medewerker/ShiftCard";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
+import MeldingenBel from "@/components/meldingen/MeldingenBel";
 import ReageerChecklistBlok from "@/components/medewerker/ReageerChecklistBlok";
 import ReageerDialoog from "@/components/medewerker/ReageerDialoog";
 import DienstDetailSheet from "@/components/medewerker/DienstDetailSheet";
@@ -287,18 +288,21 @@ export default function OntdekkenClient() {
             <h1 className="text-2xl font-bold text-[var(--mp-text-primary)]">
               Ontdekken
             </h1>
-            <button
-              onClick={openFilters}
-              className="relative w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center transition-colors active:scale-95"
-              aria-label={actief ? `Filters (${actief} actief)` : "Filters"}
-            >
-              <SlidersHorizontal className="w-5 h-5 text-[var(--mp-text-primary)]" />
-              {actief > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-[var(--mp-accent)] text-white text-[10px] font-bold flex items-center justify-center">
-                  {actief}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <MeldingenBel />
+              <button
+                onClick={openFilters}
+                className="relative w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center transition-colors active:scale-95"
+                aria-label={actief ? `Filters (${actief} actief)` : "Filters"}
+              >
+                <SlidersHorizontal className="w-5 h-5 text-[var(--mp-text-primary)]" />
+                {actief > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-[var(--mp-accent)] text-white text-[10px] font-bold flex items-center justify-center">
+                    {actief}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Zoeken: in de opgehaalde diensten (bedrijf, locatie, functie) */}

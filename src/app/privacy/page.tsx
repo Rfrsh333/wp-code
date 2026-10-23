@@ -354,6 +354,8 @@ export default function PrivacyPolicyPage() {
               </table>
             </div>
             <p>Na afloop van de bewaartermijn worden uw gegevens verwijderd of geanonimiseerd, tenzij een wettelijke verplichting of een gerechtvaardigd belang een langere bewaartermijn rechtvaardigt.</p>
+            {/* Meldingencentrum (v2.4) */}
+            <p id="meldingen">Meldingen die wij u sturen over uw diensten, uren, facturen of account, bijvoorbeeld als pushmelding, bewaren wij ook in het meldingenoverzicht van uw account, zodat u ze kunt teruglezen. Wij bewaren ze 90 dagen; daarna worden ze automatisch verwijderd. Wordt uw account verwijderd, dan verwijderen wij ook uw meldingen.</p>
 
             {/* 7. Verstrekking aan derden */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
