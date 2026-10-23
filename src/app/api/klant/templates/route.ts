@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { parseUurtarief } from "@/lib/klant-portaal-regels";
+import { isOntbrekendeKolom, schrijfMetKolomFallback } from "@/lib/db-kolom-fallback";
+import { parseKledingvoorschrift, parsePauzeMinuten } from "@/lib/medewerker/reactie-regels";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -18,7 +20,13 @@ type TemplateVelden = {
   favoriet_medewerker_ids?: string[];
   notities?: string | null;
   functies_met_aantal?: FunctieRegel[] | null;
+  // Uitgebreid reageren: zelfde velden en regels als de aanvraag (migratie 20261023_sjablonen_kleding_pauze.sql).
+  kledingvoorschrift?: string | null;
+  pauze_minuten?: number | null;
 };
+
+/** Kolommen die pas na migratie 20261023_sjablonen_kleding_pauze.sql bestaan. */
+const EXTRA_KOLOMMEN = ["kledingvoorschrift", "pauze_minuten"] as const;
 
 const tekst = (v: unknown, max: number): string | null =>
   typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null;
@@ -93,6 +101,17 @@ function leesVelden(body: Record<string, unknown>): { ok: true; velden: Template
       velden.duur_uren = duur;
     }
   }
+  // Kledingvoorschrift en pauze: leeg = null (wissen kan via PATCH), verder als bij de aanvraag.
+  if ("kledingvoorschrift" in body) {
+    const kleding = parseKledingvoorschrift(body.kledingvoorschrift);
+    if (!kleding.ok) return { ok: false, error: kleding.error };
+    velden.kledingvoorschrift = kleding.waarde;
+  }
+  if ("pauze_minuten" in body) {
+    const pauze = parsePauzeMinuten(body.pauze_minuten);
+    if (!pauze.ok) return { ok: false, error: pauze.error };
+    velden.pauze_minuten = pauze.waarde;
+  }
   if ("favoriet_medewerker_ids" in body) {
     const ids = body.favoriet_medewerker_ids;
     if (ids != null && (!Array.isArray(ids) || ids.length > 50 || !ids.every((i) => typeof i === "string" && UUID.test(i)))) {
@@ -106,19 +125,39 @@ function leesVelden(body: Record<string, unknown>): { ok: true; velden: Template
 
 const ALLEEN_EERSTE_FUNCTIE =
   "Templates met meerdere functies zijn nog niet beschikbaar: alleen de eerste functie is opgeslagen.";
+const EXTRAS_NIET_OPGESLAGEN =
+  "Kledingvoorschrift en pauze konden nog niet in de template worden opgeslagen. Vul ze bij de aanvraag opnieuw in.";
+
+type DbFout = { code?: string | null; message?: string | null } | null;
+
+/** Waarschuwing(en) voor het antwoord, of geen veld. */
+function waarschuwing(r: { alleenEersteFunctie?: true; extrasNietOpgeslagen?: true }): { waarschuwing?: string } {
+  const delen = [r.alleenEersteFunctie ? ALLEEN_EERSTE_FUNCTIE : null, r.extrasNietOpgeslagen ? EXTRAS_NIET_OPGESLAGEN : null].filter(Boolean);
+  return delen.length ? { waarschuwing: delen.join(" ") } : {};
+}
 
 /**
- * Schrijft; valt zonder migratie (kolom functies_met_aantal, 20261001_klant_portaal.sql) terug op
- * de oude kolommen. Zoals die migratie belooft wordt dan alleen de EERSTE functieregel opgeslagen
- * (functie, aantal en tarief van die regel) — niet meer "bediening, bar" met het totaalaantal en
- * één tarief. `alleenEersteFunctie` meldt dat er regels zijn weggevallen.
+ * Schrijft, met twee terugvallen voor een database zonder migratie:
+ * - kledingvoorschrift/pauze_minuten (20261023_sjablonen_kleding_pauze.sql): 42703/PGRST204 op die
+ *   kolom → opnieuw zonder. `extrasNietOpgeslagen` alleen als er echt een waarde wegviel (een leeg
+ *   veld uit het formulier is geen verlies);
+ * - functies_met_aantal (20261001_klant_portaal.sql): terug op de oude kolommen. Zoals die migratie
+ *   belooft wordt dan alleen de EERSTE functieregel opgeslagen (functie, aantal en tarief van die
+ *   regel) — niet meer "bediening, bar" met het totaalaantal en één tarief. `alleenEersteFunctie`
+ *   meldt dat er regels zijn weggevallen.
  */
 async function schrijf<T>(
-  actie: (velden: TemplateVelden) => PromiseLike<{ data: T | null; error: { code?: string } | null }>,
+  actie: (velden: TemplateVelden) => PromiseLike<{ data: T | null; error: DbFout }>,
   velden: TemplateVelden,
-): Promise<{ data: T | null; error: { code?: string } | null; alleenEersteFunctie?: true }> {
-  const res = await actie(velden);
-  if (res.error && (res.error.code === "42703" || res.error.code === "PGRST204") && "functies_met_aantal" in velden) {
+): Promise<{ data: T | null; error: DbFout; alleenEersteFunctie?: true; extrasNietOpgeslagen?: true }> {
+  const metExtras = async (v: TemplateVelden) => {
+    const r = await schrijfMetKolomFallback<T>(v as Record<string, unknown>, EXTRA_KOLOMMEN, (d) => actie(d as TemplateVelden));
+    const verloren = r.weggelaten.some((k) => v[k as keyof TemplateVelden] != null);
+    return { data: r.data, error: r.error ?? null, ...(verloren ? { extrasNietOpgeslagen: true as const } : {}) };
+  };
+
+  const res = await metExtras(velden);
+  if (isOntbrekendeKolom(res.error) && "functies_met_aantal" in velden) {
     const regels = velden.functies_met_aantal ?? [];
     const zonder = { ...velden };
     delete zonder.functies_met_aantal;
@@ -127,7 +166,7 @@ async function schrijf<T>(
       zonder.aantal_nodig = regels[0].aantal;
       zonder.uurtarief = Number(regels[0].uurtarief);
     }
-    const terug = await actie(zonder);
+    const terug = await metExtras(zonder);
     return regels.length > 1 ? { ...terug, alleenEersteFunctie: true } : terug;
   }
   return res;
@@ -172,7 +211,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Vul een uurtarief in" }, { status: 400 });
   }
 
-  const { data, error, alleenEersteFunctie } = await schrijf(
+  const resultaat = await schrijf(
     (velden) =>
       supabaseAdmin
         .from("dienst_templates")
@@ -182,16 +221,12 @@ export async function POST(request: NextRequest) {
     v,
   );
 
-  if (error) {
-    captureRouteError(error, { route: "/api/klant/templates", action: "POST" });
+  if (resultaat.error) {
+    captureRouteError(resultaat.error, { route: "/api/klant/templates", action: "POST" });
     return NextResponse.json({ error: "Opslaan mislukt" }, { status: 500 });
   }
 
-  return NextResponse.json({
-    success: true,
-    template: data,
-    ...(alleenEersteFunctie ? { waarschuwing: ALLEEN_EERSTE_FUNCTIE } : {}),
-  });
+  return NextResponse.json({ success: true, template: resultaat.data, ...waarschuwing(resultaat) });
 }
 
 // PATCH - Update template of increment gebruik
@@ -242,7 +277,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Geen wijzigingen" }, { status: 400 });
   }
 
-  const { error, alleenEersteFunctie } = await schrijf(
+  const resultaat = await schrijf(
     (velden) =>
       supabaseAdmin
         .from("dienst_templates")
@@ -253,12 +288,12 @@ export async function PATCH(request: NextRequest) {
     parsed.velden,
   );
 
-  if (error) {
-    captureRouteError(error, { route: "/api/klant/templates", action: "PATCH" });
+  if (resultaat.error) {
+    captureRouteError(resultaat.error, { route: "/api/klant/templates", action: "PATCH" });
     return NextResponse.json({ error: "Update mislukt" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, ...(alleenEersteFunctie ? { waarschuwing: ALLEEN_EERSTE_FUNCTIE } : {}) });
+  return NextResponse.json({ success: true, ...waarschuwing(resultaat) });
 }
 
 // DELETE - Verwijder template
