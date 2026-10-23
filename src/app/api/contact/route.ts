@@ -128,31 +128,9 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
-    const contactRecipients =
-      process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim()).filter(Boolean) || ["info@toptalentjobs.nl"];
-
-    // Send email via email service
-    const { error } = await sendEmail({
-      from: process.env.RESEND_FROM || "TopTalent Jobs <info@toptalentjobs.nl>",
-      to: contactRecipients,
-      replyTo: data.email,
-      subject: `Contact: ${data.onderwerp} - ${data.naam}`,
-      html: emailHtml,
-    });
-
-    if (error) {
-      captureRouteError(error, { route: "/api/contact", action: "POST" });
-      // console.error("Email service error details:", JSON.stringify(error, null, 2));
-
-      if (process.env.NODE_ENV !== "development") {
-        return NextResponse.json(
-          { error: "Fout bij verzenden e-mail. Probeer het later opnieuw." },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Opslaan in Supabase
+    // 1. Eerst opslaan: het bericht mag niet verloren gaan als de mail faalt.
+    // Voorheen werd eerst gemaild en bij een mailfout (productie) direct een 500
+    // teruggegeven — dan stond het bericht nergens.
     const { error: dbError } = await supabase.from("contact_berichten").insert({
       naam: data.naam,
       email: data.email,
@@ -167,13 +145,39 @@ export async function POST(request: NextRequest) {
       utm_campaign: data.utmCampaign || null,
     });
 
+    const contactRecipients =
+      process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim()).filter(Boolean) || ["info@toptalentjobs.nl"];
+
+    // 2. Dan mailen. Een mislukte mail is niet fataal zolang het bericht in de
+    // database staat (het is dan in het dashboard te zien).
+    let mailGelukt = false;
+    try {
+      const { error: mailError } = await sendEmail({
+        from: process.env.RESEND_FROM || "TopTalent Jobs <info@toptalentjobs.nl>",
+        to: contactRecipients,
+        replyTo: data.email,
+        subject: `Contact: ${data.onderwerp} - ${data.naam}`,
+        html: emailHtml,
+      });
+      if (mailError) {
+        captureRouteError(mailError, { route: "/api/contact", action: "POST" });
+      } else {
+        mailGelukt = true;
+      }
+    } catch (mailErr) {
+      captureRouteError(mailErr, { route: "/api/contact", action: "POST" });
+    }
+
     if (dbError) {
-      captureRouteError(error, { route: "/api/contact", action: "POST" });
-      // console.error("Supabase error:", dbError);
-      return NextResponse.json(
-        { error: "Fout bij opslaan bericht" },
-        { status: 500 }
-      );
+      captureRouteError(dbError, { route: "/api/contact", action: "POST" });
+      // Niet opgeslagen maar wél gemaild: het bericht is binnen, dus succes.
+      // Niet opgeslagen én niet gemaild: dan is het echt weg → fout tonen.
+      if (!mailGelukt) {
+        return NextResponse.json(
+          { error: "Fout bij opslaan bericht. Probeer het later opnieuw." },
+          { status: 500 }
+        );
+      }
     }
 
     // Send Telegram alert (geen PII — AVG compliance)

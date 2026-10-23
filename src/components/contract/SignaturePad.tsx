@@ -6,6 +6,7 @@ import SignaturePadLib from 'signature_pad';
 interface SignaturePadProps {
   onSave: (dataUrl: string) => void;
   onClear?: () => void;
+  /** Maximale breedte; op smallere schermen schaalt het tekenvlak mee met de container. */
   width?: number;
   height?: number;
   label?: string;
@@ -21,9 +22,27 @@ export default function SignaturePad({
   disabled = false,
 }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const padRef = useRef<SignaturePadLib | null>(null);
   const [isEmpty, setIsEmpty] = useState(true);
   const [hasSaved, setHasSaved] = useState(false);
+  // Vaste 500px liep op een telefoon (±360px) buiten beeld; meet de beschikbare breedte.
+  const [breedte, setBreedte] = useState(width);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const meet = () => {
+      const beschikbaar = Math.floor(container.clientWidth) - 4; // 2px rand links en rechts
+      if (beschikbaar <= 0) return;
+      const nieuw = Math.min(width, beschikbaar);
+      // Alleen bij een echte breedteverandering (bv. draaien); hertekenen wist de handtekening.
+      setBreedte((oud) => (Math.abs(oud - nieuw) >= 8 ? nieuw : oud));
+    };
+    meet();
+    window.addEventListener("resize", meet);
+    return () => window.removeEventListener("resize", meet);
+  }, [width]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,9 +68,9 @@ export default function SignaturePad({
 
     // Resize canvas for retina
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    canvas.width = width * ratio;
+    canvas.width = breedte * ratio;
     canvas.height = height * ratio;
-    canvas.style.width = `${width}px`;
+    canvas.style.width = `${breedte}px`;
     canvas.style.height = `${height}px`;
     const ctx = canvas.getContext('2d');
     if (ctx) {
@@ -59,10 +78,16 @@ export default function SignaturePad({
     }
     pad.clear();
 
+    // Opnieuw opgebouwd (andere breedte) = leeg vlak.
+    queueMicrotask(() => {
+      setIsEmpty(true);
+      setHasSaved(false);
+    });
+
     return () => {
       pad.off();
     };
-  }, [width, height, disabled]);
+  }, [breedte, height, disabled]);
 
   const handleClear = useCallback(() => {
     if (padRef.current) {
@@ -87,7 +112,7 @@ export default function SignaturePad({
         {label}
       </label>
 
-      <div className={`relative border-2 rounded-lg overflow-hidden ${
+      <div ref={containerRef} className={`relative w-full max-w-full border-2 rounded-lg overflow-hidden ${
         disabled ? 'border-gray-200 bg-gray-50' :
         hasSaved ? 'border-green-400 bg-green-50/30' :
         'border-gray-300 hover:border-orange-300'

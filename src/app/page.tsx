@@ -56,7 +56,8 @@ const industries = [
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Horecapersoneel met persoonlijke aanpak | TopTalent",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Horecapersoneel met persoonlijke aanpak | TopTalent" },
   description:
     "TopTalent levert zorgvuldig gescreend horecapersoneel met persoonlijke matching en duidelijke afspraken. Vaak binnen 24 uur inzetbaar.",
   alternates: {

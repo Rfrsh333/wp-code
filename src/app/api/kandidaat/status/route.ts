@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     // Fetch all kandidaten (we'll validate the token against them)
     const { data: kandidaten, error: fetchError } = await supabaseAdmin
       .from("inschrijvingen")
-      .select("id, email, voornaam, achternaam, onboarding_status, documenten_compleet, inzetbaar_op, goedgekeurd_op, created_at, onboarding_checklist");
+      .select("id, email, voornaam, achternaam, onboarding_status, documenten_compleet, inzetbaar_op, goedgekeurd_op, created_at, onboarding_checklist, onboarding_portal_token, onboarding_portal_token_expires_at, medewerker_id");
 
     if (fetchError || !kandidaten) {
       return NextResponse.json({ error: "Fout bij ophalen data" }, { status: 500 });
@@ -67,11 +67,31 @@ export async function GET(request: NextRequest) {
     // Fetch kandidaat documenten
     const { data: documenten } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .select("id, document_type, review_status, uploaded_at")
+      .select("id, type, status, uploaded_at")
       .eq("inschrijving_id", kandidaat.id)
       .order("uploaded_at", { ascending: false });
 
+    // B14: de statuspagina geeft een uploadlink bij "documenten nodig" en bij "inzetbaar" de
+    // weg naar activeren of inloggen. De statuslink is persoonlijk (hash met geheim), dus de
+    // uploadlink van deze kandidaat mag hier mee.
+    const uploadGeldig =
+      !!kandidaat.onboarding_portal_token &&
+      !!kandidaat.onboarding_portal_token_expires_at &&
+      new Date(kandidaat.onboarding_portal_token_expires_at) > new Date();
+
+    let account: { aangemaakt: boolean; geactiveerd: boolean } = { aangemaakt: false, geactiveerd: false };
+    if (kandidaat.medewerker_id) {
+      const { data: medewerker } = await supabaseAdmin
+        .from("medewerkers")
+        .select("wachtwoord")
+        .eq("id", kandidaat.medewerker_id)
+        .maybeSingle();
+      account = { aangemaakt: !!medewerker, geactiveerd: !!medewerker?.wachtwoord };
+    }
+
     return NextResponse.json({
+      upload_url: uploadGeldig ? `/kandidaat/documenten?token=${kandidaat.onboarding_portal_token}` : null,
+      account,
       kandidaat: {
         voornaam: kandidaat.voornaam,
         achternaam: kandidaat.achternaam,
@@ -85,8 +105,10 @@ export async function GET(request: NextRequest) {
       },
       documenten: documenten?.map((doc) => ({
         id: doc.id,
-        document_type: doc.document_type,
-        review_status: doc.review_status,
+        // Live kolommen heten type/status; de statuspagina verwacht de oude
+        // veldnamen (met Nederlandse statuswaarden).
+        document_type: doc.type,
+        review_status: doc.status,
         uploaded_at: doc.uploaded_at,
       })) || [],
     });

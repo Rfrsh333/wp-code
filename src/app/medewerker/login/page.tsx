@@ -19,20 +19,30 @@ export default function MedewerkerLogin() {
     setIsLoading(true);
     setError("");
 
-    const res = await fetch("/api/medewerker/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, wachtwoord }),
-    });
+    // try/catch/finally: bij een netwerkfout of niet-JSON-antwoord (bv. 429/502 van de proxy)
+    // bleef de knop eeuwig op 'laden' staan.
+    try {
+      const res = await fetch("/api/medewerker/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, wachtwoord }),
+      });
 
-    const data = await res.json();
-    setIsLoading(false);
+      const data = await res.json().catch(() => ({}));
 
-    if (data.success) {
-      toast.success("Welkom terug!");
-      router.push("/medewerker/dashboard");
-    } else {
-      setError(data.error || "Er ging iets mis");
+      if (res.ok && data.success && data.gepauzeerd) {
+        // B5: gepauzeerd account ziet alleen status, boete en betalen.
+        router.push("/medewerker/gepauzeerd");
+      } else if (res.ok && data.success) {
+        toast.success("Welkom terug!");
+        router.push("/medewerker/dashboard");
+      } else {
+        setError(data.error || "Er ging iets mis. Probeer het opnieuw.");
+      }
+    } catch {
+      setError("Geen verbinding. Controleer je internet en probeer het opnieuw.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

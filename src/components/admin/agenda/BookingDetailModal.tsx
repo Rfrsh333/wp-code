@@ -13,6 +13,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/lib/supabase";
+
+async function openCv(bookingId: string) {
+  // Venster direct openen (binnen de klik) zodat popup-blockers het toelaten.
+  const venster = window.open("", "_blank");
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`/api/admin/bookings/cv?booking_id=${encodeURIComponent(bookingId)}`, {
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    });
+    const data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || "CV kon niet worden geopend");
+    if (venster) venster.location.href = data.url;
+    else window.location.href = data.url;
+  } catch (err) {
+    venster?.close();
+    alert(err instanceof Error ? err.message : "CV kon niet worden geopend");
+  }
+}
 
 interface BookingDetailModalProps {
   booking: Booking | null;
@@ -77,10 +96,11 @@ export default function BookingDetailModal({
                 {booking.kandidaat_cv_url && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-neutral-500">CV:</span>
-                    <a href={booking.kandidaat_cv_url} target="_blank" rel="noopener noreferrer" className="text-sm text-purple-600 hover:underline flex items-center gap-1">
+                    {/* Opgeslagen is het opslagpad; bij klikken een vers gesigneerde URL ophalen. */}
+                    <button type="button" onClick={() => void openCv(booking.id)} className="text-sm text-purple-600 hover:underline flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       Download CV
-                    </a>
+                    </button>
                   </div>
                 )}
                 {booking.google_meet_link && (

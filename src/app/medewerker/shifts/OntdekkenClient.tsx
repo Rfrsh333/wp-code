@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SlidersHorizontal, Search } from "lucide-react";
 import ShiftCard from "@/components/medewerker/ShiftCard";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
+import ReageerChecklistBlok from "@/components/medewerker/ReageerChecklistBlok";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
@@ -31,6 +32,10 @@ export default function OntdekkenClient() {
   const [loading, setLoading] = useState(true);
   const [savedShifts, setSavedShifts] = useState<Set<string>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
+  const [aanmeldenBezig, setAanmeldenBezig] = useState<string | null>(null);
+  const [checklistVersie, setChecklistVersie] = useState(0);
+  // Ref i.p.v. alleen state: een snelle dubbelklik komt vóór de re-render binnen.
+  const aanmeldenLoopt = useRef(false);
 
   useEffect(() => {
     fetchShifts();
@@ -55,6 +60,9 @@ export default function OntdekkenClient() {
   };
 
   const handleApply = async (shiftId: string) => {
+    if (aanmeldenLoopt.current) return;
+    aanmeldenLoopt.current = true;
+    setAanmeldenBezig(shiftId);
     try {
       const res = await fetch("/api/medewerker/shifts/aanmelden", {
         method: "POST",
@@ -63,16 +71,21 @@ export default function OntdekkenClient() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         toast.error(data.error || "Aanmelden mislukt");
+        // B1: checklist onvolledig → blok bovenaan opnieuw laden zodat zichtbaar is wat ontbreekt.
+        if (data.code === "checklist_onvolledig") setChecklistVersie((v) => v + 1);
         return;
       }
 
-      toast.success("Aanmelding geslaagd! 🎉");
+      toast.success("Aanmelding geslaagd! 🎉 Je vindt hem bij Mijn diensten onder Aangemeld.");
       await fetchShifts(); // Refresh om beschikbare plekken te updaten
     } catch (err) {
       Sentry.captureException(err);
       toast.error("Er ging iets mis");
+    } finally {
+      aanmeldenLoopt.current = false;
+      setAanmeldenBezig(null);
     }
   };
 
@@ -121,6 +134,11 @@ export default function OntdekkenClient() {
         </div>
       </div>
 
+      {/* B1: checklist vóór reageren */}
+      <div className="px-4 pt-4 empty:hidden">
+        <ReageerChecklistBlok verversSleutel={checklistVersie} />
+      </div>
+
       {/* Shifts Feed */}
       <div className="px-4 pt-4 pb-4">
         {loading ? (
@@ -145,6 +163,7 @@ export default function OntdekkenClient() {
                 onApply={handleApply}
                 onSave={handleSave}
                 saved={savedShifts.has(shift.id)}
+                bezig={aanmeldenBezig !== null}
               />
             ))}
           </div>

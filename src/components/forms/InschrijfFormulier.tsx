@@ -1,5 +1,6 @@
 "use client";
 
+import { isGeldigKvkNummer } from "@/lib/medewerker/zzp-gegevens";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
@@ -59,7 +60,8 @@ const initialFormData: FormData = {
   horecaErvaring: "",
   motivatie: "",
   hoeGekomen: "",
-  uitbetalingswijze: "",
+  // B11: TopTalent werkt alleen met zzp'ers; er is geen keuze meer.
+  uitbetalingswijze: "zzp",
   kvkNummer: "",
   beschikbaarheid: "",
   beschikbaarVanaf: "",
@@ -348,7 +350,8 @@ export default function InschrijfFormulier() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.formData) {
-          setFormData(prev => ({ ...prev, ...parsed.formData }));
+          // Oude concepten kunnen nog "loondienst" bevatten: altijd zzp (B11).
+          setFormData(prev => ({ ...prev, ...parsed.formData, uitbetalingswijze: "zzp" }));
           setCurrentStep(parsed.step || 0);
           setDraftRestored(true);
         }
@@ -440,9 +443,10 @@ export default function InschrijfFormulier() {
       case 2: // Beschikbaarheid
         if (!formData.beschikbaarheid) newErrors.beschikbaarheid = "Selecteer je beschikbaarheid";
         if (!formData.beschikbaarVanaf) newErrors.beschikbaarVanaf = "Kies wanneer je kunt starten";
-        if (!formData.uitbetalingswijze) newErrors.uitbetalingswijze = "Selecteer een optie";
-        if (formData.uitbetalingswijze === "zzp" && !formData.kvkNummer.trim()) {
-          newErrors.kvkNummer = "KVK nummer is verplicht voor ZZP";
+        if (!formData.kvkNummer.trim()) {
+          newErrors.kvkNummer = "KvK-nummer is verplicht";
+        } else if (!isGeldigKvkNummer(formData.kvkNummer)) {
+          newErrors.kvkNummer = "Een KvK-nummer bestaat uit 8 cijfers";
         }
         break;
       case 3: // Extra context
@@ -774,31 +778,22 @@ export default function InschrijfFormulier() {
               placeholder="Bijvoorbeeld 24"
               error={errors.maxUrenPerWeek}
             />
-            <FormSelect
-              id="uitbetalingswijze"
-              label="Voorkeur uitbetaling"
-              value={formData.uitbetalingswijze}
-              onChange={(e) => updateField("uitbetalingswijze", e.target.value)}
-              error={errors.uitbetalingswijze}
-              required
-              options={[
-                { value: "loondienst", label: "Loondienst" },
-                { value: "zzp", label: "ZZP" },
-              ]}
-            />
-            {formData.uitbetalingswijze === "zzp" ? (
-              <div className="md:col-span-2">
-                <FormInput
-                  id="kvk-nummer"
-                  label="KVK nummer"
-                  value={formData.kvkNummer}
-                  onChange={(e) => updateField("kvkNummer", e.target.value)}
-                  placeholder="Alleen invullen als je als ZZP werkt"
-                  error={errors.kvkNummer}
-                  required
-                />
-              </div>
-            ) : null}
+            {/* B11: alleen zzp. Geen keuze voor loondienst meer. */}
+            <div className="md:col-span-2 rounded-xl bg-[#F97316]/5 border border-[#F97316]/20 px-4 py-3 text-sm text-neutral-700">
+              Via TopTalent werk je als zelfstandige (zzp). Daarvoor heb je een inschrijving bij de
+              Kamer van Koophandel nodig.
+            </div>
+            <div className="md:col-span-2">
+              <FormInput
+                id="kvk-nummer"
+                label="KvK-nummer"
+                value={formData.kvkNummer}
+                onChange={(e) => updateField("kvkNummer", e.target.value)}
+                placeholder="8 cijfers, bijvoorbeeld 12345678"
+                error={errors.kvkNummer}
+                required
+              />
+            </div>
           </div>
         )}
 

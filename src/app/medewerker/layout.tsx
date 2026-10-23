@@ -3,6 +3,8 @@ import ThemeProvider from "@/components/medewerker/ThemeProvider";
 import ServiceWorkerRegister from "@/components/medewerker/ServiceWorkerRegister";
 import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidgetLazy";
 import QueryProvider from "@/components/QueryProvider";
+import SessieVerlopenBewaker from "@/components/shared/SessieVerlopenBewaker";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   robots: {
@@ -49,9 +51,13 @@ export default function MedewerkerLayout({
   // body zijn) — daarom bewust verwijderd.
   return (
     <QueryProvider>
+      <SessieVerlopenBewaker portaal="medewerker" />
       <ThemeProvider>
         <ServiceWorkerRegister />
         {children}
+        {/* Alle portaalpagina's gebruiken `toast` uit sonner, maar er was nergens een Toaster
+            gemount: geen enkele foutmelding of bevestiging werd ooit getoond. */}
+        <Toaster position="top-center" richColors closeButton />
         <AIChatWidget userType="medewerker" />
       </ThemeProvider>
     </QueryProvider>

@@ -175,7 +175,7 @@ export default async function FunctiePage({ params }: PageProps) {
               <Link
                 key={dienst}
                 href={`/diensten/${dienst}/`}
-                className="px-2.5 py-1 rounded-full bg-orange-50 text-[#B85600] text-xs font-semibold hover:bg-orange-100 transition-colors"
+                className="px-2.5 py-1 rounded-full bg-orange-50 text-[#9a4700] text-xs font-semibold hover:bg-orange-100 transition-colors"
               >
                 {dienstLabels[dienst]}
               </Link>
@@ -282,7 +282,7 @@ export default async function FunctiePage({ params }: PageProps) {
               </div>
               <Link
                 href="/kosten-calculator/"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#B85600] font-semibold rounded-xl hover:bg-orange-50 transition-colors text-center"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#9a4700] font-semibold rounded-xl hover:bg-orange-50 transition-colors text-center"
               >
                 Bereken exacte kosten
               </Link>
@@ -358,7 +358,7 @@ export default async function FunctiePage({ params }: PageProps) {
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link
                 href="/personeel-aanvragen/"
-                className="px-6 py-3 bg-white text-[#B85600] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
+                className="px-6 py-3 bg-white text-[#9a4700] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
               >
                 Personeel aanvragen
               </Link>
@@ -501,7 +501,7 @@ export default async function FunctiePage({ params }: PageProps) {
                 href={`/functies/${f.slug}/`}
                 className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
                   f.slug === functie.slug
-                    ? "bg-orange-50 border-orange-300 text-[#B85600]"
+                    ? "bg-orange-50 border-orange-300 text-[#9a4700]"
                     : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-orange-300 hover:text-[#9a4700]"
                 }`}
               >

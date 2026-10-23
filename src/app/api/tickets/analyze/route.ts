@@ -5,19 +5,12 @@ import { sendEmail } from "@/lib/email-service";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { escapeHtml } from "@/lib/sanitize";
+import { normaliseerTicketAnalyse, type GenormaliseerdeAnalyse } from "@/lib/ticket-analyse";
 
 interface TicketSubmission {
   question: string;
   visitor_name?: string;
   visitor_email?: string;
-}
-
-interface AIAnalysis {
-  priority: "high" | "medium" | "low";
-  category: string;
-  is_spam: boolean;
-  similar_existing_question: string | null;
-  reasoning: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -78,7 +71,7 @@ export async function POST(request: NextRequest) {
       .join("\n");
 
     // 3. AI Analysis
-    let analysis: AIAnalysis | null = null;
+    let analysis: GenormaliseerdeAnalyse | null = null;
 
     if (isOpenAIConfigured()) {
       try {
@@ -121,7 +114,8 @@ Antwoord ALLEEN in valid JSON format:
         // Parse JSON from response
         const jsonMatch = result.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          analysis = JSON.parse(jsonMatch[0]) as AIAnalysis;
+          // Normaliseren: ai_priority heeft een CHECK (high|medium|low).
+          analysis = normaliseerTicketAnalyse(JSON.parse(jsonMatch[0]));
         }
       } catch (aiError) {
         captureRouteError(aiError, { route: "/api/tickets/analyze", action: "POST" });
@@ -148,17 +142,20 @@ Antwoord ALLEEN in valid JSON format:
           .from("faq_items")
           .select("id")
           .eq("id", analysis.similar_existing_question)
-          .single();
+          .maybeSingle();
 
         if (faqMatch) {
           updateData.ai_similar_faq_id = faqMatch.id;
         }
       }
 
-      await supabaseAdmin
+      const { error: updateError } = await supabaseAdmin
         .from("tickets")
         .update(updateData)
         .eq("id", ticket.id);
+      if (updateError) {
+        captureRouteError(updateError, { route: "/api/tickets/analyze", action: "ai-update" });
+      }
     }
 
     // 5. Send email notification for high-priority tickets
@@ -173,8 +170,8 @@ Antwoord ALLEEN in valid JSON format:
             <p><strong>Vraag:</strong> ${escapeHtml(body.question)}</p>
             ${body.visitor_name ? `<p><strong>Naam:</strong> ${escapeHtml(body.visitor_name)}</p>` : ""}
             ${body.visitor_email ? `<p><strong>Email:</strong> ${escapeHtml(body.visitor_email)}</p>` : ""}
-            <p><strong>AI Categorie:</strong> ${escapeHtml(analysis.category)}</p>
-            <p><strong>AI Redenering:</strong> ${escapeHtml(analysis.reasoning)}</p>
+            <p><strong>AI Categorie:</strong> ${escapeHtml(analysis.category ?? "-")}</p>
+            <p><strong>AI Redenering:</strong> ${escapeHtml(analysis.reasoning ?? "-")}</p>
             <hr>
             <p><a href="https://www.toptalentjobs.nl/admin">Bekijk in admin dashboard</a></p>
           `,

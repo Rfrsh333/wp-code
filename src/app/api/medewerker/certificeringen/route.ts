@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const { data } = await supabaseAdmin
     .from("certificeringen")
@@ -24,15 +18,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const { action, id, data } = await request.json();
 

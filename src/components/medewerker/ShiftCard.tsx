@@ -26,9 +26,11 @@ interface ShiftCardProps {
   onApply: (shiftId: string) => void;
   onSave?: (shiftId: string) => void;
   saved?: boolean;
+  /** Aanmelding loopt: knop uitgeschakeld (geen dubbele aanmelding door dubbelklikken). */
+  bezig?: boolean;
 }
 
-export default function ShiftCard({ shift, onApply, onSave, saved = false }: ShiftCardProps) {
+export default function ShiftCard({ shift, onApply, onSave, saved = false, bezig = false }: ShiftCardProps) {
   const medewerkerUurtarief = shift.uurtarief - 4; // €4 margin voor TopTalent
 
   const formatDatum = (datum: string) => {
@@ -193,9 +195,11 @@ export default function ShiftCard({ shift, onApply, onSave, saved = false }: Shi
         {/* CTA Button — compact */}
         <button
           onClick={() => onApply(shift.id)}
-          className="w-full py-2.5 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-xs transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)]"
+          disabled={bezig}
+          aria-busy={bezig}
+          className="w-full py-2.5 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-xs transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)] disabled:opacity-50"
         >
-          Direct aanmelden
+          {bezig ? "Bezig met aanmelden…" : "Direct aanmelden"}
         </button>
       </div>
     </div>

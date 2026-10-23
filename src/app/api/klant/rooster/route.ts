@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
+import { isIngepland } from "@/lib/dienst-status";
 
 export async function GET(request: NextRequest) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const klant = await verifyKlantSession(session.value);
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const start = searchParams.get("start");
   const end = searchParams.get("end");
 
-  if (!start || !end) {
-    return NextResponse.json({ error: "start en end parameters zijn verplicht" }, { status: 400 });
+  const DATUM = /^\d{4}-\d{2}-\d{2}$/;
+  if (!start || !end || !DATUM.test(start) || !DATUM.test(end)) {
+    return NextResponse.json({ error: "start en end (YYYY-MM-DD) zijn verplicht" }, { status: 400 });
   }
 
   const { data: diensten } = await supabaseAdmin
@@ -44,7 +41,8 @@ export async function GET(request: NextRequest) {
     status: d.status,
     aantal_nodig: d.aantal_nodig,
     medewerkers: (d.dienst_aanmeldingen || [])
-      .filter((a: { status: string }) => a.status === "bevestigd")
+      // Ingepland = geaccepteerd door de klant óf bevestigd door medewerker/admin.
+      .filter((a: { status: string }) => isIngepland(a.status))
       .map((a: { medewerker: unknown }) => {
         const m = a.medewerker as { id: string; naam: string; functie: string | string[]; profile_photo_url: string | null } | null;
         return {

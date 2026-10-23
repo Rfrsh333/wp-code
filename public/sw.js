@@ -1,7 +1,8 @@
 const STATIC_CACHE = "toptalent-static-v5";
 const DYNAMIC_CACHE = "toptalent-dynamic-v5";
 // Meegroeien met de overige cache-versies zodat API-cache óók geïnvalideerd wordt bij een bump.
-const API_CACHE = "toptalent-api-v5";
+// v6: loon-/dashboarddata wordt niet meer gecachet; de bump ruimt de oude v5-cache op.
+const API_CACHE = "toptalent-api-v6";
 
 const STATIC_ASSETS = [
   "/medewerker/dashboard/",
@@ -14,13 +15,11 @@ const STATIC_ASSETS = [
   "/favicon-icon.png",
 ];
 
-// API routes die gecached mogen worden voor offline gebruik.
-// Let op: /api/medewerker/profile bevat gevoelige PII (IBAN/BSN-status) en wordt
-// bewust NIET offline gecached om PII-at-rest op (gedeelde) toestellen te beperken.
+// API routes die gecached mogen worden voor offline gebruik (rooster + beschikbaarheid).
+// Bewust NIET: /api/medewerker/profile (IBAN/BSN-status), /dashboard en /financieel
+// (verdiensten/loon) — die bleven anders als JSON op (gedeelde) toestellen op schijf staan.
 const CACHEABLE_API_ROUTES = [
   "/api/medewerker/diensten/lijst",
-  "/api/medewerker/dashboard",
-  "/api/medewerker/financieel",
   "/api/medewerker/beschikbaarheid",
 ];
 
@@ -63,7 +62,7 @@ self.addEventListener("push", (event) => {
     icon: "/icons/icon-192x192.png",
     badge: "/icons/icon-192x192.png",
     tag: data.tag ?? "medewerker-notif",
-    data: { url: data.url ?? "/medewerker/dashboard/" },
+    data: { url: data.url ?? "/medewerker/shifts" },
     actions: data.actions ?? [],
     vibrate: [200, 100, 200],
   };
@@ -75,7 +74,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/medewerker/dashboard/";
+  const url = event.notification.data?.url ?? "/medewerker/shifts";
   event.waitUntil(
     clients.matchAll({ type: "window" }).then((windowClients) => {
       const existing = windowClients.find((c) => c.url.includes("/medewerker"));

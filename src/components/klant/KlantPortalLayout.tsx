@@ -103,6 +103,7 @@ export default function KlantPortalLayout({
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={onTabChange}
+        onLogout={onLogout}
       />
     </div>
     </LazyMotion>

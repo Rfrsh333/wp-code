@@ -502,17 +502,24 @@ export default function LeadDetailPanel({ leadId, onClose, onUpdate }: Props) {
   };
 
   const convertToKlant = async () => {
-    if (!confirm("Lead converteren naar klant?")) return;
+    if (!confirm("Lead converteren naar klant? De klant krijgt een mail om een wachtwoord in te stellen voor het klantportaal.")) return;
     const token = await getToken();
     const res = await fetch("/api/admin/acquisitie/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ action: "convert", id: leadId }),
     });
+    const data = await res.json().catch(() => ({}));
     if (res.ok) {
-      setMessage({ type: "success", text: "Lead geconverteerd naar klant!" });
+      const uitnodiging = data.uitnodiging as { verstuurd: boolean; melding: string } | undefined;
+      setMessage({
+        type: uitnodiging && !uitnodiging.verstuurd ? "error" : "success",
+        text: `Lead geconverteerd naar klant. ${uitnodiging?.melding ?? ""}`.trim(),
+      });
       fetchLead();
       onUpdate();
+    } else {
+      setMessage({ type: "error", text: data.error || "Converteren mislukt" });
     }
   };
 

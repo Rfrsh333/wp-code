@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
+import { haalDemoIds } from "@/lib/demo";
 
 // Cron: dagelijks review requests versturen
 // Zoekt diensten van gisteren waar uren goedgekeurd zijn en stuurt review email
@@ -38,7 +39,9 @@ export async function GET(request: NextRequest) {
       .select("id, bedrijfsnaam, contactpersoon, email")
       .in("id", klantIds);
 
-    const klantMap = new Map((klanten || []).map(k => [k.id, k]));
+    // Geen reviewverzoeken naar demo-accounts (lib/demo.ts).
+    const demoIds = await haalDemoIds();
+    const klantMap = new Map((klanten || []).filter(k => !demoIds.klanten.has(k.id)).map(k => [k.id, k]));
 
     let verzonden = 0;
 

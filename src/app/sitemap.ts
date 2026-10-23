@@ -81,6 +81,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/meer-aanvragen/`,
+      lastModified: coreDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/inschrijven/`,
       lastModified: coreDate,
       changeFrequency: 'monthly',
@@ -112,7 +118,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/privacy/`,
-      lastModified: new Date('2026-01-01'),
+      lastModified: new Date('2026-10-03'),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
@@ -125,6 +131,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${baseUrl}/voorwaarden/`,
       lastModified: new Date('2026-01-01'),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/account-verwijderen/`,
+      lastModified: new Date('2026-10-03'),
       changeFrequency: 'yearly',
       priority: 0.3,
     },

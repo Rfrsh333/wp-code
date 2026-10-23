@@ -3,6 +3,7 @@ import RegisterSW from "./components/RegisterSW";
 import KlantPWAInstallPrompt from "./components/PWAInstallPrompt";
 import AIChatWidget from "@/components/shared/AIChatbot/AIChatWidgetLazy";
 import QueryProvider from "@/components/QueryProvider";
+import SessieVerlopenBewaker from "@/components/shared/SessieVerlopenBewaker";
 
 export const metadata: Metadata = {
   robots: {
@@ -47,6 +48,7 @@ export default function KlantLayout({
   // een handmatige <head> in een geneste layout gaf hydration-errors — verwijderd.
   return (
     <QueryProvider>
+      <SessieVerlopenBewaker portaal="klant" />
       <RegisterSW />
       <KlantPWAInstallPrompt />
       {children}

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Horecapersoneel Aanvragen binnen 24 uur | TopTalent Jobs",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Horecapersoneel Aanvragen binnen 24 uur | TopTalent Jobs" },
   description:
     "Direct horecapersoneel nodig? Vraag gescreende krachten aan bij TopTalent Jobs. Bevestiging binnen 24 uur voor restaurants, hotels en evenementen.",
   alternates: {

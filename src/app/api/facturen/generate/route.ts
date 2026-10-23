@@ -5,6 +5,9 @@ import { calculateVat } from "@/lib/factuur-config";
 import { calculateKlantReiskosten, sanitizeKilometers, roundCurrency } from "@/lib/reiskosten";
 import { berekenToeslagRegel, toeslagLabel } from "@/lib/toeslag";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { isOntbrekendeKolomFout, zonderNieuweSnapshotKolommen } from "@/lib/factuur-klant-snapshot";
+import { haalKlantSnapshot } from "@/lib/factuur-klant-snapshot-db";
+import { DEMO_MELDINGEN, isDemoKlant } from "@/lib/demo";
 
 type UrenRegistratie = {
   id: string;
@@ -45,6 +48,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { klant_id, periode_start, periode_eind } = await request.json();
+
+    // Nooit een factuurnummer verbruiken voor een demo-account (ook niet via de cron).
+    if (await isDemoKlant(klant_id)) {
+      return NextResponse.json({ success: false, error: DEMO_MELDINGEN.factuur, demo: true }, { status: 403 });
+    }
 
     // Haal goedgekeurde uren op voor deze klant in deze periode
     const { data: uren } = await supabase
@@ -122,6 +130,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Een deel van deze uren is al gefactureerd" }, { status: 409 });
     }
 
+    // Klant-NAW vastleggen op de factuur (adreswijziging of accountverwijdering raakt hem later niet).
+    const snapshot = await haalKlantSnapshot(klant_id);
+    let metSnapshot = !!snapshot;
+
     const jaar = new Date().getFullYear();
     let factuur_nummer = "";
     let factuur: { id: string } | null = null;
@@ -134,20 +146,29 @@ export async function POST(request: NextRequest) {
         .ilike("factuur_nummer", `${jaar}%`);
       factuur_nummer = `${jaar}${String((count || 0) + 1 + attempt).padStart(4, "0")}`;
 
+      const rij = {
+        factuur_nummer,
+        klant_id,
+        ...(snapshot ?? {}),
+        periode_start,
+        periode_eind,
+        subtotaal,
+        btw_percentage,
+        btw_bedrag,
+        totaal,
+      };
       const insertResult = await supabase
         .from("facturen")
-        .insert({
-          factuur_nummer,
-          klant_id,
-          periode_start,
-          periode_eind,
-          subtotaal,
-          btw_percentage,
-          btw_bedrag,
-          totaal,
-        })
+        .insert(metSnapshot ? rij : zonderNieuweSnapshotKolommen(rij))
         .select()
         .single();
+
+      // Snapshotkolommen nog niet gemigreerd: zelfde poging opnieuw zonder die kolommen.
+      if (metSnapshot && isOntbrekendeKolomFout(insertResult.error)) {
+        metSnapshot = false;
+        attempt -= 1;
+        continue;
+      }
 
       if (!insertResult.error && insertResult.data) {
         factuur = insertResult.data;

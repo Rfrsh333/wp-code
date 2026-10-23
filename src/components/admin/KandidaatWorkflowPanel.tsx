@@ -12,6 +12,7 @@ interface Candidate {
   achternaam: string;
   email: string;
   is_test_candidate?: boolean;
+  medewerker_id?: string | null;
 }
 
 interface ContactMoment {
@@ -301,9 +302,12 @@ export default function KandidaatWorkflowPanel({
           >
             {sendingAction === "documenten_opvragen" ? "Versturen..." : "Documentenverzoek opnieuw"}
           </button>
+          {/* De welkomstmail wijst naar de login: alleen zinvol als er een medewerkeraccount is.
+              Nog niet geactiveerd? Gebruik "Activatiemail opnieuw sturen". */}
           <button
             onClick={() => void runQuickAction("inzetbaar")}
-            disabled={sendingAction !== null}
+            disabled={sendingAction !== null || !candidate.medewerker_id}
+            title={candidate.medewerker_id ? undefined : "Nog geen medewerkeraccount: zet de kandidaat eerst op inzetbaar"}
             className="px-4 py-3 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-60"
           >
             {sendingAction === "inzetbaar" ? "Versturen..." : "Welkomstmail opnieuw"}

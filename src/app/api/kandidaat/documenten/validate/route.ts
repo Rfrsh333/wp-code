@@ -29,10 +29,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch already uploaded documents
+    // Afgekeurde documenten (ook van een vorige inschrijving) niet als "geüpload" tonen.
     const { data: documents } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .select("document_type, file_name, file_size")
-      .eq("inschrijving_id", matchedKandidaat.id);
+      .select("type, bestandsnaam, bestand_grootte")
+      .eq("inschrijving_id", matchedKandidaat.id)
+      .neq("status", "afgekeurd");
 
     return NextResponse.json({
       kandidaat: {
@@ -40,7 +42,12 @@ export async function GET(request: NextRequest) {
         achternaam: matchedKandidaat.achternaam,
         uitbetalingswijze: matchedKandidaat.uitbetalingswijze,
       },
-      uploaded_documents: documents || [],
+      // Live kolommen → veldnamen die de uploadpagina verwacht
+      uploaded_documents: (documents || []).map((doc) => ({
+        document_type: doc.type,
+        file_name: doc.bestandsnaam,
+        file_size: doc.bestand_grootte ?? 0,
+      })),
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/kandidaat/documenten/validate", action: "GET" });

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
 import crypto from "crypto";
 import { captureRouteError } from "@/lib/sentry-utils";
 
@@ -10,11 +9,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get("klant_session");
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const klant = await verifyKlantSession(session.value);
+    const klant = await getKlantSession(request);
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const formData = await request.formData();

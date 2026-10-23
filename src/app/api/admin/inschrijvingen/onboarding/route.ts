@@ -34,12 +34,20 @@ export async function POST(request: NextRequest) {
     // Fetch kandidaat
     const { data: kandidaat, error: fetchError } = await supabaseAdmin
       .from("inschrijvingen")
-      .select("id, voornaam, achternaam, email, uitbetalingswijze")
+      .select("id, voornaam, achternaam, email, uitbetalingswijze, medewerker_id")
       .eq("id", kandidaat_id)
       .single();
 
     if (fetchError || !kandidaat) {
       return NextResponse.json({ error: "Kandidaat niet gevonden" }, { status: 404 });
+    }
+
+    // De welkomstmail wijst naar de login; zonder medewerkeraccount loopt die dood.
+    if (action === "inzetbaar" && !kandidaat.medewerker_id) {
+      return NextResponse.json(
+        { error: "Deze kandidaat heeft nog geen medewerkeraccount. Zet hem eerst op inzetbaar." },
+        { status: 409 },
+      );
     }
 
     // Check if email was already sent recently (idempotency - prevent duplicates within 24h)

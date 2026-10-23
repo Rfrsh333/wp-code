@@ -25,8 +25,6 @@ interface ContractData {
   medewerker: {
     id: string;
     naam: string;
-    voornaam: string;
-    achternaam: string;
   } | null;
 }
 
@@ -199,7 +197,7 @@ export default function ContractOndertekeningClient() {
             <h2 className="text-xl font-bold text-gray-900">{contract.titel}</h2>
             {contract.medewerker && (
               <p className="text-gray-600 mt-1">
-                Beste {contract.medewerker.voornaam || contract.medewerker.naam},
+                Beste {contract.medewerker.naam?.trim().split(/\s+/)[0] || "medewerker"},
               </p>
             )}
           </div>

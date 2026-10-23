@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
-  title: "Kennismakingsgesprek Plannen",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Kennismakingsgesprek Plannen | TopTalent Jobs" },
   description:
     "Plan een gratis kennismakingsgesprek met TopTalent Jobs. Ontdek hoe wij uw horecabedrijf helpen met betrouwbaar en flexibel personeel.",
   alternates: {

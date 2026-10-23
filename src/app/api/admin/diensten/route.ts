@@ -1,4 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { haalChecklist } from "@/lib/medewerker/checklist";
+import { CHECKLIST_CODE } from "@/lib/medewerker/reageer-checklist";
+import { controleerInzetbaarheid } from "@/lib/medewerker/aanmelden";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { ensureKlantForDienst } from "@/lib/klanten-sync";
@@ -6,6 +9,7 @@ import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-ema
 import { dienstenPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { notifyKlantMedewerkerAssigned } from "@/lib/klant-push-triggers";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { notifyMedewerkerAanmeldingBeslist } from "@/lib/dienst-push-triggers";
 
 export async function GET(request: NextRequest) {
   // KRITIEK: Verify admin with proper email check
@@ -65,7 +69,7 @@ export async function POST(request: NextRequest) {
       payload.plekken_beschikbaar = payload.aantal_nodig;
     }
     if (payload.klant_naam) {
-      payload.klant_id = await ensureKlantForDienst(payload);
+      payload.klant_id = await ensureKlantForDienst(payload, { uitnodigen: true });
     }
     // Genereer spoeddienst token als het een spoeddienst is
     if (payload.is_spoeddienst) {
@@ -96,7 +100,7 @@ export async function POST(request: NextRequest) {
       payload.plekken_beschikbaar = Math.max(0, oldBeschikbaar + diff);
     }
     if (payload.klant_naam) {
-      payload.klant_id = await ensureKlantForDienst(payload);
+      payload.klant_id = await ensureKlantForDienst(payload, { uitnodigen: true });
     }
     // Als spoeddienst wordt geactiveerd en er nog geen token is
     if (payload.is_spoeddienst && !payload.spoeddienst_token) {
@@ -133,6 +137,15 @@ export async function POST(request: NextRequest) {
       .from("dienst_aanmeldingen")
       .update({ status: data.status, beoordeeld_at: new Date().toISOString() })
       .eq("id", id);
+
+    if (data.status === "geaccepteerd" || data.status === "afgewezen") {
+      const status: "geaccepteerd" | "afgewezen" = data.status;
+      after(() =>
+        notifyMedewerkerAanmeldingBeslist(id, status).catch((e) =>
+          captureRouteError(e, { route: "/api/admin/diensten", action: "PUSH" }),
+        ),
+      );
+    }
 
     if (data.status === "geaccepteerd") {
       const { data: aanmelding } = await supabaseAdmin
@@ -188,6 +201,31 @@ export async function POST(request: NextRequest) {
 
   // Spoeddienst: update response status (bevestig/afwijs)
   if (action === "update_spoeddienst_response") {
+    // B1: bevestigen plant de medewerker direct in; dat mag de checklist vóór reageren (ID, KvK,
+    // btw, IBAN, akkoord) en de verloopblokkade niet omzeilen.
+    if (data.status === "bevestigd") {
+      const { data: reactie } = await supabaseAdmin
+        .from("spoeddienst_responses")
+        .select("medewerker_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (reactie?.medewerker_id) {
+        const checklist = await haalChecklist(reactie.medewerker_id);
+        if (!checklist.compleet) {
+          return NextResponse.json(
+            {
+              error: `Kan niet bevestigen: de checklist van deze medewerker is niet compleet (${checklist.ontbrekend.map((p) => p.label).join(", ")}).`,
+              code: CHECKLIST_CODE,
+              ontbrekend: checklist.ontbrekend,
+            },
+            { status: 409 },
+          );
+        }
+        const melding = await controleerInzetbaarheid(reactie.medewerker_id);
+        if (melding) return NextResponse.json({ error: `Kan niet bevestigen: ${melding}` }, { status: 409 });
+      }
+    }
+
     await supabaseAdmin
       .from("spoeddienst_responses")
       .update({ status: data.status })

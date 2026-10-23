@@ -58,7 +58,9 @@ interface MedewerkerDetail {
     id: string;
     document_type: string;
     file_name: string;
-    file_url: string;
+    file_url: string | null;
+    /** Signed URL (10 min) uit de admin-route; de bucket is privé. */
+    signed_url: string | null;
     file_size: number;
     uploaded_at: string;
     expiry_date?: string | null;
@@ -615,14 +617,20 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
                     })()}
                   </div>
                 </div>
-                <a
-                  href={doc.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#F27501] hover:text-[#d96800] text-sm font-medium"
-                >
-                  Bekijken
-                </a>
+                {doc.signed_url ? (
+                  <a
+                    href={doc.signed_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#F27501] hover:text-[#d96800] text-sm font-medium"
+                  >
+                    Bekijken
+                  </a>
+                ) : (
+                  <span className="text-sm text-neutral-400" title="Bestand niet gevonden in de opslag">
+                    Niet beschikbaar
+                  </span>
+                )}
               </div>
             ))}
           </div>

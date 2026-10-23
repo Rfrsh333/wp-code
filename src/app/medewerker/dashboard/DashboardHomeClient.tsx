@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import PushNotificationBanner from "@/components/medewerker/PushNotificationBanner";
 import RatingsCard from "@/components/medewerker/RatingsCard";
+import ReageerChecklistBlok from "@/components/medewerker/ReageerChecklistBlok";
 import * as Sentry from "@sentry/nextjs";
 
 interface DashboardStats {
@@ -174,10 +175,15 @@ export default function DashboardHomeClient() {
                 <span className="text-xs text-[var(--mp-text-tertiary)]">Rating</span>
               </div>
               <div className="text-xl md:text-2xl font-bold text-[var(--mp-text-primary)]">
-                {loading ? "..." : stats.gemiddelde_rating.toFixed(1)}
+                {loading ? "..." : stats.gemiddelde_rating > 0 ? stats.gemiddelde_rating.toFixed(1) : "–"}
               </div>
             </div>
           </div>
+        </div>
+
+        {/* B1: checklist vóór reageren (verdwijnt als alles in orde is) */}
+        <div className="max-w-4xl mx-auto px-4 mb-6 empty:hidden">
+          <ReageerChecklistBlok />
         </div>
 
         {/* Quick Actions */}

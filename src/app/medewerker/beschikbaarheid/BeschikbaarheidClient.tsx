@@ -5,8 +5,10 @@ import { Calendar, Check } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
+import { DAG_LABELS, DAG_SLEUTELS, normaliseerBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
 
-const DAGEN = ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"];
+// Sleutels = notatie van de matching (ma…zo); labels alleen voor weergave.
+const DAGEN = DAG_SLEUTELS;
 const TIJDBLOKKEN = [
   { id: "ochtend", label: "Ochtend", tijd: "06:00 - 12:00" },
   { id: "middag", label: "Middag", tijd: "12:00 - 18:00" },
@@ -29,7 +31,9 @@ export default function BeschikbaarheidClient() {
       const res = await fetch("/api/medewerker/beschikbaarheid");
       if (res.ok) {
         const data = await res.json();
-        setBeschikbaarheid(data.beschikbaarheid || {});
+        setBeschikbaarheid(normaliseerBeschikbaarheid(data.beschikbaarheid) ?? {});
+      } else if (res.status === 404) {
+        toast.error("We konden je inschrijving niet vinden. Stuur TopTalent een bericht.");
       }
     } catch (err) {
       Sentry.captureException(err);
@@ -75,11 +79,12 @@ export default function BeschikbaarheidClient() {
       });
 
       if (!res.ok) {
-        toast.error("Opslaan mislukt");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Opslaan mislukt");
         return;
       }
 
-      toast.success("Beschikbaarheid opgeslagen! ✅");
+      toast.success("Beschikbaarheid opgeslagen");
     } catch (err) {
       Sentry.captureException(err);
       toast.error("Er ging iets mis");
@@ -161,7 +166,7 @@ export default function BeschikbaarheidClient() {
                           className={idx !== DAGEN.length - 1 ? "border-b border-[var(--mp-separator)]" : ""}
                         >
                           <td className="px-4 py-3 font-medium text-[var(--mp-text-primary)]">
-                            {dag}
+                            {DAG_LABELS[dag]}
                           </td>
                           {TIJDBLOKKEN.map((tijdblok) => {
                             const isSelected = beschikbaarheid[dag]?.includes(tijdblok.id);
@@ -191,7 +196,7 @@ export default function BeschikbaarheidClient() {
                   {DAGEN.map((dag) => (
                     <div key={dag} className="p-4">
                       <h3 className="text-sm font-semibold text-[var(--mp-text-primary)] mb-3">
-                        {dag}
+                        {DAG_LABELS[dag]}
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
                         {TIJDBLOKKEN.map((tijdblok) => {

@@ -5,7 +5,8 @@ import { GEO_STEDEN, GEO_CONTENT_TYPES } from "@/lib/geo/types";
 import type { GeoContent } from "@/lib/geo/types";
 
 export const metadata: Metadata = {
-  title: "Horeca Personeel in de Randstad | TopTalent Jobs",
+  // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
+  title: { absolute: "Horeca Personeel in de Randstad | TopTalent Jobs" },
   description:
     "Vind betrouwbaar horeca personeel in Amsterdam, Rotterdam, Den Haag en Utrecht. TopTalent Jobs is jouw partner voor uitzenden, detachering en recruitment in de horeca.",
   alternates: {

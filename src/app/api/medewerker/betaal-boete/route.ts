@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSessieInclGepauzeerd } from "@/lib/medewerker/sessie-boete";
 import { createMollieClient } from "@mollie/api-client";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 function getMollieClient() {
   if (!process.env.MOLLIE_API_KEY) {
@@ -16,16 +17,10 @@ const getBaseUrl = () =>
   process.env.NEXT_PUBLIC_BASE_URL ||
   "https://www.toptalentjobs.nl";
 
-export async function POST() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function POST(request: NextRequest) {
+  // Gepauzeerde medewerkers moeten hun boete juist kunnen zien en betalen.
+  const medewerker = await getMedewerkerSessieInclGepauzeerd(request);
+  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Haal open boete op
   const { data: boete } = await supabaseAdmin
@@ -35,7 +30,7 @@ export async function POST() {
     .eq("status", "openstaand")
     .order("created_at", { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!boete) {
     return NextResponse.json({ error: "Geen openstaande boete gevonden" }, { status: 404 });
@@ -44,20 +39,26 @@ export async function POST() {
   const baseUrl = getBaseUrl();
 
   // Maak Mollie betaling aan
-  const mollie = getMollieClient();
-  const payment = await mollie.payments.create({
-    amount: {
-      currency: "EUR",
-      value: Number(boete.bedrag).toFixed(2),
-    },
-    description: `TopTalentJobs — Boete #${boete.id.slice(0, 8)}`,
-    redirectUrl: `${baseUrl}/medewerker/dashboard?betaling=succes`,
-    webhookUrl: `${baseUrl}/api/webhooks/mollie`,
-    metadata: {
-      boete_id: boete.id,
-      medewerker_id: medewerker.id,
-    },
-  });
+  let payment;
+  try {
+    const mollie = getMollieClient();
+    payment = await mollie.payments.create({
+      amount: {
+        currency: "EUR",
+        value: Number(boete.bedrag).toFixed(2),
+      },
+      description: `TopTalentJobs — Boete #${boete.id.slice(0, 8)}`,
+      redirectUrl: `${baseUrl}/medewerker/dashboard?betaling=succes`,
+      webhookUrl: `${baseUrl}/api/webhooks/mollie`,
+      metadata: {
+        boete_id: boete.id,
+        medewerker_id: medewerker.id,
+      },
+    });
+  } catch (error) {
+    captureRouteError(error, { route: "/api/medewerker/betaal-boete", action: "MOLLIE" });
+    return NextResponse.json({ error: "Betaling starten mislukt. Probeer het later opnieuw." }, { status: 502 });
+  }
 
   // Sla Mollie payment ID en checkout URL op
   await supabaseAdmin

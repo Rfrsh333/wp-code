@@ -9,10 +9,10 @@ import * as Sentry from "@sentry/nextjs";
 interface Bericht {
   id: string;
   van_type: string;
-  onderwerp: string;
-  bericht: string;
+  onderwerp: string | null;
+  inhoud: string;
   created_at: string;
-  gelezen: boolean;
+  gelezen: boolean | null;
 }
 
 export default function BerichtenClient() {
@@ -48,6 +48,10 @@ export default function BerichtenClient() {
         (b: Bericht) => b.van_type !== "medewerker" && !b.gelezen
       );
       if (ongelezen.length > 0) {
+        // Lokaal meteen als gelezen markeren, zodat de 10s-poll niet steeds opnieuw post.
+        setBerichten((huidig) =>
+          huidig.map((b) => (ongelezen.some((o: Bericht) => o.id === b.id) ? { ...b, gelezen: true } : b)),
+        );
         await fetch("/api/medewerker/berichten/mark-read", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,7 +79,7 @@ export default function BerichtenClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           onderwerp: "Bericht van medewerker",
-          bericht: nieuwBericht,
+          inhoud: nieuwBericht,
         }),
       });
 
@@ -164,7 +168,7 @@ export default function BerichtenClient() {
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-wrap break-words">
-                      {bericht.bericht}
+                      {bericht.inhoud}
                     </p>
                     <div
                       className={`text-xs mt-1 ${

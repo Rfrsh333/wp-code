@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
+import { isDemoAdres } from "@/lib/demo";
 
 /**
  * Dienst Herinneringen Cron
@@ -125,6 +126,11 @@ export async function POST(request: NextRequest) {
           reden: "Geen email adres",
         });
         continue;
+      }
+
+      if (await isDemoAdres(medewerker.email)) {
+        skipped++;
+        continue; // demo-accounts (reviewers) krijgen geen herinneringen
       }
 
       try {

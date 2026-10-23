@@ -119,7 +119,12 @@ const getRelevantTarieven = (typePersoneel: string[]): { min: number; max: numbe
   return { min: minTarief, max: maxTarief };
 };
 
-export default function PersoneelAanvragenWizard() {
+export default function PersoneelAanvragenWizard({
+  standaardBron = "website",
+}: {
+  /** lead_source als de URL geen ?source= heeft (bv. "meer-aanvragen"). */
+  standaardBron?: string;
+} = {}) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<Partial<FormData>>({});
@@ -135,7 +140,7 @@ export default function PersoneelAanvragenWizard() {
 
   // Read URL parameters for lead source tracking
   useEffect(() => {
-    const source = searchParams.get('source') || 'website';
+    const source = searchParams.get('source') || standaardBron;
     const campaign = searchParams.get('campaign') || '';
     const utmSource = searchParams.get('utm_source') || '';
     const utmMedium = searchParams.get('utm_medium') || '';
@@ -152,7 +157,7 @@ export default function PersoneelAanvragenWizard() {
       utmCampaign: utmCampaign,
       referralCode: refCode,
     }));
-  }, [searchParams]);
+  }, [searchParams, standaardBron]);
 
   const updateField = (field: keyof FormData, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

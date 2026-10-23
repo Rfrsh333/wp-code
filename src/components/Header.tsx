@@ -12,21 +12,25 @@ export default function Header() {
   const [isMobileLocatiesOpen, setIsMobileLocatiesOpen] = useState(false);
   const [isDienstenOpen, setIsDienstenOpen] = useState(false);
   const [isLocatiesOpen, setIsLocatiesOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const dienstenRef = useRef<HTMLDivElement>(null);
   const locatiesRef = useRef<HTMLDivElement>(null);
+  const loginRef = useRef<HTMLDivElement>(null);
 
   const closeDiensten = useCallback(() => setIsDienstenOpen(false), []);
   const closeLocaties = useCallback(() => setIsLocatiesOpen(false), []);
+  const closeLogin = useCallback(() => setIsLoginOpen(false), []);
 
   // Close desktop dropdowns on Escape or outside click
   useEffect(() => {
-    if (!isDienstenOpen && !isLocatiesOpen) return;
+    if (!isDienstenOpen && !isLocatiesOpen && !isLoginOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { closeDiensten(); closeLocaties(); }
+      if (e.key === "Escape") { closeDiensten(); closeLocaties(); closeLogin(); }
     };
     const handleClick = (e: MouseEvent) => {
       if (isDienstenOpen && dienstenRef.current && !dienstenRef.current.contains(e.target as Node)) closeDiensten();
       if (isLocatiesOpen && locatiesRef.current && !locatiesRef.current.contains(e.target as Node)) closeLocaties();
+      if (isLoginOpen && loginRef.current && !loginRef.current.contains(e.target as Node)) closeLogin();
     };
     document.addEventListener("keydown", handleKey);
     document.addEventListener("mousedown", handleClick);
@@ -34,7 +38,7 @@ export default function Header() {
       document.removeEventListener("keydown", handleKey);
       document.removeEventListener("mousedown", handleClick);
     };
-  }, [isDienstenOpen, isLocatiesOpen, closeDiensten, closeLocaties]);
+  }, [isDienstenOpen, isLocatiesOpen, isLoginOpen, closeDiensten, closeLocaties, closeLogin]);
 
   // Close mobile menu on Escape key
   useEffect(() => {
@@ -236,35 +240,35 @@ export default function Header() {
                 className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Over ons
-                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#B85600] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/blog/"
                 className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Nieuws
-                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#B85600] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/kosten-calculator/"
                 className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Kosten calculator
-                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#B85600] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/veelgestelde-vragen/"
                 className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 FAQ
-                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#B85600] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/contact/"
                 className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Contact
-                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#B85600] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
             </nav>
 
@@ -273,17 +277,50 @@ export default function Header() {
 
             {/* CTA Buttons */}
             <div className="hidden lg:flex items-center gap-2.5 shrink-0">
-              <Link
-                href="/medewerker/login/"
-                className="whitespace-nowrap flex items-center gap-2 h-11 px-4 rounded-lg font-medium text-sm
-                border border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]
-                transition-all duration-300"
-              >
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Login
-              </Link>
+              {/* Inloggen: keuze tussen het klantportaal (werkgever) en het medewerkersportaal */}
+              <div className="relative" ref={loginRef}>
+                <button
+                  onClick={() => setIsLoginOpen(!isLoginOpen)}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") { e.preventDefault(); setIsLoginOpen(true); }
+                  }}
+                  aria-expanded={isLoginOpen}
+                  aria-haspopup="true"
+                  className="whitespace-nowrap flex items-center gap-2 h-11 px-4 rounded-lg font-medium text-sm
+                  border border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]
+                  transition-all duration-300"
+                >
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Inloggen
+                  <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${isLoginOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className={`absolute right-0 top-full pt-2 transition-all duration-300 ${isLoginOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+                  <div className="bg-white rounded-xl shadow-xl shadow-neutral-900/10 border border-neutral-100 py-2 min-w-[240px]" role="menu">
+                    <Link
+                      href="/klant/login/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLogin}
+                    >
+                      <span className="block font-medium text-neutral-800">Werkgever</span>
+                      <span className="block text-xs text-neutral-500">Personeel aanvragen en uren goedkeuren</span>
+                    </Link>
+                    <Link
+                      href="/medewerker/login/"
+                      role="menuitem"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
+                      onClick={closeLogin}
+                    >
+                      <span className="block font-medium text-neutral-800">Medewerker</span>
+                      <span className="block text-xs text-neutral-500">Diensten, rooster en uren</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
               <Link
                 href="/contact/"
                 className="whitespace-nowrap h-11 inline-flex items-center bg-[#B85600] text-white px-5 rounded-lg font-semibold text-sm
@@ -566,16 +603,31 @@ export default function Header() {
                 >
                   Personeel aanvragen
                 </Link>
-                <Link
-                  href="/medewerker/login/"
-                  className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl font-semibold border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600] transition-all duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Medewerker login
-                </Link>
+                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider pt-2 px-2">
+                  Inloggen
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    href="/klant/login/"
+                    className="flex items-center justify-center gap-2 w-full px-3 py-3.5 rounded-xl font-semibold border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600] transition-all duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Werkgever
+                  </Link>
+                  <Link
+                    href="/medewerker/login/"
+                    className="flex items-center justify-center gap-2 w-full px-3 py-3.5 rounded-xl font-semibold border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600] transition-all duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Medewerker
+                  </Link>
+                </div>
               </div>
             </nav>
           </div>

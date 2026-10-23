@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { verifyMedewerkerSession } from "@/lib/session";
+import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { dienstUren, nlVandaag, plusDagen } from "@/lib/nl-tijd";
+import { HERACTIVEERBAAR, heeftVrijePlek } from "@/lib/medewerker/dienst-regels";
+import { beperkDiensten, haalDemoIds } from "@/lib/demo";
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("medewerker_session");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const medewerker = await getMedewerkerSession(request);
+    if (!medewerker) return geenMedewerkerToegang(request);
 
-    const medewerker = await verifyMedewerkerSession(sessionCookie.value);
-    if (!medewerker) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    const vandaag = new Date().toISOString().split("T")[0];
+    const vandaag = nlVandaag();
+    const morgen = plusDagen(vandaag, 1);
+    // Demo-medewerkers zien alleen diensten van demo-klanten, echte medewerkers die nooit.
+    const demoIds = await haalDemoIds();
+    const demo = demoIds.medewerkers.has(medewerker.id);
 
     // Haal alle toekomstige open diensten op (met optionele klant join)
-    const result = await supabaseAdmin
+    const result = await beperkDiensten(supabaseAdmin
       .from("diensten")
       .select(`
         id,
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
       .gte("datum", vandaag)
       .order("datum", { ascending: true })
       .order("start_tijd", { ascending: true })
-      .limit(50);
+      .limit(50), demoIds, demo);
 
     let diensten = result.data as Record<string, unknown>[] | null;
     const error = result.error;
@@ -54,31 +55,40 @@ export async function GET(request: NextRequest) {
     // Fallback: Als de join query faalt, gebruik simpele query
     if (error) {
       console.warn("[SHIFTS BESCHIKBAAR] Join query failed, using fallback:", error);
-      const { data: fallbackDiensten } = await supabaseAdmin
+      const { data: fallbackDiensten } = await beperkDiensten(supabaseAdmin
         .from("diensten")
         .select("id, datum, start_tijd, eind_tijd, locatie, notities, uurtarief, aantal_nodig, plekken_totaal, plekken_beschikbaar, functie, klant_naam, klant_id, status, afbeelding_url")
         .in("status", ["open", "vol"])
         .gte("datum", vandaag)
         .order("datum", { ascending: true })
-        .limit(50);
+        .limit(50), demoIds, demo);
       // Add null klant property to match type
       diensten = (fallbackDiensten || []).map(d => ({ ...d, klant: null })) as Record<string, unknown>[];
     }
 
-    // Filter uit: diensten waar medewerker al is aangemeld
+    // Filter uit: diensten waar de medewerker al een lopende aanmelding heeft
+    // (een geannuleerde/afgewezen aanmelding mag opnieuw).
     const { data: aanmeldingen } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("dienst_id")
+      .select("dienst_id, status")
       .eq("medewerker_id", medewerker.id);
 
-    const aangemeldeDienstIds = new Set(aanmeldingen?.map((a) => a.dienst_id) || []);
+    const aangemeldeDienstIds = new Set(
+      (aanmeldingen || [])
+        .filter((a) => !(HERACTIVEERBAAR as readonly string[]).includes(a.status))
+        .map((a) => a.dienst_id),
+    );
 
     const beschikbareShifts = (diensten || [])
       .filter((d: Record<string, unknown>) => {
         if (aangemeldeDienstIds.has(d.id as string)) return false;
         const aantalNodig = (d.aantal_nodig as number) ?? 1;
         if (aantalNodig <= 0) return false;
-        return true;
+        // Volle diensten niet tonen: aanmelden zou toch geweigerd worden.
+        return heeftVrijePlek({
+          status: d.status as string | null,
+          plekken_beschikbaar: d.plekken_beschikbaar as number | null,
+        });
       })
       .map((d: Record<string, unknown>) => {
         const klant = d.klant as Record<string, unknown> | null;
@@ -87,17 +97,14 @@ export async function GET(request: NextRequest) {
         const plekkenTotaal = (d.plekken_totaal as number) ?? (d.aantal_nodig as number) ?? 1;
 
         const tags: string[] = [];
-        const uren = berekenUren(d.start_tijd as string, d.eind_tijd as string);
+        const uren = dienstUren(d.start_tijd as string, d.eind_tijd as string) || 0;
         if (uren < 4) tags.push("Korte shift");
         if (uren >= 8) tags.push("Hele dag");
 
         const medewerkerUurtarief = (d.uurtarief as number) - 4;
         if (medewerkerUurtarief >= 16) tags.push("Goed betaald");
 
-        const datum = new Date(d.datum as string);
-        const morgen = new Date();
-        morgen.setDate(morgen.getDate() + 1);
-        if (datum.toDateString() === morgen.toDateString()) {
+        if (d.datum === morgen) {
           tags.push("Morgen");
         }
 
@@ -117,7 +124,6 @@ export async function GET(request: NextRequest) {
           klant: {
             bedrijfsnaam: (klant?.bedrijfsnaam as string) || (d.klant_naam as string) || "Onbekend",
             bedrijf_foto_url: klant?.bedrijf_foto_url,
-            rating: 4.5,
           },
           tags,
           is_speciaal,
@@ -132,8 +138,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function berekenUren(start: string, eind: string): number {
-  const [startH, startM] = start.split(":").map(Number);
-  const [eindH, eindM] = eind.split(":").map(Number);
-  return eindH - startH + (eindM - startM) / 60;
-}

@@ -7,6 +7,8 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
+import { isGeldigIban, maskeerIban } from "@/lib/medewerker/iban";
+import { isGeldigBtwNummer, isGeldigKvkNummer } from "@/lib/medewerker/zzp-gegevens";
 
 interface ProfielData {
   naam: string;
@@ -17,13 +19,17 @@ interface ProfielData {
   postcode?: string;
   geboortedatum?: string;
   functie?: string | string[];
-  opkomstPercentage?: number;
-  optijdPercentage?: number;
+  /** null = nog geen afgelopen diensten. */
+  opkomstPercentage?: number | null;
+  rating?: number;
+  aantalBeoordelingen?: number;
   favorieteOpdrachtgevers?: string[];
   factuurAdres?: string;
   factuurPostcode?: string;
   factuurStad?: string;
   btwNummer?: string;
+  kvkNummer?: string;
+  iban?: string | null;
   korActief?: boolean;
 }
 
@@ -33,6 +39,11 @@ export default function ProfielClient() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showKorWarning, setShowKorWarning] = useState(false);
+  // KOR zoals opgeslagen: alleen een wijziging van uit → aan wordt verstuurd.
+  const [korOpgeslagen, setKorOpgeslagen] = useState(false);
+  const [nieuwIban, setNieuwIban] = useState("");
+  // Btw-nummer zoals opgeslagen: alleen een gewijzigd nummer wordt gecontroleerd.
+  const [btwOpgeslagen, setBtwOpgeslagen] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     fetchProfiel();
@@ -58,10 +69,15 @@ export default function ProfielClient() {
           factuurPostcode: p.factuur_postcode,
           factuurStad: p.factuur_stad,
           btwNummer: p.btw_nummer,
-          korActief: p.kor_actief,
-          opkomstPercentage: data.stats?.opkomst_percentage,
-          optijdPercentage: data.stats?.op_tijd_percentage,
+          kvkNummer: p.kvk_nummer,
+          iban: p.iban,
+          korActief: p.kor_actief === true,
+          opkomstPercentage: data.stats?.opkomst_percentage ?? null,
+          rating: data.stats?.rating ?? 0,
+          aantalBeoordelingen: data.stats?.aantal_beoordelingen ?? 0,
         });
+        setKorOpgeslagen(p.kor_actief === true);
+        setBtwOpgeslagen(p.btw_nummer ?? undefined);
       } else {
         toast.error("Kon profiel niet laden");
       }
@@ -100,6 +116,21 @@ export default function ProfielClient() {
   const handleSave = async () => {
     if (!profiel) return;
 
+    const ibanInvoer = nieuwIban.trim();
+    if (ibanInvoer && !isGeldigIban(ibanInvoer)) {
+      toast.error("Dit IBAN klopt niet. Controleer het nummer.");
+      return;
+    }
+    // B1: KvK- en btw-nummer staan op de checklist vóór reageren; meteen hier controleren.
+    if (profiel.kvkNummer?.trim() && !isGeldigKvkNummer(profiel.kvkNummer)) {
+      toast.error("Een KvK-nummer bestaat uit 8 cijfers.");
+      return;
+    }
+    if (profiel.btwNummer?.trim() && profiel.btwNummer !== btwOpgeslagen && !isGeldigBtwNummer(profiel.btwNummer)) {
+      toast.error("Dit btw-nummer klopt niet. Het ziet eruit als NL123456789B01.");
+      return;
+    }
+
     try {
       setSaving(true);
       const res = await fetch("/api/medewerker/profile", {
@@ -115,7 +146,10 @@ export default function ProfielClient() {
           factuur_postcode: profiel.factuurPostcode,
           factuur_stad: profiel.factuurStad,
           btw_nummer: profiel.btwNummer,
-          kor_actief: profiel.korActief,
+          kvk_nummer: profiel.kvkNummer,
+          // Alleen aanzetten wordt verstuurd; uitzetten kan alleen via support.
+          ...(profiel.korActief && !korOpgeslagen ? { kor_actief: true } : {}),
+          ...(ibanInvoer ? { iban: ibanInvoer } : {}),
         }),
       });
 
@@ -123,7 +157,8 @@ export default function ProfielClient() {
         toast.success("Profiel bijgewerkt");
         router.push("/medewerker/account");
       } else {
-        toast.error("Kon niet opslaan");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Kon niet opslaan");
       }
     } catch (err) {
       Sentry.captureException(err);
@@ -291,23 +326,25 @@ export default function ProfielClient() {
             </h2>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Opkomst percentage */}
+              {/* Opkomst: alleen tonen als er afgelopen diensten zijn */}
               <div className="bg-[var(--mp-bg)] rounded-xl p-4">
                 <div className="text-2xl font-bold text-[var(--mp-accent)]">
-                  {profiel?.opkomstPercentage !== undefined ? `${profiel.opkomstPercentage}%` : "-"}
+                  {profiel?.opkomstPercentage != null ? `${profiel.opkomstPercentage}%` : "–"}
                 </div>
                 <div className="text-xs text-[var(--mp-text-tertiary)] mt-1">
-                  Opkomst percentage
+                  Opkomst (ingecheckt of uren ingediend)
                 </div>
               </div>
 
-              {/* Op tijd percentage */}
+              {/* Gemiddelde beoordeling door opdrachtgevers */}
               <div className="bg-[var(--mp-bg)] rounded-xl p-4">
                 <div className="text-2xl font-bold text-[var(--mp-accent)]">
-                  {profiel?.optijdPercentage !== undefined ? `${profiel.optijdPercentage}%` : "-"}
+                  {profiel?.rating && profiel.rating > 0 ? `★ ${profiel.rating.toFixed(1)}` : "–"}
                 </div>
                 <div className="text-xs text-[var(--mp-text-tertiary)] mt-1">
-                  Op tijd percentage
+                  {profiel?.aantalBeoordelingen
+                    ? `Beoordeling (${profiel.aantalBeoordelingen}x)`
+                    : "Nog geen beoordelingen"}
                 </div>
               </div>
             </div>
@@ -380,6 +417,21 @@ export default function ProfielClient() {
               </div>
             </div>
 
+            {/* KvK-nummer (B1: nodig om te reageren op diensten) */}
+            <div>
+              <label className="block text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase mb-2">
+                KvK-nummer
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={profiel?.kvkNummer || ""}
+                onChange={(e) => setProfiel({ ...profiel!, kvkNummer: e.target.value })}
+                placeholder="12345678"
+                className="w-full px-4 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] placeholder:text-[var(--mp-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
+              />
+            </div>
+
             {/* BTW-identificatienummer */}
             <div>
               <label className="block text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase mb-2">
@@ -390,6 +442,27 @@ export default function ProfielClient() {
                 value={profiel?.btwNummer || ""}
                 onChange={(e) => setProfiel({ ...profiel!, btwNummer: e.target.value })}
                 placeholder="NL123456789B01"
+                className="w-full px-4 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] placeholder:text-[var(--mp-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
+              />
+            </div>
+
+            {/* IBAN (versleuteld opgeslagen) */}
+            <div>
+              <label className="block text-xs font-semibold text-[var(--mp-text-tertiary)] uppercase mb-2">
+                IBAN voor uitbetaling
+              </label>
+              {profiel?.iban && (
+                <p className="text-sm text-[var(--mp-text-primary)] font-medium mb-2">
+                  Huidig: {maskeerIban(profiel.iban)}
+                </p>
+              )}
+              <input
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                value={nieuwIban}
+                onChange={(e) => setNieuwIban(e.target.value)}
+                placeholder={profiel?.iban ? "Nieuw IBAN (laat leeg om te behouden)" : "NL12 INGB 0001 2345 67"}
                 className="w-full px-4 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] placeholder:text-[var(--mp-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
               />
             </div>
@@ -408,10 +481,10 @@ export default function ProfielClient() {
                 <button
                   type="button"
                   onClick={() => handleKorToggle(!profiel?.korActief)}
-                  disabled={profiel?.korActief}
+                  disabled={korOpgeslagen}
                   className={`relative w-[60px] h-8 rounded-full transition-all duration-300 ${
                     profiel?.korActief
-                      ? "bg-[var(--mp-accent)] opacity-50 cursor-not-allowed"
+                      ? `bg-[var(--mp-accent)] ${korOpgeslagen ? "opacity-50 cursor-not-allowed" : ""}`
                       : "bg-neutral-300 dark:bg-neutral-700"
                   }`}
                   style={{ minWidth: '60px', minHeight: '32px' }}

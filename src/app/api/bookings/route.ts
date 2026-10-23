@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import {
-  createGoogleCalendarEvent,
-  isGoogleCalendarConfigured,
-} from "@/lib/google-calendar";
-import { sendEmail } from "@/lib/email-service";
-import {
-  buildBookingConfirmationHtml,
-  buildBookingNotificationHtml,
-  buildKandidaatBookingBevestiging,
-  buildKandidaatBookingNotificatie,
-} from "@/lib/email-templates";
-import { randomBytes } from "crypto";
 import { checkRedisRateLimit, getClientIP, formRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyRecaptcha } from "@/lib/recaptcha";
+import { maakBoeking, stuurBoekingMails } from "@/lib/bookings/aanmaken";
+import { BEZETTENDE_STATUSSEN, tijdvakkenOverlappen } from "@/lib/bookings/regels";
 
 interface EventType {
   id: string;
@@ -64,10 +56,6 @@ function minutesToTime(minutes: number): string {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
 
-function generateToken(): string {
-  return randomBytes(32).toString("hex");
-}
-
 // GET: Beschikbare slots ophalen voor de booking pagina
 export async function GET(request: NextRequest) {
   const eventTypeSlug = request.nextUrl.searchParams.get("type");
@@ -80,7 +68,8 @@ export async function GET(request: NextRequest) {
       .from("event_types")
       .select("id, name, slug, description, duration_minutes, buffer_before_minutes, buffer_after_minutes, color, is_active, max_bookings_per_day, confirmation_message, booking_type, sort_order")
       .eq("is_active", true)
-      .order("sort_order");
+      .order("sort_order")
+      .order("slug"); // vaste volgorde bij gelijke sort_order (zelfde keuze als lib/bookings/aanmaken)
 
     // Kandidaat booking type: zoek het kandidaat event type
     if (bookingType === "kandidaat") {
@@ -122,8 +111,11 @@ export async function GET(request: NextRequest) {
         inquiry = data;
       }
 
+      // /afspraak-plannen is de klantpagina: kandidaattypes horen daar niet in
+      // de keuzelijst (kandidaten boeken via /kennismaking-plannen, dat
+      // ?booking_type=kandidaat gebruikt).
       return NextResponse.json({
-        event_types: eventTypes || [],
+        event_types: ((eventTypes as EventType[]) || []).filter((et) => et.booking_type !== "kandidaat"),
         inquiry,
         intro_text: settingsMap.booking_page_intro_text || "",
         sender_name: settingsMap.sender_name || "TopTalent Jobs",
@@ -169,13 +161,24 @@ export async function GET(request: NextRequest) {
       .gte("date", todayStr)
       .lte("date", endStr);
 
-    // Haal bestaande boekingen op (voor conflict check)
+    // Haal bestaande boekingen op (voor conflict check): alle niet-geannuleerde
+    // boekingen binnen de horizon, ongeacht het afspraaktype.
     const { data: existingBookings } = await supabaseAdmin
       .from("bookings")
-      .select("id, slot_id, status, availability_slots(date, start_time, end_time)")
-      .in("status", ["confirmed"])
-      .not("slot_id", "is", null)
-      .limit(500);
+      .select("id, slot_id, status, availability_slots!inner(date, start_time, end_time)")
+      .in("status", [...BEZETTENDE_STATUSSEN])
+      .gte("availability_slots.date", todayStr)
+      .lte("availability_slots.date", endStr)
+      .limit(1000);
+
+    const bezetPerDag = new Map<string, { start: string; eind: string }[]>();
+    for (const b of existingBookings || []) {
+      const slot = b.availability_slots as unknown as { date: string; start_time: string; end_time: string } | null;
+      if (!slot) continue;
+      const lijst = bezetPerDag.get(slot.date) || [];
+      lijst.push({ start: slot.start_time, eind: slot.end_time });
+      bezetPerDag.set(slot.date, lijst);
+    }
 
     // Haal bestaande slots op
     const { data: existingSlots } = await supabaseAdmin
@@ -243,7 +246,12 @@ export async function GET(request: NextRequest) {
               (s) => s.date === dateStr && s.start_time === slotStart + ":00",
             );
 
-            const isBooked = existingSlot?.is_booked || false;
+            // Bezet als het exacte slot geboekt is óf als het tijdvak overlapt
+            // met een boeking van een (ander) afspraaktype.
+            const overlaptBoeking = (bezetPerDag.get(dateStr) || []).some((b) =>
+              tijdvakkenOverlappen({ start: slotStart, eind: slotEnd }, b),
+            );
+            const isBooked = existingSlot?.is_booked || overlaptBoeking;
             const isBlocked = existingSlot && !existingSlot.is_available;
 
             if (!isOverrideBlocked && !isBooked && !isBlocked) {
@@ -309,6 +317,11 @@ export async function GET(request: NextRequest) {
 }
 
 // POST: Afspraak boeken
+//
+// Publiek (afspraak-plannen, kennismaking-plannen): reCAPTCHA verplicht,
+// source = "website", duur uit event_types. Admin-agenda (Bearer-token van een
+// admin): geen captcha, source = "admin", eigen eindtijd toegestaan.
+// `source` uit de body wordt nooit vertrouwd.
 export async function POST(request: NextRequest) {
   // Rate limiting
   const clientIP = getClientIP(request);
@@ -318,370 +331,74 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
-    const {
-      slot_id,
-      event_type_id,
-      date,
-      start_time,
-      end_time,
-      client_name,
-      client_email,
-      client_phone,
-      company_name,
-      notes,
-      inquiry_id,
-      source = "website",
-      booking_type = "client",
-      kandidaat_naam,
-      kandidaat_email,
-      kandidaat_telefoon,
-      kandidaat_notities,
-      kandidaat_cv_url,
-      inschrijving_id,
-    } = body;
-
-    const isKandidaat = booking_type === "kandidaat";
-
-    if (!client_name || !client_email) {
-      return NextResponse.json(
-        { error: "Naam en e-mailadres zijn vereist" },
-        { status: 400 },
-      );
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Ongeldig verzoek" }, { status: 400 });
     }
+    const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
-    if (!slot_id && (!date || !start_time || !end_time)) {
-      return NextResponse.json(
-        { error: "Tijdslot of datum/tijd zijn vereist" },
-        { status: 400 },
-      );
-    }
+    const { isAdmin } = await verifyAdmin(request);
 
-    let actualSlotId = slot_id;
-    let slotDate = date;
-    let slotStartTime = start_time;
-    let slotEndTime = end_time;
-
-    // Als er een bestaand slot_id is, gebruik dat
-    if (slot_id && !slot_id.startsWith("gen_")) {
-      const { data: slot, error: slotError } = await supabaseAdmin
-        .from("availability_slots")
-        .select("id, date, start_time, end_time, is_available, is_booked")
-        .eq("id", slot_id)
-        .single();
-
-      if (slotError || !slot) {
-        return NextResponse.json({ error: "Tijdslot niet gevonden" }, { status: 404 });
+    if (!isAdmin) {
+      const recaptchaToken = str(body.recaptchaToken);
+      if (!recaptchaToken) {
+        return NextResponse.json({ error: "reCAPTCHA verificatie vereist" }, { status: 400 });
       }
-
-      if (!slot.is_available || slot.is_booked) {
-        return NextResponse.json(
-          { error: "Dit tijdslot is helaas niet meer beschikbaar. Kies een ander tijdstip." },
-          { status: 409 },
-        );
-      }
-
-      slotDate = slot.date;
-      slotStartTime = slot.start_time;
-      slotEndTime = slot.end_time;
-
-      // Markeer slot als geboekt
-      await supabaseAdmin
-        .from("availability_slots")
-        .update({ is_booked: true, is_available: false })
-        .eq("id", slot_id);
-    } else {
-      // Genereer een slot on-the-fly (schema-gebaseerd)
-      const targetDate = slot_id?.startsWith("gen_")
-        ? slot_id.split("_")[1]
-        : date;
-      const targetStart = slot_id?.startsWith("gen_")
-        ? slot_id.split("_")[2]
-        : start_time;
-      const targetEnd = end_time;
-
-      slotDate = targetDate;
-      slotStartTime = targetStart;
-      slotEndTime = targetEnd;
-
-      // Conflict check
-      const { data: conflict } = await supabaseAdmin
-        .from("availability_slots")
-        .select("id")
-        .eq("date", targetDate)
-        .eq("start_time", targetStart + ":00")
-        .eq("is_booked", true)
-        .maybeSingle();
-
-      if (conflict) {
-        return NextResponse.json(
-          { error: "Dit tijdslot is helaas niet meer beschikbaar." },
-          { status: 409 },
-        );
-      }
-
-      // Maak het slot aan
-      const { data: newSlot } = await supabaseAdmin
-        .from("availability_slots")
-        .upsert(
-          {
-            date: targetDate,
-            start_time: targetStart.length === 5 ? targetStart + ":00" : targetStart,
-            end_time: (targetEnd || minutesToTime(timeToMinutes(targetStart) + 60)).length === 5
-              ? (targetEnd || minutesToTime(timeToMinutes(targetStart) + 60)) + ":00"
-              : targetEnd || minutesToTime(timeToMinutes(targetStart) + 60) + ":00",
-            is_available: false,
-            is_booked: true,
-          },
-          { onConflict: "date,start_time" },
-        )
-        .select()
-        .single();
-
-      actualSlotId = newSlot?.id || null;
-    }
-
-    // Generate tokens
-    const cancellationToken = generateToken();
-    const rescheduleToken = generateToken();
-
-    // Maak booking aan
-    const bookingInsert: Record<string, unknown> = {
-      slot_id: actualSlotId,
-      event_type_id: event_type_id || null,
-      inquiry_id: inquiry_id || null,
-      client_name: isKandidaat ? (kandidaat_naam || client_name) : client_name,
-      client_email: isKandidaat ? (kandidaat_email || client_email) : client_email,
-      client_phone: isKandidaat ? (kandidaat_telefoon || client_phone || null) : (client_phone || null),
-      company_name: company_name || null,
-      notes: isKandidaat ? (kandidaat_notities || notes || null) : (notes || null),
-      status: "confirmed",
-      cancellation_token: cancellationToken,
-      reschedule_token: rescheduleToken,
-      source,
-      booking_type: isKandidaat ? "kandidaat" : "client",
-    };
-
-    if (isKandidaat) {
-      bookingInsert.kandidaat_naam = kandidaat_naam || client_name || null;
-      bookingInsert.kandidaat_email = kandidaat_email || client_email || null;
-      bookingInsert.kandidaat_telefoon = kandidaat_telefoon || client_phone || null;
-      bookingInsert.kandidaat_cv_url = kandidaat_cv_url || null;
-      bookingInsert.kandidaat_notities = kandidaat_notities || notes || null;
-      bookingInsert.inschrijving_id = inschrijving_id || null;
-    }
-
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from("bookings")
-      .insert(bookingInsert)
-      .select()
-      .single();
-
-    if (bookingError || !booking) {
-      // Rollback slot
-      if (actualSlotId) {
-        await supabaseAdmin
-          .from("availability_slots")
-          .update({ is_booked: false, is_available: true })
-          .eq("id", actualSlotId);
-      }
-      captureRouteError(bookingError, { route: "/api/bookings", action: "POST" });
-      // console.error("Booking create error:", bookingError);
-      return NextResponse.json({ error: "Kon boeking niet aanmaken" }, { status: 500 });
-    }
-
-    // Koppel booking aan aanvraag
-    if (inquiry_id) {
-      await supabaseAdmin
-        .from("personeel_aanvragen")
-        .update({ booking_id: booking.id })
-        .eq("id", inquiry_id);
-    }
-
-    // Google Calendar event aanmaken
-    let meetLink: string | undefined;
-    if (isGoogleCalendarConfigured()) {
-      const startDateTime = `${slotDate}T${slotStartTime}`;
-      const endDateTime = `${slotDate}T${slotEndTime}`;
-
-      const bookingName = isKandidaat ? (kandidaat_naam || client_name) : client_name;
-      const bookingEmail = isKandidaat ? (kandidaat_email || client_email) : client_email;
-
-      const calResult = await createGoogleCalendarEvent({
-        summary: isKandidaat
-          ? `Kennismaking: ${bookingName}`
-          : `Gesprek: ${bookingName}${company_name ? ` (${company_name})` : ""}`,
-        description: isKandidaat
-          ? [
-              `Kandidaat: ${bookingName}`,
-              `Email: ${bookingEmail}`,
-              kandidaat_telefoon ? `Telefoon: ${kandidaat_telefoon}` : "",
-              kandidaat_notities ? `\nNotities: ${kandidaat_notities}` : "",
-              kandidaat_cv_url ? `\nCV: ${kandidaat_cv_url}` : "",
-            ].filter(Boolean).join("\n")
-          : [
-              `Klant: ${client_name}`,
-              company_name ? `Bedrijf: ${company_name}` : "",
-              `Email: ${client_email}`,
-              client_phone ? `Telefoon: ${client_phone}` : "",
-              notes ? `\nNotities: ${notes}` : "",
-            ].filter(Boolean).join("\n"),
-        startDateTime,
-        endDateTime,
-        attendeeEmail: bookingEmail,
-        addMeetLink: true,
-      });
-
-      if (calResult.eventId) {
-        const updateData: Record<string, unknown> = { google_calendar_event_id: calResult.eventId };
-        if (calResult.meetLink) {
-          updateData.google_meet_link = calResult.meetLink;
-          meetLink = calResult.meetLink;
-        }
-        await supabaseAdmin
-          .from("bookings")
-          .update(updateData)
-          .eq("id", booking.id);
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+      if (!recaptchaResult.success) {
+        return NextResponse.json({ error: recaptchaResult.error || "Spam detectie mislukt" }, { status: 400 });
       }
     }
 
-    // Datum/tijd formatteren
-    const datumFormatted = new Date(slotDate).toLocaleDateString("nl-NL", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const startFormatted = typeof slotStartTime === "string" ? slotStartTime.slice(0, 5) : "";
-    const endFormatted = typeof slotEndTime === "string" ? slotEndTime.slice(0, 5) : "";
+    const clientName = str(body.client_name) ?? str(body.kandidaat_naam);
+    const clientEmail = str(body.client_email) ?? str(body.kandidaat_email);
+    if (!clientName || !clientEmail) {
+      return NextResponse.json({ error: "Naam en e-mailadres zijn vereist" }, { status: 400 });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail) || clientEmail.length > 255 || clientName.length > 200) {
+      return NextResponse.json({ error: "Ongeldig e-mailadres of naam" }, { status: 400 });
+    }
 
-    // Haal afzender instellingen op
-    const { data: senderSettings } = await supabaseAdmin
-      .from("admin_settings")
-      .select("key, value")
-      .in("key", ["sender_email", "sender_name"]);
-
-    const sMap = Object.fromEntries((senderSettings || []).map((s) => [s.key, s.value]));
-    const senderEmail = sMap.sender_email || "info@toptalentjobs.nl";
-    const senderName = sMap.sender_name || "TopTalent Jobs";
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
-    const manageUrl = `${baseUrl}/afspraak/${cancellationToken}`;
-
-    // Verstuur bevestigingsmails
-    if (isKandidaat) {
-        // Kandidaat bevestigingsmail
-        const kNaam = kandidaat_naam || client_name;
-        const kEmail = kandidaat_email || client_email;
-        try {
-          await sendEmail({
-            from: `${senderName} <${senderEmail}>`,
-            to: [kEmail],
-            subject: `Je kennismakingsgesprek is bevestigd`,
-            html: buildKandidaatBookingBevestiging({
-              naam: kNaam,
-              datum: datumFormatted,
-              tijd: `${startFormatted} - ${endFormatted}`,
-              meetLink,
-              annuleringsLink: manageUrl,
-            }),
-          });
-
-          await supabaseAdmin
-            .from("bookings")
-            .update({ confirmation_email_sent: true })
-            .eq("id", booking.id);
-        } catch (emailErr) {
-          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
-          // console.error("Kandidaat booking confirmation email error:", emailErr);
-        }
-
-        // Admin notificatie
-        try {
-          await sendEmail({
-            from: `${senderName} <${senderEmail}>`,
-            to: [senderEmail],
-            subject: `Nieuw kennismakingsgesprek: ${kNaam} op ${datumFormatted}`,
-            html: buildKandidaatBookingNotificatie({
-              kandidaatNaam: kNaam,
-              email: kEmail,
-              telefoon: kandidaat_telefoon || client_phone,
-              cvUrl: kandidaat_cv_url,
-              inschrijvingId: inschrijving_id,
-              meetLink,
-              datum: datumFormatted,
-              tijd: `${startFormatted} - ${endFormatted}`,
-            }),
-          });
-        } catch (emailErr) {
-          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
-          // console.error("Kandidaat booking notification email error:", emailErr);
-        }
-      } else {
-        // Klant bevestigingsmail
-        try {
-          await sendEmail({
-            from: `${senderName} <${senderEmail}>`,
-            to: [client_email],
-            subject: `Je afspraak met ${senderName} is bevestigd`,
-            html: buildBookingConfirmationHtml({
-              clientName: client_name,
-              datumFormatted,
-              startTime: startFormatted,
-              endTime: endFormatted,
-              senderName,
-              notes,
-              manageUrl,
-            }),
-          });
-
-          await supabaseAdmin
-            .from("bookings")
-            .update({ confirmation_email_sent: true })
-            .eq("id", booking.id);
-        } catch (emailErr) {
-          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
-          // console.error("Booking confirmation email error:", emailErr);
-        }
-
-        try {
-          await sendEmail({
-            from: `${senderName} <${senderEmail}>`,
-            to: [senderEmail],
-            subject: `Nieuwe afspraak: ${client_name} op ${datumFormatted}`,
-            html: buildBookingNotificationHtml({
-              clientName: client_name,
-              clientEmail: client_email,
-              clientPhone: client_phone,
-              companyName: company_name,
-              datumFormatted,
-              startTime: startFormatted,
-              endTime: endFormatted,
-              notes,
-              inquiryId: inquiry_id,
-            }),
-          });
-        } catch (emailErr) {
-          captureRouteError(emailErr, { route: "/api/bookings", action: "POST" });
-          // console.error("Booking notification email error:", emailErr);
-        }
-      }
-
-    return NextResponse.json({
-      success: true,
-      booking: {
-        id: booking.id,
-        datum: slotDate,
-        datum_formatted: datumFormatted,
-        start_time: startFormatted,
-        end_time: endFormatted,
-        client_name: isKandidaat ? (kandidaat_naam || client_name) : client_name,
-        cancellation_token: cancellationToken,
-        manage_url: manageUrl,
-        booking_type: isKandidaat ? "kandidaat" : "client",
-        ...(meetLink ? { meet_link: meetLink } : {}),
+    const resultaat = await maakBoeking(
+      {
+        slotId: str(body.slot_id),
+        eventTypeId: str(body.event_type_id),
+        gevraagdBookingType: body.booking_type === "kandidaat" ? "kandidaat" : "client",
+        datum: str(body.date),
+        startTijd: str(body.start_time),
+        eindTijd: str(body.end_time),
+        clientName,
+        clientEmail,
+        clientPhone: str(body.client_phone),
+        companyName: str(body.company_name),
+        notes: str(body.notes)?.slice(0, 2000) ?? null,
+        inquiryId: str(body.inquiry_id),
+        kandidaatNaam: str(body.kandidaat_naam),
+        kandidaatEmail: str(body.kandidaat_email),
+        kandidaatTelefoon: str(body.kandidaat_telefoon),
+        kandidaatNotities: str(body.kandidaat_notities)?.slice(0, 2000) ?? null,
+        // Alleen een pad uit /api/cv-upload accepteren (geen willekeurige URL's).
+        kandidaatCvPad: (() => {
+          const pad = str(body.kandidaat_cv_pad);
+          return pad && /^cv\/[A-Za-z0-9._-]+$/.test(pad) ? pad : null;
+        })(),
+        inschrijvingId: str(body.inschrijving_id),
       },
-    });
+      {
+        source: isAdmin ? "admin" : "website",
+        eigenEindtijdToegestaan: isAdmin,
+      },
+    );
+
+    if (!resultaat.ok) {
+      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+    }
+
+    await stuurBoekingMails(resultaat.context, { klant: true, admin: true });
+
+    return NextResponse.json({ success: true, booking: resultaat.booking });
   } catch (error) {
     captureRouteError(error, { route: "/api/bookings", action: "POST" });
     // console.error("Booking POST error:", error);

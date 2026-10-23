@@ -27,6 +27,8 @@ interface DashboardWidgetsProps {
   stats: DashboardStats | null;
   volgendeDienst: UpcomingDienst | null;
   openFacturen: Factuur[];
+  /** Openstaand factuurbedrag zoals berekend door de server (alle facturen, niet alleen de laatste 5). */
+  openBedrag?: number;
   maandBedrag: number;
   budgetGebruikt?: number;
   budgetTotaal?: number;
@@ -37,14 +39,16 @@ export default function DashboardWidgets({
   stats,
   volgendeDienst,
   openFacturen,
+  openBedrag: openBedragServer,
   maandBedrag,
   budgetGebruikt = 0,
-  budgetTotaal = 3000,
+  // Geen budget ingesteld = geen budgetbalk (er bestond alleen een hardcoded €3000).
+  budgetTotaal = 0,
   onTabChange,
 }: DashboardWidgetsProps) {
-  const openBedrag = openFacturen
-    .filter((f) => f.status === "openstaand")
-    .reduce((s, f) => s + f.totaal, 0);
+  const openBedrag = openBedragServer ?? openFacturen
+    .filter((f) => f.status !== "betaald" && f.status !== "concept")
+    .reduce((s, f) => s + (Number(f.totaal) || 0), 0);
   const budgetPct = budgetTotaal > 0 ? Math.min(100, Math.round((budgetGebruikt / budgetTotaal) * 100)) : 0;
   const budgetWaarschuwing = budgetPct >= 85;
 

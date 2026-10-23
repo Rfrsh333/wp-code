@@ -130,7 +130,7 @@ export default function FunctiesOverzichtPage() {
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link
                 href="/personeel-aanvragen/"
-                className="px-6 py-3 bg-white text-[#B85600] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
+                className="px-6 py-3 bg-white text-[#9a4700] font-semibold rounded-xl hover:bg-orange-50 transition-colors"
               >
                 Personeel aanvragen
               </Link>

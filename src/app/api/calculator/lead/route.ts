@@ -10,12 +10,14 @@ import { functieLabels, ervaringLabels, dagen } from "@/lib/calculator/tarieven"
 import { captureRouteError } from "@/lib/sentry-utils";
 import * as Sentry from "@sentry/nextjs";
 import { escapeHtml } from "@/lib/sanitize";
+import { verifyRecaptcha } from "@/lib/recaptcha";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface LeadRequest {
+  recaptchaToken?: string | null;
   lead: LeadFormData;
   inputs: CalculatorInputs;
   resultaten: Resultaten;
@@ -282,8 +284,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data: LeadRequest = await request.json();
+    let data: LeadRequest;
+    try {
+      data = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Ongeldig verzoek" }, { status: 400 });
+    }
     const { lead, inputs } = data;
+
+    // reCAPTCHA: dit endpoint verstuurt mail naar een opgegeven adres en is
+    // dus aantrekkelijk voor misbruik (zelfde check als de andere formulieren).
+    if (!data.recaptchaToken) {
+      return NextResponse.json({ error: "reCAPTCHA verificatie vereist" }, { status: 400 });
+    }
+    const recaptchaResult = await verifyRecaptcha(data.recaptchaToken);
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || "Spam detectie mislukt" },
+        { status: 400 }
+      );
+    }
 
     // Validate lead form
     if (!lead?.naam?.trim() || !lead?.bedrijfsnaam?.trim() || !lead?.email?.trim()) {
@@ -338,9 +358,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (dbError) {
+      // Niet doorgaan: de PDF-link in de mail en op de pagina werkt alleen als
+      // de rij met pdf_token bestaat. Liever een nette fout dan een dode link.
       captureRouteError(dbError, { route: "/api/calculator/lead", action: "POST" });
-      // console.error("Database error:", dbError);
-      // Continue anyway - email is more important
+      return NextResponse.json(
+        { error: "Je berekening kon niet worden opgeslagen. Probeer het opnieuw." },
+        { status: 500 }
+      );
     }
 
     // Send Telegram alert (geen PII — AVG compliance)
@@ -365,16 +389,38 @@ export async function POST(request: NextRequest) {
       html: generateInternalEmail(lead, inputs, resultaten),
     });
 
-    await Promise.all([leadEmailPromise, internalEmailPromise]);
+    const [leadMail, internalMail] = await Promise.allSettled([leadEmailPromise, internalEmailPromise]);
 
-    await supabase
-      .from("calculator_leads")
-      .update({ email_sent: true, email_sent_at: new Date().toISOString() })
-      .eq("pdf_token", pdfToken);
+    // email_sent alleen zetten als de mail naar de lead echt is verstuurd;
+    // sendEmail geeft fouten terug in plaats van te gooien.
+    const leadMailGelukt = leadMail.status === "fulfilled" && !leadMail.value.error && !leadMail.value.suppressed;
+    if (!leadMailGelukt) {
+      captureRouteError(
+        leadMail.status === "rejected" ? leadMail.reason : leadMail.value.error,
+        { route: "/api/calculator/lead", action: "lead-email" }
+      );
+    }
+    if (internalMail.status === "rejected" || internalMail.value.error) {
+      captureRouteError(
+        internalMail.status === "rejected" ? internalMail.reason : internalMail.value.error,
+        { route: "/api/calculator/lead", action: "internal-email" }
+      );
+    }
+
+    if (leadMailGelukt) {
+      const { error: updateError } = await supabase
+        .from("calculator_leads")
+        .update({ email_sent: true, email_sent_at: new Date().toISOString() })
+        .eq("pdf_token", pdfToken);
+      if (updateError) {
+        captureRouteError(updateError, { route: "/api/calculator/lead", action: "email_sent" });
+      }
+    }
 
     return NextResponse.json({
       success: true,
       pdfToken,
+      emailSent: leadMailGelukt,
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/calculator/lead", action: "POST" });

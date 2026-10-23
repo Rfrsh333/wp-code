@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // Get document info
     const { data: document, error: docError } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .select("id, file_path, file_name, file_size, mime_type")
+      .select("id, bestand_pad, bestandsnaam, bestand_grootte, mime_type")
       .eq("id", documentId)
       .single();
 
@@ -35,19 +35,19 @@ export async function GET(request: NextRequest) {
 
     // Generate signed URL (valid for 1 hour)
     const { data: signedUrlData, error: urlError } = await supabaseAdmin.storage
-      .from("kandidaat-documenten")
-      .createSignedUrl(document.file_path, 3600); // 1 hour
+      .from(process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten")
+      .createSignedUrl(document.bestand_pad, 3600); // 1 hour
 
     if (urlError || !signedUrlData) {
-      captureRouteError(new Error("/api/admin/kandidaat-documenten/download GET error"), { route: "/api/admin/kandidaat-documenten/download", action: "GET" });
+      captureRouteError(urlError ?? new Error("Signed URL leeg"), { route: "/api/admin/kandidaat-documenten/download", action: "GET" });
       // console.error("Signed URL error:", urlError);
       return NextResponse.json({ error: "Kon signed URL niet genereren" }, { status: 500 });
     }
 
     return NextResponse.json({
       document_id: document.id,
-      file_name: document.file_name,
-      file_size: document.file_size,
+      file_name: document.bestandsnaam,
+      file_size: document.bestand_grootte,
       mime_type: document.mime_type,
       signed_url: signedUrlData.signedUrl,
       expires_in: 3600, // seconds

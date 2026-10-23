@@ -6,6 +6,16 @@ import { verifyRecaptcha } from "@/lib/recaptcha";
 import { escapeHtml } from "@/lib/sanitize";
 import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
+import {
+  HERINSCHRIJVING_RESET,
+  HERINSCHRIJVING_RESET_BASIS,
+  herinschrijvingKeuze,
+  VORIGE_INSCHRIJVING_NOTITIE,
+  ontbrekendeInschrijfVelden,
+  inschrijfFoutmelding,
+} from "@/lib/inschrijving-regels";
+import { emailIlikePatroon, normaliseerEmail } from "@/lib/email-normalisatie";
+import { isGeldigKvkNummer, normaliseerKvkNummer } from "@/lib/medewerker/zzp-gegevens";
 
 function formatBoolean(value: boolean) {
   return value ? "Ja" : "Nee";
@@ -74,7 +84,8 @@ export async function POST(request: NextRequest) {
     const voornaam = (formData.get("voornaam") as string) || "";
     const tussenvoegsel = (formData.get("tussenvoegsel") as string) || "";
     const achternaam = (formData.get("achternaam") as string) || "";
-    const email = (formData.get("email") as string) || "";
+    // Klein en getrimd opslaan: login en reset zoeken op dit adres (B4).
+    const email = normaliseerEmail(formData.get("email"));
     const telefoon = (formData.get("telefoon") as string) || "";
     const stad = (formData.get("stad") as string) || "";
     const geboortedatum = (formData.get("geboortedatum") as string) || "";
@@ -102,47 +113,60 @@ export async function POST(request: NextRequest) {
       .map((value) => String(value).trim())
       .filter(Boolean);
 
-    if (
-      !voornaam ||
-      !achternaam ||
-      !email ||
-      !telefoon ||
-      !stad ||
-      !geboortedatum ||
-      !geslacht ||
-      !horecaErvaring ||
-      !beschikbaarheid ||
-      !beschikbaarVanaf ||
-      !motivatie ||
-      !hoeGekomen ||
-      !uitbetalingswijze ||
-      functies.length === 0 ||
-      talen.length === 0
-    ) {
+    // Motivatie is in het formulier "(optioneel)" — niet meer eisen, anders
+    // strandt een kandidaat die dat veld leeg laat op een vage foutmelding.
+    // Noem bij een fout wélk veld ontbreekt, zodat de kandidaat het kan herstellen.
+    const ontbrekend = ontbrekendeInschrijfVelden({
+      voornaam,
+      achternaam,
+      email,
+      telefoon,
+      stad,
+      geboortedatum,
+      geslacht,
+      horecaErvaring,
+      beschikbaarheid,
+      beschikbaarVanaf,
+      hoeGekomen,
+      uitbetalingswijze,
+      functies,
+      talen,
+    });
+    if (ontbrekend.length > 0) {
       return NextResponse.json(
-        { error: "Vul alle verplichte velden in" },
+        { error: inschrijfFoutmelding(ontbrekend), ontbrekend },
         { status: 400 }
       );
     }
 
-    if (uitbetalingswijze === "zzp" && !kvkNummer) {
+    // B11: TopTalent werkt alleen met zzp'ers; KvK-nummer (8 cijfers) is dus altijd verplicht.
+    if (uitbetalingswijze !== "zzp") {
       return NextResponse.json(
-        { error: "KVK nummer is verplicht voor ZZP inschrijvingen" },
+        { error: "Via TopTalent werk je als zelfstandige (zzp). Kies zzp en vul je KvK-nummer in." },
+        { status: 400 }
+      );
+    }
+    if (!isGeldigKvkNummer(kvkNummer)) {
+      return NextResponse.json(
+        { error: kvkNummer ? "Een KvK-nummer bestaat uit 8 cijfers" : "KvK-nummer is verplicht" },
         { status: 400 }
       );
     }
 
-    // H-2: Duplicate email check
-    const { data: existingKandidaat } = await supabase
-      .from("inschrijvingen")
-      .select("id")
-      .eq("email", email)
-      .limit(1)
-      .maybeSingle();
+    // H-2: Duplicate email check, hoofdletterongevoelig (oudere inschrijvingen bewaren het adres
+    // zoals het werd getypt). B13: na een afwijzing mag je je opnieuw inschrijven; dan wordt de
+    // afgewezen inschrijving hergebruikt.
+    const patroon = emailIlikePatroon(email);
+    const bestaandBasis = supabase.from("inschrijvingen").select("id, email, onboarding_status, created_at");
+    const { data: bestaandeRijen } = await (patroon ? bestaandBasis.ilike("email", patroon) : bestaandBasis.eq("email", email)).limit(20);
+    const keuze = herinschrijvingKeuze(
+      ((bestaandeRijen ?? []) as { id: string; email: string; onboarding_status: string | null; created_at: string | null }[])
+        .filter((r) => normaliseerEmail(r.email) === email),
+    );
 
-    if (existingKandidaat) {
+    if (keuze.soort === "bestaat") {
       return NextResponse.json(
-        { error: "Er bestaat al een inschrijving met dit e-mailadres" },
+        { error: "Er bestaat al een inschrijving met dit e-mailadres. Je status staat in de bevestigingsmail; vragen? Mail info@toptalentjobs.nl." },
         { status: 409 }
       );
     }
@@ -202,7 +226,7 @@ export async function POST(request: NextRequest) {
               Extra context
             </h2>
             <p style="margin: 0 0 15px; color: #666;"><strong>Hoe bij ons gekomen:</strong> ${escapeHtml(hoeGekomen)}</p>
-            <p style="margin: 0; color: #666;"><strong>Motivatie:</strong><br>${escapeHtml(motivatie)}</p>
+            <p style="margin: 0; color: #666;"><strong>Motivatie:</strong><br>${escapeHtml(motivatie) || "Niet ingevuld"}</p>
             <p style="margin-top: 20px; font-size: 12px; color: #777;">
               Deze intake bevat bewust nog geen documenten. Die worden later in de onboarding apart opgevraagd.
             </p>
@@ -223,10 +247,11 @@ export async function POST(request: NextRequest) {
       stad,
       geboortedatum,
       geslacht,
-      motivatie,
+      // Kolom is NOT NULL; lege string = "niet ingevuld" (veld is optioneel).
+      motivatie: motivatie.trim(),
       hoe_gekomen: hoeGekomen,
       uitbetalingswijze,
-      kvk_nummer: kvkNummer || null,
+      kvk_nummer: normaliseerKvkNummer(kvkNummer) || null,
       horeca_ervaring: horecaErvaring,
       gewenste_functies: functies,
       talen,
@@ -246,11 +271,39 @@ export async function POST(request: NextRequest) {
     // moeten eerst aan de inschrijvingen tabel worden toegevoegd via een migratie.
     // Zie personeel_aanvragen voor referentie-implementatie.
 
-    const { data: insertedData, error: dbError } = await supabase
-      .from("inschrijvingen")
-      .insert(insertPayload)
-      .select()
-      .single();
+    let insertedData: { id: string } | null = null;
+    let dbError: unknown = null;
+    if (keuze.soort === "hergebruik") {
+      // Afgewezen inschrijving opnieuw gebruiken: nieuwe gegevens, onboarding terug naar het begin.
+      const herstart = { ...insertPayload, ...HERINSCHRIJVING_RESET, laatste_onboarding_actie: new Date().toISOString() };
+      let resultaat = await supabase.from("inschrijvingen").update(herstart).eq("id", keuze.id).select("id").single();
+      if (resultaat.error?.code === "PGRST204") {
+        // Een resetkolom bestaat (nog) niet in deze database: dan de kleinste reset.
+        resultaat = await supabase
+          .from("inschrijvingen")
+          .update({ ...insertPayload, ...HERINSCHRIJVING_RESET_BASIS })
+          .eq("id", keuze.id)
+          .select("id")
+          .single();
+      }
+      insertedData = resultaat.data;
+      dbError = resultaat.error;
+
+      // Documenten van de vorige inschrijving tellen niet mee voor de nieuwe (uploadpagina,
+      // autopilot, goedkeuring en meenemen naar het medewerkeraccount kijken naar de status).
+      if (!dbError) {
+        const { error: docFout } = await supabase
+          .from("kandidaat_documenten")
+          .update({ status: "afgekeurd", notitie: VORIGE_INSCHRIJVING_NOTITIE, reviewed_at: new Date().toISOString() })
+          .eq("inschrijving_id", keuze.id)
+          .neq("status", "afgekeurd");
+        if (docFout) captureRouteError(docFout, { route: "/api/inschrijven", action: "HERINSCHRIJVING_DOCUMENTEN" });
+      }
+    } else {
+      const resultaat = await supabase.from("inschrijvingen").insert(insertPayload).select().single();
+      insertedData = resultaat.data;
+      dbError = resultaat.error;
+    }
 
     if (dbError) {
       captureRouteError(dbError, { route: "/api/inschrijven", action: "POST" });

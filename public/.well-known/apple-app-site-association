@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["HCU649T23W.nl.toptalentjobs.app"],
+        "components": [
+          { "/": "/klant/email-bevestigen*", "comment": "Bevestigingslink na registratie van een werkgever: opent de app als die geïnstalleerd is" }
+        ]
+      }
+    ]
+  }
+}

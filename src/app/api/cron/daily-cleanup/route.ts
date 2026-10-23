@@ -19,15 +19,17 @@ export async function POST(request: NextRequest) {
   const gisterenStr = gisteren.toISOString().split("T")[0];
 
   try {
-    // 1. Verlopen diensten op "gesloten" zetten
+    // 1. Verlopen diensten opzoeken (alleen lezen). Voorheen werden ze op "gesloten" gezet, maar die
+    //    status bestaat niet (diensten_status_check) en de update faalde altijd. Bewuste keuze
+    //    (2-10-2026): de dienststatus blijft staan; alleen open aanmeldingen worden opgeruimd.
     const { data: verlopenDiensten, error: verlopenError } = await supabaseAdmin
       .from("diensten")
-      .update({ status: "gesloten" })
+      .select("id")
       .in("status", ["open", "vol"])
       .lt("datum", gisterenStr)
-      .select("id");
+      .limit(1000);
 
-    results.verlopen_diensten_gesloten = verlopenDiensten?.length || 0;
+    results.verlopen_diensten = verlopenDiensten?.length || 0;
     if (verlopenError) {
       captureRouteError(verlopenError, { route: "/api/cron/daily-cleanup", action: "POST" });
       // console.error("[CRON] Verlopen diensten error:", verlopenError);

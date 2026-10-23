@@ -4,6 +4,21 @@ const REDIRECT_TARGET = "https://www.toptalentjobs.nl/";
 const ADMIN_LOGIN = "/admin/login";
 const KLANT_LOGIN = "/klant/login";
 const MEDEWERKER_LOGIN = "/medewerker/login";
+// Pagina's die zonder sessie bereikbaar moeten zijn: e-maillinks (activatie, reset)
+// dragen hun token in de URL en zouden anders bij de login stranden.
+const KLANT_PUBLIC_PAGES = [
+  KLANT_LOGIN,
+  "/klant/registreren",
+  "/klant/wachtwoord-vergeten",
+  "/klant/wachtwoord-reset",
+  "/klant/email-bevestigen",
+];
+const MEDEWERKER_PUBLIC_PAGES = [
+  MEDEWERKER_LOGIN,
+  "/medewerker/activeren",
+  "/medewerker/wachtwoord-vergeten",
+  "/medewerker/wachtwoord-reset",
+];
 const CSRF_EXEMPT = ["/api/webhooks/", "/api/cron/"];
 
 export function proxy(request: NextRequest) {
@@ -44,7 +59,7 @@ export function proxy(request: NextRequest) {
   }
 
   // --- Klant pages auth ---
-  const isKlantPublicPage = pathname === KLANT_LOGIN || pathname === "/klant/registreren";
+  const isKlantPublicPage = KLANT_PUBLIC_PAGES.includes(pathname);
   if (pathname.startsWith("/klant") && !pathname.startsWith("/api/") && !isKlantPublicPage) {
     const klantSession = request.cookies.get("klant_session")?.value;
 
@@ -57,7 +72,7 @@ export function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/medewerker") &&
     !pathname.startsWith("/api/") &&
-    pathname !== MEDEWERKER_LOGIN
+    !MEDEWERKER_PUBLIC_PAGES.includes(pathname)
   ) {
     const medewerkerSession = request.cookies.get("medewerker_session")?.value;
 
@@ -114,6 +129,7 @@ export function proxy(request: NextRequest) {
     pathname === "/afspraak-plannen" ||
     pathname === "/kennismaking-plannen" ||
     pathname === "/privacy" ||
+    pathname === "/account-verwijderen" ||
     pathname === "/voorwaarden";
 
   if (!isIndexablePath) {

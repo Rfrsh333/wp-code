@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getClientIP } from "@/lib/rate-limit-redis";
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function GET(
   }
 
   // Rate limit: 10 requests per minute per IP
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = getClientIP(request);
   try {
     const { Ratelimit } = await import("@upstash/ratelimit");
     const { Redis } = await import("@upstash/redis");
@@ -35,16 +36,28 @@ export async function GET(
     // Redis not configured, continue without rate limiting
   }
 
-  // Lookup medewerker by token
+  // Lookup medewerker by token. `bsn_verified` en `documenten_compleet`
+  // bestaan niet op medewerkers (live: bsn_geverifieerd); door die select gaf
+  // elke scan een 404.
   const { data: medewerker, error } = await supabaseAdmin
     .from("medewerkers")
-    .select("id, naam, functie, profile_photo_url, bsn_verified, documenten_compleet")
+    .select("id, naam, functie, profile_photo_url, bsn_geverifieerd")
     .eq("verificatie_token", token)
-    .single();
+    .maybeSingle();
 
   if (error || !medewerker) {
     return NextResponse.json({ error: "Medewerker niet gevonden" }, { status: 404 });
   }
+
+  // "Documenten compleet" staat op de inschrijving waaruit de medewerker is
+  // aangemaakt. Geen gekoppelde inschrijving → niet compleet tonen.
+  const { data: inschrijving } = await supabaseAdmin
+    .from("inschrijvingen")
+    .select("documenten_compleet")
+    .eq("medewerker_id", medewerker.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   // Check dienst vandaag
   const today = new Date().toISOString().split("T")[0];
@@ -74,8 +87,8 @@ export async function GET(
       naam: medewerker.naam,
       functie: medewerker.functie,
       profile_photo_url: medewerker.profile_photo_url,
-      bsn_verified: medewerker.bsn_verified ?? false,
-      documenten_compleet: medewerker.documenten_compleet ?? false,
+      bsn_verified: medewerker.bsn_geverifieerd ?? false,
+      documenten_compleet: inschrijving?.documenten_compleet ?? false,
     },
     dienst_vandaag: vandaagDiensten.map((da) => {
       const d = da.dienst as unknown as {

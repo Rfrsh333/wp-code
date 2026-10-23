@@ -1,4 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { normaliseerEmail } from "@/lib/email-normalisatie";
+import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
+import { normaliseerKvkNummer } from "@/lib/medewerker/zzp-gegevens";
+import { neemKandidaatDocumentenMee } from "@/lib/kandidaat-documenten-meenemen";
 
 interface CandidateRecord {
   id: string;
@@ -9,6 +13,7 @@ interface CandidateRecord {
   telefoon?: string | null;
   gewenste_functies?: string[] | null;
   interne_notitie?: string | null;
+  kvk_nummer?: string | null;
 }
 
 const functieMapping: Record<string, string> = {
@@ -35,20 +40,47 @@ function mapFuncties(gewensteFuncties?: string[] | null) {
   return Array.from(new Set(mapped.length > 0 ? mapped : ["bediening"]));
 }
 
-export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord) {
-  const existingByEmail = await supabaseAdmin
-    .from("medewerkers")
-    .select("id")
-    .eq("email", candidate.email)
-    .maybeSingle();
+/** Resultaat van kandidaat → medewerker: bestond het account al, en is het al geactiveerd? */
+export type MedewerkerUitKandidaat = {
+  id: string;
+  bestond: boolean;
+  heeftWachtwoord: boolean;
+  status: string;
+};
 
-  if (existingByEmail.data?.id) {
-    return existingByEmail.data.id;
+export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord): Promise<MedewerkerUitKandidaat> {
+  // Hoofdletterongevoelig zoeken en klein opslaan: anders kan de medewerker nooit inloggen (B4).
+  const email = normaliseerEmail(candidate.email);
+  const existingByEmail = await zoekOpEmail<{ id: string; email: string; wachtwoord: string | null; status: string | null }>(
+    "medewerkers",
+    "id, email, wachtwoord, status",
+    email,
+  );
+
+  if (existingByEmail?.id) {
+    // Bestaand account (oud-medewerker of door de admin aangemaakt): niet als nieuw behandelen.
+    // KvK-nummer aanvullen als dat nog leeg is (kolom bestaat pas na de checklist-migratie),
+    // en goedgekeurde kandidaatdocumenten alsnog meenemen (idempotent).
+    const kvkBestaand = normaliseerKvkNummer(candidate.kvk_nummer);
+    if (kvkBestaand) {
+      await supabaseAdmin
+        .from("medewerkers")
+        .update({ kvk_nummer: kvkBestaand })
+        .eq("id", existingByEmail.id)
+        .is("kvk_nummer", null);
+    }
+    await neemKandidaatDocumentenMee(candidate.id, existingByEmail.id);
+    return {
+      id: existingByEmail.id,
+      bestond: true,
+      heeftWachtwoord: !!existingByEmail.wachtwoord,
+      status: existingByEmail.status ?? "",
+    };
   }
 
   const payload = {
     naam: buildNaam(candidate),
-    email: candidate.email,
+    email,
     telefoon: candidate.telefoon || null,
     functie: mapFuncties(candidate.gewenste_functies),
     uurtarief: 15,
@@ -58,15 +90,24 @@ export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord) 
       : "Automatisch aangemaakt vanuit onboarding.",
   };
 
-  const { data, error } = await supabaseAdmin
+  // KvK-nummer gaat mee (checklist vóór reageren, B1). Bestaat de kolom nog niet (migratie
+  // 20261023_medewerker_checklist_reageren), dan zonder.
+  const kvk = normaliseerKvkNummer(candidate.kvk_nummer);
+  let { data, error } = await supabaseAdmin
     .from("medewerkers")
-    .insert(payload)
+    .insert(kvk ? { ...payload, kvk_nummer: kvk } : payload)
     .select("id")
     .single();
+  if (kvk && (error?.code === "42703" || error?.code === "PGRST204")) {
+    ({ data, error } = await supabaseAdmin.from("medewerkers").insert(payload).select("id").single());
+  }
 
   if (error || !data?.id) {
     throw new Error(error?.message || "Medewerker kon niet automatisch worden aangemaakt");
   }
 
-  return data.id;
+  // Goedgekeurde kandidaatdocumenten (ID, KvK, …) mee naar het medewerkeraccount.
+  await neemKandidaatDocumentenMee(candidate.id, data.id);
+
+  return { id: data.id, bestond: false, heeftWachtwoord: false, status: "actief" };
 }

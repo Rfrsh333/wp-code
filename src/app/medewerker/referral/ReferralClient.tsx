@@ -6,18 +6,35 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
+/** Zoals /api/medewerker/referral een verwezen persoon teruggeeft. */
 interface Referral {
-  id: string;
   naam: string;
-  status: string;
+  status: "pending" | "qualified" | "rewarded" | string;
+  reward_amount: number | null;
   created_at: string;
-  bonus_verdiend: number;
+  qualified_at: string | null;
 }
+
+interface ReferralStats {
+  totaal_verwezen: number;
+  qualified: number;
+  rewarded: number;
+  totaal_verdiend: number;
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "In behandeling",
+  qualified: "Gekwalificeerd",
+  rewarded: "Uitbetaald",
+};
 
 export default function ReferralClient() {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [referralCode, setReferralCode] = useState("");
+  // De link komt uit de API (/inschrijven?ref=…); de oude /medewerker/aanmelden bestaat niet.
+  const [referralLink, setReferralLink] = useState("");
+  const [stats, setStats] = useState<ReferralStats>({ totaal_verwezen: 0, qualified: 0, rewarded: 0, totaal_verdiend: 0 });
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -32,6 +49,8 @@ export default function ReferralClient() {
         const data = await res.json();
         setReferrals(data.referrals || []);
         setReferralCode(data.referral_code || "");
+        setReferralLink(data.referral_link || "");
+        if (data.stats) setStats(data.stats);
       }
     } catch (err) {
       Sentry.captureException(err);
@@ -40,17 +59,21 @@ export default function ReferralClient() {
     }
   };
 
-  const copyReferralLink = () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    toast.success("Link gekopieerd!");
-    setTimeout(() => setCopied(false), 2000);
+  const copyReferralLink = async () => {
+    if (!referralLink) return;
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setCopied(true);
+      toast.success("Link gekopieerd!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Kopiëren lukte niet; houd de link ingedrukt om hem te kopiëren");
+    }
   };
 
   const shareReferralLink = async () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50: ${link}`;
+    const link = referralLink;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25: ${link}`;
 
     if (navigator.share) {
       try {
@@ -64,37 +87,37 @@ export default function ReferralClient() {
   };
 
   const shareViaWhatsApp = () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50: ${link}`;
+    const link = referralLink;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25: ${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const shareViaLinkedIn = () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
+    const link = referralLink;
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`, '_blank');
   };
 
   const shareViaFacebook = () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
+    const link = referralLink;
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`, '_blank');
   };
 
   const shareViaTwitter = () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50:`;
+    const link = referralLink;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25:`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`, '_blank');
   };
 
   const shareViaEmail = () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
+    const link = referralLink;
     const subject = "Word medewerker bij TopTalent!";
-    const body = `Hoi!\n\nIk werk bij TopTalent en vind het echt top! Als jij je via mijn referral link aanmeldt, verdienen we allebei €50.\n\nGebruik deze link om je aan te melden:\n${link}\n\nGroetjes!`;
+    const body = `Hoi!\n\nIk werk bij TopTalent en vind het echt top! Als jij je via mijn referral link aanmeldt, verdienen we allebei €25.\n\nGebruik deze link om je aan te melden:\n${link}\n\nGroetjes!`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const shareViaSMS = () => {
-    const link = `https://toptalentjobs.nl/medewerker/aanmelden?ref=${referralCode}`;
-    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €50: ${link}`;
+    const link = referralLink;
+    const text = `Word medewerker bij TopTalent! Gebruik mijn referral link en we verdienen beide €25: ${link}`;
     window.location.href = `sms:?&body=${encodeURIComponent(text)}`;
   };
 
@@ -108,8 +131,8 @@ export default function ReferralClient() {
     toast.info("Link gekopieerd! Open Snapchat en plak de link");
   };
 
-  const totaalVerdiend = referrals.reduce((sum, r) => sum + (r.bonus_verdiend || 0), 0);
-  const actieveReferrals = referrals.filter((r) => r.status === "actief").length;
+  const totaalVerdiend = stats.totaal_verdiend;
+  const actieveReferrals = stats.qualified;
 
   return (
     <MedewerkerResponsiveLayout>
@@ -121,7 +144,7 @@ export default function ReferralClient() {
               Vrienden werven
             </h1>
             <p className="text-sm text-[var(--mp-text-secondary)] mt-1">
-              Verdien €50 per vriend die je werft!
+              Verdien €25 per vriend die je werft!
             </p>
           </div>
         </div>
@@ -135,9 +158,9 @@ export default function ReferralClient() {
                 <Gift className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-bold mb-2">€50 per vriend!</h2>
+                <h2 className="text-xl font-bold mb-2">€25 per vriend!</h2>
                 <p className="text-sm text-white/90">
-                  Werf een vriend en jullie verdienen allebei €50 zodra je vriend zijn eerste dienst heeft afgerond.
+                  Werf een vriend en jullie verdienen allebei €25 zodra je vriend zijn eerste dienst heeft afgerond.
                 </p>
               </div>
             </div>
@@ -162,7 +185,7 @@ export default function ReferralClient() {
             </h3>
             <div className="flex gap-3 mb-4">
               <div className="flex-1 px-4 py-3 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] text-sm font-mono border border-[var(--mp-separator)] truncate">
-                toptalentjobs.nl/aanmelden?ref={referralCode}
+                {referralLink ? referralLink.replace(/^https?:\/\/(www\.)?/, "") : referralCode || "…"}
               </div>
               <button
                 onClick={copyReferralLink}
@@ -367,10 +390,10 @@ export default function ReferralClient() {
                 </div>
                 <div>
                   <div className="font-semibold text-[var(--mp-text-primary)] text-sm mb-1">
-                    Jullie verdienen €50!
+                    Jullie verdienen €25!
                   </div>
                   <div className="text-sm text-[var(--mp-text-secondary)]">
-                    Jullie ontvangen allebei €50 bonus
+                    Jullie ontvangen allebei €25 bonus
                   </div>
                 </div>
               </div>
@@ -384,9 +407,9 @@ export default function ReferralClient() {
                 Jouw referrals
               </h3>
               <div className="space-y-3">
-                {referrals.map((referral) => (
+                {referrals.map((referral, idx) => (
                   <div
-                    key={referral.id}
+                    key={`${referral.created_at}-${idx}`}
                     className="flex items-center justify-between p-4 rounded-xl bg-[var(--mp-bg)]"
                   >
                     <div className="flex items-center gap-3">
@@ -404,16 +427,16 @@ export default function ReferralClient() {
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-bold text-[var(--mp-accent)]">
-                        €{referral.bonus_verdiend}
+                        €{referral.status === "rewarded" ? Number(referral.reward_amount || 0) : 0}
                       </div>
                       <div
                         className={`text-xs ${
-                          referral.status === "actief"
+                          referral.status === "qualified" || referral.status === "rewarded"
                             ? "text-[var(--mp-success)]"
                             : "text-[var(--mp-text-tertiary)]"
                         }`}
                       >
-                        {referral.status === "actief" ? "Actief" : "In behandeling"}
+                        {STATUS_LABEL[referral.status] ?? "In behandeling"}
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   User,
   Settings,
@@ -13,6 +13,9 @@ import {
   Award,
   Euro,
   Users,
+  CalendarCheck,
+  MessageSquare,
+  FileSignature,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -20,14 +23,17 @@ import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerRespon
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
+import { buildCheckinQr } from "@/lib/checkin-qr";
 import ThemeToggle from "@/components/medewerker/ThemeToggle";
 
 interface MedewerkerProfile {
+  id?: string;
   naam: string;
   email: string;
   profile_photo_url?: string;
   functie?: string | string[];
   rating?: number;
+  aantal_beoordelingen?: number;
   totaal_diensten?: number;
 }
 
@@ -36,6 +42,8 @@ export default function AccountClient() {
   const [profile, setProfile] = useState<MedewerkerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [fotoBezig, setFotoBezig] = useState(false);
+  const fotoInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -59,13 +67,46 @@ export default function AccountClient() {
     }
   };
 
+  // Profielfoto via de bestaande upload-API (POST /api/medewerker/profile, veld "photo").
+  const handleFotoGekozen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const bestand = e.target.files?.[0];
+    e.target.value = "";
+    if (!bestand) return;
+    if (!["image/jpeg", "image/png"].includes(bestand.type)) {
+      toast.error("Kies een JPG- of PNG-foto");
+      return;
+    }
+    if (bestand.size > 4 * 1024 * 1024) {
+      toast.error("Foto mag maximaal 4 MB zijn");
+      return;
+    }
+    setFotoBezig(true);
+    try {
+      const formData = new FormData();
+      formData.append("photo", bestand);
+      const res = await fetch("/api/medewerker/profile", { method: "POST", body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Foto uploaden mislukt");
+        return;
+      }
+      // Cache-buster: de bestandsnaam blijft gelijk (profile.jpg).
+      const url = data.profile_photo_url ? `${data.profile_photo_url}?v=${Date.now()}` : undefined;
+      setProfile((p) => (p ? { ...p, profile_photo_url: url } : p));
+      toast.success("Profielfoto bijgewerkt");
+    } catch (err) {
+      Sentry.captureException(err);
+      toast.error("Er ging iets mis");
+    } finally {
+      setFotoBezig(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
-      // Wis SW caches voordat we uitloggen
-      const { clearSwCacheOnLogout } = await import("@/lib/sw-utils");
-      await clearSwCacheOnLogout();
-      const res = await fetch("/api/medewerker/logout", { method: "POST" });
-      if (res.ok) {
+      // Push-abonnement van dit toestel weg, SW-caches wissen, sessie wissen (met time-outs).
+      const { medewerkerUitloggen } = await import("@/lib/medewerker/uitloggen");
+      if (await medewerkerUitloggen()) {
         toast.success("Uitgelogd");
         router.push("/medewerker/login");
       } else {
@@ -86,11 +127,19 @@ export default function AccountClient() {
       ],
     },
     {
+      title: "Planning & contact",
+      items: [
+        { icon: CalendarCheck, label: "Beschikbaarheid", onClick: () => router.push("/medewerker/beschikbaarheid") },
+        { icon: MessageSquare, label: "Berichten", onClick: () => router.push("/medewerker/berichten") },
+      ],
+    },
+    {
       title: "Financieel & Extra",
       items: [
         { icon: Euro, label: "Financieel overzicht", onClick: () => router.push("/medewerker/financieel") },
         { icon: Users, label: "Vrienden werven", onClick: () => router.push("/medewerker/referral") },
         { icon: FileText, label: "Documenten", onClick: () => router.push("/medewerker/documenten") },
+        { icon: FileSignature, label: "Contracten", onClick: () => router.push("/medewerker/contracten") },
       ],
     },
     {
@@ -162,10 +211,10 @@ export default function AccountClient() {
                 style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
               >
                 <div className="p-3 flex flex-col items-center justify-center h-full">
-                  {/* QR Code - scannable met medewerker email */}
+                  {/* Check-in-QR: zelfde formaat als de scanner in het klantportaal verwacht */}
                   <div className="w-20 h-20 bg-white p-1 rounded-lg mb-2">
                     <QRCode
-                      value={profile?.email || "medewerker@toptalent.nl"}
+                      value={profile?.id ? buildCheckinQr({ id: profile.id, naam: profile.naam }) : ""}
                       size={76}
                       level="M"
                       style={{ width: "100%", height: "100%" }}
@@ -193,14 +242,26 @@ export default function AccountClient() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toast.info("Foto wijzigen...");
+                  fotoInput.current?.click();
                 }}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-[var(--mp-accent)] flex items-center justify-center shadow-lg transition-transform active:scale-95 z-10"
+                disabled={fotoBezig}
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-[var(--mp-accent)] flex items-center justify-center shadow-lg transition-transform active:scale-95 z-10 disabled:opacity-60"
                 aria-label="Foto wijzigen"
               >
-                <Camera className="w-4 h-4" />
+                {fotoBezig ? (
+                  <div className="w-4 h-4 border-2 border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
               </button>
             )}
+            <input
+              ref={fotoInput}
+              type="file"
+              accept="image/jpeg,image/png"
+              className="hidden"
+              onChange={handleFotoGekozen}
+            />
           </div>
 
           {/* Name */}
@@ -213,16 +274,19 @@ export default function AccountClient() {
 
           {/* Stats */}
           <div className="flex gap-6">
-            <div className="text-center">
-              <div className="flex items-center gap-1 justify-center mb-1">
-                <Star className="w-4 h-4 fill-white text-white" />
-                <span className="text-lg font-bold text-white">
-                  {profile?.rating?.toFixed(1) || "5.0"}
-                </span>
-              </div>
-              <span className="text-white/70 text-xs">Rating</span>
-            </div>
-            <div className="w-px bg-white/20" />
+            {/* Alleen een echte beoordeling tonen; voorheen stond hier standaard "5.0". */}
+            {profile?.rating && profile.rating > 0 ? (
+              <>
+                <div className="text-center">
+                  <div className="flex items-center gap-1 justify-center mb-1">
+                    <Star className="w-4 h-4 fill-white text-white" />
+                    <span className="text-lg font-bold text-white">{profile.rating.toFixed(1)}</span>
+                  </div>
+                  <span className="text-white/70 text-xs">Beoordeling</span>
+                </div>
+                <div className="w-px bg-white/20" />
+              </>
+            ) : null}
             <div className="text-center">
               <div className="text-lg font-bold text-white mb-1">
                 {profile?.totaal_diensten || 0}

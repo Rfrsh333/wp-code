@@ -204,6 +204,31 @@ export default function MedewerkersTab() {
     await fetchMedewerkers();
   };
 
+  // B8: nieuwe activatielink (7 dagen geldig) zolang de medewerker nog geen wachtwoord heeft.
+  const stuurActivatiemailOpnieuw = async () => {
+    if (!editingMedewerker) return;
+    if (!confirm(`Nieuwe activatiemail sturen naar ${editingMedewerker.email}? De vorige link werkt dan niet meer.`)) return;
+
+    setIsSaving(true);
+    setFeedback(null);
+    try {
+      const headers = await getAuthHeader();
+      const response = await fetch("/api/admin/medewerkers/activatiemail", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ medewerker_id: editingMedewerker.id }),
+      });
+      const result = await response.json().catch(() => ({}));
+      setFeedback(
+        response.ok
+          ? `Nieuwe activatiemail verstuurd naar ${result.email || editingMedewerker.email} (7 dagen geldig).`
+          : result.error || "Activatiemail versturen mislukt.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const toggleFunctie = (functie: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -417,14 +442,26 @@ export default function MedewerkersTab() {
                           : "Deze medewerker heeft nog geen wachtwoord ingesteld."}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void generateTemporaryPassword()}
-                      disabled={isSaving}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                    >
-                      {isSaving ? "Bezig..." : editingMedewerker.heeft_wachtwoord ? "Reset tijdelijk wachtwoord" : "Maak tijdelijk wachtwoord"}
-                    </button>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {!editingMedewerker.heeft_wachtwoord && (
+                        <button
+                          type="button"
+                          onClick={() => void stuurActivatiemailOpnieuw()}
+                          disabled={isSaving}
+                          className="px-4 py-2 bg-white border border-blue-200 text-blue-700 rounded-xl hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                        >
+                          Activatiemail opnieuw sturen
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void generateTemporaryPassword()}
+                        disabled={isSaving}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                      >
+                        {isSaving ? "Bezig..." : editingMedewerker.heeft_wachtwoord ? "Reset tijdelijk wachtwoord" : "Maak tijdelijk wachtwoord"}
+                      </button>
+                    </div>
                   </div>
 
                   {temporaryPassword && (

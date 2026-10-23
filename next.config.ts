@@ -47,7 +47,7 @@ const securityHeaders = [
       "font-src 'self' data: https://fonts.gstatic.com",
       "frame-src https://www.google.com https://vercel.live",
       "worker-src 'self' blob:",
-      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co wss://*.supabase.co https://vercel.live https://*.clarity.ms https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.ingest.sentry.io",
+      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co wss://*.supabase.co https://vercel.live https://*.clarity.ms https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.ingest.sentry.io https://eu.i.posthog.com",
     ].join('; '),
   },
 ];
@@ -92,6 +92,19 @@ const nextConfig: NextConfig = {
         // Pas security headers toe op alle routes
         source: '/:path*',
         headers: securityHeaders,
+      },
+      {
+        // Universal links van de app (ios.associatedDomains); Apple leest dit bestand als JSON.
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
+      {
+        // De klant scant de QR-code van de medewerker bij check-in; camera alleen hier toestaan.
+        // Staat ná de globale regel zodat deze Permissions-Policy wint.
+        source: '/klant/:path*',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=()' },
+        ],
       },
       {
         // Cache statische images voor 1 jaar

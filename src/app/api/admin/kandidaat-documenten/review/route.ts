@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { naDocumentBeoordeling } from "@/lib/kandidaat-documentbeoordeling";
+import { naarAdminDocument, reviewNaarStatus, type KandidaatDocumentRij } from "@/lib/kandidaat-documenten";
 
 interface ReviewRequest {
   document_id: string;
@@ -41,15 +43,18 @@ export async function POST(request: NextRequest) {
     // Update document review status
     const { data: document, error } = await supabaseAdmin
       .from("kandidaat_documenten")
+      // Live tabel: status (ontvangen|goedgekeurd|afgekeurd) + notitie. De
+      // kolommen review_status/reviewed_by/review_notes bestaan niet; wie
+      // reviewde staat in de audit-log hieronder.
       .update({
-        review_status,
-        reviewed_by: email || "admin", // Store admin email instead of ID
+        status: reviewNaarStatus(review_status),
         reviewed_at: new Date().toISOString(),
-        review_notes: review_notes || null,
+        notitie: review_notes || null,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", document_id)
-      .select("*, inschrijving_id")
-      .single();
+      .select("id, inschrijving_id, type, bestandsnaam, bestand_pad, mime_type, bestand_grootte, status, notitie, reviewed_at, uploaded_at")
+      .single<KandidaatDocumentRij>();
 
     if (error || !document) {
       captureRouteError(error, { route: "/api/admin/kandidaat-documenten/review", action: "POST" });
@@ -57,40 +62,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Document niet gevonden" }, { status: 404 });
     }
 
-    // Check if all required documents are approved
-    const { data: inschrijving } = await supabaseAdmin
-      .from("inschrijvingen")
-      .select("uitbetalingswijze")
-      .eq("id", document.inschrijving_id)
-      .single();
-
-    if (inschrijving) {
-      const { data: allDocs } = await supabaseAdmin
-        .from("kandidaat_documenten")
-        .select("document_type, review_status")
-        .eq("inschrijving_id", document.inschrijving_id);
-
-      // Required docs: ID + CV (+ KVK for ZZP)
-      const requiredTypes = inschrijving.uitbetalingswijze === "zzp"
-        ? ["id", "cv", "kvk"]
-        : ["id", "cv"];
-
-      const allRequiredApproved = requiredTypes.every(type =>
-        allDocs?.some(doc => doc.document_type === type && doc.review_status === "approved")
-      );
-
-      // Auto-update kandidaat status if all docs approved
-      if (allRequiredApproved) {
-        await supabaseAdmin
-          .from("inschrijvingen")
-          .update({
-            onboarding_status: "goedgekeurd",
-            laatste_contact_op: new Date().toISOString(),
-          })
-          .eq("id", document.inschrijving_id);
-
-      }
-    }
+    // Zijn nu alle verplichte documenten goedgekeurd? Dan kandidaat naar "goedgekeurd" en de
+    // beloofde mail; zelfde regel als de PATCH op /api/admin/kandidaat-documenten (B16).
+    const beoordeling = await naDocumentBeoordeling(document.inschrijving_id);
 
     await logAuditEvent({
       actorEmail: email,
@@ -108,7 +82,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      document,
+      document: naarAdminDocument(document),
+      beoordeling,
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/admin/kandidaat-documenten/review", action: "POST" });

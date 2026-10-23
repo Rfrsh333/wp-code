@@ -3,6 +3,22 @@ import { verifyAdmin } from "@/lib/admin-auth";
 import { findMatchesForDienst, inviteMedewerkersForDienst } from "@/lib/matching";
 import { matchingPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { supabaseAdmin } from "@/lib/supabase";
+import { haalDemoIds } from "@/lib/demo";
+
+/**
+ * Demo-accounts (lib/demo.ts): bij een dienst van een echte klant nooit demo-medewerkers
+ * voorstellen of uitnodigen, bij een dienst van een demo-klant alleen demo-medewerkers.
+ * Gefilterd in de route (niet in lib/matching) om botsingen met PR #12 te voorkomen.
+ */
+async function wereldVanDienst(dienstId: string): Promise<{ demo: boolean; demoMedewerkers: ReadonlySet<string> }> {
+  const [ids, { data: dienst }] = await Promise.all([
+    haalDemoIds(),
+    supabaseAdmin.from("diensten").select("klant_id").eq("id", dienstId).maybeSingle(),
+  ]);
+  const klantId = (dienst as { klant_id?: string | null } | null)?.klant_id ?? null;
+  return { demo: !!klantId && ids.klanten.has(klantId), demoMedewerkers: ids.medewerkers };
+}
 
 export async function GET(request: NextRequest) {
   const { isAdmin, email } = await verifyAdmin(request);
@@ -17,8 +33,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await findMatchesForDienst(dienstId);
-    return NextResponse.json(result);
+    const [result, wereld] = await Promise.all([findMatchesForDienst(dienstId), wereldVanDienst(dienstId)]);
+    const matches = result.matches.filter((m) => wereld.demoMedewerkers.has(m.medewerker.id) === wereld.demo);
+    return NextResponse.json({ ...result, matches });
   } catch (error) {
     captureRouteError(error, { route: "/api/admin/matching", action: "GET" });
     // console.error("Matching error:", error);
@@ -44,7 +61,12 @@ export async function POST(request: NextRequest) {
     }
     const { dienst_id, medewerker_ids } = validation.data;
 
-    const result = await inviteMedewerkersForDienst(dienst_id, medewerker_ids);
+    const wereld = await wereldVanDienst(dienst_id);
+    const toegestaan = medewerker_ids.filter((id) => wereld.demoMedewerkers.has(id) === wereld.demo);
+    const result = await inviteMedewerkersForDienst(dienst_id, toegestaan);
+    if (toegestaan.length < medewerker_ids.length) {
+      result.errors.push(`${medewerker_ids.length - toegestaan.length} medewerker(s) overgeslagen: demo-accounts en echte diensten blijven gescheiden`);
+    }
     return NextResponse.json(result);
   } catch (error) {
     captureRouteError(error, { route: "/api/admin/matching", action: "POST" });

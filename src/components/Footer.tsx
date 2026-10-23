@@ -209,7 +209,7 @@ export default function Footer() {
                 <span>WAADI-geregistreerd</span>
               </p>
             </div>
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-sm">
               <Link href="/voorwaarden/" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Algemene voorwaarden
               </Link>
@@ -218,6 +218,9 @@ export default function Footer() {
               </Link>
               <Link href="/privacy/" className="text-neutral-400 hover:text-white transition-colors duration-300">
                 Privacy Policy
+              </Link>
+              <Link href="/account-verwijderen/" className="text-neutral-400 hover:text-white transition-colors duration-300">
+                Account verwijderen
               </Link>
             </div>
           </div>

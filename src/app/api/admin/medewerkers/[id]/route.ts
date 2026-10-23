@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { decryptField } from "@/lib/encryption";
+import { documentOpslagPad, MEDEWERKER_DOCUMENTEN_BUCKET } from "@/lib/medewerker/documenten";
+
+/** Signed URL's voor documenten (privé bucket) zijn 10 minuten geldig. */
+const DOCUMENT_URL_SECONDEN = 10 * 60;
 
 export async function GET(
   request: NextRequest,
@@ -125,11 +129,31 @@ export async function GET(
 
   const totalVerdiensten = financieel.reduce((sum, m) => sum + m.verdiensten, 0);
 
+  // De bucket is privé: file_url opent niets. Per document een kortlevende signed URL.
+  const documentRijen = (documentenRes.data ?? []) as Record<string, unknown>[];
+  const padPerDoc = documentRijen.map((d) =>
+    documentOpslagPad({ file_path: d.file_path as string | null, file_url: d.file_url as string | null }),
+  );
+  const paden = [...new Set(padPerDoc.filter((p): p is string => !!p))];
+  const urlPerPad = new Map<string, string>();
+  if (paden.length > 0) {
+    const { data: signed } = await supabaseAdmin.storage
+      .from(MEDEWERKER_DOCUMENTEN_BUCKET)
+      .createSignedUrls(paden, DOCUMENT_URL_SECONDEN);
+    for (const s of signed ?? []) {
+      if (s.path && s.signedUrl) urlPerPad.set(s.path, s.signedUrl);
+    }
+  }
+  const documenten = documentRijen.map((d, i) => ({
+    ...d,
+    signed_url: padPerDoc[i] ? (urlPerPad.get(padPerDoc[i]!) ?? null) : null,
+  }));
+
   return NextResponse.json({
     profiel,
     werkervaring: werkervaringRes.data || [],
     vaardigheden: vaardighedenRes.data || [],
-    documenten: documentenRes.data || [],
+    documenten,
     diensten: dienstenRes.data || [],
     financieel,
     beoordelingen: beoordelingenRes.data || [],
@@ -139,5 +163,5 @@ export async function GET(
       totaal_verdiensten: totalVerdiensten,
       totaal_diensten: totalAanmeldingen,
     },
-  });
+  }, { headers: { "Cache-Control": "private, no-store" } });
 }

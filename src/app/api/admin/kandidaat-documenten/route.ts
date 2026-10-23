@@ -3,6 +3,13 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { kandidaatDocumentenPatchSchema, validateAdminBody } from "@/lib/validations-admin";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { naDocumentBeoordeling } from "@/lib/kandidaat-documentbeoordeling";
+import {
+  KANDIDAAT_DOCUMENT_KOLOMMEN,
+  isKandidaatDocumentType,
+  naarAdminDocument,
+  type KandidaatDocumentRij,
+} from "@/lib/kandidaat-documenten";
 
 const DOCUMENT_BUCKET = process.env.SUPABASE_DOCUMENTS_BUCKET || "kandidaat-documenten";
 
@@ -24,12 +31,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "inschrijvingId is verplicht" }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("kandidaat_documenten")
-    .select("id, inschrijving_id, type, bestandsnaam, bestand_pad, file_path, mime_type, bestand_grootte, status, notitie, reviewed_at, uploaded_at")
-    .eq("inschrijving_id", inschrijvingId)
-    .order("uploaded_at", { ascending: false })
-    .limit(100);
+  const lijst = (kolommen: string) =>
+    supabaseAdmin
+      .from("kandidaat_documenten")
+      // `file_path` bestaat niet in de live tabel; selecteren gaf een fout en
+      // daardoor een lege documentenlijst in de admin.
+      .select(kolommen)
+      .eq("inschrijving_id", inschrijvingId)
+      .order("uploaded_at", { ascending: false })
+      .limit(100);
+  // Vervaldatum bestaat pas na migratie 20261023_medewerker_checklist_reageren.
+  let { data, error } = await lijst(`${KANDIDAAT_DOCUMENT_KOLOMMEN}, vervaldatum`);
+  if (error?.code === "42703") ({ data, error } = await lijst(KANDIDAAT_DOCUMENT_KOLOMMEN));
 
   if (error) {
     captureRouteError(error, { route: "/api/admin/kandidaat-documenten", action: "GET" });
@@ -39,16 +52,14 @@ export async function GET(request: NextRequest) {
 
   // Generate signed URLs for all documents
   const enrichedDocuments = await Promise.all(
-    (data || []).map(async (document) => {
-      // Support both old and new column names during migration
-      const filePath = document.file_path || document.bestand_pad;
-
+    ((data || []) as unknown as KandidaatDocumentRij[]).map(async (document) => {
       const { data: signedData } = await supabaseAdmin.storage
         .from(DOCUMENT_BUCKET)
-        .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+        .createSignedUrl(document.bestand_pad, 60 * 60); // 1 hour expiry
 
+      // Live kolommen (AdminDashboard) + oude aliasnamen (KandidaatDocumentenModal)
       return {
-        ...document,
+        ...naarAdminDocument(document),
         download_url: signedData?.signedUrl || null,
       };
     })
@@ -72,6 +83,9 @@ export async function POST(request: NextRequest) {
 
   if (!inschrijvingId || !type || !(file instanceof File)) {
     return NextResponse.json({ error: "inschrijvingId, type en file zijn verplicht" }, { status: 400 });
+  }
+  if (!isKandidaatDocumentType(type)) {
+    return NextResponse.json({ error: "Onbekend documenttype" }, { status: 400 });
   }
 
   const safeFilename = sanitizeFilename(file.name);
@@ -135,27 +149,56 @@ export async function PATCH(request: NextRequest) {
   if (!validation.success) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
-  const { id, status, notitie } = validation.data;
+  const { id, status, notitie, type, vervaldatum } = validation.data;
 
-  const updateData: Record<string, string | null> = {
-    notitie: typeof notitie === "string" ? notitie : null,
-  };
+  // Alleen meegestuurde velden bijwerken: voorheen wiste elke PATCH zonder notitie de notitie.
+  const updateData: Record<string, string | null> = {};
+  if (notitie !== undefined) updateData.notitie = typeof notitie === "string" ? notitie : null;
+
+  if (type !== undefined) {
+    if (!isKandidaatDocumentType(type)) {
+      return NextResponse.json({ error: "Onbekend documenttype" }, { status: 400 });
+    }
+    updateData.type = type;
+  }
 
   if (status) {
     updateData.status = status;
     updateData.reviewed_at = new Date().toISOString();
   }
 
-  const { error } = await supabaseAdmin
+  // Vervaldatum (vooral ID): gaat bij kandidaat → medewerker mee naar medewerker_documenten.
+  if (vervaldatum !== undefined) updateData.vervaldatum = vervaldatum || null;
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: "Niets om bij te werken" }, { status: 400 });
+  }
+
+  const { data: bijgewerkt, error } = await supabaseAdmin
     .from("kandidaat_documenten")
     .update(updateData)
-    .eq("id", id);
+    .eq("id", id)
+    .select("inschrijving_id")
+    .maybeSingle();
 
+  if (error && vervaldatum !== undefined && (error.code === "42703" || error.code === "PGRST204")) {
+    return NextResponse.json(
+      { error: "Vervaldatum opslaan kan pas na migratie 20261023_medewerker_checklist_reageren." },
+      { status: 409 },
+    );
+  }
   if (error) {
     captureRouteError(error, { route: "/api/admin/kandidaat-documenten", action: "PATCH" });
     // console.error("Document update mislukt:", error);
     return NextResponse.json({ error: "Document kon niet worden bijgewerkt" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  // B16: na een beoordeling (of typecorrectie) kijken of nu alles is goedgekeurd; zo ja,
+  // kandidaat naar "goedgekeurd" en de beloofde mail.
+  const beoordeling =
+    bijgewerkt?.inschrijving_id && (status || type)
+      ? await naDocumentBeoordeling(bijgewerkt.inschrijving_id as string)
+      : null;
+
+  return NextResponse.json({ success: true, beoordeling });
 }

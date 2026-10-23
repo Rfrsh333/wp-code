@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     supabaseAdmin
       .from("kandidaat_documenten")
       .select("id", { count: "exact", head: true })
-      .eq("review_status", "in_review"),
+      .eq("status", "ontvangen"),
     supabaseAdmin
       .from("email_log")
       .select("id", { count: "exact", head: true })

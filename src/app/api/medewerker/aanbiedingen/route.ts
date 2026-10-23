@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
+import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { sendShiftReactieEmail } from "@/lib/notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
+import { isAanbiedingVerlopen } from "@/lib/medewerker/dienst-regels";
+import { isDemoMedewerker } from "@/lib/demo";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    console.warn("[SECURITY] Invalid medewerker session token");
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const { data } = await supabaseAdmin
     .from("dienst_aanbiedingen")
@@ -23,19 +19,18 @@ export async function GET() {
     .order("aangeboden_at", { ascending: false })
     .limit(100);
 
-  return NextResponse.json({ aanbiedingen: data || [] });
+  // Een aanbieding is 48 uur geldig (verlopen_at). Een verlopen, onbeantwoorde aanbieding
+  // tonen we als "verlopen", zodat er geen Accepteren-knop meer bij staat.
+  const aanbiedingen = (data || []).map((a) =>
+    a.status === "aangeboden" && isAanbiedingVerlopen(a.verlopen_at) ? { ...a, status: "verlopen" } : a,
+  );
+
+  return NextResponse.json({ aanbiedingen });
 }
 
 export async function PATCH(request: NextRequest) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("medewerker_session");
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { verifyMedewerkerSession } = await import("@/lib/session");
-  const medewerker = await verifyMedewerkerSession(session.value);
-  if (!medewerker) {
-    return NextResponse.json({ error: "Unauthorized - Invalid session" }, { status: 401 });
-  }
+  const medewerker = await getMedewerkerSession(request);
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const { id, status } = await request.json();
 
@@ -46,10 +41,10 @@ export async function PATCH(request: NextRequest) {
   // Verify ownership
   const { data: aanbieding } = await supabaseAdmin
     .from("dienst_aanbiedingen")
-    .select("id, dienst_id, status")
+    .select("id, dienst_id, status, verlopen_at")
     .eq("id", id)
     .eq("medewerker_id", medewerker.id)
-    .single();
+    .maybeSingle();
 
   if (!aanbieding) {
     return NextResponse.json({ error: "Aanbieding niet gevonden" }, { status: 404 });
@@ -59,18 +54,29 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Deze aanbieding is al beantwoord" }, { status: 400 });
   }
 
-  await supabaseAdmin
+  // Afwijzen mag altijd; accepteren alleen binnen de 48 uur van de aanbieding.
+  if (status === "geaccepteerd" && isAanbiedingVerlopen(aanbieding.verlopen_at)) {
+    return NextResponse.json({ error: "Deze aanbieding is verlopen. Kijk bij de open diensten of hij er nog bij staat." }, { status: 410 });
+  }
+
+  // Accepteren = direct ingepland. Eerst de aanmelding (capaciteit, dubbele aanmelding, verlopen
+  // documenten); pas als die lukt de aanbieding op geaccepteerd. Voorheen werd de insert-fout
+  // genegeerd en kon een volle dienst overboekt raken.
+  if (status === "geaccepteerd") {
+    const resultaat = await meldAan(medewerker.id, aanbieding.dienst_id, "geaccepteerd");
+    if (!resultaat.ok) {
+      return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
+    }
+  }
+
+  const { error: updateFout } = await supabaseAdmin
     .from("dienst_aanbiedingen")
     .update({ status, reactie_at: new Date().toISOString() })
-    .eq("id", id);
-
-  // If accepted, also create a dienst_aanmelding
-  if (status === "geaccepteerd") {
-    await supabaseAdmin.from("dienst_aanmeldingen").insert({
-      dienst_id: aanbieding.dienst_id,
-      medewerker_id: medewerker.id,
-      status: "geaccepteerd",
-    });
+    .eq("id", id)
+    .eq("status", "aangeboden");
+  if (updateFout) {
+    captureRouteError(updateFout, { route: "/api/medewerker/aanbiedingen", action: "PATCH" });
+    return NextResponse.json({ error: "Reageren mislukt" }, { status: 500 });
   }
 
   // Notify admin about response
@@ -81,7 +87,8 @@ export async function PATCH(request: NextRequest) {
       .eq("id", aanbieding.dienst_id)
       .single();
 
-    if (dienst) {
+    // Geen mail naar TopTalent voor reacties van demo-accounts (lib/demo.ts).
+    if (dienst && !(await isDemoMedewerker(medewerker.id))) {
       await sendShiftReactieEmail({
         medewerkerNaam: medewerker.naam,
         functie: dienst.functie,

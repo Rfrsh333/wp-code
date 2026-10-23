@@ -11,11 +11,12 @@ interface KandidaatDocument {
   file_size: number;
   mime_type: string;
   review_status: "in_review" | "approved" | "rejected";
-  reviewed_by: string | null;
+  // Bestaan niet in de live tabel (zie lib/kandidaat-documenten); blijven leeg.
+  reviewed_by?: string | null;
   reviewed_at: string | null;
   review_notes: string | null;
-  document_expires_at: string | null;
-  expiry_reminder_sent_at: string | null;
+  document_expires_at?: string | null;
+  expiry_reminder_sent_at?: string | null;
   uploaded_at: string;
   download_url?: string;
 }
@@ -315,7 +316,7 @@ export default function KandidaatDocumentenModal({
 
                         {/* Expiry Warning */}
                         {(() => {
-                          const warning = getExpiryWarning(doc.document_expires_at);
+                          const warning = getExpiryWarning(doc.document_expires_at ?? null);
                           if (!warning) return null;
 
                           return (

@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { cookies } from "next/headers";
-import { verifyKlantSession } from "@/lib/session";
+import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { isDemoKlant } from "@/lib/demo";
 
-async function getKlant() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("klant_session");
-  if (!session) return null;
-  return await verifyKlantSession(session.value);
-}
-
-export async function GET() {
-  const klant = await getKlant();
+export async function GET(request: NextRequest) {
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Get last 50 berichten
@@ -49,7 +42,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const klant = await getKlant();
+  const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { bericht } = await request.json();
@@ -67,8 +60,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Bericht versturen mislukt" }, { status: 500 });
   }
 
-  // Telegram notification (geen PII — AVG compliance)
-  await sendTelegramAlert(
+  // Telegram notification (geen PII — AVG compliance); niet voor demo-accounts (lib/demo.ts).
+  if (!(await isDemoKlant(klant.id))) await sendTelegramAlert(
     `<b>Nieuw bericht van klant</b>\n` +
     `Nieuw bericht van klant — bekijk in dashboard`
   );

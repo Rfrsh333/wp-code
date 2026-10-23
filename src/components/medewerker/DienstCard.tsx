@@ -2,7 +2,7 @@
 
 import { MapPin, Clock, Euro, Calendar, Check, X, Briefcase, FileText, Car } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface DienstCardProps {
@@ -23,16 +23,19 @@ interface DienstCardProps {
       bedrijf_foto_url?: string;
     };
   };
-  type: "aangeboden" | "gepland" | "voltooid";
+  type: "aangeboden" | "aangemeld" | "gepland" | "voltooid";
   onRefresh?: () => void;
 }
 
 export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps) {
   const [accepting, setAccepting] = useState(false);
   const [declining, setDeclining] = useState(false);
+  const verzoekLoopt = useRef(false);
   const [showDetail, setShowDetail] = useState(false);
   const [showUrenForm, setShowUrenForm] = useState(false);
   const [submittingUren, setSubmittingUren] = useState(false);
+  const [annuleren, setAnnuleren] = useState(false);
+  const [intrekken, setIntrekken] = useState(false);
 
   // Uren form state
   const [urenStart, setUrenStart] = useState(dienst.start_tijd?.slice(0, 5) || "");
@@ -83,6 +86,9 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   const verdiensten = parseFloat(uren) * medewerkerUurtarief;
 
   const handleAccept = async () => {
+    // Ref-guard: een dubbelklik komt vóór de re-render (disabled) binnen.
+    if (verzoekLoopt.current) return;
+    verzoekLoopt.current = true;
     setAccepting(true);
     try {
       const res = await fetch("/api/medewerker/diensten/accept", {
@@ -103,11 +109,14 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
       console.error("Accept error:", err);
       toast.error("Er ging iets mis");
     } finally {
+      verzoekLoopt.current = false;
       setAccepting(false);
     }
   };
 
   const handleDecline = async () => {
+    if (verzoekLoopt.current) return;
+    verzoekLoopt.current = true;
     setDeclining(true);
     try {
       const res = await fetch("/api/medewerker/diensten/decline", {
@@ -128,7 +137,79 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
       console.error("Decline error:", err);
       toast.error("Er ging iets mis");
     } finally {
+      verzoekLoopt.current = false;
       setDeclining(false);
+    }
+  };
+
+  // Annuleren van een ingeplande dienst: > 48 uur vooraf direct, daarbinnen zoekt het systeem
+  // een vervanger (de plek komt vrij en jij keurt een vervanger goed). Regels staan server-side.
+  const handleAnnuleren = async () => {
+    if (!dienst.aanmelding_id) {
+      toast.error("Aanmelding ID ontbreekt");
+      return;
+    }
+    const bevestigd = window.confirm(
+      "Weet je zeker dat je deze dienst wilt annuleren?\n\n" +
+        "Meer dan 48 uur van tevoren wordt de dienst direct geannuleerd. " +
+        "Binnen 48 uur blijf je ingeschreven tot je een vervanger hebt goedgekeurd.",
+    );
+    if (!bevestigd) return;
+
+    setAnnuleren(true);
+    try {
+      const res = await fetch("/api/medewerker/diensten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "afmelden", aanmelding_id: dienst.aanmelding_id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Annuleren mislukt");
+        return;
+      }
+      toast.success(
+        data.uitkomst === "vervanging_gezocht"
+          ? "We zoeken een vervanger. Keur een vervanger goed bij Mijn diensten."
+          : "Dienst geannuleerd",
+      );
+      setShowDetail(false);
+      onRefresh?.();
+    } catch (err) {
+      console.error("Annuleren error:", err);
+      toast.error("Er ging iets mis");
+    } finally {
+      setAnnuleren(false);
+    }
+  };
+
+  // B9: openstaande aanmelding (de opdrachtgever kiest nog) intrekken, zoals in de app.
+  const handleIntrekken = async () => {
+    if (!dienst.aanmelding_id) {
+      toast.error("Aanmelding ID ontbreekt");
+      return;
+    }
+    if (!window.confirm("Aanmelding intrekken? Je staat dan niet meer op de lijst voor deze dienst.")) return;
+
+    setIntrekken(true);
+    try {
+      const res = await fetch("/api/medewerker/diensten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "afmelden", aanmelding_id: dienst.aanmelding_id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Intrekken mislukt");
+        return;
+      }
+      toast.success("Aanmelding ingetrokken");
+      onRefresh?.();
+    } catch (err) {
+      console.error("Intrekken error:", err);
+      toast.error("Er ging iets mis");
+    } finally {
+      setIntrekken(false);
     }
   };
 
@@ -202,6 +283,11 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
           )}
 
           {/* Status badge */}
+          {type === "aangemeld" && (
+            <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-amber-500 text-white text-[11px] font-semibold shadow-lg">
+              Wacht op opdrachtgever
+            </div>
+          )}
           {type === "voltooid" && (
             <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-[var(--mp-success)] text-white text-[11px] font-semibold shadow-lg flex items-center gap-1">
               <Check className="w-3 h-3" />
@@ -261,7 +347,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
             <div className="flex gap-2">
               <button
                 onClick={handleDecline}
-                disabled={declining}
+                disabled={declining || accepting}
                 className="flex-1 py-2.5 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {declining ? (
@@ -275,7 +361,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
               </button>
               <button
                 onClick={handleAccept}
-                disabled={accepting}
+                disabled={accepting || declining}
                 className="flex-1 py-2.5 rounded-xl bg-[var(--mp-accent)] text-white font-semibold text-xs transition-all active:scale-[0.98] hover:bg-[var(--mp-accent-dark)] disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {accepting ? (
@@ -288,6 +374,16 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
                 )}
               </button>
             </div>
+          )}
+
+          {type === "aangemeld" && (
+            <button
+              onClick={handleIntrekken}
+              disabled={intrekken}
+              className="w-full py-2.5 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              {intrekken ? "Bezig..." : "Aanmelding intrekken"}
+            </button>
           )}
 
           {type === "gepland" && (
@@ -485,14 +581,23 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
                 </div>
               )}
 
-              {/* Sluiten knop voor gepland */}
+              {/* Annuleren + sluiten voor gepland */}
               {type === "gepland" && (
-                <button
-                  onClick={() => setShowDetail(false)}
-                  className="w-full py-3 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-sm transition-all active:scale-[0.98]"
-                >
-                  Sluiten
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleAnnuleren}
+                    disabled={annuleren}
+                    className="w-full py-3 rounded-xl border border-[var(--mp-danger)] text-[var(--mp-danger)] font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {annuleren ? "Bezig..." : "Dienst annuleren"}
+                  </button>
+                  <button
+                    onClick={() => setShowDetail(false)}
+                    className="w-full py-3 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-sm transition-all active:scale-[0.98]"
+                  >
+                    Sluiten
+                  </button>
+                </div>
               )}
             </div>
           </div>

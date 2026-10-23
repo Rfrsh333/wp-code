@@ -1,5 +1,11 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { valideerLeeftijdVoorDienst, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
+import { normaliseerBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
+import { beschikbaarheidPerMedewerker } from "@/lib/medewerker/beschikbaarheid-bron";
+import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
+import { haalChecklist } from "@/lib/medewerker/checklist";
+import { inzetbaarheidsMelding } from "@/lib/medewerker/dienst-regels";
+import { nlVandaag } from "@/lib/nl-tijd";
 
 interface Medewerker {
   id: string;
@@ -18,7 +24,7 @@ interface Medewerker {
 }
 
 interface Beschikbaarheid {
-  email: string;
+  email?: string;
   beschikbaarheid: Record<string, string[]> | string | null;
   beschikbaar_vanaf: string | null;
   max_uren_per_week: number | null;
@@ -93,13 +99,15 @@ function calculateMatchScore(
 
   // 2. Beschikbaarheid (30%)
   let isBeschikbaar = true;
-  if (beschikbaarheid?.beschikbaarheid && typeof beschikbaarheid.beschikbaarheid === "object") {
+  // Dagnotatie: korte sleutels (ma…zo). Oudere portaaldata met "Maandag"… wordt bij lezen omgezet.
+  const weekBeschikbaarheid = normaliseerBeschikbaarheid(beschikbaarheid?.beschikbaarheid);
+  if (weekBeschikbaarheid) {
     const dienstDatum = new Date(dienst.datum);
-    const dagNaam = dagNamen[dienstDatum.getDay()];
+    const dagNaam = dagNamen[dienstDatum.getDay()] as keyof typeof weekBeschikbaarheid;
     const tijdslot = getTijdslot(dienst.start_tijd);
-    const dagBeschikbaarheid = beschikbaarheid.beschikbaarheid[dagNaam];
+    const dagBeschikbaarheid = weekBeschikbaarheid[dagNaam];
 
-    if (dagBeschikbaarheid && Array.isArray(dagBeschikbaarheid)) {
+    if (dagBeschikbaarheid && dagBeschikbaarheid.length > 0) {
       if (dagBeschikbaarheid.includes(tijdslot) || dagBeschikbaarheid.includes("hele_dag")) {
         breakdown.beschikbaarheid_score = 30;
       } else {
@@ -212,16 +220,9 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
     return { dienst, matches: [] };
   }
 
-  // Haal beschikbaarheid op voor alle medewerkers
-  const emails = medewerkers.map((m) => m.email);
-  const { data: beschikbaarheidData } = await supabaseAdmin
-    .from("inschrijvingen")
-    .select("email, beschikbaarheid, beschikbaar_vanaf, max_uren_per_week")
-    .in("email", emails);
-
-  const beschikbaarheidMap = new Map(
-    (beschikbaarheidData || []).map((b) => [b.email, b as Beschikbaarheid])
-  );
+  // Haal beschikbaarheid op voor alle medewerkers: inschrijving (e-mail of medewerker_id),
+  // anders het rooster op de medewerker zelf (medewerkers zonder inschrijving).
+  const beschikbaarheidMap = await beschikbaarheidPerMedewerker(medewerkers);
 
   // Haal bestaande aanmeldingen op voor deze dienst
   const { data: bestaandeAanmeldingen } = await supabaseAdmin
@@ -232,29 +233,36 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
 
   const alAangemeldIds = new Set((bestaandeAanmeldingen || []).map((a) => a.medewerker_id));
 
-  // C-23: Haal verlopen ID-bewijzen, werkvergunningen en verblijfsvergunningen op voor blokkering
-  const today = new Date().toISOString().split("T")[0];
-  const { data: verlopenDocs } = await supabaseAdmin
-    .from("medewerker_documenten")
-    .select("medewerker_id, expiry_date")
-    .in("document_type", ["id_bewijs", "werkvergunning", "verblijfsvergunning"])
-    .lt("expiry_date", today);
-
-  const verlopenIDSet = new Set((verlopenDocs || []).map((d) => d.medewerker_id));
-
-  // Check werkvergunning_geldig_tot op medewerker-niveau
-  const { data: verlopenWerkvergunning } = await supabaseAdmin
-    .from("medewerkers")
-    .select("id")
-    .lt("werkvergunning_geldig_tot", today)
-    .not("werkvergunning_geldig_tot", "is", null);
-
-  for (const mw of verlopenWerkvergunning || []) {
-    verlopenIDSet.add(mw.id);
-  }
+  // C-23 / B10: verlopen ID-bewijs, werkvergunning of verblijfsvergunning blokkeert. Zelfde regel
+  // als meldAan (inzetbaarheidsMelding): per type alleen het nieuwste goedgekeurde document.
+  // Voorheen telde hier elke verlopen versie, ook als er al een nieuw, geldig document was.
+  const today = nlVandaag();
+  const medewerkerIds = medewerkers.map((m) => m.id);
+  const [kritiekeDocumenten, { data: werkvergunningen }] = await Promise.all([
+    haalKritiekeDocumenten(medewerkerIds),
+    supabaseAdmin
+      .from("medewerkers")
+      .select("id, werkvergunning_geldig_tot")
+      .not("werkvergunning_geldig_tot", "is", null),
+  ]);
+  const werkvergunningPerId = new Map(
+    ((werkvergunningen ?? []) as { id: string; werkvergunning_geldig_tot: string | null }[]).map((w) => [
+      w.id,
+      w.werkvergunning_geldig_tot,
+    ]),
+  );
+  const verlopenIDSet = new Set(
+    medewerkerIds.filter(
+      (id) =>
+        inzetbaarheidsMelding({
+          vandaag: today,
+          documenten: kritiekeDocumenten.get(id) ?? [],
+          werkvergunningGeldigTot: werkvergunningPerId.get(id) ?? null,
+        }) !== null,
+    ),
+  );
 
   // C-13: Haal geldige VSH-certificeringen op
-  const medewerkerIds = medewerkers.map((m) => m.id);
   const { data: vshCerts } = await supabaseAdmin
     .from("certificeringen")
     .select("medewerker_id")
@@ -268,7 +276,7 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
   const matches = medewerkers
     .filter((m) => !alAangemeldIds.has(m.id))
     .filter((m) => !verlopenIDSet.has(m.id))
-    .map((m) => calculateMatchScore(m, dienst, beschikbaarheidMap.get(m.email) || null, vshSet.has(m.id)))
+    .map((m) => calculateMatchScore(m, dienst, (beschikbaarheidMap.get(m.id) as Beschikbaarheid | undefined) || null, vshSet.has(m.id)))
     .filter((m) => m.score > 0)
     .sort((a, b) => {
       // Beschikbare medewerkers eerst, dan op score
@@ -290,6 +298,22 @@ export async function inviteMedewerkersForDienst(
   let success = 0;
 
   for (const medewerkerId of medewerkerIds) {
+    // B1: een uitnodiging vanuit de matching zet direct een aanmelding neer; die mag de checklist
+    // (ID, KvK, btw, IBAN, akkoord overeenkomst) niet omzeilen.
+    let checklist: Awaited<ReturnType<typeof haalChecklist>>;
+    try {
+      checklist = await haalChecklist(medewerkerId);
+    } catch (fout) {
+      errors.push(`Medewerker ${medewerkerId} niet uitgenodigd: checklist kon niet worden gecontroleerd (${fout instanceof Error ? fout.message : "onbekende fout"})`);
+      continue;
+    }
+    if (!checklist.compleet) {
+      errors.push(
+        `Medewerker ${medewerkerId} niet uitgenodigd: checklist onvolledig (${checklist.ontbrekend.map((p) => p.label).join(", ")})`,
+      );
+      continue;
+    }
+
     const { error } = await supabaseAdmin.from("dienst_aanmeldingen").insert({
       dienst_id: dienstId,
       medewerker_id: medewerkerId,

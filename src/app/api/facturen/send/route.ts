@@ -5,6 +5,9 @@ import { signFactuurToken } from "@/lib/session";
 import { getFactuurConfig } from "@/lib/factuur-config";
 import { sendEmail } from "@/lib/email-service";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { escapeHtml } from "@/lib/sanitize";
+import { notifyKlantNieuweFactuur } from "@/lib/klant-push-triggers";
+import { factuurKlantNaw, factuurOntvanger } from "@/lib/factuur-klant-snapshot";
 
 export async function POST(request: NextRequest) {
   // KRITIEK: Dit endpoint was publiek toegankelijk - alleen admins mogen facturen verzenden
@@ -36,7 +39,9 @@ export async function POST(request: NextRequest) {
     // Genereer een signed token voor veilige PDF toegang (geldig 30 dagen)
     const pdfToken = await signFactuurToken(factuur_id, factuur.klant_id);
     const pdfUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl"}/api/facturen/${factuur_id}/pdf?token=${pdfToken}`;
-    const recipient = email || factuur.klant?.email;
+    // NAW zoals vastgelegd bij het factureren (per veld terugvallen op de live klant).
+    const naw = factuurKlantNaw(factuur, factuur.klant);
+    const recipient = email || factuurOntvanger(factuur, factuur.klant);
 
     if (!recipient) {
       return NextResponse.json({ error: "Geen e-mailadres beschikbaar voor deze klant" }, { status: 400 });
@@ -53,7 +58,7 @@ export async function POST(request: NextRequest) {
           </div>
           <div style="padding: 30px; background: #f9fafb;">
             <p style="color: #374151; font-size: 16px;">
-              Beste ${factuur.klant?.contactpersoon || "klant"},
+              Beste ${escapeHtml(naw.contactpersoon && naw.contactpersoon !== "Verwijderd" ? naw.contactpersoon : "klant")},
             </p>
             <p style="color: #374151; font-size: 16px;">
               Hierbij ontvangt u factuur <strong>${factuur.factuur_nummer}</strong> voor de geleverde diensten.
@@ -87,6 +92,11 @@ export async function POST(request: NextRequest) {
       .from("facturen")
       .update({ status: "verzonden", verzonden_at: new Date().toISOString() })
       .eq("id", factuur_id);
+
+    // Push naar app/PWA van de klant; een mislukte push mag het verzenden niet laten falen.
+    await notifyKlantNieuweFactuur(factuur.klant_id, factuur.totaal, factuur.factuur_nummer).catch((err) =>
+      captureRouteError(err, { route: "/api/facturen/send", action: "push" }),
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

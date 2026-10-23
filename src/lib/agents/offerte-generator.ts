@@ -1,4 +1,5 @@
 import { chatCompletion, isOpenAIConfigured, type ChatMessage } from "@/lib/openai";
+import { offerteTarief } from "@/lib/pricing/richtlijntarieven";
 
 export type OfferteAutoMode = "send" | "concept" | "off";
 
@@ -8,14 +9,9 @@ export function getOfferteAutoMode(): OfferteAutoMode {
   return "concept";
 }
 
-const TARIEFKAART: Record<string, { basis: number; weekend: number; feestdag: number }> = {
-  bediening: { basis: 14.50, weekend: 16.00, feestdag: 18.50 },
-  bar: { basis: 15.00, weekend: 17.00, feestdag: 19.50 },
-  keuken: { basis: 16.00, weekend: 18.00, feestdag: 20.50 },
-  afwas: { basis: 13.00, weekend: 14.50, feestdag: 16.50 },
-  gastheer: { basis: 15.50, weekend: 17.50, feestdag: 20.00 },
-  runner: { basis: 13.50, weekend: 15.00, feestdag: 17.00 },
-};
+// Tarieven komen uit de ene bron van richtlijntarieven (lib/pricing/richtlijntarieven.ts), dezelfde
+// als het portaal en de PDF-offerte. Voorheen stond hier een eigen kaart (bediening € 14,50),
+// terwijl de PDF € 27,00 noemde en het portaal minimaal € 25 vroeg.
 
 interface AanvraagInput {
   bedrijfsnaam: string;
@@ -57,17 +53,12 @@ export async function generateOfferteVoorstel(input: AanvraagInput): Promise<Off
   const aantal = Number.isNaN(parsed) || parsed < 1 ? 1 : Math.min(parsed, 100);
 
   // Bereken tarieven per functie
-  const tarieven = input.typePersoneel.map(functie => {
-    const f = functie.toLowerCase();
-    const tarief = TARIEFKAART[f] || TARIEFKAART.bediening;
-    return {
-      functie,
-      uurtarief: tarief.basis,
-      weekend_tarief: tarief.weekend,
-      feestdag_tarief: tarief.feestdag,
-      aantal,
-    };
-  });
+  const contract = input.contractType[0];
+  const tarieven = input.typePersoneel.map(functie => ({
+    functie,
+    ...offerteTarief(functie, contract),
+    aantal,
+  }));
 
   // Volume korting
   let korting_percentage = 0;
@@ -101,6 +92,7 @@ export async function generateOfferteVoorstel(input: AanvraagInput): Promise<Off
       role: "system",
       content: `Je bent een sales specialist voor TopTalent Jobs, een horeca uitzendbureau.
 Genereer een professioneel en persoonlijk offerte voorstel.
+Noem geen bedragen of tarieven: die staan al in de offerte zelf.
 
 Antwoord ALLEEN met valid JSON:
 {

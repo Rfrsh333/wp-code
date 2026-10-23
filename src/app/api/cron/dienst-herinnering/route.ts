@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { withCronMonitor } from "@/lib/sentry-utils";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { isDemoAdres } from "@/lib/demo";
 
 type EmailResult = {
   medewerker: string;
@@ -25,14 +27,15 @@ export async function GET(request: NextRequest) {
   morgen.setDate(morgen.getDate() + 1);
   const morgenStr = morgen.toISOString().split("T")[0];
 
-  // Haal geaccepteerde aanmeldingen op voor morgen
+  // Ingeplande aanmeldingen voor morgen (geaccepteerd én bevestigd; alleen geaccepteerd sloeg
+  // uitnodigingen en door admin ingeplande diensten over)
   const { data } = await supabaseAdmin
     .from("dienst_aanmeldingen")
     .select(`
       medewerker:medewerkers(naam, email),
       dienst:diensten!inner(klant_naam, locatie, datum, start_tijd, eind_tijd)
     `)
-    .eq("status", "geaccepteerd")
+    .in("status", [...INGEPLAND_STATUSSEN])
     .eq("dienst.datum", morgenStr);
 
   const results: EmailResult[] = [];
@@ -41,6 +44,7 @@ export async function GET(request: NextRequest) {
     const m = (aanmelding as unknown as { medewerker: Medewerker }).medewerker;
     const d = (aanmelding as unknown as { dienst: Dienst }).dienst;
     if (!m?.email || !d) continue;
+    if (await isDemoAdres(m.email)) continue; // demo-accounts (reviewers) krijgen geen herinneringen
 
     try {
       await sendEmail({

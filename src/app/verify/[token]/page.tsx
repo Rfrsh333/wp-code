@@ -25,9 +25,13 @@ interface VerifyData {
 }
 
 async function fetchVerification(token: string): Promise<VerifyData | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
+  // Publieke site-URL gebruiken. De oude expressie `A || B ? x : y` las als
+  // `(A || B) ? https://VERCEL_URL : localhost`, dus ging altijd naar de
+  // deployment-URL — en die staat achter Vercel Deployment Protection.
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://www.toptalentjobs.nl");
 
   try {
     const res = await fetch(`${baseUrl}/api/verify/${token}`, {

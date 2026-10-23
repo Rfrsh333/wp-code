@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Calendar, Check, Clock, WifiOff } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Calendar, Check, Clock, Send, WifiOff } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import DienstCard from "@/components/medewerker/DienstCard";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
-type SubTab = "aangeboden" | "gepland" | "voltooid";
+type SubTab = "aangeboden" | "aangemeld" | "gepland" | "voltooid";
 
 interface Dienst {
   id: string;
@@ -35,6 +35,7 @@ interface VervangingVerzoek {
   naam: string;
   functie: string | string[];
   profile_photo_url: string | null;
+  dienst?: { datum: string; start_tijd: string; locatie: string; klant_naam: string } | null;
 }
 
 export default function MijnDienstenClient() {
@@ -44,6 +45,8 @@ export default function MijnDienstenClient() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [isCachedData, setIsCachedData] = useState(false);
+  const [aantalAanbiedingen, setAantalAanbiedingen] = useState(0);
+  const onAantalAanbiedingen = useCallback((n: number) => setAantalAanbiedingen(n), []);
 
   // Luister naar online/offline events
   useEffect(() => {
@@ -141,7 +144,8 @@ export default function MijnDienstenClient() {
       });
 
       if (!res.ok) {
-        toast.error("Afwijzen mislukt");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Afwijzen mislukt");
         return;
       }
 
@@ -155,6 +159,8 @@ export default function MijnDienstenClient() {
 
   const tabs = [
     { id: "aangeboden" as SubTab, label: "Aangeboden", icon: Clock },
+    // B9: zelf gereageerd, de opdrachtgever kiest nog (was nergens te zien in het webportaal)
+    { id: "aangemeld" as SubTab, label: "Aangemeld", icon: Send },
     { id: "gepland" as SubTab, label: "Gepland", icon: Calendar },
     { id: "voltooid" as SubTab, label: "Voltooid", icon: Check },
   ];
@@ -170,7 +176,7 @@ export default function MijnDienstenClient() {
           </h1>
 
           {/* Sub-tabs met oranje indicator */}
-          <div className="flex gap-6 relative">
+          <div className="flex gap-6 relative overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -252,10 +258,13 @@ export default function MijnDienstenClient() {
                       </div>
                     </div>
 
-                    {dienst && (
+                    {(verzoek.dienst || dienst) && (
                       <div className="text-xs text-[var(--mp-text-secondary)] mb-3 pl-13">
-                        <div>{dienst.klant.bedrijfsnaam}</div>
-                        <div>{new Date(dienst.datum).toLocaleDateString("nl-NL")} • {dienst.locatie}</div>
+                        <div>{verzoek.dienst?.klant_naam || dienst?.klant.bedrijfsnaam}</div>
+                        <div>
+                          {new Date(verzoek.dienst?.datum || dienst!.datum).toLocaleDateString("nl-NL")} •{" "}
+                          {verzoek.dienst?.locatie || dienst?.locatie}
+                        </div>
                       </div>
                     )}
 
@@ -287,24 +296,47 @@ export default function MijnDienstenClient() {
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-3 border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : activeTab === "aangeboden" ? (
+          <>
+            {/* Shift-aanbiedingen (swipe) + uitnodigingen (accepteren/afwijzen) */}
+            <SwipeShiftStack onAantalChange={onAantalAanbiedingen} />
+            {diensten.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {diensten.map((dienst) => (
+                  <DienstCard key={dienst.id} dienst={dienst} type="aangeboden" onRefresh={fetchDiensten} />
+                ))}
+              </div>
+            )}
+            {diensten.length === 0 && aantalAanbiedingen === 0 && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 rounded-full bg-[var(--mp-bg)] mx-auto mb-4 flex items-center justify-center">
+                  <Clock className="w-8 h-8 text-[var(--mp-text-tertiary)]" />
+                </div>
+                <p className="text-[var(--mp-text-secondary)] text-sm">Geen aangeboden diensten</p>
+              </div>
+            )}
+          </>
         ) : diensten.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 rounded-full bg-[var(--mp-bg)] mx-auto mb-4 flex items-center justify-center">
-              {activeTab === "aangeboden" && <Clock className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
+              {activeTab === "aangemeld" && <Send className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
               {activeTab === "gepland" && <Calendar className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
               {activeTab === "voltooid" && <Check className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
             </div>
             <p className="text-[var(--mp-text-secondary)] text-sm">
-              {activeTab === "aangeboden" && "Geen aangeboden diensten"}
+              {activeTab === "aangemeld" && "Geen openstaande aanmeldingen. Reageer op een dienst bij Ontdekken."}
               {activeTab === "gepland" && "Geen geplande diensten"}
               {activeTab === "voltooid" && "Geen voltooide diensten"}
             </p>
           </div>
-        ) : activeTab === "aangeboden" ? (
-          /* Swipe cards voor aangeboden diensten */
-          <SwipeShiftStack />
         ) : (
-          /* Regular cards voor gepland/voltooid - grid layout zoals Ontdekken */
+          /* Regular cards voor aangemeld/gepland/voltooid - grid layout zoals Ontdekken */
+          <>
+          {activeTab === "aangemeld" && (
+            <p className="text-sm text-[var(--mp-text-secondary)] mb-3">
+              De opdrachtgever moet je aanmelding nog bevestigen. Zolang dat niet is gebeurd, kun je hem intrekken.
+            </p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {diensten.map((dienst) => (
               <DienstCard
@@ -315,6 +347,7 @@ export default function MijnDienstenClient() {
               />
             ))}
           </div>
+          </>
         )}
       </div>
 
