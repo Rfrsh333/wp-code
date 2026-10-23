@@ -27,6 +27,11 @@ export default function UitbetalingSectie() {
         het bedrag en het factuurnummer naar onze bank. Facturen en de gegevens die daarbij horen bewaren wij 7 jaar
         (fiscale bewaarplicht), ook als u uw account laat verwijderen.
       </p>
+      <p>
+        Is uw uitbetaling verwerkt, dan krijgt u daarvan een melding in uw meldingenoverzicht (en een pushmelding als u
+        die heeft aangezet), met het factuurnummer, het bedrag en de laatste vier cijfers van uw rekeningnummer. Die
+        melding bewaren wij 90 dagen, zoals alle meldingen (zie paragraaf 6).
+      </p>
     </>
   );
 }
