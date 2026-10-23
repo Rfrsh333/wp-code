@@ -1,14 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { FEESTDAG_FACTOR, standaardUitzendTarieven, WEEKEND_FACTOR } from "@/lib/pricing/richtlijntarieven";
 
-// Basistarieven per functie (uitzend tarieven voor klanten)
-const BASIS_TARIEVEN: Record<string, number> = {
-  bediening: 27.0,
-  bar: 27.0,
-  keuken: 28.0,
-  afwas: 25.0,
-  gastheer: 27.5,
-  runner: 25.5,
-};
+// Basistarieven per functie (uitzendtarieven voor klanten): uit de ene bron van richtlijntarieven
+// (lib/pricing/richtlijntarieven.ts, gebaseerd op de publieke kosten-calculator). Zelfde bedragen
+// als hier eerder vast stonden: bediening 27, bar 27, keuken 28, afwas 25, gastheer 27,5, runner 25,5.
+const BASIS_TARIEVEN: Record<string, number> = standaardUitzendTarieven();
 
 interface PricingRule {
   id: string;
@@ -159,8 +155,8 @@ export async function getAllPricingOverview(): Promise<{
   const feestdagRule = rules.find(r => r.conditie.feestdag === true);
   const piekRule = rules.find(r => r.conditie.maand);
 
-  const weekendMult = weekendRule?.waarde || 1.10;
-  const feestdagMult = feestdagRule?.waarde || 1.25;
+  const weekendMult = weekendRule?.waarde || WEEKEND_FACTOR;
+  const feestdagMult = feestdagRule?.waarde || FEESTDAG_FACTOR;
   const piekMult = piekRule?.waarde || 1.10;
 
   const tarieven = Object.entries(BASIS_TARIEVEN).map(([functie, basis]) => ({

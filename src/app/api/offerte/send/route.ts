@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // van deze aanvraag (zo stuurt de automatische modus "send" het AI-concept). Voorheen kreeg
     // een aanroep zonder offerteId een nieuw offertenummer zonder record in `offertes`, dus een
     // tweede offerte die niet online te bekijken of te accepteren was.
-    const OFFERTE_VELDEN = "id, offerte_nummer, ai_introductie, geldig_tot, token, status, aanvraag_id";
+    const OFFERTE_VELDEN = "id, offerte_nummer, ai_introductie, geldig_tot, token, status, aanvraag_id, tarieven";
     type OfferteRij = {
       id: string;
       offerte_nummer: string;
@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
       token: string | null;
       status: string | null;
       aanvraag_id: string | null;
+      tarieven: { functie: string; uurtarief: number }[] | null;
     };
     let offerte: OfferteRij | null = null;
     if (offerteId) {
@@ -125,6 +126,8 @@ export async function POST(request: NextRequest) {
       eindDatum: aanvraag.eind_datum || undefined,
       werkdagen: aanvraag.werkdagen || [],
       werktijden: aanvraag.werktijden,
+      // Zelfde tarieven als de online offerte
+      tarieven: Array.isArray(offerte.tarieven) ? offerte.tarieven : null,
       offerteNummer,
       offerteDatum,
       geldigTot,

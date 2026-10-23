@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
-import { basisTarieven, ervaringsMultiplier } from "@/lib/calculator/tarieven";
+import { offerteTarief } from "@/lib/pricing/richtlijntarieven";
 
 // ============================================================================
 // Types
@@ -25,7 +25,10 @@ interface OfferteData {
   typePersoneel: string[];
   aantalPersonen: string;
   contractType: string[];
+  /** Alleen ter info; het tarief in de PDF komt uit de offerte of de richtlijn (één prijs). */
   gewenstUurtarief?: number;
+  /** Tarieven van de opgeslagen offerte (offertes.tarieven), zodat PDF en online offerte gelijk zijn. */
+  tarieven?: { functie: string; uurtarief: number }[] | null;
 
   // Planning
   startDatum: string;
@@ -342,28 +345,16 @@ const contractTypeLabels: Record<string, string> = {
   uitzendkracht: "Uitzendkracht",
 };
 
-const functieMapping: Record<string, keyof typeof basisTarieven> = {
-  "Barista": "bar",
-  "Bartender": "bar",
-  "Ober/Serveerster": "bediening",
-  "Gastheer/Gastvrouw": "bediening",
-  "Runner": "bediening",
-  "Evenement medewerker": "bediening",
-  "Kok": "keuken",
-  "Sous-chef": "keuken",
-  "Afwasser": "afwas",
-};
-
-const contractToTariefType: Record<string, "vast" | "uitzend" | "zzp"> = {
-  loondienst: "vast",
-  uitzendkracht: "uitzend",
-  zzp: "zzp",
-};
-
-function getTarief(personeel: string, contractType: string): number {
-  const functie = functieMapping[personeel] || "bediening";
-  const tariefType = contractToTariefType[contractType] || "uitzend";
-  return basisTarieven[functie][tariefType] * ervaringsMultiplier.ervaren;
+/**
+ * Uurtarief per functie: dat van de opgeslagen offerte als die er is, anders de richtlijn
+ * (lib/pricing/richtlijntarieven.ts, dezelfde bron als de AI-offerte en het portaal). Het
+ * "gewenste uurtarief" van de klant overschrijft de prijs niet meer: anders zag de klant in de
+ * PDF een ander bedrag dan in de online offerte.
+ */
+function getTarief(personeel: string, contractType: string, tarieven?: OfferteData["tarieven"]): number {
+  const uitOfferte = tarieven?.find((t) => t.functie === personeel)?.uurtarief;
+  if (typeof uitOfferte === "number" && Number.isFinite(uitOfferte) && uitOfferte > 0) return uitOfferte;
+  return offerteTarief(personeel, contractType).uurtarief;
 }
 
 function formatCurrency(amount: number): string {
@@ -401,7 +392,7 @@ export function OffertePDF({ data }: { data: OfferteData }) {
   const primaryContract = data.contractType[0] || "uitzendkracht";
 
   const tariefItems = data.typePersoneel.map((personeel) => {
-    const tarief = data.gewenstUurtarief || getTarief(personeel, primaryContract);
+    const tarief = getTarief(personeel, primaryContract, data.tarieven);
     return {
       personeel,
       contractType: contractTypeLabels[primaryContract] || primaryContract,

@@ -4,8 +4,13 @@ import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { laagsteBasistarief } from "@/lib/pricing/ondergrens";
-import { haalTariefOverzicht } from "@/lib/pricing/tarief-overzicht";
+import {
+  alleRichtlijnen,
+  MARGE_PER_UUR,
+  tariefAdvies,
+  WETTELIJK_MINIMUMUURLOON,
+  WETTELIJK_MINIMUMUURLOON_PEILDATUM,
+} from "@/lib/pricing/richtlijntarieven";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { begintijdVoorbij, kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
 import { checkRedisRateLimit, klantAanvraagRateLimit } from "@/lib/rate-limit-redis";
@@ -19,14 +24,12 @@ const TIJD = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Ondergrens voor het uurtarief bij self-service aanvragen: het laagste basistarief uit de
- * bestaande prijsbron (lib/pricing/smart-pricing, BASIS_TARIEVEN). Zo kan een klant geen
- * dienst plaatsen onder het laagste tarief dat TopTalent zelf hanteert.
- * Lukt het ophalen niet, dan geen ondergrens (0) i.p.v. alle aanvragen te blokkeren.
+ * Uurtarief: geen minimum of maximum (besluit Rachid 23-10-2026), wel richtlijnen per functie
+ * (lib/pricing/richtlijntarieven.ts). Een tarief onder de richtlijn, of waarbij de medewerker
+ * (klanttarief − € 4) onder het wettelijk minimumloon uitkomt, geeft een zachte waarschuwing in
+ * het antwoord (`tarief_waarschuwingen`), geen blokkade. Alleen een ongeldig bedrag (≤ 0) of een
+ * kennelijke tikfout (> € 1000) wordt geweigerd.
  */
-async function minimaalUurtarief(): Promise<number> {
-  return laagsteBasistarief(await haalTariefOverzicht("/api/klant/aanvraag"));
-}
 
 type FunctieRegel = { functie: string; aantal: number; tarief: number };
 
@@ -162,7 +165,6 @@ export async function POST(request: NextRequest) {
 
     // Functies + tarieven normaliseren (nieuw formaat: meerdere functies met eigen tarief;
     // oud formaat: één functie + globaal tarief).
-    const minimum = await minimaalUurtarief();
     const globaalTarief = parseUurtarief(uurtarief);
     const regels: FunctieRegel[] = [];
 
@@ -178,8 +180,8 @@ export async function POST(request: NextRequest) {
         }
         const eigen = parseUurtarief(f?.uurtarief);
         const tarief = Number.isFinite(eigen) && eigen > 0 ? eigen : globaalTarief;
-        const fout = uurtariefFout(tarief, minimum);
-        if (fout) return NextResponse.json({ error: `${naam}: ${fout}`, min_uurtarief: minimum }, { status: 400 });
+        const fout = uurtariefFout(tarief, 0);
+        if (fout) return NextResponse.json({ error: `${naam}: ${fout}` }, { status: 400 });
         regels.push({ functie: naam, aantal: n, tarief });
       }
     } else {
@@ -188,10 +190,23 @@ export async function POST(request: NextRequest) {
       }
       const n = parseInt(aantal) || 1;
       if (n < 1 || n > 50) return NextResponse.json({ error: "Aantal moet tussen 1 en 50 liggen" }, { status: 400 });
-      const fout = uurtariefFout(globaalTarief, minimum);
-      if (fout) return NextResponse.json({ error: fout, min_uurtarief: minimum }, { status: 400 });
+      const fout = uurtariefFout(globaalTarief, 0);
+      if (fout) return NextResponse.json({ error: fout }, { status: 400 });
       regels.push({ functie: functie.trim().slice(0, 100), aantal: n, tarief: globaalTarief });
     }
+
+    // Zachte waarschuwingen per functie (geen blokkade): onder de richtlijn / onder het minimumloon.
+    const tariefWaarschuwingen = regels
+      .map((r) => ({ functie: r.functie, uurtarief: r.tarief, ...tariefAdvies(r.tarief, r.functie) }))
+      .filter((a) => a.waarschuwing)
+      .map((a) => ({
+        functie: a.functie,
+        uurtarief: a.uurtarief,
+        medewerker_uurloon: a.medewerkerUurloon,
+        onder_richtlijn: a.onderRichtlijn,
+        onder_minimumloon: a.onderMinimumloon,
+        tekst: a.waarschuwing as string,
+      }));
 
     // Alleen een afbeelding die via /api/klant/dienst-afbeelding voor déze klant is geüpload.
     const afbeelding =
@@ -312,6 +327,7 @@ export async function POST(request: NextRequest) {
           "Uw aanvraag is ontvangen. Omdat dit uw eerste dienst is, controleert TopTalent hem eerst. Na goedkeuring zien medewerkers de dienst en kunnen ze reageren; volgende diensten gaan direct live.",
         favorieten_uitgenodigd: 0,
         favorieten_overgeslagen: uitnodigingen.overgeslagen,
+        tarief_waarschuwingen: tariefWaarschuwingen,
       });
     }
 
@@ -339,6 +355,7 @@ export async function POST(request: NextRequest) {
       in_controle: false,
       favorieten_uitgenodigd: uitnodigingen.uitgenodigd,
       favorieten_overgeslagen: uitnodigingen.overgeslagen,
+      tarief_waarschuwingen: tariefWaarschuwingen,
     });
   } catch (err) {
     captureRouteError(err, { route: "/api/klant/aanvraag", action: "POST" });
@@ -352,25 +369,31 @@ export async function GET(request: NextRequest) {
     if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Get previous locations for this klant
-    const [{ data: locaties, error }, minimum] = await Promise.all([
-      supabaseAdmin
-        .from("diensten")
-        .select("locatie")
-        .eq("klant_id", klant.id)
-        .not("locatie", "is", null)
-        .order("datum", { ascending: false })
-        .limit(50),
-      minimaalUurtarief(),
-    ]);
+    const { data: locaties, error } = await supabaseAdmin
+      .from("diensten")
+      .select("locatie")
+      .eq("klant_id", klant.id)
+      .not("locatie", "is", null)
+      .order("datum", { ascending: false })
+      .limit(50);
+
+    // Geen ondergrens meer: min_uurtarief blijft 0 voor oudere clients; `tarieven` geeft de
+    // richtlijnen per functie, het minimumloon en de marge voor de zachte waarschuwing.
+    const tarieven = {
+      richtlijnen: alleRichtlijnen(),
+      wettelijk_minimumuurloon: WETTELIJK_MINIMUMUURLOON,
+      minimumloon_peildatum: WETTELIJK_MINIMUMUURLOON_PEILDATUM,
+      marge_per_uur: MARGE_PER_UUR,
+    };
 
     if (error) {
       captureRouteError(error, { route: "/api/klant/aanvraag", action: "GET" });
-      return NextResponse.json({ locaties: [], min_uurtarief: minimum });
+      return NextResponse.json({ locaties: [], min_uurtarief: 0, tarieven });
     }
 
     const uniqueLocaties = [...new Set((locaties || []).map((l) => l.locatie).filter(Boolean))];
 
-    return NextResponse.json({ locaties: uniqueLocaties, min_uurtarief: minimum });
+    return NextResponse.json({ locaties: uniqueLocaties, min_uurtarief: 0, tarieven });
   } catch (err) {
     captureRouteError(err, { route: "/api/klant/aanvraag", action: "GET" });
     return NextResponse.json({ locaties: [] });

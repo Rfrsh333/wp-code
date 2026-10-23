@@ -14,6 +14,7 @@ import {
 import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import KlantPushNotificationBanner from "../components/PushNotificationBanner";
 import KlantOnboardingMelding from "@/components/klant/KlantOnboardingMelding";
+import { euro, richtlijnBereikTekst, richtlijnVoorFunctie, tariefAdvies } from "@/lib/pricing/richtlijntarieven";
 import QuickActions from "@/components/klant/QuickActions";
 import KlantInstellingen from "@/components/klant/KlantInstellingen";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
@@ -1686,11 +1687,11 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
   });
 
   const locaties: string[] = aanvraagData?.locaties ?? [];
-  // Ondergrens uit de bestaande prijsbron (server bepaalt en controleert; dit is alleen voor de hint).
-  const minUurtarief: number = Number(aanvraagData?.min_uurtarief) || 0;
+  // Geen minimum of maximum (alleen een geldig bedrag); richtlijn en zachte waarschuwing per
+  // functie uit lib/pricing/richtlijntarieven (dezelfde bron als de server, offerte en PDF).
   const tariefOk = (t: string) => {
     const n = parseUurtarief(t);
-    return Number.isFinite(n) && n > 0 && n >= minUurtarief;
+    return Number.isFinite(n) && n > 0 && n <= 1000;
   };
   const favorieten: Favoriet[] = favData?.favorieten ?? [];
   const templates: DienstTemplate[] = templData?.templates ?? [];
@@ -1991,10 +1992,13 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
                     <label className="text-xs text-neutral-600 whitespace-nowrap">Uurtarief €:</label>
                     <input
                       type="number"
-                      min={minUurtarief || 0}
+                      min={0}
                       step="0.50"
                       value={functieData.uurtarief}
-                      placeholder={minUurtarief ? `Min. ${minUurtarief.toFixed(2)}` : "Bijv. 27.50"}
+                      placeholder={(() => {
+                        const rl = richtlijnVoorFunctie(functieData.functie);
+                        return rl ? `Richtlijn ${euro(rl.standaard).replace("€ ", "")}` : "Bijv. 27.50";
+                      })()}
                       onChange={(e) => {
                         setForm({
                           ...form,
@@ -2006,14 +2010,29 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
                       className="flex-1 px-2 py-1 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501]"
                     />
                   </div>
+                  {(() => {
+                    // Richtlijn als advies; onder de richtlijn of het minimumloon een zachte waarschuwing.
+                    const rl = richtlijnVoorFunctie(functieData.functie);
+                    const n = parseUurtarief(functieData.uurtarief);
+                    const advies = functieData.uurtarief && Number.isFinite(n) && n > 0 ? tariefAdvies(n, functieData.functie) : null;
+                    if (advies?.waarschuwing) {
+                      return <p className="mt-2 text-xs text-amber-700" role="status">{advies.waarschuwing}</p>;
+                    }
+                    if (rl) {
+                      return (
+                        <p className="mt-2 text-xs text-neutral-500">
+                          Richtlijn {rl.label.toLowerCase()}: {richtlijnBereikTekst(rl)} per uur (gemiddeld {euro(rl.standaard)}).
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               ))}
             </div>
 
-            {minUurtarief > 0 && form.functies_met_aantal.some(f => f.uurtarief && !tariefOk(f.uurtarief)) && (
-              <p className="mt-2 text-xs text-red-600">
-                Het minimale uurtarief is &euro;{minUurtarief.toFixed(2).replace(".", ",")}.
-              </p>
+            {form.functies_met_aantal.some(f => f.uurtarief && !tariefOk(f.uurtarief)) && (
+              <p className="mt-2 text-xs text-red-600">Vul per functie een geldig uurtarief in.</p>
             )}
 
             {form.functies_met_aantal.length > 0 && (
