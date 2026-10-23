@@ -112,10 +112,18 @@ export function ontbrekendVoorReageren(
   return reageerChecklist(medewerker, documenten, vandaag).filter((p) => !p.ok);
 }
 
+const ZINSDEEL: Record<ChecklistCode, string> = {
+  id_bewijs: "een geldig ID-bewijs",
+  kvk_nummer: "je KvK-nummer",
+  btw_nummer: "je btw-nummer",
+  iban: "je IBAN",
+  overeenkomst: "je akkoord op de overeenkomst van opdracht",
+};
+
 /** Melding bij een geweigerde aanmelding (403 checklist_onvolledig). */
 export function checklistMelding(ontbrekend: readonly ChecklistPunt[]): string {
   if (ontbrekend.length === 0) return "";
-  const labels = ontbrekend.map((p) => p.label);
+  const labels = ontbrekend.map((p) => ZINSDEEL[p.code] ?? p.label);
   const lijst = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(", ")} en ${labels[labels.length - 1]}`;
   return `Je kunt je nog niet aanmelden. Regel eerst: ${lijst}. Je ziet wat er nog moet gebeuren op je dashboard.`;
 }

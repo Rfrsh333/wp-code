@@ -73,7 +73,7 @@ test.describe("checklist vóór reageren (B1)", () => {
 
   test("melding noemt wat er ontbreekt", () => {
     const melding = checklistMelding(ontbrekendVoorReageren({ ...compleet, iban: null, kvk_nummer: null }, [geldigId], vandaag));
-    expect(melding).toContain("KvK-nummer en IBAN");
+    expect(melding).toContain("Regel eerst: je KvK-nummer en je IBAN.");
     expect(checklistMelding([])).toBe("");
   });
 });
