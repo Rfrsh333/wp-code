@@ -15,6 +15,8 @@ import { parseOntdekFilters, pasOntdekFiltersToe, sorteerOntdek } from "@/lib/me
 import { haalVoorkeuren } from "@/lib/medewerker/werkgever-voorkeuren";
 import { fotoVoorDienst, type DienstFoto } from "@/lib/sfeerfotos";
 import { fotosVoorDiensten } from "@/lib/sfeerfotos-opslag";
+import { haalCompacteWerkgeverProfielen } from "@/lib/werkgever-profiel";
+import type { WerkgeverProfielCompact } from "@/lib/werkgever-profiel-regels";
 
 /**
  * De nieuwe Ontdekken-gegevens zijn een aanvulling: lukt een ervan niet, dan de lijst zonder
@@ -142,7 +144,11 @@ export async function GET(request: NextRequest) {
     const dienstIds = (diensten || []).map((d) => d.id as string);
     const { filters, ongeldig } = parseOntdekFilters(request.nextUrl.searchParams);
     // Sfeerfoto per dienst (dienst → bedrijfsfoto → standaard per functie, lib/sfeerfotos.ts).
-    const [extras, mijnAfstand, dienstLocaties, voorkeuren, favorietBij, reacties, fotos] = await Promise.all([
+    // Stap 4 (Vertrouwen): compact werkgeversprofiel per werkgever (sterren, kiest binnen, kies-%).
+    const klantIdsVanDiensten = (diensten || []).map(
+      (d) => (d.klant_id as string | null) ?? ((d.klant as { id?: string } | null)?.id ?? null),
+    );
+    const [extras, mijnAfstand, dienstLocaties, voorkeuren, favorietBij, reacties, fotos, werkgeverProfielen] = await Promise.all([
       haalDienstExtras(dienstIds),
       veilig(haalMedewerkerAfstand(medewerker.id), { beschikbaar: false, locatie: null, maxAfstandKm: null, postcodeIngevuld: false }, "AFSTAND"),
       veilig(haalDienstLocaties(dienstIds), new Map(), "DIENST_LOCATIES"),
@@ -163,6 +169,7 @@ export async function GET(request: NextRequest) {
         new Map<string, DienstFoto>(),
         "FOTOS",
       ),
+      veilig(haalCompacteWerkgeverProfielen(klantIdsVanDiensten), new Map<string, WerkgeverProfielCompact>(), "WERKGEVER_PROFIEL"),
     ]);
     const ikBenFavorietBij = new Set(((favorietBij.data ?? []) as { klant_id: string }[]).map((f) => f.klant_id));
 
@@ -239,6 +246,9 @@ export async function GET(request: NextRequest) {
           werkgever_verborgen: !!klantId && voorkeuren.verborgen.has(klantId),
           ik_ben_favoriet: !!klantId && ikBenFavorietBij.has(klantId),
           aantal_reacties: reacties.get(d.id as string) ?? 0,
+          // Stap 4: { gemiddelde, aantal, kiest_binnen_uren, kies_percentage, betaalt_binnen_dagen }; elk
+          // kengetal null onder 3 waarnemingen. Null zonder werkgever of als het ophalen mislukte.
+          werkgever_profiel: (klantId && werkgeverProfielen.get(klantId)) || null,
         };
       });
 

@@ -16,6 +16,8 @@ import { intrekInfo, reactieUitBody, richtlijnBereik } from "@/lib/medewerker/re
 import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 import { fotoVoorDienst } from "@/lib/sfeerfotos";
 import { fotosVoorDiensten } from "@/lib/sfeerfotos-opslag";
+import { haalCompacteWerkgeverProfielen } from "@/lib/werkgever-profiel";
+import type { WerkgeverProfielCompact } from "@/lib/werkgever-profiel-regels";
 
 type UrenRegistratie = { status: string };
 
@@ -150,7 +152,8 @@ export async function GET(request: NextRequest) {
   // Uitgebreid reageren: een reactie voorbij haar intrekmoment heeft status `geannuleerd` (lazy
   // check), en kledingvoorschrift + pauze per dienst (leeg zolang de migratie niet gedraaid is).
   // Plus de sfeerfoto per dienst (dienst → bedrijfsfoto → standaard per functie, lib/sfeerfotos.ts).
-  const [voorwaarden, extras, fotos] = await Promise.all([
+  // Stap 4 (Vertrouwen): compact werkgeversprofiel per werkgever; mislukt dat, dan null (geen 500).
+  const [voorwaarden, extras, fotos, werkgeverProfielen] = await Promise.all([
     haalVoorwaarden((aanmeldingen ?? []).map((a) => a.id)),
     haalDienstExtras((alleDienstenCompat || []).map((d) => d.id as string)),
     fotosVoorDiensten(
@@ -161,6 +164,10 @@ export async function GET(request: NextRequest) {
         klant_id: d.klant_id as string | null,
       })),
     ),
+    haalCompacteWerkgeverProfielen((alleDienstenCompat || []).map((d) => d.klant_id as string | null)).catch((e) => {
+      captureRouteError(e, { route: "/api/medewerker/diensten", action: "WERKGEVER_PROFIEL" });
+      return new Map<string, WerkgeverProfielCompact>();
+    }),
   ]);
   const dienstInfo = new Map((alleDienstenCompat || []).map((d) => [d.id as string, d as { datum?: string; start_tijd?: string }]));
 
@@ -208,6 +215,8 @@ export async function GET(request: NextRequest) {
     foto:
       fotos.get(d.id as string) ??
       fotoVoorDienst({ id: d.id as string, functie: d.functie as string | null, afbeelding_url: d.afbeelding_url as string | null }),
+    // Stap 4: zelfde compacte werkgever_profiel als in shifts/beschikbaar (null zonder werkgever).
+    werkgever_profiel: (d.klant_id ? werkgeverProfielen.get(d.klant_id as string) : null) ?? null,
   }));
 
   // FASE 6: Compute automatic tags
