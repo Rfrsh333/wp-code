@@ -121,3 +121,22 @@ export function parseMaxAfstandKm(waarde: unknown): AfstandResultaat {
   }
   return { ok: true, waarde: Math.round(n) };
 }
+
+/**
+ * Velden om de globale locatie te wissen bij een verwijderverzoek (medewerker) of het verwijderen
+ * van een account (diensten van een klant). `geo_bijgewerkt_op` krijgt een tijdstip, zodat de
+ * backfill de rij niet opnieuw oppakt.
+ */
+export function gewisteGeoVelden(nu: Date = new Date()): {
+  geo_lat: null;
+  geo_lng: null;
+  geo_postcode: null;
+  geo_bijgewerkt_op: string;
+} {
+  return { geo_lat: null, geo_lng: null, geo_postcode: null, geo_bijgewerkt_op: nu.toISOString() };
+}
+
+/** Bij een medewerker ook de maximale afstand (een eigen instelling) wissen. */
+export function gewisteOntdekVeldenMedewerker(nu: Date = new Date()): ReturnType<typeof gewisteGeoVelden> & { max_afstand_km: null } {
+  return { ...gewisteGeoVelden(nu), max_afstand_km: null };
+}

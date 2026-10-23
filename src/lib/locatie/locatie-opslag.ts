@@ -1,8 +1,16 @@
 import { supabaseAdmin } from "@/lib/supabase";
-import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
+import { isOntbrekendeKolom, schrijfMetKolomFallback } from "@/lib/db-kolom-fallback";
+import { isOntbrekendeTabel } from "@/lib/medewerker/werkgever-voorkeuren";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { geocodeerPostcode } from "@/lib/locatie/pdok";
-import { naarCoordinaat, normaliseerPostcode, postcodeUitTekst, type Coordinaat } from "@/lib/locatie/locatie-regels";
+import {
+  gewisteGeoVelden,
+  gewisteOntdekVeldenMedewerker,
+  naarCoordinaat,
+  normaliseerPostcode,
+  postcodeUitTekst,
+  type Coordinaat,
+} from "@/lib/locatie/locatie-regels";
 
 /**
  * Globale locatie (postcode → afgeronde coördinaten) opslaan bij medewerkers en diensten.
@@ -104,6 +112,38 @@ export async function werkDienstLocatiesBij(
   if (isOntbrekendeKolom(error)) return { uitkomst: "migratie_ontbreekt", locatie: null };
   if (error) throw error;
   return { uitkomst, locatie };
+}
+
+// --- Wissen (verwijderverzoek / account verwijderen) ---------------------------------------
+
+const GEO_KOLOMMEN = ["geo_lat", "geo_lng", "geo_postcode", "geo_bijgewerkt_op"] as const;
+
+/**
+ * Ontdekken-gegevens van een medewerker wissen: globale locatie, maximale afstand en zijn
+ * bewaarde/verborgen werkgevers. Geen van deze gegevens valt onder een bewaarplicht, dus dit gebeurt
+ * al bij het verzoek om het account te verwijderen (en nog eens bij het verwijderen door de admin).
+ * Zonder migratie (kolommen of tabel ontbreken) is er niets te wissen. Een andere fout wordt gegooid.
+ */
+export async function wisOntdekGegevensMedewerker(medewerkerId: string): Promise<void> {
+  const { error } = await schrijfMetKolomFallback(gewisteOntdekVeldenMedewerker(), [...GEO_KOLOMMEN, "max_afstand_km"], (rij) =>
+    Object.keys(rij).length ? supabaseAdmin.from("medewerkers").update(rij).eq("id", medewerkerId) : Promise.resolve({ data: null, error: null }),
+  );
+  if (error && !isOntbrekendeKolom(error)) throw error;
+  const voorkeuren = await supabaseAdmin.from("medewerker_werkgever_voorkeuren").delete().eq("medewerker_id", medewerkerId);
+  if (voorkeuren.error && !isOntbrekendeTabel(voorkeuren.error)) throw voorkeuren.error;
+}
+
+/**
+ * Bij het verwijderen van een klantaccount: de globale locatie van zijn diensten (afgeleid van zijn
+ * adres of postcode) en de keuzes van medewerkers om deze werkgever te bewaren of te verbergen.
+ */
+export async function wisOntdekGegevensKlant(klantId: string): Promise<void> {
+  const { error } = await schrijfMetKolomFallback(gewisteGeoVelden(), GEO_KOLOMMEN, (rij) =>
+    Object.keys(rij).length ? supabaseAdmin.from("diensten").update(rij).eq("klant_id", klantId) : Promise.resolve({ data: null, error: null }),
+  );
+  if (error && !isOntbrekendeKolom(error)) throw error;
+  const voorkeuren = await supabaseAdmin.from("medewerker_werkgever_voorkeuren").delete().eq("klant_id", klantId);
+  if (voorkeuren.error && !isOntbrekendeTabel(voorkeuren.error)) throw voorkeuren.error;
 }
 
 // --- Lezen ----------------------------------------------------------------------------------

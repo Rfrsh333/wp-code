@@ -7,7 +7,7 @@ import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admi
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { normaliseerEmail } from "@/lib/email-normalisatie";
-import { werkMedewerkerLocatieBij } from "@/lib/locatie/locatie-opslag";
+import { werkMedewerkerLocatieBij, wisOntdekGegevensMedewerker } from "@/lib/locatie/locatie-opslag";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -237,6 +237,9 @@ export async function POST(request: NextRequest) {
     if (!hasRequiredAdminRole(role, ["owner"])) {
       return NextResponse.json({ error: "Alleen de eigenaar kan medewerkers verwijderen" }, { status: 403 });
     }
+    // Ontdekken-gegevens expliciet eerst (de rij en de cascade ruimen ze ook op, maar zo staat het
+    // vast, ook als de medewerker straks geanonimiseerd in plaats van verwijderd wordt).
+    await wisOntdekGegevensMedewerker(id).catch((e) => captureRouteError(e, { route: "/api/admin/medewerkers", action: "ONTDEKKEN_WISSEN" }));
     const { error } = await supabaseAdmin.from("medewerkers").delete().eq("id", id);
     if (error) {
       return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });

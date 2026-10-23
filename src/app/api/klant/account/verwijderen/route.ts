@@ -10,6 +10,7 @@ import { nlVandaag } from "@/lib/nl-tijd";
 import { sendTelegramAlert } from "@/lib/telegram";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isDemoKlant } from "@/lib/demo";
+import { wisOntdekGegevensKlant } from "@/lib/locatie/locatie-opslag";
 
 /**
  * Account verwijderen (App Store-richtlijn 5.1.1(v)).
@@ -23,7 +24,8 @@ import { isDemoKlant } from "@/lib/demo";
  *   horen bij de factuur; zonder facturen worden ook die gewist;
  * - facturen zelf worden hier nooit gewijzigd: de klant-NAW staat als snapshot op de factuur
  *   (lib/factuur-klant-snapshot, migratie 20261002_review_fixes.sql) en blijft dus correct;
- * - favorieten, templates en push-abonnementen verwijderd; open toekomstige diensten zonder
+ * - favorieten, templates, push-abonnementen, de globale locatie van zijn diensten en de
+ *   bewaar-/verbergkeuzes van medewerkers voor deze werkgever verwijderd; open toekomstige diensten zonder
  *   ingeplande medewerkers geannuleerd.
  * Diensten waar al iemand voor ingepland staat blokkeren het verwijderen: die moeten eerst
  * geannuleerd of afgerond worden (anders staat er een medewerker voor niets).
@@ -182,6 +184,8 @@ export async function POST(request: NextRequest) {
       supabaseAdmin.from("klant_favoriete_medewerkers").delete().eq("klant_id", klant.id),
       supabaseAdmin.from("dienst_templates").delete().eq("klant_id", klant.id),
       supabaseAdmin.from("push_subscriptions").delete().eq("user_id", klant.id).eq("user_type", "klant"),
+      // Globale locatie van zijn diensten en bewaar-/verbergkeuzes van medewerkers voor deze werkgever.
+      wisOntdekGegevensKlant(klant.id).catch((e) => captureRouteError(e, { route: "/api/klant/account/verwijderen", action: "ONTDEKKEN_WISSEN" })),
     ]);
 
     await revokeSessions("klanten", klant.id);

@@ -4,6 +4,7 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { checkRedisRateLimit, loginRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { wisOntdekGegevensMedewerker } from "@/lib/locatie/locatie-opslag";
 import { logAuditEvent } from "@/lib/audit-log";
 import { controleerWachtwoord } from "@/lib/medewerker/wachtwoord";
 import { isDemoMedewerker } from "@/lib/demo";
@@ -56,6 +57,13 @@ export async function POST(request: NextRequest) {
     if (kolomFout && kolomFout.code !== "42703" && kolomFout.code !== "PGRST204") {
       captureRouteError(kolomFout, { route: "/api/medewerker/account-verwijderen", action: "UPDATE" });
     }
+
+    // Ontdekken-gegevens (globale locatie, maximale afstand, bewaarde/verborgen werkgevers) vallen
+    // niet onder een bewaarplicht: direct wissen bij het verzoek (privacybeleid 10d). Een fout
+    // blokkeert het verzoek niet.
+    await wisOntdekGegevensMedewerker(medewerker.id).catch((e) =>
+      captureRouteError(e, { route: "/api/medewerker/account-verwijderen", action: "ONTDEKKEN_WISSEN" }),
+    );
 
     const { error: berichtFout } = await supabaseAdmin.from("berichten").insert({
       van_type: "medewerker",

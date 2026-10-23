@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import {
   afstandKm,
+  gewisteGeoVelden,
+  gewisteOntdekVeldenMedewerker,
   afstandLabel,
   afstandTussen,
   leesPdokAntwoord,
@@ -154,5 +156,24 @@ test.describe("geocodeerPostcode (PDOK, met nep-fetch: er gaat niets naar buiten
     await geocodeerPostcode("3511AB", { fetchFn: fn });
     await geocodeerPostcode("3511 AB", { fetchFn: fn });
     expect(urls).toHaveLength(1);
+  });
+});
+
+test.describe("wissen bij verwijderen", () => {
+  test("medewerker: locatie én maximale afstand leeg, backfill pakt hem niet opnieuw op", () => {
+    const nu = new Date("2026-10-23T12:00:00Z");
+    expect(gewisteOntdekVeldenMedewerker(nu)).toEqual({
+      geo_lat: null,
+      geo_lng: null,
+      geo_postcode: null,
+      geo_bijgewerkt_op: "2026-10-23T12:00:00.000Z",
+      max_afstand_km: null,
+    });
+  });
+
+  test("diensten van een klant: alleen de locatie", () => {
+    const velden = gewisteGeoVelden(new Date("2026-10-23T12:00:00Z"));
+    expect(Object.keys(velden).sort()).toEqual(["geo_bijgewerkt_op", "geo_lat", "geo_lng", "geo_postcode"]);
+    expect(velden.geo_bijgewerkt_op).not.toBeNull();
   });
 });

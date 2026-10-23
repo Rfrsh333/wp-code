@@ -339,7 +339,7 @@ export default function PrivacyPolicyPage() {
                   </tr>
                   <tr className="border-b">
                     <td className="px-4 py-3">Globale locatie op basis van uw postcode</td>
-                    <td className="px-4 py-3">Zolang uw postcode bij ons bekend is; bij een nieuwe postcode wordt hij vervangen</td>
+                    <td className="px-4 py-3">Zolang uw postcode bij ons bekend is; bij een nieuwe postcode vervangen, bij een verzoek om verwijdering van uw account direct gewist</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3">Klachten en geschillen</td>
@@ -631,7 +631,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Zelf in de hand:</strong> u bepaalt zelf of u een maximale afstand instelt en welke werkgevers u bewaart of verbergt (in het werknemersportaal onder Instellingen en Account). Zonder postcode ziet u geen afstand en krijgt u meldingen ongeacht de afstand.</li>
               <li><strong>Favorieten:</strong> u ziet bij welke werkgevers u als favoriet staat. Werkgevers zien niet welke werkgevers u heeft bewaard of verborgen.</li>
             </ul>
-            <p>Wij doen dit om onze bemiddeling uit te voeren en u passende diensten aan te bieden (artikel 6 lid 1 sub b AVG). Wij bewaren de globale locatie niet langer dan uw postcode: wijzigt u uw postcode, dan vervangen wij hem; wist u uw postcode of handelen wij uw verzoek om uw account te verwijderen af, dan wissen wij hem.</p>
+            <p>Wij doen dit om onze bemiddeling uit te voeren en u passende diensten aan te bieden (artikel 6 lid 1 sub b AVG). Wij bewaren de globale locatie niet langer dan uw postcode: wijzigt u uw postcode, dan vervangen wij hem; wist u uw postcode, dan wissen wij hem. Vraagt u om verwijdering van uw account, dan wissen wij direct de globale locatie, uw maximale afstand en de werkgevers die u heeft bewaard of verborgen.</p>
 
             {/* 11. Beveiliging */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
