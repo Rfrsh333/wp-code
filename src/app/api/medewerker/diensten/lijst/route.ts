@@ -5,6 +5,14 @@ import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { aanmeldStatussenVoorTab } from "@/lib/medewerker/dienst-regels";
 import { nlVandaag } from "@/lib/nl-tijd";
+import {
+  geldendeTijden,
+  intrekMoment,
+  isAutomatischIngetrokken,
+  klantUurtariefVoorAanmelding,
+  medewerkerUurtariefVoorAanmelding,
+} from "@/lib/medewerker/reactie-regels";
+import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,6 +75,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Stap 3b: voorwaarden per aanmelding (tegenbod, eigen tijden, …) en kleding/pauze per dienst.
+    // Zonder migratie leeg: dan gelden overal de tijden en het tarief van de dienst.
+    const [voorwaarden, extras] = await Promise.all([
+      haalVoorwaarden(aanmeldingen.map((a) => a.id)),
+      haalDienstExtras(dienstIds),
+    ]);
+
     // Stap 4: Combineer data en filter op datum
     const dienstenMap = new Map((diensten || []).map((d) => [d.id, d]));
 
@@ -74,20 +89,45 @@ export async function GET(request: NextRequest) {
       .map((a) => {
         const dienst = dienstenMap.get(a.dienst_id);
         if (!dienst) return null;
+        const v = voorwaarden.get(a.id);
+        // Een reactie voorbij haar intrekmoment staat niet meer bij "Aangemeld" (lazy check).
+        if (isAutomatischIngetrokken({ status: a.status, auto_intrekken_uren: v?.auto_intrekken_uren }, dienst)) return null;
 
         const klant = dienst.klant_id ? klantenMap[dienst.klant_id] : null;
+        const extra = extras.get(dienst.id) ?? GEEN_EXTRAS;
+        // Tijden en tarief die voor DEZE aanmelding gelden (na acceptatie bindend; bij "Aangemeld"
+        // is het je voorstel). `uurtarief` blijft het klanttarief (zoals altijd: medewerker = − € 4).
+        const tijden = geldendeTijden(dienst, v);
 
         return {
           id: dienst.id,
           aanmelding_id: a.id,
           datum: dienst.datum,
-          start_tijd: dienst.start_tijd,
-          eind_tijd: dienst.eind_tijd,
+          start_tijd: tijden.start_tijd,
+          eind_tijd: tijden.eind_tijd,
           locatie: dienst.locatie,
           functie: dienst.functie || null,
           notities: dienst.notities || null,
           omschrijving: dienst.notities || dienst.functie || "Geen omschrijving",
-          uurtarief: dienst.uurtarief,
+          uurtarief: klantUurtariefVoorAanmelding(dienst.uurtarief, v?.voorgesteld_uurtarief),
+          medewerker_uurtarief: medewerkerUurtariefVoorAanmelding(dienst.uurtarief, v?.voorgesteld_uurtarief),
+          dienst_start_tijd: dienst.start_tijd,
+          dienst_eind_tijd: dienst.eind_tijd,
+          eigen_tijden: tijden.eigen_tijden,
+          eigen_tarief: v?.voorgesteld_uurtarief != null,
+          kledingvoorschrift: extra.kledingvoorschrift,
+          pauze_minuten: extra.pauze_minuten,
+          voorstel: v
+            ? {
+                motivatie: v.motivatie,
+                kleding_akkoord_op: v.kleding_akkoord_op,
+                auto_intrekken_uren: v.auto_intrekken_uren,
+                intrekken_op:
+                  v.auto_intrekken_uren && dienst.datum && dienst.start_tijd
+                    ? intrekMoment(dienst.datum, dienst.start_tijd, v.auto_intrekken_uren).toISOString()
+                    : null,
+              }
+            : null,
           status: a.status,
           klant: {
             bedrijfsnaam: klant?.bedrijfsnaam || dienst.klant_naam || "Onbekend",

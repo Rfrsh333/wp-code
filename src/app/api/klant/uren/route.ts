@@ -5,6 +5,8 @@ import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskos
 import { valideerUrenAanpassing } from "@/lib/klant-portaal-regels";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { nlVandaag } from "@/lib/nl-tijd";
+import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden, type AanmeldingVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 /**
  * Uren van de medewerkers bij deze klant.
@@ -24,7 +26,7 @@ const HISTORIE = ["goedgekeurd", "gefactureerd"];
 const PER_PAGINA = 25;
 
 const SELECT = `
-  id, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren, reiskosten_km, reiskosten_bedrag, status, created_at,
+  id, aanmelding_id, start_tijd, eind_tijd, pauze_minuten, gewerkte_uren, reiskosten_km, reiskosten_bedrag, status, created_at,
   klant_start_tijd, klant_eind_tijd, klant_pauze_minuten, klant_gewerkte_uren, klant_opmerking,
   aanmelding:dienst_aanmeldingen!inner(
     medewerker:medewerkers(naam),
@@ -34,6 +36,7 @@ const SELECT = `
 
 type Rij = {
   id: string;
+  aanmelding_id: string | null;
   start_tijd: string | null;
   eind_tijd: string | null;
   pauze_minuten: number | null;
@@ -54,7 +57,8 @@ function eerste<T>(v: T | T[] | null | undefined): T | null {
   return (Array.isArray(v) ? v[0] : v) ?? null;
 }
 
-function naarUren(u: Rij) {
+/** `uurtarief` = wat de klant per uur betaalt voor deze aanmelding (tegenbod + € 4, anders de dienst). */
+function naarUren(u: Rij, voorwaarden: Map<string, AanmeldingVoorwaarden>) {
   const aanmelding = eerste(u.aanmelding as { medewerker?: unknown; dienst?: unknown } | null);
   const medewerker = eerste(aanmelding?.medewerker as { naam?: string } | null);
   const dienst = eerste(aanmelding?.dienst as { datum?: string; locatie?: string; uurtarief?: number } | null);
@@ -76,7 +80,7 @@ function naarUren(u: Rij) {
     medewerker_naam: medewerker?.naam || "Onbekend",
     dienst_datum: dienst?.datum || "",
     dienst_locatie: dienst?.locatie || "",
-    uurtarief: dienst?.uurtarief || 0,
+    uurtarief: klantUurtariefVoorAanmelding(dienst?.uurtarief, voorwaarden.get(u.aanmelding_id ?? "")?.voorgesteld_uurtarief),
   };
 }
 
@@ -111,8 +115,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Uren ophalen mislukt" }, { status: 500 });
   }
 
-  const openstaand = ((openRes.data || []) as Rij[]).map(naarUren);
-  const historie = ((histRes.data || []) as Rij[]).map(naarUren);
+  const openRijen = (openRes.data || []) as Rij[];
+  const histRijen = (histRes.data || []) as Rij[];
+  const voorwaarden = await haalVoorwaarden([...openRijen, ...histRijen].map((u) => u.aanmelding_id));
+  const openstaand = openRijen.map((u) => naarUren(u, voorwaarden));
+  const historie = histRijen.map((u) => naarUren(u, voorwaarden));
   const historieTotaal = histRes.count ?? historie.length;
 
   return NextResponse.json({

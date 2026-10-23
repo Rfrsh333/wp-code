@@ -4,6 +4,8 @@ import { getKlantSession } from "@/lib/portal-auth";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
+import { geldendeTijden } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 export async function POST(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -58,6 +60,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Geen ingeplande dienst vandaag voor deze medewerker" }, { status: 404 });
   }
 
+  // Check-in toont de tijden die voor déze medewerker gelden (eigen tijden na acceptatie).
+  const voorwaarden = await haalVoorwaarden(aanmeldingen.map((a) => a.id));
+  const tijdenVan = (aanmeldingId: string, d: { start_tijd: string; eind_tijd: string }) =>
+    geldendeTijden(d, voorwaarden.get(aanmeldingId));
+
   // Als er meerdere diensten zijn en geen specifieke dienst_id is opgegeven, return de lijst
   if (aanmeldingen.length > 1 && !dienst_id) {
     // Haal medewerker info op
@@ -69,12 +76,14 @@ export async function POST(request: NextRequest) {
 
     const diensten = aanmeldingen.map(a => {
       const d = Array.isArray(a.dienst) ? a.dienst[0] : a.dienst;
+      const tijden = tijdenVan(a.id, d);
       return {
         dienst_id: d.id,
         aanmelding_id: a.id,
         datum: d.datum,
-        start_tijd: d.start_tijd,
-        eind_tijd: d.eind_tijd,
+        start_tijd: tijden.start_tijd,
+        eind_tijd: tijden.eind_tijd,
+        eigen_tijden: tijden.eigen_tijden,
         locatie: d.locatie,
         functie: d.functie,
         check_in_at: a.check_in_at,
@@ -94,7 +103,8 @@ export async function POST(request: NextRequest) {
 
   // Pak de eerste (of enige) aanmelding
   const aanmelding = aanmeldingen[0];
-  const dienst = Array.isArray(aanmelding.dienst) ? aanmelding.dienst[0] : aanmelding.dienst;
+  const dienstRij = Array.isArray(aanmelding.dienst) ? aanmelding.dienst[0] : aanmelding.dienst;
+  const dienst = dienstRij ? { ...dienstRij, ...tijdenVan(aanmelding.id, dienstRij) } : dienstRij;
 
   // Al ingecheckt?
   if (aanmelding.check_in_at) {
@@ -188,9 +198,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Laden mislukt" }, { status: 500 });
   }
 
+  const lijstVoorwaarden = await haalVoorwaarden((checkins || []).map((c) => c.id));
   const result = (checkins || []).map((c) => {
     const medewerker = Array.isArray(c.medewerker) ? c.medewerker[0] : c.medewerker;
-    const dienst = Array.isArray(c.dienst) ? c.dienst[0] : c.dienst;
+    const dienstRij = Array.isArray(c.dienst) ? c.dienst[0] : c.dienst;
+    const dienst = dienstRij ? { ...dienstRij, ...geldendeTijden(dienstRij, lijstVoorwaarden.get(c.id)) } : dienstRij;
     return {
       id: c.id,
       check_in_at: c.check_in_at,

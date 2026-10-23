@@ -8,6 +8,8 @@ import { nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { haalUrenRegistraties } from "@/lib/medewerker/uren";
 import { isVerdiend } from "@/lib/medewerker/uren-regels";
 import { telVerlopendeDocumenten } from "@/lib/medewerker/dienst-regels";
+import { geldendeTijden } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,14 +21,21 @@ export async function GET(request: NextRequest) {
     // Volgende shift
     const { data: volgendeDiensten } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .select("dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie)")
+      .select("id, dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie)")
       .eq("medewerker_id", medewerker.id)
       .in("status", [...INGEPLAND_STATUSSEN])
       .order("created_at", { ascending: true })
       .limit(100);
 
+    // Eigen tijden (uitgebreid reageren) gelden na acceptatie: toon die bij de volgende shift.
+    const voorwaarden = await haalVoorwaarden((volgendeDiensten || []).map((a) => a.id));
     const volgendeShift = (volgendeDiensten || [])
-      .map(a => Array.isArray(a.dienst) ? a.dienst[0] : a.dienst)
+      .map((a) => {
+        const d = Array.isArray(a.dienst) ? a.dienst[0] : a.dienst;
+        if (!d) return d;
+        const { start_tijd, eind_tijd } = geldendeTijden(d, voorwaarden.get(a.id));
+        return { ...d, start_tijd, eind_tijd };
+      })
       .filter(d => d && d.datum >= today)
       .sort((a, b) => (a!.datum > b!.datum ? 1 : -1))[0] || null;
 

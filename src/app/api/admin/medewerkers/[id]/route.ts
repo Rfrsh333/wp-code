@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { decryptField } from "@/lib/encryption";
 import { documentOpslagPad, MEDEWERKER_DOCUMENTEN_BUCKET } from "@/lib/medewerker/documenten";
+import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 /** Signed URL's voor documenten (privé bucket) zijn 10 minuten geldig. */
 const DOCUMENT_URL_SECONDEN = 10 * 60;
@@ -56,26 +58,29 @@ export async function GET(
     supabaseAdmin
       .from("dienst_aanmeldingen")
       .select(`
-        id, status, aangemeld_op,
+        id, status, aangemeld_at,
         diensten (
           id, klant_naam, locatie, datum, start_tijd, eind_tijd, functie, uurtarief
         )
       `)
       .eq("medewerker_id", id)
-      .order("aangemeld_op", { ascending: false })
+      // De kolom heet aangemeld_at; met aangemeld_op faalde deze query en bleef de lijst leeg.
+      .order("aangemeld_at", { ascending: false })
       .limit(50),
     // Uren registraties
     supabaseAdmin
       .from("uren_registraties")
       .select(`
-        id, gewerkte_uren, status, created_at,
+        id, aanmelding_id, gewerkte_uren, status, created_at,
         dienst_aanmeldingen!inner (
+          medewerker_id,
           diensten!inner (
             datum, klant_naam, locatie, uurtarief
           )
         )
       `)
-      .eq("medewerker_id", id)
+      // uren_registraties.medewerker_id wordt nooit gevuld (zie lib/medewerker/uren.ts): filter via de aanmelding.
+      .eq("dienst_aanmeldingen.medewerker_id", id)
       .order("created_at", { ascending: false })
       .limit(100),
     // Beoordelingen van klanten
@@ -108,17 +113,22 @@ export async function GET(
   const totalUren = goedgekeurdeUren.reduce((sum, u) => sum + (u.gewerkte_uren || 0), 0);
   const opkomstPct = totalAanmeldingen > 0 ? Math.round((goedgekeurdeUren.length / totalAanmeldingen) * 100) : 0;
 
-  // Monthly financials
+  // Monthly financials (tarief per aanmelding: tegenbod + € 4, anders het tarief van de dienst)
+  const voorwaarden = await haalVoorwaarden(goedgekeurdeUren.map((u) => u.aanmelding_id as string));
   const maandMap = new Map<string, { uren: number; verdiensten: number; diensten: number }>();
   for (const u of goedgekeurdeUren) {
-    const aanmelding = u.dienst_aanmeldingen as { diensten?: { datum: string; uurtarief?: number } } | null;
-    const dienst = aanmelding?.diensten;
+    const aanmelding = (Array.isArray(u.dienst_aanmeldingen) ? u.dienst_aanmeldingen[0] : u.dienst_aanmeldingen) as
+      | { diensten?: { datum: string; uurtarief?: number } | { datum: string; uurtarief?: number }[] }
+      | null;
+    const dienst = Array.isArray(aanmelding?.diensten) ? aanmelding?.diensten[0] : aanmelding?.diensten;
     if (!dienst) continue;
     const d = new Date(dienst.datum);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const existing = maandMap.get(key) || { uren: 0, verdiensten: 0, diensten: 0 };
     existing.uren += u.gewerkte_uren || 0;
-    existing.verdiensten += (u.gewerkte_uren || 0) * (dienst.uurtarief || 0);
+    existing.verdiensten +=
+      (u.gewerkte_uren || 0) *
+      klantUurtariefVoorAanmelding(dienst.uurtarief, voorwaarden.get(u.aanmelding_id as string)?.voorgesteld_uurtarief);
     existing.diensten += 1;
     maandMap.set(key, existing);
   }
@@ -154,7 +164,8 @@ export async function GET(
     werkervaring: werkervaringRes.data || [],
     vaardigheden: vaardighedenRes.data || [],
     documenten,
-    diensten: dienstenRes.data || [],
+    // `aangemeld_op` blijft in het antwoord voor de bestaande weergave (MedewerkerDetailView).
+    diensten: (dienstenRes.data || []).map((d) => ({ ...d, aangemeld_op: d.aangemeld_at })),
     financieel,
     beoordelingen: beoordelingenRes.data || [],
     stats: {

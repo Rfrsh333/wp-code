@@ -18,6 +18,9 @@ interface UrenRegistratie {
     medewerker: { naam: string; email: string };
     dienst: { klant_naam: string; datum: string; locatie: string; uurtarief: number };
   };
+  /** Tarief van de aanmelding (tegenbod + € 4, anders de dienst); van /api/admin/uren. */
+  klant_uurtarief?: number;
+  medewerker_uurtarief?: number;
 }
 
 interface AanmeldingZonderUren {
@@ -26,6 +29,12 @@ interface AanmeldingZonderUren {
   check_in_at: string | null;
   medewerker: { id: string; naam: string; email: string };
   dienst: { id: string; klant_naam: string; datum: string; start_tijd: string; eind_tijd: string; locatie: string; uurtarief: number; functie: string };
+  /** Geldende tijden van de aanmelding (eigen tijden na acceptatie) en pauze van de dienst. */
+  start_tijd?: string | null;
+  eind_tijd?: string | null;
+  eigen_tijden?: boolean;
+  pauze_minuten?: number | null;
+  klant_uurtarief?: number;
 }
 
 export default function UrenTab() {
@@ -161,9 +170,9 @@ export default function UrenTab() {
   const selectAanmelding = (a: AanmeldingZonderUren) => {
     setSelectedAanmelding(a);
     setHandmatigForm({
-      start_tijd: a.dienst?.start_tijd?.slice(0, 5) || "",
-      eind_tijd: a.dienst?.eind_tijd?.slice(0, 5) || "",
-      pauze_minuten: "0",
+      start_tijd: (a.start_tijd ?? a.dienst?.start_tijd)?.slice(0, 5) || "",
+      eind_tijd: (a.eind_tijd ?? a.dienst?.eind_tijd)?.slice(0, 5) || "",
+      pauze_minuten: String(a.pauze_minuten ?? 0),
       reiskosten_km: "0",
       opmerking: "",
     });
@@ -273,7 +282,10 @@ export default function UrenTab() {
                   )}
                 </td>
                 <td className="px-6 py-4">
-                  <p className="font-medium text-green-600">€{((u.gewerkte_uren * (u.aanmelding?.dienst?.uurtarief || 0)) + ((u.reiskosten_km || 0) * 0.23)).toFixed(2)}</p>
+                  <p className="font-medium text-green-600">€{((u.gewerkte_uren * (u.klant_uurtarief ?? (u.aanmelding?.dienst?.uurtarief || 0))) + ((u.reiskosten_km || 0) * 0.23)).toFixed(2)}</p>
+                  {u.klant_uurtarief != null && u.klant_uurtarief !== (u.aanmelding?.dienst?.uurtarief || 0) && (
+                    <p className="text-xs text-amber-700">Eigen tarief: €{u.klant_uurtarief.toFixed(2)}/uur (dienst €{(u.aanmelding?.dienst?.uurtarief || 0).toFixed(2)})</p>
+                  )}
                   {u.reiskosten_km > 0 && (
                     <p className="text-sm text-neutral-500">incl. €{((u.reiskosten_km || 0) * 0.23).toFixed(2)} reiskosten klant</p>
                   )}
@@ -343,7 +355,8 @@ export default function UrenTab() {
                           {a.dienst?.klant_naam} · {a.dienst?.functie} · {a.dienst?.datum ? formatDate(a.dienst.datum) : "—"}
                         </div>
                         <div className="text-xs text-neutral-400 mt-0.5">
-                          {a.dienst?.start_tijd?.slice(0, 5)} - {a.dienst?.eind_tijd?.slice(0, 5)} · {a.dienst?.locatie}
+                          {(a.start_tijd ?? a.dienst?.start_tijd)?.slice(0, 5)} - {(a.eind_tijd ?? a.dienst?.eind_tijd)?.slice(0, 5)}
+                          {a.eigen_tijden ? " (eigen tijden)" : ""} · {a.dienst?.locatie}
                         </div>
                       </button>
                     ))}
