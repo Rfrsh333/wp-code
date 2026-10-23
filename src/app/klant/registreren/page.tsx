@@ -6,12 +6,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/Toast";
+import { ALGEMENE_VOORWAARDEN_PAD, ALGEMENE_VOORWAARDEN_VERSIE, normaliseerKvk } from "@/lib/klant-registratie-regels";
 
 interface RegisterFormData {
   bedrijfsnaam: string;
   contactpersoon: string;
   email: string;
   telefoon?: string;
+  kvk_nummer: string;
+  akkoord_voorwaarden: boolean;
   wachtwoord: string;
   wachtwoordBevestig: string;
 }
@@ -36,14 +39,20 @@ export default function KlantRegistreren() {
           contactpersoon: formData.contactpersoon,
           email: formData.email,
           telefoon: formData.telefoon,
+          kvk_nummer: formData.kvk_nummer,
+          akkoord_voorwaarden: formData.akkoord_voorwaarden === true,
           wachtwoord: formData.wachtwoord,
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (data.success) {
-        toast.success("Account aangemaakt! Welkom bij TopTalent.");
+        toast.success(
+          data.email_bevestigen
+            ? "Account aangemaakt! Bevestig uw e-mailadres via de link die we u mailden."
+            : "Account aangemaakt! Welkom bij TopTalent.",
+        );
         router.push("/klant/dashboard");
       } else {
         setError(data.error || "Er ging iets mis");
@@ -69,7 +78,7 @@ export default function KlantRegistreren() {
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">Word klant</h1>
           <p className="text-neutral-400 text-lg leading-relaxed">
-            Registreer uw bedrijf en krijg direct toegang tot TopTalent Business. Personeel aanvragen, uren beheren en facturen inzien.
+            Registreer uw bedrijf bij TopTalent Business. Na het bevestigen van uw e-mailadres vraagt u personeel aan, beheert u uren en ziet u uw facturen.
           </p>
           <div className="mt-10 space-y-4 text-left">
             {[
@@ -154,6 +163,23 @@ export default function KlantRegistreren() {
               </div>
 
               <div>
+                <label htmlFor="registreren-kvk" className="block text-sm font-medium text-neutral-700 mb-1.5">KvK-nummer *</label>
+                <input
+                  id="registreren-kvk"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  {...register("kvk_nummer", {
+                    required: "KvK-nummer is verplicht",
+                    validate: (value) => !!normaliseerKvk(value) || "Een KvK-nummer heeft 8 cijfers",
+                  })}
+                  className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F27501]/20 focus:border-[#F27501] transition-colors"
+                  placeholder="12345678"
+                />
+                {errors.kvk_nummer && <p className="text-red-500 text-sm mt-1">{errors.kvk_nummer.message}</p>}
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1.5">Wachtwoord *</label>
                 <input
                   type="password"
@@ -173,6 +199,24 @@ export default function KlantRegistreren() {
                   placeholder="Herhaal wachtwoord"
                 />
                 {errors.wachtwoordBevestig && <p className="text-red-500 text-sm mt-1">{errors.wachtwoordBevestig.message}</p>}
+              </div>
+
+              <div>
+                <label className="flex items-start gap-3 text-sm text-neutral-700">
+                  <input
+                    type="checkbox"
+                    {...register("akkoord_voorwaarden", { required: "Ga akkoord met de algemene voorwaarden" })}
+                    className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-[#F27501] focus:ring-[#F27501]/30"
+                  />
+                  <span>
+                    Ik ga akkoord met de{" "}
+                    <Link href={ALGEMENE_VOORWAARDEN_PAD} target="_blank" className="text-[#F27501] hover:text-[#d96800] font-medium underline">
+                      algemene voorwaarden
+                    </Link>{" "}
+                    van TopTalent (versie {ALGEMENE_VOORWAARDEN_VERSIE}) *
+                  </span>
+                </label>
+                {errors.akkoord_voorwaarden && <p className="text-red-500 text-sm mt-1">{errors.akkoord_voorwaarden.message}</p>}
               </div>
 
               <button

@@ -34,7 +34,7 @@ function getBaseUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.toptalentjobs.nl";
 }
 
-function renderEmailLayout(content: string) {
+export function renderEmailLayout(content: string) {
   return `
     <!DOCTYPE html>
     <html>
@@ -52,9 +52,14 @@ function renderEmailLayout(content: string) {
   `;
 }
 
-export async function createKlantPasswordResetToken(klantId: string) {
+/**
+ * Maakt een eenmalig token en slaat alleen de hash op. `geldigMs` is standaard 2 uur (reset);
+ * de uitnodiging voor een nieuw account (lib/klant-uitnodiging.ts) gebruikt 7 dagen. Een nieuw
+ * token vervangt het vorige: alleen de laatst verstuurde link werkt.
+ */
+export async function createKlantPasswordResetToken(klantId: string, geldigMs: number = KLANT_RESET_GELDIG_MS) {
   const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + KLANT_RESET_GELDIG_MS).toISOString();
+  const expiresAt = new Date(Date.now() + geldigMs).toISOString();
 
   const { error } = await supabaseAdmin
     .from("klanten")

@@ -143,6 +143,9 @@ export function useKlantCheckins() {
   });
 }
 
+/** Onboardingstand uit /api/klant/account (zie lib/klant-onboarding.ts). */
+export type KlantOnboarding = { email_bevestigd: boolean; gecontroleerd: boolean };
+
 export function useKlantAccount() {
   return useQuery({
     queryKey: klantKeys.account(),

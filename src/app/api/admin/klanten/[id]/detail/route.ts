@@ -102,8 +102,14 @@ export async function GET(
     .order("created_at", { ascending: false })
     .limit(10);
 
+  // Geen wachtwoordhash of resettoken naar de browser; wel of het account al te gebruiken is.
+  const veiligeKlant: Record<string, unknown> = { ...klant, heeft_wachtwoord: !!klant.wachtwoord };
+  delete veiligeKlant.wachtwoord;
+  delete veiligeKlant.reset_token;
+  delete veiligeKlant.reset_token_expires_at;
+
   return NextResponse.json({
-    klant,
+    klant: veiligeKlant,
     diensten: diensten || [],
     maandGrafiek,
     seizoen: {

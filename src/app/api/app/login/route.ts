@@ -13,6 +13,7 @@ import {
 import { signKlantSession, signMedewerkerSession } from "@/lib/session";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { APP_TOKEN_GELDIGHEID } from "@/lib/klant-sessie-cookie";
+import { beoordeelKlantLogin } from "@/lib/klant-login-regels";
 
 // Login voor de native app (één app, rolkeuze bij inloggen).
 // Zelfde controles als de web-logins, maar het token komt in de body: de app bewaart het in
@@ -92,9 +93,13 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     const valid = await bcrypt.compare(wachtwoord, k?.wachtwoord || DUMMY_HASH);
-    if (!k || !valid || k.status !== "actief") {
-      return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
+    // Zelfde regels als de web-login (lib/klant-login-regels): één antwoord voor onbekend adres,
+    // fout wachtwoord en account zonder wachtwoord; "niet actief" alleen bij een kloppend wachtwoord.
+    const oordeel = beoordeelKlantLogin({ gevonden: !!k, wachtwoordKlopt: valid, status: k?.status }, "je");
+    if (!oordeel.ok) {
+      return NextResponse.json({ error: oordeel.error, code: oordeel.code }, { status: oordeel.status });
     }
+    if (!k) return NextResponse.json({ error: "Fout bij inloggen" }, { status: 500 }); // kan niet: oordeel.ok vereist een account
 
     const token = await signKlantSession(
       { id: k.id, bedrijfsnaam: k.bedrijfsnaam, contactpersoon: k.contactpersoon, email: k.email },

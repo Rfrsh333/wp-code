@@ -8,6 +8,9 @@ export default function KlantWachtwoordResetClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
+  // Uitnodiging voor een nieuw account (lib/klant-uitnodiging): zelfde token en route, andere tekst.
+  const welkom = searchParams.get("welkom") === "1";
+  const linkNaam = welkom ? "Uitnodigingslink" : "Resetlink";
   const [bedrijfsnaam, setBedrijfsnaam] = useState("");
   const [isReady, setIsReady] = useState(false);
   const [wachtwoord, setWachtwoord] = useState("");
@@ -18,14 +21,18 @@ export default function KlantWachtwoordResetClient() {
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setError("Resetlink ontbreekt of is ongeldig.");
+        setError(`${linkNaam} ontbreekt of is ongeldig.`);
         return;
       }
       try {
         const response = await fetch(`/api/klant/wachtwoord-reset?token=${encodeURIComponent(token)}`);
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          setError(data.error || "Resetlink is ongeldig of verlopen.");
+          setError(
+            welkom
+              ? "Deze uitnodigingslink is verlopen of al gebruikt. Vraag hieronder een nieuwe link aan, of neem contact op via info@toptalentjobs.nl."
+              : data.error || "Resetlink is ongeldig of verlopen.",
+          );
           return;
         }
         setBedrijfsnaam(data.klant?.bedrijfsnaam || "");
@@ -36,7 +43,7 @@ export default function KlantWachtwoordResetClient() {
     };
 
     void validateToken();
-  }, [token]);
+  }, [token, welkom, linkNaam]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -60,10 +67,10 @@ export default function KlantWachtwoordResetClient() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error || "Wachtwoord resetten mislukt.");
+        setError(data.error || (welkom ? "Wachtwoord instellen mislukt." : "Wachtwoord resetten mislukt."));
         return;
       }
-      router.push("/klant/login?reset=1");
+      router.push(welkom ? "/klant/login?welkom=1" : "/klant/login?reset=1");
     } catch {
       setError("Geen verbinding. Probeer het opnieuw.");
     } finally {
@@ -75,20 +82,22 @@ export default function KlantWachtwoordResetClient() {
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-xl shadow-neutral-900/5 p-8 w-full max-w-md border border-neutral-100">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-neutral-900">Nieuw wachtwoord</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">{welkom ? "Welkom bij TopTalent Business" : "Nieuw wachtwoord"}</h1>
           <p className="text-neutral-500 mt-2">
-            {bedrijfsnaam ? `Voor ${bedrijfsnaam}` : "Stel direct een nieuw wachtwoord in"}
+            {welkom
+              ? `Kies een wachtwoord${bedrijfsnaam ? ` voor ${bedrijfsnaam}` : ""}. Daarna kunt u direct inloggen.`
+              : bedrijfsnaam ? `Voor ${bedrijfsnaam}` : "Stel direct een nieuw wachtwoord in"}
           </p>
         </div>
 
         {error && <div role="alert" className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-5">{error}</div>}
 
-        {!isReady && !error ? <div className="text-center text-neutral-500">Resetlink controleren...</div> : null}
+        {!isReady && !error ? <div className="text-center text-neutral-500">{linkNaam} controleren...</div> : null}
 
         {isReady ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="klant-nieuw-wachtwoord" className="block text-sm font-medium text-neutral-700 mb-2">Nieuw wachtwoord</label>
+              <label htmlFor="klant-nieuw-wachtwoord" className="block text-sm font-medium text-neutral-700 mb-2">{welkom ? "Wachtwoord" : "Nieuw wachtwoord"}</label>
               <input
                 id="klant-nieuw-wachtwoord"
                 type="password"
@@ -116,14 +125,14 @@ export default function KlantWachtwoordResetClient() {
               disabled={isLoading}
               className="w-full bg-[#F27501] text-white py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors disabled:opacity-50"
             >
-              {isLoading ? "Opslaan..." : "Nieuw wachtwoord opslaan"}
+              {isLoading ? "Opslaan..." : welkom ? "Wachtwoord instellen" : "Nieuw wachtwoord opslaan"}
             </button>
           </form>
         ) : null}
 
         <div className="mt-6 text-center">
           <Link href={error ? "/klant/wachtwoord-vergeten" : "/klant/login"} className="text-sm text-neutral-500 hover:text-[#F27501]">
-            {error ? "Nieuwe resetlink aanvragen" : "← Terug naar inloggen"}
+            {error ? (welkom ? "Nieuwe link aanvragen" : "Nieuwe resetlink aanvragen") : "← Terug naar inloggen"}
           </Link>
         </div>
       </div>

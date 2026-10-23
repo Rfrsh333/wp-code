@@ -1,7 +1,9 @@
 /**
  * Ondergrens en bereik van het klant-uurtarief, afgeleid van de bestaande prijsbron
- * (BASIS_TARIEVEN via getAllPricingOverview in smart-pricing). Gedeeld door de aanvraag-route
- * (validatie) en de AI-offerte (prompt + suggestie), zodat beide hetzelfde minimum hanteren.
+ * (BASIS_TARIEVEN via getAllPricingOverview in smart-pricing).
+ * Sinds 23-10-2026 hanteert de aanvraag-route geen ondergrens meer (alleen richtlijnen, zie
+ * lib/pricing/richtlijntarieven.ts). Dit bestand wordt nog alleen gebruikt door
+ * /api/klant/ai-offerte, dat door geen enkele UI wordt aangeroepen.
  * De pure functies hier hebben geen imports en zijn los testbaar.
  */
 
