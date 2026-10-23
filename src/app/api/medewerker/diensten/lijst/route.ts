@@ -7,10 +7,11 @@ import { aanmeldStatussenVoorTab } from "@/lib/medewerker/dienst-regels";
 import { nlVandaag } from "@/lib/nl-tijd";
 import {
   geldendeTijden,
+  intrekInfo,
   intrekMoment,
-  isAutomatischIngetrokken,
   klantUurtariefVoorAanmelding,
   medewerkerUurtariefVoorAanmelding,
+  richtlijnBereik,
 } from "@/lib/medewerker/reactie-regels";
 import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
@@ -90,8 +91,13 @@ export async function GET(request: NextRequest) {
         const dienst = dienstenMap.get(a.dienst_id);
         if (!dienst) return null;
         const v = voorwaarden.get(a.id);
-        // Een reactie voorbij haar intrekmoment staat niet meer bij "Aangemeld" (lazy check).
-        if (isAutomatischIngetrokken({ status: a.status, auto_intrekken_uren: v?.auto_intrekken_uren }, dienst)) return null;
+        const info = intrekInfo(
+          { status: a.status, auto_intrekken_uren: v?.auto_intrekken_uren, annuleer_reden: v?.annuleer_reden },
+          dienst,
+        );
+        // Een reactie voorbij haar intrekmoment staat niet meer bij "Aangemeld" (lazy check); ze staat
+        // in het overzicht (GET /api/medewerker/diensten) met automatisch_ingetrokken = true.
+        if (info.automatisch_ingetrokken) return null;
 
         const klant = dienst.klant_id ? klantenMap[dienst.klant_id] : null;
         const extra = extras.get(dienst.id) ?? GEEN_EXTRAS;
@@ -129,6 +135,12 @@ export async function GET(request: NextRequest) {
               }
             : null,
           status: a.status,
+          // Nieuw (nawerk PR #22), zelfde velden als het overzicht. Deze tabs tonen geen
+          // geannuleerde aanmeldingen, dus hier in de praktijk null en false.
+          annuleer_reden: info.annuleer_reden,
+          automatisch_ingetrokken: info.automatisch_ingetrokken,
+          // Richtlijn voor de functie (wat de werkgever per uur betaalt), zie richtlijnBereik.
+          richtlijn: richtlijnBereik(dienst.functie),
           klant: {
             bedrijfsnaam: klant?.bedrijfsnaam || dienst.klant_naam || "Onbekend",
             bedrijf_foto_url: klant?.bedrijf_foto_url || null,

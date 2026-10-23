@@ -12,7 +12,7 @@ import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { meldAan, meldAf, planVervangerIn, werkBezettingBij, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { beperkDiensten, haalDemoIds } from "@/lib/demo";
-import { effectieveAanmeldStatus, reactieUitBody } from "@/lib/medewerker/reactie-regels";
+import { intrekInfo, reactieUitBody, richtlijnBereik } from "@/lib/medewerker/reactie-regels";
 import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 
 type UrenRegistratie = { status: string };
@@ -154,18 +154,25 @@ export async function GET(request: NextRequest) {
   const dienstInfo = new Map((alleDienstenCompat || []).map((d) => [d.id as string, d as { datum?: string; start_tijd?: string }]));
 
   const aanmeldMap = new Map(
-    aanmeldingen?.map((a) => [
-      a.dienst_id,
-      {
-        id: a.id,
-        status: effectieveAanmeldStatus(
-          { status: a.status, auto_intrekken_uren: voorwaarden.get(a.id)?.auto_intrekken_uren },
-          dienstInfo.get(a.dienst_id),
-        ),
-        check_in_at: a.check_in_at,
-        uren_status: (a.uren_registraties as UrenRegistratie[])?.[0]?.status,
-      },
-    ]) || []
+    aanmeldingen?.map((a) => {
+      const v = voorwaarden.get(a.id);
+      // Status, annuleer_reden en de vlag automatisch_ingetrokken (ook vóór de cron: lazy check).
+      const info = intrekInfo(
+        { status: a.status, auto_intrekken_uren: v?.auto_intrekken_uren, annuleer_reden: v?.annuleer_reden },
+        dienstInfo.get(a.dienst_id),
+      );
+      return [
+        a.dienst_id,
+        {
+          id: a.id,
+          status: info.status,
+          annuleer_reden: info.annuleer_reden,
+          automatisch_ingetrokken: info.automatisch_ingetrokken,
+          check_in_at: a.check_in_at,
+          uren_status: (a.uren_registraties as UrenRegistratie[])?.[0]?.status,
+        },
+      ] as const;
+    }) || []
   );
 
   const baseDiensten = (alleDienstenCompat || []).map((d: Record<string, unknown>) => ({
@@ -179,6 +186,11 @@ export async function GET(request: NextRequest) {
     aangemeld: aanmeldMap.has(d.id as string),
     aanmelding_id: aanmeldMap.get(d.id as string)?.id,
     aanmelding_status: aanmeldMap.get(d.id as string)?.status,
+    // Nieuw (nawerk PR #22): waarom de eigen aanmelding geannuleerd is, en of hij vanzelf verviel.
+    annuleer_reden: aanmeldMap.get(d.id as string)?.annuleer_reden ?? null,
+    automatisch_ingetrokken: aanmeldMap.get(d.id as string)?.automatisch_ingetrokken ?? false,
+    // Richtlijn voor de functie (wat de werkgever per uur betaalt), voor de tegenbod-waarschuwing.
+    richtlijn: richtlijnBereik(d.functie as string | null),
     check_in_at: aanmeldMap.get(d.id as string)?.check_in_at,
     uren_status: aanmeldMap.get(d.id as string)?.uren_status,
     qr_verplicht: (d.klant as Record<string, unknown> | null)?.qr_verplicht !== false,

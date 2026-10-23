@@ -7,6 +7,7 @@ import {
   geldendeTijden,
   geschatteVerdiensten,
   heeftVoorwaarden,
+  intrekInfo,
   intrekMoment,
   isAutomatischIngetrokken,
   kledingVoorMail,
@@ -19,6 +20,7 @@ import {
   REACTIE_FOUTCODES,
   reactieUitBody,
   reactieVoorWerkgever,
+  richtlijnBereik,
   tegenbodAdvies,
   valideerReactie,
   vooringevuldeUren,
@@ -27,6 +29,7 @@ import {
 } from "../../src/lib/medewerker/reactie-regels";
 import { medewerkerUurtarief, verdienstenVanRegel } from "../../src/lib/medewerker/uren-regels";
 import { nlMoment } from "../../src/lib/nl-tijd";
+import { richtlijnVoorFunctie } from "../../src/lib/pricing/richtlijntarieven";
 
 // Za 7 november 2026 (wintertijd, UTC+1), 14:00–22:00, klanttarief € 22 → medewerker € 18.
 const dienst = (over: Partial<ReactieDienst> = {}): ReactieDienst => ({
@@ -278,6 +281,36 @@ test.describe("automatisch intrekken (lazy check)", () => {
     expect(effectieveAanmeldStatus({ status: "aangemeld" }, d, na)).toBe("aangemeld");
     expect(effectieveAanmeldStatus({ status: "geaccepteerd", auto_intrekken_uren: 12 }, d, na)).toBe("geaccepteerd");
   });
+
+  test("intrekInfo: reden en vlag voor de medewerker-API, ook vóór de cron", () => {
+    const na = new Date(start.getTime() - 1000);
+    // Lazy: de cron heeft nog niet gedraaid (reden nog leeg), toch al ingetrokken.
+    expect(intrekInfo({ status: "aangemeld", auto_intrekken_uren: 12, annuleer_reden: null }, d, na)).toEqual({
+      status: "geannuleerd",
+      annuleer_reden: "automatisch_ingetrokken",
+      automatisch_ingetrokken: true,
+    });
+    // Door de cron ingetrokken.
+    expect(intrekInfo({ status: "geannuleerd", annuleer_reden: "automatisch_ingetrokken" }, d, na)).toEqual({
+      status: "geannuleerd",
+      annuleer_reden: "automatisch_ingetrokken",
+      automatisch_ingetrokken: true,
+    });
+    // Zelf afgemeld of door de werkgever geannuleerd: wel geannuleerd, niet automatisch.
+    expect(intrekInfo({ status: "geannuleerd", annuleer_reden: null }, d, na)).toEqual({
+      status: "geannuleerd",
+      annuleer_reden: null,
+      automatisch_ingetrokken: false,
+    });
+    // Open reactie vóór het intrekmoment, en zonder migratie (velden ontbreken).
+    const ruimVoor = new Date(start.getTime() - 48 * 3600e3);
+    expect(intrekInfo({ status: "aangemeld", auto_intrekken_uren: 12 }, d, ruimVoor)).toEqual({
+      status: "aangemeld",
+      annuleer_reden: null,
+      automatisch_ingetrokken: false,
+    });
+    expect(intrekInfo({ status: "geaccepteerd" }, d, na).automatisch_ingetrokken).toBe(false);
+  });
 });
 
 test.describe("weergave voor de werkgever", () => {
@@ -351,6 +384,25 @@ test.describe("tegenbod-advies (zacht)", () => {
 
     const extreem = tegenbodAdvies(60, { dienstUurtarief: 22, functie: "afwas" });
     expect(extreem.bovenRichtlijn).toBe(true);
+  });
+
+  test("richtlijnBereik voor de medewerker-API: min/max/label van de functie, of null", () => {
+    const volledig = richtlijnVoorFunctie("bediening")!;
+    expect(richtlijnBereik("bediening")).toEqual({ min: volledig.min, max: volledig.max, label: volledig.label });
+    // Aliassen zoals in de rest van de prijsregels.
+    expect(richtlijnBereik("Ober")).toEqual(richtlijnBereik("bediening"));
+    expect(richtlijnBereik("onbekende functie")).toBeNull();
+    expect(richtlijnBereik(null)).toBeNull();
+  });
+
+  test("de app kan bovenRichtlijn narekenen: tegenbod + € 4 > richtlijn.max", () => {
+    const r = richtlijnBereik("afwas")!;
+    const net = Math.round((r.max - 4) * 100) / 100; // werkgever betaalt precies max
+    expect(tegenbodAdvies(net, { functie: "afwas", dienstUurtarief: 22 }).bovenRichtlijn).toBe(false);
+    expect(tegenbodAdvies(net + 0.01, { functie: "afwas", dienstUurtarief: 22 }).bovenRichtlijn).toBe(true);
+    expect(net + 0.01 + 4 > r.max).toBe(true);
+    // De waarschuwing noemt het label uit het veld.
+    expect(tegenbodAdvies(net + 1, { functie: "afwas" }).waarschuwing).toContain(r.label.toLowerCase());
   });
 });
 
