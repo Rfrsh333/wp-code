@@ -9,15 +9,23 @@
  *                           werkgever, over beslissingen in de laatste 90 dagen
  *   kies_percentage         van de afgelopen diensten (laatste 90 dagen) met minstens één reactie:
  *                           in hoeveel procent is iemand gekozen
- *   betaalt_binnen_dagen    altijd null: een factuur krijgt alleen de status "betaald", zonder datum
- *                           (api/facturen/[id]/betaald), dus de betaaltermijn is niet vast te stellen
+ *   betaalt_binnen_dagen    mediaan in hele kalenderdagen (NL-tijd) van factuurdatum (facturen.created_at,
+ *                           de datum op de factuur) tot betaald_op, over facturen die in de laatste
+ *                           180 dagen als betaald zijn gemarkeerd. betaald_op is het moment waarop een
+ *                           admin de factuur op betaald zette (api/facturen/[id]/betaald), dus de dag
+ *                           waarop TopTalent de betaling zag. Facturen zonder betaald_op (van vóór
+ *                           migratie 20261024, of nog niet betaald) tellen niet mee
  *
  * Elk kengetal is pas zichtbaar vanaf MIN_WAARNEMINGEN waarnemingen; anders null. De UI toont dan
  * "Nog te weinig gegevens" (of niets). `aantal` is altijd het echte aantal beoordelingen.
  */
 
+import { nlDatum } from "@/lib/nl-tijd";
+
 export const MIN_WAARNEMINGEN = 3;
 export const PROFIEL_PERIODE_DAGEN = 90;
+/** Betaalgedrag over een langere periode: een werkgever krijgt hooguit een paar facturen per maand. */
+export const BETAAL_PERIODE_DAGEN = 180;
 
 /**
  * Een "beslissing" binnen zoveel seconden na de aanmelding is geen keuze van de werkgever: TopTalent
@@ -170,6 +178,46 @@ export function kiesPercentage(
 }
 
 // ---------------------------------------------------------------------------------------------
+// "Betaalt meestal binnen X dagen"
+// ---------------------------------------------------------------------------------------------
+
+/** Factuurdatum = facturen.created_at (de datum op de factuur-PDF); betaald_op uit migratie 20261024. */
+export type BetaalRij = { factuur_datum: string | null; betaald_op: string | null };
+
+const DAG_MS = 24 * 60 * 60 * 1000;
+
+/** Kalenderdag (NL-tijd) van een moment, als dagnummer sinds 1970; zo telt een factuur van 23:30 als die dag. */
+function nlDagNummer(t: number): number {
+  const [y, m, d] = nlDatum(new Date(t)).split("-").map(Number);
+  return Date.UTC(y, m - 1, d) / DAG_MS;
+}
+
+/**
+ * Mediaan van factuurdatum → betaald_op in hele kalenderdagen (NL-tijd), naar boven afgerond
+ * ("binnen" moet kloppen), over facturen die in de laatste `periodeDagen` als betaald zijn
+ * gemarkeerd. Niet mee: zonder betaald_op of factuurdatum, ongeldige datums, betaald vóór de
+ * factuurdatum of in de toekomst. Null onder MIN_WAARNEMINGEN.
+ */
+export function betaaltBinnen(
+  rijen: readonly BetaalRij[],
+  nu: Date = new Date(),
+  periodeDagen: number = BETAAL_PERIODE_DAGEN,
+): { dagen: number | null; aantal: number } {
+  const grens = nu.getTime() - periodeDagen * DAG_MS;
+  const termijnen: number[] = [];
+  for (const r of rijen) {
+    if (!r.factuur_datum || !r.betaald_op) continue;
+    const f = new Date(r.factuur_datum).getTime();
+    const b = new Date(r.betaald_op).getTime();
+    if (!Number.isFinite(f) || !Number.isFinite(b)) continue;
+    if (b < grens || b > nu.getTime() || b < f) continue;
+    termijnen.push(nlDagNummer(b) - nlDagNummer(f));
+  }
+  const m = termijnen.length >= MIN_WAARNEMINGEN ? mediaan(termijnen) : null;
+  return { dagen: m == null ? null : Math.ceil(m), aantal: termijnen.length };
+}
+
+// ---------------------------------------------------------------------------------------------
 // Profiel
 // ---------------------------------------------------------------------------------------------
 
@@ -179,7 +227,7 @@ export type WerkgeverProfielCompact = {
   aantal: number;
   kiest_binnen_uren: number | null;
   kies_percentage: number | null;
-  /** Altijd null: TopTalent legt geen betaaldatum vast (zie de toelichting bovenaan). */
+  /** Hele dagen van factuurdatum tot betaling (mediaan, laatste 180 dagen); null onder het minimum. */
   betaalt_binnen_dagen: number | null;
 };
 
@@ -191,9 +239,13 @@ export type WerkgeverProfielKern = WerkgeverProfielCompact & {
     deelscores: Record<Deelscore, number>;
     beslissingen: number;
     diensten_met_reactie: number;
+    /** Betaalde facturen met betaald_op in de betaalperiode. */
+    betaalde_facturen: number;
   };
   minimum_waarnemingen: number;
   periode_dagen: number;
+  /** Periode voor betaalt_binnen_dagen (BETAAL_PERIODE_DAGEN). */
+  betaal_periode_dagen: number;
   /** false zolang de tabel werkgever_beoordelingen niet bestaat (migratie niet gedraaid). */
   beoordelingen_beschikbaar: boolean;
 };
@@ -203,27 +255,32 @@ export function bouwWerkgeverProfiel(input: {
   beslissingen: readonly BeslisRij[];
   dienstIds: readonly string[];
   reacties: readonly ReactieRij[];
+  betalingen?: readonly BetaalRij[];
   beoordelingenBeschikbaar?: boolean;
   nu?: Date;
 }): WerkgeverProfielKern {
+  const nu = input.nu ?? new Date();
   const scores = scoreSamenvatting(input.beoordelingen);
-  const kiest = kiestBinnen(input.beslissingen, input.nu ?? new Date());
+  const kiest = kiestBinnen(input.beslissingen, nu);
   const kies = kiesPercentage(input.dienstIds, input.reacties);
+  const betaalt = betaaltBinnen(input.betalingen ?? [], nu);
   return {
     gemiddelde: scores.gemiddelde,
     aantal: scores.aantal,
     kiest_binnen_uren: kiest.uren,
     kies_percentage: kies.percentage,
-    betaalt_binnen_dagen: null,
+    betaalt_binnen_dagen: betaalt.dagen,
     deelscores: scores.deelscores,
     waarnemingen: {
       beoordelingen: scores.aantal,
       deelscores: scores.aantal_deelscores,
       beslissingen: kiest.aantal,
       diensten_met_reactie: kies.aantal,
+      betaalde_facturen: betaalt.aantal,
     },
     minimum_waarnemingen: MIN_WAARNEMINGEN,
     periode_dagen: PROFIEL_PERIODE_DAGEN,
+    betaal_periode_dagen: BETAAL_PERIODE_DAGEN,
     beoordelingen_beschikbaar: input.beoordelingenBeschikbaar ?? true,
   };
 }
@@ -270,4 +327,11 @@ export function kiestBinnenTekst(uren: number | null | undefined): string | null
   if (uren < 24) return `binnen ${Math.ceil(uren)} uur`;
   const dagen = Math.ceil(uren / 24);
   return dagen === 1 ? "binnen 1 dag" : `binnen ${dagen} dagen`;
+}
+
+/** 0 of 1 → "binnen 1 dag", 14 → "binnen 14 dagen" (betaalt_binnen_dagen is al naar boven afgerond). */
+export function betaaltBinnenTekst(dagen: number | null | undefined): string | null {
+  if (dagen == null || !Number.isFinite(dagen) || dagen < 0) return null;
+  const n = Math.max(1, Math.ceil(dagen));
+  return n === 1 ? "binnen 1 dag" : `binnen ${n} dagen`;
 }

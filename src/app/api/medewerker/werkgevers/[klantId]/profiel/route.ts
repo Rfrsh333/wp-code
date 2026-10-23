@@ -10,9 +10,9 @@ import { haalWerkgeverProfiel } from "@/lib/werkgever-profiel";
  * GET /api/medewerker/werkgevers/<klantId>/profiel → WerkgeverProfiel (stap 4 "Vertrouwen zoals YoungOnes")
  *
  * Wat een medewerker over een werkgever ziet: gemiddelde beoordeling en aantal, deelscores en de
- * kengetallen (kiest meestal binnen X uur, kiest in X% van de diensten iemand). Elk kengetal is null
- * onder het minimum aantal waarnemingen (3); betaalt_binnen_dagen is altijd null (geen betaaldatum
- * bekend). Nooit namen of opmerkingen.
+ * kengetallen (kiest meestal binnen X uur, kiest in X% van de diensten iemand, betaalt meestal binnen
+ * X dagen: factuurdatum → betaald_op, laatste 180 dagen). Elk kengetal is null onder het minimum aantal
+ * waarnemingen (3). Nooit namen of opmerkingen.
  *
  * Alleen werkgevers met minstens één dienst (zoals bij werkgevers bewaren), en alleen binnen de eigen
  * wereld (demo-scheiding); anders 404, zodat de route geen manier is om klantaccounts op te zoeken.

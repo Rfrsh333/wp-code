@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Clock, Lock, Star, UserCheck } from "lucide-react";
+import { Clock, Lock, Star, UserCheck, Wallet } from "lucide-react";
 import {
+  betaaltBinnenTekst,
   DEELSCORE_LABEL,
   DEELSCORES,
   kiestBinnenTekst,
@@ -52,6 +53,7 @@ export default function WerkgeverScoreKaart() {
   if (isLoading || isError || !data || !data.beoordelingen_beschikbaar) return null;
   const min = data.minimum_waarnemingen;
   const kiest = kiestBinnenTekst(data.kiest_binnen_uren);
+  const betaalt = betaaltBinnenTekst(data.betaalt_binnen_dagen);
 
   return (
     <section aria-labelledby="hoe-beoordeeld" className="rounded-2xl border border-[var(--kp-border)] bg-white p-5 shadow-sm space-y-4">
@@ -107,6 +109,15 @@ export default function WerkgeverScoreKaart() {
               teWeinig
             )}
             <span className="block text-xs text-neutral-500">Afgelopen diensten, laatste {data.periode_dagen} dagen.</span>
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <Wallet className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+          <span>
+            Facturen betalen: {betaalt ? <strong className="text-[var(--kp-text-primary)]">u betaalt meestal {betaalt}</strong> : teWeinig}
+            <span className="block text-xs text-neutral-500">
+              Van factuurdatum tot betaling, mediaan over de laatste {data.betaal_periode_dagen} dagen.
+            </span>
           </span>
         </li>
       </ul>

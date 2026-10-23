@@ -7,7 +7,8 @@ import { haalWerkgeverProfiel } from "@/lib/werkgever-profiel";
  * GET /api/klant/werkgever-profiel → "Hoe medewerkers u beoordelen" (stap 4 "Vertrouwen zoals YoungOnes")
  *
  * Hetzelfde profiel dat medewerkers over deze werkgever zien: gemiddelde en aantal, deelscores en de
- * kengetallen, plus het aantal waarnemingen erachter. Anoniem: geen namen, geen datums per
+ * kengetallen (ook betaalt_binnen_dagen: factuurdatum → betaald, laatste 180 dagen), plus het aantal
+ * waarnemingen erachter. Anoniem: geen namen, geen datums per
  * beoordeling en geen opmerkingen (die ziet alleen TopTalent). Kengetallen zijn null onder het
  * minimum aantal waarnemingen (3).
  */
