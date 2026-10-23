@@ -3,6 +3,8 @@ import { decryptField } from "@/lib/encryption";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
+import { haalDemoIds } from "@/lib/demo";
+import { isDemoMedewerkerId } from "@/lib/demo-regels";
 import { reageerChecklist, type ChecklistMedewerker, type ChecklistPunt } from "@/lib/medewerker/reageer-checklist";
 import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
 
@@ -18,15 +20,19 @@ export type ChecklistStatus = {
   overeenkomst: { versie: string; akkoord_op: string | null; akkoord_versie: string | null };
   /** true als migratie 20261023_medewerker_checklist_reageren nog niet gedraaid is: dan geen blokkade. */
   migratieOntbreekt: boolean;
+  /** Demo-/reviewaccount (Apple/Google): ziet alleen demodiensten en wordt niet geblokkeerd. */
+  demo: boolean;
 };
 
 const KOLOMMEN = "kvk_nummer, btw_nummer, iban, overeenkomst_akkoord_op, overeenkomst_akkoord_versie";
 
 export async function haalChecklist(medewerkerId: string): Promise<ChecklistStatus> {
-  const [{ data, error }, documenten] = await Promise.all([
+  const [{ data, error }, documenten, demoIds] = await Promise.all([
     supabaseAdmin.from("medewerkers").select(KOLOMMEN).eq("id", medewerkerId).maybeSingle(),
     haalKritiekeDocumenten([medewerkerId]),
+    haalDemoIds(),
   ]);
+  const demo = isDemoMedewerkerId(demoIds, medewerkerId);
 
   // Kolommen bestaan nog niet: niemand blokkeren op velden die hij niet kan invullen.
   const migratieOntbreekt = error?.code === "42703";
@@ -48,7 +54,8 @@ export async function haalChecklist(medewerkerId: string): Promise<ChecklistStat
   };
 
   const punten = reageerChecklist(medewerker, documenten.get(medewerkerId) ?? [], nlVandaag());
-  const ontbrekend = migratieOntbreekt ? [] : punten.filter((p) => !p.ok);
+  // Demo-accounts (app-review) en een ontbrekende migratie blokkeren niet.
+  const ontbrekend = migratieOntbreekt || demo ? [] : punten.filter((p) => !p.ok);
   return {
     compleet: ontbrekend.length === 0,
     punten,
@@ -59,5 +66,6 @@ export async function haalChecklist(medewerkerId: string): Promise<ChecklistStat
       akkoord_versie: medewerker.overeenkomst_akkoord_versie ?? null,
     },
     migratieOntbreekt,
+    demo,
   };
 }

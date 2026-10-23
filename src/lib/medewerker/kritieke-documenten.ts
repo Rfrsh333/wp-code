@@ -18,22 +18,28 @@ export async function haalKritiekeDocumenten(medewerkerIds: string[]): Promise<M
   const perMedewerker = new Map<string, KritiekDocument[]>();
   if (medewerkerIds.length === 0) return perMedewerker;
 
-  const query = (kolommen: string) =>
+  const query = (ids: string[], kolommen: string) =>
     supabaseAdmin
       .from("medewerker_documenten")
       .select(kolommen)
-      .in("medewerker_id", medewerkerIds)
+      .in("medewerker_id", ids)
       .in("document_type", [...KRITIEKE_DOCUMENTEN])
       .order("uploaded_at", { ascending: false })
       .limit(1000);
 
-  let { data, error } = await query("medewerker_id, document_type, expiry_date, uploaded_at, review_status");
-  if (error?.code === "42703") ({ data, error } = await query("medewerker_id, document_type, expiry_date, uploaded_at"));
+  // In blokken van 100 ids: de matching vraagt alle actieve medewerkers op en een lange
+  // `in(...)`-lijst in de URL loopt anders tegen de lengtegrens aan.
+  for (let i = 0; i < medewerkerIds.length; i += 100) {
+    const blok = medewerkerIds.slice(i, i + 100);
+    let { data, error } = await query(blok, "medewerker_id, document_type, expiry_date, uploaded_at, review_status");
+    if (error?.code === "42703") ({ data, error } = await query(blok, "medewerker_id, document_type, expiry_date, uploaded_at"));
+    if (error) throw error;
 
-  for (const doc of ((data ?? []) as unknown as KritiekDocument[])) {
-    const lijst = perMedewerker.get(doc.medewerker_id) ?? [];
-    lijst.push(doc);
-    perMedewerker.set(doc.medewerker_id, lijst);
+    for (const doc of ((data ?? []) as unknown as KritiekDocument[])) {
+      const lijst = perMedewerker.get(doc.medewerker_id) ?? [];
+      lijst.push(doc);
+      perMedewerker.set(doc.medewerker_id, lijst);
+    }
   }
   return perMedewerker;
 }
