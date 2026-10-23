@@ -47,6 +47,7 @@ const MedewerkersTab = dynamic(() => import("./MedewerkersTab"), { loading: () =
 const DienstenTab = dynamic(() => import("./DienstenTab"), { loading: () => <TabSkeleton />, ssr: false });
 const UrenTab = dynamic(() => import("./UrenTab"), { loading: () => <TabSkeleton />, ssr: false });
 const FacturenTab = dynamic(() => import("./FacturenTab"), { loading: () => <TabSkeleton />, ssr: false });
+const UitbetalingenTab = dynamic(() => import("./UitbetalingenTab"), { loading: () => <TabSkeleton />, ssr: false });
 const StatsTab = dynamic(() => import("./StatsTab"), { loading: () => <TabSkeleton />, ssr: false });
 const KandidaatWorkflowPanel = dynamic(() => import("./KandidaatWorkflowPanel"), { ssr: false });
 const MatchingTab = dynamic(() => import("./MatchingTab"), { loading: () => <TabSkeleton />, ssr: false });
@@ -1640,6 +1641,9 @@ export default function AdminDashboard() {
 
             {/* Facturen Tab */}
             {activeTab === "facturen" && <FacturenTab />}
+
+            {/* Uitbetalingen Tab (zelffacturering + SEPA) */}
+            {activeTab === "uitbetalingen" && <UitbetalingenTab />}
 
             {/* Stats Tab */}
             {activeTab === "stats" && <StatsTab />}

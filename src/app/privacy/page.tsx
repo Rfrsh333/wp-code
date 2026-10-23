@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import UitbetalingSectie from "./UitbetalingSectie";
 
 export const metadata: Metadata = {
   // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
@@ -115,6 +116,7 @@ export default function PrivacyPolicyPage() {
               <li>Loonheffingskorting en loonbelastingverklaring</li>
               <li>Eventuele loonbeslagen (indien van toepassing)</li>
             </ul>
+            <UitbetalingSectie />
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">3.6 Contract- en plaatsingsgegevens</h3>
             <ul className="list-disc pl-6 space-y-2">

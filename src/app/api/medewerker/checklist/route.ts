@@ -11,8 +11,11 @@ import { captureRouteError } from "@/lib/sentry-utils";
  *     compleet: boolean,             // true = mag reageren
  *     aantal_open: number,
  *     punten: [{ code, label, ok, uitleg, actie: { scherm, web_pad, label } }],
- *       // code ∈ id_bewijs | kvk_nummer | btw_nummer | iban | overeenkomst
- *       // scherm ∈ profiel | documenten | overeenkomst
+ *       // code ∈ id_bewijs | kvk_nummer | btw_nummer | iban | overeenkomst | zelffacturering
+ *       // scherm ∈ profiel | documenten | overeenkomst | zelffacturering
+ *       // zelffacturering (stap 6) staat er alleen bij met ZELFFACTURERING_ACTIEF=1 en migratie
+ *       // 20261024; akkoord geven via GET/POST /api/medewerker/zelffacturering. Onbekende
+ *       // `scherm`-waarden: open `web_pad`.
  *     overeenkomst: { versie, akkoord_op, akkoord_versie },
  *     actief: boolean                // false = migratie ontbreekt, er wordt (nog) niet geblokkeerd
  *   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
 
 interface MaandOverzicht {
@@ -160,6 +161,13 @@ export default function FinancieelOverzicht() {
             {tab.label}
           </button>
         ))}
+        {/* Stap 6 "Geld": facturen per kwartaal (zelffacturering) op een eigen pagina. */}
+        <Link
+          href="/medewerker/financieel/facturen"
+          className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-[var(--mp-text-secondary)] hover:text-[var(--mp-text-primary)]"
+        >
+          Facturen
+        </Link>
       </div>
 
       {isLoading ? (
@@ -267,13 +275,6 @@ export default function FinancieelOverzicht() {
             <h3 className="text-base font-medium text-[var(--mp-text-primary)] mb-2">Inkomsten laatste 30 dagen</h3>
             <p className="text-3xl font-bold text-[var(--mp-text-primary)]">€{last30.toFixed(2)}</p>
             <p className="text-sm text-[var(--mp-text-secondary)] mt-1">Het bedrag dat je verdiend hebt over de afgelopen 30 dagen.</p>
-            {last30 > 50 && (
-              <div className="mt-4 pt-4 border-t border-[var(--mp-separator)]">
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                  ⚡ Krijg direct betaald functie komt binnenkort beschikbaar
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Totalen */}

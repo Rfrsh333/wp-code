@@ -2,6 +2,7 @@ import { isGeldigIban } from "@/lib/medewerker/iban";
 import { isGeldigBtwNummer, isGeldigKvkNummer } from "@/lib/medewerker/zzp-gegevens";
 import { nieuwstePerType, teltVoorVerloop } from "@/lib/medewerker/dienst-regels";
 import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
+import { ZELFFACTURERING_VERSIE } from "@/content/zelffacturering-akkoord";
 
 /**
  * B1: wat in orde moet zijn voordat een medewerker zich mag aanmelden voor een dienst of een
@@ -12,15 +13,18 @@ import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
  * - KvK-nummer: 8 cijfers;
  * - btw-nummer: Nederlands formaat (ook met KOR heb je een btw-id);
  * - IBAN: geldig (mod-97);
- * - akkoord op de overeenkomst van opdracht, op de huidige versie.
+ * - akkoord op de overeenkomst van opdracht, op de huidige versie;
+ * - stap 6 "Geld": akkoord op zelffacturering, op de huidige versie. Alleen als akkoord geven kan
+ *   (ZELFFACTURERING_ACTIEF=1, tekst geen concept, termijn ingesteld, migratie gedraaid); de DB-kant
+ *   geeft dat door met `opties.zelffacturering`. Anders verandert er niets aan de checklist.
  */
 
 export const CHECKLIST_CODE = "checklist_onvolledig";
 
-export type ChecklistCode = "id_bewijs" | "kvk_nummer" | "btw_nummer" | "iban" | "overeenkomst";
+export type ChecklistCode = "id_bewijs" | "kvk_nummer" | "btw_nummer" | "iban" | "overeenkomst" | "zelffacturering";
 
 /** Waar het punt geregeld wordt: web-pad + soort scherm (voor de app). */
-export type ChecklistActie = { scherm: "profiel" | "documenten" | "overeenkomst"; web_pad: string; label: string };
+export type ChecklistActie = { scherm: "profiel" | "documenten" | "overeenkomst" | "zelffacturering"; web_pad: string; label: string };
 
 export type ChecklistPunt = {
   code: ChecklistCode;
@@ -39,6 +43,13 @@ export type ChecklistMedewerker = {
   iban?: string | null;
   overeenkomst_akkoord_op?: string | null;
   overeenkomst_akkoord_versie?: string | null;
+  zelffacturering_akkoord_op?: string | null;
+  zelffacturering_akkoord_versie?: string | null;
+};
+
+export type ChecklistOpties = {
+  /** true = punt "Akkoord zelffacturering" meenemen (vlag aan én migratie gedraaid). */
+  zelffacturering?: boolean;
 };
 
 export type ChecklistDocument = {
@@ -51,6 +62,7 @@ export type ChecklistDocument = {
 const PROFIEL: ChecklistActie = { scherm: "profiel", web_pad: "/medewerker/profiel", label: "Naar je profiel" };
 const DOCUMENTEN: ChecklistActie = { scherm: "documenten", web_pad: "/medewerker/documenten", label: "Naar je documenten" };
 const OVEREENKOMST: ChecklistActie = { scherm: "overeenkomst", web_pad: "/medewerker/overeenkomst", label: "Overeenkomst lezen" };
+const ZELFFACTURERING: ChecklistActie = { scherm: "zelffacturering", web_pad: "/medewerker/zelffacturering", label: "Lezen en akkoord geven" };
 
 /** Uitleg bij het ID-bewijs, of "" als er een goedgekeurd, geldig ID is. */
 function idUitleg(documenten: readonly ChecklistDocument[], vandaag: string): string {
@@ -72,6 +84,7 @@ export function reageerChecklist(
   medewerker: ChecklistMedewerker,
   documenten: readonly ChecklistDocument[],
   vandaag: string,
+  opties: ChecklistOpties = {},
 ): ChecklistPunt[] {
   const id = idUitleg(documenten, vandaag);
   const kvk = isGeldigKvkNummer(medewerker.kvk_nummer)
@@ -96,13 +109,24 @@ export function reageerChecklist(
         ? "De overeenkomst van opdracht is gewijzigd. Lees de nieuwe versie en ga akkoord."
         : "Lees de overeenkomst van opdracht en ga akkoord.";
 
-  return [
+  const punten: ChecklistPunt[] = [
     { code: "id_bewijs", label: "Geldig ID-bewijs", uitleg: id, ok: !id, actie: DOCUMENTEN },
     { code: "kvk_nummer", label: "KvK-nummer", uitleg: kvk, ok: !kvk, actie: PROFIEL },
     { code: "btw_nummer", label: "Btw-nummer", uitleg: btw, ok: !btw, actie: PROFIEL },
     { code: "iban", label: "IBAN", uitleg: iban, ok: !iban, actie: PROFIEL },
     { code: "overeenkomst", label: "Overeenkomst van opdracht", uitleg: akkoord, ok: !akkoord, actie: OVEREENKOMST },
   ];
+
+  if (opties.zelffacturering) {
+    const zf =
+      medewerker.zelffacturering_akkoord_op && medewerker.zelffacturering_akkoord_versie === ZELFFACTURERING_VERSIE
+        ? ""
+        : medewerker.zelffacturering_akkoord_op
+          ? "De afspraken over zelffacturering zijn gewijzigd. Lees de nieuwe versie en ga akkoord."
+          : "Geef TopTalent akkoord om de facturen voor je diensten namens jou op te maken (zelffacturering).";
+    punten.push({ code: "zelffacturering", label: "Akkoord zelffacturering", uitleg: zf, ok: !zf, actie: ZELFFACTURERING });
+  }
+  return punten;
 }
 
 /** Wat er nog ontbreekt voordat de medewerker mag reageren (lege lijst = alles in orde). */
@@ -110,8 +134,9 @@ export function ontbrekendVoorReageren(
   medewerker: ChecklistMedewerker,
   documenten: readonly ChecklistDocument[],
   vandaag: string,
+  opties: ChecklistOpties = {},
 ): ChecklistPunt[] {
-  return reageerChecklist(medewerker, documenten, vandaag).filter((p) => !p.ok);
+  return reageerChecklist(medewerker, documenten, vandaag, opties).filter((p) => !p.ok);
 }
 
 const ZINSDEEL: Record<ChecklistCode, string> = {
@@ -120,6 +145,7 @@ const ZINSDEEL: Record<ChecklistCode, string> = {
   btw_nummer: "je btw-nummer",
   iban: "je IBAN",
   overeenkomst: "je akkoord op de overeenkomst van opdracht",
+  zelffacturering: "je akkoord op zelffacturering",
 };
 
 /** Melding bij een geweigerde aanmelding (403 checklist_onvolledig). */

@@ -5,6 +5,8 @@ import { logAuditEvent } from "@/lib/audit-log";
 import { verwerkInzetbaar, type InzetbaarResultaat } from "@/lib/kandidaat-inzetbaar";
 import { dataPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { schrijfMetKolomFallback } from "@/lib/db-kolom-fallback";
+import { geldVeldenAdminData } from "@/lib/uitbetaling/admin-data-regels";
 
 // KRITIEK: Whitelist van toegestane tables om SQL injection te voorkomen
 const ALLOWED_TABLES = [
@@ -130,11 +132,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Stap 6 "Geld": factuurstatus, urenstatus/-goedkeuring en de koppeling uren ↔ klantfactuur bepalen
+  // of uren uitbetaalbaar zijn. Via deze generieke route alleen met een geld-rol; "betaald" krijgt betaald_op.
+  const geld = geldVeldenAdminData(table, action === "update" || action === "bulk_update" || action === "insert" ? data : undefined, action);
+  if (geld.vereistGeldRol && !hasRequiredAdminRole(role, ["owner", "finance"])) {
+    return NextResponse.json({ error: "Onvoldoende rechten — finance vereist" }, { status: 403 });
+  }
+  // Alleen bij "factuur op betaald" anders schrijven (met betaald_op, weggelaten zolang die kolom
+  // nog niet bestaat); alle andere updates gaan precies zoals voorheen.
+  const metBetaaldOp = geld.data && geld.optioneel.length > 0 ? geld.data : null;
+
   let generatedMedewerkerLinks = 0;
   const inzetbaarResultaten: InzetbaarResultaat[] = [];
 
   if (action === "update") {
-    const { error: updateError } = await supabaseAdmin.from(table).update(data).eq("id", id);
+    const { error: updateError } = metBetaaldOp
+      ? await schrijfMetKolomFallback(metBetaaldOp, geld.optioneel, (rij) => supabaseAdmin.from(table).update(rij).eq("id", id))
+      : await supabaseAdmin.from(table).update(data).eq("id", id);
     if (updateError) {
       captureRouteError(updateError, { route: "/api/admin/data", action: "POST" });
       // console.error(`[DATA] Update error on ${table}:`, updateError.message, { id, data });
@@ -207,7 +221,9 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const { error: bulkError } = await supabaseAdmin.from(table).update(data).in("id", ids);
+    const { error: bulkError } = metBetaaldOp
+      ? await schrijfMetKolomFallback(metBetaaldOp, geld.optioneel, (rij) => supabaseAdmin.from(table).update(rij).in("id", ids))
+      : await supabaseAdmin.from(table).update(data).in("id", ids);
     if (bulkError) {
       captureRouteError(bulkError, { route: "/api/admin/data", action: "POST" });
       // console.error(`[DATA] Bulk update error on ${table}:`, bulkError.message, { ids, data });

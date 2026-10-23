@@ -12,6 +12,7 @@ export const adminTabs = [
   "filters",
   "uren",
   "facturen",
+  "uitbetalingen",
   "matching",
   "ai",
   "acquisitie",
