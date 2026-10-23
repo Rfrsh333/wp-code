@@ -14,6 +14,8 @@ import {
   richtlijnBereik,
 } from "@/lib/medewerker/reactie-regels";
 import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+import { fotoVoorDienst } from "@/lib/sfeerfotos";
+import { haalBedrijfsfotos } from "@/lib/sfeerfotos-opslag";
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
     // Stap 2: Haal diensten op (los van aanmeldingen om join-problemen te voorkomen)
     const { data: diensten, error: dienstenError } = await supabaseAdmin
       .from("diensten")
-      .select("id, datum, start_tijd, eind_tijd, locatie, notities, functie, uurtarief, status, klant_naam, klant_id")
+      .select("id, datum, start_tijd, eind_tijd, locatie, notities, functie, uurtarief, status, klant_naam, klant_id, afbeelding_url")
       .in("id", dienstIds);
 
     if (dienstenError) {
@@ -78,9 +80,11 @@ export async function GET(request: NextRequest) {
 
     // Stap 3b: voorwaarden per aanmelding (tegenbod, eigen tijden, …) en kleding/pauze per dienst.
     // Zonder migratie leeg: dan gelden overal de tijden en het tarief van de dienst.
-    const [voorwaarden, extras] = await Promise.all([
+    // Plus de bedrijfsfoto's voor `foto` (dienst → bedrijfsfoto → standaard, lib/sfeerfotos.ts).
+    const [voorwaarden, extras, bedrijfsfotos] = await Promise.all([
       haalVoorwaarden(aanmeldingen.map((a) => a.id)),
       haalDienstExtras(dienstIds),
+      haalBedrijfsfotos(klantIds),
     ]);
 
     // Stap 4: Combineer data en filter op datum
@@ -145,6 +149,7 @@ export async function GET(request: NextRequest) {
             bedrijfsnaam: klant?.bedrijfsnaam || dienst.klant_naam || "Onbekend",
             bedrijf_foto_url: klant?.bedrijf_foto_url || null,
           },
+          foto: fotoVoorDienst(dienst, dienst.klant_id ? bedrijfsfotos.get(dienst.klant_id) : null),
         };
       })
       .filter((d): d is NonNullable<typeof d> => {

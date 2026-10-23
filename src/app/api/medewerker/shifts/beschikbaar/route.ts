@@ -13,6 +13,8 @@ import { afstandTussen } from "@/lib/locatie/locatie-regels";
 import { haalDienstLocaties, haalMedewerkerAfstand } from "@/lib/locatie/locatie-opslag";
 import { parseOntdekFilters, pasOntdekFiltersToe, sorteerOntdek } from "@/lib/medewerker/ontdekken-regels";
 import { haalVoorkeuren } from "@/lib/medewerker/werkgever-voorkeuren";
+import { fotoVoorDienst, type DienstFoto } from "@/lib/sfeerfotos";
+import { fotosVoorDiensten } from "@/lib/sfeerfotos-opslag";
 
 /**
  * De nieuwe Ontdekken-gegevens zijn een aanvulling: lukt een ervan niet, dan de lijst zonder
@@ -139,7 +141,8 @@ export async function GET(request: NextRequest) {
     // niet gedraaid is; dan is het antwoord zoals voorheen.
     const dienstIds = (diensten || []).map((d) => d.id as string);
     const { filters, ongeldig } = parseOntdekFilters(request.nextUrl.searchParams);
-    const [extras, mijnAfstand, dienstLocaties, voorkeuren, favorietBij, reacties] = await Promise.all([
+    // Sfeerfoto per dienst (dienst → bedrijfsfoto → standaard per functie, lib/sfeerfotos.ts).
+    const [extras, mijnAfstand, dienstLocaties, voorkeuren, favorietBij, reacties, fotos] = await Promise.all([
       haalDienstExtras(dienstIds),
       veilig(haalMedewerkerAfstand(medewerker.id), { beschikbaar: false, locatie: null, maxAfstandKm: null, postcodeIngevuld: false }, "AFSTAND"),
       veilig(haalDienstLocaties(dienstIds), new Map(), "DIENST_LOCATIES"),
@@ -149,6 +152,16 @@ export async function GET(request: NextRequest) {
         openReactiesPerDienst((diensten || []).map((d) => ({ id: d.id as string, datum: d.datum as string, start_tijd: d.start_tijd as string }))),
         new Map<string, number>(),
         "REACTIES",
+      ),
+      veilig(
+        fotosVoorDiensten((diensten || []).map((d) => ({
+          id: d.id as string,
+          functie: d.functie as string | null,
+          afbeelding_url: d.afbeelding_url as string | null,
+          klant_id: (d.klant_id as string | null) ?? ((d.klant as { id?: string } | null)?.id ?? null),
+        }))),
+        new Map<string, DienstFoto>(),
+        "FOTOS",
       ),
     ]);
     const ikBenFavorietBij = new Set(((favorietBij.data ?? []) as { klant_id: string }[]).map((f) => f.klant_id));
@@ -207,6 +220,10 @@ export async function GET(request: NextRequest) {
           plekken_beschikbaar: plekkenBeschikbaar,
           plekken_totaal: plekkenTotaal,
           afbeelding_url: d.afbeelding_url || null,
+          // Altijd een foto: { groot, klein, bron: "dienst" | "bedrijf" | "standaard" }.
+          foto:
+            fotos.get(d.id as string) ??
+            fotoVoorDienst({ id: d.id as string, functie: d.functie as string | null, afbeelding_url: d.afbeelding_url as string | null }),
           klant_id: klantId,
           klant: {
             id: klantId,

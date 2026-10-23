@@ -11,6 +11,7 @@ import { sendTelegramAlert } from "@/lib/telegram";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isDemoKlant } from "@/lib/demo";
 import { wisOntdekGegevensKlant } from "@/lib/locatie/locatie-opslag";
+import { leesBedrijfsfoto, verwijderBedrijfsfotoBestand } from "@/lib/sfeerfotos-opslag";
 
 /**
  * Account verwijderen (App Store-richtlijn 5.1.1(v)).
@@ -20,6 +21,7 @@ import { wisOntdekGegevensKlant } from "@/lib/locatie/locatie-opslag";
  * - status 'verwijderd' (valt terug op 'inactief' als een CHECK-constraint dat weigert) →
  *   inloggen en elke API geven direct 401 (getKlantSession controleert de status);
  * - persoonsgegevens geanonimiseerd: contactpersoon, e-mail, telefoon, wachtwoord, resettoken;
+ * - de bedrijfsfoto (klanten.foto_url) leeggemaakt en een geüploade foto uit de opslag verwijderd;
  * - bedrijfsgegevens (naam, adres, KvK, btw) blijven alleen staan als er facturen zijn — die
  *   horen bij de factuur; zonder facturen worden ook die gewist;
  * - facturen zelf worden hier nooit gewijzigd: de klant-NAW staat als snapshot op de factuur
@@ -97,6 +99,9 @@ export async function POST(request: NextRequest) {
     // Onbruikbaar wachtwoord: hash van willekeurige bytes die niemand kent.
     const onbruikbaar = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
 
+    // Bedrijfsfoto: na het anonimiseren ook het geüploade bestand opruimen (catalogusfoto's niet).
+    const bedrijfsfoto = await leesBedrijfsfoto(klant.id).catch(() => ({ beschikbaar: false, fotoUrl: null }));
+
     const anoniem: Record<string, unknown> = {
       status: "verwijderd",
       contactpersoon: "Verwijderd",
@@ -106,6 +111,8 @@ export async function POST(request: NextRequest) {
       reset_token: null,
       reset_token_expires_at: null,
       verwijderd_at: new Date().toISOString(),
+      // Bestaat pas na migratie 20261023_bedrijfsfoto.sql; de herhaallus hieronder laat hem dan weg.
+      foto_url: null,
     };
     if (!aantalFacturen) {
       Object.assign(anoniem, {
@@ -186,6 +193,9 @@ export async function POST(request: NextRequest) {
       supabaseAdmin.from("push_subscriptions").delete().eq("user_id", klant.id).eq("user_type", "klant"),
       // Globale locatie van zijn diensten en bewaar-/verbergkeuzes van medewerkers voor deze werkgever.
       wisOntdekGegevensKlant(klant.id).catch((e) => captureRouteError(e, { route: "/api/klant/account/verwijderen", action: "ONTDEKKEN_WISSEN" })),
+      verwijderBedrijfsfotoBestand(klant.id, bedrijfsfoto.fotoUrl).catch((e) =>
+        captureRouteError(e, { route: "/api/klant/account/verwijderen", action: "BEDRIJFSFOTO_WISSEN" }),
+      ),
     ]);
 
     await revokeSessions("klanten", klant.id);

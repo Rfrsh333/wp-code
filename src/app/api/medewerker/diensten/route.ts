@@ -14,6 +14,8 @@ import { meldAan, meldAf, planVervangerIn, werkBezettingBij, aanmeldFoutBody } f
 import { beperkDiensten, haalDemoIds } from "@/lib/demo";
 import { intrekInfo, reactieUitBody, richtlijnBereik } from "@/lib/medewerker/reactie-regels";
 import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+import { fotoVoorDienst } from "@/lib/sfeerfotos";
+import { fotosVoorDiensten } from "@/lib/sfeerfotos-opslag";
 
 type UrenRegistratie = { status: string };
 
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
       .from("diensten")
       .select(`
         id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, klant_id, status, notities, aantal_nodig, uurtarief,
-        categorie_id, functie_id, vereiste_taal,
+        afbeelding_url, categorie_id, functie_id, vereiste_taal,
         categorie:dienst_categorieen(naam, slug),
         functie_ref:dienst_functies(naam, slug),
         klant:klanten(qr_verplicht)
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
     console.warn("[MEDEWERKER DIENSTEN] Join query failed, using fallback:", queryError);
     const { data: fallbackData } = await beperkDiensten(supabaseAdmin
       .from("diensten")
-      .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, status, notities, aantal_nodig, uurtarief")
+      .select("id, datum, start_tijd, eind_tijd, functie, locatie, klant_naam, klant_id, status, notities, aantal_nodig, uurtarief, afbeelding_url")
       .in("status", ["open", "vol"])
       .gte("datum", nlVandaag())
       .order("datum", { ascending: true })
@@ -147,9 +149,18 @@ export async function GET(request: NextRequest) {
 
   // Uitgebreid reageren: een reactie voorbij haar intrekmoment heeft status `geannuleerd` (lazy
   // check), en kledingvoorschrift + pauze per dienst (leeg zolang de migratie niet gedraaid is).
-  const [voorwaarden, extras] = await Promise.all([
+  // Plus de sfeerfoto per dienst (dienst → bedrijfsfoto → standaard per functie, lib/sfeerfotos.ts).
+  const [voorwaarden, extras, fotos] = await Promise.all([
     haalVoorwaarden((aanmeldingen ?? []).map((a) => a.id)),
     haalDienstExtras((alleDienstenCompat || []).map((d) => d.id as string)),
+    fotosVoorDiensten(
+      (alleDienstenCompat || []).map((d) => ({
+        id: d.id as string,
+        functie: d.functie as string | null,
+        afbeelding_url: d.afbeelding_url as string | null,
+        klant_id: d.klant_id as string | null,
+      })),
+    ),
   ]);
   const dienstInfo = new Map((alleDienstenCompat || []).map((d) => [d.id as string, d as { datum?: string; start_tijd?: string }]));
 
@@ -194,6 +205,9 @@ export async function GET(request: NextRequest) {
     check_in_at: aanmeldMap.get(d.id as string)?.check_in_at,
     uren_status: aanmeldMap.get(d.id as string)?.uren_status,
     qr_verplicht: (d.klant as Record<string, unknown> | null)?.qr_verplicht !== false,
+    foto:
+      fotos.get(d.id as string) ??
+      fotoVoorDienst({ id: d.id as string, functie: d.functie as string | null, afbeelding_url: d.afbeelding_url as string | null }),
   }));
 
   // FASE 6: Compute automatic tags

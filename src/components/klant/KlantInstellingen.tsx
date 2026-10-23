@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/Toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { klantKeys, useKlantAccount } from "@/hooks/queries/useKlantQueries";
+import Bedrijfsfoto from "@/components/klant/Bedrijfsfoto";
 
 interface Account {
   bedrijfsnaam: string;
@@ -33,7 +34,7 @@ async function post(url: string, method: string, body: unknown) {
 }
 
 /**
- * Instellingen-tab: bedrijfsgegevens, wachtwoord, meldingen, uitloggen en account verwijderen
+ * Instellingen-tab: bedrijfsgegevens, bedrijfsfoto, wachtwoord, meldingen, uitloggen en account verwijderen
  * (App Store 5.1.1(v): verwijderen moet in de app zelf kunnen).
  */
 export default function KlantInstellingen({ onLogout }: { onLogout: () => void }) {
@@ -54,7 +55,7 @@ export default function KlantInstellingen({ onLogout }: { onLogout: () => void }
     <div className="space-y-6 max-w-2xl">
       <div>
         <h2 className="text-2xl font-bold text-neutral-900">Instellingen</h2>
-        <p className="mt-1 text-sm text-neutral-500">Uw bedrijfsgegevens, wachtwoord en account.</p>
+        <p className="mt-1 text-sm text-neutral-500">Uw bedrijfsgegevens, bedrijfsfoto, wachtwoord en account.</p>
       </div>
 
       <Bedrijfsgegevens
@@ -66,6 +67,7 @@ export default function KlantInstellingen({ onLogout }: { onLogout: () => void }
         }}
         onFout={(m) => toast.error(m)}
       />
+      <Bedrijfsfoto />
       <WachtwoordWijzigen onSucces={() => toast.success("Wachtwoord gewijzigd. Andere apparaten zijn uitgelogd.")} onFout={(m) => toast.error(m)} />
       <Meldingen />
 

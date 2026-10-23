@@ -43,7 +43,7 @@ const securityHeaders = [
       "form-action 'self'",
       "script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://vercel.live https://www.clarity.ms https://c.clarity.ms https://scripts.clarity.ms https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com https://www.googletagmanager.com https://www.google.com https://www.gstatic.com https://lh3.googleusercontent.com https://images.unsplash.com",
+      "img-src 'self' data: blob: https://www.toptalentjobs.nl https://*.supabase.co https://www.google-analytics.com https://www.googletagmanager.com https://www.google.com https://www.gstatic.com https://lh3.googleusercontent.com https://images.unsplash.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "frame-src https://www.google.com https://vercel.live",
       "worker-src 'self' blob:",
@@ -144,10 +144,18 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // API responses: niet cachen
-        source: '/api/:path*',
+        // API responses: niet cachen. Uitzondering: de openbare catalogus van standaardfoto's
+        // (/api/sfeerfotos), die zet zelf een publieke Cache-Control.
+        source: '/api/:path((?!sfeerfotos(?:/|$)).*)',
         headers: [
           { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
+        source: '/api/sfeerfotos',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
       },

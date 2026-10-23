@@ -8,6 +8,8 @@ import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { isAanbiedingVerlopen } from "@/lib/medewerker/dienst-regels";
 import { isDemoMedewerker } from "@/lib/demo";
 import { GEEN_EXTRAS, haalDienstExtras } from "@/lib/medewerker/reactie-voorwaarden";
+import { fotoVoorDienst } from "@/lib/sfeerfotos";
+import { haalBedrijfsfotos } from "@/lib/sfeerfotos-opslag";
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   const { data } = await supabaseAdmin
     .from("dienst_aanbiedingen")
-    .select("*, dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie, uurtarief)")
+    .select("*, dienst:diensten(klant_naam, klant_id, locatie, datum, start_tijd, eind_tijd, functie, uurtarief, afbeelding_url)")
     .eq("medewerker_id", medewerker.id)
     .order("aangeboden_at", { ascending: false })
     .limit(100);
@@ -23,9 +25,18 @@ export async function GET(request: NextRequest) {
   // Een aanbieding is 48 uur geldig (verlopen_at). Een verlopen, onbeantwoorde aanbieding
   // tonen we als "verlopen", zodat er geen Accepteren-knop meer bij staat.
   // Kledingvoorschrift en pauze bij de dienst (leeg zolang de migratie niet gedraaid is).
-  const extras = await haalDienstExtras((data || []).map((a) => a.dienst_id as string));
+  // En de sfeerfoto van de dienst (dienst → bedrijfsfoto → standaard, lib/sfeerfotos.ts).
+  type DienstEmbed = { klant_id?: string | null; functie?: string | null; afbeelding_url?: string | null };
+  const [extras, bedrijfsfotos] = await Promise.all([
+    haalDienstExtras((data || []).map((a) => a.dienst_id as string)),
+    haalBedrijfsfotos((data || []).map((a) => (a.dienst as DienstEmbed | null)?.klant_id)),
+  ]);
   const aanbiedingen = (data || []).map((a) => {
-    const metExtras = a.dienst ? { ...a, dienst: { ...a.dienst, ...(extras.get(a.dienst_id as string) ?? GEEN_EXTRAS) } } : a;
+    const d = a.dienst as DienstEmbed | null;
+    const foto = d
+      ? fotoVoorDienst({ id: a.dienst_id as string, functie: d.functie, afbeelding_url: d.afbeelding_url }, d.klant_id ? bedrijfsfotos.get(d.klant_id) : null)
+      : null;
+    const metExtras = a.dienst ? { ...a, dienst: { ...a.dienst, ...(extras.get(a.dienst_id as string) ?? GEEN_EXTRAS), foto } } : a;
     return a.status === "aangeboden" && isAanbiedingVerlopen(a.verlopen_at) ? { ...metExtras, status: "verlopen" } : metExtras;
   });
 

@@ -4,6 +4,8 @@ import { getKlantSession } from "@/lib/portal-auth";
 import { isIngepland } from "@/lib/dienst-status";
 import { geldendeTijden } from "@/lib/medewerker/reactie-regels";
 import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+import { fotoVoorDienst } from "@/lib/sfeerfotos";
+import { haalBedrijfsfotos } from "@/lib/sfeerfotos-opslag";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
   const { data: diensten } = await supabaseAdmin
     .from("diensten")
     .select(`
-      id, datum, start_tijd, eind_tijd, locatie, functie, status, aantal_nodig,
+      id, datum, start_tijd, eind_tijd, locatie, functie, status, aantal_nodig, afbeelding_url,
       dienst_aanmeldingen(
         id, status,
         medewerker:medewerkers(id, naam, functie, profile_photo_url)
@@ -36,9 +38,11 @@ export async function GET(request: NextRequest) {
   // Per ingeplande medewerker de tijden die voor hem gelden (eigen tijden na acceptatie), en per
   // dienst kledingvoorschrift en pauze (leeg zolang de migratie niet gedraaid is).
   const alleAanmeldingIds = (diensten || []).flatMap((d) => (d.dienst_aanmeldingen || []).map((a: { id: string }) => a.id));
-  const [voorwaarden, extras] = await Promise.all([
+  // Plus de eigen bedrijfsfoto voor `foto` (dienst → bedrijfsfoto → standaard, lib/sfeerfotos.ts).
+  const [voorwaarden, extras, bedrijfsfotos] = await Promise.all([
     haalVoorwaarden(alleAanmeldingIds),
     haalDienstExtras((diensten || []).map((d) => d.id)),
+    haalBedrijfsfotos([klant.id]),
   ]);
 
   const rooster = (diensten || []).map((d) => ({
@@ -51,6 +55,7 @@ export async function GET(request: NextRequest) {
     status: d.status,
     aantal_nodig: d.aantal_nodig,
     ...(extras.get(d.id) ?? GEEN_EXTRAS),
+    foto: fotoVoorDienst(d, bedrijfsfotos.get(klant.id)),
     medewerkers: (d.dienst_aanmeldingen || [])
       // Ingepland = geaccepteerd door de klant óf bevestigd door medewerker/admin.
       .filter((a: { status: string }) => isIngepland(a.status))
