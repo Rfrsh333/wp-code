@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { normaliseerBeschikbaarheid, schoneBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) {
       console.warn("[SECURITY] Invalid medewerker session token");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return geenMedewerkerToegang(request);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) {
       console.warn("[SECURITY] Invalid medewerker session token");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return geenMedewerkerToegang(request);
     }
 
     const wantOverrides = request.nextUrl.searchParams.get("overrides") === "true";
@@ -112,7 +113,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const { week_start, beschikbaarheid: ruw, notitie } = await request.json();
     const beschikbaarheid = schoneBeschikbaarheid(ruw);
@@ -151,7 +152,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const weekStart = request.nextUrl.searchParams.get("week_start");
     if (!weekStart) return NextResponse.json({ error: "week_start is verplicht" }, { status: 400 });

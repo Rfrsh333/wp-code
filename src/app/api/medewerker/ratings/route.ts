@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   // Haal alle beoordelingen op
   const { data: beoordelingen } = await supabaseAdmin

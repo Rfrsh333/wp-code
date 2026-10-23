@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   // Fetch inbox (berichten aan mij) + verzonden (berichten van mij)
   const { data: inbox } = await supabaseAdmin
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const body = await request.json().catch(() => ({}));
   const onderwerp = typeof body.onderwerp === "string" ? body.onderwerp.slice(0, 200) : null;

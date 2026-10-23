@@ -15,6 +15,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { APP_TOKEN_GELDIGHEID } from "@/lib/klant-sessie-cookie";
 import { normaliseerEmail } from "@/lib/email-normalisatie";
 import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
+import { loginToegang } from "@/lib/medewerker/account-status";
 
 // Login voor de native app (één app, rolkeuze bij inloggen).
 // Zelfde controles als de web-logins, maar het token komt in de body: de app bewaart het in
@@ -69,8 +70,14 @@ export async function POST(request: NextRequest) {
       }>("medewerkers", "id, naam, email, functie, wachtwoord, status", email);
 
       const valid = await bcrypt.compare(wachtwoord, m?.wachtwoord || DUMMY_HASH);
-      if (!m || !valid || m.status !== "actief") {
+      if (!m || !valid) {
         return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
+      }
+      // B5: gepauzeerd krijgt wel een token (status, boete en betalen werken; de andere routes
+      // geven 403 `account_gepauzeerd`, geen 401). Andere statussen: eerlijke melding.
+      const toegang = loginToegang(m.status);
+      if (toegang.soort === "geweigerd") {
+        return NextResponse.json({ error: toegang.melding, code: toegang.code }, { status: 403 });
       }
 
       await supabase.from("medewerkers").update({ laatste_login: new Date().toISOString() }).eq("id", m.id);
@@ -82,6 +89,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         token,
         rol,
+        status: toegang.soort,
+        ...(toegang.soort === "gepauzeerd" ? { code: toegang.code, melding: toegang.melding } : {}),
         gebruiker: { id: m.id, naam: m.naam, email: m.email, functie: m.functie },
       });
     }

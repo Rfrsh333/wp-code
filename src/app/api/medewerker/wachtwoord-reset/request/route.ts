@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
+import { magWachtwoordResetten } from "@/lib/medewerker/account-status";
 import { sendMedewerkerPasswordResetEmail } from "@/lib/medewerker-password-reset";
 import { captureRouteError } from "@/lib/sentry-utils";
 
@@ -29,7 +30,8 @@ export async function POST(request: NextRequest) {
       String(email),
     );
 
-    if (medewerker && medewerker.status === "actief") {
+    // Ook gepauzeerd (B5): anders kan wie zijn wachtwoord kwijt is de boete nooit betalen.
+    if (medewerker && magWachtwoordResetten(medewerker.status)) {
       await sendMedewerkerPasswordResetEmail({
         id: medewerker.id,
         naam: medewerker.naam,

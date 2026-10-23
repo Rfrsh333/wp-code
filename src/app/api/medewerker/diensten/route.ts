@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
@@ -37,7 +38,7 @@ type UrenAanpassing = {
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   // Parse filter params
   const { searchParams } = new URL(request.url);
@@ -306,7 +307,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
   const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
 
   if (action === "aanmelden") {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
@@ -10,7 +11,7 @@ import { annuleerUitkomst, urenTotDienststart } from "@/lib/medewerker/dienst-re
 // POST — initieer vervangingsverzoek
 export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const { dienst_id } = await request.json();
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
 // PATCH — originele medewerker accepteert/weigert vervanger
 export async function PATCH(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const { vervanging_id, actie, vervanger_aanmelding_id } = await request.json();
 

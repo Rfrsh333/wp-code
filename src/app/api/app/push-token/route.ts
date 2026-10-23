@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase";
-import { getKlantSession, getMedewerkerSession } from "@/lib/portal-auth";
+import { getKlantSession } from "@/lib/portal-auth";
+import { getMedewerkerSessieInclGepauzeerd } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 
 // Registreert het Expo-pushtoken van de native app (APNs/FCM via Expo).
@@ -13,7 +14,9 @@ const schema = z.object({
 });
 
 async function huidigeGebruiker(request: NextRequest) {
-  const medewerker = await getMedewerkerSession(request);
+  // Ook een gepauzeerd account (B5): de app registreert het token direct na het inloggen, en een
+  // 401 zou de app laten uitloggen. Een pushbericht ontvangen kan geen kwaad.
+  const medewerker = await getMedewerkerSessieInclGepauzeerd(request);
   if (medewerker) return { id: medewerker.id, type: "medewerker" as const };
   const klant = await getKlantSession(request);
   if (klant) return { id: klant.id, type: "klant" as const };

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { roundCurrency } from "@/lib/reiskosten";
 import { haalUrenRegistraties } from "@/lib/medewerker/uren";
@@ -8,7 +9,7 @@ import { isVerdiend, verdienstenVanRegel } from "@/lib/medewerker/uren-regels";
 export async function GET(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const registraties = await haalUrenRegistraties(medewerker.id, 1000);
 

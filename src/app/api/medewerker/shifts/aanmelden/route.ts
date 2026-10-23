@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { meldAan } from "@/lib/medewerker/aanmelden";
 
 export async function POST(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const { dienst_id } = await request.json();
 

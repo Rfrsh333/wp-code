@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { isSessieVerlopen, type Portaal } from "@/lib/sessie-verlopen";
+import { isAccountGepauzeerd, isSessieVerlopen, type Portaal } from "@/lib/sessie-verlopen";
+import { ACCOUNT_STATUS_HEADER, GEPAUZEERD_PAGINA } from "@/lib/medewerker/account-status";
 
 let bezigMetUitloggen = false;
 
@@ -18,6 +19,22 @@ export default function SessieVerlopenBewaker({ portaal }: { portaal: Portaal })
     const omhulsel: typeof window.fetch = async (input, init) => {
       const res = await origineel(input, init);
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      // Gepauzeerd account (B5): niet uitloggen, maar naar de pagina met status en boete.
+      if (
+        !bezigMetUitloggen &&
+        isAccountGepauzeerd({
+          portaal,
+          status: res.status,
+          accountStatus: res.headers.get(ACCOUNT_STATUS_HEADER),
+          url,
+          origin: window.location.origin,
+          paginaPad: window.location.pathname,
+        })
+      ) {
+        bezigMetUitloggen = true;
+        window.location.replace(GEPAUZEERD_PAGINA);
+        return res;
+      }
       if (
         !bezigMetUitloggen &&
         isSessieVerlopen({

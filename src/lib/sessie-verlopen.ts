@@ -41,3 +41,25 @@ export function isSessieVerlopen(input: {
   const paginaDeel = pagina.slice(paginaPrefix.length).split("/")[0];
   return !OPENBARE_PAGINAS.includes(paginaDeel);
 }
+
+/**
+ * B5: is dit een 403 van een gepauzeerd medewerkeraccount (header `x-account-status: gepauzeerd`)
+ * op een gewone portaalpagina? Dan stuurt de bewaker door naar /medewerker/gepauzeerd in plaats
+ * van uit te loggen. Op de gepauzeerd-pagina zelf nooit (voorkomt lussen).
+ */
+export function isAccountGepauzeerd(input: {
+  portaal: Portaal;
+  status: number;
+  accountStatus: string | null;
+  url: string;
+  origin: string;
+  paginaPad: string;
+}): boolean {
+  if (input.portaal !== "medewerker" || input.status !== 403 || input.accountStatus !== "gepauzeerd") return false;
+  const api = pad(input.url, input.origin);
+  if (!api || !api.startsWith("/api/medewerker/")) return false;
+  const pagina = input.paginaPad.endsWith("/") ? input.paginaPad : `${input.paginaPad}/`;
+  if (!pagina.startsWith("/medewerker/")) return false;
+  const paginaDeel = pagina.slice("/medewerker/".length).split("/")[0];
+  return paginaDeel !== "gepauzeerd" && !OPENBARE_PAGINAS.includes(paginaDeel);
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { checkRedisRateLimit, loginRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { logAuditEvent } from "@/lib/audit-log";
@@ -19,7 +20,7 @@ import { isDemoMedewerker } from "@/lib/demo";
  */
 export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const limiet = await checkRedisRateLimit(`medewerker-account-verwijderen:${medewerker.id}`, loginRateLimit, {
     failClosed: true,
