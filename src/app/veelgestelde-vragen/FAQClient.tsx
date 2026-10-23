@@ -140,7 +140,7 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
                   onClick={() => scrollToCategory(cat)}
                   className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     activeCategory === cat
-                      ? "bg-[#B85600] text-white"
+                      ? "bg-[#F27501] text-[#1D1B19]"
                       : "bg-neutral-100 text-neutral-700 hover:bg-orange-50 hover:text-[#9a4700]"
                   }`}
                 >
@@ -249,7 +249,7 @@ export default function FAQClient({ initialFaqs }: { initialFaqs: FAQItem[] }) {
       <Section variant="white" spacing="large">
         <Container>
           <FadeIn>
-            <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2" />
                 <div className="absolute bottom-0 right-0 w-60 h-60 border border-white/20 rounded-full translate-x-1/3 translate-y-1/3" />
@@ -355,7 +355,7 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
             <span className="text-sm font-medium text-neutral-900 hidden sm:block">
               Staat jouw vraag er niet bij?
             </span>
-            <span className="bg-[#B85600] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#9a4700] transition-all duration-300 flex items-center gap-2 whitespace-nowrap">
+            <span className="bg-[#F27501] text-[#1D1B19] px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#E06C00] transition-all duration-300 flex items-center gap-2 whitespace-nowrap">
               Stel je vraag
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -409,7 +409,7 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
                 </p>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="bg-[#B85600] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors"
+                  className="bg-[#F27501] text-[#1D1B19] px-6 py-2.5 rounded-xl font-semibold hover:bg-[#E06C00] transition-colors"
                 >
                   Sluiten
                 </button>
@@ -484,7 +484,7 @@ function SubmitQuestionFloating({ toast }: { toast: ReturnType<typeof useToast> 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#B85600] text-white py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#F27501] text-[#1D1B19] py-3 rounded-xl font-semibold hover:bg-[#E06C00] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Versturen..." : "Vraag insturen"}
                   </button>

@@ -55,7 +55,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
               aria-current={currentPage === page ? "page" : undefined}
               className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                 currentPage === page
-                  ? "bg-[#B85600] text-white"
+                  ? "bg-[#F27501] text-[#1D1B19]"
                   : "text-neutral-600 hover:bg-neutral-100"
               }`}
             >

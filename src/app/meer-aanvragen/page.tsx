@@ -103,7 +103,7 @@ export default function MeerAanvragenPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/kosten-calculator/"
-                className="inline-flex items-center justify-center rounded-xl bg-[#B85600] px-6 py-3 font-semibold text-white transition-colors hover:bg-[#9a4700]"
+                className="inline-flex items-center justify-center rounded-xl bg-[#F27501] px-6 py-3 font-semibold text-[#1D1B19] transition-colors hover:bg-[#E06C00]"
               >
                 Naar de kostencalculator
               </Link>

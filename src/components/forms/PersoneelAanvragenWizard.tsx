@@ -283,7 +283,7 @@ export default function PersoneelAanvragenWizard({
             setCurrentStep(0);
             setIsSubmitted(false);
           }}
-          className="bg-[#B85600] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#9a4700] transition-colors"
+          className="bg-[#F27501] text-[#1D1B19] px-8 py-3 rounded-lg font-semibold hover:bg-[#E06C00] transition-colors"
         >
           Nieuwe aanvraag
         </button>
@@ -305,7 +305,7 @@ export default function PersoneelAanvragenWizard({
                 aria-label={`Stap ${step}: ${stepLabels[index]}${index < currentStep ? " (voltooid)" : index === currentStep ? " (huidige stap)" : ""}`}
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
                   index <= currentStep
-                    ? "bg-[#B85600] text-white"
+                    ? "bg-[#F27501] text-[#1D1B19]"
                     : "bg-neutral-200 text-neutral-500"
                 }`}
               >
@@ -457,7 +457,7 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.typePersoneel.includes(type)}
                         className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.typePersoneel.includes(type)
-                            ? "bg-[#B85600] border-[#F27501] text-white"
+                            ? "bg-[#F27501] border-[#F27501] text-[#1D1B19]"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]"
                         }`}
                       >
@@ -496,7 +496,7 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.aantalPersonen === aantal}
                         className={`px-6 py-3 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.aantalPersonen === aantal
-                            ? "bg-[#B85600] border-[#F27501] text-white"
+                            ? "bg-[#F27501] border-[#F27501] text-[#1D1B19]"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]"
                         }`}
                       >
@@ -522,7 +522,7 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.contractType.includes(option.value)}
                         className={`px-4 py-4 rounded-lg border text-left transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.contractType.includes(option.value)
-                            ? "bg-[#B85600] border-[#F27501] text-white"
+                            ? "bg-[#F27501] border-[#F27501] text-[#1D1B19]"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501]"
                         }`}
                       >
@@ -665,7 +665,7 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.werkdagen.includes(dag)}
                         className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.werkdagen.includes(dag)
-                            ? "bg-[#B85600] border-[#F27501] text-white"
+                            ? "bg-[#F27501] border-[#F27501] text-[#1D1B19]"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]"
                         }`}
                       >
@@ -794,7 +794,7 @@ export default function PersoneelAanvragenWizard({
           <button
             type="button"
             onClick={nextStep}
-            className="bg-[#B85600] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#9a4700] transition-colors shadow-lg shadow-orange-500/20"
+            className="bg-[#F27501] text-[#1D1B19] px-8 py-3 rounded-lg font-semibold hover:bg-[#E06C00] transition-colors shadow-lg shadow-orange-500/20"
           >
             Volgende &rarr;
           </button>
@@ -803,7 +803,7 @@ export default function PersoneelAanvragenWizard({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-[#B85600] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#9a4700] transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#F27501] text-[#1D1B19] px-8 py-3 rounded-lg font-semibold hover:bg-[#E06C00] transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Verzenden..." : "Aanvraag versturen"}
           </button>

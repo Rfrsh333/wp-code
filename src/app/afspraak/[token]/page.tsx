@@ -120,7 +120,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           <p className="text-neutral-500 mb-6">{error || "Deze link is niet meer geldig of verlopen."}</p>
           <a
             href="/afspraak-plannen/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F27501] text-[#1D1B19] rounded-xl font-medium hover:bg-[#E06C00] transition-all duration-300 shadow-lg shadow-orange-500/20"
           >
             Nieuwe afspraak plannen
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +139,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
         <style>{`
           @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
-        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+        <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
           <div className="max-w-3xl mx-auto px-4 py-14 text-center">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +156,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
             <p className="text-neutral-400 text-sm mb-6">Het tijdslot is weer vrijgegeven.</p>
             <a
               href="/afspraak-plannen/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/20"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#F27501] text-[#1D1B19] rounded-xl font-medium hover:bg-[#E06C00] transition-all duration-300 shadow-lg shadow-orange-500/20"
             >
               Nieuwe afspraak plannen
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +195,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           <p className="text-neutral-500 mb-6">Deze afspraak kan niet meer gewijzigd worden.</p>
           <a
             href="/afspraak-plannen/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700] transition-all duration-300"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F27501] text-[#1D1B19] rounded-xl font-medium hover:bg-[#E06C00] transition-all duration-300"
           >
             Nieuwe afspraak plannen
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +213,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
       <style>{`
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
-      <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+      <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
         <div className="max-w-3xl mx-auto px-4 py-10 md:py-12 text-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Je afspraak beheren</h1>
           <p className="text-white/90">Bekijk of annuleer je geplande afspraak.</p>

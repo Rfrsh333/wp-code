@@ -148,7 +148,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
             <span className="text-neutral-700">{article.category}</span>
           </nav>
 
-          <span className="inline-block bg-[#B85600] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide mb-4">
+          <span className="inline-block bg-[#F27501] text-[#1D1B19] text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide mb-4">
             {article.category}
           </span>
 

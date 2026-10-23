@@ -222,7 +222,7 @@ export default function TestimonialsPage() {
                   onClick={() => setActiveSegment(segment.id)}
                   className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                     activeSegment === segment.id
-                      ? "bg-[#B85600] text-white shadow-lg shadow-orange-500/25"
+                      ? "bg-[#F27501] text-[#1D1B19] shadow-lg shadow-orange-500/25"
                       : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                   }`}
                 >
@@ -304,7 +304,7 @@ export default function TestimonialsPage() {
                         <p className="text-sm text-neutral-600">{testimonial.role}</p>
                         <p className="text-sm text-neutral-500">{testimonial.company}</p>
                       </div>
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                         {testimonial.name.split(' ').map(n => n[0]).join('')}
                       </div>
                     </div>
@@ -350,7 +350,7 @@ export default function TestimonialsPage() {
 
                   {/* Attribution */}
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {quote.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div>
@@ -371,7 +371,7 @@ export default function TestimonialsPage() {
       <section className="py-20 lg:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
-            <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               {/* Decorative elements */}
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>

@@ -119,7 +119,7 @@ export default function FunctiesOverzichtPage() {
 
         {/* CTA */}
         <section className="max-w-4xl mx-auto px-4 pb-16">
-          <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl p-8 md:p-12 text-white text-center">
+          <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-2xl p-8 md:p-12 text-white text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">
               Staat uw functie er niet bij?
             </h2>

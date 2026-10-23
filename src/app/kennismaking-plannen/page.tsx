@@ -539,7 +539,7 @@ function KennismakingPlannenContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-50">
-        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+        <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
             <div className="animate-pulse space-y-3">
               <div className="h-8 w-64 bg-white/20 rounded-lg mx-auto" />
@@ -565,7 +565,7 @@ function KennismakingPlannenContent() {
           @keyframes checkStroke { to { stroke-dashoffset: 0; } }
           @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
-        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+        <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
           <div className="max-w-3xl mx-auto px-4 py-14 text-center">
             <AnimatedCheckmark />
             <h1 className="text-3xl font-bold mb-2 animate-[fadeSlideUp_0.5s_ease-out_0.8s_both]">
@@ -599,7 +599,7 @@ function KennismakingPlannenContent() {
                 href={bookingResult.meet_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#B85600] text-white rounded-xl hover:bg-[#9a4700] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20 mb-3"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#F27501] text-[#1D1B19] rounded-xl hover:bg-[#E06C00] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20 mb-3"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -661,7 +661,7 @@ function KennismakingPlannenContent() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+      <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
         <div className="max-w-4xl mx-auto px-4 py-10 md:py-12 text-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Plan je kennismakingsgesprek</h1>
           <p className="text-white/90 text-base md:text-lg max-w-xl mx-auto">
@@ -768,7 +768,7 @@ function KennismakingPlannenContent() {
                             ${!cell.isCurrentMonth ? "text-neutral-300" : ""}
                             ${cell.isCurrentMonth && !canSelect ? "text-neutral-300 cursor-default" : ""}
                             ${canSelect && !isSelected ? "text-neutral-900 hover:bg-[#FEF3E7] cursor-pointer" : ""}
-                            ${isSelected ? "bg-[#B85600] text-white shadow-md shadow-orange-500/20" : ""}
+                            ${isSelected ? "bg-[#F27501] text-[#1D1B19] shadow-md shadow-orange-500/20" : ""}
                             ${cell.isToday && !isSelected ? "ring-2 ring-[#F97316]/30" : ""}
                           `}
                           aria-label={`${cell.day} ${MONTH_NAMES[viewMonth]}${cell.hasSlots ? ", beschikbaar" : ""}${isSelected ? ", geselecteerd" : ""}`}
@@ -827,7 +827,7 @@ function KennismakingPlannenContent() {
                                 w-full py-3 px-4 rounded-xl border-2 text-left transition-all duration-200
                                 focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-1 outline-none
                                 ${isSlotSelected
-                                  ? "border-[#F97316] bg-[#B85600] text-white shadow-md shadow-orange-500/20"
+                                  ? "border-[#F97316] bg-[#F27501] text-[#1D1B19] shadow-md shadow-orange-500/20"
                                   : "border-neutral-200 hover:border-orange-400 hover:bg-[#FEF3E7]"
                                 }
                               `}
@@ -953,7 +953,7 @@ function KennismakingPlannenContent() {
               <button
                 onClick={handleBook}
                 disabled={submitting}
-                className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#E06C00] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -987,7 +987,7 @@ function KennismakingPlannenContent() {
           <button
             onClick={handleBook}
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>

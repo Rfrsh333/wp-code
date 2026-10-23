@@ -166,8 +166,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: #B85600;
-  color: white;
+  background-color: #F27501;
+  color: #1D1B19;
   padding: 1rem 2rem;
   border-radius: 0.75rem;
   font-size: 1rem;
@@ -181,7 +181,7 @@
 }
 
 .ctaPrimary:hover {
-  background-color: #9a4700;
+  background-color: #E06C00;
   transform: translateY(-2px);
   box-shadow: 0 15px 35px -5px rgba(242, 117, 1, 0.35);
 }
@@ -354,6 +354,7 @@
 
 /* Hero image */
 .heroImage {
+  object-fit: contain;
   position: relative;
   z-index: 10;
   filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15));

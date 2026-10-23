@@ -169,7 +169,7 @@ export default function ContractOndertekeningClient() {
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-[#F27501] to-[#d96800] p-6 text-white">
+          <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] p-6 text-white">
             <h1 className="text-2xl font-bold">TopTalent Jobs</h1>
             <p className="text-white/80 text-sm">Contract ter ondertekening</p>
           </div>
@@ -266,7 +266,7 @@ export default function ContractOndertekeningClient() {
           <button
             onClick={handleSubmit}
             disabled={!handtekeningData || !akkoord || isSubmitting}
-            className="w-full py-3 px-6 bg-[#B85600] text-white font-bold rounded-xl hover:bg-[#9a4700] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 px-6 bg-[#F27501] text-[#1D1B19] font-bold rounded-xl hover:bg-[#E06C00] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? 'Bezig met ondertekenen...' : 'Contract ondertekenen'}
           </button>

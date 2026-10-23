@@ -144,7 +144,7 @@ export default function ConfirmationModal({
             <Link
               href={primaryAction.href}
               onClick={onClose}
-              className="inline-flex items-center justify-center bg-[#B85600] text-white px-6 py-3.5 rounded-xl font-semibold
+              className="inline-flex items-center justify-center bg-[#F27501] text-[#1D1B19] px-6 py-3.5 rounded-xl font-semibold
               shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
               hover:bg-[#E66E00] hover:-translate-y-0.5 active:scale-[0.98]
               transition-all duration-300"

@@ -63,7 +63,7 @@ export default function FAQObjections() {
 
             {/* CTA Box */}
             <FadeIn delay={0.2}>
-              <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl p-8 text-white">
+              <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-2xl p-8 text-white">
                 <h3 className="text-2xl font-bold mb-4">
                   Nog twijfels?
                 </h3>

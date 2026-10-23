@@ -101,9 +101,9 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
             className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-semibold text-sm
               transition-all duration-500 ${
               currentStep === step
-                ? "bg-[#B85600] text-white scale-110 shadow-lg shadow-orange-500/30"
+                ? "bg-[#F27501] text-[#1D1B19] scale-110 shadow-lg shadow-orange-500/30"
                 : currentStep > step
-                ? "bg-[#B85600] text-white"
+                ? "bg-[#F27501] text-[#1D1B19]"
                 : "bg-neutral-100 text-neutral-400"
             }`}
           >
@@ -370,7 +370,7 @@ export default function CalculatorClient() {
                           [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-pointer
                           [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
                       />
-                      <div className="flex justify-between text-sm text-neutral-400 mt-2">
+                      <div className="flex justify-between text-sm text-neutral-500 mt-2">
                         <span>1</span>
                         <span>20</span>
                       </div>
@@ -409,9 +409,9 @@ export default function CalculatorClient() {
                     {/* Next Button - Mobile Optimized */}
                     <button
                       onClick={() => setCurrentStep(2)}
-                      className="w-full bg-[#B85600] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                      className="w-full bg-[#F27501] text-[#1D1B19] px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                         shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                        hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
+                        hover:bg-[#E06C00] hover:-translate-y-0.5 active:translate-y-0
                         transition-all duration-300 flex items-center justify-center gap-2"
                     >
                       Volgende
@@ -456,7 +456,7 @@ export default function CalculatorClient() {
                           [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-pointer
                           [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
                       />
-                      <div className="flex justify-between text-sm text-neutral-400 mt-2">
+                      <div className="flex justify-between text-sm text-neutral-500 mt-2">
                         <span>4 uur</span>
                         <span>12 uur</span>
                       </div>
@@ -480,7 +480,7 @@ export default function CalculatorClient() {
                             }}
                             className={`flex-1 min-w-[3rem] py-3 rounded-xl font-medium transition-all duration-300 ${
                               inputs.dagenPerWeek.includes(index)
-                                ? "bg-[#B85600] text-white shadow-md"
+                                ? "bg-[#F27501] text-[#1D1B19] shadow-md"
                                 : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                             }`}
                           >
@@ -539,9 +539,9 @@ export default function CalculatorClient() {
                       <button
                         onClick={() => setCurrentStep(3)}
                         disabled={inputs.dagenPerWeek.length === 0}
-                        className="flex-1 bg-[#B85600] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                        className="flex-1 bg-[#F27501] text-[#1D1B19] px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                          hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
+                          hover:bg-[#E06C00] hover:-translate-y-0.5 active:translate-y-0
                           transition-all duration-300 flex items-center justify-center gap-2
                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                       >
@@ -633,9 +633,9 @@ export default function CalculatorClient() {
                       <button
                         onClick={handleCalculate}
                         disabled={inputs.vergelijkingen.length === 0 || isCalculating}
-                        className="flex-1 bg-[#B85600] text-white px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                        className="flex-1 bg-[#F27501] text-[#1D1B19] px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                           shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                          hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
+                          hover:bg-[#E06C00] hover:-translate-y-0.5 active:translate-y-0
                           transition-all duration-300 flex items-center justify-center gap-2
                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                       >
@@ -707,7 +707,7 @@ export default function CalculatorClient() {
                       style={{ animationDelay: `${index * 150}ms` }}
                     >
                       {isUitzend && (
-                        <span className="inline-block bg-[#B85600] text-white text-xs font-semibold px-3 py-1 rounded-full mb-4">
+                        <span className="inline-block bg-[#F27501] text-[#1D1B19] text-xs font-semibold px-3 py-1 rounded-full mb-4">
                           Aanbevolen
                         </span>
                       )}
@@ -717,24 +717,24 @@ export default function CalculatorClient() {
                       </h3>
 
                       <p className="text-sm text-neutral-500 mb-6">
-                        {formatCurrencyDecimal(result?.uurtarief || 0)} per uur <span className="text-neutral-400">excl. btw</span>
+                        {formatCurrencyDecimal(result?.uurtarief || 0)} per uur <span className="text-neutral-500">excl. btw</span>
                       </p>
 
                       <div className="space-y-4">
                         <div>
-                          <p className="text-sm text-neutral-500 mb-1">Per dienst <span className="text-neutral-400">excl. btw</span></p>
+                          <p className="text-sm text-neutral-500 mb-1">Per dienst <span className="text-neutral-500">excl. btw</span></p>
                           <p className="text-2xl font-bold text-neutral-900">
                             <AnimatedCounter value={result?.perDienst || 0} duration={1000} />
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-neutral-500 mb-1">Per week <span className="text-neutral-400">excl. btw</span></p>
+                          <p className="text-sm text-neutral-500 mb-1">Per week <span className="text-neutral-500">excl. btw</span></p>
                           <p className="text-2xl font-bold text-neutral-900">
                             <AnimatedCounter value={result?.perWeek || 0} duration={1200} />
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-neutral-500 mb-1">Per maand <span className="text-neutral-400">excl. btw</span></p>
+                          <p className="text-sm text-neutral-500 mb-1">Per maand <span className="text-neutral-500">excl. btw</span></p>
                           <p className="text-3xl font-bold text-[#B85600]">
                             <AnimatedCounter value={result?.perMaand || 0} duration={1400} />
                           </p>
@@ -808,9 +808,9 @@ export default function CalculatorClient() {
                   <button
                     onClick={handleDownloadPdf}
                     disabled={isPdfDownloading}
-                    className="bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                    className="bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                       shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                      hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
+                      hover:bg-[#E06C00] hover:-translate-y-0.5 active:translate-y-0
                       transition-all duration-300 flex items-center justify-center gap-2
                       disabled:opacity-50"
                   >
@@ -834,9 +834,9 @@ export default function CalculatorClient() {
                 ) : (
                   <button
                     onClick={() => setShowLeadModal(true)}
-                    className="bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                    className="bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                       shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                      hover:bg-[#9a4700] hover:-translate-y-0.5 active:translate-y-0
+                      hover:bg-[#E06C00] hover:-translate-y-0.5 active:translate-y-0
                       transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -948,9 +948,9 @@ export default function CalculatorClient() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#B85600] text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
+                className="w-full bg-[#F27501] text-[#1D1B19] px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                  hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  hover:bg-[#E06C00] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Versturen..." : "Verstuur mijn kostenoverzicht"}
               </button>

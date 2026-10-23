@@ -196,7 +196,7 @@ export default function SpoeddienstPage() {
 
         {/* Dienst details card */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-[#F27501] to-[#d96800] p-5 text-white">
+          <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] p-5 text-white">
             <div className="flex items-center gap-3 mb-3">
               <span className="px-3 py-1 bg-white/20 rounded-lg text-sm font-bold">
                 {functieLabels[dienst.functie] || dienst.functie}

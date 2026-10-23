@@ -496,7 +496,7 @@ function AfspraakPlannenContent() {
   if (loading && !selectedEventType) {
     return (
       <div className="min-h-screen bg-neutral-50">
-        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+        <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
             <div className="animate-pulse space-y-3">
               <div className="h-8 w-64 bg-white/20 rounded-lg mx-auto" />
@@ -522,7 +522,7 @@ function AfspraakPlannenContent() {
           @keyframes checkStroke { to { stroke-dashoffset: 0; } }
           @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
-        <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+        <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
           <div className="max-w-3xl mx-auto px-4 py-14 text-center">
             <AnimatedCheckmark />
             <h1 className="text-3xl font-bold mb-2 animate-[fadeSlideUp_0.5s_ease-out_0.8s_both]">
@@ -563,7 +563,7 @@ function AfspraakPlannenContent() {
                 href={googleCalendarUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#B85600] text-white rounded-xl hover:bg-[#9a4700] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#F27501] text-[#1D1B19] rounded-xl hover:bg-[#E06C00] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V8h15v11.5z" />
@@ -608,7 +608,7 @@ function AfspraakPlannenContent() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white">
+      <div className="bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white">
         <div className="max-w-4xl mx-auto px-4 py-10 md:py-12 text-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Plan een gesprek in</h1>
           <p className="text-white/90 text-base md:text-lg max-w-xl mx-auto">
@@ -826,7 +826,7 @@ function AfspraakPlannenContent() {
                               ${!cell.isCurrentMonth ? "text-neutral-300" : ""}
                               ${cell.isCurrentMonth && !canSelect ? "text-neutral-300 cursor-default" : ""}
                               ${canSelect && !isSelected ? "text-neutral-900 hover:bg-[#FEF3E7] cursor-pointer" : ""}
-                              ${isSelected ? "bg-[#B85600] text-white shadow-md shadow-orange-500/20" : ""}
+                              ${isSelected ? "bg-[#F27501] text-[#1D1B19] shadow-md shadow-orange-500/20" : ""}
                               ${cell.isToday && !isSelected ? "ring-2 ring-[#F97316]/30" : ""}
                             `}
                             aria-label={`${cell.day} ${MONTH_NAMES[viewMonth]}${cell.hasSlots ? ", beschikbaar" : ""}${isSelected ? ", geselecteerd" : ""}`}
@@ -887,7 +887,7 @@ function AfspraakPlannenContent() {
                                   focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-1 outline-none
                                   motion-reduce:transition-none
                                   ${isSelected
-                                    ? "border-[#F97316] bg-[#B85600] text-white shadow-md shadow-orange-500/20"
+                                    ? "border-[#F97316] bg-[#F27501] text-[#1D1B19] shadow-md shadow-orange-500/20"
                                     : "border-neutral-200 hover:border-[#F97316] hover:bg-[#FEF3E7]"
                                   }
                                 `}
@@ -1070,7 +1070,7 @@ function AfspraakPlannenContent() {
                 <button
                   onClick={handleBook}
                   disabled={submitting}
-                  className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#E06C00] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>
@@ -1106,7 +1106,7 @@ function AfspraakPlannenContent() {
           <button
             onClick={handleBook}
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>
