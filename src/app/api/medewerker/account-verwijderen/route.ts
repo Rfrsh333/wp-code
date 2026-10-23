@@ -5,6 +5,7 @@ import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { checkRedisRateLimit, loginRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { wisOntdekGegevensMedewerker } from "@/lib/locatie/locatie-opslag";
+import { wisWerkgeverBeoordelingenMedewerker } from "@/lib/medewerker/werkgever-beoordeling";
 import { logAuditEvent } from "@/lib/audit-log";
 import { controleerWachtwoord } from "@/lib/medewerker/wachtwoord";
 import { isDemoMedewerker } from "@/lib/demo";
@@ -63,6 +64,10 @@ export async function POST(request: NextRequest) {
     // blokkeert het verzoek niet.
     await wisOntdekGegevensMedewerker(medewerker.id).catch((e) =>
       captureRouteError(e, { route: "/api/medewerker/account-verwijderen", action: "ONTDEKKEN_WISSEN" }),
+    );
+    // Zelfde voor de beoordelingen die de medewerker over werkgevers gaf (privacybeleid 10e).
+    await wisWerkgeverBeoordelingenMedewerker(medewerker.id).catch((e) =>
+      captureRouteError(e, { route: "/api/medewerker/account-verwijderen", action: "BEOORDELINGEN_WISSEN" }),
     );
 
     const { error: berichtFout } = await supabaseAdmin.from("berichten").insert({

@@ -5,6 +5,7 @@ import { Calendar, Check, Clock, Send, WifiOff } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import DienstCard from "@/components/medewerker/DienstCard";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
+import OpenstaandeBeoordelingen from "@/components/medewerker/OpenstaandeBeoordelingen";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import type { DienstFoto } from "@/lib/sfeerfotos";
@@ -57,6 +58,20 @@ export default function MijnDienstenClient() {
   const [isCachedData, setIsCachedData] = useState(false);
   const [aantalAanbiedingen, setAantalAanbiedingen] = useState(0);
   const onAantalAanbiedingen = useCallback((n: number) => setAantalAanbiedingen(n), []);
+  // Stap 4: ?tab=voltooid&beoordeel=<dienst_id> (link in de herinnering "Hoe was het bij X?").
+  const [beoordeelDienstId, setBeoordeelDienstId] = useState<string | null>(null);
+  const vergeetBeoordeelLink = useCallback(() => setBeoordeelDienstId(null), []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab === "aangeboden" || tab === "aangemeld" || tab === "gepland" || tab === "voltooid") setActiveTab(tab);
+    const beoordeel = params.get("beoordeel");
+    if (beoordeel) {
+      setBeoordeelDienstId(beoordeel);
+      setActiveTab("voltooid");
+    }
+  }, []);
 
   // Luister naar online/offline events
   useEffect(() => {
@@ -302,6 +317,10 @@ export default function MijnDienstenClient() {
 
       {/* Content */}
       <div className="px-4 pt-4">
+        {/* Stap 4: afgeronde diensten die je nog kunt beoordelen (Voltooid = geschiedenis) */}
+        {activeTab === "voltooid" && (
+          <OpenstaandeBeoordelingen openDienstId={beoordeelDienstId} onLinkGebruikt={vergeetBeoordeelLink} />
+        )}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-3 border-[var(--mp-accent)] border-t-transparent rounded-full animate-spin" />

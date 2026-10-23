@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import WerkgeverBeoordelingenPaneel from "@/components/admin/WerkgeverBeoordelingenPaneel";
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -473,6 +474,9 @@ export default function KlantenTab() {
             </div>
           </div>
         </div>
+
+        {/* Stap 4: beoordelingen van deze werkgever door medewerkers, met opmerkingen (moderatie) */}
+        <WerkgeverBeoordelingenPaneel klantId={k.id} />
 
         {/* Recente beoordelingen */}
         {klantDetail.beoordelingen.length > 0 && (

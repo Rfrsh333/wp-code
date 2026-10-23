@@ -16,6 +16,8 @@ import {
 import { GEEN_EXTRAS, haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 import { fotoVoorDienst } from "@/lib/sfeerfotos";
 import { haalBedrijfsfotos } from "@/lib/sfeerfotos-opslag";
+import { haalEigenWerkgeverBeoordelingen } from "@/lib/medewerker/werkgever-beoordeling";
+import { eigenBeoordelingVoor, type EigenWerkgeverBeoordeling } from "@/lib/medewerker/werkgever-beoordeling-regels";
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,10 +83,18 @@ export async function GET(request: NextRequest) {
     // Stap 3b: voorwaarden per aanmelding (tegenbod, eigen tijden, …) en kleding/pauze per dienst.
     // Zonder migratie leeg: dan gelden overal de tijden en het tarief van de dienst.
     // Plus de bedrijfsfoto's voor `foto` (dienst → bedrijfsfoto → standaard, lib/sfeerfotos.ts).
-    const [voorwaarden, extras, bedrijfsfotos] = await Promise.all([
+    // Stap 4 (Vertrouwen): bij Voltooid de eigen beoordeling van de werkgever per dienst ("Beoordeeld ★4").
+    // Mislukt dat, dan zonder (null), net als zolang de migratie niet gedraaid is.
+    const [voorwaarden, extras, bedrijfsfotos, eigenBeoordelingen] = await Promise.all([
       haalVoorwaarden(aanmeldingen.map((a) => a.id)),
       haalDienstExtras(dienstIds),
       haalBedrijfsfotos(klantIds),
+      status === "voltooid"
+        ? haalEigenWerkgeverBeoordelingen(medewerker.id, dienstIds).catch((e) => {
+            captureRouteError(e, { route: "/api/medewerker/diensten/lijst", action: "WERKGEVER_BEOORDELING" });
+            return new Map<string, EigenWerkgeverBeoordeling>();
+          })
+        : Promise.resolve(new Map<string, EigenWerkgeverBeoordeling>()),
     ]);
 
     // Stap 4: Combineer data en filter op datum
@@ -150,6 +160,9 @@ export async function GET(request: NextRequest) {
             bedrijf_foto_url: klant?.bedrijf_foto_url || null,
           },
           foto: fotoVoorDienst(dienst, dienst.klant_id ? bedrijfsfotos.get(dienst.klant_id) : null),
+          // Stap 4: { score } als je deze werkgever voor deze dienst al beoordeelde, anders null
+          // (alleen gevuld bij status=voltooid).
+          werkgever_beoordeling: eigenBeoordelingVoor(eigenBeoordelingen, dienst.id),
         };
       })
       .filter((d): d is NonNullable<typeof d> => {

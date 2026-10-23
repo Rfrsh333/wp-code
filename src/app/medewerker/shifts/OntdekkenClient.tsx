@@ -13,6 +13,7 @@ import type { OntdekSortering } from "@/lib/medewerker/ontdekken-regels";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import type { DienstFoto } from "@/lib/sfeerfotos";
+import type { WerkgeverProfielCompact } from "@/lib/werkgever-profiel-regels";
 
 interface Shift {
   id: string;
@@ -45,6 +46,8 @@ interface Shift {
   afbeelding_url?: string | null;
   /** Sfeerfoto: klein in de lijst, groot bovenaan het detail. */
   foto?: DienstFoto | null;
+  /** Stap 4: compact werkgeversprofiel (vertrouwenskaart in het detail). */
+  werkgever_profiel?: WerkgeverProfielCompact | null;
 }
 
 type Antwoord = {

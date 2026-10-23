@@ -259,6 +259,7 @@ export default function PrivacyPolicyPage() {
               <li>Marketing en acquisitie (met inachtneming van opt-out mogelijkheden)</li>
               <li>Beveiliging van systemen en gegevens</li>
               <li>Verbetering van onze dienstverlening</li>
+              <li>Beoordelingen van werkgevers door werknemers en kengetallen over werkgevers (zie paragraaf 10e)</li>
               <li>Interne bedrijfsvoering en managementrapportages</li>
               <li>Juridische claims en geschillen</li>
             </ul>
@@ -340,6 +341,10 @@ export default function PrivacyPolicyPage() {
                   <tr className="border-b">
                     <td className="px-4 py-3">Globale locatie op basis van uw postcode</td>
                     <td className="px-4 py-3">Zolang uw postcode bij ons bekend is; bij een nieuwe postcode vervangen, bij een verzoek om verwijdering van uw account direct gewist</td>
+                  </tr>
+                  <tr className="border-b bg-neutral-50">
+                    <td className="px-4 py-3">Beoordelingen die u als werknemer over werkgevers geeft</td>
+                    <td className="px-4 py-3">Zolang uw account bestaat; bij een verzoek om verwijdering van uw account direct gewist</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3">Klachten en geschillen</td>
@@ -633,6 +638,19 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>Wij doen dit om onze bemiddeling uit te voeren en u passende diensten aan te bieden (artikel 6 lid 1 sub b AVG). Wij bewaren de globale locatie niet langer dan uw postcode: wijzigt u uw postcode, dan vervangen wij hem; wist u uw postcode, dan wissen wij hem. Vraagt u om verwijdering van uw account, dan wissen wij direct de globale locatie, uw maximale afstand en de werkgevers die u heeft bewaard of verborgen.</p>
 
+            {/* 10e. Beoordelingen van werkgevers */}
+            <h2 id="beoordelingen" className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
+              10e. Beoordelingen van werkgevers
+            </h2>
+            <p>Na een afgeronde dienst kunt u als werknemer de werkgever beoordelen: een score van 1 tot 5 sterren, desgewenst drie deelscores (duidelijke instructies, sfeer en behandeling, werk zoals beschreven) en een korte opmerking. Een beoordeling geven is vrijwillig. U kunt één beoordeling per dienst geven, tot 14 dagen na de dienst. Wij sturen u na een dienst hooguit één pushmelding met de vraag of u de werkgever wilt beoordelen.</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Anoniem voor werkgevers:</strong> werkgevers zien alleen het aantal beoordelingen en de gemiddelden van alle beoordelingen samen; een gemiddelde pas vanaf drie beoordelingen. Zij zien niet wie welke beoordeling gaf, niet wanneer, en nooit uw opmerking.</li>
+              <li><strong>Andere werknemers</strong> zien bij een dienst hetzelfde gemiddelde en het aantal beoordelingen, zonder namen of opmerkingen.</li>
+              <li><strong>Alleen TopTalent</strong> ziet bij een beoordeling uw naam, de dienst en uw opmerking. Wij gebruiken dat om de kwaliteit van onze werkgevers te bewaken en om ongepaste beoordelingen te kunnen verbergen.</li>
+              <li><strong>Kengetallen over werkgevers:</strong> bij een dienst tonen wij ook hoe snel de werkgever gewoonlijk over reacties beslist en in hoeveel procent van zijn diensten met reacties hij iemand kiest. Die berekenen wij uit de diensten en aanmeldingen van de laatste 90 dagen, ook pas vanaf drie waarnemingen. Ze gaan over de werkgever, niet over u.</li>
+            </ul>
+            <p>Wij doen dit op grond van ons gerechtvaardigd belang (artikel 6 lid 1 sub f AVG): de kwaliteit van onze bemiddeling bewaken en werknemers helpen een werkgever te kiezen. Vraagt u om verwijdering van uw account, dan wissen wij direct de beoordelingen die u heeft gegeven.</p>
+
             {/* 11. Beveiliging */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
               11. Beveiliging van persoonsgegevens
@@ -766,7 +784,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Utrecht, oktober 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 2.3
+                TopTalent B.V. - Privacy Policy versie 2.4
               </p>
             </div>
           </div>

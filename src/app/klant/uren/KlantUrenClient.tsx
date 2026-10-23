@@ -32,6 +32,7 @@ import ReactieVoorstel, { type ReactieWeergave } from "@/components/reacties/Rea
 import { PAUZE_MAX_MINUTEN, KLEDINGVOORSCHRIFT_MAX } from "@/lib/medewerker/reactie-regels";
 import { sfeerCategorieVoorFunctie, webFotoSrc, type DienstFoto } from "@/lib/sfeerfotos";
 import SfeerfotoKiezer from "@/components/klant/SfeerfotoKiezer";
+import WerkgeverScoreKaart from "@/components/klant/WerkgeverScoreKaart";
 
 const KLANT_TAB_IDS = [
   "overzicht", "uren", "diensten", "rooster", "aanvragen", "favorieten",
@@ -726,6 +727,9 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
 
                 {/* NIEUW: Quick Actions */}
                 <QuickActions onTabChange={setActiveTab} />
+
+                {/* Stap 4 (Vertrouwen): hoe medewerkers u beoordelen (anoniem, gemiddelden) */}
+                <WerkgeverScoreKaart />
 
                 {/* NIEUW: Live Status */}
                 <LiveStatusTracker

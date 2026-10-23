@@ -7,11 +7,13 @@ import { afstandLabel } from "@/lib/locatie/locatie-regels";
 import { reactiesLabel } from "@/lib/medewerker/ontdekken-regels";
 import { geschatteVerdiensten, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
 import { webFotoSrc, type DienstFoto } from "@/lib/sfeerfotos";
+import type { WerkgeverProfielCompact } from "@/lib/werkgever-profiel-regels";
+import WerkgeverVertrouwenKaart from "@/components/medewerker/WerkgeverVertrouwenKaart";
 
 /**
  * Dienstdetail in Ontdekken (medewerkerportaal, stap 3): alle gegevens van de dienst, de afstand,
  * het aantal reacties en de knoppen om de werkgever te bewaren of te verbergen. Reageren opent de
- * bestaande ReageerDialoog via `onReageer`.
+ * bestaande ReageerDialoog via `onReageer`. Stap 4: de vertrouwenskaart "Over deze werkgever".
  */
 
 export type DetailDienst = {
@@ -36,6 +38,8 @@ export type DetailDienst = {
   ik_ben_favoriet?: boolean;
   /** Sfeerfoto; de grote versie staat bovenaan het detail. Ontbreekt bij een oudere backend. */
   foto?: DienstFoto | null;
+  /** Stap 4: compact werkgeversprofiel voor "Over deze werkgever"; ontbreekt bij een oudere backend. */
+  werkgever_profiel?: WerkgeverProfielCompact | null;
 };
 
 const euro = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
@@ -192,6 +196,10 @@ export default function DienstDetailSheet({
               <div className="text-base font-bold text-[var(--mp-accent)]">{euro(schatting.bedrag)}</div>
             </div>
           </div>
+
+          {dienst.klant_id && (
+            <WerkgeverVertrouwenKaart bedrijfsnaam={dienst.klant.bedrijfsnaam} profiel={dienst.werkgever_profiel} />
+          )}
 
           {kanVoorkeur && (
             <div className="grid grid-cols-2 gap-2">
