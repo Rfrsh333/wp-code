@@ -29,7 +29,7 @@ export type InzetbaarResultaat = {
 const ROUTE = "lib/kandidaat-inzetbaar";
 
 const KANDIDAAT_VELDEN =
-  "id, voornaam, tussenvoegsel, achternaam, email, telefoon, gewenste_functies, interne_notitie, medewerker_id, uitbetalingswijze";
+  "id, voornaam, tussenvoegsel, achternaam, email, telefoon, gewenste_functies, interne_notitie, medewerker_id, uitbetalingswijze, kvk_nummer";
 
 async function welkomRecentVerstuurd(kandidaatId: string): Promise<boolean> {
   const { data } = await supabaseAdmin

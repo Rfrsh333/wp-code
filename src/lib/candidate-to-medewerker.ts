@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { normaliseerEmail } from "@/lib/email-normalisatie";
 import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
+import { normaliseerKvkNummer } from "@/lib/medewerker/zzp-gegevens";
+import { neemKandidaatDocumentenMee } from "@/lib/kandidaat-documenten-meenemen";
 
 interface CandidateRecord {
   id: string;
@@ -11,6 +13,7 @@ interface CandidateRecord {
   telefoon?: string | null;
   gewenste_functies?: string[] | null;
   interne_notitie?: string | null;
+  kvk_nummer?: string | null;
 }
 
 const functieMapping: Record<string, string> = {
@@ -43,6 +46,8 @@ export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord) 
   const existingByEmail = await zoekOpEmail<{ id: string; email: string }>("medewerkers", "id, email", email);
 
   if (existingByEmail?.id) {
+    // Bestaand account: goedgekeurde kandidaatdocumenten alsnog meenemen (idempotent).
+    await neemKandidaatDocumentenMee(candidate.id, existingByEmail.id);
     return existingByEmail.id;
   }
 
@@ -58,15 +63,24 @@ export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord) 
       : "Automatisch aangemaakt vanuit onboarding.",
   };
 
-  const { data, error } = await supabaseAdmin
+  // KvK-nummer gaat mee (checklist vóór reageren, B1). Bestaat de kolom nog niet (migratie
+  // 20261023_medewerker_checklist_reageren), dan zonder.
+  const kvk = normaliseerKvkNummer(candidate.kvk_nummer);
+  let { data, error } = await supabaseAdmin
     .from("medewerkers")
-    .insert(payload)
+    .insert(kvk ? { ...payload, kvk_nummer: kvk } : payload)
     .select("id")
     .single();
+  if (kvk && (error?.code === "42703" || error?.code === "PGRST204")) {
+    ({ data, error } = await supabaseAdmin.from("medewerkers").insert(payload).select("id").single());
+  }
 
   if (error || !data?.id) {
     throw new Error(error?.message || "Medewerker kon niet automatisch worden aangemaakt");
   }
+
+  // Goedgekeurde kandidaatdocumenten (ID, KvK, …) mee naar het medewerkeraccount.
+  await neemKandidaatDocumentenMee(candidate.id, data.id);
 
   return data.id;
 }

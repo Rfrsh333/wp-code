@@ -165,3 +165,23 @@ export function alleVerplichteGoedgekeurd(
  * Bewust niet `nieuw`/`in_beoordeling` (de intake is dan nog niet rond) en niet later.
  */
 export const DOCUMENTFASE_STATUSSEN = ["documenten_opvragen", "wacht_op_kandidaat"] as const;
+
+/**
+ * Documenttype van een kandidaatdocument in `medewerker_documenten` (lib/medewerker/documenten).
+ * Types zonder eigen medewerkertype (CV, bankbewijs, …) worden "overig"; de bestandsnaam blijft.
+ */
+export function medewerkerDocumentType(kandidaatType: string): string {
+  if (kandidaatType === "id") return "id_bewijs";
+  if (kandidaatType === "kvk") return "kvk";
+  if (kandidaatType === "contract") return "contract";
+  return "overig";
+}
+
+/**
+ * Welke kandidaatdocumenten mee gaan naar het medewerkeraccount: alleen wat een admin heeft
+ * goedgekeurd (besluit Rachid, 23-10-2026). Zo begint een nieuwe medewerker niet met een lege
+ * documentenlijst en telt een goedgekeurd ID meteen voor de checklist vóór reageren.
+ */
+export function meeTeNemenDocumenten<T extends { status: string | null }>(documenten: readonly T[]): T[] {
+  return documenten.filter((d) => d.status === "goedgekeurd");
+}

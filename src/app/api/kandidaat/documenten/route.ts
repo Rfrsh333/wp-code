@@ -89,6 +89,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Kies eerst wat voor document je uploadt" }, { status: 400 });
     }
     const documentType = gevraagdType;
+    // Optionele vervaldatum (ID-bewijs); gaat later mee naar het medewerkeraccount.
+    const vervaldatumRuw = formData.get("vervaldatum");
+    const vervaldatum = typeof vervaldatumRuw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(vervaldatumRuw) ? vervaldatumRuw : null;
 
     // Validate token
     if (!token) {
@@ -153,18 +156,23 @@ export async function POST(request: NextRequest) {
 
     // Save to database (bestand_pad wordt gebruikt om op aanvraag een signed URL
     // te maken). Kolomnamen volgen de live tabel; zie lib/kandidaat-documenten.
-    const { error: dbError } = await supabaseAdmin
+    const rij = {
+      inschrijving_id: validation.kandidaatId,
+      type: documentType,
+      bestandsnaam: file.name.slice(0, 255),
+      bestand_pad: fileName,
+      mime_type: formaat.mime,
+      bestand_grootte: file.size,
+      status: "ontvangen",
+      uploaded_at: new Date().toISOString(),
+    };
+    let { error: dbError } = await supabaseAdmin
       .from("kandidaat_documenten")
-      .insert({
-        inschrijving_id: validation.kandidaatId,
-        type: documentType,
-        bestandsnaam: file.name.slice(0, 255),
-        bestand_pad: fileName,
-        mime_type: formaat.mime,
-        bestand_grootte: file.size,
-        status: "ontvangen",
-        uploaded_at: new Date().toISOString(),
-      });
+      .insert(vervaldatum ? { ...rij, vervaldatum } : rij);
+    // Kolom vervaldatum bestaat pas na migratie 20261023_medewerker_checklist_reageren.
+    if (vervaldatum && (dbError?.code === "42703" || dbError?.code === "PGRST204")) {
+      ({ error: dbError } = await supabaseAdmin.from("kandidaat_documenten").insert(rij));
+    }
 
     if (dbError) {
       captureRouteError(dbError, { route: "/api/kandidaat/documenten", action: "POST" });

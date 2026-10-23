@@ -174,6 +174,7 @@ interface KandidaatDocument {
   notitie: string | null;
   uploaded_at: string;
   reviewed_at: string | null;
+  vervaldatum?: string | null;
   download_url?: string | null;
 }
 
@@ -621,7 +622,7 @@ export default function AdminDashboard() {
   const updateKandidaatDocument = async (
     inschrijving: Inschrijving,
     documentId: string,
-    data: { status?: KandidaatDocumentStatus; notitie?: string; type?: string }
+    data: { status?: KandidaatDocumentStatus; notitie?: string; type?: string; vervaldatum?: string | null }
   ) => {
     const response = await fetch("/api/admin/kandidaat-documenten", {
       method: "PATCH",
@@ -2190,6 +2191,22 @@ export default function AdminDashboard() {
                                     ))}
                                   </select>
                                 </div>
+                                {document.type === "id" && (
+                                  <label className="flex items-center gap-2 text-sm text-neutral-600 mb-1">
+                                    Vervaldatum ID
+                                    <input
+                                      type="date"
+                                      defaultValue={document.vervaldatum ?? ""}
+                                      onBlur={(e) => {
+                                        const waarde = e.target.value || null;
+                                        if (waarde !== (document.vervaldatum ?? null)) {
+                                          void updateKandidaatDocument(selectedItem as Inschrijving, document.id, { vervaldatum: waarde });
+                                        }
+                                      }}
+                                      className="px-2 py-1 rounded-lg border border-neutral-200 text-sm"
+                                    />
+                                  </label>
+                                )}
                                 <p className="text-sm text-neutral-500">
                                   Geupload op {formatDate(document.uploaded_at)}
                                   {document.bestand_grootte ? ` · ${(document.bestand_grootte / 1024 / 1024).toFixed(2)} MB` : ""}

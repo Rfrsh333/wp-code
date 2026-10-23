@@ -31,6 +31,7 @@ function DocumentenUploadContent() {
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [gekozenType, setGekozenType] = useState<KandidaatUploadType | "">("");
+  const [vervaldatum, setVervaldatum] = useState("");
   const toast = useToast();
 
   useEffect(() => {
@@ -115,6 +116,7 @@ function DocumentenUploadContent() {
         formData.append("file", file);
         formData.append("token", token);
         formData.append("document_type", gekozenType);
+        if (gekozenType === "id" && vervaldatum) formData.append("vervaldatum", vervaldatum);
 
         let response: Response;
         try {
@@ -256,6 +258,17 @@ function DocumentenUploadContent() {
             <p className="text-sm text-neutral-500 mt-2">
               Voor- en achterkant van je ID? Kies &quot;ID-bewijs&quot; en upload beide foto&apos;s.
             </p>
+            {gekozenType === "id" && (
+              <label className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-neutral-700">
+                <span className="font-medium">Geldig tot (staat op je ID)</span>
+                <input
+                  type="date"
+                  value={vervaldatum}
+                  onChange={(e) => setVervaldatum(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-neutral-200"
+                />
+              </label>
+            )}
           </div>
 
           {/* Upload Zone */}
