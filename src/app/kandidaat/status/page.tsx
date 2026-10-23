@@ -4,18 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { kandidaatStatusTekst, type KandidaatOnboardingStatus } from "@/lib/kandidaat-status";
+import { kandidaatDocumentLabel } from "@/lib/kandidaat-documenten";
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 
-type OnboardingStatus =
-  | "nieuw"
-  | "in_beoordeling"
-  | "documenten_opvragen"
-  | "wacht_op_kandidaat"
-  | "goedgekeurd"
-  | "inzetbaar"
-  | "afgewezen";
+type OnboardingStatus = KandidaatOnboardingStatus;
 
 interface KandidaatData {
   voornaam: string;
@@ -36,55 +31,23 @@ interface Document {
   uploaded_at: string;
 }
 
-const statusInfo: Record<OnboardingStatus, { label: string; color: string; icon: string; description: string }> = {
-  nieuw: {
-    label: "Nieuw",
-    color: "bg-sky-100 text-sky-700 border-sky-200",
-    icon: "📝",
-    description: "Je inschrijving is ontvangen! We bekijken je gegevens binnenkort.",
-  },
-  in_beoordeling: {
-    label: "In beoordeling",
-    color: "bg-amber-100 text-amber-700 border-amber-200",
-    icon: "🔍",
-    description: "We beoordelen momenteel je inschrijving en ervaring.",
-  },
-  documenten_opvragen: {
-    label: "Documenten nodig",
-    color: "bg-orange-100 text-orange-700 border-orange-200",
-    icon: "📄",
-    description: "We hebben nog enkele documenten van je nodig. We nemen contact met je op.",
-  },
-  wacht_op_kandidaat: {
-    label: "Wacht op reactie",
-    color: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    icon: "⏳",
-    description: "We wachten op jouw reactie of documenten.",
-  },
-  goedgekeurd: {
-    label: "Goedgekeurd",
-    color: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    icon: "✅",
-    description: "Gefeliciteerd! Je inschrijving is goedgekeurd.",
-  },
-  inzetbaar: {
-    label: "Inzetbaar",
-    color: "bg-green-100 text-green-700 border-green-200",
-    icon: "🚀",
-    description: "Je bent volledig inzetbaar! We kunnen je matchen met opdrachten.",
-  },
-  afgewezen: {
-    label: "Afgewezen",
-    color: "bg-red-100 text-red-700 border-red-200",
-    icon: "❌",
-    description: "Helaas kunnen we je op dit moment niet plaatsen.",
-  },
+// Teksten (en wie aan zet is) staan in lib/kandidaat-status (B14); hier alleen de opmaak.
+const statusStijl: Record<OnboardingStatus, { color: string; icon: string }> = {
+  nieuw: { color: "bg-sky-100 text-sky-700 border-sky-200", icon: "📝" },
+  in_beoordeling: { color: "bg-amber-100 text-amber-700 border-amber-200", icon: "🔍" },
+  documenten_opvragen: { color: "bg-orange-100 text-orange-700 border-orange-200", icon: "📄" },
+  wacht_op_kandidaat: { color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: "⏳" },
+  goedgekeurd: { color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: "✅" },
+  inzetbaar: { color: "bg-green-100 text-green-700 border-green-200", icon: "🚀" },
+  afgewezen: { color: "bg-red-100 text-red-700 border-red-200", icon: "❌" },
 };
 
 function KandidaatStatusContent() {
   const searchParams = useSearchParams();
   const [kandidaat, setKandidaat] = useState<KandidaatData | null>(null);
   const [documenten, setDocumenten] = useState<Document[]>([]);
+  const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [account, setAccount] = useState<{ aangemaakt: boolean; geactiveerd: boolean }>({ aangemaakt: false, geactiveerd: false });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,6 +71,8 @@ function KandidaatStatusContent() {
         const data = await response.json();
         setKandidaat(data.kandidaat);
         setDocumenten(data.documenten || []);
+        setUploadUrl(data.upload_url || null);
+        if (data.account) setAccount(data.account);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Fout bij ophalen gegevens");
       } finally {
@@ -147,8 +112,11 @@ function KandidaatStatusContent() {
     );
   }
 
-  const status = kandidaat.onboarding_status || "nieuw";
-  const statusDetails = statusInfo[status];
+  const status = (kandidaat.onboarding_status || "nieuw") as OnboardingStatus;
+  // Oude links met ?upload_token=… blijven werken als de server geen geldige link meer kent.
+  const uploadLink = uploadUrl || (searchParams.get("upload_token") ? `/kandidaat/documenten?token=${searchParams.get("upload_token")}` : null);
+  const tekst = kandidaatStatusTekst(status, { uploadLink: !!uploadLink, accountGeactiveerd: account.geactiveerd });
+  const statusDetails = { ...statusStijl[status] ?? statusStijl.nieuw, label: tekst.label, description: tekst.beschrijving };
   const daysSinceCreated = Math.floor(
     (Date.now() - new Date(kandidaat.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
@@ -158,8 +126,6 @@ function KandidaatStatusContent() {
   const currentStepIndex = statusSteps.indexOf(status);
   const progressPercentage = status === "afgewezen" ? 0 : ((currentStepIndex + 1) / statusSteps.length) * 100;
 
-  // Get upload token from URL if available
-  const uploadToken = searchParams.get("upload_token");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 py-12 px-4">
@@ -201,13 +167,18 @@ function KandidaatStatusContent() {
                 <p className="text-sm opacity-80">Huidige status</p>
               </div>
             </div>
-            <p className="text-lg mb-4">{statusDetails.description}</p>
+            <p className="text-lg mb-2">{statusDetails.description}</p>
+            {tekst.aanZet !== "niemand" && (
+              <p className="text-sm font-semibold mb-4">
+                {tekst.aanZet === "jij" ? "👉 Jij bent aan zet" : "⏳ TopTalent is aan zet"}
+              </p>
+            )}
 
             {/* Action Buttons */}
-            {status === "documenten_opvragen" && uploadToken && (
+            {status === "documenten_opvragen" && uploadLink && (
               <div className="mt-6 pt-6 border-t border-current/20">
                 <Link
-                  href={`/kandidaat/documenten?token=${uploadToken}`}
+                  href={uploadLink}
                   className="block w-full px-6 py-4 bg-gradient-to-r from-[#F27501] to-[#d96800] text-white rounded-xl font-bold text-center hover:shadow-lg transform hover:scale-105 transition-all"
                 >
                   📤 Upload Documenten Nu →
@@ -227,10 +198,21 @@ function KandidaatStatusContent() {
             )}
 
             {status === "inzetbaar" && (
-              <div className="mt-6 pt-6 border-t border-current/20">
-                <p className="text-center text-lg font-bold">
-                  🎉 Je bent klaar! We gaan direct voor je aan de slag.
-                </p>
+              <div className="mt-6 pt-6 border-t border-current/20 space-y-3">
+                <Link
+                  href="/medewerker/login"
+                  className="block w-full px-6 py-4 bg-gradient-to-r from-[#F27501] to-[#d96800] text-white rounded-xl font-bold text-center hover:shadow-lg transition-all"
+                >
+                  {account.geactiveerd ? "Inloggen op TopTalent Hub →" : "Al een wachtwoord gekozen? Log in →"}
+                </Link>
+                {!account.geactiveerd && (
+                  <p className="text-center text-sm opacity-80">
+                    Geen mail gekregen of is de link verlopen?{" "}
+                    <Link href="/medewerker/wachtwoord-vergeten" className="underline font-medium">
+                      Kies een wachtwoord via &quot;Wachtwoord vergeten&quot;
+                    </Link>
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -323,7 +305,7 @@ function KandidaatStatusContent() {
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">📄</div>
                     <div>
-                      <p className="font-medium text-neutral-900">{doc.document_type}</p>
+                      <p className="font-medium text-neutral-900">{kandidaatDocumentLabel(doc.document_type)}</p>
                       <p className="text-sm text-neutral-500">
                         Geüpload op {new Date(doc.uploaded_at).toLocaleDateString("nl-NL")}
                       </p>

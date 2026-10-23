@@ -64,6 +64,21 @@ export const candidateEmailCopy = {
     ctaLabel: "Inloggen",
     outro: "Vragen? We zijn er! Bel, app of mail ons. 💬",
   },
+  // B16: de mail "Documenten ontvangen" belooft bericht zodra alles is goedgekeurd.
+  documentenGoedgekeurd: {
+    subject: "{voornaam}, je documenten zijn goedgekeurd ✅",
+    heading: "Top {voornaam}, je documenten zijn goedgekeurd!",
+    intro: "We hebben je documenten bekeken en alles is in orde.",
+    cardTitle: "Wat nu?",
+    cardItems: [
+      "We ronden je inschrijving af",
+      "Zodra je account klaarstaat, krijg je een mail om je wachtwoord in te stellen",
+      "Daarna log je in en kun je reageren op diensten",
+    ],
+    bodyAfterCard: "Je kunt je status altijd volgen via onderstaande link:",
+    ctaLabel: "📊 Bekijk je status",
+    outro: "Vragen? Gewoon appen of mailen, we helpen je graag! 💬",
+  },
   afwijzing: {
     subject: "{voornaam}, update over je aanmelding bij TopTalent",
     heading: "Beste {voornaam},",

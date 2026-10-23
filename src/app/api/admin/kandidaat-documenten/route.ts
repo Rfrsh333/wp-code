@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { kandidaatDocumentenPatchSchema, validateAdminBody } from "@/lib/validations-admin";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { naDocumentBeoordeling } from "@/lib/kandidaat-documentbeoordeling";
 import {
   KANDIDAAT_DOCUMENT_KOLOMMEN,
   isKandidaatDocumentType,
@@ -166,10 +167,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Niets om bij te werken" }, { status: 400 });
   }
 
-  const { error } = await supabaseAdmin
+  const { data: bijgewerkt, error } = await supabaseAdmin
     .from("kandidaat_documenten")
     .update(updateData)
-    .eq("id", id);
+    .eq("id", id)
+    .select("inschrijving_id")
+    .maybeSingle();
 
   if (error) {
     captureRouteError(error, { route: "/api/admin/kandidaat-documenten", action: "PATCH" });
@@ -177,5 +180,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Document kon niet worden bijgewerkt" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  // B16: na een beoordeling (of typecorrectie) kijken of nu alles is goedgekeurd; zo ja,
+  // kandidaat naar "goedgekeurd" en de beloofde mail.
+  const beoordeling =
+    bijgewerkt?.inschrijving_id && (status || type)
+      ? await naDocumentBeoordeling(bijgewerkt.inschrijving_id as string)
+      : null;
+
+  return NextResponse.json({ success: true, beoordeling });
 }

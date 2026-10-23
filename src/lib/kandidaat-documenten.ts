@@ -144,3 +144,24 @@ export function naarAdminDocument(rij: KandidaatDocumentRij) {
     review_notes: rij.notitie,
   };
 }
+
+/** Documenten die een kandidaat moet aanleveren: ID en CV, en bij zzp ook het KvK-uittreksel. */
+export function verplichteKandidaatDocumenten(uitbetalingswijze: string | null | undefined): KandidaatUploadType[] {
+  return uitbetalingswijze === "zzp" ? ["id", "cv", "kvk"] : ["id", "cv"];
+}
+
+/** Zijn alle verplichte documenten door een admin goedgekeurd? "Ontvangen" telt niet (B2, B16). */
+export function alleVerplichteGoedgekeurd(
+  documenten: readonly { type: string; status: string | null }[],
+  uitbetalingswijze: string | null | undefined,
+): boolean {
+  return verplichteKandidaatDocumenten(uitbetalingswijze).every((type) =>
+    documenten.some((d) => d.type === type && d.status === "goedgekeurd"),
+  );
+}
+
+/**
+ * Onboardingstatussen waarin "alle documenten goedgekeurd" de kandidaat op `goedgekeurd` zet.
+ * Bewust niet `nieuw`/`in_beoordeling` (de intake is dan nog niet rond) en niet later.
+ */
+export const DOCUMENTFASE_STATUSSEN = ["documenten_opvragen", "wacht_op_kandidaat"] as const;

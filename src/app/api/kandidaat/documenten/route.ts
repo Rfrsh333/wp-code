@@ -205,8 +205,8 @@ export async function POST(request: NextRequest) {
               </div>
               <div style="padding: 30px;">
                 <p>Beste ${kandidaatInfo.voornaam},</p>
-                <p>We hebben uw document(en) goed ontvangen. Ons team zal deze zo snel mogelijk beoordelen.</p>
-                <p>U ontvangt bericht zodra alles is goedgekeurd.</p>
+                <p>We hebben je document(en) goed ontvangen. Ons team beoordeelt ze zo snel mogelijk.</p>
+                <p>Je krijgt een mail zodra alles is goedgekeurd.</p>
                 <p style="color: #666; margin-top: 20px;">Met vriendelijke groet,<br><strong style="color: #F27501;">TopTalent Jobs</strong></p>
               </div>
             </div>`,

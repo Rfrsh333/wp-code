@@ -632,10 +632,18 @@ export default function AdminDashboard() {
       }),
     });
 
+    const result = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const result = await response.json();
       toast.error(result.error || "Document kon niet worden bijgewerkt.");
       return;
+    }
+    if (result.beoordeling?.statusGewijzigd) {
+      toast.success(
+        result.beoordeling.mailVerstuurd
+          ? "Alle documenten goedgekeurd: kandidaat staat op Goedgekeurd en heeft een mail gekregen."
+          : "Alle documenten goedgekeurd: kandidaat staat op Goedgekeurd (de mail kon niet worden verstuurd).",
+      );
+      await fetchData();
     }
 
     await fetchKandidaatDocumenten(inschrijving.id);

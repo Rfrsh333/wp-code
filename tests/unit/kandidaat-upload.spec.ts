@@ -50,3 +50,18 @@ test.describe("kandidaat-upload (B6/B7)", () => {
     expect(uploadFoutmelding(403, {})).toContain("verlopen");
   });
 });
+
+test.describe("verplichte kandidaatdocumenten (B16)", () => {
+  test("alleen goedgekeurde documenten tellen, KvK alleen bij zzp", async () => {
+    const { alleVerplichteGoedgekeurd, verplichteKandidaatDocumenten } = await import("../../src/lib/kandidaat-documenten");
+    expect(verplichteKandidaatDocumenten("zzp")).toEqual(["id", "cv", "kvk"]);
+    expect(verplichteKandidaatDocumenten("loondienst")).toEqual(["id", "cv"]);
+    const docs = [
+      { type: "id", status: "goedgekeurd" },
+      { type: "cv", status: "ontvangen" },
+    ];
+    expect(alleVerplichteGoedgekeurd(docs, "loondienst")).toBe(false);
+    expect(alleVerplichteGoedgekeurd([...docs, { type: "cv", status: "goedgekeurd" }], "loondienst")).toBe(true);
+    expect(alleVerplichteGoedgekeurd([...docs, { type: "cv", status: "goedgekeurd" }], "zzp")).toBe(false);
+  });
+});
