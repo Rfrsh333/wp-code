@@ -47,20 +47,22 @@ export const candidateEmailCopy = {
     outro:
       "Duurt echt maar 2 minuutjes. Gewoon een foto maken met je telefoon is helemaal prima. 🙌",
   },
+  // Alleen voor wie al een (geactiveerd) account heeft; een nieuw account krijgt bij
+  // "inzetbaar" de activatiemail, die dezelfde boodschap heeft (B15: één consistente mail).
   welkom: {
     subject: "🎉 {voornaam}, je bent inzetbaar!",
     heading: "Yes {voornaam}, je bent inzetbaar!",
     intro:
-      "Je bent officieel goedgekeurd en klaar voor inzet. Vanaf nu kunnen we je matchen met gave opdrachten in de horeca!",
+      "Je bent goedgekeurd en klaar voor inzet. Log in op TopTalent Hub met je account en reageer op de open diensten.",
     cardTitle: "Wat nu?",
     cardItems: [
-      "📞 Bellen we je of sturen een berichtje",
-      "📅 Matchen we je met een leuke opdracht",
-      "💰 Regel je snel je eerste shift!",
+      "Log in op TopTalent Hub",
+      "Maak je profiel compleet",
+      "Reageer op een dienst die bij je past",
     ],
-    bodyAfterCard: "Houd je telefoon in de gaten - je eerste match kan zomaar binnenkomen! 📱",
-    ctaLabel: "🚀 Bekijk je profiel",
-    outro: "Let's go! 🔥<br><br>Vragen? We zijn er! Bel, app of mail ons. 💬",
+    bodyAfterCard: "Wachtwoord kwijt? Kies op de inlogpagina voor 'Wachtwoord vergeten'.",
+    ctaLabel: "Inloggen",
+    outro: "Vragen? We zijn er! Bel, app of mail ons. 💬",
   },
   afwijzing: {
     subject: "{voornaam}, update over je aanmelding bij TopTalent",

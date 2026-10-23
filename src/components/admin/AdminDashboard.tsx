@@ -374,6 +374,7 @@ export default function AdminDashboard() {
   const [kandidaatDocumenten, setKandidaatDocumenten] = useState<KandidaatDocument[]>([]);
   const [documentenLoading, setDocumentenLoading] = useState(false);
   const [documentTypeDraft, setDocumentTypeDraft] = useState("id");
+  const [activatiemailBezig, setActivatiemailBezig] = useState(false);
   const [documentNotitieDraft, setDocumentNotitieDraft] = useState("");
   const [documentFileDraft, setDocumentFileDraft] = useState<File | null>(null);
   const [documentUploading, setDocumentUploading] = useState(false);
@@ -496,7 +497,7 @@ export default function AdminDashboard() {
       payload.inzetbaar_op = null;
     }
 
-    await fetch("/api/admin/data", {
+    const statusRes = await fetch("/api/admin/data", {
       method: "POST",
       headers: await getAuthHeaders(),
       body: JSON.stringify({
@@ -506,6 +507,17 @@ export default function AdminDashboard() {
         data: payload,
       }),
     });
+    const statusResultaat = await statusRes.json().catch(() => ({}));
+    if (!statusRes.ok) {
+      toast.error(statusResultaat.error || "Status bijwerken mislukt.");
+    } else if (onboardingStatus === "inzetbaar") {
+      // Inzetbaar: de server maakt het account aan en stuurt één mail (activatie of welkom).
+      if (statusResultaat.mailMislukt) {
+        toast.error("Inzetbaar gezet, maar de mail kon niet worden verstuurd. Gebruik 'Activatiemail opnieuw sturen'.");
+      } else if (statusResultaat.inzetbaar?.[0]?.mail === "activatie") {
+        toast.success("Account aangemaakt en activatiemail verstuurd.");
+      }
+    }
 
     // ✨ Auto-trigger emails on specific status changes
     try {
@@ -521,17 +533,7 @@ export default function AdminDashboard() {
         });
       }
 
-      if (onboardingStatus === "inzetbaar") {
-        // Send welcome/ready email
-        await fetch("/api/admin/inschrijvingen/onboarding", {
-          method: "POST",
-          headers: await getAuthHeaders(),
-          body: JSON.stringify({
-            kandidaat_id: inschrijving.id,
-            action: "inzetbaar",
-          }),
-        });
-      }
+      // "inzetbaar" stuurt hier geen tweede mail meer: /api/admin/data doet dat al (B15).
     } catch {
       // Don't fail the status update if email fails
     }
@@ -671,6 +673,28 @@ export default function AdminDashboard() {
     });
   };
 
+  // B8: nieuwe activatielink (7 dagen geldig) voor een account dat nog niet is geactiveerd.
+  const stuurActivatiemailOpnieuw = async (inschrijving: Inschrijving) => {
+    if (!inschrijving.medewerker_id) return;
+    if (!confirm(`Nieuwe activatiemail sturen naar ${inschrijving.email}? De vorige link werkt dan niet meer.`)) return;
+    setActivatiemailBezig(true);
+    try {
+      const res = await fetch("/api/admin/medewerkers/activatiemail", {
+        method: "POST",
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({ medewerker_id: inschrijving.medewerker_id }),
+      });
+      const resultaat = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(resultaat.error || "Activatiemail versturen mislukt.");
+        return;
+      }
+      toast.success(`Nieuwe activatiemail verstuurd naar ${resultaat.email || inschrijving.email}.`);
+    } finally {
+      setActivatiemailBezig(false);
+    }
+  };
+
   const bulkUpdateOnboardingStatus = async (status: OnboardingStatus) => {
     if (selectedIds.size === 0) return;
 
@@ -694,7 +718,7 @@ export default function AdminDashboard() {
       payload.inzetbaar_op = null;
     }
 
-    await fetch("/api/admin/data", {
+    const bulkRes = await fetch("/api/admin/data", {
       method: "POST",
       headers: await getAuthHeaders(),
       body: JSON.stringify({
@@ -704,6 +728,12 @@ export default function AdminDashboard() {
         data: payload,
       }),
     });
+    const bulkResultaat = await bulkRes.json().catch(() => ({}));
+    if (!bulkRes.ok) {
+      toast.error(bulkResultaat.error || "Bulk update mislukt.");
+    } else if (bulkResultaat.mailMislukt) {
+      toast.error(`${bulkResultaat.mailMislukt} mail(s) konden niet worden verstuurd. Gebruik per kandidaat 'Activatiemail opnieuw sturen'.`);
+    }
 
     setSelectedIds(new Set());
     setBulkOnboardingStatus("");
@@ -1967,6 +1997,15 @@ export default function AdminDashboard() {
                         <p className="font-medium text-neutral-900">
                           {(selectedItem as Inschrijving).medewerker_id || "Nog niet aangemaakt"}
                         </p>
+                        {(selectedItem as Inschrijving).medewerker_id && (
+                          <button
+                            onClick={() => stuurActivatiemailOpnieuw(selectedItem as Inschrijving)}
+                            disabled={activatiemailBezig}
+                            className="mt-2 px-3 py-1.5 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
+                          >
+                            {activatiemailBezig ? "Versturen..." : "Activatiemail opnieuw sturen"}
+                          </button>
+                        )}
                       </div>
                       <div>
                         <p className="text-neutral-500">Type kandidaat</p>

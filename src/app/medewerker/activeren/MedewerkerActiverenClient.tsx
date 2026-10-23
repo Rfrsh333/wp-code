@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -92,7 +93,27 @@ export default function MedewerkerActiverenClient() {
         {isLoading ? (
           <div className="text-center text-neutral-500">Activatielink controleren...</div>
         ) : error && !naam ? (
-          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{error}</div>
+          <div className="space-y-4">
+            <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{error}</div>
+            {/* B8: een verlopen activatielink is geen doodlopende weg. */}
+            <div className="bg-neutral-50 rounded-xl p-4 text-sm text-neutral-700">
+              <p className="font-medium text-neutral-900 mb-1">Link verlopen?</p>
+              <p>
+                Kies zelf een nieuw wachtwoord via &quot;Wachtwoord vergeten&quot; met het e-mailadres waarop je
+                deze mail kreeg. Lukt dat niet, mail dan{" "}
+                <a href="mailto:info@toptalentjobs.nl" className="text-[#F27501] font-medium">
+                  info@toptalentjobs.nl
+                </a>
+                ; we sturen je een nieuwe activatielink.
+              </p>
+            </div>
+            <Link
+              href="/medewerker/wachtwoord-vergeten"
+              className="block w-full py-3 bg-[#F27501] text-white text-center rounded-xl font-semibold hover:bg-[#d96800] transition-colors"
+            >
+              Wachtwoord vergeten
+            </Link>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{error}</div>}

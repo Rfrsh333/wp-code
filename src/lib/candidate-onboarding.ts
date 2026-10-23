@@ -321,7 +321,8 @@ export async function sendCandidateTemplateEmail(
 
 // 3. Welkomst mail - "Yes, je bent klaar" vibe
 export async function sendWelkomstmail(kandidaat: Kandidaat) {
-  const statusUrl = `${getBaseUrl()}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
+  // Naar de login, niet naar de statuspagina: wie inzetbaar is, werkt verder in het portaal (B15).
+  const loginUrl = `${getBaseUrl()}/medewerker/login`;
   const copy = candidateEmailCopy.welkom;
 
   const content = `
@@ -340,7 +341,7 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
     <p>${copy.bodyAfterCard}</p>
 
     <center>
-      <a href="${statusUrl}" class="cta-button">
+      <a href="${loginUrl}" class="cta-button">
         ${copy.ctaLabel}
       </a>
     </center>
