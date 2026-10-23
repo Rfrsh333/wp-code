@@ -86,7 +86,7 @@ export default function Header() {
             <div className="flex items-center gap-6">
               <a
                 href="mailto:info@toptalentjobs.nl"
-                className="flex items-center text-neutral-300 hover:text-white transition-colors duration-300"
+                className="flex items-center min-h-6 text-neutral-300 hover:text-white transition-colors duration-300"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -323,9 +323,9 @@ export default function Header() {
               </div>
               <Link
                 href="/contact/"
-                className="whitespace-nowrap h-11 inline-flex items-center bg-[#B85600] text-white px-5 rounded-lg font-semibold text-sm
+                className="whitespace-nowrap h-11 inline-flex items-center bg-[#F27501] text-[#1D1B19] px-5 rounded-lg font-semibold text-sm
                 shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30
-                hover:bg-[#9a4700] transition-all duration-300"
+                hover:bg-[#E06C00] transition-all duration-300"
               >
                 Neem contact op
               </Link>
@@ -598,7 +598,7 @@ export default function Header() {
               <div className="space-y-3 pt-4 border-t border-neutral-200">
                 <Link
                   href="/personeel-aanvragen/"
-                  className="block w-full bg-gradient-to-r from-[#F27501] to-[#d96800] text-white px-6 py-4 rounded-xl font-bold text-center shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-200 active:scale-98"
+                  className="block w-full bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white px-6 py-4 rounded-xl font-bold text-center shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-200 active:scale-98"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Personeel aanvragen

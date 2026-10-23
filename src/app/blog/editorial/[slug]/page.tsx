@@ -146,7 +146,7 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
             <Link href="/blog/editorial/" className="transition-colors hover:text-[#B85600]">Editorial</Link>
           </nav>
 
-          <span className="mb-4 inline-block rounded-full bg-[#B85600] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">
+          <span className="mb-4 inline-block rounded-full bg-[#F27501] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#1D1B19]">
             {draft.primaryAudience ?? "Editorial"}
           </span>
 

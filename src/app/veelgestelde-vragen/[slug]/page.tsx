@@ -205,7 +205,7 @@ export default async function FAQDetailPage({
               </div>
               <Link
                 href="/personeel-aanvragen/"
-                className="bg-[#B85600] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors whitespace-nowrap"
+                className="bg-[#F27501] text-[#1D1B19] px-6 py-3 rounded-xl font-semibold hover:bg-[#E06C00] transition-colors whitespace-nowrap"
               >
                 Personeel aanvragen
               </Link>

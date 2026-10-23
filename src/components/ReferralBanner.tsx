@@ -51,7 +51,7 @@ export default function ReferralBanner() {
             </span>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-[#B85600] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#9a4700] transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+              className="bg-[#F27501] text-[#1D1B19] px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#E06C00] transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
             >
               Meer info
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@ export default function ReferralBanner() {
 
               <button
                 onClick={handleCopyLink}
-                className="w-full bg-[#B85600] text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#9a4700] transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full bg-[#F27501] text-[#1D1B19] px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#E06C00] transition-all duration-300 flex items-center justify-center gap-2"
               >
                 {copied ? (
                   <>

@@ -328,9 +328,9 @@ function PersoneelLandingVariantBContent() {
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="w-full bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                    className="w-full bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#9a4700] transition-all duration-300"
+                    hover:bg-[#E06C00] transition-all duration-300"
                   >
                     Check beschikbaarheid
                   </button>
@@ -437,9 +437,9 @@ function PersoneelLandingVariantBContent() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                      className="flex-1 bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                       shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                      hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      hover:bg-[#E06C00] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? "Versturen..." : "Vraag direct personeel aan"}
                     </button>
@@ -543,7 +543,7 @@ function PersoneelLandingVariantBContent() {
       <div className="fixed bottom-24 left-4 right-4 md:hidden z-40">
         <a
           href="#lp3-form"
-          className="flex items-center justify-center gap-2 bg-[#B85600] text-white px-6 py-3 rounded-full font-semibold shadow-lg shadow-orange-500/30 hover:bg-[#9a4700] transition-colors"
+          className="flex items-center justify-center gap-2 bg-[#F27501] text-[#1D1B19] px-6 py-3 rounded-full font-semibold shadow-lg shadow-orange-500/30 hover:bg-[#E06C00] transition-colors"
         >
           Vraag direct personeel aan
         </a>

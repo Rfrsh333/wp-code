@@ -123,7 +123,7 @@ export default function StickyMobileCTA() {
             className="
               flex flex-col items-center justify-center gap-1
               min-h-[60px] rounded-xl
-              bg-gradient-to-br from-[#F27501] to-[#d96800]
+              bg-gradient-to-br from-[#B85600] to-[#9a4700]
               text-white
               hover:from-[#d96800] hover:to-[#c25e00]
               active:scale-95

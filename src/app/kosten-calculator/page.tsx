@@ -107,9 +107,9 @@ export default function KostenCalculatorPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/contact/"
-                className="bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                className="bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                   shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                  hover:bg-[#9a4700] hover:-translate-y-0.5 transition-all duration-300 text-center"
+                  hover:bg-[#E06C00] hover:-translate-y-0.5 transition-all duration-300 text-center"
               >
                 Neem contact op
               </Link>

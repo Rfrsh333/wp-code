@@ -58,9 +58,9 @@ export default function UitzendenPage() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href="/personeel-aanvragen"
-                    className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                    className="inline-flex items-center justify-center bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#9a4700] transition-all duration-300"
+                    hover:bg-[#E06C00] transition-all duration-300"
                   >
                     Direct personeel aanvragen
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +233,7 @@ export default function UitzendenPage() {
                 ].map((item, i) => (
                   <FadeIn key={i} delay={0.15 * i}>
                     <div className="text-center relative">
-                      <div className="w-14 h-14 bg-[#B85600] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 relative z-10">
+                      <div className="w-14 h-14 bg-[#F27501] rounded-full flex items-center justify-center text-[#1D1B19] font-bold text-xl mx-auto mb-4 relative z-10">
                         {item.step}
                       </div>
                       <h3 className="font-bold text-neutral-900 mb-2">{item.title}</h3>
@@ -344,7 +344,7 @@ export default function UitzendenPage() {
       <Section variant="white" spacing="large">
         <Section.Container>
           <FadeIn>
-            <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-3xl p-12 lg:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute top-0 left-0 w-40 h-40 border border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                 <div className="absolute bottom-0 right-0 w-60 h-60 border border-white/20 rounded-full translate-x-1/3 translate-y-1/3"></div>

@@ -353,7 +353,7 @@ export default async function BlogPage() {
                       <p className="text-white/70 text-sm mb-4">
                         Alles wat u moet weten over werving in de horeca.
                       </p>
-                      <button className="w-full bg-[#B85600] text-white py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors">
+                      <button className="w-full bg-[#F27501] text-[#1D1B19] py-3 rounded-xl font-semibold hover:bg-[#E06C00] transition-colors">
                         Download E-book
                       </button>
                     </div>
@@ -388,7 +388,7 @@ export default async function BlogPage() {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <span className="absolute top-4 left-4 bg-[#B85600] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
+                        <span className="absolute top-4 left-4 bg-[#F27501] text-[#1D1B19] text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
                           {post.category}
                         </span>
                       </div>

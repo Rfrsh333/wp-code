@@ -273,12 +273,12 @@ export default async function FunctiePage({ params }: PageProps) {
           <h2 className="text-2xl font-bold text-neutral-900 mb-4">
             Wat kost {naam} inhuren?
           </h2>
-          <div className="bg-[#B85600] text-white rounded-2xl p-6 md:p-8">
+          <div className="bg-[#F27501] text-[#1D1B19] rounded-2xl p-6 md:p-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <p className="text-white text-sm mb-1">Uurtarief indicatie</p>
+                <p className="text-sm mb-1">Uurtarief indicatie</p>
                 <p className="text-3xl font-bold">{functie.hourlyRateRange}</p>
-                <p className="text-white text-sm mt-1">Per uur, inclusief werkgeverslasten</p>
+                <p className="text-sm mt-1">Per uur, inclusief werkgeverslasten</p>
               </div>
               <Link
                 href="/kosten-calculator/"
@@ -347,7 +347,7 @@ export default async function FunctiePage({ params }: PageProps) {
 
         {/* CTA + trust signals */}
         <section className="max-w-4xl mx-auto px-4 pb-12">
-          <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl p-8 md:p-12 text-white text-center">
+          <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-2xl p-8 md:p-12 text-white text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">
               Direct een {naam} inhuren?
             </h2>

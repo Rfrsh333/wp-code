@@ -92,7 +92,7 @@ export function ChecklistBlock({ title, items, variant = "checklist" }: Checklis
   const icons = {
     checklist: (checked: boolean) => (
       <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
-        checked ? "bg-[#B85600] text-white" : "border-2 border-neutral-300"
+        checked ? "bg-[#F27501] text-[#1D1B19]" : "border-2 border-neutral-300"
       }`}>
         {checked && (
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +102,7 @@ export function ChecklistBlock({ title, items, variant = "checklist" }: Checklis
       </div>
     ),
     steps: (index: number) => (
-      <div className="w-7 h-7 rounded-full bg-[#B85600] text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
+      <div className="w-7 h-7 rounded-full bg-[#F27501] text-[#1D1B19] text-sm font-semibold flex items-center justify-center flex-shrink-0">
         {index + 1}
       </div>
     ),
@@ -154,7 +154,7 @@ export function QuoteBlock({ quote, author, role, variant = "insight" }: QuoteBl
         </blockquote>
         {(author || role) && (
           <div className="flex items-center gap-3 mt-6">
-            <div className="w-10 h-10 rounded-full bg-[#B85600] flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full bg-[#F27501] flex items-center justify-center text-[#1D1B19] font-semibold">
               {author ? author.charAt(0) : "T"}
             </div>
             <div>
@@ -330,7 +330,7 @@ export function CTABox({ title, description, primaryLink, secondaryLink, variant
       bg: "bg-gradient-to-br from-neutral-900 to-neutral-800",
       text: "text-white",
       subtext: "text-neutral-300",
-      primaryBtn: "bg-[#B85600] text-white hover:bg-[#9a4700]",
+      primaryBtn: "bg-[#F27501] text-[#1D1B19] hover:bg-[#E06C00]",
       secondaryBtn: "border-2 border-neutral-600 text-white hover:border-neutral-400",
     },
   };
@@ -416,7 +416,7 @@ export function ProcessTimeline({ title, steps }: ProcessTimelineProps) {
         <div className="space-y-6">
           {steps.map((step, i) => (
             <div key={i} className="flex gap-4 relative">
-              <div className="w-8 h-8 rounded-full bg-[#B85600] text-white flex items-center justify-center flex-shrink-0 text-sm font-bold relative z-10">
+              <div className="w-8 h-8 rounded-full bg-[#F27501] text-[#1D1B19] flex items-center justify-center flex-shrink-0 text-sm font-bold relative z-10">
                 {i + 1}
               </div>
               <div className="bg-white rounded-xl border border-neutral-100 p-5 flex-1 shadow-sm">
@@ -450,7 +450,7 @@ export function PriceTable({ title, rows, footer }: PriceTableProps) {
   return (
     <div className="my-8 overflow-hidden rounded-xl border border-neutral-200">
       {title && (
-        <div className="bg-[#B85600] text-white px-6 py-4">
+        <div className="bg-[#F27501] text-[#1D1B19] px-6 py-4">
           <h2 className="font-semibold">{title}</h2>
         </div>
       )}

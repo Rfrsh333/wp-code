@@ -34,9 +34,9 @@ export default function DetacheringPage() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href="/contact/"
-                    className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                    className="inline-flex items-center justify-center bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#9a4700] transition-all duration-300"
+                    hover:bg-[#E06C00] transition-all duration-300"
                   >
                     Meer informatie aanvragen
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,8 +389,8 @@ export default function DetacheringPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/contact/"
-                    className="bg-[#B85600] text-white px-8 py-4 rounded-xl text-base font-semibold
-                    hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/20"
+                    className="bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl text-base font-semibold
+                    hover:bg-[#E06C00] transition-all duration-300 shadow-lg shadow-orange-500/20"
                   >
                     Gesprek inplannen
                   </Link>

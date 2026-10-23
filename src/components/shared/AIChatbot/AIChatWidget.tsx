@@ -283,7 +283,7 @@ export default function AIChatWidget({ userType }: AIChatWidgetProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={store.toggle}
-            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[60] w-12 h-12 bg-[#B85600] text-white rounded-full shadow-lg hover:bg-[#9a4700] transition-colors flex items-center justify-center"
+            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[60] w-12 h-12 bg-[#F27501] text-[#1D1B19] rounded-full shadow-lg hover:bg-[#E06C00] transition-colors flex items-center justify-center"
             aria-label="Open chat"
           >
             <MessageCircle className="w-5 h-5" />

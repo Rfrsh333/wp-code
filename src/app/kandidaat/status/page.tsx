@@ -103,7 +103,7 @@ function KandidaatStatusContent() {
           <p className="text-neutral-600 mb-6">{error}</p>
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700]"
+            className="inline-block px-6 py-3 bg-[#F27501] text-[#1D1B19] rounded-xl font-medium hover:bg-[#E06C00]"
           >
             Terug naar homepage
           </Link>
@@ -179,7 +179,7 @@ function KandidaatStatusContent() {
               <div className="mt-6 pt-6 border-t border-current/20">
                 <Link
                   href={uploadLink}
-                  className="block w-full px-6 py-4 bg-gradient-to-r from-[#F27501] to-[#d96800] text-white rounded-xl font-bold text-center hover:shadow-lg transform hover:scale-105 transition-all"
+                  className="block w-full px-6 py-4 bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white rounded-xl font-bold text-center hover:shadow-lg transform hover:scale-105 transition-all"
                 >
                   📤 Upload Documenten Nu →
                 </Link>
@@ -201,7 +201,7 @@ function KandidaatStatusContent() {
               <div className="mt-6 pt-6 border-t border-current/20 space-y-3">
                 <Link
                   href="/medewerker/login"
-                  className="block w-full px-6 py-4 bg-gradient-to-r from-[#F27501] to-[#d96800] text-white rounded-xl font-bold text-center hover:shadow-lg transition-all"
+                  className="block w-full px-6 py-4 bg-gradient-to-r from-[#B85600] to-[#9a4700] text-white rounded-xl font-bold text-center hover:shadow-lg transition-all"
                 >
                   {account.geactiveerd ? "Inloggen op TopTalent Hub →" : "Al een wachtwoord gekozen? Log in →"}
                 </Link>
@@ -341,7 +341,7 @@ function KandidaatStatusContent() {
           <div className="flex flex-col sm:flex-row gap-4">
             <a
               href="mailto:info@toptalentjobs.nl"
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700]"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-[#F27501] text-[#1D1B19] rounded-xl font-medium hover:bg-[#E06C00]"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

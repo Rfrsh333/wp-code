@@ -154,7 +154,7 @@ export default async function GeoPage({ params }: PageProps) {
             <div className="flex flex-col sm:flex-row gap-3 mb-10">
               <Link
                 href="/personeel-aanvragen/"
-                className="inline-flex items-center justify-center px-7 py-3.5 bg-[#B85600] text-white font-semibold rounded-xl hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center px-7 py-3.5 bg-[#F27501] text-[#1D1B19] font-semibold rounded-xl hover:bg-[#E06C00] transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
               >
                 Personeel aanvragen
                 <svg
@@ -311,7 +311,7 @@ export default async function GeoPage({ params }: PageProps) {
         <Section variant="white" spacing="default">
           <Section.Container>
             <ScrollReveal direction="up">
-              <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-3xl p-8 md:p-12 lg:p-16 text-center text-white relative overflow-hidden">
+              <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] rounded-3xl p-8 md:p-12 lg:p-16 text-center text-white relative overflow-hidden">
                 {/* Decorative circles */}
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute top-0 left-0 w-40 h-40 border border-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />

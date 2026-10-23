@@ -85,7 +85,7 @@ export default async function VerifyPage({
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-lg max-w-sm w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-br from-[#F27501] to-[#d96800] p-6 text-center text-white">
+        <div className="bg-gradient-to-br from-[#B85600] to-[#9a4700] p-6 text-center text-white">
           <div className="flex justify-center mb-3">
             <span className="text-sm font-bold tracking-wider opacity-80">TOPTALENT</span>
           </div>

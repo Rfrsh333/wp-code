@@ -333,9 +333,9 @@ function PersoneelLandingPageContent() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
+                    className="w-full bg-[#F27501] text-[#1D1B19] px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    hover:bg-[#E06C00] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Versturen..." : "Vrijblijvende aanvraag"}
                   </button>
