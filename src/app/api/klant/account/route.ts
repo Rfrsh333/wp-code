@@ -4,11 +4,18 @@ import { getKlantSession } from "@/lib/portal-auth";
 import { schoonProfielUpdate } from "@/lib/klant-portaal-regels";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isBearerRequest, zetKlantSessie } from "@/lib/klant-sessie-cookie";
+import { laadOnboardingStand } from "@/lib/klant-onboarding";
+import { isDemoKlant } from "@/lib/demo";
 
 const VELDEN_VOL = "id, bedrijfsnaam, contactpersoon, email, telefoon, adres, postcode, stad, kvk_nummer, btw_nummer";
 const VELDEN_BASIS = "id, bedrijfsnaam, contactpersoon, email, telefoon";
 
-/** Bedrijfsgegevens van de ingelogde klant (Instellingen-tab). */
+/**
+ * Bedrijfsgegevens van de ingelogde klant (Instellingen-tab), plus de onboardingstand:
+ * `onboarding: { email_bevestigd, gecontroleerd }`. Zolang email_bevestigd false is, weigert
+ * POST /api/klant/aanvraag (403, code email_niet_bevestigd); zolang gecontroleerd false is,
+ * krijgen nieuwe diensten status in_controle. Web (cookie) en app (Bearer).
+ */
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
   if (!klant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,7 +30,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Account niet gevonden" }, { status: 404 });
   }
 
-  return NextResponse.json({ account: res.data });
+  const [stand, demo] = await Promise.all([laadOnboardingStand(klant.id), isDemoKlant(klant.id)]);
+  return NextResponse.json({
+    account: res.data,
+    onboarding: { email_bevestigd: stand.emailBevestigd || demo, gecontroleerd: stand.gecontroleerd || demo },
+  });
 }
 
 /** Wijzig bedrijfsgegevens; alleen whitelist-velden (nooit status, e-mail, wachtwoord of id). */

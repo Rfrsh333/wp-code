@@ -53,12 +53,17 @@ interface Klant {
   status?: string | null;
   heeft_wachtwoord?: boolean;
   uitgenodigd_op?: string | null;
+  // Migratie 20261023_klant_onboarding.sql; undefined zolang die niet gedraaid is.
+  email_geverifieerd_op?: string | null;
+  gecontroleerd_op?: string | null;
+  kvk_nummer?: string | null;
 }
 
 /** Leesbare stand van de portaaltoegang van een klant. */
 function portaalStand(k: Klant): { label: string; kleur: string } {
   if (k.status === "verwijderd") return { label: "Account verwijderd", kleur: "bg-neutral-200 text-neutral-600" };
   if (k.status === "inactief") return { label: "Inactief", kleur: "bg-red-100 text-red-700" };
+  if (k.heeft_wachtwoord && k.email_geverifieerd_op === null) return { label: "E-mail nog niet bevestigd", kleur: "bg-amber-100 text-amber-700" };
   if (k.heeft_wachtwoord) return { label: "Kan inloggen", kleur: "bg-green-100 text-green-700" };
   if (k.uitgenodigd_op) return { label: "Uitgenodigd, nog geen wachtwoord", kleur: "bg-amber-100 text-amber-700" };
   return { label: "Nog niet uitgenodigd", kleur: "bg-neutral-100 text-neutral-600" };
@@ -350,6 +355,12 @@ export default function KlantenTab() {
                   ? `Mail met een link om een wachtwoord in te stellen (7 dagen geldig, werkt één keer).${k.uitgenodigd_op ? ` Laatst uitgenodigd: ${new Date(k.uitgenodigd_op).toLocaleDateString("nl-NL")}.` : ""}`
                   : "Geen e-mailadres bekend: uitnodigen kan pas met een e-mailadres."}
               </p>
+              {k.gecontroleerd_op === null && (
+                <p className="text-xs text-amber-700 mt-1">
+                  Zelf geregistreerd, nog niet gecontroleerd: de eerste dienst wacht op goedkeuring in Diensten.
+                  {k.kvk_nummer ? ` KvK ${k.kvk_nummer}.` : ""}
+                </p>
+              )}
               {uitnodigingMelding && (
                 <p role="status" className={`text-xs mt-1 ${uitnodigingMelding.type === "ok" ? "text-green-700" : "text-red-600"}`}>
                   {uitnodigingMelding.tekst}

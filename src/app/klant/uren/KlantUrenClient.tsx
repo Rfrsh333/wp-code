@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import DashboardWidgets from "@/components/klant/DashboardWidgets";
 import KlantPushNotificationBanner from "../components/PushNotificationBanner";
+import KlantOnboardingMelding from "@/components/klant/KlantOnboardingMelding";
 import QuickActions from "@/components/klant/QuickActions";
 import KlantInstellingen from "@/components/klant/KlantInstellingen";
 import LiveStatusTracker from "@/components/klant/LiveStatusTracker";
@@ -502,6 +503,7 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
     open: "bg-blue-100 text-blue-800",
     bezig: "bg-amber-100 text-amber-800",
     vol: "bg-green-100 text-green-800",
+    in_controle: "bg-amber-100 text-amber-800",
     aangevraagd: "bg-blue-100 text-blue-800",
     bevestigd: "bg-green-100 text-green-800",
   };
@@ -663,6 +665,7 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
             {activeTab === "overzicht" && (
               <div className="space-y-5">
                 <KlantPushNotificationBanner />
+                <KlantOnboardingMelding plek="overzicht" />
                 {/* Greeting */}
                 <div>
                   <h2 className="text-xl font-bold text-[var(--kp-text-primary)]">
@@ -893,8 +896,11 @@ export default function KlantUrenClient({ klant, initialTab }: { klant: Klant; i
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone[dienst.status] || "bg-neutral-200 text-neutral-700"}`}>
-                                {dienst.status}
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone[dienst.status] || "bg-neutral-200 text-neutral-700"}`}
+                                title={dienst.status === "in_controle" ? "TopTalent controleert uw eerste dienst; daarna zien medewerkers hem" : undefined}
+                              >
+                                {dienst.status === "in_controle" ? "In controle bij TopTalent" : dienst.status}
                               </span>
                               {dienst.status === "vol" && (
                                 <button
@@ -1656,6 +1662,8 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
     favoriet_medewerker_ids: (voorkeurMedewerkerId ? [voorkeurMedewerkerId] : []) as string[],
   });
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  // Antwoord van de laatste aanvraag: eerste dienst van een nieuwe klant, eerst controle door TopTalent.
+  const [inControle, setInControle] = useState(false);
   const [templateNaam, setTemplateNaam] = useState("");
 
   // Platform opties (functies & vaardigheden uit admin)
@@ -1734,9 +1742,16 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
         queryClient.invalidateQueries({ queryKey: klantKeys.dashboard() });
 
         const uitgenodigd = Number(data?.favorieten_uitgenodigd) || 0;
-        toast.success(uitgenodigd > 0
-          ? `Aanvraag verstuurd! ${uitgenodigd} favoriet${uitgenodigd === 1 ? "" : "en"} uitgenodigd.`
-          : "Aanvraag succesvol verstuurd!");
+        if (data?.in_controle) {
+          // Eerste dienst van een nieuwe klant: eerst controle door TopTalent, nog geen push.
+          setInControle(true);
+          toast.success("Aanvraag ontvangen! TopTalent controleert uw eerste dienst.");
+        } else {
+          setInControle(false);
+          toast.success(uitgenodigd > 0
+            ? `Aanvraag verstuurd! ${uitgenodigd} favoriet${uitgenodigd === 1 ? "" : "en"} uitgenodigd.`
+            : "Aanvraag succesvol verstuurd!");
+        }
         // Geen automatische doorverwijzing meer: die sprong na 3 s weg terwijl u een templatenaam typte.
         setShowSaveTemplate(true);
         setIsSending(false);
@@ -1813,6 +1828,8 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
         <h2 className="text-2xl font-bold text-neutral-900">Personeel Aanvragen</h2>
         <p className="mt-1 text-sm text-neutral-500">Vul het formulier in om personeel aan te vragen.</p>
       </div>
+
+      <KlantOnboardingMelding plek="aanvraag" />
 
       {/* Snelle Aanvraag - Templates */}
       {templates.length > 0 && step === 1 && (
@@ -2356,7 +2373,12 @@ function AanvraagTab({ onSuccess, voorkeurMedewerkerId }: { onSuccess: () => voi
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-neutral-900">Aanvraag verstuurd!</h3>
+            <h3 className="text-lg font-bold text-neutral-900">{inControle ? "Aanvraag ontvangen" : "Aanvraag verstuurd!"}</h3>
+            {inControle && (
+              <p className="text-sm text-neutral-600 mt-1">
+                Omdat dit uw eerste dienst is, controleert TopTalent hem eerst. Na goedkeuring zien medewerkers de dienst; volgende diensten gaan direct live.
+              </p>
+            )}
             <p className="text-sm text-neutral-600 mt-1">Wil je deze aanvraag opslaan als template voor volgende keer?</p>
           </div>
           <div className="space-y-3">

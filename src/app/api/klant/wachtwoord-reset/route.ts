@@ -7,6 +7,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { hashToken } from "@/lib/token-hash";
 import { revokeSessions } from "@/lib/portal-auth";
 import { findValidKlantResetToken } from "@/lib/klant-password-reset";
+import { markeerEmailBevestigd } from "@/lib/klant-onboarding";
 
 export async function GET(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -83,6 +84,9 @@ export async function POST(request: NextRequest) {
 
     // Alle bestaande sessies (ook op andere apparaten) vervallen na een reset.
     await revokeSessions("klanten", klant.id);
+
+    // De link kwam per mail: daarmee is het e-mailadres ook bevestigd (uitnodiging of reset).
+    await markeerEmailBevestigd(klant.id, "/api/klant/wachtwoord-reset");
 
     return NextResponse.json({ success: true });
   } catch (error) {

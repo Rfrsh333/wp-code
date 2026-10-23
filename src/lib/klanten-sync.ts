@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { stuurKlantUitnodiging } from "@/lib/klant-uitnodiging";
+import { markeerGecontroleerd } from "@/lib/klant-onboarding";
 import {
   letterlijkLikePatroon,
   moetBestaandeKlantUitnodigen,
@@ -104,6 +105,9 @@ export async function ensureKlantForDienst(input: DienstKlantInput, opties: { ui
   if (error) {
     throw error;
   }
+
+  // Door TopTalent aangemaakt = gecontroleerd (geen eerste-dienstcontrole).
+  await markeerGecontroleerd(createdKlant.id as string, "lib/klanten-sync");
 
   if (opties.uitnodigen && email) {
     await nodigUitZonderFout(createdKlant.id as string);

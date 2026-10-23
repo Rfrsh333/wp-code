@@ -2,7 +2,7 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { sendTelegramAlert } from "@/lib/telegram";
-import { sendPushToAllOfType, sendPushToUser } from "@/lib/push-notifications";
+import { sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { laagsteBasistarief } from "@/lib/pricing/ondergrens";
 import { haalTariefOverzicht } from "@/lib/pricing/tarief-overzicht";
@@ -10,6 +10,9 @@ import { nlVandaag } from "@/lib/nl-tijd";
 import { begintijdVoorbij, kiesDienstVoorFavoriet, parseUurtarief, uurtariefFout } from "@/lib/klant-portaal-regels";
 import { checkRedisRateLimit, klantAanvraagRateLimit } from "@/lib/rate-limit-redis";
 import { isDemoKlant, medewerkersInWereld } from "@/lib/demo";
+import { laadOnboardingStand } from "@/lib/klant-onboarding";
+import { beoordeelDienstPlaatsen, DIENST_STATUS_IN_CONTROLE } from "@/lib/klant-controle-regels";
+import { meldDienstInControle, pushNieuweDienst } from "@/lib/klant-controle";
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 const TIJD = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
@@ -122,6 +125,16 @@ export async function POST(request: NextRequest) {
     // en geen Telegram of push naar echte mensen (lib/demo.ts).
     const demo = await isDemoKlant(klantData.id);
 
+    // E-mailadres bevestigd? En is de klant al door TopTalent gecontroleerd? Zo niet, dan gaan
+    // de diensten eerst langs TopTalent (status in_controle, geen push). Zonder migratie
+    // 20261023_klant_onboarding.sql geldt iedereen als bevestigd en gecontroleerd.
+    const stand = await laadOnboardingStand(klantData.id);
+    const plaatsen = beoordeelDienstPlaatsen({ emailBevestigd: stand.emailBevestigd, gecontroleerd: stand.gecontroleerd, demo });
+    if (!plaatsen.ok) {
+      return NextResponse.json({ error: plaatsen.error, code: plaatsen.code }, { status: plaatsen.status });
+    }
+    const inControle = plaatsen.dienstStatus === DIENST_STATUS_IN_CONTROLE;
+
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Ongeldige aanvraag" }, { status: 400 });
@@ -193,7 +206,7 @@ export async function POST(request: NextRequest) {
       start_tijd,
       eind_tijd,
       locatie: typeof locatie === "string" && locatie.trim() ? locatie.trim().slice(0, 300) : null,
-      status: "open",
+      status: plaatsen.dienstStatus,
       notities: typeof opmerkingen === "string" && opmerkingen.trim() ? opmerkingen.trim().slice(0, 2000) : null,
     };
     if (["nl", "en", "nl_en"].includes(vereiste_taal)) gemeenschappelijk.vereiste_taal = vereiste_taal;
@@ -236,10 +249,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert all diensten
-    const { data: diensten, error } = await supabaseAdmin
+    let { data: diensten, error } = await supabaseAdmin
       .from("diensten")
       .insert(dienstenToCreate)
       .select("id, functie");
+
+    // 23514: de status-CHECK op diensten kent in_controle nog niet (migratie half gedraaid).
+    // Dan zoals voorheen direct open, en een melding in Sentry zodat het opvalt.
+    let statusGeplaatst = plaatsen.dienstStatus as string;
+    if (error?.code === "23514" && inControle) {
+      captureRouteError(error, { route: "/api/klant/aanvraag", action: "IN_CONTROLE_CONSTRAINT" });
+      statusGeplaatst = "open";
+      ({ data: diensten, error } = await supabaseAdmin
+        .from("diensten")
+        .insert(dienstenToCreate.map((d) => ({ ...d, status: "open" })))
+        .select("id, functie"));
+    }
+    const wachtOpControle = statusGeplaatst === DIENST_STATUS_IN_CONTROLE;
 
     if (error) {
       captureRouteError(error, { route: "/api/klant/aanvraag", action: "POST" });
@@ -251,10 +277,43 @@ export async function POST(request: NextRequest) {
     const omschrijving = `${functieSummary} op ${datum} (${start_tijd.slice(0, 5)} - ${eind_tijd.slice(0, 5)})${gemeenschappelijk.locatie ? ` in ${gemeenschappelijk.locatie}` : ""}`;
 
     // Favorieten uit stap 4 daadwerkelijk uitnodigen (voorheen werd de keuze genegeerd).
+    // Niet zolang de dienst in controle is: medewerkers zien hem dan nog niet.
     const favorietIds = Array.isArray(favoriet_medewerker_ids)
       ? [...new Set(favoriet_medewerker_ids.filter((i: unknown): i is string => typeof i === "string" && UUID.test(i)))].slice(0, 50)
       : [];
-    const uitnodigingen = await nodigFavorietenUit(klantData.id, favorietIds, diensten || [], omschrijving, demo);
+    const uitnodigingen = wachtOpControle
+      ? { uitgenodigd: 0, overgeslagen: favorietIds.length }
+      : await nodigFavorietenUit(klantData.id, favorietIds, diensten || [], omschrijving, demo);
+
+    if (wachtOpControle) {
+      // Eerste dienst(en) van een nog niet gecontroleerde klant: geen push, wel een melding aan
+      // TopTalent (Telegram + mail). Goedkeuren in admin > Diensten zet ze open en pusht dan.
+      const controleDiensten = dienstenToCreate.map((d) => ({
+        functie: (d.functie as string) ?? null,
+        aantal_nodig: (d.aantal_nodig as number) ?? null,
+        datum,
+        start_tijd,
+        eind_tijd,
+        locatie: (gemeenschappelijk.locatie as string | null) ?? null,
+        uurtarief: (d.uurtarief as number) ?? null,
+      }));
+      after(() =>
+        meldDienstInControle(klantData.id, controleDiensten).catch((e) =>
+          captureRouteError(e, { route: "/api/klant/aanvraag", action: "MELDING_CONTROLE" }),
+        ),
+      );
+      return NextResponse.json({
+        success: true,
+        dienst_ids: diensten?.map((d) => d.id) || [],
+        count: diensten?.length || 0,
+        status: DIENST_STATUS_IN_CONTROLE,
+        in_controle: true,
+        melding:
+          "Uw aanvraag is ontvangen. Omdat dit uw eerste dienst is, controleert TopTalent hem eerst. Na goedkeuring zien medewerkers de dienst en kunnen ze reageren; volgende diensten gaan direct live.",
+        favorieten_uitgenodigd: 0,
+        favorieten_overgeslagen: uitnodigingen.overgeslagen,
+      });
+    }
 
     // Telegram notification (geen PII — AVG compliance); niet voor demo-aanvragen.
     if (!demo) after(() =>
@@ -269,18 +328,15 @@ export async function POST(request: NextRequest) {
     // Push notificatie naar alle medewerkers: nieuwe dienst beschikbaar. Bij een demo-klant
     // alleen naar demo-medewerkers (sendPushToAllOfType filtert op de wereld).
     after(() =>
-      sendPushToAllOfType("medewerker", {
-        title: "Nieuwe dienst beschikbaar!",
-        body: omschrijving,
-        url: "/medewerker/diensten/",
-        tag: `nieuwe-dienst-${datum}`,
-      }, { demo }).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
+      pushNieuweDienst(omschrijving, datum, demo).catch((e) => captureRouteError(e, { route: "/api/klant/aanvraag", action: "PUSH" })),
     );
 
     return NextResponse.json({
       success: true,
       dienst_ids: diensten?.map(d => d.id) || [],
       count: diensten?.length || 0,
+      status: "open",
+      in_controle: false,
       favorieten_uitgenodigd: uitnodigingen.uitgenodigd,
       favorieten_overgeslagen: uitnodigingen.overgeslagen,
     });

@@ -7,6 +7,7 @@ import { isOpenAIConfigured } from "@/lib/openai";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { buildLeadIdentityFields, normalizeCompanyName } from "@/lib/acquisitie/identity";
 import { stuurKlantUitnodiging } from "@/lib/klant-uitnodiging";
+import { markeerGecontroleerd } from "@/lib/klant-onboarding";
 
 type LeadIdentityCandidate = {
   id: string;
@@ -250,6 +251,9 @@ export async function POST(request: NextRequest) {
           geconverteerd_op: new Date().toISOString(),
         })
         .eq("id", id);
+
+      // Door TopTalent aangemaakt = gecontroleerd (geen eerste-dienstcontrole).
+      await markeerGecontroleerd(klant.id, "/api/admin/acquisitie/leads");
 
       // Uitnodiging "wachtwoord instellen" (7 dagen geldig), zodat de klant zelf kan inloggen.
       let uitnodiging: { verstuurd: boolean; melding: string };

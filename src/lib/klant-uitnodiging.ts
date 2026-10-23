@@ -2,6 +2,7 @@ import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
+import { markeerGecontroleerd } from "@/lib/klant-onboarding";
 import {
   createKlantPasswordResetToken,
   klantResetBeschikbaar,
@@ -102,6 +103,9 @@ export async function stuurKlantUitnodiging(
   const nu = new Date().toISOString();
   const { error: tijdFout } = await supabaseAdmin.from("klanten").update({ uitgenodigd_op: nu }).eq("id", klant.id);
   if (tijdFout && !isOntbrekendeKolom(tijdFout)) captureRouteError(tijdFout, { route, action: "UITNODIGING_MOMENT" });
+
+  // Door TopTalent uitgenodigd = gecontroleerd: geen eerste-dienstcontrole (lib/klant-controle-regels).
+  await markeerGecontroleerd(klant.id, route);
 
   return { ok: true, email, geldigTot: new Date(Date.now() + KLANT_UITNODIGING_GELDIG_MS).toISOString() };
 }
