@@ -18,3 +18,10 @@ export function fitDescription(text: string, max = 158): string {
   if (sentence > max * 0.6) return cut.slice(0, sentence + 1);
   return cut.slice(0, cut.lastIndexOf(" ")).replace(/[,;:\-–—]+$/, "") + "…";
 }
+
+// Voor vragen als titel: liever een nette ellips dan een zin die midden in een gedachte stopt.
+export function fitQuestionTitle(question: string, max = 60): string {
+  if (question.length <= max) return question;
+  const cut = question.slice(0, max - 1);
+  return cut.slice(0, cut.lastIndexOf(" ")).replace(/[,;:\-–—]+$/, "") + "…";
+}
