@@ -118,6 +118,35 @@ export function parseWerkgeverBeoordeling(body: unknown): ParseResultaat {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Eigen beoordelingen in de dienstdata ("Beoordeeld ★4")
+// ---------------------------------------------------------------------------------------------
+
+export type EigenWerkgeverBeoordeling = { score: number };
+
+/**
+ * Per dienst de eigen beoordeling van de medewerker, voor `werkgever_beoordeling` in de dienstdata.
+ * Ook een door TopTalent verborgen beoordeling telt hier: de medewerker heeft hem wél gegeven.
+ * Ongeldige scores vallen weg (dan null, alsof er nog niets is gegeven).
+ */
+export function eigenBeoordelingenPerDienst(
+  rijen: readonly { dienst_id: string | null; score: unknown }[],
+): Map<string, EigenWerkgeverBeoordeling> {
+  const uit = new Map<string, EigenWerkgeverBeoordeling>();
+  for (const r of rijen) {
+    if (r.dienst_id && isGeldigeScore(r.score)) uit.set(r.dienst_id, { score: r.score });
+  }
+  return uit;
+}
+
+/** `werkgever_beoordeling` voor één dienst: `{ score }` of null. */
+export function eigenBeoordelingVoor(
+  perDienst: ReadonlyMap<string, EigenWerkgeverBeoordeling>,
+  dienstId: string | null | undefined,
+): EigenWerkgeverBeoordeling | null {
+  return (dienstId && perDienst.get(dienstId)) || null;
+}
+
+// ---------------------------------------------------------------------------------------------
 // Herinnering
 // ---------------------------------------------------------------------------------------------
 

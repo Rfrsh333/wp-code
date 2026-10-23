@@ -5,6 +5,8 @@ import {
   beoordeelUrl,
   beoordelenTot,
   binnenBeoordeelTermijn,
+  eigenBeoordelingVoor,
+  eigenBeoordelingenPerDienst,
   herinneringPush,
   isAfgerondVoorBeoordeling,
   parseWerkgeverBeoordeling,
@@ -132,5 +134,29 @@ test.describe("herinnering", () => {
     const p = herinneringPush({ dienstId: "d-2", klantNaam: "  ", datum: "2026-10-22", functie: null });
     expect(p.title).toBe("Hoe was het bij je werkgever?");
     expect(p.body.startsWith("Geef je dienst van")).toBe(true);
+  });
+});
+
+test.describe("werkgever_beoordeling in de dienstdata", () => {
+  test("per dienst { score }; zonder beoordeling null", () => {
+    const perDienst = eigenBeoordelingenPerDienst([
+      { dienst_id: "a", score: 4 },
+      { dienst_id: "b", score: 5 },
+    ]);
+    expect(eigenBeoordelingVoor(perDienst, "a")).toEqual({ score: 4 });
+    expect(eigenBeoordelingVoor(perDienst, "b")).toEqual({ score: 5 });
+    expect(eigenBeoordelingVoor(perDienst, "c")).toBeNull();
+    expect(eigenBeoordelingVoor(perDienst, null)).toBeNull();
+    expect(eigenBeoordelingVoor(new Map(), "a")).toBeNull();
+  });
+
+  test("ongeldige rijen vallen weg", () => {
+    const perDienst = eigenBeoordelingenPerDienst([
+      { dienst_id: "a", score: 0 },
+      { dienst_id: "b", score: "4" },
+      { dienst_id: null, score: 3 },
+      { dienst_id: "c", score: 3.5 },
+    ]);
+    expect(perDienst.size).toBe(0);
   });
 });

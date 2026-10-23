@@ -18,6 +18,8 @@ import { fotoVoorDienst } from "@/lib/sfeerfotos";
 import { fotosVoorDiensten } from "@/lib/sfeerfotos-opslag";
 import { haalCompacteWerkgeverProfielen } from "@/lib/werkgever-profiel";
 import type { WerkgeverProfielCompact } from "@/lib/werkgever-profiel-regels";
+import { haalEigenWerkgeverBeoordelingen } from "@/lib/medewerker/werkgever-beoordeling";
+import { eigenBeoordelingVoor, type EigenWerkgeverBeoordeling } from "@/lib/medewerker/werkgever-beoordeling-regels";
 
 type UrenRegistratie = { status: string };
 
@@ -153,7 +155,8 @@ export async function GET(request: NextRequest) {
   // check), en kledingvoorschrift + pauze per dienst (leeg zolang de migratie niet gedraaid is).
   // Plus de sfeerfoto per dienst (dienst → bedrijfsfoto → standaard per functie, lib/sfeerfotos.ts).
   // Stap 4 (Vertrouwen): compact werkgeversprofiel per werkgever; mislukt dat, dan null (geen 500).
-  const [voorwaarden, extras, fotos, werkgeverProfielen] = await Promise.all([
+  // Plus de eigen beoordeling van de werkgever per dienst ("Beoordeeld ★4"), ook null als dat mislukt.
+  const [voorwaarden, extras, fotos, werkgeverProfielen, eigenBeoordelingen] = await Promise.all([
     haalVoorwaarden((aanmeldingen ?? []).map((a) => a.id)),
     haalDienstExtras((alleDienstenCompat || []).map((d) => d.id as string)),
     fotosVoorDiensten(
@@ -167,6 +170,10 @@ export async function GET(request: NextRequest) {
     haalCompacteWerkgeverProfielen((alleDienstenCompat || []).map((d) => d.klant_id as string | null)).catch((e) => {
       captureRouteError(e, { route: "/api/medewerker/diensten", action: "WERKGEVER_PROFIEL" });
       return new Map<string, WerkgeverProfielCompact>();
+    }),
+    haalEigenWerkgeverBeoordelingen(medewerker.id, (alleDienstenCompat || []).map((d) => d.id as string)).catch((e) => {
+      captureRouteError(e, { route: "/api/medewerker/diensten", action: "WERKGEVER_BEOORDELING" });
+      return new Map<string, EigenWerkgeverBeoordeling>();
     }),
   ]);
   const dienstInfo = new Map((alleDienstenCompat || []).map((d) => [d.id as string, d as { datum?: string; start_tijd?: string }]));
@@ -217,6 +224,8 @@ export async function GET(request: NextRequest) {
       fotoVoorDienst({ id: d.id as string, functie: d.functie as string | null, afbeelding_url: d.afbeelding_url as string | null }),
     // Stap 4: zelfde compacte werkgever_profiel als in shifts/beschikbaar (null zonder werkgever).
     werkgever_profiel: (d.klant_id ? werkgeverProfielen.get(d.klant_id as string) : null) ?? null,
+    // Stap 4: { score } als je deze werkgever voor deze dienst al beoordeelde, anders null.
+    werkgever_beoordeling: eigenBeoordelingVoor(eigenBeoordelingen, d.id as string),
   }));
 
   // FASE 6: Compute automatic tags

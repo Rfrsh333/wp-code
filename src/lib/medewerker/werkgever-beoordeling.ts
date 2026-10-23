@@ -8,7 +8,9 @@ import {
   BEOORDEEL_TERMIJN_DAGEN,
   beoordelenTot,
   binnenBeoordeelTermijn,
+  eigenBeoordelingenPerDienst,
   isAfgerondVoorBeoordeling,
+  type EigenWerkgeverBeoordeling,
   type WerkgeverBeoordelingInvoer,
 } from "@/lib/medewerker/werkgever-beoordeling-regels";
 import { fotoVoorDienst, type DienstFoto } from "@/lib/sfeerfotos";
@@ -217,6 +219,29 @@ export async function dienWerkgeverBeoordelingIn(
   if (insertFout) throw insertFout;
   vergeetWerkgeverProfiel(d.klant_id);
   return { ok: true, beoordeling: rij as { id: string; dienst_id: string; klant_id: string; score: number; created_at: string } };
+}
+
+/**
+ * Eigen beoordelingen van de medewerker voor deze diensten (`werkgever_beoordeling` in de dienstdata:
+ * "Beoordeeld ★4" op elk toestel). Zonder tabel (migratie) een lege map.
+ */
+export async function haalEigenWerkgeverBeoordelingen(
+  medewerkerId: string,
+  dienstIds: readonly (string | null | undefined)[],
+): Promise<Map<string, EigenWerkgeverBeoordeling>> {
+  const ids = [...new Set(dienstIds.filter((id): id is string => !!id))];
+  const rijen: { dienst_id: string | null; score: unknown }[] = [];
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data, error } = await supabaseAdmin
+      .from("werkgever_beoordelingen")
+      .select("dienst_id, score")
+      .eq("medewerker_id", medewerkerId)
+      .in("dienst_id", ids.slice(i, i + 150));
+    if (isOntbrekendeTabel(error)) return new Map();
+    if (error) throw error;
+    rijen.push(...((data ?? []) as { dienst_id: string | null; score: unknown }[]));
+  }
+  return eigenBeoordelingenPerDienst(rijen);
 }
 
 /**
