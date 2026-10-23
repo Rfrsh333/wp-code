@@ -16,8 +16,9 @@ import {
  * lib/onboarding-autopilot-regels.ts; zie daar ook waarom hij voorheen vastliep (B3).
  */
 
-const MAX_PER_STATUS = 25;
-const DELAY_MS = 500;
+// Ruim binnen maxDuration (60 s, vercel.json): per actie een mail plus een paar queries.
+const MAX_PER_STATUS = 15;
+const DELAY_MS = 300;
 
 type Kandidaat = AutopilotKandidaat & {
   id: string;
@@ -25,10 +26,11 @@ type Kandidaat = AutopilotKandidaat & {
   achternaam: string;
   email: string;
   uitbetalingswijze: string;
+  onboarding_portal_token: string | null;
 };
 
 const VELDEN =
-  "id, voornaam, achternaam, email, uitbetalingswijze, onboarding_status, ai_screening_score, laatste_onboarding_actie, onboarding_portal_token_expires_at, created_at";
+  "id, voornaam, achternaam, email, uitbetalingswijze, onboarding_status, ai_screening_score, laatste_onboarding_actie, onboarding_portal_token, onboarding_portal_token_expires_at, documenten_verzoek_verstuurd_op, created_at";
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -102,18 +104,9 @@ export async function GET(request: NextRequest) {
           if (actie.soort === "wachten") continue;
 
           if (actie.soort === "documenten_opvragen") {
-            // Eerst de mail; alleen als die lukt gaat de status mee (anders morgen opnieuw).
-            const emailResult = await sendDocumentenVerzoek(kandidaat, undefined, { automatisch: true });
-            if (emailResult.error) {
-              captureRouteError(new Error(`Autopilot: documentenverzoek mislukt: ${emailResult.error.message}`), {
-                route: "/api/cron/onboarding-autopilot",
-                action: "MAIL",
-              });
-              results.push(`${naam}: documentenverzoek mislukt, morgen opnieuw`);
-              continue;
-            }
-            await logEmail(kandidaat.id, "documenten_opvragen", kandidaat.email, `${kandidaat.voornaam}, de volgende stap: je documenten`, emailResult.data?.id);
-            await updateKandidaat(
+            // Eerst de status claimen (voorwaardelijk), dan pas mailen: wordt de run afgebroken,
+            // dan krijgt niemand morgen een tweede verzoek. Mislukt de mail, dan terug naar nieuw.
+            const geclaimd = await updateKandidaat(
               kandidaat.id,
               {
                 onboarding_status: "documenten_opvragen",
@@ -124,7 +117,40 @@ export async function GET(request: NextRequest) {
               },
               "nieuw",
             );
+            if (!geclaimd) continue; // een admin was ons voor
+
+            // Een nog geldige uploadlink hergebruiken, zodat een eerder verstuurde link blijft werken.
+            const tokenGeldig =
+              !!kandidaat.onboarding_portal_token &&
+              !!kandidaat.onboarding_portal_token_expires_at &&
+              new Date(kandidaat.onboarding_portal_token_expires_at) > new Date();
+            const emailResult = await sendDocumentenVerzoek(
+              kandidaat,
+              tokenGeldig ? kandidaat.onboarding_portal_token! : undefined,
+              { automatisch: true },
+            );
+            if (emailResult.error) {
+              captureRouteError(new Error(`Autopilot: documentenverzoek mislukt: ${emailResult.error.message}`), {
+                route: "/api/cron/onboarding-autopilot",
+                action: "MAIL",
+              });
+              await updateKandidaat(
+                kandidaat.id,
+                { onboarding_status: "nieuw", onboarding_step: STAP_PER_STATUS.nieuw, documenten_verzoek_verstuurd_op: null },
+                "documenten_opvragen",
+              );
+              results.push(`${naam}: documentenverzoek mislukt, morgen opnieuw`);
+              continue;
+            }
+            await logEmail(kandidaat.id, "documenten_opvragen", kandidaat.email, `${kandidaat.voornaam}, de volgende stap: je documenten`, emailResult.data?.id);
             results.push(`${naam}: nieuw → documenten_opvragen (automatisch documentenverzoek)`);
+          } else if (actie.soort === "status_documenten_opvragen") {
+            await updateKandidaat(
+              kandidaat.id,
+              { onboarding_status: "documenten_opvragen", onboarding_step: STAP_PER_STATUS.documenten_opvragen, laatste_onboarding_actie: nu },
+              "nieuw",
+            );
+            results.push(`${naam}: documentenverzoek was al verstuurd → status documenten_opvragen (geen mail)`);
           } else if (actie.soort === "documenten_ontvangen") {
             // Alleen de status gelijktrekken; goedkeuren doet een admin.
             await updateKandidaat(

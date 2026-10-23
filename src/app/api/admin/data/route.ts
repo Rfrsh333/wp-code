@@ -48,6 +48,9 @@ const ALLOWED_TABLES = [
 
 type AllowedTable = typeof ALLOWED_TABLES[number];
 
+/** Bulk "inzetbaar": per kandidaat account + documenten + mail; zo blijft het binnen maxDuration. */
+const MAX_BULK_INZETBAAR = 10;
+
 function isAllowedTable(table: string): table is AllowedTable {
   return ALLOWED_TABLES.includes(table as AllowedTable);
 }
@@ -191,6 +194,19 @@ export async function POST(request: NextRequest) {
     if (!hasRequiredAdminRole(role, ["owner", "operations"])) {
       return NextResponse.json({ error: "Onvoldoende rechten voor bulk update" }, { status: 403 });
     }
+    // Inzetbaar maakt per kandidaat een account aan, kopieert documenten en stuurt een mail;
+    // dat moet binnen de tijdslimiet van de functie blijven.
+    if (
+      table === "inschrijvingen" &&
+      data?.onboarding_status === "inzetbaar" &&
+      Array.isArray(ids) &&
+      ids.length > MAX_BULK_INZETBAAR
+    ) {
+      return NextResponse.json(
+        { error: `Zet maximaal ${MAX_BULK_INZETBAAR} kandidaten tegelijk op inzetbaar.` },
+        { status: 400 },
+      );
+    }
     const { error: bulkError } = await supabaseAdmin.from(table).update(data).in("id", ids);
     if (bulkError) {
       captureRouteError(bulkError, { route: "/api/admin/data", action: "POST" });
@@ -250,6 +266,7 @@ export async function POST(request: NextRequest) {
       ? {
           inzetbaar: inzetbaarResultaten,
           mailMislukt: inzetbaarResultaten.filter((r) => r.mailMislukt).length,
+          waarschuwingen: inzetbaarResultaten.map((r) => r.waarschuwing).filter((w): w is string => !!w),
         }
       : {}),
   });

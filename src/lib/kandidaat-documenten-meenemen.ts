@@ -42,6 +42,9 @@ async function kopieerBestand(bron: string, doel: string, mime: string | null): 
     .from(KANDIDAAT_BUCKET)
     .copy(bron, doel, { destinationBucket: MEDEWERKER_DOCUMENTEN_BUCKET });
   if (!kopie.error) return true;
+  // Het doelpad is vast per kandidaatdocument: bestaat het al (eerdere, half afgebroken run),
+  // dan is het bestand er en kan de rij alsnog worden aangemaakt.
+  if (/already exists|duplicate/i.test(kopie.error.message ?? "")) return true;
 
   // Terugval (bv. oudere storage-server zonder kopiëren tussen buckets): downloaden en uploaden.
   const download = await supabaseAdmin.storage.from(KANDIDAAT_BUCKET).download(bron);
@@ -50,7 +53,8 @@ async function kopieerBestand(bron: string, doel: string, mime: string | null): 
     .from(MEDEWERKER_DOCUMENTEN_BUCKET)
     .upload(doel, Buffer.from(await download.data.arrayBuffer()), {
       contentType: mime || "application/octet-stream",
-      upsert: false,
+      // Vast doelpad: overschrijven is veilig en maakt een herhaalde run idempotent.
+      upsert: true,
     });
   return !upload.error;
 }

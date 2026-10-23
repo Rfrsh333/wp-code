@@ -32,6 +32,11 @@ test.describe("onboarding-autopilot (B2/B3)", () => {
     expect(bepaalAutopilotActie(herstart, { aantalDocumenten: 0, nu })).toEqual({ soort: "documenten_opvragen" });
   });
 
+  test("verzoek al met de hand verstuurd: geen tweede mail, alleen de status bijwerken", () => {
+    const k = nieuw({ documenten_verzoek_verstuurd_op: urenGeleden(1) });
+    expect(bepaalAutopilotActie(k, { aantalDocumenten: 0, nu })).toEqual({ soort: "status_documenten_opvragen" });
+  });
+
   test("een lage (handmatige) AI-score gaat naar handmatige beoordeling", () => {
     expect(bepaalAutopilotActie(nieuw({ ai_screening_score: 4 }), { aantalDocumenten: 0, nu })).toMatchObject({
       soort: "handmatig",

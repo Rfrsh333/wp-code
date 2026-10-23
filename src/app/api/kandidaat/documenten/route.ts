@@ -58,7 +58,8 @@ export async function GET(request: NextRequest) {
     const { data: documents } = await supabaseAdmin
       .from("kandidaat_documenten")
       .select("type, bestandsnaam, bestand_grootte")
-      .eq("inschrijving_id", validation.kandidaatId);
+      .eq("inschrijving_id", validation.kandidaatId)
+      .neq("status", "afgekeurd");
 
     return NextResponse.json({
       kandidaat,
@@ -116,10 +117,12 @@ export async function POST(request: NextRequest) {
     const formaat = bepaalDocumentFormaat(file)!;
 
     // Rate limiting check - max 20 uploads per kandidaat total
+    // Afgekeurde documenten (ook die van een vorige, afgewezen inschrijving) tellen niet mee.
     const { data: existingDocs, error: countError } = await supabaseAdmin
       .from("kandidaat_documenten")
       .select("id", { count: 'exact' })
-      .eq("inschrijving_id", validation.kandidaatId);
+      .eq("inschrijving_id", validation.kandidaatId)
+      .neq("status", "afgekeurd");
 
     if (countError) {
       captureRouteError(countError, { route: "/api/kandidaat/documenten", action: "POST" });
@@ -183,8 +186,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Eerste upload: status naar "documenten in beoordeling" (wacht_op_kandidaat), alleen vanuit
-    // de fases vóór de beoordeling. onboarding_step en laatste_onboarding_actie gaan mee, zodat
-    // status en stap niet meer uit elkaar lopen (B3).
+    // "documenten_opvragen": bij nieuw/in_beoordeling is de intake nog niet rond. onboarding_step
+    // en laatste_onboarding_actie gaan mee, zodat status en stap niet uit elkaar lopen (B3).
     if (!existingDocs || existingDocs.length === 0) {
       const nu = new Date().toISOString();
       await supabaseAdmin
@@ -196,7 +199,7 @@ export async function POST(request: NextRequest) {
           laatste_contact_op: nu,
         })
         .eq("id", validation.kandidaatId)
-        .in("onboarding_status", ["nieuw", "in_beoordeling", "documenten_opvragen"]);
+        .eq("onboarding_status", "documenten_opvragen");
     }
 
     // Send confirmation email on first document upload

@@ -40,15 +40,42 @@ function mapFuncties(gewensteFuncties?: string[] | null) {
   return Array.from(new Set(mapped.length > 0 ? mapped : ["bediening"]));
 }
 
-export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord) {
+/** Resultaat van kandidaat → medewerker: bestond het account al, en is het al geactiveerd? */
+export type MedewerkerUitKandidaat = {
+  id: string;
+  bestond: boolean;
+  heeftWachtwoord: boolean;
+  status: string;
+};
+
+export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord): Promise<MedewerkerUitKandidaat> {
   // Hoofdletterongevoelig zoeken en klein opslaan: anders kan de medewerker nooit inloggen (B4).
   const email = normaliseerEmail(candidate.email);
-  const existingByEmail = await zoekOpEmail<{ id: string; email: string }>("medewerkers", "id, email", email);
+  const existingByEmail = await zoekOpEmail<{ id: string; email: string; wachtwoord: string | null; status: string | null }>(
+    "medewerkers",
+    "id, email, wachtwoord, status",
+    email,
+  );
 
   if (existingByEmail?.id) {
-    // Bestaand account: goedgekeurde kandidaatdocumenten alsnog meenemen (idempotent).
+    // Bestaand account (oud-medewerker of door de admin aangemaakt): niet als nieuw behandelen.
+    // KvK-nummer aanvullen als dat nog leeg is (kolom bestaat pas na de checklist-migratie),
+    // en goedgekeurde kandidaatdocumenten alsnog meenemen (idempotent).
+    const kvkBestaand = normaliseerKvkNummer(candidate.kvk_nummer);
+    if (kvkBestaand) {
+      await supabaseAdmin
+        .from("medewerkers")
+        .update({ kvk_nummer: kvkBestaand })
+        .eq("id", existingByEmail.id)
+        .is("kvk_nummer", null);
+    }
     await neemKandidaatDocumentenMee(candidate.id, existingByEmail.id);
-    return existingByEmail.id;
+    return {
+      id: existingByEmail.id,
+      bestond: true,
+      heeftWachtwoord: !!existingByEmail.wachtwoord,
+      status: existingByEmail.status ?? "",
+    };
   }
 
   const payload = {
@@ -82,5 +109,5 @@ export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord) 
   // Goedgekeurde kandidaatdocumenten (ID, KvK, …) mee naar het medewerkeraccount.
   await neemKandidaatDocumentenMee(candidate.id, data.id);
 
-  return data.id;
+  return { id: data.id, bestond: false, heeftWachtwoord: false, status: "actief" };
 }

@@ -50,6 +50,8 @@ test.describe("checklist vóór reageren (B1)", () => {
     expect(code([{ ...geldigId, expiry_date: "2026-10-22" }])).toEqual(["id_bewijs"]);
     expect(code([{ ...geldigId, expiry_date: vandaag }])).toEqual([]);
     expect(code([{ ...geldigId, expiry_date: null }])).toEqual([]);
+    // Database zonder kolom review_status: zelfde regel als de verloopblokkade (telt mee).
+    expect(code([{ document_type: "id_bewijs", expiry_date: "2030-01-01" }])).toEqual([]);
     // Een ander document (bv. VOG) is geen ID.
     expect(code([{ ...geldigId, document_type: "vog" }])).toEqual(["id_bewijs"]);
     const uitleg = (docs: ChecklistDocument[]) => ontbrekendVoorReageren(compleet, docs, vandaag)[0]?.uitleg;

@@ -1,6 +1,6 @@
 import { isGeldigIban } from "@/lib/medewerker/iban";
 import { isGeldigBtwNummer, isGeldigKvkNummer } from "@/lib/medewerker/zzp-gegevens";
-import { nieuwstePerType } from "@/lib/medewerker/dienst-regels";
+import { nieuwstePerType, teltVoorVerloop } from "@/lib/medewerker/dienst-regels";
 import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
 
 /**
@@ -55,7 +55,9 @@ const OVEREENKOMST: ChecklistActie = { scherm: "overeenkomst", web_pad: "/medewe
 /** Uitleg bij het ID-bewijs, of "" als er een goedgekeurd, geldig ID is. */
 function idUitleg(documenten: readonly ChecklistDocument[], vandaag: string): string {
   const ids = documenten.filter((d) => d.document_type === "id_bewijs");
-  const goedgekeurd = ids.filter((d) => d.review_status === "goedgekeurd");
+  // Zelfde regel als de verloopblokkade (teltVoorVerloop): zonder kolom review_status (waarde
+  // undefined) is goedkeuring niet vast te stellen en telt het document, anders blokkeert iedereen.
+  const goedgekeurd = ids.filter(teltVoorVerloop);
   const geldig = goedgekeurd.filter((d) => !d.expiry_date || d.expiry_date >= vandaag);
   if (geldig.length > 0) return "";
   if (goedgekeurd.length > 0) return "Je ID-bewijs is verlopen. Upload een nieuw, geldig ID-bewijs.";

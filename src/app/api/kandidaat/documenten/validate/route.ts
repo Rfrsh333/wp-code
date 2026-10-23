@@ -29,10 +29,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch already uploaded documents
+    // Afgekeurde documenten (ook van een vorige inschrijving) niet als "geüpload" tonen.
     const { data: documents } = await supabaseAdmin
       .from("kandidaat_documenten")
       .select("type, bestandsnaam, bestand_grootte")
-      .eq("inschrijving_id", matchedKandidaat.id);
+      .eq("inschrijving_id", matchedKandidaat.id)
+      .neq("status", "afgekeurd");
 
     return NextResponse.json({
       kandidaat: {

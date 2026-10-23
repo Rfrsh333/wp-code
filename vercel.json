@@ -9,6 +9,15 @@
     },
     "src/app/api/cron/instantly-sync/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/cron/onboarding-autopilot/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/data/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/matching/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [

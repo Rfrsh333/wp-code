@@ -8,7 +8,9 @@ import { inschrijvenSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
 import {
   HERINSCHRIJVING_RESET,
+  HERINSCHRIJVING_RESET_BASIS,
   herinschrijvingKeuze,
+  VORIGE_INSCHRIJVING_NOTITIE,
   ontbrekendeInschrijfVelden,
   inschrijfFoutmelding,
 } from "@/lib/inschrijving-regels";
@@ -276,11 +278,27 @@ export async function POST(request: NextRequest) {
       const herstart = { ...insertPayload, ...HERINSCHRIJVING_RESET, laatste_onboarding_actie: new Date().toISOString() };
       let resultaat = await supabase.from("inschrijvingen").update(herstart).eq("id", keuze.id).select("id").single();
       if (resultaat.error?.code === "PGRST204") {
-        // Een resetkolom bestaat (nog) niet in deze database: dan alleen de formuliervelden.
-        resultaat = await supabase.from("inschrijvingen").update(insertPayload).eq("id", keuze.id).select("id").single();
+        // Een resetkolom bestaat (nog) niet in deze database: dan de kleinste reset.
+        resultaat = await supabase
+          .from("inschrijvingen")
+          .update({ ...insertPayload, ...HERINSCHRIJVING_RESET_BASIS })
+          .eq("id", keuze.id)
+          .select("id")
+          .single();
       }
       insertedData = resultaat.data;
       dbError = resultaat.error;
+
+      // Documenten van de vorige inschrijving tellen niet mee voor de nieuwe (uploadpagina,
+      // autopilot, goedkeuring en meenemen naar het medewerkeraccount kijken naar de status).
+      if (!dbError) {
+        const { error: docFout } = await supabase
+          .from("kandidaat_documenten")
+          .update({ status: "afgekeurd", notitie: VORIGE_INSCHRIJVING_NOTITIE, reviewed_at: new Date().toISOString() })
+          .eq("inschrijving_id", keuze.id)
+          .neq("status", "afgekeurd");
+        if (docFout) captureRouteError(docFout, { route: "/api/inschrijven", action: "HERINSCHRIJVING_DOCUMENTEN" });
+      }
     } else {
       const resultaat = await supabase.from("inschrijvingen").insert(insertPayload).select().single();
       insertedData = resultaat.data;

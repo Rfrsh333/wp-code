@@ -507,7 +507,9 @@ export default function AdminDashboard() {
       toast.error(statusResultaat.error || "Status bijwerken mislukt.");
     } else if (onboardingStatus === "inzetbaar") {
       // Inzetbaar: de server maakt het account aan en stuurt één mail (activatie of welkom).
-      if (statusResultaat.mailMislukt) {
+      if (statusResultaat.waarschuwingen?.length) {
+        toast.warning(statusResultaat.waarschuwingen[0]);
+      } else if (statusResultaat.mailMislukt) {
         toast.error("Inzetbaar gezet, maar de mail kon niet worden verstuurd. Gebruik 'Activatiemail opnieuw sturen'.");
       } else if (statusResultaat.inzetbaar?.[0]?.mail === "activatie") {
         toast.success("Account aangemaakt en activatiemail verstuurd.");
@@ -736,6 +738,8 @@ export default function AdminDashboard() {
       toast.error(bulkResultaat.error || "Bulk update mislukt.");
     } else if (bulkResultaat.mailMislukt) {
       toast.error(`${bulkResultaat.mailMislukt} mail(s) konden niet worden verstuurd. Gebruik per kandidaat 'Activatiemail opnieuw sturen'.`);
+    } else if (bulkResultaat.waarschuwingen?.length) {
+      toast.warning(`${bulkResultaat.waarschuwingen.length} kandidaat/kandidaten hadden al een niet-actief account; daar is geen mail verstuurd.`);
     }
 
     setSelectedIds(new Set());

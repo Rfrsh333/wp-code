@@ -5,7 +5,7 @@ import { emailIlikePatroon, kiesEmailMatch, normaliseerEmail } from "@/lib/email
 /**
  * Zoek één rij op e-mailadres, hoofdletterongevoelig (B4). Werkt ook voor oude rijen met
  * hoofdletters zolang migratie 20261023_medewerker_email_kleine_letters nog niet gedraaid is.
- * `kolommen` moet `email` bevatten.
+ * `kolommen` moet `email` bevatten. Gooit bij een databasefout (null = echt niet gevonden).
  */
 export async function zoekOpEmail<T extends { email?: string | null }>(
   tabel: "medewerkers" | "inschrijvingen",
@@ -18,9 +18,11 @@ export async function zoekOpEmail<T extends { email?: string | null }>(
   const patroon = emailIlikePatroon(schoon);
   const basis = supabaseAdmin.from(tabel).select(kolommen);
   const { data, error } = await (patroon ? basis.ilike("email", patroon) : basis.eq("email", schoon)).limit(5);
+  // Een databasefout is geen "niet gevonden": anders maakt kandidaat → medewerker een tweede
+  // account aan en meldt de login "Ongeldige inloggegevens". De aanroepers vangen dit op (500).
   if (error) {
     captureRouteError(error, { route: `zoekOpEmail:${tabel}`, action: "SELECT" });
-    return null;
+    throw new Error(`Zoeken op e-mailadres in ${tabel} mislukt: ${error.message}`);
   }
 
   const { rij, dubbel } = kiesEmailMatch((data ?? []) as unknown as T[], schoon);

@@ -86,3 +86,17 @@ export const HERINSCHRIJVING_RESET = {
   welkom_mail_verstuurd_op: null,
   ai_screening_score: null,
 } as const;
+
+/** Kleinste reset (kolommen die zeker bestaan) als een kolom uit HERINSCHRIJVING_RESET ontbreekt. */
+export const HERINSCHRIJVING_RESET_BASIS = {
+  onboarding_status: "nieuw",
+  documenten_compleet: false,
+  goedgekeurd_op: null,
+  inzetbaar_op: null,
+  onboarding_portal_token: null,
+  onboarding_portal_token_expires_at: null,
+  documenten_verzoek_verstuurd_op: null,
+} as const;
+
+/** Notitie op documenten van een vorige, afgewezen inschrijving (die tellen niet meer mee). */
+export const VORIGE_INSCHRIJVING_NOTITIE = "Van een eerdere (afgewezen) inschrijving; telt niet mee voor de nieuwe.";

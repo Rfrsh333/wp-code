@@ -52,11 +52,15 @@ export type AutopilotKandidaat = {
   created_at: string;
   laatste_onboarding_actie: string | null;
   onboarding_portal_token_expires_at: string | null;
+  /** Gezet als TopTalent (of de autopilot) het documentenverzoek al verstuurde. */
+  documenten_verzoek_verstuurd_op?: string | null;
 };
 
 export type AutopilotActie =
   | { soort: "wachten" }
   | { soort: "documenten_opvragen" }
+  /** Verzoek is al met de hand verstuurd terwijl de status op `nieuw` bleef: alleen gelijktrekken. */
+  | { soort: "status_documenten_opvragen" }
   | { soort: "documenten_ontvangen" }
   | { soort: "handmatig"; reden: string; status?: "in_beoordeling" };
 
@@ -74,6 +78,9 @@ export function bepaalAutopilotActie(
     if (kandidaat.ai_screening_score != null && kandidaat.ai_screening_score < MIN_AI_SCORE) {
       return { soort: "handmatig", reden: `AI-score ${kandidaat.ai_screening_score}: handmatig beoordelen`, status: "in_beoordeling" };
     }
+    // Al een documentenverzoek verstuurd (bv. "Documentenverzoek opnieuw" in de admin): geen
+    // tweede mail (die zou ook de link uit de eerste ongeldig maken), alleen de status bijwerken.
+    if (kandidaat.documenten_verzoek_verstuurd_op) return { soort: "status_documenten_opvragen" };
     if (urenSinds > MAX_DAGEN_IN_NIEUW * 24) {
       return { soort: "handmatig", reden: `langer dan ${MAX_DAGEN_IN_NIEUW} dagen geleden ingeschreven: geen automatische mail` };
     }

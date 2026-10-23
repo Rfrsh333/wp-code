@@ -325,11 +325,17 @@ export default function DienstenTab() {
 
   const updateSpoedResponse = async (responseId: string, status: "bevestigd" | "afgewezen") => {
     const headers = await getAuthHeader();
-    await fetch("/api/admin/diensten", {
+    const updateRes = await fetch("/api/admin/diensten", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ action: "update_spoeddienst_response", id: responseId, data: { status } }),
     });
+    if (!updateRes.ok) {
+      // Bv. checklist van de medewerker niet compleet (B1): laat zien waarom het niet lukte.
+      const fout = await updateRes.json().catch(() => ({}));
+      toast.error(fout.error || "Bijwerken mislukt");
+      return;
+    }
     // Refresh responses
     if (spoedDienst) {
       const res = await fetch("/api/admin/diensten", {

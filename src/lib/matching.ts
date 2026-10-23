@@ -300,7 +300,13 @@ export async function inviteMedewerkersForDienst(
   for (const medewerkerId of medewerkerIds) {
     // B1: een uitnodiging vanuit de matching zet direct een aanmelding neer; die mag de checklist
     // (ID, KvK, btw, IBAN, akkoord overeenkomst) niet omzeilen.
-    const checklist = await haalChecklist(medewerkerId);
+    let checklist: Awaited<ReturnType<typeof haalChecklist>>;
+    try {
+      checklist = await haalChecklist(medewerkerId);
+    } catch (fout) {
+      errors.push(`Medewerker ${medewerkerId} niet uitgenodigd: checklist kon niet worden gecontroleerd (${fout instanceof Error ? fout.message : "onbekende fout"})`);
+      continue;
+    }
     if (!checklist.compleet) {
       errors.push(
         `Medewerker ${medewerkerId} niet uitgenodigd: checklist onvolledig (${checklist.ontbrekend.map((p) => p.label).join(", ")})`,

@@ -24,6 +24,8 @@ export type InzetbaarResultaat = {
   mailMislukt: boolean;
   /** Account aanmaken mislukt: de status staat op inzetbaar, maar er is geen medewerker. */
   accountFout?: string;
+  /** Iets wat de admin moet weten maar geen fout is (bv. bestaand account is niet actief). */
+  waarschuwing?: string;
 };
 
 const ROUTE = "lib/kandidaat-inzetbaar";
@@ -32,11 +34,13 @@ const KANDIDAAT_VELDEN =
   "id, voornaam, tussenvoegsel, achternaam, email, telefoon, gewenste_functies, interne_notitie, medewerker_id, uitbetalingswijze, kvk_nummer";
 
 async function welkomRecentVerstuurd(kandidaatId: string): Promise<boolean> {
+  // Alleen echt verstuurde mails: sendEmail logt ook mislukte pogingen met dit type.
   const { data } = await supabaseAdmin
     .from("email_log")
     .select("id")
     .eq("kandidaat_id", kandidaatId)
     .eq("email_type", "inzetbaar")
+    .eq("status", "sent")
     .gte("sent_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
     .limit(1);
   return (data ?? []).length > 0;
@@ -54,30 +58,44 @@ export async function verwerkInzetbaar(kandidaatId: string): Promise<InzetbaarRe
 
   const nu = new Date().toISOString();
 
-  if (kandidaat.medewerker_id) {
-    if (await welkomRecentVerstuurd(kandidaat.id)) {
-      return { ...leeg, medewerkerId: kandidaat.medewerker_id };
-    }
+  const stuurWelkom = async (medewerkerId: string): Promise<InzetbaarResultaat> => {
+    if (await welkomRecentVerstuurd(kandidaat.id)) return { ...leeg, medewerkerId };
     try {
       const resultaat = await sendWelkomstmail(kandidaat);
       if (resultaat.error) throw new Error(resultaat.error.message);
       await logEmail(kandidaat.id, "inzetbaar", kandidaat.email, "Je bent inzetbaar (welkomstmail)", resultaat.data?.id);
       await supabaseAdmin.from("inschrijvingen").update({ welkom_mail_verstuurd_op: nu }).eq("id", kandidaat.id);
-      return { ...leeg, medewerkerId: kandidaat.medewerker_id, mail: "welkom" };
+      return { ...leeg, medewerkerId, mail: "welkom" };
     } catch (error) {
       captureRouteError(error, { route: ROUTE, action: "WELKOMSTMAIL" });
-      return { ...leeg, medewerkerId: kandidaat.medewerker_id, mail: "welkom", mailMislukt: true };
+      return { ...leeg, medewerkerId, mail: "welkom", mailMislukt: true };
     }
-  }
+  };
 
-  let medewerkerId: string;
+  if (kandidaat.medewerker_id) return stuurWelkom(kandidaat.medewerker_id);
+
+  let account: Awaited<ReturnType<typeof ensureMedewerkerFromCandidate>>;
   try {
-    medewerkerId = await ensureMedewerkerFromCandidate(kandidaat);
-    const { error } = await supabaseAdmin.from("inschrijvingen").update({ medewerker_id: medewerkerId }).eq("id", kandidaat.id);
+    account = await ensureMedewerkerFromCandidate(kandidaat);
+    const { error } = await supabaseAdmin.from("inschrijvingen").update({ medewerker_id: account.id }).eq("id", kandidaat.id);
     if (error) throw new Error(error.message);
   } catch (error) {
     captureRouteError(error, { route: ROUTE, action: "ACCOUNT_AANMAKEN" });
     return { ...leeg, accountFout: error instanceof Error ? error.message : "Account aanmaken mislukt" };
+  }
+  const medewerkerId = account.id;
+
+  // Er bestond al een medewerker met dit e-mailadres: geen "je account is aangemaakt".
+  if (account.bestond) {
+    if (account.status !== "actief") {
+      return {
+        ...leeg,
+        medewerkerId,
+        waarschuwing: `Er bestaat al een medewerkeraccount met dit e-mailadres met status "${account.status || "onbekend"}". Er is geen mail verstuurd; zet het account eerst op actief.`,
+      };
+    }
+    // Al geactiveerd: welkomstmail (naar de login). Nog geen wachtwoord: activatiemail hieronder.
+    if (account.heeftWachtwoord) return stuurWelkom(medewerkerId);
   }
 
   const { data: medewerker } = await supabaseAdmin
@@ -90,7 +108,7 @@ export async function verwerkInzetbaar(kandidaatId: string): Promise<InzetbaarRe
       route: ROUTE,
       action: "ACTIVATIEMAIL",
     });
-    return { ...leeg, medewerkerId, nieuwAccount: true, mail: "activatie", mailMislukt: true };
+    return { ...leeg, medewerkerId, nieuwAccount: !account.bestond, mail: "activatie", mailMislukt: true };
   }
 
   const uitkomst = await verstuurActivatiemail(medewerker, ROUTE);
@@ -98,5 +116,5 @@ export async function verwerkInzetbaar(kandidaatId: string): Promise<InzetbaarRe
     await logEmail(kandidaat.id, "inzetbaar", medewerker.email, "Je bent inzetbaar: activeer je account", uitkomst.emailId ?? undefined);
     await supabaseAdmin.from("inschrijvingen").update({ welkom_mail_verstuurd_op: nu }).eq("id", kandidaat.id);
   }
-  return { ...leeg, medewerkerId, nieuwAccount: true, mail: "activatie", mailMislukt: !uitkomst.ok };
+  return { ...leeg, medewerkerId, nieuwAccount: !account.bestond, mail: "activatie", mailMislukt: !uitkomst.ok };
 }

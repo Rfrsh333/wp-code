@@ -42,6 +42,8 @@ export default function ProfielClient() {
   // KOR zoals opgeslagen: alleen een wijziging van uit → aan wordt verstuurd.
   const [korOpgeslagen, setKorOpgeslagen] = useState(false);
   const [nieuwIban, setNieuwIban] = useState("");
+  // Btw-nummer zoals opgeslagen: alleen een gewijzigd nummer wordt gecontroleerd.
+  const [btwOpgeslagen, setBtwOpgeslagen] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     fetchProfiel();
@@ -75,6 +77,7 @@ export default function ProfielClient() {
           aantalBeoordelingen: data.stats?.aantal_beoordelingen ?? 0,
         });
         setKorOpgeslagen(p.kor_actief === true);
+        setBtwOpgeslagen(p.btw_nummer ?? undefined);
       } else {
         toast.error("Kon profiel niet laden");
       }
@@ -123,7 +126,7 @@ export default function ProfielClient() {
       toast.error("Een KvK-nummer bestaat uit 8 cijfers.");
       return;
     }
-    if (profiel.btwNummer?.trim() && !isGeldigBtwNummer(profiel.btwNummer)) {
+    if (profiel.btwNummer?.trim() && profiel.btwNummer !== btwOpgeslagen && !isGeldigBtwNummer(profiel.btwNummer)) {
       toast.error("Dit btw-nummer klopt niet. Het ziet eruit als NL123456789B01.");
       return;
     }

@@ -166,11 +166,19 @@ export async function PUT(request: NextRequest) {
       updateData.kvk_nummer = kvk || null;
     }
     if (typeof updateData.btw_nummer === "string") {
+      // Alleen controleren als het nummer is gewijzigd: web en app sturen bij elke keer opslaan
+      // het opgeslagen nummer mee, en een oud (ongeldig) nummer mag ander opslaan (bv. het IBAN)
+      // niet blokkeren. De checklist meldt een ongeldig nummer toch.
+      const { data: huidig } = await supabaseAdmin.from("medewerkers").select("btw_nummer").eq("id", medewerker.id).maybeSingle();
+      const opgeslagen = normaliseerBtwNummer(decryptField((huidig?.btw_nummer as string | null) ?? null));
       const btw = normaliseerBtwNummer(updateData.btw_nummer);
-      if (!isGeldigBtwNummer(btw)) {
+      if (btw === opgeslagen) {
+        delete updateData.btw_nummer;
+      } else if (!isGeldigBtwNummer(btw)) {
         return NextResponse.json({ error: "Dit btw-nummer klopt niet. Het ziet eruit als NL123456789B01." }, { status: 400 });
+      } else {
+        updateData.btw_nummer = btw;
       }
-      updateData.btw_nummer = btw;
     }
 
     // KOR: `body[field] || null` maakte van false een null. De medewerker kan de KOR alleen
