@@ -49,6 +49,19 @@ interface Klant {
   notities: string | null;
   gemiddelde_beoordeling: number;
   qr_verplicht: boolean;
+  // Alleen in de detailweergave (api/admin/klanten/[id]/detail)
+  status?: string | null;
+  heeft_wachtwoord?: boolean;
+  uitgenodigd_op?: string | null;
+}
+
+/** Leesbare stand van de portaaltoegang van een klant. */
+function portaalStand(k: Klant): { label: string; kleur: string } {
+  if (k.status === "verwijderd") return { label: "Account verwijderd", kleur: "bg-neutral-200 text-neutral-600" };
+  if (k.status === "inactief") return { label: "Inactief", kleur: "bg-red-100 text-red-700" };
+  if (k.heeft_wachtwoord) return { label: "Kan inloggen", kleur: "bg-green-100 text-green-700" };
+  if (k.uitgenodigd_op) return { label: "Uitgenodigd, nog geen wachtwoord", kleur: "bg-amber-100 text-amber-700" };
+  return { label: "Nog niet uitgenodigd", kleur: "bg-neutral-100 text-neutral-600" };
 }
 
 interface KlantStats {
@@ -101,6 +114,8 @@ export default function KlantenTab() {
   const [filter, setFilter] = useState<"alle" | "hoog" | "middel" | "laag">("alle");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"omzet" | "diensten" | "churn" | "laatste">("omzet");
+  const [uitnodigenBezig, setUitnodigenBezig] = useState(false);
+  const [uitnodigingMelding, setUitnodigingMelding] = useState<{ type: "ok" | "fout"; tekst: string; heractiveren?: boolean } | null>(null);
 
   const [now] = useState(() => Date.now());
 
@@ -150,7 +165,42 @@ export default function KlantenTab() {
 
   const openDetail = (klantId: string) => {
     setSelectedKlant(klantId);
+    setUitnodigingMelding(null);
     fetchDetail(klantId);
+  };
+
+  // Uitnodiging "wachtwoord instellen" (7 dagen geldig). Een eerdere link vervalt daarmee.
+  const stuurUitnodiging = async (k: Klant, heractiveren = false) => {
+    if (!k.email) return;
+    const vraag = heractiveren
+      ? `Het account van ${k.bedrijfsnaam} heractiveren en een uitnodiging sturen naar ${k.email}?`
+      : `Een uitnodiging (wachtwoord instellen) sturen naar ${k.email}? Een eerder verstuurde link vervalt.`;
+    if (!confirm(vraag)) return;
+    setUitnodigenBezig(true);
+    setUitnodigingMelding(null);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/admin/klanten/${k.id}/uitnodigen`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ heractiveren }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setUitnodigingMelding({ type: "ok", tekst: `Uitnodiging verstuurd naar ${data.email || k.email}. De link is 7 dagen geldig.` });
+        const nu = new Date().toISOString();
+        setKlantDetail(prev => prev ? { ...prev, klant: { ...prev.klant, uitgenodigd_op: nu, status: "actief" } } : prev);
+      } else {
+        setUitnodigingMelding({
+          type: "fout",
+          tekst: data.error || "Uitnodigen mislukt.",
+          heractiveren: data.reden === "gedeactiveerd",
+        });
+      }
+    } catch {
+      setUitnodigingMelding({ type: "fout", tekst: "Geen verbinding. Probeer het opnieuw." });
+    }
+    setUitnodigenBezig(false);
   };
 
   // Filter & sort
@@ -286,6 +336,41 @@ export default function KlantenTab() {
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${k.qr_verplicht ? "translate-x-5" : ""}`} />
             </button>
+          </div>
+
+          {/* Portaaltoegang: uitnodiging "wachtwoord instellen" */}
+          <div className="flex items-center justify-between gap-4 mt-4 pt-4 border-t border-neutral-100">
+            <div>
+              <p className="text-sm font-medium text-neutral-700 flex items-center gap-2">
+                Portaaltoegang
+                <span className={`${portaalStand(k).kleur} px-2 py-0.5 rounded-full text-xs font-medium`}>{portaalStand(k).label}</span>
+              </p>
+              <p className="text-xs text-neutral-500">
+                {k.email
+                  ? `Mail met een link om een wachtwoord in te stellen (7 dagen geldig, werkt één keer).${k.uitgenodigd_op ? ` Laatst uitgenodigd: ${new Date(k.uitgenodigd_op).toLocaleDateString("nl-NL")}.` : ""}`
+                  : "Geen e-mailadres bekend: uitnodigen kan pas met een e-mailadres."}
+              </p>
+              {uitnodigingMelding && (
+                <p role="status" className={`text-xs mt-1 ${uitnodigingMelding.type === "ok" ? "text-green-700" : "text-red-600"}`}>
+                  {uitnodigingMelding.tekst}
+                </p>
+              )}
+            </div>
+            {k.status !== "verwijderd" && (
+              <button
+                onClick={() => stuurUitnodiging(k, k.status === "inactief" || !!uitnodigingMelding?.heractiveren)}
+                disabled={uitnodigenBezig || !k.email}
+                className="shrink-0 px-4 py-2 border border-neutral-300 text-neutral-700 rounded-xl hover:border-[#F27501] hover:text-[#F27501] disabled:opacity-50 text-sm font-medium"
+              >
+                {uitnodigenBezig
+                  ? "Versturen..."
+                  : k.status === "inactief" || uitnodigingMelding?.heractiveren
+                    ? "Heractiveren en uitnodigen"
+                    : k.uitgenodigd_op || k.heeft_wachtwoord
+                      ? "Uitnodiging opnieuw sturen"
+                      : "Uitnodiging sturen"}
+              </button>
+            )}
           </div>
         </div>
 

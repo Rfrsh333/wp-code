@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       payload.plekken_beschikbaar = payload.aantal_nodig;
     }
     if (payload.klant_naam) {
-      payload.klant_id = await ensureKlantForDienst(payload);
+      payload.klant_id = await ensureKlantForDienst(payload, { uitnodigen: true });
     }
     // Genereer spoeddienst token als het een spoeddienst is
     if (payload.is_spoeddienst) {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       payload.plekken_beschikbaar = Math.max(0, oldBeschikbaar + diff);
     }
     if (payload.klant_naam) {
-      payload.klant_id = await ensureKlantForDienst(payload);
+      payload.klant_id = await ensureKlantForDienst(payload, { uitnodigen: true });
     }
     // Als spoeddienst wordt geactiveerd en er nog geen token is
     if (payload.is_spoeddienst && !payload.spoeddienst_token) {
