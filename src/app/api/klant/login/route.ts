@@ -5,6 +5,7 @@ import { checkRedisRateLimit, getClientIP, klantLoginRateLimit, klantLoginPerAcc
 import bcrypt from "bcryptjs";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { beoordeelKlantLogin } from "@/lib/klant-login-regels";
 
 // Constant-time dummy hash so timing is identical whether or not the account exists.
 const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
@@ -52,13 +53,13 @@ export async function POST(request: NextRequest) {
     const hashToCompare = klant?.wachtwoord || DUMMY_HASH;
     const valid = await bcrypt.compare(wachtwoord, hashToCompare);
 
-    if (!klant || !valid) {
-      return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
+    // Zelfde antwoord voor onbekend adres, fout wachtwoord en account zonder wachtwoord (met
+    // uitleg wat je dan kunt doen); "niet actief" alleen als het wachtwoord klopt.
+    const oordeel = beoordeelKlantLogin({ gevonden: !!klant, wachtwoordKlopt: valid, status: klant?.status }, "u");
+    if (!oordeel.ok) {
+      return NextResponse.json({ error: oordeel.error, code: oordeel.code }, { status: oordeel.status });
     }
-
-    if (klant.status !== "actief") {
-      return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
-    }
+    if (!klant) return NextResponse.json({ error: "Fout bij inloggen" }, { status: 500 }); // kan niet: oordeel.ok vereist een account
 
     // KRITIEK: Gebruik signed JWT in plaats van plain JSON
     const { signKlantSession } = await import("@/lib/session");
