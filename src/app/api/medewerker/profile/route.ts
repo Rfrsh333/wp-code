@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { encryptField, decryptField } from "@/lib/encryption";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { isGeldigIban, normaliseerIban } from "@/lib/medewerker/iban";
+import {
+  isGeldigBtwNummer,
+  isGeldigKvkNummer,
+  normaliseerBtwNummer,
+  normaliseerKvkNummer,
+} from "@/lib/medewerker/zzp-gegevens";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 // Vercel weigert bodies boven ~4,5 MB al vóór de route; 4 MB is de eerlijke grens.
@@ -15,12 +22,20 @@ const MAX_SIZE = 4 * 1024 * 1024;
 // élke select/update met deze kolommen 42703: profiel leeg en opslaan altijd "Update mislukt".
 // Tot de migratie draait laten we ze weg i.p.v. alles te laten falen.
 const NIEUWE_KOLOMMEN = ["adres", "postcode", "kor_actief"] as const;
+// B1: KvK-nummer op de medewerker (migratie 20261023_medewerker_checklist_reageren).
+const CHECKLIST_KOLOMMEN = ["kvk_nummer"] as const;
 const PROFIEL_KOLOMMEN = "naam, email, functie, stad, geboortedatum, bsn_geverifieerd, factuur_adres, factuur_postcode, factuur_stad, btw_nummer, iban, telefoon, badge, gemiddelde_score, aantal_beoordelingen, totaal_diensten, profile_photo_path";
 const isOntbrekendeKolom = (e: { code?: string } | null) => e?.code === "42703";
 
 type Profiel = Record<string, unknown> & { naam?: string; email?: string; functie?: string; profile_photo_path?: string | null };
 
 async function haalProfiel(id: string): Promise<{ data: Profiel | null }> {
+  const alles = await supabaseAdmin
+    .from("medewerkers")
+    .select(`${PROFIEL_KOLOMMEN}, ${NIEUWE_KOLOMMEN.join(", ")}, ${CHECKLIST_KOLOMMEN.join(", ")}`)
+    .eq("id", id)
+    .single();
+  if (!isOntbrekendeKolom(alles.error)) return { data: alles.data as unknown as Profiel | null };
   const res = await supabaseAdmin.from("medewerkers").select(`${PROFIEL_KOLOMMEN}, ${NIEUWE_KOLOMMEN.join(", ")}`).eq("id", id).single();
   if (!isOntbrekendeKolom(res.error)) return { data: res.data as unknown as Profiel | null };
   const zonder = await supabaseAdmin.from("medewerkers").select(PROFIEL_KOLOMMEN).eq("id", id).single();
@@ -32,7 +47,7 @@ const TEKSTVELDEN = ["stad", "adres", "postcode", "geboortedatum", "telefoon", "
 export async function GET(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const vandaag = nlVandaag();
     const [{ data: profiel }, { data: ingepland }, { data: beoordelingen }] = await Promise.all([
@@ -130,7 +145,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const body = await request.json();
     const updateData: Record<string, string | boolean | null> = {};
@@ -139,6 +154,30 @@ export async function PUT(request: NextRequest) {
       if (field in body) {
         const waarde = typeof body[field] === "string" ? body[field].trim().slice(0, 200) : "";
         updateData[field] = waarde || null;
+      }
+    }
+
+    // B1: KvK- en btw-nummer moeten kloppen (ze staan op de checklist vóór reageren).
+    if ("kvk_nummer" in body) {
+      const kvk = typeof body.kvk_nummer === "string" ? normaliseerKvkNummer(body.kvk_nummer) : "";
+      if (kvk && !isGeldigKvkNummer(kvk)) {
+        return NextResponse.json({ error: "Een KvK-nummer bestaat uit 8 cijfers." }, { status: 400 });
+      }
+      updateData.kvk_nummer = kvk || null;
+    }
+    if (typeof updateData.btw_nummer === "string") {
+      // Alleen controleren als het nummer is gewijzigd: web en app sturen bij elke keer opslaan
+      // het opgeslagen nummer mee, en een oud (ongeldig) nummer mag ander opslaan (bv. het IBAN)
+      // niet blokkeren. De checklist meldt een ongeldig nummer toch.
+      const { data: huidig } = await supabaseAdmin.from("medewerkers").select("btw_nummer").eq("id", medewerker.id).maybeSingle();
+      const opgeslagen = normaliseerBtwNummer(decryptField((huidig?.btw_nummer as string | null) ?? null));
+      const btw = normaliseerBtwNummer(updateData.btw_nummer);
+      if (btw === opgeslagen) {
+        delete updateData.btw_nummer;
+      } else if (!isGeldigBtwNummer(btw)) {
+        return NextResponse.json({ error: "Dit btw-nummer klopt niet. Het ziet eruit als NL123456789B01." }, { status: 400 });
+      } else {
+        updateData.btw_nummer = btw;
       }
     }
 
@@ -169,7 +208,9 @@ export async function PUT(request: NextRequest) {
 
     if (isOntbrekendeKolom(error)) {
       const zonderNieuw = Object.fromEntries(
-        Object.entries(updateData).filter(([k]) => !(NIEUWE_KOLOMMEN as readonly string[]).includes(k)),
+        Object.entries(updateData).filter(
+          ([k]) => !(NIEUWE_KOLOMMEN as readonly string[]).includes(k) && !(CHECKLIST_KOLOMMEN as readonly string[]).includes(k),
+        ),
       );
       captureRouteError(error, { route: "/api/medewerker/profile", action: "PUT-zonder-migratie" });
       ({ error } = Object.keys(zonderNieuw).length
@@ -193,7 +234,7 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const formData = await request.formData();
     const file = formData.get("photo") as File | null;
@@ -271,7 +312,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     // Get current photo path
     const { data: existing } = await supabaseAdmin

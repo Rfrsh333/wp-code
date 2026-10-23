@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { meldAan } from "@/lib/medewerker/aanmelden";
+import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { notifyKlantMedewerkerAssigned } from "@/lib/klant-push-triggers";
 
 export async function POST(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const { dienst_id } = await request.json();
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     // capaciteit) en daarna de bezetting herberekenen.
     const resultaat = await meldAan(medewerker.id, dienst_id, "bevestigd", { bestaandeAanmeldingId: aanmelding.id });
     if (!resultaat.ok) {
-      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+      return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
     }
 
     // Klant laten weten wie er komt.

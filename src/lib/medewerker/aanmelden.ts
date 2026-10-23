@@ -4,13 +4,15 @@ import { DIENST_STATUS_IN_CONTROLE } from "@/lib/klant-controle-regels";
 import { herberekenPlekken } from "@/lib/plekken";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { haalDemoIds, zelfdeWereld } from "@/lib/demo";
+import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
+import { checklistMelding, CHECKLIST_CODE, type ChecklistPunt } from "@/lib/medewerker/reageer-checklist";
+import { haalChecklist } from "@/lib/medewerker/checklist";
 import {
   annuleerUitkomst,
   HERACTIVEERBAAR,
   heeftVrijePlek,
   inzetbaarheidsMelding,
   kiesTeHoudenAanmelding,
-  KRITIEKE_DOCUMENTEN,
   urenTotDienststart,
   VRIJ_AFMELDBAAR,
 } from "@/lib/medewerker/dienst-regels";
@@ -22,26 +24,36 @@ import {
  * plekken_beschikbaar.
  */
 
-export type AanmeldResultaat = { ok: true; aanmeldingId: string } | { ok: false; status: number; error: string };
+export type AanmeldResultaat =
+  | { ok: true; aanmeldingId: string }
+  | {
+      ok: false;
+      status: number;
+      error: string;
+      /** B1: `checklist_onvolledig` met de lijst van wat er nog ontbreekt. */
+      code?: typeof CHECKLIST_CODE;
+      ontbrekend?: ChecklistPunt[];
+    };
 
-/** Verlopen ID-bewijs/werkvergunning blokkeert inzet (zelfde regels als de oude `aanmelden`-actie). */
+/** JSON-body voor een mislukte aanmelding; geeft bij B1 ook code + ontbrekend mee. */
+export function aanmeldFoutBody(resultaat: Extract<AanmeldResultaat, { ok: false }>) {
+  return resultaat.code
+    ? { error: resultaat.error, code: resultaat.code, ontbrekend: resultaat.ontbrekend ?? [] }
+    : { error: resultaat.error };
+}
+
+/** Verlopen ID-bewijs/werkvergunning blokkeert inzet; alleen goedgekeurde documenten tellen (B10). */
 export async function controleerInzetbaarheid(medewerkerId: string): Promise<string | null> {
   const vandaag = nlVandaag();
-  const [{ data: documenten }, { data: mw }] = await Promise.all([
-    supabaseAdmin
-      .from("medewerker_documenten")
-      .select("document_type, expiry_date, uploaded_at")
-      .eq("medewerker_id", medewerkerId)
-      .in("document_type", [...KRITIEKE_DOCUMENTEN])
-      .order("uploaded_at", { ascending: false })
-      .limit(100),
+  const [documenten, { data: mw }] = await Promise.all([
+    haalKritiekeDocumenten([medewerkerId]),
     supabaseAdmin.from("medewerkers").select("werkvergunning_geldig_tot").eq("id", medewerkerId).maybeSingle(),
   ]);
 
   return inzetbaarheidsMelding({
     vandaag,
-    // Alle versies ophalen: inzetbaarheidsMelding beoordeelt alleen het nieuwste document per type.
-    documenten: (documenten ?? []) as { document_type: string; expiry_date: string | null; uploaded_at: string | null }[],
+    // Alle versies: inzetbaarheidsMelding beoordeelt alleen het nieuwste goedgekeurde document per type.
+    documenten: documenten.get(medewerkerId) ?? [],
     werkvergunningGeldigTot: (mw as { werkvergunning_geldig_tot?: string | null } | null)?.werkvergunning_geldig_tot,
   });
 }
@@ -86,6 +98,19 @@ export async function meldAan(
   status: "aangemeld" | "geaccepteerd" | "bevestigd",
   opties: { bestaandeAanmeldingId?: string } = {},
 ): Promise<AanmeldResultaat> {
+  // B1: eerst de checklist (ID, KvK, btw, IBAN, akkoord overeenkomst). Geldt voor zelf aanmelden
+  // én voor het accepteren van een aanbieding of uitnodiging: alle routes lopen via meldAan.
+  const checklist = await haalChecklist(medewerkerId);
+  if (!checklist.compleet) {
+    return {
+      ok: false,
+      status: 403,
+      error: checklistMelding(checklist.ontbrekend),
+      code: CHECKLIST_CODE,
+      ontbrekend: checklist.ontbrekend,
+    };
+  }
+
   const melding = await controleerInzetbaarheid(medewerkerId);
   if (melding) return { ok: false, status: 403, error: melding };
 

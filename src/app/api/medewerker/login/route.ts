@@ -5,6 +5,9 @@ import { checkRedisRateLimit, getClientIP, loginRateLimit, medewerkerLoginPerAcc
 import bcrypt from "bcryptjs";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { normaliseerEmail } from "@/lib/email-normalisatie";
+import { zoekOpEmail } from "@/lib/medewerker/zoek-op-email";
+import { loginToegang } from "@/lib/medewerker/account-status";
 
 // Constant-time dummy hash so timing is identical whether or not the account exists.
 const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
@@ -33,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting: per-account (prevents credential stuffing on known emails)
-    const acctLimit = await checkRedisRateLimit(`medewerker-login-acct:${email.toLowerCase()}`, medewerkerLoginPerAccountRateLimit, { failClosed: true });
+    const acctLimit = await checkRedisRateLimit(`medewerker-login-acct:${normaliseerEmail(email)}`, medewerkerLoginPerAccountRateLimit, { failClosed: true });
     if (!acctLimit.success) {
       const retryAfter = Math.max(1, Math.ceil((acctLimit.reset - Date.now()) / 1000));
       return NextResponse.json(
@@ -42,11 +45,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: medewerker } = await supabase
-      .from("medewerkers")
-      .select("id, naam, email, functie, wachtwoord, status")
-      .eq("email", email.toLowerCase())
-      .single();
+    // Hoofdletterongevoelig: oude rijen kunnen nog "Jan@Gmail.com" bevatten (B4).
+    const medewerker = await zoekOpEmail<{
+      id: string; naam: string; email: string; functie: string | string[]; wachtwoord: string | null; status: string | null;
+    }>("medewerkers", "id, naam, email, functie, wachtwoord, status", email);
 
     // Always run bcrypt to prevent timing-based user enumeration.
     const hashToCompare = medewerker?.wachtwoord || DUMMY_HASH;
@@ -56,8 +58,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
     }
 
-    if (medewerker.status !== "actief") {
-      return NextResponse.json({ error: "Ongeldige inloggegevens" }, { status: 401 });
+    // B5: gepauzeerd mag inloggen (status + boete betalen); andere statussen krijgen een eerlijke
+    // melding. Dit gebeurt pas na een juist wachtwoord, dus het verraadt geen accounts.
+    const toegang = loginToegang(medewerker.status);
+    if (toegang.soort === "geweigerd") {
+      return NextResponse.json({ error: toegang.melding, code: toegang.code }, { status: 403 });
     }
 
     await supabase.from("medewerkers").update({ laatste_login: new Date().toISOString() }).eq("id", medewerker.id);
@@ -80,6 +85,9 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    if (toegang.soort === "gepauzeerd") {
+      return NextResponse.json({ success: true, gepauzeerd: true, code: toegang.code, melding: toegang.melding });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     captureRouteError(error, { route: "/api/medewerker/login", action: "POST" });

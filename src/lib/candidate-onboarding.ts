@@ -193,12 +193,17 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
 }
 
 // 2. Documenten verzoek - Upbeat en duidelijk
-export async function sendDocumentenVerzoek(kandidaat: Kandidaat, portalToken?: string) {
+export async function sendDocumentenVerzoek(
+  kandidaat: Kandidaat,
+  portalToken?: string,
+  opties: { automatisch?: boolean } = {},
+) {
   const uploadToken = portalToken || await generateAndSaveUploadToken(kandidaat.id);
   const uploadUrl = `${getBaseUrl()}/kandidaat/documenten?token=${uploadToken}`;
 
   const isZZP = kandidaat.uitbetalingswijze === "zzp";
-  const copy = candidateEmailCopy.documenten;
+  // Automatisch (autopilot): neutrale tekst, er is nog geen oordeel over het profiel.
+  const copy = opties.automatisch ? candidateEmailCopy.documentenAutomatisch : candidateEmailCopy.documenten;
 
   const content = `
     <span class="emoji">📄</span>
@@ -321,7 +326,8 @@ export async function sendCandidateTemplateEmail(
 
 // 3. Welkomst mail - "Yes, je bent klaar" vibe
 export async function sendWelkomstmail(kandidaat: Kandidaat) {
-  const statusUrl = `${getBaseUrl()}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
+  // Naar de login, niet naar de statuspagina: wie inzetbaar is, werkt verder in het portaal (B15).
+  const loginUrl = `${getBaseUrl()}/medewerker/login`;
   const copy = candidateEmailCopy.welkom;
 
   const content = `
@@ -340,7 +346,7 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
     <p>${copy.bodyAfterCard}</p>
 
     <center>
-      <a href="${statusUrl}" class="cta-button">
+      <a href="${loginUrl}" class="cta-button">
         ${copy.ctaLabel}
       </a>
     </center>
@@ -362,6 +368,50 @@ export async function sendWelkomstmail(kandidaat: Kandidaat) {
 
   if (result.error) {
     console.error("sendWelkomstmail email error:", result.error);
+  }
+
+  return result;
+}
+
+// 3b. Documenten goedgekeurd (B16): de belofte uit de mail "Documenten ontvangen".
+export async function sendDocumentenGoedgekeurd(kandidaat: Kandidaat) {
+  const statusUrl = `${getBaseUrl()}/kandidaat/status?token=${generateStatusToken(kandidaat.email, kandidaat.id)}`;
+  const copy = candidateEmailCopy.documentenGoedgekeurd;
+
+  const content = `
+    <span class="emoji">✅</span>
+
+    <h1>${applyCandidateEmailVars(copy.heading, { voornaam: kandidaat.voornaam })}</h1>
+
+    <p>${copy.intro}</p>
+
+    ${renderCard(copy.cardTitle, copy.cardItems)}
+
+    <p>${copy.bodyAfterCard}</p>
+
+    <center>
+      <a href="${statusUrl}" class="cta-button">
+        ${copy.ctaLabel}
+      </a>
+    </center>
+
+    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+      ${copy.outro}
+    </p>
+  `;
+
+  const result = await sendEmail({
+    from: "TopTalent <info@toptalentjobs.nl>",
+    to: [kandidaat.email],
+    replyTo: "info@toptalentjobs.nl",
+    subject: applyCandidateEmailVars(copy.subject, { voornaam: kandidaat.voornaam }),
+    html: getEmailLayout(content),
+    kandidaatId: kandidaat.id,
+    emailType: "custom",
+  });
+
+  if (result.error) {
+    console.error("sendDocumentenGoedgekeurd email error:", result.error);
   }
 
   return result;

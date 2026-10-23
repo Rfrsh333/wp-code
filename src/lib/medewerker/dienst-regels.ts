@@ -1,4 +1,5 @@
 import { nlMoment } from "@/lib/nl-tijd";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 
 /**
  * Pure regels voor aanmelden/afmelden in het medewerkerportaal (geen DB-toegang, wel getest).
@@ -7,6 +8,20 @@ import { nlMoment } from "@/lib/nl-tijd";
 
 /** Binnen dit aantal uur vóór de start annuleert een medewerker niet meer zelf, maar zoekt hij een vervanger. */
 export const ANNULEER_GRENS_UREN = 48;
+
+/** Tabs van "Mijn diensten" in het webportaal. */
+export type MijnDienstenTab = "aangeboden" | "aangemeld" | "gepland" | "voltooid";
+
+/**
+ * Welke aanmeldingsstatussen een tab van "Mijn diensten" toont. B9: `aangemeld` (zelf
+ * gereageerd, de opdrachtgever kiest nog) viel buiten alle tabs; na het aanmelden was de
+ * aanmelding in het webportaal nergens meer te zien of in te trekken. De app had dit wel.
+ */
+export function aanmeldStatussenVoorTab(tab: string | null | undefined): string[] {
+  if (tab === "aangeboden") return ["uitgenodigd"];
+  if (tab === "aangemeld") return ["aangemeld"];
+  return [...INGEPLAND_STATUSSEN];
+}
 
 /** Statussen van een eigen aanmelding waarvoor nog niemand is ingepland: vrij terugtrekken. */
 export const VRIJ_AFMELDBAAR = ["aangemeld", "uitgenodigd"] as const;
@@ -87,16 +102,26 @@ export function nieuwstePerType<T extends DocumentVersie>(documenten: readonly T
 }
 
 /**
+ * Telt dit document mee voor de verloopblokkade? Alleen goedgekeurde documenten (B10): voorheen
+ * hief elk nieuw bestand als `id_bewijs` (ongezien, zonder datum) de blokkade op. Zonder kolom
+ * `review_status` (oude database, waarde undefined) telt alles, zoals voorheen.
+ */
+export function teltVoorVerloop(doc: { review_status?: string | null }): boolean {
+  return doc.review_status === undefined || doc.review_status === "goedgekeurd";
+}
+
+/**
  * Melding als de medewerker niet ingezet mag worden (verlopen ID/werkvergunning), anders null.
  * `vandaag` is YYYY-MM-DD (NL); datums vóór vandaag zijn verlopen. Per documenttype telt alleen
- * het nieuwste document (zie nieuwstePerType).
+ * het nieuwste goedgekeurde document (zie teltVoorVerloop en nieuwstePerType). Dezelfde regel
+ * geldt voor `meldAan` en voor de admin-matching (lib/matching.ts).
  */
 export function inzetbaarheidsMelding(input: {
   vandaag: string;
-  documenten: { document_type: string; expiry_date: string | null; uploaded_at?: string | null }[];
+  documenten: { document_type: string; expiry_date: string | null; uploaded_at?: string | null; review_status?: string | null }[];
   werkvergunningGeldigTot?: string | null;
 }): string | null {
-  const verlopen = nieuwstePerType(input.documenten)
+  const verlopen = nieuwstePerType(input.documenten.filter(teltVoorVerloop))
     .filter((d) => (KRITIEKE_DOCUMENTEN as readonly string[]).includes(d.document_type))
     .filter((d) => !!d.expiry_date && d.expiry_date < input.vandaag)
     .map((d) => DOCUMENT_LABELS[d.document_type] ?? d.document_type);

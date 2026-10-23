@@ -2,6 +2,8 @@ import crypto from "crypto";
 import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin } from "@/lib/supabase";
 import { hashToken } from "@/lib/token-hash";
+import { escapeHtml } from "@/lib/sanitize";
+import { captureRouteError } from "@/lib/sentry-utils";
 
 interface MedewerkerActivationTarget {
   id: string;
@@ -33,7 +35,7 @@ function renderEmailLayout(content: string) {
 
 export async function createMedewerkerActivationToken(medewerkerId: string) {
   const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + ACTIVATIE_GELDIG_DAGEN * 24 * 60 * 60 * 1000).toISOString();
 
   const { error } = await supabaseAdmin
     .from("medewerkers")
@@ -50,35 +52,72 @@ export async function createMedewerkerActivationToken(medewerkerId: string) {
   return token;
 }
 
+/** Geldigheid van een activatielink (ook bij opnieuw sturen vanuit de admin). */
+export const ACTIVATIE_GELDIG_DAGEN = 7;
+
+/**
+ * De ene mail bij "inzetbaar" voor een nieuw account (B15): voorheen gingen er twee mails
+ * tegelijk uit (deze activatiemail én een welkomstmail met "we bellen je" en een knop naar de
+ * statuspagina). Nu zegt deze mail alles: je bent inzetbaar, kies je wachtwoord, log in.
+ */
 export async function sendMedewerkerActivationEmail(medewerker: MedewerkerActivationTarget) {
   const token = await createMedewerkerActivationToken(medewerker.id);
   const activationUrl = `${getBaseUrl()}/medewerker/activeren?token=${token}`;
+  const resetUrl = `${getBaseUrl()}/medewerker/wachtwoord-vergeten`;
   const firstName = medewerker.naam.split(" ")[0] || medewerker.naam;
 
   return sendEmail({
     from: "TopTalent <info@toptalentjobs.nl>",
     to: [medewerker.email],
     replyTo: "info@toptalentjobs.nl",
-    subject: "Activeer je medewerkeraccount bij TopTalent",
+    subject: "Je bent inzetbaar bij TopTalent: activeer je account",
     html: renderEmailLayout(`
-      <p style="font-size:32px;margin:0 0 16px;">🔐</p>
-      <h1 style="margin:0 0 16px;color:#F27501;font-size:28px;">Hey ${firstName}, zet je account live</h1>
-      <p>Je medewerkeraccount is aangemaakt. Kies hieronder zelf je wachtwoord, dan kun je meteen inloggen in TopTalent Hub.</p>
+      <p style="font-size:32px;margin:0 0 16px;">🎉</p>
+      <h1 style="margin:0 0 16px;color:#F27501;font-size:28px;">Hey ${escapeHtml(firstName)}, je bent inzetbaar!</h1>
+      <p>Je inschrijving is rond en je medewerkeraccount is aangemaakt. Kies hieronder je wachtwoord. Daarna log je in op TopTalent Hub en kun je reageren op open diensten.</p>
       <div style="background:#fff7f1;border:1px solid #f8d4b4;border-radius:12px;padding:20px;margin:24px 0;">
         <p style="margin:0 0 8px;"><strong>Zo werkt het:</strong></p>
-        <ul style="margin:0;padding-left:20px;">
+        <ol style="margin:0;padding-left:20px;">
           <li>Klik op de knop hieronder</li>
-          <li>Stel je wachtwoord in</li>
-          <li>Log daarna in en bekijk je diensten</li>
-        </ul>
+          <li>Kies je wachtwoord</li>
+          <li>Log in, maak je profiel compleet en bekijk de open diensten</li>
+        </ol>
       </div>
       <p style="text-align:center;margin:32px 0;">
         <a href="${activationUrl}" style="display:inline-block;background:#0B2447;color:#fff;text-decoration:none;padding:14px 24px;border-radius:10px;font-weight:700;">
           Wachtwoord instellen
         </a>
       </p>
-      <p style="font-size:14px;color:#666;">Deze link is 7 dagen geldig.</p>
+      <p style="font-size:14px;color:#666;">Deze link is ${ACTIVATIE_GELDIG_DAGEN} dagen geldig. Verlopen? Kies dan via <a href="${resetUrl}" style="color:#F27501;">Wachtwoord vergeten</a> zelf een nieuw wachtwoord met dit e-mailadres.</p>
       <p style="font-size:13px;word-break:break-all;color:#666;">${activationUrl}</p>
     `),
   });
+}
+
+export type ActivatiemailUitkomst = { ok: true; emailId: string | null } | { ok: false; fout: string };
+
+/**
+ * Activatiemail versturen mét controle op het resultaat (B8). Voorheen werd het resultaat
+ * genegeerd: een mislukte mail betekende een account dat nooit geactiveerd kon worden, zonder
+ * dat iemand het merkte. Een mislukking gaat nu naar Sentry en terug naar de aanroeper.
+ */
+export async function verstuurActivatiemail(
+  medewerker: MedewerkerActivationTarget,
+  route: string,
+): Promise<ActivatiemailUitkomst> {
+  try {
+    const resultaat = await sendMedewerkerActivationEmail(medewerker);
+    if (resultaat.error || resultaat.suppressed) {
+      const fout = resultaat.error?.message || "Adres staat op de bounce-lijst";
+      captureRouteError(new Error(`Activatiemail mislukt voor medewerker ${medewerker.id}: ${fout}`), {
+        route,
+        action: "ACTIVATIEMAIL",
+      });
+      return { ok: false, fout };
+    }
+    return { ok: true, emailId: resultaat.data?.id ?? null };
+  } catch (error) {
+    captureRouteError(error, { route, action: "ACTIVATIEMAIL" });
+    return { ok: false, fout: error instanceof Error ? error.message : "Onbekende fout" };
+  }
 }

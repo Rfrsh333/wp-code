@@ -385,6 +385,10 @@ export const kandidaatDocumentenPatchSchema = z.object({
   // Zelfde waarden als de CHECK op kandidaat_documenten.status
   status: z.enum(["ontvangen", "goedgekeurd", "afgekeurd"]).optional(),
   notitie: z.string().max(5000).optional().nullable(),
+  // B6: admin corrigeert het documenttype (waarden: KANDIDAAT_DOCUMENT_TYPES, gecontroleerd in de route)
+  type: z.string().max(40).optional(),
+  // Vervaldatum (YYYY-MM-DD) of null om te wissen
+  vervaldatum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
 });
 
 // ============================================================

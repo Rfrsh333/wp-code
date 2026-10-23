@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import PushNotificationBanner from "@/components/medewerker/PushNotificationBanner";
 import RatingsCard from "@/components/medewerker/RatingsCard";
+import ReageerChecklistBlok from "@/components/medewerker/ReageerChecklistBlok";
 import * as Sentry from "@sentry/nextjs";
 
 interface DashboardStats {
@@ -178,6 +179,11 @@ export default function DashboardHomeClient() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* B1: checklist vóór reageren (verdwijnt als alles in orde is) */}
+        <div className="max-w-4xl mx-auto px-4 mb-6 empty:hidden">
+          <ReageerChecklistBlok />
         </div>
 
         {/* Quick Actions */}

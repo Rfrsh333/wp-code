@@ -36,6 +36,19 @@ export const candidateEmailCopy = {
     outro:
       "🔒 Deze link is beveiligd en 7 dagen geldig.<br>Nadat we alles hebben, ben je zo goedgekeurd! 🚀",
   },
+  // Zelfde verzoek, maar automatisch verstuurd door de autopilot (B3): zonder "je profiel ziet
+  // er goed uit", want er heeft nog niemand naar gekeken.
+  documentenAutomatisch: {
+    subject: "{voornaam}, de volgende stap: je documenten 📄",
+    heading: "Hey {voornaam}, de volgende stap!",
+    intro:
+      "Bedankt voor je inschrijving! Om je aanmelding verder te brengen hebben we een paar documenten van je nodig. Dit duurt maar 2 minuten. 😊",
+    cardTitle: "Dit hebben we nodig:",
+    bodyAfterCard: "Upload je documenten hier:",
+    ctaLabel: "📤 Upload documenten (2 min)",
+    outro:
+      "🔒 Deze link is beveiligd en 7 dagen geldig.<br>Daarna bekijken we je inschrijving en documenten en hoor je van ons.",
+  },
   documentenReminder: {
     subject: "{voornaam}, vergeet je documenten niet! 📄",
     heading: "Hey {voornaam}, nog heel eventjes!",
@@ -47,20 +60,37 @@ export const candidateEmailCopy = {
     outro:
       "Duurt echt maar 2 minuutjes. Gewoon een foto maken met je telefoon is helemaal prima. 🙌",
   },
+  // Alleen voor wie al een (geactiveerd) account heeft; een nieuw account krijgt bij
+  // "inzetbaar" de activatiemail, die dezelfde boodschap heeft (B15: één consistente mail).
   welkom: {
     subject: "🎉 {voornaam}, je bent inzetbaar!",
     heading: "Yes {voornaam}, je bent inzetbaar!",
     intro:
-      "Je bent officieel goedgekeurd en klaar voor inzet. Vanaf nu kunnen we je matchen met gave opdrachten in de horeca!",
+      "Je bent goedgekeurd en klaar voor inzet. Log in op TopTalent Hub met je account en reageer op de open diensten.",
     cardTitle: "Wat nu?",
     cardItems: [
-      "📞 Bellen we je of sturen een berichtje",
-      "📅 Matchen we je met een leuke opdracht",
-      "💰 Regel je snel je eerste shift!",
+      "Log in op TopTalent Hub",
+      "Maak je profiel compleet",
+      "Reageer op een dienst die bij je past",
     ],
-    bodyAfterCard: "Houd je telefoon in de gaten - je eerste match kan zomaar binnenkomen! 📱",
-    ctaLabel: "🚀 Bekijk je profiel",
-    outro: "Let's go! 🔥<br><br>Vragen? We zijn er! Bel, app of mail ons. 💬",
+    bodyAfterCard: "Wachtwoord kwijt? Kies op de inlogpagina voor 'Wachtwoord vergeten'.",
+    ctaLabel: "Inloggen",
+    outro: "Vragen? We zijn er! Bel, app of mail ons. 💬",
+  },
+  // B16: de mail "Documenten ontvangen" belooft bericht zodra alles is goedgekeurd.
+  documentenGoedgekeurd: {
+    subject: "{voornaam}, je documenten zijn goedgekeurd ✅",
+    heading: "Top {voornaam}, je documenten zijn goedgekeurd!",
+    intro: "We hebben je documenten bekeken en alles is in orde.",
+    cardTitle: "Wat nu?",
+    cardItems: [
+      "We ronden je inschrijving af",
+      "Zodra je account klaarstaat, krijg je een mail om je wachtwoord in te stellen",
+      "Daarna log je in en kun je reageren op diensten",
+    ],
+    bodyAfterCard: "Je kunt je status altijd volgen via onderstaande link:",
+    ctaLabel: "📊 Bekijk je status",
+    outro: "Vragen? Gewoon appen of mailen, we helpen je graag! 💬",
   },
   afwijzing: {
     subject: "{voornaam}, update over je aanmelding bij TopTalent",

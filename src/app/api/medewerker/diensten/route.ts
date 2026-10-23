@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
@@ -9,7 +10,7 @@ import { notifyKlantUrenIngediend } from "@/lib/klant-push-triggers";
 import { notifyKlantNieuweAanmelding } from "@/lib/dienst-push-triggers";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
-import { meldAan, meldAf, planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
+import { meldAan, meldAf, planVervangerIn, werkBezettingBij, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { beperkDiensten, haalDemoIds } from "@/lib/demo";
 
 type UrenRegistratie = { status: string };
@@ -37,7 +38,7 @@ type UrenAanpassing = {
 
 export async function GET(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   // Parse filter params
   const { searchParams } = new URL(request.url);
@@ -306,13 +307,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
   const { action, dienst_id, aanmelding_id, uren_id, data } = await request.json();
 
   if (action === "aanmelden") {
     if (!dienst_id) return NextResponse.json({ error: "Dienst ID is verplicht" }, { status: 400 });
     const resultaat = await meldAan(medewerker.id, dienst_id, "aangemeld");
-    if (!resultaat.ok) return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+    if (!resultaat.ok) return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
 
     // Push notificatie naar klant: iemand heeft zich aangemeld
     after(() =>

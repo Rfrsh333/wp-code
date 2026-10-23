@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { maandGrenzen, nlVandaag } from "@/lib/nl-tijd";
 import { haalAfgelopenZonderUren, haalUrenRegistraties } from "@/lib/medewerker/uren";
@@ -10,7 +11,7 @@ import { roundCurrency } from "@/lib/reiskosten";
 export async function GET(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const [registraties, { teRegistreren, nietIngecheckt }] = await Promise.all([
       haalUrenRegistraties(medewerker.id),

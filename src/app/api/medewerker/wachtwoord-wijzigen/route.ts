@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession, revokeSessions } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { checkRedisRateLimit, loginRateLimit } from "@/lib/rate-limit-redis";
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
@@ -16,7 +17,7 @@ import { BCRYPT_KOSTEN, controleerWachtwoord, geefNieuweSessie } from "@/lib/med
  */
 export async function POST(request: NextRequest) {
   const medewerker = await getMedewerkerSession(request);
-  if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!medewerker) return geenMedewerkerToegang(request);
 
   const limiet = await checkRedisRateLimit(`medewerker-wachtwoord-wijzigen:${medewerker.id}`, loginRateLimit, {
     failClosed: true,

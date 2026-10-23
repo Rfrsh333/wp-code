@@ -1,4 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
+import { haalChecklist } from "@/lib/medewerker/checklist";
+import { CHECKLIST_CODE } from "@/lib/medewerker/reageer-checklist";
+import { controleerInzetbaarheid } from "@/lib/medewerker/aanmelden";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { ensureKlantForDienst } from "@/lib/klanten-sync";
@@ -198,6 +201,31 @@ export async function POST(request: NextRequest) {
 
   // Spoeddienst: update response status (bevestig/afwijs)
   if (action === "update_spoeddienst_response") {
+    // B1: bevestigen plant de medewerker direct in; dat mag de checklist vóór reageren (ID, KvK,
+    // btw, IBAN, akkoord) en de verloopblokkade niet omzeilen.
+    if (data.status === "bevestigd") {
+      const { data: reactie } = await supabaseAdmin
+        .from("spoeddienst_responses")
+        .select("medewerker_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (reactie?.medewerker_id) {
+        const checklist = await haalChecklist(reactie.medewerker_id);
+        if (!checklist.compleet) {
+          return NextResponse.json(
+            {
+              error: `Kan niet bevestigen: de checklist van deze medewerker is niet compleet (${checklist.ontbrekend.map((p) => p.label).join(", ")}).`,
+              code: CHECKLIST_CODE,
+              ontbrekend: checklist.ontbrekend,
+            },
+            { status: 409 },
+          );
+        }
+        const melding = await controleerInzetbaarheid(reactie.medewerker_id);
+        if (melding) return NextResponse.json({ error: `Kan niet bevestigen: ${melding}` }, { status: 409 });
+      }
+    }
+
     await supabaseAdmin
       .from("spoeddienst_responses")
       .update({ status: data.status })

@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
+import { aanmeldStatussenVoorTab } from "@/lib/medewerker/dienst-regels";
 import { nlVandaag } from "@/lib/nl-tijd";
 
 export async function GET(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status") || "gepland";
 
     const vandaag = nlVandaag();
 
-    // Bepaal welke aanmelding statussen we willen
-    const statusFilter: string[] = status === "aangeboden" ? ["uitgenodigd"] : [...INGEPLAND_STATUSSEN];
+    // Bepaal welke aanmelding statussen we willen (B9: ook "aangemeld")
+    const statusFilter = aanmeldStatussenVoorTab(status);
 
     // Stap 1: Haal aanmeldingen op
     const { data: aanmeldingen, error: aanmeldingenError } = await supabaseAdmin
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
       })
       .filter((d): d is NonNullable<typeof d> => {
         if (!d) return false;
-        if (status === "gepland") return d.datum >= vandaag;
+        if (status === "gepland" || status === "aangemeld") return d.datum >= vandaag;
         if (status === "voltooid") return d.datum < vandaag;
         return true;
       })

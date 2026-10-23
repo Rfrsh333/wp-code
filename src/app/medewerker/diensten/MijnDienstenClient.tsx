@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Calendar, Check, Clock, WifiOff } from "lucide-react";
+import { Calendar, Check, Clock, Send, WifiOff } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
 import DienstCard from "@/components/medewerker/DienstCard";
 import SwipeShiftStack from "@/components/medewerker/SwipeShiftStack";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
-type SubTab = "aangeboden" | "gepland" | "voltooid";
+type SubTab = "aangeboden" | "aangemeld" | "gepland" | "voltooid";
 
 interface Dienst {
   id: string;
@@ -159,6 +159,8 @@ export default function MijnDienstenClient() {
 
   const tabs = [
     { id: "aangeboden" as SubTab, label: "Aangeboden", icon: Clock },
+    // B9: zelf gereageerd, de opdrachtgever kiest nog (was nergens te zien in het webportaal)
+    { id: "aangemeld" as SubTab, label: "Aangemeld", icon: Send },
     { id: "gepland" as SubTab, label: "Gepland", icon: Calendar },
     { id: "voltooid" as SubTab, label: "Voltooid", icon: Check },
   ];
@@ -174,7 +176,7 @@ export default function MijnDienstenClient() {
           </h1>
 
           {/* Sub-tabs met oranje indicator */}
-          <div className="flex gap-6 relative">
+          <div className="flex gap-6 relative overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -317,16 +319,24 @@ export default function MijnDienstenClient() {
         ) : diensten.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 rounded-full bg-[var(--mp-bg)] mx-auto mb-4 flex items-center justify-center">
+              {activeTab === "aangemeld" && <Send className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
               {activeTab === "gepland" && <Calendar className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
               {activeTab === "voltooid" && <Check className="w-8 h-8 text-[var(--mp-text-tertiary)]" />}
             </div>
             <p className="text-[var(--mp-text-secondary)] text-sm">
+              {activeTab === "aangemeld" && "Geen openstaande aanmeldingen. Reageer op een dienst bij Ontdekken."}
               {activeTab === "gepland" && "Geen geplande diensten"}
               {activeTab === "voltooid" && "Geen voltooide diensten"}
             </p>
           </div>
         ) : (
-          /* Regular cards voor gepland/voltooid - grid layout zoals Ontdekken */
+          /* Regular cards voor aangemeld/gepland/voltooid - grid layout zoals Ontdekken */
+          <>
+          {activeTab === "aangemeld" && (
+            <p className="text-sm text-[var(--mp-text-secondary)] mb-3">
+              De opdrachtgever moet je aanmelding nog bevestigen. Zolang dat niet is gebeurd, kun je hem intrekken.
+            </p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {diensten.map((dienst) => (
               <DienstCard
@@ -337,6 +347,7 @@ export default function MijnDienstenClient() {
               />
             ))}
           </div>
+          </>
         )}
       </div>
 

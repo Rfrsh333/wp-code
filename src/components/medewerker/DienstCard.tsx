@@ -23,7 +23,7 @@ interface DienstCardProps {
       bedrijf_foto_url?: string;
     };
   };
-  type: "aangeboden" | "gepland" | "voltooid";
+  type: "aangeboden" | "aangemeld" | "gepland" | "voltooid";
   onRefresh?: () => void;
 }
 
@@ -35,6 +35,7 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
   const [showUrenForm, setShowUrenForm] = useState(false);
   const [submittingUren, setSubmittingUren] = useState(false);
   const [annuleren, setAnnuleren] = useState(false);
+  const [intrekken, setIntrekken] = useState(false);
 
   // Uren form state
   const [urenStart, setUrenStart] = useState(dienst.start_tijd?.slice(0, 5) || "");
@@ -182,6 +183,36 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
     }
   };
 
+  // B9: openstaande aanmelding (de opdrachtgever kiest nog) intrekken, zoals in de app.
+  const handleIntrekken = async () => {
+    if (!dienst.aanmelding_id) {
+      toast.error("Aanmelding ID ontbreekt");
+      return;
+    }
+    if (!window.confirm("Aanmelding intrekken? Je staat dan niet meer op de lijst voor deze dienst.")) return;
+
+    setIntrekken(true);
+    try {
+      const res = await fetch("/api/medewerker/diensten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "afmelden", aanmelding_id: dienst.aanmelding_id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Intrekken mislukt");
+        return;
+      }
+      toast.success("Aanmelding ingetrokken");
+      onRefresh?.();
+    } catch (err) {
+      console.error("Intrekken error:", err);
+      toast.error("Er ging iets mis");
+    } finally {
+      setIntrekken(false);
+    }
+  };
+
   const handleUrenIndienen = async () => {
     if (!dienst.aanmelding_id) {
       toast.error("Aanmelding ID ontbreekt");
@@ -252,6 +283,11 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
           )}
 
           {/* Status badge */}
+          {type === "aangemeld" && (
+            <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-amber-500 text-white text-[11px] font-semibold shadow-lg">
+              Wacht op opdrachtgever
+            </div>
+          )}
           {type === "voltooid" && (
             <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-[var(--mp-success)] text-white text-[11px] font-semibold shadow-lg flex items-center gap-1">
               <Check className="w-3 h-3" />
@@ -338,6 +374,16 @@ export default function DienstCard({ dienst, type, onRefresh }: DienstCardProps)
                 )}
               </button>
             </div>
+          )}
+
+          {type === "aangemeld" && (
+            <button
+              onClick={handleIntrekken}
+              disabled={intrekken}
+              className="w-full py-2.5 rounded-xl bg-[var(--mp-bg)] text-[var(--mp-text-primary)] font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              {intrekken ? "Bezig..." : "Aanmelding intrekken"}
+            </button>
           )}
 
           {type === "gepland" && (

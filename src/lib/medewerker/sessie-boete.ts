@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyMedewerkerSession, type MedewerkerSession } from "@/lib/session";
+import { ACCOUNT_GEPAUZEERD_CODE, ACCOUNT_STATUS_HEADER, GEPAUZEERD_MELDING } from "@/lib/medewerker/account-status";
 
 /**
  * Sessie voor de boete-routes (status, boetes, betaal-boete).
@@ -52,4 +54,23 @@ export async function getMedewerkerSessieInclGepauzeerd(request?: Request): Prom
     return null;
   }
   return { ...session, status: account.status ?? "actief" };
+}
+
+/**
+ * Antwoord voor een portaal-API als `getMedewerkerSession` geen sessie gaf (B5).
+ * - Geldige sessie van een gepauzeerd account: 403 met code `account_gepauzeerd` en header
+ *   `x-account-status: gepauzeerd`. Bewust geen 401: daarop loggen webportaal en app uit, en
+ *   dan kan de medewerker zijn boete nooit betalen. Het webportaal stuurt door naar
+ *   /medewerker/gepauzeerd; de app houdt de sessie en toont de boetebanner.
+ * - Anders: 401 zoals voorheen (sessie verlopen, ingetrokken of account niet actief).
+ */
+export async function geenMedewerkerToegang(request?: Request): Promise<NextResponse> {
+  const sessie = await getMedewerkerSessieInclGepauzeerd(request);
+  if (sessie?.status === "gepauzeerd") {
+    return NextResponse.json(
+      { error: GEPAUZEERD_MELDING, code: ACCOUNT_GEPAUZEERD_CODE },
+      { status: 403, headers: { [ACCOUNT_STATUS_HEADER]: "gepauzeerd" } },
+    );
+  }
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }

@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { logAuditEvent } from "@/lib/audit-log";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { naDocumentBeoordeling } from "@/lib/kandidaat-documentbeoordeling";
 import { naarAdminDocument, reviewNaarStatus, type KandidaatDocumentRij } from "@/lib/kandidaat-documenten";
 
 interface ReviewRequest {
@@ -61,40 +62,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Document niet gevonden" }, { status: 404 });
     }
 
-    // Check if all required documents are approved
-    const { data: inschrijving } = await supabaseAdmin
-      .from("inschrijvingen")
-      .select("uitbetalingswijze")
-      .eq("id", document.inschrijving_id)
-      .single();
-
-    if (inschrijving) {
-      const { data: allDocs } = await supabaseAdmin
-        .from("kandidaat_documenten")
-        .select("type, status")
-        .eq("inschrijving_id", document.inschrijving_id);
-
-      // Required docs: ID + CV (+ KVK for ZZP)
-      const requiredTypes = inschrijving.uitbetalingswijze === "zzp"
-        ? ["id", "cv", "kvk"]
-        : ["id", "cv"];
-
-      const allRequiredApproved = requiredTypes.every(type =>
-        allDocs?.some(doc => doc.type === type && doc.status === "goedgekeurd")
-      );
-
-      // Auto-update kandidaat status if all docs approved
-      if (allRequiredApproved) {
-        await supabaseAdmin
-          .from("inschrijvingen")
-          .update({
-            onboarding_status: "goedgekeurd",
-            laatste_contact_op: new Date().toISOString(),
-          })
-          .eq("id", document.inschrijving_id);
-
-      }
-    }
+    // Zijn nu alle verplichte documenten goedgekeurd? Dan kandidaat naar "goedgekeurd" en de
+    // beloofde mail; zelfde regel als de PATCH op /api/admin/kandidaat-documenten (B16).
+    const beoordeling = await naDocumentBeoordeling(document.inschrijving_id);
 
     await logAuditEvent({
       actorEmail: email,
@@ -113,6 +83,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       document: naarAdminDocument(document),
+      beoordeling,
     });
   } catch (error) {
     captureRouteError(error, { route: "/api/admin/kandidaat-documenten/review", action: "POST" });

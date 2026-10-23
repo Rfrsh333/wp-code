@@ -30,7 +30,10 @@ export default function MedewerkerLogin() {
 
       const data = await res.json().catch(() => ({}));
 
-      if (res.ok && data.success) {
+      if (res.ok && data.success && data.gepauzeerd) {
+        // B5: gepauzeerd account ziet alleen status, boete en betalen.
+        router.push("/medewerker/gepauzeerd");
+      } else if (res.ok && data.success) {
         toast.success("Welkom terug!");
         router.push("/medewerker/dashboard");
       } else {

@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admin";
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { normaliseerEmail } from "@/lib/email-normalisatie";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -102,6 +103,8 @@ export async function POST(request: NextRequest) {
 
   if (action === "create" || action === "update") {
     const payload: Record<string, unknown> = { ...data };
+    // Klein opslaan: login zoekt op het genormaliseerde adres (B4).
+    if (typeof data.email === "string") payload.email = normaliseerEmail(data.email);
     if (data.wachtwoord) {
       // Validate password security (length, weakness, leaked passwords)
       const passwordValidation = await validatePasswordSecurity(data.wachtwoord);

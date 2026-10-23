@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag, plusDagen } from "@/lib/nl-tijd";
@@ -11,7 +12,7 @@ import { telVerlopendeDocumenten } from "@/lib/medewerker/dienst-regels";
 export async function GET(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const today = nlVandaag();
 

@@ -1,13 +1,14 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { getMedewerkerSession } from "@/lib/portal-auth";
+import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { meldAan } from "@/lib/medewerker/aanmelden";
+import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
 import { notifyKlantNieuweAanmelding } from "@/lib/dienst-push-triggers";
 
 export async function POST(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
-    if (!medewerker) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!medewerker) return geenMedewerkerToegang(request);
 
     const { dienst_id } = await request.json();
 
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     // zitten in één gedeelde functie; insert-fouten worden niet meer genegeerd.
     const resultaat = await meldAan(medewerker.id, dienst_id, "aangemeld");
     if (!resultaat.ok) {
-      return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
+      return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
     }
 
     // Zelfde melding als de aanmeldactie in /api/medewerker/diensten: de app meldt zich via deze route aan.
