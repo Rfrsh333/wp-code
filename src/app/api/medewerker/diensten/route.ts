@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
   // Afmelden/annuleren: één flow voor beide acties (eigen aanmelding, statuscheck, 48-uurregel in NL-tijd).
   if (action === "afmelden" || action === "annuleer_geaccepteerd") {
     const resultaat = await meldAf(medewerker.id, { aanmeldingId: aanmelding_id, dienstId: dienst_id });
-    if (!resultaat.ok) return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
+    if (!resultaat.ok) return NextResponse.json({ error: resultaat.error }, { status: resultaat.status });
     return NextResponse.json({
       success: true,
       uitkomst: resultaat.uitkomst,
