@@ -57,10 +57,13 @@ test.describe("moetPushKrijgen", () => {
 
   test("a. functie moet passen", () => {
     expect(redenGeenPush(medewerker({ functie: ["keuken"] }), dienst())).toBe("functie");
-    expect(redenGeenPush(medewerker({ functie: [] }), dienst())).toBe("functie");
-    expect(redenGeenPush(medewerker({ functie: null }), dienst())).toBe("functie");
-    // Dienst zonder functie past bij iedereen.
+    expect(redenGeenPush(medewerker({ functie: ["keuken"] }), dienst({ functie: "bartending" }))).toBe("functie");
+    expect(moetPushKrijgen(medewerker({ functie: ["bar"] }), dienst({ functie: "bartending" }))).toBe(true);
+    // Medewerker zonder functie of dienst zonder (bekende) functie: wel sturen.
+    expect(moetPushKrijgen(medewerker({ functie: [] }), dienst())).toBe(true);
+    expect(moetPushKrijgen(medewerker({ functie: null }), dienst())).toBe(true);
     expect(moetPushKrijgen(medewerker({ functie: ["keuken"] }), dienst({ functie: null }))).toBe(true);
+    expect(moetPushKrijgen(medewerker({ functie: ["keuken"] }), dienst({ functie: "catering" }))).toBe(true);
   });
 
   test("b. verborgen werkgever → geen push, andere werkgever wel", () => {
@@ -96,9 +99,13 @@ test.describe("moetPushKrijgen", () => {
     expect(moetPushKrijgen(medewerker({ rooster: { za: ["avond"] }, overrides: andereWeek }), dienst())).toBe(true);
   });
 
-  test("c. nachtdienst telt ook voor het blok nacht", () => {
-    expect(moetPushKrijgen(medewerker({ rooster: { za: ["nacht"] } }), dienst({ startTijd: "23:00" }))).toBe(true);
-    expect(redenGeenPush(medewerker({ rooster: { za: ["nacht"] } }), dienst({ startTijd: "18:00" }))).toBe("beschikbaarheid");
+  test("c. tijdsblokken: overlap van de hele dienst, nacht na middernacht", () => {
+    expect(moetPushKrijgen(medewerker({ rooster: { za: ["nacht"] } }), dienst({ startTijd: "23:00", eindTijd: "03:00" }))).toBe(true);
+    expect(redenGeenPush(medewerker({ rooster: { za: ["nacht"] } }), dienst({ startTijd: "18:00", eindTijd: "23:00" }))).toBe("beschikbaarheid");
+    // Middag loopt tot 18:00 (zoals de Beschikbaarheid-pagina): een dienst vanaf 17:30 telt.
+    expect(moetPushKrijgen(medewerker({ rooster: { za: ["middag"] } }), dienst({ startTijd: "17:30", eindTijd: "22:00" }))).toBe(true);
+    // Avond-medewerker en een dienst van 16 tot 23 uur.
+    expect(moetPushKrijgen(medewerker({ rooster: { za: ["avond"] } }), dienst({ startTijd: "16:00", eindTijd: "23:00" }))).toBe(true);
   });
 
   test("d. maximale afstand: alleen als ingesteld én beide locaties bekend", () => {
@@ -127,23 +134,39 @@ test.describe("functiePast", () => {
     expect(functiePast(["  keuken "], "KEUKEN")).toBe(true);
   });
 
-  test("synoniemen uit de richtlijntarieven (ober → bediening, barista → bar, kok → keuken)", () => {
-    expect(functiePast(["ober"], "bediening")).toBe(true);
+  test("hoofdfunctie van de medewerker tegen de functies uit platform_options", () => {
+    // Medewerkers: bediening | bar | keuken | afwas (candidate-to-medewerker, admin-formulier).
+    expect(functiePast(["bar"], "bartending")).toBe(true);
+    expect(functiePast(["bar"], "barista")).toBe(true);
+    expect(functiePast(["keuken"], "hulpkok")).toBe(true);
+    expect(functiePast(["keuken"], "zelfstandig werkend kok")).toBe(true);
+    expect(functiePast(["afwas"], "spoelkeuken medewerker")).toBe(true);
+    expect(functiePast(["bediening"], "hosting")).toBe(true);
+    expect(functiePast(["bediening"], "runner")).toBe(true);
+    expect(functiePast(["bediening"], "Gastheer / gastvrouw")).toBe(true);
     expect(functiePast(["bediening"], "Serveerster")).toBe(true);
+    // Andere groep: geen push.
+    expect(functiePast(["bediening"], "bartending")).toBe(false);
+    expect(functiePast(["afwas"], "hulpkok")).toBe(false);
+    expect(functiePast(["bar", "keuken"], "bediening")).toBe(false);
+  });
+
+  test("synoniemen ook aan de kant van de medewerker", () => {
+    expect(functiePast(["ober"], "bediening")).toBe(true);
     expect(functiePast(["barista"], "bartender")).toBe(true);
     expect(functiePast(["kok"], "keuken")).toBe(true);
-    expect(functiePast(["afwas"], "bediening")).toBe(false);
   });
 
-  test("onbekende functie: alleen exact", () => {
-    expect(functiePast(["promotie"], "promotie")).toBe(true);
-    expect(functiePast(["promotie"], "hostess")).toBe(false);
+  test("onbekende dienstfunctie (buiten de vier groepen) past bij iedereen", () => {
+    expect(functiePast(["bediening"], "catering")).toBe(true);
+    expect(functiePast(["afwas"], "garderobe")).toBe(true);
+    expect(functiePast(["bar"], "festivalmedewerker")).toBe(true);
   });
 
-  test("dienst zonder functie past altijd; medewerker zonder functie past niet", () => {
+  test("dienst zonder functie of medewerker zonder functie: past", () => {
     expect(functiePast([], null)).toBe(true);
     expect(functiePast(["bar"], "  ")).toBe(true);
-    expect(functiePast([], "bar")).toBe(false);
-    expect(functiePast(undefined, "bar")).toBe(false);
+    expect(functiePast([], "bar")).toBe(true);
+    expect(functiePast(undefined, "bar")).toBe(true);
   });
 });

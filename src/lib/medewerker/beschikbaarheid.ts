@@ -70,20 +70,41 @@ export function maandagVan(datum: string): string | null {
 }
 
 /**
- * Tijdsblokken waar een dienst met deze begintijd onder valt. Zelfde indeling als de matching
- * (lib/matching.ts: voor 12 uur ochtend, voor 17 uur middag, anders avond), plus `nacht` voor een
- * begintijd vanaf 22 uur of voor 6 uur (dat blok bestond in het portaal, maar telde nergens mee).
+ * Tijdsblokken zoals de Beschikbaarheid-pagina ze toont (BeschikbaarheidClient): ochtend 06–12,
+ * middag 12–18, avond 18–24, nacht 00–06.
  */
-export function tijdsblokkenVoorStart(startTijd: string): string[] {
-  const uur = parseInt(String(startTijd).split(":")[0], 10);
-  if (!Number.isFinite(uur)) return [];
-  const blok = uur < 12 ? "ochtend" : uur < 17 ? "middag" : "avond";
-  return uur >= 22 || uur < 6 ? [blok, "nacht"] : [blok];
+const BLOK_UREN: { blok: string; van: number; tot: number }[] = [
+  { blok: "nacht", van: 0, tot: 6 * 60 },
+  { blok: "ochtend", van: 6 * 60, tot: 12 * 60 },
+  { blok: "middag", van: 12 * 60, tot: 18 * 60 },
+  { blok: "avond", van: 18 * 60, tot: 24 * 60 },
+];
+
+function minuten(tijd: string | null | undefined): number | null {
+  const m = /^(\d{1,2}):(\d{2})/.exec(String(tijd ?? ""));
+  if (!m) return null;
+  const n = Number(m[1]) * 60 + Number(m[2]);
+  return n >= 0 && n <= 24 * 60 ? n : null;
+}
+
+/**
+ * Tijdsblokken die een dienst raakt (overlap van begin–eind met de blokken). Zonder eindtijd alleen
+ * het blok van de begintijd. Een dienst over middernacht raakt na 00:00 het blok nacht (we rekenen
+ * dat bij de dag van de dienst, zoals een medewerker een nachtdienst ook ziet).
+ */
+export function tijdsblokkenVoorDienst(startTijd: string, eindTijd?: string | null): string[] {
+  const start = minuten(startTijd);
+  if (start == null) return [];
+  let eind = minuten(eindTijd);
+  if (eind == null || eind === start) eind = Math.min(24 * 60, start + 1);
+  const delen: [number, number][] = eind > start ? [[start, eind]] : [[start, 24 * 60], [0, eind]];
+  return BLOK_UREN.filter((b) => delen.some(([van, tot]) => van < b.tot && tot > b.van)).map((b) => b.blok);
 }
 
 /**
  * Valt een dienst binnen de beschikbaarheid van een medewerker?
- * - `true` / `false`: de medewerker heeft beschikbaarheid ingevuld en de dienst valt er wel / niet in;
+ * - `true` / `false`: de medewerker heeft beschikbaarheid ingevuld en de dienst raakt op die dag wel /
+ *   geen gekozen tijdsblok (of `hele_dag`);
  * - `null`: geen beschikbaarheid ingevuld (geen rooster, alleen vrije tekst, of alle dagen leeg),
  *   de aanroeper beslist dan zelf (de gerichte push stuurt dan wel).
  * Een weekoverride (medewerker_beschikbaarheid_overrides) voor de week van de dienst gaat vóór het
@@ -96,11 +117,12 @@ export function beschikbaarVoorDienst(input: {
   beschikbaarVanaf?: string | null;
   datum: string;
   startTijd: string;
+  eindTijd?: string | null;
 }): boolean | null {
   if (input.beschikbaarVanaf && input.datum < input.beschikbaarVanaf.slice(0, 10)) return false;
   const dag = dagSleutelVanDatum(input.datum);
   if (!dag) return null;
-  const blokken = tijdsblokkenVoorStart(input.startTijd);
+  const blokken = tijdsblokkenVoorDienst(input.startTijd, input.eindTijd);
 
   const override = input.override != null ? normaliseerBeschikbaarheid(input.override) : null;
   const week = override ?? normaliseerBeschikbaarheid(input.rooster);

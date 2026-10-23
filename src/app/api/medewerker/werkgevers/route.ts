@@ -39,11 +39,15 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** Klant-id uit de body: rechtstreeks, of via een dienst (zo hoeft de app geen klant-id te kennen). */
+/**
+ * Klant-id uit de body: rechtstreeks, of via een dienst (zo hoeft de app geen klant-id te kennen).
+ * Alleen werkgevers met minstens één dienst (de medewerker kent ze uit Ontdekken of Mijn diensten);
+ * zo is de route geen manier om willekeurige klantaccounts op te zoeken.
+ */
 async function klantUitVerzoek(body: Record<string, unknown>): Promise<string | null> {
   if (typeof body.klant_id === "string" && UUID.test(body.klant_id)) {
-    const { data } = await supabaseAdmin.from("klanten").select("id").eq("id", body.klant_id).maybeSingle();
-    return (data?.id as string | undefined) ?? null;
+    const { data } = await supabaseAdmin.from("diensten").select("klant_id").eq("klant_id", body.klant_id).limit(1);
+    return ((data?.[0]?.klant_id as string | undefined) ?? null);
   }
   if (typeof body.dienst_id === "string" && UUID.test(body.dienst_id)) {
     const { data } = await supabaseAdmin.from("diensten").select("klant_id").eq("id", body.dienst_id).maybeSingle();

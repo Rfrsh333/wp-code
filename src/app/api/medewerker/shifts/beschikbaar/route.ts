@@ -228,10 +228,16 @@ export async function GET(request: NextRequest) {
     // Filters en sortering (alle optioneel). Verborgen werkgevers vallen standaard weg. Zonder eigen
     // locatie kan het afstandsfilter niet: dan genegeerd en gemeld.
     const afstandMogelijk = !!mijnAfstand.locatie;
-    const gefilterd = sorteerOntdek(pasOntdekFiltersToe(beschikbareShifts, filters, afstandMogelijk), filters.sortering);
     const genegeerd = [...ongeldig];
     if (filters.maxAfstandKm != null && !afstandMogelijk) genegeerd.push("max_afstand_km");
     if (filters.sortering === "afstand" && !afstandMogelijk) genegeerd.push("sortering");
+    // Zonder voorkeurentabel (migratie) kan niemand werkgevers bewaren: filter niet toepassen.
+    const toegepast = { ...filters };
+    if (filters.alleenFavorieteWerkgevers && !voorkeuren.beschikbaar) {
+      toegepast.alleenFavorieteWerkgevers = false;
+      genegeerd.push("alleen_favoriete_werkgevers");
+    }
+    const gefilterd = sorteerOntdek(pasOntdekFiltersToe(beschikbareShifts, toegepast, afstandMogelijk), filters.sortering);
 
     return NextResponse.json({
       shifts: gefilterd,

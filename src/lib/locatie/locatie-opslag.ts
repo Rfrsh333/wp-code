@@ -23,6 +23,23 @@ type GeoVelden = {
   geo_bijgewerkt_op: string | null;
 };
 
+/**
+ * Bestaan de geo-kolommen al? Eerst controleren, zodat we zonder migratie geen postcode naar PDOK
+ * sturen (en niet op PDOK wachten) voor niets. Per serverinstantie 5 minuten onthouden.
+ */
+const KOLOM_CACHE_MS = 5 * 60 * 1000;
+const kolomCache = new Map<string, { tot: number; aanwezig: boolean }>();
+
+async function geoKolommenAanwezig(tabel: "medewerkers" | "diensten"): Promise<boolean> {
+  const bewaard = kolomCache.get(tabel);
+  if (bewaard && bewaard.tot > Date.now()) return bewaard.aanwezig;
+  const { error } = await supabaseAdmin.from(tabel).select("id, geo_lat, geo_lng, geo_postcode, geo_bijgewerkt_op").limit(1);
+  if (error && !isOntbrekendeKolom(error)) throw error;
+  const aanwezig = !error;
+  kolomCache.set(tabel, { tot: Date.now() + KOLOM_CACHE_MS, aanwezig });
+  return aanwezig;
+}
+
 async function geoVoorPostcode(pc: string | null): Promise<{ velden: GeoVelden; uitkomst: Exclude<LocatieUitkomst, "migratie_ontbreekt">; locatie: Coordinaat | null }> {
   const nu = new Date().toISOString();
   if (!pc) return { velden: { geo_lat: null, geo_lng: null, geo_postcode: null, geo_bijgewerkt_op: nu }, uitkomst: "geen_postcode", locatie: null };
@@ -45,6 +62,7 @@ export async function werkMedewerkerLocatieBij(
   opties: { alleenBijWijziging?: boolean } = {},
 ): Promise<LocatieUitkomst> {
   const pc = normaliseerPostcode(postcode);
+  if (!(await geoKolommenAanwezig("medewerkers"))) return "migratie_ontbreekt";
   if (opties.alleenBijWijziging) {
     const { data, error } = await supabaseAdmin.from("medewerkers").select("geo_postcode, geo_bijgewerkt_op").eq("id", medewerkerId).maybeSingle();
     if (isOntbrekendeKolom(error)) return "migratie_ontbreekt";
@@ -79,6 +97,7 @@ export async function werkDienstLocatiesBij(
   cache?: Map<string, string | null>,
 ): Promise<{ uitkomst: LocatieUitkomst; locatie: Coordinaat | null }> {
   if (dienstIds.length === 0) return { uitkomst: "geen_postcode", locatie: null };
+  if (!(await geoKolommenAanwezig("diensten"))) return { uitkomst: "migratie_ontbreekt", locatie: null };
   const pc = postcodeUitTekst(bron.locatie) ?? (await klantPostcode(bron.klantId, cache));
   const { velden, uitkomst, locatie } = await geoVoorPostcode(pc);
   const { error } = await supabaseAdmin.from("diensten").update(velden).in("id", [...dienstIds]);
@@ -142,22 +161,27 @@ export type BackfillResultaat =
       migratie: true;
       medewerkers: BackfillTelling;
       diensten: BackfillTelling;
-      /** Nog te doen na deze aanroep (geo_bijgewerkt_op is null). Diensten: alleen vanaf vandaag. */
+      /** Nog te doen na deze aanroep (geo_bijgewerkt_op is null): actieve medewerkers, diensten vanaf vandaag. */
       resterend: { medewerkers: number | null; diensten: number | null };
-      /** Gestopt omdat PDOK herhaaldelijk niet antwoordde. */
+      /** Gestopt omdat PDOK herhaaldelijk niet antwoordde (later opnieuw proberen). */
       afgebroken: boolean;
+      /** Gestopt omdat het tijdbudget (± 40 s) op was; gewoon opnieuw aanroepen. */
+      tijdbudget_op: boolean;
     };
 
 export const BACKFILL_STANDAARD_LIMIET = 50;
-export const BACKFILL_MAX_LIMIET = 200;
+export const BACKFILL_MAX_LIMIET = 100;
 const TEGELIJK = 4;
 const MAX_FOUTEN_OP_RIJ = 3;
+/** Ruim binnen maxDuration (60 s) van de route blijven: daarna geen nieuwe rijen meer beginnen. */
+const TIJDBUDGET_MS = 40_000;
 
 /**
- * Vult de locatie aan voor rijen waar geo_bijgewerkt_op nog leeg is: eerst medewerkers, dan diensten
- * vanaf vandaag (oudere diensten verschijnen niet meer in Ontdekken). Idempotent: een verwerkte rij
- * krijgt geo_bijgewerkt_op en komt niet terug; een PDOK-fout blijft open voor een volgende aanroep.
- * `limiet` = maximaal aantal rijen per aanroep (medewerkers + diensten samen).
+ * Vult de locatie aan voor rijen waar geo_bijgewerkt_op nog leeg is: eerst actieve medewerkers
+ * (dataminimalisatie: inactieve accounts niet), dan diensten vanaf vandaag (oudere diensten verschijnen
+ * niet meer in Ontdekken). Idempotent: een verwerkte rij krijgt geo_bijgewerkt_op en komt niet terug;
+ * een PDOK- of databasefout op een rij blijft open voor een volgende aanroep en blokkeert de rest niet.
+ * `limiet` = maximaal aantal rijen per aanroep (medewerkers + diensten samen); na ± 40 s stopt hij.
  */
 export async function backfillLocaties(limiet: number): Promise<BackfillResultaat> {
   const max = Math.max(1, Math.min(BACKFILL_MAX_LIMIET, Math.floor(limiet) || BACKFILL_STANDAARD_LIMIET));
@@ -166,6 +190,16 @@ export async function backfillLocaties(limiet: number): Promise<BackfillResultaa
   const diensten = legeTelling();
   let foutenOpRij = 0;
   let afgebroken = false;
+  const begin = Date.now();
+  const tijdOp = () => Date.now() - begin > TIJDBUDGET_MS;
+  const perRij = async <T,>(werk: () => Promise<T>, bijFout: T): Promise<T> => {
+    try {
+      return await werk();
+    } catch (e) {
+      console.error("[backfill-locaties] rij mislukt:", e instanceof Error ? e.message : e);
+      return bijFout;
+    }
+  };
 
   const tel = (t: BackfillTelling, u: LocatieUitkomst) => {
     if (u === "migratie_ontbreekt") return;
@@ -178,18 +212,22 @@ export async function backfillLocaties(limiet: number): Promise<BackfillResultaa
     .from("medewerkers")
     .select("id, postcode")
     .is("geo_bijgewerkt_op", null)
+    .eq("status", "actief")
     .order("id", { ascending: true })
     .limit(max);
   if (isOntbrekendeKolom(mw.error)) return { migratie: false };
   if (mw.error) throw mw.error;
   const mwRijen = (mw.data ?? []) as { id: string; postcode: string | null }[];
-  for (let i = 0; i < mwRijen.length && !afgebroken; i += TEGELIJK) {
-    const uitkomsten = await Promise.all(mwRijen.slice(i, i + TEGELIJK).map((m) => werkMedewerkerLocatieBij(m.id, m.postcode)));
+  let mwGedaan = 0;
+  for (let i = 0; i < mwRijen.length && !afgebroken && !tijdOp(); i += TEGELIJK) {
+    const blok = mwRijen.slice(i, i + TEGELIJK);
+    const uitkomsten = await Promise.all(blok.map((m) => perRij(() => werkMedewerkerLocatieBij(m.id, m.postcode), "fout" as LocatieUitkomst)));
     uitkomsten.forEach((u) => tel(medewerkers, u));
+    mwGedaan += blok.length;
   }
 
   const rest = max - mwRijen.length;
-  if (rest > 0 && !afgebroken) {
+  if (rest > 0 && !afgebroken && !tijdOp() && mwGedaan === mwRijen.length) {
     const dn = await supabaseAdmin
       .from("diensten")
       .select("id, locatie, klant_id")
@@ -201,16 +239,23 @@ export async function backfillLocaties(limiet: number): Promise<BackfillResultaa
     if (dn.error) throw dn.error;
     const klantCache = new Map<string, string | null>();
     const dnRijen = (dn.data ?? []) as { id: string; locatie: string | null; klant_id: string | null }[];
-    for (let i = 0; i < dnRijen.length && !afgebroken; i += TEGELIJK) {
+    for (let i = 0; i < dnRijen.length && !afgebroken && !tijdOp(); i += TEGELIJK) {
       const uitkomsten = await Promise.all(
-        dnRijen.slice(i, i + TEGELIJK).map((d) => werkDienstLocatiesBij([d.id], { locatie: d.locatie, klantId: d.klant_id }, klantCache)),
+        dnRijen
+          .slice(i, i + TEGELIJK)
+          .map((d) =>
+            perRij(
+              () => werkDienstLocatiesBij([d.id], { locatie: d.locatie, klantId: d.klant_id }, klantCache),
+              { uitkomst: "fout" as LocatieUitkomst, locatie: null },
+            ),
+          ),
       );
       uitkomsten.forEach((u) => tel(diensten, u.uitkomst));
     }
   }
 
   const [restMw, restDn] = await Promise.all([
-    supabaseAdmin.from("medewerkers").select("id", { count: "exact", head: true }).is("geo_bijgewerkt_op", null),
+    supabaseAdmin.from("medewerkers").select("id", { count: "exact", head: true }).is("geo_bijgewerkt_op", null).eq("status", "actief"),
     supabaseAdmin.from("diensten").select("id", { count: "exact", head: true }).is("geo_bijgewerkt_op", null).gte("datum", vandaag),
   ]);
   return {
@@ -219,5 +264,6 @@ export async function backfillLocaties(limiet: number): Promise<BackfillResultaa
     diensten,
     resterend: { medewerkers: restMw.error ? null : restMw.count ?? null, diensten: restDn.error ? null : restDn.count ?? null },
     afgebroken,
+    tijdbudget_op: tijdOp(),
   };
 }

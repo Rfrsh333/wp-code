@@ -335,11 +335,11 @@ export default function PrivacyPolicyPage() {
                   </tr>
                   <tr className="border-b bg-neutral-50">
                     <td className="px-4 py-3">Sessie-opnames in de app (alleen met toestemming)</td>
-                    <td className="px-4 py-3">30 dagen (de standaardtermijn van PostHog), daarna automatisch verwijderd</td>
+                    <td className="px-4 py-3">30 dagen, daarna automatisch verwijderd</td>
                   </tr>
                   <tr className="border-b">
                     <td className="px-4 py-3">Globale locatie op basis van uw postcode</td>
-                    <td className="px-4 py-3">Zolang u een account heeft; bij een nieuwe postcode wordt hij vervangen</td>
+                    <td className="px-4 py-3">Zolang uw postcode bij ons bekend is; bij een nieuwe postcode wordt hij vervangen</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3">Klachten en geschillen</td>
@@ -389,6 +389,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>PostHog (servers in Frankfurt, Duitsland):</strong> voor gebruiksstatistieken van de website, de portalen en de app, zonder naam of e-mailadres (op de website alleen met uw toestemming voor analytics), en voor sessie-opnames in de app, alleen als u daar in de app toestemming voor geeft (zie paragraaf 10c). Op de website en in de portalen maken wij geen schermopnames.</li>
             </ul>
             <p>Met alle verwerkers hebben wij verwerkersovereenkomsten gesloten die voldoen aan de eisen van artikel 28 AVG.</p>
+            <p>Voor de afstand tot diensten in het werknemersportaal en de app sturen wij alleen postcodes naar de PDOK Locatieserver van de Nederlandse overheid, zonder naam, adres of andere gegevens (zie paragraaf 10d).</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">7.3 Overheidsinstanties</h3>
             <p>Wij zijn wettelijk verplicht bepaalde gegevens te verstrekken aan:</p>
@@ -580,9 +581,10 @@ export default function PrivacyPolicyPage() {
               <li>Alle invoervelden en afbeeldingen worden in de opname gemaskeerd, zodat wat u invult of ziet aan foto&apos;s niet te lezen is.</li>
               <li>Gevoelige schermen worden helemaal niet opgenomen: inloggen, registreren, profiel, documenten, financiële gegevens, betalen en inchecken.</li>
               <li>Een opname hangt niet aan uw naam of account, alleen aan een willekeurig (anoniem) toestel-id.</li>
+              <li>Technische logboeken van de app (consolelogs en netwerkverzoeken) worden niet opgenomen.</li>
               <li>Wij gebruiken de opnames alleen om de app te verbeteren.</li>
             </ul>
-            <p>De opnames gaan naar PostHog (servers in Frankfurt, Duitsland) en worden na 30 dagen automatisch verwijderd; dat is de standaardtermijn van PostHog voor sessie-opnames. De grondslag is uw toestemming (artikel 6 lid 1 sub a AVG). U kunt de opnames altijd stoppen in de app onder Privacy; daarmee trekt u uw toestemming in.</p>
+            <p>De opnames gaan naar PostHog (servers in Frankfurt, Duitsland) en worden na 30 dagen automatisch verwijderd. De grondslag is uw toestemming (artikel 6 lid 1 sub a AVG). U kunt de opnames altijd stoppen in de app onder Privacy; daarmee trekt u uw toestemming in.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Opslag op uw toestel</h3>
             <p>De app bewaart op uw toestel, in de beveiligde opslag van iOS (Keychain) of Android (Keystore):</p>
@@ -629,7 +631,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Zelf in de hand:</strong> u bepaalt zelf of u een maximale afstand instelt en welke werkgevers u bewaart of verbergt (in het werknemersportaal onder Instellingen en Account). Zonder postcode ziet u geen afstand en krijgt u meldingen ongeacht de afstand.</li>
               <li><strong>Favorieten:</strong> u ziet bij welke werkgevers u als favoriet staat. Werkgevers zien niet welke werkgevers u heeft bewaard of verborgen.</li>
             </ul>
-            <p>Wij doen dit om onze bemiddeling uit te voeren en u passende diensten aan te bieden (artikel 6 lid 1 sub b AVG). De globale locatie wordt vervangen als u uw postcode wijzigt en verwijderd met uw account.</p>
+            <p>Wij doen dit om onze bemiddeling uit te voeren en u passende diensten aan te bieden (artikel 6 lid 1 sub b AVG). Wij bewaren de globale locatie niet langer dan uw postcode: wijzigt u uw postcode, dan vervangen wij hem; wist u uw postcode of handelen wij uw verzoek om uw account te verwijderen af, dan wissen wij hem.</p>
 
             {/* 11. Beveiliging */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">

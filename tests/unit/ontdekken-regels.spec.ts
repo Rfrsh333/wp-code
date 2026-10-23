@@ -8,7 +8,7 @@ import {
   sorteerOntdek,
   type OntdekRegel,
 } from "../../src/lib/medewerker/ontdekken-regels";
-import { beschikbaarVoorDienst, dagSleutelVanDatum, maandagVan, tijdsblokkenVoorStart } from "../../src/lib/medewerker/beschikbaarheid";
+import { beschikbaarVoorDienst, dagSleutelVanDatum, maandagVan, tijdsblokkenVoorDienst } from "../../src/lib/medewerker/beschikbaarheid";
 
 const params = (q: string) => new URLSearchParams(q);
 
@@ -127,12 +127,26 @@ test.describe("beschikbaarheid voor een dienst", () => {
     expect(maandagVan("2027-01-01")).toBe("2026-12-28");
   });
 
-  test("tijdsblokkenVoorStart: zelfde indeling als de matching, plus nacht", () => {
-    expect(tijdsblokkenVoorStart("09:00")).toEqual(["ochtend"]);
-    expect(tijdsblokkenVoorStart("12:00:00")).toEqual(["middag"]);
-    expect(tijdsblokkenVoorStart("17:00")).toEqual(["avond"]);
-    expect(tijdsblokkenVoorStart("22:30")).toEqual(["avond", "nacht"]);
-    expect(tijdsblokkenVoorStart("02:00")).toEqual(["ochtend", "nacht"]);
+  test("tijdsblokkenVoorDienst: overlap met de blokken van de Beschikbaarheid-pagina", () => {
+    // ochtend 06–12, middag 12–18, avond 18–24, nacht 00–06
+    expect(tijdsblokkenVoorDienst("09:00", "11:00")).toEqual(["ochtend"]);
+    expect(tijdsblokkenVoorDienst("12:00:00", "16:00:00")).toEqual(["middag"]);
+    expect(tijdsblokkenVoorDienst("17:30", "17:59")).toEqual(["middag"]);
+    expect(tijdsblokkenVoorDienst("16:00", "23:00")).toEqual(["middag", "avond"]);
+    expect(tijdsblokkenVoorDienst("18:00", "00:00")).toEqual(["avond"]);
+    expect(tijdsblokkenVoorDienst("22:00", "03:00")).toEqual(["nacht", "avond"]);
+    expect(tijdsblokkenVoorDienst("05:00", "07:00")).toEqual(["nacht", "ochtend"]);
+    // Zonder eindtijd: het blok van de begintijd.
+    expect(tijdsblokkenVoorDienst("17:00")).toEqual(["middag"]);
+    expect(tijdsblokkenVoorDienst("onzin", "10:00")).toEqual([]);
+  });
+
+  test("beschikbaarVoorDienst: een dienst die een gekozen blok raakt telt", () => {
+    const rooster = { vr: ["middag"] };
+    // Vrijdag 23 oktober 2026.
+    expect(beschikbaarVoorDienst({ rooster, datum: "2026-10-23", startTijd: "17:30", eindTijd: "22:00" })).toBe(true);
+    expect(beschikbaarVoorDienst({ rooster, datum: "2026-10-23", startTijd: "18:00", eindTijd: "23:00" })).toBe(false);
+    expect(beschikbaarVoorDienst({ rooster: { vr: ["avond"] }, datum: "2026-10-23", startTijd: "16:00", eindTijd: "23:00" })).toBe(true);
   });
 
   test("null als er niets is ingevuld", () => {

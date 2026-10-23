@@ -49,7 +49,15 @@ export async function pushNieuweDienst(
     doelgroep = { modus: "iedereen", reden: "databasefout" };
   }
   if (doelgroep.modus === "iedereen") return sendPushToAllOfType("medewerker", payload, { demo });
-  console.info(`[push] nieuwe dienst: ${doelgroep.ids.length} van ${doelgroep.kandidaten} actieve medewerkers`);
+  // Alleen aantallen in de log (geen ids of namen).
+  console.info(`[push] nieuwe dienst: ${doelgroep.ids.length} van ${doelgroep.kandidaten} actieve medewerkers`, doelgroep.redenen);
+  if (doelgroep.kandidaten > 0 && doelgroep.ids.length === 0) {
+    // Niemand past: geen fout, maar wel opvallend (bv. functienamen die niet aansluiten).
+    captureRouteError(new Error(`Gerichte push zonder ontvangers (${doelgroep.kandidaten} kandidaten): ${JSON.stringify(doelgroep.redenen)}`), {
+      route: "lib/klant-controle",
+      action: "PUSH_GEEN_ONTVANGERS",
+    });
+  }
   return pushNaarMedewerkers(doelgroep.ids, (blok) => sendPushToUsers(blok, "medewerker", payload));
 }
 
