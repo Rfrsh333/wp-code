@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { valideerPauze, valideerDienstDuur, berekenToeslag } from "@/lib/compliance/arbeidstijden";
 import { geldendeTijden, klantUurtariefVoorAanmelding, medewerkerUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
 import { haalDienstExtras, haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+import { meldUrenBeoordeeld } from "@/lib/meldingen/uren-meldingen";
 
 type Een<T> = T | T[] | null | undefined;
 const een = <T,>(v: Een<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
@@ -118,6 +119,13 @@ export async function POST(request: NextRequest) {
     }
 
     await supabaseAdmin.from("uren_registraties").update(payload).eq("id", id);
+
+    // Push + melding aan de medewerker (gebundeld per medewerker), na het antwoord.
+    if (status === "goedgekeurd" && urenRegistratie.status !== "goedgekeurd") {
+      after(() => meldUrenBeoordeeld(id, "definitief", "admin"));
+    } else if (status === "afgewezen" && urenRegistratie.status !== "afgewezen") {
+      after(() => meldUrenBeoordeeld(id, "afgewezen", "admin"));
+    }
 
     if (status === "goedgekeurd") {
       const aanmelding = Array.isArray(urenRegistratie.aanmelding)
@@ -244,6 +252,8 @@ export async function POST(request: NextRequest) {
       klant_opmerking: data.opmerking || null,
       goedgekeurd_at: null,
     }).eq("id", id);
+    // De medewerker moet akkoord geven of weigeren (zelfde stap als bij een aanpassing van de werkgever).
+    after(() => meldUrenBeoordeeld(id, "aangepast", "admin"));
   }
 
   return NextResponse.json({ success: true });

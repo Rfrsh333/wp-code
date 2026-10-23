@@ -24,6 +24,7 @@ import {
 import {
   meldingContractTerOndertekening,
   meldingDienstAangeboden,
+  meldingUrenBeoordeeld,
   meldingVervangerIngepland,
 } from "../../src/lib/meldingen/meldingen-teksten";
 
@@ -319,3 +320,46 @@ test.describe("ontdubbelen: sleutels", () => {
   });
 });
 
+test.describe("meldingUrenBeoordeeld (Uren & geld)", () => {
+  const regel = { klantNaam: "Café De Proef", functie: "Bediening", datum: "2026-10-24", uren: 6.5 };
+
+  test("werkgever keurt één regel goed", () => {
+    const m = meldingUrenBeoordeeld({ actie: "goedgekeurd", door: "klant", aantal: 1, ...regel });
+    expect(m).toMatchObject({ title: "Uren goedgekeurd", url: "/medewerker/uren/", categorie: "uren_geld", tag: "uren-goedgekeurd" });
+    expect(m.body).toBe("Café De Proef heeft je uren voor Bediening op za 24 okt goedgekeurd (6,5 uur).");
+    expect(categorieVoorMelding(m)).toBe("uren_geld");
+  });
+
+  test("bundel: één push met het aantal", () => {
+    const m = meldingUrenBeoordeeld({ actie: "goedgekeurd", door: "klant", aantal: 5, ...regel });
+    expect(m.body).toBe("Café De Proef heeft 5 urenregistraties van je goedgekeurd.");
+  });
+
+  test("aangepast: akkoord nodig, met de nieuwe uren", () => {
+    const een = meldingUrenBeoordeeld({ actie: "aangepast", door: "klant", aantal: 1, ...regel, uren: 5.25 });
+    expect(een.title).toBe("Uren aangepast: jouw akkoord nodig");
+    expect(een.body).toBe("Café De Proef heeft je uren voor Bediening op za 24 okt aangepast naar 5,25 uur. Geef bij Uren akkoord of weiger de aanpassing.");
+    const twee = meldingUrenBeoordeeld({ actie: "aangepast", door: "klant", aantal: 2, ...regel });
+    expect(twee.body).toBe("Café De Proef heeft 2 urenregistraties van je aangepast. Geef bij Uren akkoord of weiger de aanpassing.");
+  });
+
+  test("afgewezen", () => {
+    const m = meldingUrenBeoordeeld({ actie: "afgewezen", door: "klant", aantal: 1, ...regel, uren: null });
+    expect(m.body).toBe("Café De Proef heeft je uren voor Bediening op za 24 okt afgewezen. Heb je vragen, neem dan contact op met TopTalent.");
+  });
+
+  test("TopTalent keurt definitief goed", () => {
+    const m = meldingUrenBeoordeeld({ actie: "definitief", door: "admin", aantal: 1, ...regel });
+    expect(m.title).toBe("Uren definitief goedgekeurd");
+    expect(m.body).toBe("TopTalent heeft je uren voor Bediening bij Café De Proef op za 24 okt definitief goedgekeurd (6,5 uur).");
+    expect(meldingUrenBeoordeeld({ actie: "definitief", door: "admin", aantal: 3 }).body).toBe(
+      "TopTalent heeft 3 urenregistraties van je definitief goedgekeurd.",
+    );
+  });
+
+  test("zonder gegevens nog steeds een nette zin", () => {
+    expect(meldingUrenBeoordeeld({ actie: "goedgekeurd", door: "klant", aantal: 0 }).body).toBe(
+      "De opdrachtgever heeft je uren voor je dienst goedgekeurd.",
+    );
+  });
+});
