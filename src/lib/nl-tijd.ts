@@ -22,6 +22,14 @@ export function nlVandaag(): string {
   return nlDatum(new Date());
 }
 
+const kortFmt = new Intl.DateTimeFormat("nl-NL", { timeZone: TZ, weekday: "short", day: "numeric", month: "short" });
+
+/** "2026-10-24" → "za 24 okt", voor korte teksten zoals pushmeldingen. Ongeldige invoer blijft staan. */
+export function nlDatumKort(datum: string): string {
+  const d = new Date(`${datum}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) ? datum : kortFmt.format(d);
+}
+
 /** YYYY-MM-DD plus/min `dagen`, puur op kalenderdatum (geen tijdzone-effecten). */
 export function plusDagen(datum: string, dagen: number): string {
   const [y, m, d] = datum.split("-").map(Number);

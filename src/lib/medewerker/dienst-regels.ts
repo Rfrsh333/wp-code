@@ -34,6 +34,11 @@ export function urenTotDienststart(datum: string, startTijd: string, nu: Date = 
   return (nlMoment(datum, startTijd).getTime() - nu.getTime()) / (1000 * 60 * 60);
 }
 
+/** Een aanbieding van TopTalent is 48 uur geldig (`verlopen_at`); daarna kan hij niet meer geaccepteerd worden. */
+export function isAanbiedingVerlopen(verlopenAt: string | null | undefined, nu: Date = new Date()): boolean {
+  return !!verlopenAt && new Date(verlopenAt).getTime() <= nu.getTime();
+}
+
 export type AnnuleerUitkomst = "direct" | "vervanging" | "begonnen";
 
 /**

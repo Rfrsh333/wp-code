@@ -5,6 +5,7 @@ import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { sendShiftReactieEmail } from "@/lib/notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
+import { isAanbiedingVerlopen } from "@/lib/medewerker/dienst-regels";
 import { isDemoMedewerker } from "@/lib/demo";
 
 export async function GET(request: NextRequest) {
@@ -18,7 +19,13 @@ export async function GET(request: NextRequest) {
     .order("aangeboden_at", { ascending: false })
     .limit(100);
 
-  return NextResponse.json({ aanbiedingen: data || [] });
+  // Een aanbieding is 48 uur geldig (verlopen_at). Een verlopen, onbeantwoorde aanbieding
+  // tonen we als "verlopen", zodat er geen Accepteren-knop meer bij staat.
+  const aanbiedingen = (data || []).map((a) =>
+    a.status === "aangeboden" && isAanbiedingVerlopen(a.verlopen_at) ? { ...a, status: "verlopen" } : a,
+  );
+
+  return NextResponse.json({ aanbiedingen });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -34,7 +41,7 @@ export async function PATCH(request: NextRequest) {
   // Verify ownership
   const { data: aanbieding } = await supabaseAdmin
     .from("dienst_aanbiedingen")
-    .select("id, dienst_id, status")
+    .select("id, dienst_id, status, verlopen_at")
     .eq("id", id)
     .eq("medewerker_id", medewerker.id)
     .maybeSingle();
@@ -45,6 +52,11 @@ export async function PATCH(request: NextRequest) {
 
   if (aanbieding.status !== "aangeboden") {
     return NextResponse.json({ error: "Deze aanbieding is al beantwoord" }, { status: 400 });
+  }
+
+  // Afwijzen mag altijd; accepteren alleen binnen de 48 uur van de aanbieding.
+  if (status === "geaccepteerd" && isAanbiedingVerlopen(aanbieding.verlopen_at)) {
+    return NextResponse.json({ error: "Deze aanbieding is verlopen. Kijk bij de open diensten of hij er nog bij staat." }, { status: 410 });
   }
 
   // Accepteren = direct ingepland. Eerst de aanmelding (capaciteit, dubbele aanmelding, verlopen

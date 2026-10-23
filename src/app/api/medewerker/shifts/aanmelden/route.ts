@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { meldAan, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
+import { notifyKlantNieuweAanmelding } from "@/lib/dienst-push-triggers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +22,13 @@ export async function POST(request: NextRequest) {
     if (!resultaat.ok) {
       return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
     }
+
+    // Zelfde melding als de aanmeldactie in /api/medewerker/diensten: de app meldt zich via deze route aan.
+    after(() =>
+      notifyKlantNieuweAanmelding(medewerker.id, dienst_id).catch((e) =>
+        captureRouteError(e, { route: "/api/medewerker/shifts/aanmelden", action: "PUSH" }),
+      ),
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -5,9 +5,9 @@ import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { calculateMedewerkerReiskosten, sanitizeKilometers } from "@/lib/reiskosten";
 import { berekenGewerkteUren } from "@/lib/compliance/arbeidstijden";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
-import { sendPushToUser } from "@/lib/push-notifications";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { notifyKlantUrenIngediend } from "@/lib/klant-push-triggers";
+import { notifyKlantNieuweAanmelding } from "@/lib/dienst-push-triggers";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { meldAan, meldAf, planVervangerIn, werkBezettingBij, aanmeldFoutBody } from "@/lib/medewerker/aanmelden";
@@ -316,28 +316,11 @@ export async function POST(request: NextRequest) {
     if (!resultaat.ok) return NextResponse.json(aanmeldFoutBody(resultaat), { status: resultaat.status });
 
     // Push notificatie naar klant: iemand heeft zich aangemeld
-    const { data: dienstDetails } = await supabaseAdmin
-      .from("diensten")
-      .select("klant_id, datum, functie, start_tijd, eind_tijd")
-      .eq("id", dienst_id)
-      .single();
-
-    const { data: mwNaam } = await supabaseAdmin
-      .from("medewerkers")
-      .select("naam")
-      .eq("id", medewerker.id)
-      .single();
-
-    if (dienstDetails?.klant_id) {
-      after(() =>
-        sendPushToUser(dienstDetails.klant_id, "klant", {
-          title: "Nieuwe aanmelding!",
-          body: `${mwNaam?.naam?.trim().split(/\s+/)[0] || "Een medewerker"} heeft zich aangemeld voor ${dienstDetails.functie || "dienst"} op ${dienstDetails.datum}`,
-          url: "/klant/uren/",
-          tag: `aanmelding-${dienst_id}`,
-        }).catch((e) => captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" })),
-      );
-    }
+    after(() =>
+      notifyKlantNieuweAanmelding(medewerker.id, dienst_id).catch((e) =>
+        captureRouteError(e, { route: "/api/medewerker/diensten", action: "PUSH" }),
+      ),
+    );
     return NextResponse.json({ success: true });
   }
 

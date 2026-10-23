@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
       .from("dienst_aanbiedingen")
       .select("id", { count: "exact", head: true })
       .eq("medewerker_id", medewerker.id)
-      .eq("status", "aangeboden");
+      .eq("status", "aangeboden")
+      .or(`verlopen_at.is.null,verlopen_at.gt.${new Date().toISOString()}`);
 
     // Verlopen of binnen 30 dagen verlopende documenten; per type telt alleen het nieuwste.
     const { data: documenten } = await supabaseAdmin

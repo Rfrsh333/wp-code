@@ -9,6 +9,7 @@ import {
   plekkenTotaal,
   telVerlopendeDocumenten,
   urenTotDienststart,
+  isAanbiedingVerlopen,
 } from "../../src/lib/medewerker/dienst-regels";
 
 test.describe("medewerker dienst-regels", () => {
@@ -120,6 +121,14 @@ test.describe("medewerker dienst-regels", () => {
       ]),
     ).toBe("x");
     expect(kiesTeHoudenAanmelding([{ id: "z", aangemeld_at: null }, { id: "q" }])).toBe("q");
+  });
+
+  test("aanbieding: na verlopen_at niet meer te accepteren", () => {
+    const nu = new Date("2026-10-23T12:00:00Z");
+    expect(isAanbiedingVerlopen("2026-10-23T11:59:59Z", nu)).toBe(true);
+    expect(isAanbiedingVerlopen("2026-10-23T12:00:00Z", nu)).toBe(true);
+    expect(isAanbiedingVerlopen("2026-10-25T12:00:00Z", nu)).toBe(false);
+    expect(isAanbiedingVerlopen(null, nu)).toBe(false);
   });
 });
 

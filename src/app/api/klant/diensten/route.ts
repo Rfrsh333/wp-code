@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getKlantSession } from "@/lib/portal-auth";
 import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
@@ -7,6 +7,7 @@ import { nlVandaag } from "@/lib/nl-tijd";
 import { herberekenPlekken } from "@/lib/plekken";
 import { magKlantAanmeldingWijzigen } from "@/lib/klant-portaal-regels";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { notifyMedewerkerAanmeldingBeslist } from "@/lib/dienst-push-triggers";
 
 export async function GET(request: NextRequest) {
   const klant = await getKlantSession(request);
@@ -181,6 +182,15 @@ export async function POST(request: NextRequest) {
     }
 
     await herberekenPlekken(aanmelding.dienst_id);
+
+    // De medewerker hoort het direct in de app: ingepland of niet gekozen.
+    if (naar === "geaccepteerd" || naar === "afgewezen") {
+      after(() =>
+        notifyMedewerkerAanmeldingBeslist(id, naar).catch((e) =>
+          captureRouteError(e, { route: "/api/klant/diensten", action: "PUSH" }),
+        ),
+      );
+    }
 
     // Bij acceptatie: stuur bevestigingsmail
     if (naar === "geaccepteerd") {
