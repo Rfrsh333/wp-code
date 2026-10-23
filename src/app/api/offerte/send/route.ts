@@ -4,8 +4,8 @@ import { sendEmail } from "@/lib/email-service";
 import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { OffertePDF } from "@/lib/pdf/offerte-pdf";
 import { verifyAdmin } from "@/lib/admin-auth";
-import crypto from "crypto";
 import { captureRouteError } from "@/lib/sentry-utils";
+import { offerteMailHtml, offerteOnlineUrl } from "@/lib/offerte-mail";
 
 // ============================================================================
 // Send Offerte via Email API
@@ -14,8 +14,10 @@ import { captureRouteError } from "@/lib/sentry-utils";
 // POST /api/offerte/send
 // Body: { aanvraagId: string, offerteId?: string }
 //
-// Generates a PDF offerte and sends it to the customer via email.
-// If offerteId is provided, uses the existing offerte record (concept review flow).
+// Generates a PDF offerte and sends it to the customer via email, with a link to the online
+// offerte (/offerte/<token>) to view and accept it.
+// Uses the given offerteId, or else the latest open offerte (concept/verzonden) of the aanvraag.
+// Without any offerte record it refuses (409): every sent offerte exists in `offertes`.
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,26 +52,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If offerteId provided, fetch existing offerte (concept review flow)
-    let existingOfferte: { offerte_nummer: string; ai_introductie: string | null; geldig_tot: string } | null = null;
+    // Welke offerte gaat de deur uit: de opgegeven, of anders het meest recente open concept
+    // van deze aanvraag (zo stuurt de automatische modus "send" het AI-concept). Voorheen kreeg
+    // een aanroep zonder offerteId een nieuw offertenummer zonder record in `offertes`, dus een
+    // tweede offerte die niet online te bekijken of te accepteren was.
+    const OFFERTE_VELDEN = "id, offerte_nummer, ai_introductie, geldig_tot, token, status, aanvraag_id";
+    type OfferteRij = {
+      id: string;
+      offerte_nummer: string;
+      ai_introductie: string | null;
+      geldig_tot: string | null;
+      token: string | null;
+      status: string | null;
+      aanvraag_id: string | null;
+    };
+    let offerte: OfferteRij | null = null;
     if (offerteId) {
+      const { data } = await supabase.from("offertes").select(OFFERTE_VELDEN).eq("id", offerteId).maybeSingle();
+      if (!data) {
+        return NextResponse.json({ error: "Offerte niet gevonden" }, { status: 404 });
+      }
+      if (data.aanvraag_id && data.aanvraag_id !== aanvraagId) {
+        return NextResponse.json({ error: "Deze offerte hoort niet bij deze aanvraag" }, { status: 400 });
+      }
+      offerte = data as OfferteRij;
+    } else {
       const { data } = await supabase
         .from("offertes")
-        .select("offerte_nummer, ai_introductie, geldig_tot")
-        .eq("id", offerteId)
-        .single();
-      existingOfferte = data;
+        .select(OFFERTE_VELDEN)
+        .eq("aanvraag_id", aanvraagId)
+        .in("status", ["concept", "verzonden"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!data) {
+        return NextResponse.json(
+          { error: "Er is nog geen offerte voor deze aanvraag. Genereer eerst een offerte." },
+          { status: 409 },
+        );
+      }
+      offerte = data as OfferteRij;
     }
 
-    // Use existing offerte nummer or generate new one
-    const offerteNummer = existingOfferte?.offerte_nummer || `OFF-${new Date().getFullYear()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+    if (offerte.status === "geaccepteerd" || offerte.status === "afgewezen") {
+      return NextResponse.json(
+        { error: `Deze offerte is al ${offerte.status} en wordt niet opnieuw verstuurd.` },
+        { status: 409 },
+      );
+    }
 
-    // Set validity period (14 days) or use existing
+    const offerteNummer = offerte.offerte_nummer;
+
+    // Geldigheid uit de offerte (14 dagen bij het genereren), anders 14 dagen vanaf nu
     const offerteDatum = new Date();
-    const geldigTot = existingOfferte?.geldig_tot ? new Date(existingOfferte.geldig_tot) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const geldigTot = offerte.geldig_tot ? new Date(offerte.geldig_tot) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
     // AI introductie for email
-    const aiIntroductie = existingOfferte?.ai_introductie || null;
+    const aiIntroductie = offerte.ai_introductie || null;
 
     // Prepare data for PDF
     const offerteData = {
@@ -110,69 +149,18 @@ export async function POST(request: NextRequest) {
       year: "numeric",
     }).format(geldigTot);
 
-    // Build email intro: use AI introductie if available, otherwise default
-    const introText = aiIntroductie
-      ? aiIntroductie.replace(/\n/g, "<br>")
-      : `Bedankt voor uw interesse in onze horecapersoneel diensten. Hierbij ontvangt u de offerte voor uw aanvraag.`;
-
     const phoneNumber = process.env.CONTACT_PHONE_NUMBER || '+31617889189';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.toptalentjobs.nl";
 
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #F27501 0%, #d96800 100%); padding: 30px; text-align: center;">
-          <img src="https://www.toptalentjobs.nl/logo-white.png" alt="TopTalent Jobs" style="height: 40px; margin-bottom: 12px;" />
-          <h1 style="color: white; margin: 0; font-size: 24px;">Uw Personeelsofferte</h1>
-        </div>
-
-        <div style="padding: 30px; background: #f9f9f9;">
-          <div style="background: white; border-radius: 8px; padding: 25px; margin-bottom: 20px;">
-            <p style="color: #333; font-size: 16px; margin-top: 0;">
-              Beste ${aanvraag.contactpersoon},
-            </p>
-
-            <p style="color: #666; line-height: 1.6;">
-              ${introText}
-            </p>
-
-            <div style="background: #FFF7ED; border-left: 4px solid #F27501; padding: 15px; margin: 20px 0;">
-              <p style="margin: 0; color: #333;">
-                <strong>Offertenummer:</strong> ${offerteNummer}<br>
-                <strong>Geldig tot:</strong> ${geldigTotFormatted}
-              </p>
-            </div>
-
-            <p style="color: #666; line-height: 1.6;">
-              In de bijlage vindt u de offerte met alle details over de tarieven en voorwaarden.
-              Heeft u vragen of wilt u de offerte bespreken? Neem gerust contact met ons op.
-            </p>
-
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="tel:${phoneNumber}"
-                 style="display: inline-block; background: #F27501; color: white; padding: 12px 30px;
-                        text-decoration: none; border-radius: 6px; font-weight: bold;">
-                Bel ons: ${phoneNumber}
-              </a>
-            </div>
-
-            <p style="color: #666; line-height: 1.6;">
-              Met vriendelijke groet,<br><br>
-              <strong>Rachid</strong><br>
-              TopTalent Jobs<br>
-              <a href="https://www.toptalentjobs.nl" style="color: #F27501;">toptalentjobs.nl</a>
-            </p>
-          </div>
-        </div>
-
-        <div style="background: #1B2E4A; padding: 20px; text-align: center;">
-          <p style="color: #94a3b8; margin: 0 0 8px; font-size: 12px;">
-            TopTalent Jobs | Utrecht | KvK: 73401161
-          </p>
-          <p style="margin: 0;">
-            <a href="https://www.toptalentjobs.nl" style="color: #F27501; font-size: 12px; text-decoration: none;">toptalentjobs.nl</a>
-          </p>
-        </div>
-      </div>
-    `;
+    // Mail met link naar de online offerte (bekijken + accepteren); alle invoer ge-escaped.
+    const emailHtml = offerteMailHtml({
+      contactpersoon: aanvraag.contactpersoon,
+      introductie: aiIntroductie,
+      offerteNummer,
+      geldigTot: geldigTotFormatted,
+      onlineUrl: offerte.token ? offerteOnlineUrl(baseUrl, offerte.token) : null,
+      telefoon: phoneNumber,
+    });
 
     const { error: emailError } = await sendEmail({
       from: "TopTalent Jobs <info@toptalentjobs.nl>",
@@ -206,17 +194,17 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", aanvraagId);
 
-    // If existing offerte (concept review), update status to verzonden
-    if (offerteId) {
-      await supabase
-        .from("offertes")
-        .update({ status: "verzonden" })
-        .eq("id", offerteId);
-    }
+    // Concept → verzonden (een al verzonden offerte blijft verzonden)
+    await supabase
+      .from("offertes")
+      .update({ status: "verzonden" })
+      .eq("id", offerte.id)
+      .in("status", ["concept", "verzonden"]);
 
     return NextResponse.json({
       success: true,
       offerteNummer,
+      offerteId: offerte.id,
       message: "Offerte verzonden naar " + aanvraag.email,
     });
   } catch (error) {

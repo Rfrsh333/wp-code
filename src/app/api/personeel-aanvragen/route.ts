@@ -380,13 +380,17 @@ export async function POST(request: NextRequest) {
               });
 
               if (offerteRes.ok && autoMode === "send") {
+                // Precies het zojuist gemaakte concept versturen (zelfde nummer, tarieven en
+                // online link), niet een tweede offerte.
+                const gegenereerd = await offerteRes.json().catch(() => null);
+                const offerteId: string | undefined = gegenereerd?.offerte?.id;
                 await fetch(`${baseUrl}/api/offerte/send`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${cronSecret}`,
                   },
-                  body: JSON.stringify({ aanvraagId: savedAanvraag.id }),
+                  body: JSON.stringify({ aanvraagId: savedAanvraag.id, ...(offerteId ? { offerteId } : {}) }),
                 });
               }
             }
