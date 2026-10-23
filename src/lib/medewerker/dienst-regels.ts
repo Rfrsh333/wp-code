@@ -1,4 +1,5 @@
 import { nlMoment } from "@/lib/nl-tijd";
+import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 
 /**
  * Pure regels voor aanmelden/afmelden in het medewerkerportaal (geen DB-toegang, wel getest).
@@ -7,6 +8,20 @@ import { nlMoment } from "@/lib/nl-tijd";
 
 /** Binnen dit aantal uur vóór de start annuleert een medewerker niet meer zelf, maar zoekt hij een vervanger. */
 export const ANNULEER_GRENS_UREN = 48;
+
+/** Tabs van "Mijn diensten" in het webportaal. */
+export type MijnDienstenTab = "aangeboden" | "aangemeld" | "gepland" | "voltooid";
+
+/**
+ * Welke aanmeldingsstatussen een tab van "Mijn diensten" toont. B9: `aangemeld` (zelf
+ * gereageerd, de opdrachtgever kiest nog) viel buiten alle tabs; na het aanmelden was de
+ * aanmelding in het webportaal nergens meer te zien of in te trekken. De app had dit wel.
+ */
+export function aanmeldStatussenVoorTab(tab: string | null | undefined): string[] {
+  if (tab === "aangeboden") return ["uitgenodigd"];
+  if (tab === "aangemeld") return ["aangemeld"];
+  return [...INGEPLAND_STATUSSEN];
+}
 
 /** Statussen van een eigen aanmelding waarvoor nog niemand is ingepland: vrij terugtrekken. */
 export const VRIJ_AFMELDBAAR = ["aangemeld", "uitgenodigd"] as const;

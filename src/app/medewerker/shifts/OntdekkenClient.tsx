@@ -74,7 +74,7 @@ export default function OntdekkenClient() {
         return;
       }
 
-      toast.success("Aanmelding geslaagd! 🎉");
+      toast.success("Aanmelding geslaagd! 🎉 Je vindt hem bij Mijn diensten onder Aangemeld.");
       await fetchShifts(); // Refresh om beschikbare plekken te updaten
     } catch (err) {
       Sentry.captureException(err);
