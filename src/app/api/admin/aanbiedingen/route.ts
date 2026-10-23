@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     // Meldingencentrum: ook in het portaal en de app (deze aanbieding had alleen een mail). Gooit nooit.
-    await bewaarMeldingen(medewerker_ids, "medewerker", meldingDienstAangeboden(dienst));
+    await bewaarMeldingen(medewerker_ids, "medewerker", meldingDienstAangeboden(dienst, dienst_id));
 
     if (dienst) {
       const { data: medewerkersList } = await supabaseAdmin

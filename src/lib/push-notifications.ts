@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { haalDemoIds } from "@/lib/demo";
 import { NIL_UUID } from "@/lib/demo-regels";
 import { bewaarMeldingen, bewaarMeldingenVoorIedereen } from "@/lib/meldingen/meldingen-opslag";
-import type { MeldingCategorie } from "@/lib/meldingen/meldingen-regels";
+import type { MeldingCategorie, MeldingInvoer } from "@/lib/meldingen/meldingen-regels";
 
 /**
  * Meldingencentrum (stap 5): elke push hieronder wordt per ontvanger ook een melding (tabel
@@ -21,13 +21,18 @@ export interface PushPayload {
    * (lib/meldingen/meldingen-regels.ts → categorieVoorMelding). Gaat niet mee in de push.
    */
   categorie?: MeldingCategorie;
+  /** Ontdubbelen van kaarten (zie MeldingInvoer). Gaan niet mee in de push. */
+  sleutels?: MeldingInvoer["sleutels"];
+  ontdubbel?: MeldingInvoer["ontdubbel"];
 }
 
-/** Wat er naar Expo en web-push gaat: de payload zonder de categorie (de push blijft gelijk). */
+/** Wat er naar Expo en web-push gaat: de payload zonder de meldingvelden (de push blijft gelijk). */
 function pushDeel(payload: PushPayload): PushPayload {
-  if (!("categorie" in payload)) return payload;
+  if (!("categorie" in payload) && !("sleutels" in payload) && !("ontdubbel" in payload)) return payload;
   const rest = { ...payload };
   delete rest.categorie;
+  delete rest.sleutels;
+  delete rest.ontdubbel;
   return rest;
 }
 

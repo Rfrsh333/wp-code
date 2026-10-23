@@ -15,6 +15,9 @@ export const MELDING_BEWAARDAGEN = 90;
 export const MELDING_TITEL_MAX = 200;
 export const MELDING_TEKST_MAX = 1000;
 export const MELDING_URL_MAX = 500;
+/** Ontdubbelen: binnen dit venster telt een eerdere kaart over hetzelfde (zelfde sleutel) mee. */
+export const MELDING_ONTDUBBEL_VENSTER_MS = 60 * 60 * 1000;
+export const MELDING_SLEUTELS_MAX = 50;
 /** Rijen per insert bij grote broadcasts. */
 export const MELDING_INSERT_BLOK = 500;
 export const MELDING_LIMIET_STANDAARD = 20;
@@ -27,6 +30,16 @@ export type MeldingInvoer = {
   url?: string | null;
   tag?: string | null;
   categorie?: MeldingCategorie | null;
+  /**
+   * Waar de melding over gaat (bv. dienstSleutel(id)). Twee kaarten met een gemeenschappelijke
+   * sleutel binnen MELDING_ONTDUBBEL_VENSTER_MS zijn dubbel.
+   */
+  sleutels?: readonly string[] | null;
+  /**
+   * Wat er met een dubbele kaart gebeurt: "overslaan" (standaard: deze niet opslaan als er al een
+   * kaart is) of "vervangen" (de eerdere kaart weg, deze erin; voor de specifiekere melding).
+   */
+  ontdubbel?: "overslaan" | "vervangen";
 };
 
 export type MeldingRij = {
@@ -36,7 +49,22 @@ export type MeldingRij = {
   titel: string;
   tekst: string;
   url: string | null;
+  sleutels: string[] | null;
 };
+
+/** Sleutel voor "deze melding gaat over dienst X". */
+export function dienstSleutel(dienstId: string): string {
+  return `dienst_${dienstId.trim().toLowerCase()}`;
+}
+
+/** Alleen veilige, unieke sleutels (letters, cijfers, _ en -), hooguit 50; leeg = null. */
+export function normaliseerSleutels(sleutels: readonly unknown[] | null | undefined): string[] | null {
+  if (!Array.isArray(sleutels)) return null;
+  const uit = [
+    ...new Set(sleutels.filter((k): k is string => typeof k === "string" && /^[a-z0-9_-]{1,80}$/i.test(k)).map((k) => k.toLowerCase())),
+  ].slice(0, MELDING_SLEUTELS_MAX);
+  return uit.length > 0 ? uit : null;
+}
 
 export function isMeldingCategorie(v: unknown): v is MeldingCategorie {
   return typeof v === "string" && (MELDING_CATEGORIEEN as readonly string[]).includes(v);
@@ -128,8 +156,9 @@ export function maakMeldingRijen(userIds: readonly string[], userType: MeldingUs
   const tekst = knip(String(invoer.body ?? ""), MELDING_TEKST_MAX);
   const categorie = categorieVoorMelding(invoer);
   const url = veiligeMeldingUrl(invoer.url);
+  const sleutels = normaliseerSleutels(invoer.sleutels);
   const ids = [...new Set(userIds.filter(isUuid).map((id) => id.toLowerCase()))];
-  return ids.map((user_id) => ({ user_type: userType, user_id, categorie, titel, tekst, url }));
+  return ids.map((user_id) => ({ user_type: userType, user_id, categorie, titel, tekst, url, sleutels }));
 }
 
 export function inBlokken<T>(lijst: readonly T[], grootte = MELDING_INSERT_BLOK): T[][] {

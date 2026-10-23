@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import {
   actieLabel,
   categorieVoorMelding,
+  dienstSleutel,
+  normaliseerSleutels,
   cursorFilter,
   inBlokken,
   klantTabUitUrl,
@@ -111,6 +113,7 @@ test.describe("maakMeldingRijen", () => {
       titel: "Je bent ingepland!",
       tekst: "Bediening bij Café op za 24 okt.",
       url: "/medewerker/diensten/",
+      sleutels: null,
     });
   });
 
@@ -292,3 +295,27 @@ test.describe("meldingen voor gebeurtenissen die alleen een mail kregen", () => 
     expect(rijen[0].categorie).toBe("diensten");
   });
 });
+
+test.describe("ontdubbelen: sleutels", () => {
+  test("dienstSleutel en normaliseren", () => {
+    expect(dienstSleutel(DIENST.toUpperCase())).toBe(`dienst_${DIENST}`);
+    expect(normaliseerSleutels(["Dienst_A", "dienst_a", "met spatie", "", 5, "a,b", "x{y}"])).toEqual(["dienst_a"]);
+    expect(normaliseerSleutels([])).toBeNull();
+    expect(normaliseerSleutels(null)).toBeNull();
+    expect(normaliseerSleutels(Array.from({ length: 80 }, (_, i) => `k${i}`))).toHaveLength(50);
+  });
+
+  test("rijen dragen de sleutels mee, zonder sleutels null", () => {
+    const met = maakMeldingRijen([ID1], "medewerker", { title: "T", body: "", sleutels: [dienstSleutel(DIENST)] });
+    expect(met[0].sleutels).toEqual([`dienst_${DIENST}`]);
+    expect(maakMeldingRijen([ID1], "medewerker", { title: "T", body: "" })[0].sleutels).toBeNull();
+  });
+
+  test("aanbieding vervangt een kaart 'nieuwe dienst' over dezelfde dienst", () => {
+    const m = meldingDienstAangeboden({ functie: "Bar" }, DIENST);
+    expect(m.sleutels).toEqual([`dienst_${DIENST}`]);
+    expect(m.ontdubbel).toBe("vervangen");
+    expect(meldingDienstAangeboden({ functie: "Bar" }).sleutels).toBeUndefined();
+  });
+});
+

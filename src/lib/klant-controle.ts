@@ -6,6 +6,7 @@ import { bepaalPushDoelgroep, pushNaarMedewerkers } from "@/lib/medewerker/push-
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
 import { isDemoKlant } from "@/lib/demo";
+import { dienstSleutel } from "@/lib/meldingen/meldingen-regels";
 import { markeerGecontroleerd } from "@/lib/klant-onboarding";
 import {
   DIENST_STATUS_IN_CONTROLE,
@@ -40,6 +41,10 @@ export async function pushNieuweDienst(
     body: omschrijving,
     url: "/medewerker/diensten/",
     tag: `nieuwe-dienst-${datum}`,
+    // Meldingencentrum: geen tweede kaart als iemand voor deze dienst al is uitgenodigd of hem
+    // aangeboden kreeg (die kaart is specifieker). De push zelf verandert niet.
+    sleutels: dienstIds.map(dienstSleutel),
+    ontdubbel: "overslaan" as const,
   };
   let doelgroep: Awaited<ReturnType<typeof bepaalPushDoelgroep>>;
   try {

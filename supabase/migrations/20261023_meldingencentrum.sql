@@ -8,6 +8,8 @@
 --   categorie   'diensten' | 'uren_geld' | 'account' (tabs Alles / Diensten / Uren & geld)
 --   titel, tekst, url (relatief pad, zelfde als `url` in de push)
 --   gelezen_op  null = ongelezen
+--   sleutels    waar de melding over gaat (bv. 'dienst_<uuid>'), om dubbele kaarten binnen een kort
+--               venster te voorkomen (uitnodiging of aanbieding vervangt "nieuwe dienst"); null = geen
 -- Bewaartermijn 90 dagen: de dagelijkse cron /api/cron/meldingen-opruimen verwijdert oudere rijen
 -- (privacyverklaring, paragraaf 6).
 --
@@ -27,6 +29,7 @@ create table if not exists public.meldingen (
   tekst text not null default '' check (char_length(tekst) <= 1000),
   url text check (url is null or (char_length(url) <= 500 and url like '/%' and url not like '//%')),
   gelezen_op timestamptz,
+  sleutels text[] check (sleutels is null or cardinality(sleutels) <= 50),
   created_at timestamptz not null default now()
 );
 
@@ -38,6 +41,8 @@ comment on column public.meldingen.url is
   'Relatief pad waar de kaart naartoe gaat (zelfde als de url in de push), of null.';
 comment on column public.meldingen.gelezen_op is
   'Wanneer de melding gelezen is; null = ongelezen.';
+comment on column public.meldingen.sleutels is
+  'Waar de melding over gaat (bv. dienst_<uuid>), voor het ontdubbelen van kaarten binnen een kort venster.';
 
 -- Lijst per gebruiker, nieuwste eerst (cursor op created_at + id).
 create index if not exists idx_meldingen_gebruiker

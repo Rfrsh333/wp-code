@@ -1,5 +1,5 @@
 import { nlDatumKort } from "@/lib/nl-tijd";
-import type { MeldingInvoer } from "@/lib/meldingen/meldingen-regels";
+import { dienstSleutel, type MeldingInvoer } from "@/lib/meldingen/meldingen-regels";
 
 /**
  * Meldingen voor gebeurtenissen die alleen een mail kregen (geen push). Pure tekstbouwers, los
@@ -20,13 +20,17 @@ function watEnWanneer(d: DienstKort | null | undefined): string {
   return `${wat} op ${nlDatumKort(d.datum)}${d.start_tijd ? ` om ${d.start_tijd.slice(0, 5)}` : ""}`;
 }
 
-/** Admin zet een dienst klaar voor een of meer medewerkers (dienst_aanbiedingen, 48 uur geldig). */
-export function meldingDienstAangeboden(dienst: DienstKort | null | undefined): MeldingInvoer {
+/**
+ * Admin zet een dienst klaar voor een of meer medewerkers (dienst_aanbiedingen, 48 uur geldig).
+ * Vervangt een kaart "Nieuwe dienst beschikbaar" over dezelfde dienst van kort ervoor.
+ */
+export function meldingDienstAangeboden(dienst: DienstKort | null | undefined, dienstId?: string | null): MeldingInvoer {
   return {
     title: "Er staat een dienst voor je klaar",
     body: `TopTalent heeft ${watEnWanneer(dienst)} voor je klaargezet. Reageer binnen 48 uur.`,
     url: "/medewerker/diensten/",
     categorie: "diensten",
+    ...(dienstId ? { sleutels: [dienstSleutel(dienstId)], ontdubbel: "vervangen" as const } : {}),
   };
 }
 
@@ -51,3 +55,4 @@ export function meldingContractTerOndertekening(titel: string | null | undefined
     categorie: "account",
   };
 }
+

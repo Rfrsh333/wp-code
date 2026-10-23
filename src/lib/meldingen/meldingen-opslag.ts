@@ -7,6 +7,7 @@ import {
   maakCursor,
   maakMeldingRijen,
   MELDING_CATEGORIEEN,
+  MELDING_ONTDUBBEL_VENSTER_MS,
   telling,
   type MeldingCategorie,
   type MeldingenVraag,
@@ -104,6 +105,50 @@ async function alleenBestaandeAccounts(rijen: MeldingRij[], userType: MeldingUse
 }
 
 /**
+ * Ontdubbelen (sleutels): heeft een ontvanger binnen het venster al een kaart over hetzelfde (een
+ * gemeenschappelijke sleutel, bv. dezelfde dienst), dan wordt deze kaart overgeslagen, of bij
+ * `ontdubbel: "vervangen"` (de specifiekere melding, zoals een uitnodiging) de eerdere kaart
+ * verwijderd. Lukt de controle niet, dan liever dubbel dan gemist (fout naar Sentry).
+ * Klein restrisico: twee meldingen die op exact hetzelfde moment worden opgeslagen, zien elkaar niet.
+ */
+async function ontdubbel(
+  rijen: MeldingRij[],
+  userType: MeldingUserType,
+  wijze: MeldingInvoer["ontdubbel"],
+): Promise<MeldingRij[]> {
+  const sleutels = rijen[0]?.sleutels;
+  if (!sleutels?.length) return rijen;
+  const grens = new Date(Date.now() - MELDING_ONTDUBBEL_VENSTER_MS).toISOString();
+  const eerder = new Map<string, string[]>(); // user_id → ids van eerdere kaarten
+  for (const blok of inBlokken(rijen.map((r) => r.user_id), IN_BLOK)) {
+    const { data, error } = await supabaseAdmin
+      .from("meldingen")
+      .select("id, user_id")
+      .eq("user_type", userType)
+      .in("user_id", blok)
+      .overlaps("sleutels", sleutels)
+      .gte("created_at", grens);
+    if (error) {
+      if (!tabelOntbreekt(error)) captureRouteError(error, { route: ROUTE, action: "ONTDUBBELEN" });
+      return rijen;
+    }
+    for (const r of (data ?? []) as { id: string; user_id: string }[]) {
+      const uid = String(r.user_id).toLowerCase();
+      eerder.set(uid, [...(eerder.get(uid) ?? []), r.id]);
+    }
+  }
+  if (eerder.size === 0) return rijen;
+  if (wijze !== "vervangen") return rijen.filter((r) => !eerder.has(r.user_id));
+
+  const weg = [...eerder.values()].flat();
+  for (const blok of inBlokken(weg, IN_BLOK)) {
+    const { error } = await supabaseAdmin.from("meldingen").delete().in("id", blok);
+    if (error) captureRouteError(error, { route: ROUTE, action: "ONTDUBBELEN" });
+  }
+  return rijen;
+}
+
+/**
  * Sla één melding op voor elke ontvanger, in blokken van 500 rijen. Gooit nooit; geeft het aantal
  * opgeslagen rijen terug. Lukt een blok niet, dan gaan de andere blokken toch door.
  */
@@ -116,7 +161,8 @@ export async function bewaarMeldingen(
     if (ontbreektTot > Date.now()) return 0;
     const rijen = maakMeldingRijen(userIds, userType, invoer);
     if (rijen.length === 0) return 0;
-    return await schrijfRijen(await alleenBestaandeAccounts(rijen, userType));
+    const bestaand = await alleenBestaandeAccounts(rijen, userType);
+    return await schrijfRijen(await ontdubbel(bestaand, userType, invoer.ontdubbel));
   } catch (e) {
     captureRouteError(e, { route: ROUTE, action: "OPSLAAN" });
     return 0;
@@ -155,7 +201,7 @@ export async function bewaarMeldingenVoorIedereen(
     }
     // Al gefilterd op status 'actief': geen extra accountcontrole nodig.
     const wereldIds = ids.filter((id) => wereld.demoIds.has(id) === wereld.demo);
-    return await schrijfRijen(maakMeldingRijen(wereldIds, userType, invoer));
+    return await schrijfRijen(await ontdubbel(maakMeldingRijen(wereldIds, userType, invoer), userType, invoer.ontdubbel));
   } catch (e) {
     captureRouteError(e, { route: ROUTE, action: "ONTVANGERS" });
     return 0;
