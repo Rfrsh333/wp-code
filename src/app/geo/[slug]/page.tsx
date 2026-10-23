@@ -5,11 +5,21 @@ import { buildAllStructuredData } from "@/lib/geo/structured-data";
 import { GEO_STEDEN, GEO_CONTENT_TYPES } from "@/lib/geo/types";
 import Link from "next/link";
 import Section from "@/components/Section";
+import { OG_IMAGE } from "@/lib/og-image";
+import { supabaseAdmin } from "@/lib/supabase";
+import { fitTitle, fitDescription } from "@/lib/seo-fit";
 import {
   ScrollReveal,
   FAQAccordion,
   FAQSchemaFallback,
 } from "@/components/geo/GeoAnimations";
+
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const { data } = await supabaseAdmin.from("geo_content").select("slug").eq("status", "gepubliceerd");
+  return (data ?? []).map((r: { slug: string }) => ({ slug: r.slug }));
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -26,8 +36,12 @@ export async function generateMetadata({
   }
 
   return {
-    title: content.seo_title || content.title,
-    description: content.meta_description || content.excerpt || undefined,
+    title: {
+      absolute: fitTitle(
+        `${(content.seo_title || content.title).replace(/ \| TopTalent( Jobs)?$/, "")} | TopTalent Jobs`,
+      ),
+    },
+    description: fitDescription(content.meta_description || content.excerpt || ""),
     keywords: [
       ...(content.primary_keywords || []),
       ...(content.secondary_keywords || []),
@@ -36,6 +50,7 @@ export async function generateMetadata({
       canonical: `https://www.toptalentjobs.nl/geo/${content.slug}/`,
     },
     openGraph: {
+    images: [OG_IMAGE],
       title: content.title,
       description: content.meta_description || content.excerpt || undefined,
       type: "article",
@@ -75,7 +90,7 @@ export default async function GeoPage({ params }: PageProps) {
         />
       ))}
 
-      <main className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white">
         {/* ── Hero ── */}
         <section className="relative overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
           {/* Decorative circles */}
@@ -115,7 +130,7 @@ export default async function GeoPage({ params }: PageProps) {
 
             {/* Badges */}
             <div className="flex items-center gap-2 mb-5">
-              <span className="px-3 py-1 rounded-full bg-[#F97316]/10 text-[#F97316] text-xs font-semibold border border-[#F97316]/20">
+              <span className="px-3 py-1 rounded-full bg-[#B85600]/10 text-[#B85600] text-xs font-semibold border border-[#F97316]/20">
                 {typeInfo?.label || content.content_type}
               </span>
               <span className="px-3 py-1 rounded-full bg-white/5 text-neutral-300 text-xs font-semibold border border-white/10">
@@ -139,7 +154,7 @@ export default async function GeoPage({ params }: PageProps) {
             <div className="flex flex-col sm:flex-row gap-3 mb-10">
               <Link
                 href="/personeel-aanvragen/"
-                className="inline-flex items-center justify-center px-7 py-3.5 bg-[#F97316] text-white font-semibold rounded-xl hover:bg-[#EA580C] transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center px-7 py-3.5 bg-[#B85600] text-white font-semibold rounded-xl hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
               >
                 Personeel aanvragen
                 <svg
@@ -188,7 +203,7 @@ export default async function GeoPage({ params }: PageProps) {
                   key={item.text}
                   className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10"
                 >
-                  <span className="w-7 h-7 rounded-full bg-[#F97316]/10 flex items-center justify-center text-xs shrink-0">
+                  <span className="w-7 h-7 rounded-full bg-[#B85600]/10 flex items-center justify-center text-xs shrink-0">
                     {item.icon}
                   </span>
                   <span className="text-xs sm:text-sm text-neutral-300 font-medium">
@@ -255,7 +270,7 @@ export default async function GeoPage({ params }: PageProps) {
                         prose-headings:text-neutral-900 prose-headings:font-bold prose-headings:tracking-tight
                         prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
                         prose-p:text-neutral-600 prose-p:leading-relaxed
-                        prose-a:text-[#F97316] prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+                        prose-a:text-[#B85600] prose-a:no-underline hover:prose-a:underline prose-a:font-medium
                         prose-strong:text-neutral-800
                         prose-ul:my-4 prose-li:text-neutral-600
                         prose-ol:my-4
@@ -321,7 +336,7 @@ export default async function GeoPage({ params }: PageProps) {
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link
                       href="/personeel-aanvragen/"
-                      className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#F97316] font-bold rounded-xl hover:bg-orange-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                      className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#9a4700] font-bold rounded-xl hover:bg-orange-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                     >
                       Personeel aanvragen
                       <svg
@@ -421,7 +436,7 @@ export default async function GeoPage({ params }: PageProps) {
                       {item.icon}
                     </span>
                     <div>
-                      <span className="font-semibold text-neutral-900 group-hover:text-[#F97316] transition-colors block">
+                      <span className="font-semibold text-neutral-900 group-hover:text-[#B85600] transition-colors block">
                         {item.label}
                       </span>
                       <span className="text-sm text-neutral-500">
@@ -483,7 +498,7 @@ export default async function GeoPage({ params }: PageProps) {
                       {item.icon}
                     </span>
                     <div>
-                      <span className="font-semibold text-neutral-900 group-hover:text-[#F97316] transition-colors block text-sm">
+                      <span className="font-semibold text-neutral-900 group-hover:text-[#B85600] transition-colors block text-sm">
                         {item.label}
                       </span>
                       <span className="text-xs text-neutral-500">
@@ -491,7 +506,7 @@ export default async function GeoPage({ params }: PageProps) {
                       </span>
                     </div>
                     <svg
-                      className="w-5 h-5 text-neutral-300 group-hover:text-[#F97316] ml-auto shrink-0 transition-colors"
+                      className="w-5 h-5 text-neutral-300 group-hover:text-[#B85600] ml-auto shrink-0 transition-colors"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -514,7 +529,7 @@ export default async function GeoPage({ params }: PageProps) {
         {content.bronnen && content.bronnen.length > 0 && (
           <section className="border-t border-neutral-100">
             <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
-              <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+              <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">
                 Bronnen
               </h3>
               <ul className="flex flex-wrap gap-x-6 gap-y-1">
@@ -533,7 +548,7 @@ export default async function GeoPage({ params }: PageProps) {
                           href={bron.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="hover:text-[#F97316] transition-colors"
+                          className="hover:text-[#B85600] transition-colors"
                         >
                           {bron.title}
                         </a>
@@ -541,7 +556,7 @@ export default async function GeoPage({ params }: PageProps) {
                         bron.title
                       )}
                       {bron.type && (
-                        <span className="text-neutral-300 ml-1">
+                        <span className="text-neutral-500 ml-1">
                           ({bron.type})
                         </span>
                       )}
@@ -552,7 +567,7 @@ export default async function GeoPage({ params }: PageProps) {
             </div>
           </section>
         )}
-      </main>
+      </div>
     </>
   );
 }

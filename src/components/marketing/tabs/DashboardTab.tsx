@@ -134,7 +134,7 @@ function StatCard({
     blue: "bg-blue-50 text-blue-600",
     indigo: "bg-indigo-50 text-indigo-600",
     green: "bg-green-50 text-green-600",
-    orange: "bg-orange-50 text-[#F27501]",
+    orange: "bg-orange-50 text-[#9a4700]",
   };
 
   return (

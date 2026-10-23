@@ -1,14 +1,16 @@
 import { Metadata } from "next";
 
+import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
   title: {
-    absolute: "Diensten — Uitzenden, Detachering & Recruitment | TopTalent Jobs",
+    absolute: "Uitzenden, Detachering & Recruitment | TopTalent Jobs",
   },
   description: "Overzicht van de diensten van TopTalent Jobs: uitzenden, detachering en recruitment van horecapersoneel. Kies de oplossing die past bij uw situatie.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/diensten/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Onze Diensten | TopTalent Jobs - Horeca Uitzendbureau",
     description: "Uitzenden, detachering of recruitment? TopTalent Jobs biedt drie manieren om horecapersoneel in te zetten. Ontdek welke dienst bij u past.",
     url: "https://www.toptalentjobs.nl/diensten",

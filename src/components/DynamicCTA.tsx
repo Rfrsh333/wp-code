@@ -64,7 +64,7 @@ export default function DynamicCTA() {
           </span>
           <Link
             href={currentVariant.href}
-            className="bg-[#F97316] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#EA580C] transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+            className="bg-[#B85600] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#9a4700] transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
           >
             {currentVariant.cta}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -20,7 +20,7 @@ export default function BlogTab() {
         </p>
         <button
           onClick={() => router.push("/marketing?tab=content")}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#F27501] text-white rounded-xl font-semibold hover:bg-[#E06600] transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-semibold hover:bg-[#E06600] transition-colors"
         >
           Ga naar Content Management
           <ArrowRight className="h-5 w-5" />

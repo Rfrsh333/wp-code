@@ -145,7 +145,7 @@ export default function SignaturePad({
           type="button"
           onClick={handleSave}
           disabled={disabled || isEmpty || hasSaved}
-          className="px-4 py-2 text-sm font-medium text-white bg-[#F27501] rounded-lg hover:bg-[#d96800] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-[#B85600] rounded-lg hover:bg-[#9a4700] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {hasSaved ? 'Opgeslagen' : 'Handtekening bevestigen'}
         </button>

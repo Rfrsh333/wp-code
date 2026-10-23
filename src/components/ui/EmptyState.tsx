@@ -39,7 +39,7 @@ export default function EmptyState({
       {actionLabel && actionHref && (
         <Link
           href={actionHref}
-          className="inline-flex items-center gap-2 bg-[#F27501] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d96800] transition-colors"
+          className="inline-flex items-center gap-2 bg-[#B85600] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#9a4700] transition-colors"
         >
           {actionLabel}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +50,7 @@ export default function EmptyState({
       {actionLabel && onAction && !actionHref && (
         <button
           onClick={onAction}
-          className="inline-flex items-center gap-2 bg-[#F27501] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#d96800] transition-colors"
+          className="inline-flex items-center gap-2 bg-[#B85600] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#9a4700] transition-colors"
         >
           {actionLabel}
         </button>

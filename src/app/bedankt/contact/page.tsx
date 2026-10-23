@@ -74,7 +74,7 @@ export default function BedanktContactPage() {
         >
           <div className="flex items-center gap-4 mb-6">
             <div className="w-12 h-12 bg-[#FFF7F1] rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-[#FF7A00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -86,7 +86,7 @@ export default function BedanktContactPage() {
 
           <p className="text-neutral-600 leading-relaxed">
             We doen ons best om zo snel mogelijk te reageren. Heb je een dringende vraag?
-            Bel ons gerust op <a href="tel:+31617889189" className="text-[#FF7A00] font-semibold hover:underline">+31617889189</a>.
+            Bel ons gerust op <a href="tel:+31617889189" className="text-[#B85600] font-semibold hover:underline">+31617889189</a>.
           </p>
         </div>
 
@@ -107,7 +107,7 @@ export default function BedanktContactPage() {
         >
           <Link
             href="/"
-            className="inline-flex items-center justify-center bg-[#FF7A00] text-white px-8 py-4 rounded-xl font-semibold
+            className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
             shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
             hover:bg-[#E66E00] hover:-translate-y-0.5 active:scale-[0.98]
             transition-all duration-300"
@@ -118,7 +118,7 @@ export default function BedanktContactPage() {
           <Link
             href="/diensten/"
             className="inline-flex items-center justify-center border-2 border-neutral-200 text-neutral-700 px-8 py-4 rounded-xl font-semibold
-            hover:border-[#FF7A00] hover:text-[#FF7A00] hover:-translate-y-0.5 active:scale-[0.98]
+            hover:border-[#FF7A00] hover:text-[#B85600] hover:-translate-y-0.5 active:scale-[0.98]
             transition-all duration-300"
           >
             Bekijk onze diensten
@@ -133,7 +133,7 @@ export default function BedanktContactPage() {
         >
           <Link
             href="/contact/#faq"
-            className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#FF7A00] transition-colors duration-300 font-medium group"
+            className="inline-flex items-center gap-2 text-neutral-500 hover:text-[#B85600] transition-colors duration-300 font-medium group"
           >
             Bekijk veelgestelde vragen
             <svg

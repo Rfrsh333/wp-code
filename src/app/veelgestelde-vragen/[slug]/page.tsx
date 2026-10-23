@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Section, Container } from "@/components/Section";
 
+import { OG_IMAGE } from "@/lib/og-image";
+import { fitDescription, fitQuestionTitle } from "@/lib/seo-fit";
 interface FAQItem {
   id: string;
   question: string;
@@ -44,12 +46,13 @@ export async function generateMetadata({
   const shortAnswer = faq.answer.slice(0, 155).replace(/\n/g, " ");
 
   return {
-    title: faq.question,
-    description: `${shortAnswer}... Lees het volledige antwoord van TopTalent Jobs.`,
+    title: { absolute: fitQuestionTitle(faq.question) },
+    description: fitDescription(faq.answer),
     alternates: {
       canonical: `https://www.toptalentjobs.nl/veelgestelde-vragen/${slug}/`,
     },
     openGraph: {
+    images: [OG_IMAGE],
       title: faq.question,
       description: shortAnswer,
       url: `https://www.toptalentjobs.nl/veelgestelde-vragen/${slug}`,
@@ -157,9 +160,9 @@ export default async function FAQDetailPage({
       <Section variant="white" spacing="small">
         <Container>
           <nav className="flex items-center gap-2 text-sm text-neutral-500">
-            <Link href="/" className="hover:text-[#F97316]">Home</Link>
+            <Link href="/" className="hover:text-[#B85600]">Home</Link>
             <span>/</span>
-            <Link href="/veelgestelde-vragen/" className="hover:text-[#F97316]">
+            <Link href="/veelgestelde-vragen/" className="hover:text-[#B85600]">
               Veelgestelde vragen
             </Link>
             <span>/</span>
@@ -174,7 +177,7 @@ export default async function FAQDetailPage({
       <Section variant="white" spacing="large">
         <Container>
           <div className="max-w-3xl mx-auto">
-            <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+            <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
               {typedFaq.category}
             </span>
 
@@ -202,7 +205,7 @@ export default async function FAQDetailPage({
               </div>
               <Link
                 href="/personeel-aanvragen/"
-                className="bg-[#F27501] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#d96800] transition-colors whitespace-nowrap"
+                className="bg-[#B85600] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors whitespace-nowrap"
               >
                 Personeel aanvragen
               </Link>
@@ -234,17 +237,17 @@ export default async function FAQDetailPage({
                     href={`/veelgestelde-vragen/${item.slug}`}
                     className="block bg-white rounded-xl border border-neutral-200 px-6 py-4 hover:border-[#F97316]/30 hover:shadow-sm transition-all group"
                   >
-                    <span className="font-medium text-neutral-900 group-hover:text-[#F97316] transition-colors">
+                    <span className="font-medium text-neutral-900 group-hover:text-[#B85600] transition-colors">
                       {item.question}
                     </span>
-                    <span className="text-[#F97316] text-sm ml-2">&rarr;</span>
+                    <span className="text-[#B85600] text-sm ml-2">&rarr;</span>
                   </Link>
                 ))}
               </div>
               <div className="mt-8 text-center">
                 <Link
                   href="/veelgestelde-vragen/"
-                  className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all"
+                  className="inline-flex items-center gap-2 text-[#B85600] font-semibold hover:gap-3 transition-all"
                 >
                   &larr; Terug naar alle vragen
                 </Link>

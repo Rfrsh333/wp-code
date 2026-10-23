@@ -80,7 +80,7 @@ export default function Header() {
   return (
     <>
       {/* Top Bar - Subtle and Professional - Hidden on mobile */}
-      <div className="hidden md:block bg-neutral-900 py-2.5">
+      <div role="complementary" aria-label="Contactgegevens" className="hidden md:block bg-neutral-900 py-2.5">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-6">
@@ -113,7 +113,7 @@ export default function Header() {
                     href={socialLinks.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-neutral-400 hover:text-[#F27501] transition-colors duration-300 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    className="text-neutral-400 hover:text-[#B85600] transition-colors duration-300 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     aria-label="Instagram"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@ export default function Header() {
                     href={socialLinks.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-neutral-400 hover:text-[#F27501] transition-colors duration-300 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    className="text-neutral-400 hover:text-[#B85600] transition-colors duration-300 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     aria-label="LinkedIn"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -165,10 +165,10 @@ export default function Header() {
             <div className="hidden lg:block w-px h-8 bg-neutral-200 mx-3 xl:mx-5 shrink-0" />
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-0 xl:gap-0.5 flex-1 min-w-0">
+            <nav aria-label="Hoofdmenu" className="hidden lg:flex items-center gap-0 xl:gap-0.5 flex-1 min-w-0">
               <Link
                 href="/"
-                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Home
                 <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
@@ -182,7 +182,7 @@ export default function Header() {
                   }}
                   aria-expanded={isDienstenOpen}
                   aria-haspopup="true"
-                  className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 flex items-center gap-1"
+                  className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 flex items-center gap-1"
                 >
                   Diensten
                   <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${isDienstenOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -194,7 +194,7 @@ export default function Header() {
                     <Link
                       href="/diensten/"
                       role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
                     >
                       Alle Diensten
@@ -202,7 +202,7 @@ export default function Header() {
                     <Link
                       href="/diensten/uitzenden/"
                       role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
                     >
                       Uitzenden
@@ -210,7 +210,7 @@ export default function Header() {
                     <Link
                       href="/diensten/detachering/"
                       role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
                     >
                       Detachering
@@ -218,7 +218,7 @@ export default function Header() {
                     <Link
                       href="/diensten/recruitment/"
                       role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
                     >
                       Recruitment
@@ -227,7 +227,7 @@ export default function Header() {
                     <Link
                       href="/functies/"
                       role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeDiensten}
                     >
                       Personeel per functie
@@ -237,35 +237,35 @@ export default function Header() {
               </div>
               <Link
                 href="/over-ons/"
-                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Over ons
                 <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/blog/"
-                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Nieuws
                 <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/kosten-calculator/"
-                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Kosten calculator
                 <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/veelgestelde-vragen/"
-                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 FAQ
                 <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </Link>
               <Link
                 href="/contact/"
-                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#F27501] transition-colors duration-300 relative group"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-neutral-700 font-medium text-sm xl:text-[15px] hover:text-[#B85600] transition-colors duration-300 relative group"
               >
                 Contact
                 <span className="absolute bottom-0 left-2.5 right-2.5 xl:left-3.5 xl:right-3.5 h-0.5 bg-[#F27501] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
@@ -287,7 +287,7 @@ export default function Header() {
                   aria-expanded={isLoginOpen}
                   aria-haspopup="true"
                   className="whitespace-nowrap flex items-center gap-2 h-11 px-4 rounded-lg font-medium text-sm
-                  border border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]
+                  border border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]
                   transition-all duration-300"
                 >
                   <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -303,7 +303,7 @@ export default function Header() {
                     <Link
                       href="/klant/login/"
                       role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeLogin}
                     >
                       <span className="block font-medium text-neutral-800">Werkgever</span>
@@ -312,7 +312,7 @@ export default function Header() {
                     <Link
                       href="/medewerker/login/"
                       role="menuitem"
-                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 transition-colors duration-200"
+                      className="block px-4 py-2.5 text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 transition-colors duration-200"
                       onClick={closeLogin}
                     >
                       <span className="block font-medium text-neutral-800">Medewerker</span>
@@ -323,9 +323,9 @@ export default function Header() {
               </div>
               <Link
                 href="/contact/"
-                className="whitespace-nowrap h-11 inline-flex items-center bg-[#F27501] text-white px-5 rounded-lg font-semibold text-sm
+                className="whitespace-nowrap h-11 inline-flex items-center bg-[#B85600] text-white px-5 rounded-lg font-semibold text-sm
                 shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30
-                hover:bg-[#d96800] transition-all duration-300"
+                hover:bg-[#9a4700] transition-all duration-300"
               >
                 Neem contact op
               </Link>
@@ -393,12 +393,12 @@ export default function Header() {
         >
           {/* Scrollable Menu Content */}
           <div className="h-full overflow-y-auto overscroll-contain">
-            <nav className="flex flex-col p-6" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
+            <nav aria-label="Mobiel menu" className="flex flex-col p-6" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
               {/* Navigation Links */}
               <div className="space-y-2 mb-8">
                 <Link
                   href="/"
-                  className="block px-4 py-3.5 text-neutral-900 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200 active:scale-98"
+                  className="block px-4 py-3.5 text-neutral-900 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200 active:scale-98"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Home
@@ -409,7 +409,7 @@ export default function Header() {
                   <button
                     onClick={() => setIsMobileDienstenOpen(!isMobileDienstenOpen)}
                     aria-expanded={isMobileDienstenOpen}
-                    className="w-full px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200 flex items-center justify-between"
+                    className="w-full px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200 flex items-center justify-between"
                   >
                     Diensten
                     <svg
@@ -425,35 +425,35 @@ export default function Header() {
                     <div className="pl-4 pt-2 space-y-1.5">
                       <Link
                         href="/diensten/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Alle Diensten
                       </Link>
                       <Link
                         href="/diensten/uitzenden/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Uitzenden
                       </Link>
                       <Link
                         href="/diensten/detachering/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Detachering
                       </Link>
                       <Link
                         href="/diensten/recruitment/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Recruitment
                       </Link>
                       <Link
                         href="/functies/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Personeel per functie
@@ -464,7 +464,7 @@ export default function Header() {
 
                 <Link
                   href="/over-ons/"
-                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200"
+                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Over Ons
@@ -475,7 +475,7 @@ export default function Header() {
                   <button
                     onClick={() => setIsMobileLocatiesOpen(!isMobileLocatiesOpen)}
                     aria-expanded={isMobileLocatiesOpen}
-                    className="w-full px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200 flex items-center justify-between"
+                    className="w-full px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200 flex items-center justify-between"
                   >
                     Locaties
                     <svg
@@ -491,42 +491,42 @@ export default function Header() {
                     <div className="pl-4 pt-2 space-y-1.5">
                       <Link
                         href="/locaties/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Alle Locaties
                       </Link>
                       <Link
                         href="/locaties/utrecht/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Utrecht
                       </Link>
                       <Link
                         href="/locaties/amsterdam/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Amsterdam
                       </Link>
                       <Link
                         href="/locaties/rotterdam/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Rotterdam
                       </Link>
                       <Link
                         href="/locaties/den-haag/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Den Haag
                       </Link>
                       <Link
                         href="/locaties/eindhoven/"
-                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#F27501] hover:bg-neutral-50 rounded-lg transition-all duration-200"
+                        className="block px-4 py-2.5 text-sm text-neutral-600 hover:text-[#B85600] hover:bg-neutral-50 rounded-lg transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Eindhoven
@@ -537,28 +537,28 @@ export default function Header() {
 
                 <Link
                   href="/blog/"
-                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200"
+                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Nieuws
                 </Link>
                 <Link
                   href="/kosten-calculator/"
-                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200"
+                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Kosten calculator
                 </Link>
                 <Link
                   href="/veelgestelde-vragen/"
-                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200"
+                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   FAQ
                 </Link>
                 <Link
                   href="/contact/"
-                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#F27501] hover:bg-neutral-50 rounded-xl transition-all duration-200"
+                  className="block px-4 py-3.5 text-neutral-700 font-semibold text-base hover:text-[#B85600] hover:bg-neutral-50 rounded-xl transition-all duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Contact
@@ -609,7 +609,7 @@ export default function Header() {
                 <div className="grid grid-cols-2 gap-3">
                   <Link
                     href="/klant/login/"
-                    className="flex items-center justify-center gap-2 w-full px-3 py-3.5 rounded-xl font-semibold border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501] transition-all duration-200"
+                    className="flex items-center justify-center gap-2 w-full px-3 py-3.5 rounded-xl font-semibold border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600] transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -619,7 +619,7 @@ export default function Header() {
                   </Link>
                   <Link
                     href="/medewerker/login/"
-                    className="flex items-center justify-center gap-2 w-full px-3 py-3.5 rounded-xl font-semibold border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501] transition-all duration-200"
+                    className="flex items-center justify-center gap-2 w-full px-3 py-3.5 rounded-xl font-semibold border-2 border-neutral-300 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600] transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

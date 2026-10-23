@@ -59,7 +59,7 @@ export default function CookieConsent() {
               cookies voor analytics en marketing. Je kunt je voorkeur altijd wijzigen via
               onze cookie-instellingen.
             </p>
-            <Link href="/cookies/" className="text-sm text-[#F27501] hover:underline">
+            <Link href="/cookies/" className="text-sm text-[#B85600] hover:underline">
               Cookie-instellingen
             </Link>
           </div>
@@ -74,7 +74,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={() => handleConsent("all")}
-              className="px-5 py-3 rounded-xl bg-[#F27501] text-white font-semibold hover:bg-[#d96800] transition-colors"
+              className="px-5 py-3 rounded-xl bg-[#B85600] text-white font-semibold hover:bg-[#9a4700] transition-colors"
             >
               Alles accepteren
             </button>

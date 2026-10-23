@@ -139,14 +139,14 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
       <section className="bg-gradient-to-b from-white to-neutral-50 pb-12 pt-28">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <nav className="mb-6 flex items-center gap-2 text-sm text-neutral-500">
-            <Link href="/" className="transition-colors hover:text-[#F97316]">Home</Link>
+            <Link href="/" className="transition-colors hover:text-[#B85600]">Home</Link>
             <span>/</span>
-            <Link href="/blog/" className="transition-colors hover:text-[#F97316]">Blog</Link>
+            <Link href="/blog/" className="transition-colors hover:text-[#B85600]">Blog</Link>
             <span>/</span>
-            <Link href="/blog/editorial/" className="transition-colors hover:text-[#F97316]">Editorial</Link>
+            <Link href="/blog/editorial/" className="transition-colors hover:text-[#B85600]">Editorial</Link>
           </nav>
 
-          <span className="mb-4 inline-block rounded-full bg-[#F97316] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">
+          <span className="mb-4 inline-block rounded-full bg-[#B85600] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">
             {draft.primaryAudience ?? "Editorial"}
           </span>
 
@@ -211,7 +211,7 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
                 <ul className="mt-4 space-y-3 text-sm text-neutral-700">
                   {draft.keyTakeaways.map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <span className="mt-1 text-[#F97316]">&#10003;</span>
+                      <span className="mt-1 text-[#B85600]">&#10003;</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -226,7 +226,7 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
                 <ul className="mt-4 space-y-3 text-sm text-neutral-700">
                   {draft.sourceList.map((source) => (
                     <li key={`${source.sourceName}-${source.url}`}>
-                      <a href={source.url} target="_blank" rel="noopener noreferrer" className="font-medium text-[#F97316] underline-offset-2 hover:underline">
+                      <a href={source.url} target="_blank" rel="noopener noreferrer" className="font-medium text-[#B85600] underline-offset-2 hover:underline">
                         {source.sourceName}
                       </a>
                       <span className="ml-2 text-neutral-500">{source.title}</span>
@@ -253,7 +253,7 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
               <p className="mb-4 text-sm font-medium text-neutral-600">Deel dit artikel:</p>
               <div className="flex gap-3">
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=https://www.toptalentjobs.nl/blog/editorial/${slug}`}
+                  aria-label="Deel op LinkedIn" href={`https://www.linkedin.com/sharing/share-offsite/?url=https://www.toptalentjobs.nl/blog/editorial/${slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0077B5] text-white transition-opacity hover:opacity-90"
@@ -263,7 +263,7 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
                   </svg>
                 </a>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(draft.title + ' - https://www.toptalentjobs.nl/blog/editorial/' + slug)}`}
+                  aria-label="Deel via WhatsApp" href={`https://wa.me/?text=${encodeURIComponent(draft.title + ' - https://www.toptalentjobs.nl/blog/editorial/' + slug)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white transition-opacity hover:opacity-90"
@@ -273,7 +273,7 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
                   </svg>
                 </a>
                 <a
-                  href={`mailto:?subject=${encodeURIComponent(draft.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://www.toptalentjobs.nl/blog/editorial/' + slug)}`}
+                  aria-label="Deel via e-mail" href={`mailto:?subject=${encodeURIComponent(draft.title)}&body=${encodeURIComponent('Bekijk dit artikel: https://www.toptalentjobs.nl/blog/editorial/' + slug)}`}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-600 text-white transition-opacity hover:opacity-90"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,10 +301,10 @@ export default async function EditorialDraftPage({ params }: { params: Promise<{
                   className="group overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                   <div className="p-6">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-[#F97316]">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[#B85600]">
                       {related.primaryAudience ?? "Editorial"}
                     </span>
-                    <h3 className="mt-2 text-lg font-bold text-neutral-900 transition-colors group-hover:text-[#F97316]">
+                    <h3 className="mt-2 text-lg font-bold text-neutral-900 transition-colors group-hover:text-[#B85600]">
                       {related.title}
                     </h3>
                     <p className="mt-2 line-clamp-2 text-sm text-neutral-500">{related.excerpt}</p>

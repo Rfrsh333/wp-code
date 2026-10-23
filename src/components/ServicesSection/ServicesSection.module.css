@@ -52,7 +52,7 @@
 /* Eyebrow - small, uppercase, brand accent */
 .eyebrow {
   display: inline-block;
-  color: #F27501;
+  color: #B85600;
   font-weight: 600;
   font-size: 0.75rem;
   letter-spacing: 0.15em;
@@ -190,7 +190,7 @@
 .icon {
   width: 1.75rem;
   height: 1.75rem;
-  color: #F27501;
+  color: #B85600;
   transition: color 0.3s ease;
 }
 
@@ -226,7 +226,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #F27501;
+  color: #B85600;
   font-weight: 600;
   font-size: 0.9375rem;
   text-decoration: none;

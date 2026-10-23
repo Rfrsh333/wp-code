@@ -274,7 +274,7 @@ export default function OffertePublicPage() {
               <button
                 onClick={handleAccept}
                 disabled={accepting || acceptNaam.trim().length < 2}
-                className="px-6 py-3 bg-[#F27501] text-white font-semibold rounded-xl hover:bg-[#D96800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className="px-6 py-3 bg-[#B85600] text-white font-semibold rounded-xl hover:bg-[#9a4700] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 {accepting ? "Bezig..." : "Accepteer offerte"}
               </button>

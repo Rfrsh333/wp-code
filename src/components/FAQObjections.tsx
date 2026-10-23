@@ -38,7 +38,7 @@ export default function FAQObjections() {
             {/* FAQ Content */}
             <FadeIn>
               <div>
-                <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+                <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
                   Veelgestelde vragen
                 </span>
                 <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-8">
@@ -49,7 +49,7 @@ export default function FAQObjections() {
                   {faqs.map((faq, index) => (
                     <div key={index} className="bg-white rounded-xl p-6 border border-neutral-200 shadow-sm">
                       <h3 className="font-semibold text-neutral-900 mb-2 flex items-start gap-3">
-                        <span className="text-[#F97316] text-xl flex-shrink-0">•</span>
+                        <span className="text-[#B85600] text-xl flex-shrink-0">•</span>
                         {faq.question}
                       </h3>
                       <p className="text-neutral-600 text-sm leading-relaxed ml-8">
@@ -72,7 +72,7 @@ export default function FAQObjections() {
                 </p>
                 <Link
                   href="/personeel-aanvragen/"
-                  className="inline-flex items-center justify-center bg-white text-[#F97316] px-6 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-all duration-300 w-full sm:w-auto shadow-xl"
+                  className="inline-flex items-center justify-center bg-white text-[#B85600] px-6 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-all duration-300 w-full sm:w-auto shadow-xl"
                 >
                   Laat me de matchscore zien
                   <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

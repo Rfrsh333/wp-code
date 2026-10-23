@@ -26,13 +26,13 @@ export default function NotFound() {
               href={`/locaties/${location.slug}`}
               className="group rounded-2xl border border-neutral-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-[#F97316]/40 hover:shadow-lg text-left"
             >
-              <h2 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+              <h2 className="text-xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                 {location.name}
               </h2>
               <p className="text-neutral-600 text-sm mb-4">
                 {location.description.substring(0, 100)}...
               </p>
-              <div className="flex items-center gap-2 text-sm text-[#F97316] font-semibold">
+              <div className="flex items-center gap-2 text-sm text-[#B85600] font-semibold">
                 Bekijk locatie
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -50,7 +50,7 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/locaties/"
-            className="bg-[#F97316] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#EA580C] transition-colors"
+            className="bg-[#B85600] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors"
           >
             Alle locaties
           </Link>

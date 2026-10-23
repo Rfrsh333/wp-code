@@ -5,6 +5,7 @@ import Hero from "@/components/Hero";
 import { Section, Container } from "@/components/Section";
 import FadeIn from "@/components/animations/FadeIn";
 
+import { OG_IMAGE } from "@/lib/og-image";
 const MarqueeBanner = dynamic(() => import("@/components/MarqueeBanner"));
 const HowWeWorkCarousel = dynamic(() => import("@/components/HowWeWorkCarousel"));
 const WhyTopTalent = dynamic(() => import("@/components/WhyTopTalent"));
@@ -56,13 +57,14 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
-  title: { absolute: "Horecapersoneel met Persoonlijke Aanpak | Binnen 24 uur | TopTalent" },
+  title: { absolute: "Horecapersoneel met persoonlijke aanpak | TopTalent" },
   description:
-    "TopTalent levert zorgvuldig gescreend horecapersoneel met persoonlijke matching en duidelijke afspraken. Vaak binnen 24 uur inzetbaar voor restaurants, hotels en events.",
+    "TopTalent levert zorgvuldig gescreend horecapersoneel met persoonlijke matching en duidelijke afspraken. Vaak binnen 24 uur inzetbaar.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Horecapersoneel met Persoonlijke Aanpak | TopTalent",
     description: "Zorgvuldig gescreend horecapersoneel met een vast aanspreekpunt en duidelijke afspraken. Vaak binnen 24 uur inzetbaar.",
     type: "website",
@@ -170,15 +172,15 @@ export default function Home() {
         <Container>
           <FadeIn>
             <div className="text-center mb-12">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+              <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
                 Horecabranches
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Horecapersoneel voor elke <span className="text-[#F97316]">branche</span>
+                Horecapersoneel voor elke <span className="text-[#B85600]">branche</span>
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
                 Van fine dining tot festivals: wij leveren ervaren{" "}
-                <Link href="/diensten/detachering/" className="text-[#F97316] hover:underline">horecapersoneel</Link> dat past bij uw tempo en service.
+                <Link href="/diensten/detachering/" className="text-[#B85600] hover:underline">horecapersoneel</Link> dat past bij uw tempo en service.
               </p>
             </div>
           </FadeIn>
@@ -191,7 +193,7 @@ export default function Home() {
                     {industry.icon}
                   </div>
                   <h3 className="font-semibold text-neutral-900 mb-1">{industry.name}</h3>
-                  <span className="text-sm text-[#F97316] font-medium">{industry.count} bedrijven</span>
+                  <span className="text-sm text-[#B85600] font-medium">{industry.count} bedrijven</span>
                 </div>
               </FadeIn>
             ))}
@@ -204,11 +206,11 @@ export default function Home() {
         <Container>
           <FadeIn>
             <div className="text-center mb-12">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+              <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
                 Personeel per functie
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Populaire <span className="text-[#F97316]">horecafuncties</span>
+                Populaire <span className="text-[#B85600]">horecafuncties</span>
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
                 Van kok tot bediening: TopTalent Jobs levert ervaren horecapersoneel
@@ -249,7 +251,7 @@ export default function Home() {
                   href={functie.href}
                   className="group block bg-neutral-50 rounded-2xl p-6 border border-neutral-100 hover:border-[#F97316]/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full"
                 >
-                  <h3 className="text-lg font-bold text-neutral-900 group-hover:text-[#F97316] transition-colors mb-2">
+                  <h3 className="text-lg font-bold text-neutral-900 group-hover:text-[#B85600] transition-colors mb-2">
                     {functie.title}
                   </h3>
                   <p className="text-sm text-neutral-600 leading-relaxed mb-4">
@@ -259,7 +261,7 @@ export default function Home() {
                     <span className="text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
                       {functie.rate} / uur
                     </span>
-                    <span className="text-[#F97316] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                    <span className="text-[#B85600] text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                       Bekijk
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -302,7 +304,7 @@ export default function Home() {
               </div>
               <Link
                 href="/functies/"
-                className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all duration-300 whitespace-nowrap"
+                className="inline-flex items-center gap-2 text-[#B85600] font-semibold hover:gap-3 transition-all duration-300 whitespace-nowrap"
               >
                 Alle horeca functies bekijken
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,11 +321,11 @@ export default function Home() {
         <Container>
           <FadeIn>
             <div className="text-center mb-12">
-              <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
+              <span className="inline-block text-[#B85600] font-semibold text-xs tracking-wider uppercase mb-4 bg-white px-4 py-2 rounded-full border border-orange-100 shadow-sm">
                 Actief in heel Nederland
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                Horecapersoneel in <span className="text-[#F97316]">jouw stad</span>
+                Horecapersoneel in <span className="text-[#B85600]">jouw stad</span>
               </h2>
               <p className="text-neutral-600 max-w-2xl mx-auto">
                 TopTalent Jobs levert lokaal horecapersoneel in alle grote steden van Nederland.
@@ -338,7 +340,7 @@ export default function Home() {
               <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 group border border-neutral-100">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                    <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                       Utrecht
                     </h3>
                     <p className="text-sm text-neutral-600 mb-4">
@@ -350,19 +352,19 @@ export default function Home() {
                 <div className="space-y-2">
                   <Link
                     href="/locaties/utrecht/"
-                    className="block text-neutral-700 hover:text-[#F97316] font-medium transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] font-medium transition-colors text-sm"
                   >
                     → Meer over Utrecht
                   </Link>
                   <Link
                     href="/locaties/utrecht/uitzenden/"
-                    className="block text-neutral-700 hover:text-[#F97316] transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] transition-colors text-sm"
                   >
                     → Horecapersoneel Uitzenden
                   </Link>
                   <Link
                     href="/locaties/utrecht/detachering/"
-                    className="block text-neutral-700 hover:text-[#F97316] transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] transition-colors text-sm"
                   >
                     → Horecapersoneel Detacheren
                   </Link>
@@ -375,7 +377,7 @@ export default function Home() {
               <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 group border border-neutral-100">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                    <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                       Den Haag
                     </h3>
                     <p className="text-sm text-neutral-600 mb-4">
@@ -387,19 +389,19 @@ export default function Home() {
                 <div className="space-y-2">
                   <Link
                     href="/locaties/den-haag/"
-                    className="block text-neutral-700 hover:text-[#F97316] font-medium transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] font-medium transition-colors text-sm"
                   >
                     → Meer over Den Haag
                   </Link>
                   <Link
                     href="/locaties/den-haag/uitzenden/"
-                    className="block text-neutral-700 hover:text-[#F97316] transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] transition-colors text-sm"
                   >
                     → Horecapersoneel Uitzenden
                   </Link>
                   <Link
                     href="/locaties/den-haag/detachering/"
-                    className="block text-neutral-700 hover:text-[#F97316] transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] transition-colors text-sm"
                   >
                     → Horecapersoneel Detacheren
                   </Link>
@@ -412,7 +414,7 @@ export default function Home() {
               <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 group border border-neutral-100">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-[#F97316] transition-colors">
+                    <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-[#B85600] transition-colors">
                       Eindhoven
                     </h3>
                     <p className="text-sm text-neutral-600 mb-4">
@@ -424,19 +426,19 @@ export default function Home() {
                 <div className="space-y-2">
                   <Link
                     href="/locaties/eindhoven/"
-                    className="block text-neutral-700 hover:text-[#F97316] font-medium transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] font-medium transition-colors text-sm"
                   >
                     → Meer over Eindhoven
                   </Link>
                   <Link
                     href="/locaties/eindhoven/uitzenden/"
-                    className="block text-neutral-700 hover:text-[#F97316] transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] transition-colors text-sm"
                   >
                     → Horecapersoneel Uitzenden
                   </Link>
                   <Link
                     href="/locaties/eindhoven/detachering/"
-                    className="block text-neutral-700 hover:text-[#F97316] transition-colors text-sm"
+                    className="block text-neutral-700 hover:text-[#B85600] transition-colors text-sm"
                   >
                     → Horecapersoneel Detacheren
                   </Link>
@@ -449,7 +451,7 @@ export default function Home() {
             <div className="text-center">
               <Link
                 href="/locaties/"
-                className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:gap-3 transition-all duration-300"
+                className="inline-flex items-center gap-2 text-[#B85600] font-semibold hover:gap-3 transition-all duration-300"
               >
                 Bekijk alle locaties
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -491,7 +493,7 @@ export default function Home() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     href="/personeel-aanvragen/"
-                    className="inline-flex items-center justify-center bg-white text-[#F97316] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
+                    className="inline-flex items-center justify-center bg-white text-[#B85600] px-8 py-4 rounded-xl text-base font-semibold hover:bg-neutral-100 transition-all duration-300 shadow-xl"
                   >
                     Bekijk hoeveel personeel ik kan krijgen
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

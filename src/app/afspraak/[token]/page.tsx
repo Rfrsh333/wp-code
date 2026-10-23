@@ -120,7 +120,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           <p className="text-neutral-500 mb-6">{error || "Deze link is niet meer geldig of verlopen."}</p>
           <a
             href="/afspraak-plannen/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] text-white rounded-xl font-medium hover:bg-[#EA580C] transition-all duration-300 shadow-lg shadow-orange-500/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/20"
           >
             Nieuwe afspraak plannen
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +156,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
             <p className="text-neutral-400 text-sm mb-6">Het tijdslot is weer vrijgegeven.</p>
             <a
               href="/afspraak-plannen/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] text-white rounded-xl font-medium hover:bg-[#EA580C] transition-all duration-300 shadow-lg shadow-orange-500/20"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700] transition-all duration-300 shadow-lg shadow-orange-500/20"
             >
               Nieuwe afspraak plannen
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           </div>
           <div className="text-center mt-8 pb-8">
             <p className="text-sm text-neutral-400">
-              <a href="https://www.toptalentjobs.nl" className="text-[#F97316] hover:underline font-medium">TopTalent Jobs</a>
+              <a href="https://www.toptalentjobs.nl" className="text-[#B85600] hover:underline font-medium">TopTalent Jobs</a>
               {" "}&mdash; Specialist in horeca personeel
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           <p className="text-neutral-500 mb-6">Deze afspraak kan niet meer gewijzigd worden.</p>
           <a
             href="/afspraak-plannen/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] text-white rounded-xl font-medium hover:bg-[#EA580C] transition-all duration-300"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#B85600] text-white rounded-xl font-medium hover:bg-[#9a4700] transition-all duration-300"
           >
             Nieuwe afspraak plannen
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,14 +225,14 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
           {/* Booking details */}
           <div className="flex items-start gap-4 mb-6 pb-6 border-b border-neutral-100">
             <div className="w-12 h-12 bg-[#FEF3E7] rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
             <div>
               <p className="text-sm text-neutral-500">{booking.event_type_name}</p>
               <p className="font-semibold text-neutral-900 text-lg capitalize">{datumFormatted}</p>
-              <p className="text-[#F97316] font-bold text-lg">{booking.start_time} - {booking.end_time}</p>
+              <p className="text-[#B85600] font-bold text-lg">{booking.start_time} - {booking.end_time}</p>
             </div>
           </div>
 
@@ -304,7 +304,7 @@ export default function AfspraakBeherenPage({ params }: { params: Promise<{ toke
 
         <div className="text-center mt-8 pb-8">
           <p className="text-sm text-neutral-400">
-            <a href="https://www.toptalentjobs.nl" className="text-[#F97316] hover:underline font-medium">TopTalent Jobs</a>
+            <a href="https://www.toptalentjobs.nl" className="text-[#B85600] hover:underline font-medium">TopTalent Jobs</a>
             {" "}&mdash; Specialist in horeca personeel
           </p>
         </div>

@@ -3,7 +3,7 @@ import { getFaqs } from "./getFaqs";
 
 export const metadata: Metadata = {
   // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
-  title: { absolute: "Veelgestelde vragen over horecapersoneel inhuren | TopTalent" },
+  title: { absolute: "Veelgestelde vragen over horecapersoneel | TopTalent Jobs" },
   description:
     "Antwoorden op veelgestelde vragen over horecapersoneel inhuren via TopTalent. Kosten, contracten, beschikbaarheid en meer.",
   alternates: {

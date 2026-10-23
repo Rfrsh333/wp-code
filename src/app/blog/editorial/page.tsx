@@ -32,7 +32,7 @@ export default async function EditorialBlogIndexPage() {
     <div className="min-h-screen bg-white">
       <section className="bg-gradient-to-b from-white to-neutral-50 px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <span className="inline-flex rounded-full bg-orange-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#F27501]">
+          <span className="inline-flex rounded-full bg-orange-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#9a4700]">
             Editorial Intelligence
           </span>
           <h1 className="mt-5 text-4xl font-bold text-neutral-900 md:text-5xl">Inzichten voor horeca en hospitality</h1>
@@ -52,7 +52,7 @@ export default async function EditorialBlogIndexPage() {
                 <div className="aspect-[16/10] w-full bg-gradient-to-br from-orange-100 via-amber-50 to-white" />
               )}
               <div className="p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F27501]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#B85600]">
                   {formatEditorialLabel(draft.primaryAudience ?? "Editorial")}
                 </p>
                 <h2 className="mt-4 text-2xl font-semibold text-neutral-900">
@@ -61,7 +61,7 @@ export default async function EditorialBlogIndexPage() {
                 <p className="mt-3 text-sm leading-7 text-neutral-600">{draft.excerpt}</p>
                 <div className="mt-6 flex items-center justify-between text-sm text-neutral-500">
                   <span>{draft.publishedAt ? new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium" }).format(new Date(draft.publishedAt)) : "Nog niet gepubliceerd"}</span>
-                  <Link href={buildEditorialDraftPath(draft.slug)} className="font-semibold text-[#F27501]">Lees meer</Link>
+                  <Link href={buildEditorialDraftPath(draft.slug)} className="font-semibold text-[#B85600]">Lees meer</Link>
                 </div>
               </div>
             </article>

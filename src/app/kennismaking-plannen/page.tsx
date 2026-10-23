@@ -151,7 +151,7 @@ function CVUpload({ file, onFileChange, error }: {
   return (
     <div>
       <label className="block text-sm font-medium text-neutral-700 mb-1">
-        CV uploaden <span className="text-neutral-400 text-xs font-normal">optioneel, max 5MB</span>
+        CV uploaden <span className="text-neutral-500 text-xs font-normal">optioneel, max 5MB</span>
       </label>
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -185,7 +185,7 @@ function CVUpload({ file, onFileChange, error }: {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             <p className="text-sm text-neutral-500">Sleep je CV hierheen of <span className="text-orange-700 font-medium">klik om te uploaden</span></p>
-            <p className="text-xs text-neutral-400 mt-1">PDF, DOC of DOCX</p>
+            <p className="text-xs text-neutral-500 mt-1">PDF, DOC of DOCX</p>
           </>
         )}
       </div>
@@ -599,7 +599,7 @@ function KennismakingPlannenContent() {
                 href={bookingResult.meet_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#F97316] text-white rounded-xl hover:bg-[#EA580C] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20 mb-3"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#B85600] text-white rounded-xl hover:bg-[#9a4700] transition-all duration-300 font-medium shadow-lg shadow-orange-500/20 mb-3"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -647,7 +647,7 @@ function KennismakingPlannenContent() {
           </div>
 
           <div className="text-center mt-8 pb-8">
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-neutral-500">
               <a href="https://www.toptalentjobs.nl" className="text-orange-700 hover:underline font-medium">TopTalent Jobs</a>
               {" "}&mdash; Specialist in horeca personeel
             </p>
@@ -740,7 +740,7 @@ function KennismakingPlannenContent() {
 
                   <div className="grid grid-cols-7 mb-1">
                     {DAY_HEADERS.map((d) => (
-                      <div key={d} className="text-center text-xs font-medium text-neutral-400 py-2">{d}</div>
+                      <div key={d} className="text-center text-xs font-medium text-neutral-500 py-2">{d}</div>
                     ))}
                   </div>
 
@@ -750,7 +750,7 @@ function KennismakingPlannenContent() {
                         : slideDirection === "right" ? "opacity-0 translate-x-4"
                           : "opacity-100 translate-x-0"
                     }`}
-                    role="grid"
+                    role="group"
                     aria-label="Kalender"
                   >
                     {calendarCells.map((cell, idx) => {
@@ -768,12 +768,11 @@ function KennismakingPlannenContent() {
                             ${!cell.isCurrentMonth ? "text-neutral-300" : ""}
                             ${cell.isCurrentMonth && !canSelect ? "text-neutral-300 cursor-default" : ""}
                             ${canSelect && !isSelected ? "text-neutral-900 hover:bg-[#FEF3E7] cursor-pointer" : ""}
-                            ${isSelected ? "bg-[#F97316] text-white shadow-md shadow-orange-500/20" : ""}
+                            ${isSelected ? "bg-[#B85600] text-white shadow-md shadow-orange-500/20" : ""}
                             ${cell.isToday && !isSelected ? "ring-2 ring-[#F97316]/30" : ""}
                           `}
                           aria-label={`${cell.day} ${MONTH_NAMES[viewMonth]}${cell.hasSlots ? ", beschikbaar" : ""}${isSelected ? ", geselecteerd" : ""}`}
-                          aria-selected={isSelected}
-                          role="gridcell"
+                          aria-pressed={isSelected}
                         >
                           {cell.day}
                           {cell.hasSlots && !isSelected && cell.isCurrentMonth && (
@@ -784,7 +783,7 @@ function KennismakingPlannenContent() {
                     })}
                   </div>
 
-                  <div className="flex items-center gap-4 mt-4 text-xs text-neutral-400">
+                  <div className="flex items-center gap-4 mt-4 text-xs text-neutral-500">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[#F97316]" />
                       Beschikbaar
@@ -806,7 +805,7 @@ function KennismakingPlannenContent() {
                         </svg>
                       </div>
                       <p className="text-neutral-500 text-sm">Kies een datum in de kalender</p>
-                      <p className="text-neutral-400 text-xs mt-1">Paarse stippen = beschikbaar</p>
+                      <p className="text-neutral-500 text-xs mt-1">Paarse stippen = beschikbaar</p>
                     </div>
                   ) : selectedDag ? (
                     <div>
@@ -814,7 +813,7 @@ function KennismakingPlannenContent() {
                         {selectedDag.dag}{" "}
                         {new Date(selectedDatum).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
                       </h3>
-                      <p className="text-xs text-neutral-400 mb-4">
+                      <p className="text-xs text-neutral-500 mb-4">
                         {selectedDag.slots.length} {selectedDag.slots.length === 1 ? "tijdstip" : "tijdstippen"} beschikbaar
                       </p>
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
@@ -828,7 +827,7 @@ function KennismakingPlannenContent() {
                                 w-full py-3 px-4 rounded-xl border-2 text-left transition-all duration-200
                                 focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-1 outline-none
                                 ${isSlotSelected
-                                  ? "border-[#F97316] bg-[#F97316] text-white shadow-md shadow-orange-500/20"
+                                  ? "border-[#F97316] bg-[#B85600] text-white shadow-md shadow-orange-500/20"
                                   : "border-neutral-200 hover:border-orange-400 hover:bg-[#FEF3E7]"
                                 }
                               `}
@@ -878,7 +877,7 @@ function KennismakingPlannenContent() {
                     <p className="text-orange-700 font-bold">{selectedSlot.start} - {selectedSlot.eind}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedSlot(null)} className="text-sm text-neutral-400 hover:text-neutral-600 transition-colors" aria-label="Wijzig datum en tijd">Wijzig</button>
+                <button onClick={() => setSelectedSlot(null)} className="text-sm text-neutral-500 hover:text-neutral-600 transition-colors" aria-label="Wijzig datum en tijd">Wijzig</button>
               </div>
 
               {/* Form fields */}
@@ -919,7 +918,7 @@ function KennismakingPlannenContent() {
                 </div>
                 <div>
                   <label htmlFor="kb-telefoon" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Telefoonnummer <span className="text-neutral-400 text-xs font-normal">optioneel</span>
+                    Telefoonnummer <span className="text-neutral-500 text-xs font-normal">optioneel</span>
                   </label>
                   <input
                     id="kb-telefoon"
@@ -936,7 +935,7 @@ function KennismakingPlannenContent() {
 
                 <div>
                   <label htmlFor="kb-notities" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Opmerkingen <span className="text-neutral-400 text-xs font-normal">optioneel</span>
+                    Opmerkingen <span className="text-neutral-500 text-xs font-normal">optioneel</span>
                   </label>
                   <textarea
                     id="kb-notities"
@@ -947,14 +946,14 @@ function KennismakingPlannenContent() {
                     maxLength={500}
                     className="w-full px-4 py-3 border border-neutral-200 rounded-xl outline-none transition-all bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] resize-none"
                   />
-                  <p className="text-xs text-neutral-400 text-right mt-1">{notities.length}/500</p>
+                  <p className="text-xs text-neutral-500 text-right mt-1">{notities.length}/500</p>
                 </div>
               </div>
 
               <button
                 onClick={handleBook}
                 disabled={submitting}
-                className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#EA580C] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="hidden md:flex w-full mt-6 items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -975,7 +974,7 @@ function KennismakingPlannenContent() {
         </div>
 
         <div className="text-center mt-8 pb-4">
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm text-neutral-500">
             <a href="https://www.toptalentjobs.nl" className="text-orange-700 hover:underline font-medium">TopTalent Jobs</a>
             {" "}&mdash; Specialist in horeca personeel
           </p>
@@ -988,7 +987,7 @@ function KennismakingPlannenContent() {
           <button
             onClick={handleBook}
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>

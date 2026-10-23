@@ -1,13 +1,15 @@
 import { Metadata } from "next";
 
+import { OG_IMAGE } from "@/lib/og-image";
 export const metadata: Metadata = {
   // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
-  title: { absolute: "Blog - Tips & Nieuws over Horeca Personeel | TopTalent Jobs" },
+  title: { absolute: "Blog — Tips & Nieuws over Horecapersoneel | TopTalent Jobs" },
   description: "Praktische tips en nieuws over horecapersoneel inhuren, recruitment trends en de uitzendbranche. Blijf op de hoogte met TopTalent Jobs.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/blog/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Blog | TopTalent Jobs - Horeca Personeel Insights",
     description: "Tips over horecapersoneel inhuren, kosten, trends en meer. Alles wat horeca-ondernemers moeten weten.",
     url: "https://www.toptalentjobs.nl/blog",

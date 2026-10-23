@@ -2,6 +2,7 @@ import "server-only";
 
 import type { EditorialDraftRecord } from "@/lib/content/types";
 
+import { OG_IMAGE } from "@/lib/og-image";
 export function buildEditorialDraftPath(slug: string): string {
   return `/blog/editorial/${slug}`;
 }
@@ -16,6 +17,7 @@ export function buildEditorialMetadata(draft: Pick<EditorialDraftRecord, "title"
       canonical,
     },
     openGraph: {
+    images: [OG_IMAGE],
       title: draft.title,
       description: draft.excerpt,
       type: "article",

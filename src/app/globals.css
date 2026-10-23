@@ -130,6 +130,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
+  overflow-x: clip;
 }
 
 /* Prevent CLS from scrollbar disappearing when dialogs/modals open */
@@ -398,6 +399,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Prevent text size adjustment on orientation change */
 html {
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }

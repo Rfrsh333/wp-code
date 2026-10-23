@@ -283,7 +283,7 @@ export default function PersoneelAanvragenWizard({
             setCurrentStep(0);
             setIsSubmitted(false);
           }}
-          className="bg-[#F27501] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#d96800] transition-colors"
+          className="bg-[#B85600] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#9a4700] transition-colors"
         >
           Nieuwe aanvraag
         </button>
@@ -305,7 +305,7 @@ export default function PersoneelAanvragenWizard({
                 aria-label={`Stap ${step}: ${stepLabels[index]}${index < currentStep ? " (voltooid)" : index === currentStep ? " (huidige stap)" : ""}`}
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
                   index <= currentStep
-                    ? "bg-[#F27501] text-white"
+                    ? "bg-[#B85600] text-white"
                     : "bg-neutral-200 text-neutral-500"
                 }`}
               >
@@ -348,7 +348,7 @@ export default function PersoneelAanvragenWizard({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="bedrijfsnaam" className="block text-sm font-medium text-neutral-700 mb-2">
-                      Bedrijfsnaam <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                      Bedrijfsnaam <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
                       id="bedrijfsnaam"
@@ -370,7 +370,7 @@ export default function PersoneelAanvragenWizard({
 
                   <div>
                     <label htmlFor="contactpersoon" className="block text-sm font-medium text-neutral-700 mb-2">
-                      Contactpersoon <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                      Contactpersoon <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
                       id="contactpersoon"
@@ -392,7 +392,7 @@ export default function PersoneelAanvragenWizard({
 
                   <div>
                     <label htmlFor="pa-email" className="block text-sm font-medium text-neutral-700 mb-2">
-                      E-mailadres <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                      E-mailadres <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
                       id="pa-email"
@@ -414,7 +414,7 @@ export default function PersoneelAanvragenWizard({
 
                   <div>
                     <label htmlFor="pa-telefoon" className="block text-sm font-medium text-neutral-700 mb-2">
-                      Telefoonnummer <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                      Telefoonnummer <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
                       id="pa-telefoon"
@@ -446,7 +446,7 @@ export default function PersoneelAanvragenWizard({
 
                 <div role="group" aria-labelledby="type-personeel-label">
                   <label id="type-personeel-label" className="block text-sm font-medium text-neutral-700 mb-3">
-                    Type personeel <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
+                    Type personeel <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {typePersoneelOptions.map((type) => (
@@ -457,8 +457,8 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.typePersoneel.includes(type)}
                         className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.typePersoneel.includes(type)
-                            ? "bg-[#F27501] border-[#F27501] text-white"
-                            : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]"
+                            ? "bg-[#B85600] border-[#F27501] text-white"
+                            : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]"
                         }`}
                       >
                         {type}
@@ -485,7 +485,7 @@ export default function PersoneelAanvragenWizard({
 
                 <div role="group" aria-labelledby="aantal-personen-label">
                   <label id="aantal-personen-label" className="block text-sm font-medium text-neutral-700 mb-3">
-                    Aantal personen nodig <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                    Aantal personen nodig <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                   </label>
                   <div className="flex flex-wrap gap-3">
                     {aantalOptions.map((aantal) => (
@@ -496,8 +496,8 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.aantalPersonen === aantal}
                         className={`px-6 py-3 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.aantalPersonen === aantal
-                            ? "bg-[#F27501] border-[#F27501] text-white"
-                            : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]"
+                            ? "bg-[#B85600] border-[#F27501] text-white"
+                            : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]"
                         }`}
                       >
                         {aantal}
@@ -511,7 +511,7 @@ export default function PersoneelAanvragenWizard({
 
                 <div role="group" aria-labelledby="contractvorm-label">
                   <label id="contractvorm-label" className="block text-sm font-medium text-neutral-700 mb-3">
-                    Contractvorm <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
+                    Contractvorm <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {contractTypeOptions.map((option) => (
@@ -522,7 +522,7 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.contractType.includes(option.value)}
                         className={`px-4 py-4 rounded-lg border text-left transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.contractType.includes(option.value)
-                            ? "bg-[#F27501] border-[#F27501] text-white"
+                            ? "bg-[#B85600] border-[#F27501] text-white"
                             : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501]"
                         }`}
                       >
@@ -619,7 +619,7 @@ export default function PersoneelAanvragenWizard({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="startdatum" className="block text-sm font-medium text-neutral-700 mb-2">
-                      Startdatum <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                      Startdatum <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                     </label>
                     <input
                       id="startdatum"
@@ -654,7 +654,7 @@ export default function PersoneelAanvragenWizard({
 
                 <div role="group" aria-labelledby="werkdagen-label">
                   <label id="werkdagen-label" className="block text-sm font-medium text-neutral-700 mb-3">
-                    Werkdagen <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
+                    Werkdagen <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span> <span className="text-neutral-400 font-normal">(meerdere mogelijk)</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {werkdagenOptions.map((dag) => (
@@ -665,8 +665,8 @@ export default function PersoneelAanvragenWizard({
                         aria-pressed={formData.werkdagen.includes(dag)}
                         className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-2 focus:outline-[#F27501] focus:ring-2 focus:ring-[#F27501]/30 ${
                           formData.werkdagen.includes(dag)
-                            ? "bg-[#F27501] border-[#F27501] text-white"
-                            : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#F27501]"
+                            ? "bg-[#B85600] border-[#F27501] text-white"
+                            : "bg-white border-neutral-200 text-neutral-700 hover:border-[#F27501] hover:text-[#B85600]"
                         }`}
                       >
                         {dag}
@@ -680,7 +680,7 @@ export default function PersoneelAanvragenWizard({
 
                 <div>
                   <label htmlFor="werktijden" className="block text-sm font-medium text-neutral-700 mb-2">
-                    Werktijden <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                    Werktijden <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                   </label>
                   <input
                     id="werktijden"
@@ -711,7 +711,7 @@ export default function PersoneelAanvragenWizard({
 
                 <div>
                   <label htmlFor="locatie" className="block text-sm font-medium text-neutral-700 mb-2">
-                    Werklocatie <span className="text-[#F27501]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
+                    Werklocatie <span className="text-[#B85600]" aria-hidden="true">*</span><span className="sr-only"> (verplicht)</span>
                   </label>
                   <input
                     id="locatie"
@@ -794,7 +794,7 @@ export default function PersoneelAanvragenWizard({
           <button
             type="button"
             onClick={nextStep}
-            className="bg-[#F27501] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#d96800] transition-colors shadow-lg shadow-orange-500/20"
+            className="bg-[#B85600] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#9a4700] transition-colors shadow-lg shadow-orange-500/20"
           >
             Volgende &rarr;
           </button>
@@ -803,7 +803,7 @@ export default function PersoneelAanvragenWizard({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-[#F27501] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#d96800] transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#B85600] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#9a4700] transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Verzenden..." : "Aanvraag versturen"}
           </button>

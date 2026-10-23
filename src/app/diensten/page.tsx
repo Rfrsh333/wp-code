@@ -19,7 +19,7 @@ export default function DienstenPage() {
         <Section.Container>
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto">
-              <span className="inline-block text-[#F97316] font-medium text-sm tracking-wider uppercase mb-4">
+              <span className="inline-block text-[#B85600] font-medium text-sm tracking-wider uppercase mb-4">
                 Diensten horeca uitzendbureau
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
@@ -69,7 +69,7 @@ export default function DienstenPage() {
                   </ul>
                   <Link
                     href="/diensten/uitzenden"
-                    className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+                    className="inline-flex items-center text-[#B85600] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Meer over uitzenden
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +145,7 @@ export default function DienstenPage() {
                   </ul>
                   <Link
                     href="/diensten/detachering"
-                    className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+                    className="inline-flex items-center text-[#B85600] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Meer over detachering
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +190,7 @@ export default function DienstenPage() {
                   </ul>
                   <Link
                     href="/diensten/recruitment"
-                    className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+                    className="inline-flex items-center text-[#B85600] font-semibold hover:gap-3 gap-2 transition-all duration-300"
                   >
                     Meer over recruitment
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,7 +245,7 @@ export default function DienstenPage() {
                 <Link
                   key={loc.name}
                   href={loc.href}
-                  className="flex items-center justify-center gap-2 p-4 rounded-xl border border-neutral-200 hover:border-[#F97316] hover:text-[#F97316] text-neutral-700 font-medium transition-all duration-200"
+                  className="flex items-center justify-center gap-2 p-4 rounded-xl border border-neutral-200 hover:border-[#F97316] hover:text-[#B85600] text-neutral-700 font-medium transition-all duration-200"
                 >
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -260,7 +260,7 @@ export default function DienstenPage() {
             <div className="text-center mt-6">
               <Link
                 href="/locaties/"
-                className="inline-flex items-center text-[#F97316] font-semibold hover:gap-3 gap-2 transition-all duration-300"
+                className="inline-flex items-center text-[#B85600] font-semibold hover:gap-3 gap-2 transition-all duration-300"
               >
                 Alle locaties bekijken
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,7 +293,7 @@ export default function DienstenPage() {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Link
                     href="/contact"
-                    className="inline-block bg-white text-[#F97316] px-8 py-4 rounded-lg text-base font-semibold
+                    className="inline-block bg-white text-[#B85600] px-8 py-4 rounded-lg text-base font-semibold
                     hover:bg-neutral-100 transition-all duration-300"
                   >
                     Neem contact op

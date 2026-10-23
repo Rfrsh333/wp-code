@@ -70,7 +70,7 @@
 
 @media (min-width: 1024px) {
   .eyebrow {
-    color: #F27501;
+    color: #B85600;
     font-weight: 500;
   }
 }
@@ -105,7 +105,7 @@
 
 @media (min-width: 1024px) {
   .highlight {
-    color: #F27501;
+    color: #B85600;
   }
 }
 
@@ -166,7 +166,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: #F27501;
+  background-color: #B85600;
   color: white;
   padding: 1rem 2rem;
   border-radius: 0.75rem;
@@ -181,7 +181,7 @@
 }
 
 .ctaPrimary:hover {
-  background-color: #d96800;
+  background-color: #9a4700;
   transform: translateY(-2px);
   box-shadow: 0 15px 35px -5px rgba(242, 117, 1, 0.35);
 }
@@ -257,7 +257,7 @@
 
 .ctaSecondary:hover {
   border-color: #F27501;
-  color: #F27501;
+  color: #B85600;
   transform: translateY(-2px);
 }
 

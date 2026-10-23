@@ -10,7 +10,7 @@ import { createEditorialImageSignedUrl } from "@/lib/images/storage";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: "Horeca Blog — Tips over Personeel & Recruitment",
+  title: "Horeca Blog — Tips over Personeel",
   description: "Praktische tips over horecapersoneel inhuren, personeelstekorten oplossen en recruitment trends. Lees de nieuwste inzichten voor horeca-ondernemers.",
 };
 
@@ -209,16 +209,16 @@ export default async function BlogPage() {
       <section className="pt-28 pb-16 bg-gradient-to-b from-white to-neutral-50 text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
-            <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+            <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
               Nieuws & Inzichten
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
               Horeca Blog
             </h1>
             <nav className="flex justify-center items-center gap-3 text-sm text-neutral-500">
-              <Link href="/" className="hover:text-[#F97316] transition-colors">Home</Link>
+              <Link href="/" className="hover:text-[#B85600] transition-colors">Home</Link>
               <span>-</span>
-              <span className="text-[#F97316]">Nieuws</span>
+              <span className="text-[#B85600]">Nieuws</span>
             </nav>
           </FadeIn>
         </div>
@@ -240,7 +240,7 @@ export default async function BlogPage() {
                         placeholder="Zoeken..."
                         className="w-full px-4 py-3 pr-12 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#F97316] transition-colors"
                       />
-                      <button className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#F97316] transition-colors">
+                      <button aria-label="Zoeken" className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#B85600] transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
@@ -252,18 +252,18 @@ export default async function BlogPage() {
                 {/* Categories Widget */}
                 <FadeIn delay={0.1}>
                   <div className="bg-white rounded-2xl p-6 border border-neutral-100 shadow-sm">
-                    <h3 className="text-lg font-bold text-neutral-900 mb-4 pb-3 border-b-2 border-orange-100">
+                    <h2 className="text-lg font-bold text-neutral-900 mb-4 pb-3 border-b-2 border-orange-100">
                       Categorieën
-                    </h3>
+                    </h2>
                     <ul className="space-y-3">
                       {categories.map((category, index) => (
                         <li key={index}>
                           <Link
                             href={`/blog?category=${category.name.toLowerCase()}`}
-                            className="flex justify-between items-center py-2 text-neutral-600 hover:text-[#F97316] transition-colors border-b border-neutral-50"
+                            className="flex justify-between items-center py-2 text-neutral-600 hover:text-[#B85600] transition-colors border-b border-neutral-50"
                           >
                             <span>{category.name}</span>
-                            <span className="text-[#F97316] font-medium text-sm">({category.count})</span>
+                            <span className="text-[#B85600] font-medium text-sm">({category.count})</span>
                           </Link>
                         </li>
                       ))}
@@ -304,7 +304,7 @@ export default async function BlogPage() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-neutral-900 text-sm line-clamp-2 group-hover:text-[#F97316] transition-colors">
+                            <h4 className="font-semibold text-neutral-900 text-sm line-clamp-2 group-hover:text-[#B85600] transition-colors">
                               {post.title}
                             </h4>
                             <span className="text-xs text-neutral-500 mt-1 block">{post.date}</span>
@@ -326,7 +326,7 @@ export default async function BlogPage() {
                         <Link
                           key={index}
                           href={`/blog?tag=${tag.toLowerCase()}`}
-                          className="px-4 py-2 bg-neutral-50 text-neutral-600 text-sm rounded-lg hover:bg-[#F97316] hover:text-white transition-all duration-300"
+                          className="px-4 py-2 bg-neutral-50 text-neutral-600 text-sm rounded-lg hover:bg-[#B85600] hover:text-white transition-all duration-300"
                         >
                           {tag}
                         </Link>
@@ -343,17 +343,17 @@ export default async function BlogPage() {
 
                     <div className="relative z-10">
                       <div className="w-16 h-20 bg-white/10 rounded-lg flex items-center justify-center mb-4">
-                        <svg className="w-8 h-8 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 text-[#B85600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                       </div>
                       <h4 className="font-bold text-lg mb-2">
-                        De 2024 gids voor <span className="text-[#F97316]">Horecapersoneel</span>
+                        De 2024 gids voor <span className="text-[#B85600]">Horecapersoneel</span>
                       </h4>
                       <p className="text-white/70 text-sm mb-4">
                         Alles wat u moet weten over werving in de horeca.
                       </p>
-                      <button className="w-full bg-[#F97316] text-white py-3 rounded-xl font-semibold hover:bg-[#EA580C] transition-colors">
+                      <button className="w-full bg-[#B85600] text-white py-3 rounded-xl font-semibold hover:bg-[#9a4700] transition-colors">
                         Download E-book
                       </button>
                     </div>
@@ -388,7 +388,7 @@ export default async function BlogPage() {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <span className="absolute top-4 left-4 bg-[#F97316] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
+                        <span className="absolute top-4 left-4 bg-[#B85600] text-white text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
                           {post.category}
                         </span>
                       </div>
@@ -396,7 +396,7 @@ export default async function BlogPage() {
                       {/* Content */}
                       <div className="p-6">
                         <Link href={post.href}>
-                          <h3 className="font-bold text-lg text-neutral-900 mb-3 line-clamp-2 group-hover:text-[#F97316] transition-colors">
+                          <h3 className="font-bold text-lg text-neutral-900 mb-3 line-clamp-2 group-hover:text-[#B85600] transition-colors">
                             {post.title}
                           </h3>
                         </Link>
@@ -452,7 +452,7 @@ export default async function BlogPage() {
                   />
                   <button
                     type="submit"
-                    className="px-8 py-4 bg-white text-[#F97316] rounded-xl font-semibold hover:bg-neutral-100 transition-colors duration-300"
+                    className="px-8 py-4 bg-white text-[#B85600] rounded-xl font-semibold hover:bg-neutral-100 transition-colors duration-300"
                   >
                     Inschrijven
                   </button>

@@ -31,7 +31,7 @@ export default function ResultStories() {
       <Container>
         <FadeIn>
           <div className="text-center mb-12">
-            <span className="inline-block text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+            <span className="inline-block text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
               Resultaatstories
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
@@ -49,7 +49,7 @@ export default function ResultStories() {
               <div className="bg-gradient-to-br from-green-50 to-orange-50 rounded-2xl p-8 border border-neutral-200 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
                 <div className="text-5xl mb-4">{story.icon}</div>
                 <div className="mb-4">
-                  <span className="text-3xl font-bold text-[#F97316] block mb-2">
+                  <span className="text-3xl font-bold text-[#B85600] block mb-2">
                     {story.highlight}
                   </span>
                   <p className="text-lg font-semibold text-neutral-900">
@@ -68,7 +68,7 @@ export default function ResultStories() {
           <div className="text-center mt-10">
             <Link
               href="/testimonials/"
-              className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#F97316] transition-colors font-medium group"
+              className="inline-flex items-center gap-2 text-neutral-700 hover:text-[#B85600] transition-colors font-medium group"
             >
               Bekijk alle succesverhalen
               <svg

@@ -69,12 +69,12 @@ export default function MobileBottomNav({
               className={cn(
                 "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
                 isActive
-                  ? "text-[#F27501]"
+                  ? "text-[#B85600]"
                   : "text-neutral-400 active:text-neutral-600"
               )}
             >
               <span className="relative">
-                <Icon className={cn("h-5 w-5", isActive && "text-[#F27501]")} />
+                <Icon className={cn("h-5 w-5", isActive && "text-[#B85600]")} />
                 {badgeCount && badgeCount > 0 && (
                   <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                     {badgeCount > 99 ? "99+" : badgeCount}

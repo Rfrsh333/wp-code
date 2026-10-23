@@ -88,7 +88,7 @@
 
 .eyebrow {
   display: inline-block;
-  color: #F27501;
+  color: #B85600;
   font-weight: 600;
   font-size: 0.75rem;
   letter-spacing: 0.15em;
@@ -194,7 +194,7 @@
 
 .navButton:hover {
   border-color: #F27501;
-  color: #F27501;
+  color: #B85600;
   box-shadow:
     0 2px 8px rgba(242, 117, 1, 0.12),
     0 4px 12px rgba(0, 0, 0, 0.04);
@@ -403,7 +403,7 @@
 .iconWrapper svg {
   width: 1.375rem;
   height: 1.375rem;
-  color: #F27501;
+  color: #B85600;
 }
 
 @media (min-width: 640px) {

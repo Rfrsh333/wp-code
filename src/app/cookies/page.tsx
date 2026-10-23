@@ -55,14 +55,14 @@ export default function CookiesPage() {
             <button
               type="button"
               onClick={() => updateConsent("all")}
-              className="px-5 py-3 rounded-xl bg-[#F27501] text-white font-semibold hover:bg-[#d96800] transition-colors"
+              className="px-5 py-3 rounded-xl bg-[#B85600] text-white font-semibold hover:bg-[#9a4700] transition-colors"
             >
               Alles accepteren
             </button>
           </div>
         </div>
 
-        <Link href="/privacy/" className="text-[#F27501] hover:underline">
+        <Link href="/privacy/" className="text-[#B85600] hover:underline">
           Lees ons privacybeleid
         </Link>
       </div>

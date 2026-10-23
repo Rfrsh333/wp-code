@@ -14,6 +14,7 @@ import type {
   GeoGenerationResult,
 } from "./types";
 import { GEO_STEDEN, type FaqItem, type Bron, type Statistiek } from "./types";
+import { cache } from "react";
 import {
   buildGeoSystemPrompt,
   buildCityPagePrompt,
@@ -465,7 +466,7 @@ export async function runGeoContentPlan(options?: {
 /**
  * Haal gepubliceerde GEO content op voor publieke pagina's
  */
-export async function getPublishedGeoContent(slug: string): Promise<GeoContent | null> {
+export const getPublishedGeoContent = cache(async (slug: string): Promise<GeoContent | null> => {
   const { data } = await supabaseAdmin
     .from("geo_content")
     .select("*")
@@ -474,7 +475,7 @@ export async function getPublishedGeoContent(slug: string): Promise<GeoContent |
     .single();
 
   return (data as GeoContent) || null;
-}
+});
 
 /**
  * Haal alle gepubliceerde GEO content op per stad

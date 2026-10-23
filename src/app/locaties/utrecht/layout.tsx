@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { getLocation } from "@/data/locations";
 import { generateBreadcrumbSchema } from "@/components/Breadcrumbs";
+import { OG_IMAGE } from "@/lib/og-image";
 import {
   generateLocalBusinessSchema,
 } from "@/lib/schema-helpers";
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
     canonical: "https://www.toptalentjobs.nl/locaties/utrecht/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title: "Horeca Uitzendbureau Utrecht | TopTalent Jobs",
     description: "Snel en betrouwbaar horeca personeel in Utrecht. Ervaren krachten voor restaurants, hotels en evenementen. Binnen 24 uur beschikbaar.",
     url: "https://www.toptalentjobs.nl/locaties/utrecht",

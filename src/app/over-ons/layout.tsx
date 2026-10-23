@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Over Ons - Horeca Uitzendbureau met Persoonlijke Aanpak",
-  description: "Leer TopTalent Jobs kennen: een horeca uitzendbureau in Utrecht met passie voor gastvrijheid. Persoonlijke service, snel bereikbaar en zorgvuldig gescreend personeel. Vaak binnen 24 uur inzetbaar.",
+  title: "Over Ons — Horeca Uitzendbureau Utrecht",
+  description: "Leer TopTalent Jobs kennen: een horeca uitzendbureau in Utrecht met passie voor gastvrijheid. Persoonlijke service, snel bereikbaar en zorgvuldig gescreend personeel.",
   alternates: {
     canonical: "https://www.toptalentjobs.nl/over-ons/",
   },

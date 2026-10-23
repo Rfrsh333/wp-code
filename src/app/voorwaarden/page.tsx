@@ -299,7 +299,7 @@ export default function AlgemeneVoorwaardenPage() {
           </p>
           <a
             href="/contact/"
-            className="inline-flex items-center justify-center bg-[#FF7A00] text-white px-8 py-4 rounded-xl font-semibold
+            className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
             shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
             hover:bg-[#E66E00] hover:-translate-y-0.5 active:scale-[0.98]
             transition-all duration-300"

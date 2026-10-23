@@ -54,7 +54,7 @@ export default function ChatInput({ onSend, disabled, placeholder }: ChatInputPr
       <button
         onClick={handleSend}
         disabled={disabled || !value.trim()}
-        className="w-10 h-10 min-w-[40px] bg-[#F27501] text-white rounded-xl hover:bg-[#d96800] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 flex items-center justify-center"
+        className="w-10 h-10 min-w-[40px] bg-[#B85600] text-white rounded-xl hover:bg-[#9a4700] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 flex items-center justify-center"
         aria-label="Verstuur bericht"
       >
         <Send className="w-4 h-4" />

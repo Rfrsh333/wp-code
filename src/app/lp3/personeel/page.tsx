@@ -230,13 +230,13 @@ function PersoneelLandingVariantBContent() {
       <PersoneelLandingBase
         left={
           <>
-            <span className="inline-flex items-center gap-2 text-[#F97316] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+            <span className="inline-flex items-center gap-2 text-[#9a4700] font-semibold text-xs tracking-wider uppercase mb-4 bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
               <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.2)]" />
               Spoed inzet mogelijk
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
               Snel ervaren horecakrachten nodig? Wij regelen het vaak{" "}
-              <span className="text-[#F97316]">horecakrachten</span> binnen 24 uur.
+              <span className="text-[#B85600]">horecakrachten</span> binnen 24 uur.
             </h1>
             <p className="text-neutral-600 text-lg leading-relaxed mb-4">
               Jij geeft door wat je nodig hebt - wij regelen de
@@ -269,7 +269,7 @@ function PersoneelLandingVariantBContent() {
             <div className="flex items-center gap-4">
               <Link
                 href="tel:+31617889189"
-                className="inline-flex items-center gap-2 text-[#F97316] font-semibold hover:text-[#EA580C] transition-colors"
+                className="inline-flex items-center gap-2 text-[#B85600] font-semibold hover:text-[#B85600] transition-colors"
               >
                 Bel direct: +31617889189
               </Link>
@@ -328,9 +328,9 @@ function PersoneelLandingVariantBContent() {
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="w-full bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                    className="w-full bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                     shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                    hover:bg-[#EA580C] transition-all duration-300"
+                    hover:bg-[#9a4700] transition-all duration-300"
                   >
                     Check beschikbaarheid
                   </button>
@@ -437,9 +437,9 @@ function PersoneelLandingVariantBContent() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 bg-[#F97316] text-white px-8 py-4 rounded-xl font-semibold
+                      className="flex-1 bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                       shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
-                      hover:bg-[#EA580C] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      hover:bg-[#9a4700] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? "Versturen..." : "Vraag direct personeel aan"}
                     </button>
@@ -453,7 +453,7 @@ function PersoneelLandingVariantBContent() {
             </p>
             <p className="text-center text-sm text-neutral-500 mt-2">
               Door te versturen ga je akkoord met ons{" "}
-              <Link href="/privacy/" className="text-[#F97316] hover:underline">
+              <Link href="/privacy/" className="text-[#B85600] hover:underline">
                 privacybeleid
               </Link>
               .
@@ -465,7 +465,7 @@ function PersoneelLandingVariantBContent() {
       <Section variant="tinted" spacing="default">
         <Section.Container>
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#F97316] font-semibold mb-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#B85600] font-semibold mb-3">
               Bewijs uit de praktijk
             </p>
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
@@ -496,7 +496,7 @@ function PersoneelLandingVariantBContent() {
       <Section variant="white" spacing="default">
         <Section.Container>
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#F97316] font-semibold mb-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#B85600] font-semibold mb-3">
               Zo regelen we het
             </p>
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
@@ -543,7 +543,7 @@ function PersoneelLandingVariantBContent() {
       <div className="fixed bottom-24 left-4 right-4 md:hidden z-40">
         <a
           href="#lp3-form"
-          className="flex items-center justify-center gap-2 bg-[#F97316] text-white px-6 py-3 rounded-full font-semibold shadow-lg shadow-orange-500/30 hover:bg-[#EA580C] transition-colors"
+          className="flex items-center justify-center gap-2 bg-[#B85600] text-white px-6 py-3 rounded-full font-semibold shadow-lg shadow-orange-500/30 hover:bg-[#9a4700] transition-colors"
         >
           Vraag direct personeel aan
         </a>

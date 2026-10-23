@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 
+import { OG_IMAGE } from "@/lib/og-image";
 const title = "Spoed personeel horeca binnen 24 uur | TopTalent Jobs";
 const description =
   "Last-minute personeelstekort? Vraag spoed horecapersoneel aan en ontvang snel bevestiging. Binnen 24 uur inzetbaar via TopTalent Jobs.";
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
     canonical: "https://www.toptalentjobs.nl/lp/personeel/",
   },
   openGraph: {
+    images: [OG_IMAGE],
     title,
     description,
     url: "https://www.toptalentjobs.nl/lp/personeel",

@@ -4,7 +4,7 @@ import { buildPageMetadata } from "@/lib/metadata";
 export const metadata = buildPageMetadata({
   title: "Account verwijderen | TopTalent Jobs",
   description:
-    "Zo verwijdert u uw account van de TopTalent-app of het werknemers- of werkgeversportaal, ook zonder de app. Lees welke gegevens worden verwijderd en welke wij wettelijk moeten bewaren.",
+    "Zo verwijdert u uw account van de TopTalent-app of het portaal, ook zonder de app. Lees welke gegevens verdwijnen en welke wij wettelijk bewaren.",
   path: "/account-verwijderen/",
 });
 
@@ -24,7 +24,7 @@ const MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Verzoek: a
   ].join("\n"),
 )}`;
 
-const linkClass = "text-[#FF7A00] hover:underline";
+const linkClass = "text-[#B85600] hover:underline";
 
 export default function AccountVerwijderenPage() {
   return (
@@ -113,7 +113,7 @@ export default function AccountVerwijderenPage() {
             <div className="not-prose my-8">
               <a
                 href={MAILTO}
-                className="inline-flex items-center justify-center bg-[#FF7A00] text-white px-8 py-4 rounded-xl font-semibold
+                className="inline-flex items-center justify-center bg-[#B85600] text-white px-8 py-4 rounded-xl font-semibold
                 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30
                 hover:bg-[#E66E00] hover:-translate-y-0.5 active:scale-[0.98]
                 transition-all duration-300"
