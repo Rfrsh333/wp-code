@@ -1,5 +1,6 @@
 import { isGeldigIban, normaliseerIban } from "@/lib/medewerker/iban";
 import type { AdminRole } from "@/lib/admin-auth";
+import { ZELFFACTURERING_IS_CONCEPT } from "@/content/zelffacturering-akkoord";
 
 /**
  * Instellingen voor uitbetalen met zelffacturering. Alles uit env; niets hardcoded.
@@ -20,6 +21,15 @@ export const UITBETALING_ROLLEN: AdminRole[] = ["owner", "finance"];
 
 export function isZelffactureringActief(): boolean {
   return process.env.ZELFFACTURERING_ACTIEF === "1";
+}
+
+/**
+ * Kan een medewerker nu akkoord geven? Vlag aan, tekst geen concept meer en betaaltermijn ingesteld.
+ * Alleen dan doet het checklistpunt mee: anders zou iedereen geblokkeerd raken op een akkoord dat hij
+ * niet kan geven.
+ */
+export function isAkkoordMogelijk(): boolean {
+  return isZelffactureringActief() && !ZELFFACTURERING_IS_CONCEPT && uitbetaalTermijnWerkdagen() != null;
 }
 
 /** X in "binnen X werkdagen nadat de werkgever betaald heeft", of null als niet ingesteld. */

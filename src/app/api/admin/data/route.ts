@@ -132,9 +132,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Stap 6 "Geld": een klantfactuur op betaald zetten of uren goedkeuren maakt uren uitbetaalbaar.
-  // Dat mag via deze generieke route alleen met een geld-rol, en "betaald" krijgt altijd betaald_op.
-  const geld = geldVeldenAdminData(table, action === "update" || action === "bulk_update" ? data : undefined);
+  // Stap 6 "Geld": factuurstatus, urenstatus/-goedkeuring en de koppeling uren ↔ klantfactuur bepalen
+  // of uren uitbetaalbaar zijn. Via deze generieke route alleen met een geld-rol; "betaald" krijgt betaald_op.
+  const geld = geldVeldenAdminData(table, action === "update" || action === "bulk_update" || action === "insert" ? data : undefined, action);
   if (geld.vereistGeldRol && !hasRequiredAdminRole(role, ["owner", "finance"])) {
     return NextResponse.json({ error: "Onvoldoende rechten — finance vereist" }, { status: 403 });
   }

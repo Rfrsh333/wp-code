@@ -74,7 +74,14 @@ type Overzicht = {
   actief: boolean;
   migratie_ontbreekt: boolean;
   tekst: { versie: string; concept: boolean };
-  config: { bank_ok: boolean; bank_fouten: string[]; bank_naam: string | null; bank_iban_gemaskeerd: string | null; termijn_werkdagen: number | null };
+  config: {
+    bank_ok: boolean;
+    bank_fouten: string[];
+    bank_naam: string | null;
+    bank_iban_gemaskeerd: string | null;
+    termijn_werkdagen: number | null;
+    versleuteling_ok: boolean;
+  };
   standaard_uitvoerdatum: string;
   uitbetaalbaar: Medewerker[];
   wacht_op_betaling: { aantal: number; excl_centen: number };
@@ -87,6 +94,7 @@ type Overzicht = {
     klant_factuur_nummer: string | null;
     klant_factuur_status: string | null;
   }[];
+  conflicten: { uren_registratie_id: string; medewerker_naam: string; datum: string | null; werkgever: string }[];
   rondes: Ronde[];
 };
 
@@ -199,6 +207,15 @@ export default function UitbetalingenTab() {
   };
 
   const downloadSepa = async (ronde: Ronde) => {
+    if (
+      ronde.sepa_gedownload_op &&
+      !window.confirm(
+        `Dit SEPA-bestand is al gedownload op ${datum(ronde.sepa_gedownload_op)} door ${ronde.sepa_gedownload_door ?? "?"}.\n\n` +
+          `Upload het NIET nog een keer in de bank als het al is verwerkt: dan wordt er dubbel betaald. Toch opnieuw downloaden?`,
+      )
+    ) {
+      return;
+    }
     setBezig(`sepa-${ronde.id}`);
     try {
       const res = await fetch(`/api/admin/uitbetalingen/rondes/${ronde.id}/sepa`, { headers: await authHeader() });
@@ -294,7 +311,14 @@ export default function UitbetalingenTab() {
     return <div className="bg-white rounded-2xl shadow-sm p-6 text-neutral-600">{fout || "Overzicht niet beschikbaar"}</div>;
   }
 
-  const kanAanmaken = data.actief && !data.migratie_ontbreekt && data.config.bank_ok && geselecteerd.size > 0 && !!uitvoerDatum;
+  const kanAanmaken =
+    data.actief &&
+    !data.migratie_ontbreekt &&
+    !data.tekst.concept &&
+    data.config.bank_ok &&
+    data.config.versleuteling_ok &&
+    geselecteerd.size > 0 &&
+    !!uitvoerDatum;
 
   return (
     <div className="space-y-6">
@@ -321,8 +345,25 @@ export default function UitbetalingenTab() {
       )}
       {data.actief && data.tekst.concept && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Let op: de akkoordtekst zelffacturering is nog een CONCEPT (versie {data.tekst.versie}). Laat hem controleren vóór je
-          echte rondes maakt.
+          De akkoordtekst zelffacturering is nog een CONCEPT (versie {data.tekst.versie}). Zolang dat zo is, kan niemand akkoord
+          geven en kun je geen ronde aanmaken.
+        </div>
+      )}
+      {!data.config.versleuteling_ok && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          FIELD_ENCRYPTION_KEY is niet ingesteld: rondes aanmaken kan pas als IBAN&apos;s versleuteld kunnen worden opgeslagen.
+        </div>
+      )}
+      {data.conflicten.length > 0 && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          <p className="font-semibold">Uren op meer dan één klantfactuur (worden niet uitbetaald tot dit is opgelost)</p>
+          <ul className="list-disc pl-5">
+            {data.conflicten.map((c) => (
+              <li key={c.uren_registratie_id}>
+                {datum(c.datum)} · {c.medewerker_naam} · {c.werkgever}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       {!data.config.bank_ok && (
@@ -363,11 +404,12 @@ export default function UitbetalingenTab() {
       <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b">
           <h3 className="font-semibold text-neutral-900">Uitbetaalbaar (werkgever heeft betaald)</h3>
-          {selecteerbaar.length > 0 && (
+          {selecteerbaar.length > 0 && data.actief && (
             <button
               onClick={() => {
                 const alle = selecteerbaar.flatMap((m) => m.regels.map((r) => r.uren_registratie_id));
-                wissel(alle, geselecteerd.size !== alle.length);
+                if (geselecteerd.size > 0) setGeselecteerd(new Set());
+                else wissel(alle, true);
               }}
               className="text-sm text-[#F27501] font-medium"
             >
@@ -582,7 +624,7 @@ export default function UitbetalingenTab() {
                   >
                     SEPA-bestand downloaden
                   </button>
-                  {r.status === "aangemaakt" && (
+                  {(r.status === "aangemaakt" || r.facturen.some((f) => f.status === "in_uitbetaalronde")) && (
                     <button
                       onClick={() => void markeerVerwerkt(r)}
                       disabled={!r.sepa_gedownload_op || bezig === `verwerkt-${r.id}`}

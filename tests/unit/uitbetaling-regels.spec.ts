@@ -106,10 +106,12 @@ test.describe("btw en KOR", () => {
 test.describe("factuurnummer per zzp'er", () => {
   const id = "1a2b3c4d-0000-4000-8000-000000000000";
   test("opeenvolgend, uniek per medewerker en SEPA-veilig", () => {
-    expect(medewerkerCode(id)).toBe("1A2B3C4D");
-    expect(zelffactuurNummer(id, 1)).toBe("ZF-1A2B3C4D-0001");
-    expect(zelffactuurNummer(id, 12)).toBe("ZF-1A2B3C4D-0012");
-    expect(zelffactuurNummer(id, 12345)).toBe("ZF-1A2B3C4D-12345");
+    expect(medewerkerCode(id)).toBe("1A2B3C4D0000");
+    expect(zelffactuurNummer(id, 1)).toBe("ZF-1A2B3C4D0000-0001");
+    expect(zelffactuurNummer(id, 12)).toBe("ZF-1A2B3C4D0000-0012");
+    expect(zelffactuurNummer(id, 12345)).toBe("ZF-1A2B3C4D0000-12345");
+    // Zelfde eerste 8 tekens, ander id: toch een ander nummer.
+    expect(zelffactuurNummer(id, 1)).not.toBe(zelffactuurNummer("1a2b3c4d-1111-4000-8000-000000000000", 1));
     expect(zelffactuurNummer(id, 1)).not.toBe(zelffactuurNummer("9f8e7d6c-0000-4000-8000-000000000000", 1));
     expect(zelffactuurNummer(id, 9999).length).toBeLessThanOrEqual(35);
     expect(zelffactuurNummer(id, 3)).toMatch(/^[A-Z0-9-]+$/);
@@ -126,7 +128,7 @@ test.describe("factuurnummer per zzp'er", () => {
       kor: false,
       regels: [berekenRegel(bron({ uren_registratie_id: "b", datum: "2026-10-22" })), berekenRegel(bron({ uren_registratie_id: "a", datum: "2026-10-20" }))],
     });
-    expect(f.factuur_nummer).toBe("ZF-1A2B3C4D-0003");
+    expect(f.factuur_nummer).toBe("ZF-1A2B3C4D0000-0003");
     expect(f.regels.map((r) => r.uren_registratie_id)).toEqual(["a", "b"]);
     expect(f.totalen.excl_centen).toBe(32000);
     expect(f.totalen.btw_centen).toBe(6720);
@@ -220,6 +222,7 @@ test.describe("leveranciersgegevens en blokkades", () => {
   const goed = {
     naam: "Jan Jansen",
     adres: "Kerkstraat 1",
+    postcode: "3511 AA",
     stad: "Utrecht",
     kvk_nummer: "12345678",
     btw_nummer: "NL123456789B01",
@@ -234,6 +237,10 @@ test.describe("leveranciersgegevens en blokkades", () => {
     expect(leverancierBlokkades({ ...goed, akkoord_op: null }, ZELFFACTURERING_VERSIE)).toEqual(["geen_akkoord"]);
     expect(leverancierBlokkades({ ...goed, akkoord_versie: "oud" }, ZELFFACTURERING_VERSIE)).toEqual(["geen_akkoord"]);
     expect(leverancierBlokkades({ ...goed, iban: "enc:v1:xyz" }, ZELFFACTURERING_VERSIE)).toEqual(["iban"]);
+    // Buiten de EER (CH, GB) is een BIC nodig die we niet hebben: niet uitbetalen via dit bestand.
+    expect(leverancierBlokkades({ ...goed, iban: "CH9300762011623852957" }, ZELFFACTURERING_VERSIE)).toEqual(["iban"]);
+    expect(leverancierBlokkades({ ...goed, iban: "DE89370400440532013000" }, ZELFFACTURERING_VERSIE)).toEqual([]);
+    expect(leverancierBlokkades({ ...goed, postcode: null }, ZELFFACTURERING_VERSIE)).toEqual(["adres"]);
     expect(leverancierBlokkades({ ...goed, iban: null, adres: null, kvk_nummer: "123", btw_nummer: null }, ZELFFACTURERING_VERSIE)).toEqual([
       "iban",
       "adres",
@@ -261,12 +268,17 @@ test.describe("generieke admin-route: geld-velden", () => {
     expect(r.vereistGeldRol).toBe(true);
     expect(typeof r.data?.betaald_op).toBe("string");
     expect(r.optioneel).toEqual(["betaald_op"]);
-    expect(geldVeldenAdminData("facturen", { status: "verzonden" }).vereistGeldRol).toBe(false);
+    expect(geldVeldenAdminData("facturen", { status: "verzonden" }).vereistGeldRol).toBe(true);
     expect(geldVeldenAdminData("facturen", { betaald_op: null }).vereistGeldRol).toBe(true);
+    expect(geldVeldenAdminData("facturen", { notities: "x" }).vereistGeldRol).toBe(false);
   });
-  test("goedgekeurd_at op uren vraagt een geld-rol; andere tabellen niet", () => {
+  test("uren-status/goedkeuring en de koppeling uren ↔ klantfactuur vragen een geld-rol, ook bij insert", () => {
     expect(geldVeldenAdminData("uren_registraties", { goedgekeurd_at: "2026-10-23" }).vereistGeldRol).toBe(true);
+    expect(geldVeldenAdminData("uren_registraties", { status: "gefactureerd" }).vereistGeldRol).toBe(true);
     expect(geldVeldenAdminData("uren_registraties", { opmerking: "x" }).vereistGeldRol).toBe(false);
+    expect(geldVeldenAdminData("factuur_regels", { uren_registratie_id: "u1" }).vereistGeldRol).toBe(true);
+    expect(geldVeldenAdminData("facturen", [{ notities: "a" }, { status: "betaald" }], "insert").vereistGeldRol).toBe(true);
+    expect(geldVeldenAdminData("facturen", { status: "betaald" }, "insert").data).toBeNull();
     expect(geldVeldenAdminData("klanten", { status: "betaald" }).vereistGeldRol).toBe(false);
     expect(geldVeldenAdminData("facturen", undefined).vereistGeldRol).toBe(false);
   });

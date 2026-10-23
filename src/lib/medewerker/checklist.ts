@@ -7,7 +7,7 @@ import { haalDemoIds } from "@/lib/demo";
 import { isDemoMedewerkerId } from "@/lib/demo-regels";
 import { reageerChecklist, type ChecklistMedewerker, type ChecklistPunt } from "@/lib/medewerker/reageer-checklist";
 import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
-import { isZelffactureringActief } from "@/lib/uitbetaling/config";
+import { isAkkoordMogelijk } from "@/lib/uitbetaling/config";
 
 /**
  * DB-kant van de checklist vóór reageren (B1); de regels staan in lib/medewerker/reageer-checklist.
@@ -21,7 +21,7 @@ export type ChecklistStatus = {
   overeenkomst: { versie: string; akkoord_op: string | null; akkoord_versie: string | null };
   /** true als migratie 20261023_medewerker_checklist_reageren nog niet gedraaid is: dan geen blokkade. */
   migratieOntbreekt: boolean;
-  /** Stap 6: punt "Akkoord zelffacturering" doet mee (ZELFFACTURERING_ACTIEF=1 én migratie 20261024 gedraaid). */
+  /** Stap 6: punt "Akkoord zelffacturering" doet mee (ZELFFACTURERING_ACTIEF=1, tekst geen concept, termijn ingesteld én migratie 20261024 gedraaid). */
   zelffacturering: boolean;
   /** Demo-/reviewaccount (Apple/Google): ziet alleen demodiensten en wordt niet geblokkeerd. */
   demo: boolean;
@@ -35,7 +35,8 @@ const ZELFFACTURERING_KOLOMMEN = "zelffacturering_akkoord_op, zelffacturering_ak
  * ontbreken die (migratie 20261024 nog niet gedraaid), dan zonder, en dan doet het punt niet mee.
  */
 async function haalMedewerker(medewerkerId: string) {
-  if (isZelffactureringActief()) {
+  // Alleen als akkoord geven echt kan (vlag aan, tekst geen concept, termijn ingesteld).
+  if (isAkkoordMogelijk()) {
     const metAkkoord = await supabaseAdmin
       .from("medewerkers")
       .select(`${KOLOMMEN}, ${ZELFFACTURERING_KOLOMMEN}`)

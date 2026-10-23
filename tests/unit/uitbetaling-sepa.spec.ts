@@ -217,6 +217,10 @@ test.describe("SEPA pain.001.001.03", () => {
     expect(() => maakSepaXml(invoer({ betalingen: [b, { ...b }] }))).toThrow(/Dubbele/);
     expect(() => maakSepaXml(invoer({ betalingen: [{ ...b, naam: "€€€" }] }))).toThrow(/Naam/);
     expect(() => maakSepaXml(invoer({ uitvoerDatum: "26-10-2026" }))).toThrow(/Uitvoerdatum/);
+    expect(() => maakSepaXml(invoer({ uitvoerDatum: "2026-02-30" }))).toThrow(/Uitvoerdatum/);
+    // Buiten de EER is de BIC van de ontvangende bank verplicht; die hebben we niet.
+    expect(() => maakSepaXml(invoer({ betalingen: [{ ...b, iban: "CH9300762011623852957" }] }))).toThrow(/EER/);
+    expect(() => maakSepaXml(invoer({ betalingen: [{ ...b, iban: "GB82WEST12345698765432" }] }))).toThrow(/EER/);
     expect(() => maakSepaXml(invoer({ debiteur: { ...debiteur, iban: "NL91ABNA0417164301" } }))).toThrow(/TopTalent/);
     expect(() => maakSepaXml(invoer({ debiteur: { ...debiteur, bic: "XYZ" } }))).toThrow(/BIC/);
   });

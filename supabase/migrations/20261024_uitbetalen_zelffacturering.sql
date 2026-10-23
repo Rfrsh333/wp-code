@@ -145,6 +145,26 @@ create unique index if not exists uitbetaling_regels_uren_uniek
   on public.uitbetaling_regels (uren_registratie_id) where uren_registratie_id is not null;
 create index if not exists uitbetaling_regels_uitbetaling on public.uitbetaling_regels (uitbetaling_id);
 
+-- Ook de regels van een aangemaakte ronde mogen niet verdwijnen: dan zouden de uren weer
+-- "uitbetaalbaar" lijken en kon er dubbel worden uitbetaald.
+create or replace function public.uitbetaling_regels_niet_verwijderen() returns trigger
+language plpgsql as $$
+begin
+  if exists (
+    select 1
+    from public.uitbetalingen u
+    join public.uitbetaalrondes r on r.id = u.ronde_id
+    where u.id = old.uitbetaling_id and r.status <> 'concept'
+  ) then
+    raise exception 'Regels van een zelffactuur uit een aangemaakte ronde mogen niet worden verwijderd.';
+  end if;
+  return old;
+end $$;
+drop trigger if exists uitbetaling_regels_niet_verwijderen on public.uitbetaling_regels;
+create trigger uitbetaling_regels_niet_verwijderen
+  before delete on public.uitbetaling_regels
+  for each row execute function public.uitbetaling_regels_niet_verwijderen();
+
 -- 7. RLS: alleen de service role (de API-routes) mag erbij, zoals bij de andere tabellen.
 alter table public.uitbetaalrondes enable row level security;
 alter table public.uitbetalingen enable row level security;

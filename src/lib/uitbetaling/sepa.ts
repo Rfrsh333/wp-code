@@ -27,6 +27,28 @@ export const SEPA_MAX_CENTEN = 99_999_999_999;
 const BIC = /^[A-Z]{6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3})?$/;
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * IBAN-landen binnen de EER (EU + IJsland, Liechtenstein, Noorwegen). Alleen daarvoor mag de BIC
+ * van de ontvangende bank ontbreken; voor SEPA-landen buiten de EER (CH, GB, …) is die verplicht en
+ * die vragen we niet uit. Franse overzeese gebieden gebruiken FR-IBAN's.
+ */
+const EER_LANDEN = new Set([
+  "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU",
+  "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK", "IS", "LI", "NO",
+]);
+
+export function isEerIban(iban: string): boolean {
+  return EER_LANDEN.has(normaliseerIban(iban).slice(0, 2));
+}
+
+/** Bestaat deze kalenderdatum (geen 2026-02-30)? */
+export function isEchteDatum(datum: string): boolean {
+  if (!DATUM.test(datum)) return false;
+  const [j, m, d] = datum.split("-").map(Number);
+  const t = new Date(Date.UTC(j, m - 1, d));
+  return t.getUTCFullYear() === j && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+}
+
 export type SepaRekening = {
   naam: string;
   iban: string;
@@ -166,7 +188,7 @@ export function sepaTotalen(betalingen: readonly Pick<SepaBetaling, "bedragCente
 export function maakSepaXml(invoer: SepaInvoer): string {
   const berichtId = sepaId(invoer.berichtId);
   if (!berichtId) throw new SepaFout("Bericht-id ontbreekt");
-  if (!DATUM.test(invoer.uitvoerDatum)) throw new SepaFout("Uitvoerdatum moet JJJJ-MM-DD zijn");
+  if (!isEchteDatum(invoer.uitvoerDatum)) throw new SepaFout("Uitvoerdatum moet een bestaande datum JJJJ-MM-DD zijn");
   if (invoer.betalingen.length === 0) throw new SepaFout("Geen betalingen in de ronde");
 
   const debiteur = controleerRekening(invoer.debiteur, "de TopTalent-rekening");
@@ -184,6 +206,7 @@ export function maakSepaXml(invoer: SepaInvoer): string {
     const omschrijving = sepaTekst(b.omschrijving, SEPA_MAX_OMSCHRIJVING);
     if (!omschrijving) throw new SepaFout(`Omschrijving ontbreekt voor ${wie}`);
     const crediteur = controleerRekening({ naam: b.naam, iban: b.iban }, wie);
+    if (!isEerIban(crediteur.iban)) throw new SepaFout(`IBAN van ${wie} is van buiten de EER (dan is een BIC nodig)`);
     return { endToEndId, omschrijving, bedrag: centenNaarSepaBedrag(b.bedragCenten), ...crediteur };
   });
 

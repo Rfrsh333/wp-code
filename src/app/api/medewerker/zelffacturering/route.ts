@@ -8,7 +8,7 @@ import { getClientIP } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { getFactuurConfig } from "@/lib/factuur-config";
 import { isOntbrekendeKolom } from "@/lib/db-kolom-fallback";
-import { isZelffactureringActief, uitbetaalTermijnWerkdagen } from "@/lib/uitbetaling/config";
+import { isAkkoordMogelijk, isZelffactureringActief, uitbetaalTermijnWerkdagen } from "@/lib/uitbetaling/config";
 import { ZELFFACTURERING_VERSIE, zelffactureringTekst } from "@/content/zelffacturering-akkoord";
 
 /**
@@ -19,7 +19,7 @@ import { ZELFFACTURERING_VERSIE, zelffactureringTekst } from "@/content/zelffact
  * Contract (web en app):
  *   GET → 200 {
  *     actief: boolean,            // false = ZELFFACTURERING_ACTIEF staat uit: toon "binnenkort"
- *     beschikbaar: boolean,       // false = akkoord geven kan (nog) niet (vlag uit, migratie of termijn ontbreekt)
+ *     beschikbaar: boolean,       // false = akkoord geven kan (nog) niet (vlag uit, tekst nog concept, migratie of termijn ontbreekt)
  *     versie, concept: boolean, titel, secties: [{ titel, tekst }], akkoordzin,
  *     akkoord_op, akkoord_versie, akkoord_nodig: boolean, ingetrokken_op
  *   }
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         actief,
-        beschikbaar: actief && !migratieOntbreekt && uitbetaalTermijnWerkdagen() != null,
+        beschikbaar: isAkkoordMogelijk() && !migratieOntbreekt,
         ...tekstVoor(rij, medewerker.naam),
         akkoord_op: akkoordOp,
         akkoord_versie: akkoordVersie,
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
-    // Zonder vastgestelde betaaltermijn is de tekst niet compleet: dan geen akkoord.
-    if (uitbetaalTermijnWerkdagen() == null) {
+    // Op een CONCEPT-tekst of zonder vastgestelde betaaltermijn geeft niemand akkoord.
+    if (!isAkkoordMogelijk()) {
       return NextResponse.json({ error: "Akkoord geven kan nog niet. Probeer het later opnieuw." }, { status: 503 });
     }
 

@@ -13,7 +13,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "Factuur niet gevonden" }, { status: 404 });
-    const { data, error } = await supabaseAdmin.from("uitbetalingen").select("pdf_pad").eq("id", id).maybeSingle();
+    const { data, error } = await supabaseAdmin
+      .from("uitbetalingen")
+      .select("pdf_pad, ronde:uitbetaalrondes!inner(status)")
+      .eq("id", id)
+      .neq("ronde.status", "concept")
+      .maybeSingle();
     if (isMigratieFout(error)) return NextResponse.json({ error: "Factuur niet gevonden" }, { status: 404 });
     if (error) throw error;
     if (!data?.pdf_pad) return NextResponse.json({ error: "Factuur niet gevonden" }, { status: 404 });

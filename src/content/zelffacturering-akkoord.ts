@@ -23,7 +23,10 @@
 /** Versie waarop akkoord wordt gegeven (opgeslagen bij het akkoord). */
 export const ZELFFACTURERING_VERSIE = "concept-1";
 
-/** true zolang de tekst niet is goedgekeurd: de pagina toont dan een duidelijke CONCEPT-melding. */
+/**
+ * true zolang de tekst niet is goedgekeurd: de pagina toont een CONCEPT-melding, niemand kan akkoord
+ * geven, het checklistpunt doet niet mee en er kan geen uitbetaalronde worden gemaakt.
+ */
 export const ZELFFACTURERING_IS_CONCEPT = true;
 
 /** Voorstel uit de opdracht ("bijvoorbeeld bezwaar binnen 14 dagen"); laten checken. */

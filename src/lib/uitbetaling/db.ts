@@ -165,9 +165,11 @@ async function haalKlantFacturen(urenIds: readonly string[]): Promise<Map<string
   for (const r of regels) {
     const f = perId.get(r.factuur_id);
     if (!f) continue;
-    // Een uren-regel hoort op één klantfactuur; staat hij (fout) op meer, dan telt een betaalde.
     const huidig = perUren.get(r.uren_registratie_id);
-    if (!huidig || (huidig.status !== "betaald" && f.status === "betaald")) perUren.set(r.uren_registratie_id, f);
+    if (!huidig) perUren.set(r.uren_registratie_id, f);
+    // Uren horen op precies één klantfactuur (een toeslagregel staat op dezelfde factuur). Staan ze
+    // op meer facturen, dan is er iets mis: nooit automatisch uitbetalen (status "conflict").
+    else if (huidig.id !== f.id) perUren.set(r.uren_registratie_id, { ...huidig, status: "conflict", betaald_op: null });
   }
   return perUren;
 }
@@ -176,7 +178,9 @@ type UitbetalingKoppeling = { uitbetaling_id: string; status: string };
 
 /** Bestaan de tabellen van de migratie? (Een lege urenlijst zegt daar anders niets over.) */
 export async function isMigratieGedraaid(): Promise<boolean> {
-  const { error } = await supabaseAdmin.from("uitbetaalrondes").select("id", { count: "exact", head: true }).limit(1);
+  // Geen head-request: postgrest-js maakt van een 404 zonder body "geen fout", dan lijkt een
+  // ontbrekende tabel gedraaid. Een gewone select met limit 1 geeft wel 42P01/PGRST205.
+  const { error } = await supabaseAdmin.from("uitbetaalrondes").select("id").limit(1);
   if (isMigratieFout(error)) return false;
   if (error) throw error;
   return true;

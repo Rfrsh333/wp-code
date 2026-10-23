@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { maskeerIban } from "@/lib/medewerker/iban";
+import { isEncryptionConfigured } from "@/lib/encryption";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { ZELFFACTURERING_IS_CONCEPT, ZELFFACTURERING_VERSIE } from "@/content/zelffacturering-akkoord";
 import { bankConfig, isZelffactureringActief, uitbetaalTermijnWerkdagen } from "@/lib/uitbetaling/config";
@@ -75,7 +76,16 @@ export async function GET(request: NextRequest) {
       })
       .sort((a, b) => a.naam.localeCompare(b.naam, "nl"));
 
-    const wacht = items.filter((i) => i.status === "wacht_op_betaling_werkgever");
+    const wacht = items.filter((i) => i.status === "wacht_op_betaling_werkgever" && i.klant_factuur_status !== "conflict");
+    // Uren die op meer dan één klantfactuur staan: nooit automatisch uitbetalen, eerst uitzoeken.
+    const conflicten = items
+      .filter((i) => i.klant_factuur_status === "conflict")
+      .map((i) => ({
+        uren_registratie_id: i.uren_registratie_id,
+        medewerker_naam: leveranciers.get(i.medewerker_id)?.naam ?? "Onbekend",
+        datum: i.regel.datum,
+        werkgever: i.regel.werkgever,
+      }));
     const zonderGoedkeuring = items
       .filter((i) => i.status === "wacht_op_goedkeuring")
       .map((i) => ({
@@ -147,11 +157,13 @@ export async function GET(request: NextRequest) {
           bank_naam: bank.ok ? bank.naam : null,
           bank_iban_gemaskeerd: bank.ok ? maskeerIban(bank.iban) : null,
           termijn_werkdagen: termijn,
+          versleuteling_ok: isEncryptionConfigured(),
         },
         standaard_uitvoerdatum: volgendeWerkdag(nlVandaag()),
         uitbetaalbaar,
         wacht_op_betaling: { aantal: wacht.length, excl_centen: wacht.reduce((t, i) => t + i.regel.bedrag_centen, 0) },
         zonder_goedkeuring: zonderGoedkeuring,
+        conflicten,
         rondes,
       },
       { headers: GEEN_CACHE },

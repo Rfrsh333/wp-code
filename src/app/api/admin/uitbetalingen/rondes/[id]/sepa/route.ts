@@ -30,15 +30,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (downloadFout || !bestand) throw downloadFout ?? new Error("SEPA-bestand niet gevonden");
     const xml = await bestand.text();
 
+    // De EERSTE download blijft staan (wie en wanneer); latere downloads staan alleen in het audit-log.
+    // De admin-UI waarschuwt bij opnieuw downloaden: hetzelfde bestand twee keer in de bank = dubbel betalen.
     const nu = new Date().toISOString();
-    await supabaseAdmin.from("uitbetaalrondes").update({ sepa_gedownload_op: nu, sepa_gedownload_door: toegang.email ?? null }).eq("id", id);
+    const { data: eerste } = await supabaseAdmin
+      .from("uitbetaalrondes")
+      .update({ sepa_gedownload_op: nu, sepa_gedownload_door: toegang.email ?? null })
+      .eq("id", id)
+      .is("sepa_gedownload_op", null)
+      .select("id")
+      .maybeSingle();
     await logAuditEvent({
       actorEmail: toegang.email,
       actorRole: toegang.role,
-      action: "uitbetaalronde_sepa_gedownload",
+      action: eerste ? "uitbetaalronde_sepa_gedownload" : "uitbetaalronde_sepa_opnieuw_gedownload",
       targetTable: "uitbetaalrondes",
       targetId: id,
-      summary: `SEPA-bestand van ronde ${ronde.bericht_id} gedownload`,
+      summary: `SEPA-bestand van ronde ${ronde.bericht_id} ${eerste ? "gedownload" : "OPNIEUW gedownload"}`,
       metadata: { bericht_id: ronde.bericht_id, status: ronde.status },
     });
 

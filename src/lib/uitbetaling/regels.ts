@@ -4,6 +4,7 @@ import { medewerkerUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-rege
 import { isFeestdag } from "@/lib/compliance/arbeidstijden";
 import { plusDagen } from "@/lib/nl-tijd";
 import { isGeldigIban } from "@/lib/medewerker/iban";
+import { isEerIban } from "@/lib/uitbetaling/sepa";
 import { isGeldigBtwNummer, isGeldigKvkNummer } from "@/lib/medewerker/zzp-gegevens";
 
 /**
@@ -207,10 +208,14 @@ export function uitbetaalStatus(r: StatusInvoer): UitbetaalStatus | null {
 
 // --- Factuurnummer -----------------------------------------------------------------------------
 
-/** Vaste code per medewerker in het factuurnummer: de eerste 8 tekens van zijn id, in hoofdletters. */
+/**
+ * Vaste code per medewerker in het factuurnummer: de eerste 12 tekens (48 bits) van zijn id, in
+ * hoofdletters. Lang genoeg om botsingen tussen medewerkers praktisch uit te sluiten; een botsing
+ * zou bovendien op de unique-constraint op factuur_nummer stuiten in plaats van stil te gebeuren.
+ */
 export function medewerkerCode(medewerkerId: string): string {
-  const code = medewerkerId.replace(/[^0-9a-zA-Z]/g, "").slice(0, 8).toUpperCase();
-  if (code.length < 8) throw new Error("Ongeldig medewerker-id voor factuurnummer");
+  const code = medewerkerId.replace(/[^0-9a-zA-Z]/g, "").slice(0, 12).toUpperCase();
+  if (code.length < 12) throw new Error("Ongeldig medewerker-id voor factuurnummer");
   return code;
 }
 
@@ -368,9 +373,9 @@ export type BlokkadeCode = "geen_akkoord" | "iban" | "naam" | "adres" | "kvk_num
 
 export const BLOKKADE_LABELS: Record<BlokkadeCode, string> = {
   geen_akkoord: "Geen (geldig) akkoord zelffacturering",
-  iban: "IBAN ontbreekt of is ongeldig",
+  iban: "IBAN ontbreekt, is ongeldig of is van buiten de EER",
   naam: "Naam ontbreekt",
-  adres: "Adres ontbreekt",
+  adres: "Adres (straat, postcode of plaats) ontbreekt",
   kvk_nummer: "KvK-nummer ontbreekt of is ongeldig",
   btw_nummer: "Btw-id ontbreekt of is ongeldig",
 };
@@ -378,6 +383,7 @@ export const BLOKKADE_LABELS: Record<BlokkadeCode, string> = {
 export type LeverancierControle = {
   naam: string | null;
   adres: string | null;
+  postcode: string | null;
   stad: string | null;
   kvk_nummer: string | null;
   /** Ontsleuteld. */
@@ -395,9 +401,9 @@ export type LeverancierControle = {
 export function leverancierBlokkades(m: LeverancierControle, huidigeVersie: string): BlokkadeCode[] {
   const fouten: BlokkadeCode[] = [];
   if (!m.akkoord_op || m.akkoord_versie !== huidigeVersie) fouten.push("geen_akkoord");
-  if (!m.iban || !isGeldigIban(m.iban)) fouten.push("iban");
+  if (!m.iban || !isGeldigIban(m.iban) || !isEerIban(m.iban)) fouten.push("iban");
   if (!m.naam?.trim()) fouten.push("naam");
-  if (!m.adres?.trim() || !m.stad?.trim()) fouten.push("adres");
+  if (!m.adres?.trim() || !m.postcode?.trim() || !m.stad?.trim()) fouten.push("adres");
   if (!isGeldigKvkNummer(m.kvk_nummer)) fouten.push("kvk_nummer");
   if (!isGeldigBtwNummer(m.btw_nummer)) fouten.push("btw_nummer");
   return fouten;

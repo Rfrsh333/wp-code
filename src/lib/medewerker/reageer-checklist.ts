@@ -14,9 +14,9 @@ import { ZELFFACTURERING_VERSIE } from "@/content/zelffacturering-akkoord";
  * - btw-nummer: Nederlands formaat (ook met KOR heb je een btw-id);
  * - IBAN: geldig (mod-97);
  * - akkoord op de overeenkomst van opdracht, op de huidige versie;
- * - stap 6 "Geld": akkoord op zelffacturering, op de huidige versie. Alleen als de functie aan
- *   staat (ZELFFACTURERING_ACTIEF=1 en de migratie gedraaid); de DB-kant geeft dat door met
- *   `opties.zelffacturering`. Zonder die vlag verandert er niets aan de checklist.
+ * - stap 6 "Geld": akkoord op zelffacturering, op de huidige versie. Alleen als akkoord geven kan
+ *   (ZELFFACTURERING_ACTIEF=1, tekst geen concept, termijn ingesteld, migratie gedraaid); de DB-kant
+ *   geeft dat door met `opties.zelffacturering`. Anders verandert er niets aan de checklist.
  */
 
 export const CHECKLIST_CODE = "checklist_onvolledig";

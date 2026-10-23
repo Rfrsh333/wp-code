@@ -1,16 +1,16 @@
 import { randomUUID } from "crypto";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { supabaseAdmin } from "@/lib/supabase";
-import { encryptField } from "@/lib/encryption";
+import { encryptField, isEncryptionConfigured } from "@/lib/encryption";
 import { logAuditEvent } from "@/lib/audit-log";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { getFactuurConfig } from "@/lib/factuur-config";
-import { nlDatum, nlVandaag } from "@/lib/nl-tijd";
+import { nlDatum, nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import type { AdminRole } from "@/lib/admin-auth";
 import { ZelffactuurPDF } from "@/lib/pdf/zelffactuur-pdf";
-import { ZELFFACTURERING_VERSIE } from "@/content/zelffacturering-akkoord";
+import { ZELFFACTURERING_IS_CONCEPT, ZELFFACTURERING_VERSIE } from "@/content/zelffacturering-akkoord";
 import { bankConfig, uitbetaalTermijnWerkdagen, UITBETALING_BUCKET } from "@/lib/uitbetaling/config";
-import { maakSepaXml, SepaFout, sepaTijdstip } from "@/lib/uitbetaling/sepa";
+import { isEchteDatum, maakSepaXml, SepaFout, sepaTijdstip } from "@/lib/uitbetaling/sepa";
 import {
   BLOKKADE_LABELS,
   bouwZelffactuur,
@@ -44,6 +44,9 @@ export type RondeAangemaakt = {
   facturen: { id: string; factuur_nummer: string; medewerker_id: string; incl_centen: number }[];
 };
 
+/** Uitvoerdatum hoogstens zoveel dagen vooruit (tikfout-grens). */
+const MAX_DAGEN_VOORUIT = 60;
+
 /** Een ronde in opbouw die zo lang blijft staan, is achtergebleven na een crash of time-out. */
 const CONCEPT_VERLOPEN_MS = 15 * 60 * 1000;
 
@@ -63,21 +66,44 @@ function pdfPad(medewerkerId: string, factuurNummer: string): string {
   return `facturen/${medewerkerId}/${factuurNummer}.pdf`;
 }
 
-/** Ruimt een ronde in opbouw op: PDF's/SEPA uit storage, regels, zelffacturen en de ronde zelf. */
+/**
+ * Ruimt een ronde in opbouw op: PDF's/SEPA uit storage, regels, zelffacturen en de ronde zelf.
+ * Alleen als de ronde (nog) op 'concept' staat: een ronde die al is aangemaakt (bv. als het
+ * antwoord op de laatste update verloren ging) wordt NOOIT aangeraakt, anders zouden de uren weer
+ * uitbetaalbaar worden. De database dwingt dat ook af (triggers op uitbetalingen en uitbetaling_regels).
+ */
 export async function ruimConceptRondeOp(rondeId: string, extraPaden: readonly string[] = []): Promise<void> {
+  const meld = (fout: unknown, stap: string) => {
+    if (fout) captureRouteError(fout, { route: "lib/uitbetaling/ronde", action: `OPRUIMEN_${stap}` });
+  };
   try {
-    const { data: rijen } = await supabaseAdmin.from("uitbetalingen").select("id, pdf_pad").eq("ronde_id", rondeId);
-    const paden = [...new Set([...extraPaden, ...((rijen ?? []).map((r) => r.pdf_pad).filter(Boolean) as string[]), `sepa/${rondeId}.xml`])];
-    if (paden.length > 0) await supabaseAdmin.storage.from(UITBETALING_BUCKET).remove(paden);
+    const { data: ronde, error: rondeFout } = await supabaseAdmin.from("uitbetaalrondes").select("status").eq("id", rondeId).maybeSingle();
+    if (rondeFout) return meld(rondeFout, "STATUS");
+    if (ronde && ronde.status !== "concept") {
+      return meld(new Error(`Opruimen overgeslagen: ronde ${rondeId} staat al op ${ronde.status}`), "OVERGESLAGEN");
+    }
+
+    const { data: rijen, error: leesFout } = await supabaseAdmin.from("uitbetalingen").select("id, pdf_pad").eq("ronde_id", rondeId);
+    if (leesFout) return meld(leesFout, "LEZEN");
     const ids = (rijen ?? []).map((r) => r.id as string);
     if (ids.length > 0) {
-      await supabaseAdmin.from("uitbetaling_regels").delete().in("uitbetaling_id", ids);
-      await supabaseAdmin.from("uitbetalingen").delete().in("id", ids);
+      const { error: regelFout } = await supabaseAdmin.from("uitbetaling_regels").delete().in("uitbetaling_id", ids);
+      if (regelFout) return meld(regelFout, "REGELS");
+      const { error: zfFout } = await supabaseAdmin.from("uitbetalingen").delete().in("id", ids);
+      if (zfFout) return meld(zfFout, "ZELFFACTUREN");
     }
-    await supabaseAdmin.from("uitbetaalrondes").delete().eq("id", rondeId).eq("status", "concept");
+    // Bestanden weg zolang de concept-ronde nog bestaat (die is het slot): daarna kan een nieuwe
+    // ronde hetzelfde factuurnummer, en dus hetzelfde pad, weer gebruiken.
+    const paden = [...new Set([...extraPaden, ...((rijen ?? []).map((r) => r.pdf_pad).filter(Boolean) as string[]), `sepa/${rondeId}.xml`])];
+    if (paden.length > 0) {
+      const { error: opslagFout } = await supabaseAdmin.storage.from(UITBETALING_BUCKET).remove(paden);
+      meld(opslagFout, "OPSLAG");
+    }
+    const { error: delFout } = await supabaseAdmin.from("uitbetaalrondes").delete().eq("id", rondeId).eq("status", "concept");
+    meld(delFout, "RONDE");
   } catch (e) {
     // Niet fataal: een achtergebleven concept-ronde wordt bij de volgende poging opgeruimd.
-    captureRouteError(e, { route: "lib/uitbetaling/ronde", action: "OPRUIMEN" });
+    meld(e, "ONVERWACHT");
   }
 }
 
@@ -155,21 +181,45 @@ export async function maakUitbetaalronde(input: { urenIds: readonly string[]; ui
   if (!bank.ok) return fout(503, "bank_niet_ingesteld", `De TopTalent-rekening is niet (goed) ingesteld: ${bank.fouten.join(", ")}.`);
   if (!(await isMigratieGedraaid())) return fout(503, "migratie_ontbreekt", "De migratie voor zelffacturering is nog niet gedraaid.");
 
+  if (ZELFFACTURERING_IS_CONCEPT) {
+    return fout(503, "tekst_concept", "De akkoordtekst zelffacturering is nog een concept. Laat hem eerst goedkeuren.");
+  }
+  // Zonder sleutel zou het IBAN leesbaar in uitbetalingen.iban_versleuteld komen (en bij een fout in Sentry).
+  if (!isEncryptionConfigured()) {
+    return fout(503, "versleuteling_ontbreekt", "FIELD_ENCRYPTION_KEY is niet ingesteld: IBAN's kunnen niet versleuteld worden opgeslagen.");
+  }
+
   const vandaag = nlVandaag();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.uitvoerDatum) || input.uitvoerDatum < vandaag) {
-    return fout(400, "ongeldige_uitvoerdatum", "Kies een uitvoerdatum van vandaag of later.");
+  if (!isEchteDatum(input.uitvoerDatum) || input.uitvoerDatum < vandaag || input.uitvoerDatum > plusDagen(vandaag, MAX_DAGEN_VOORUIT)) {
+    return fout(400, "ongeldige_uitvoerdatum", `Kies een uitvoerdatum van vandaag tot uiterlijk ${MAX_DAGEN_VOORUIT} dagen vooruit.`);
   }
   const urenIds = [...new Set(input.urenIds)];
   if (urenIds.length === 0) return fout(400, "lege_selectie", "Selecteer minstens één dienst.");
 
-  const voor = await bereidVoor(urenIds, vandaag);
-  if (!voor.ok) return voor;
-
-  // SEPA-bestand eerst opbouwen: een ongeldig IBAN of naam stopt de ronde vóór er iets is opgeslagen.
+  // Eerst de "slot"-ronde (maximaal één ronde in opbouw). Pas daarna controleren we de selectie en
+  // bepalen we de volgnummers: zo kan een tweede admin nooit met verouderde gegevens of dubbele
+  // nummers verdergaan.
   const nu = new Date();
   const id = berichtId(nu);
+  await ruimVerlopenConceptenOp();
+  const { data: ronde, error: rondeFout } = await supabaseAdmin
+    .from("uitbetaalrondes")
+    .insert({ bericht_id: id, status: "concept", uitvoer_datum: input.uitvoerDatum, aangemaakt_door: input.actor.email ?? null })
+    .select("id")
+    .single();
+  if (rondeFout?.code === "23505") return fout(409, "ronde_bezig", "Er wordt al een uitbetaalronde aangemaakt. Probeer het over een minuut opnieuw.");
+  if (rondeFout || !ronde) throw rondeFout;
+  const rondeId = ronde.id as string;
+
+  let voor: Awaited<ReturnType<typeof bereidVoor>>;
   let xml: string;
   try {
+    voor = await bereidVoor(urenIds, vandaag);
+    if (!voor.ok) {
+      await ruimConceptRondeOp(rondeId);
+      return voor;
+    }
+    // SEPA-bestand opbouwen vóór er zelffacturen worden opgeslagen: een ongeldig IBAN of naam stopt hier.
     xml = maakSepaXml({
       berichtId: id,
       aangemaaktOp: nu,
@@ -184,19 +234,10 @@ export async function maakUitbetaalronde(input: { urenIds: readonly string[]; ui
       })),
     });
   } catch (e) {
+    await ruimConceptRondeOp(rondeId);
     if (e instanceof SepaFout) return fout(422, "sepa_ongeldig", `Het SEPA-bestand kan niet worden gemaakt: ${e.message}.`);
     throw e;
   }
-
-  await ruimVerlopenConceptenOp();
-  const { data: ronde, error: rondeFout } = await supabaseAdmin
-    .from("uitbetaalrondes")
-    .insert({ bericht_id: id, status: "concept", uitvoer_datum: input.uitvoerDatum, aangemaakt_door: input.actor.email ?? null })
-    .select("id")
-    .single();
-  if (rondeFout?.code === "23505") return fout(409, "ronde_bezig", "Er wordt al een uitbetaalronde aangemaakt. Probeer het over een minuut opnieuw.");
-  if (rondeFout || !ronde) throw rondeFout;
-  const rondeId = ronde.id as string;
 
   const geuploade: string[] = [];
   const facturen: RondeAangemaakt["facturen"] = [];
@@ -299,7 +340,11 @@ export async function maakUitbetaalronde(input: { urenIds: readonly string[]; ui
       .eq("status", "concept")
       .select("id")
       .maybeSingle();
-    if (klaarFout || !klaar) throw klaarFout ?? new Error("Ronde kon niet worden afgerond");
+    if (klaarFout || !klaar) {
+      // Het antwoord kan verloren zijn gegaan terwijl de update wél is opgeslagen: dan is de ronde klaar.
+      const { data: controle } = await supabaseAdmin.from("uitbetaalrondes").select("status").eq("id", rondeId).maybeSingle();
+      if (controle?.status !== "aangemaakt") throw klaarFout ?? new Error("Ronde kon niet worden afgerond");
+    }
 
     await logAuditEvent({
       actorEmail: input.actor.email,
@@ -346,21 +391,21 @@ export async function markeerRondeVerwerkt(rondeId: string, actor: Actor): Promi
     .maybeSingle();
   if (error) throw error;
   if (!ronde) return fout(404, "niet_gevonden", "Ronde niet gevonden.");
-  if (ronde.status === "verwerkt") return fout(409, "al_verwerkt", "Deze ronde is al als verwerkt gemarkeerd.");
-  if (ronde.status !== "aangemaakt") return fout(409, "niet_klaar", "Deze ronde is nog niet klaar.");
-  if (!ronde.sepa_gedownload_op) return fout(409, "sepa_niet_gedownload", "Download eerst het SEPA-bestand en upload het in de bank.");
+  if (ronde.status !== "aangemaakt" && ronde.status !== "verwerkt") return fout(409, "niet_klaar", "Deze ronde is nog niet klaar.");
 
   const nu = new Date().toISOString();
-  const { data: bijgewerkt, error: updateFout } = await supabaseAdmin
-    .from("uitbetaalrondes")
-    .update({ status: "verwerkt", verwerkt_door: actor.email ?? null, verwerkt_op: nu })
-    .eq("id", rondeId)
-    .eq("status", "aangemaakt")
-    .select("id")
-    .maybeSingle();
-  if (updateFout) throw updateFout;
-  if (!bijgewerkt) return fout(409, "al_verwerkt", "Deze ronde is intussen al verwerkt.");
+  if (ronde.status === "aangemaakt") {
+    if (!ronde.sepa_gedownload_op) return fout(409, "sepa_niet_gedownload", "Download eerst het SEPA-bestand en upload het in de bank.");
+    const { error: updateFout } = await supabaseAdmin
+      .from("uitbetaalrondes")
+      .update({ status: "verwerkt", verwerkt_door: actor.email ?? null, verwerkt_op: nu })
+      .eq("id", rondeId)
+      .eq("status", "aangemaakt");
+    if (updateFout) throw updateFout;
+  }
 
+  // Ook bij een ronde die al op verwerkt stond: zelffacturen die (door een eerdere fout) nog
+  // in_uitbetaalronde staan, alsnog afronden. Is er niets meer af te ronden, dan is hij al verwerkt.
   const { data: uitbetalingen, error: uFout } = await supabaseAdmin
     .from("uitbetalingen")
     .update({ status: "uitbetaald", uitbetaald_op: nu })
@@ -368,6 +413,9 @@ export async function markeerRondeVerwerkt(rondeId: string, actor: Actor): Promi
     .eq("status", "in_uitbetaalronde")
     .select("id, medewerker_id, factuur_nummer, bedrag_incl, iban_laatste4");
   if (uFout) throw uFout;
+  if (ronde.status === "verwerkt" && (uitbetalingen ?? []).length === 0) {
+    return fout(409, "al_verwerkt", "Deze ronde is al als verwerkt gemarkeerd.");
+  }
 
   await logAuditEvent({
     actorEmail: actor.email,
