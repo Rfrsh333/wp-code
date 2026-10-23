@@ -7,6 +7,19 @@ import { haalDemoIds, zelfdeWereld } from "@/lib/demo";
 import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
 import { checklistMelding, CHECKLIST_CODE, type ChecklistPunt } from "@/lib/medewerker/reageer-checklist";
 import { haalChecklist } from "@/lib/medewerker/checklist";
+import { isOntbrekendeKolom, leesMetKolomFallback } from "@/lib/db-kolom-fallback";
+import {
+  heeftVoorwaarden,
+  isAutomatischIngetrokken,
+  LEGE_VOORWAARDEN,
+  medewerkerTariefVanDienst,
+  REACTIE_FOUTCODES,
+  valideerReactie,
+  type ReactieFoutcode,
+  type ReactieInvoer,
+  type ReactieVoorwaarden,
+} from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 import {
   annuleerUitkomst,
   HERACTIVEERBAAR,
@@ -30,17 +43,50 @@ export type AanmeldResultaat =
       ok: false;
       status: number;
       error: string;
-      /** B1: `checklist_onvolledig` met de lijst van wat er nog ontbreekt. */
-      code?: typeof CHECKLIST_CODE;
+      /**
+       * B1: `checklist_onvolledig` met de lijst van wat er nog ontbreekt. Uitgebreid reageren:
+       * een code uit REACTIE_FOUTCODES (lib/medewerker/reactie-regels), bij het kledingvoorschrift
+       * met de tekst erbij zodat de app hem kan tonen.
+       */
+      code?: typeof CHECKLIST_CODE | ReactieFoutcode;
       ontbrekend?: ChecklistPunt[];
+      kledingvoorschrift?: string;
     };
 
 /** JSON-body voor een mislukte aanmelding; geeft bij B1 ook code + ontbrekend mee. */
 export function aanmeldFoutBody(resultaat: Extract<AanmeldResultaat, { ok: false }>) {
-  return resultaat.code
-    ? { error: resultaat.error, code: resultaat.code, ontbrekend: resultaat.ontbrekend ?? [] }
-    : { error: resultaat.error };
+  if (resultaat.code === CHECKLIST_CODE) {
+    return { error: resultaat.error, code: resultaat.code, ontbrekend: resultaat.ontbrekend ?? [] };
+  }
+  if (resultaat.code) {
+    return {
+      error: resultaat.error,
+      code: resultaat.code,
+      ...(resultaat.kledingvoorschrift ? { kledingvoorschrift: resultaat.kledingvoorschrift } : {}),
+    };
+  }
+  return { error: resultaat.error };
 }
+
+const NIET_BESCHIKBAAR: Extract<AanmeldResultaat, { ok: false }> = {
+  ok: false,
+  status: 503,
+  code: REACTIE_FOUTCODES.nietBeschikbaar,
+  error:
+    "Een eigen tarief, eigen tijden, motivatie of automatisch intrekken kan nog niet worden opgeslagen. Reageer zonder deze opties of probeer het later opnieuw.",
+};
+
+/**
+ * Bij direct inplannen (aanbieding of uitnodiging accepteren) gelden de voorwaarden van de dienst:
+ * een eerder tegenbod of eigen tijden op dezelfde rij vervallen. Motivatie en kleding-akkoord blijven.
+ */
+const RESET_BIJ_INPLANNEN = {
+  voorgesteld_uurtarief: null,
+  voorgestelde_start_tijd: null,
+  voorgestelde_eind_tijd: null,
+  auto_intrekken_uren: null,
+  annuleer_reden: null,
+};
 
 /** Verlopen ID-bewijs/werkvergunning blokkeert inzet; alleen goedgekeurde documenten tellen (B10). */
 export async function controleerInzetbaarheid(medewerkerId: string): Promise<string | null> {
@@ -90,13 +136,18 @@ export async function werkBezettingBij(dienstId: string): Promise<void> {
  * Meld een medewerker aan op een dienst met de gegeven status.
  * - `aangemeld`: sollicitatie, de klant kiest nog; vereist wel een vrije plek.
  * - `geaccepteerd`/`bevestigd`: direct ingepland (aanbieding/uitnodiging); vereist een vrije plek.
- * Een bestaande geannuleerde/afgewezen rij wordt hergebruikt (unieke index dienst+medewerker).
+ * Een bestaande geannuleerde/afgewezen rij wordt hergebruikt (unieke index dienst+medewerker),
+ * ook een open reactie die al voorbij haar intrekmoment is (lazy check, lib/medewerker/reactie-regels).
+ *
+ * `opties.reactie` (alleen bij `aangemeld`): tegenbod, eigen tijden, motivatie, kleding-akkoord en
+ * automatisch intrekken. Leeg = zoals voorheen (alleen dienst_id); een dienst met kledingvoorschrift
+ * vraagt wel altijd een akkoord.
  */
 export async function meldAan(
   medewerkerId: string,
   dienstId: string,
   status: "aangemeld" | "geaccepteerd" | "bevestigd",
-  opties: { bestaandeAanmeldingId?: string } = {},
+  opties: { bestaandeAanmeldingId?: string; reactie?: ReactieInvoer } = {},
 ): Promise<AanmeldResultaat> {
   // B1: eerst de checklist (ID, KvK, btw, IBAN, akkoord overeenkomst). Geldt voor zelf aanmelden
   // én voor het accepteren van een aanbieding of uitnodiging: alle routes lopen via meldAan.
@@ -114,11 +165,29 @@ export async function meldAan(
   const melding = await controleerInzetbaarheid(medewerkerId);
   if (melding) return { ok: false, status: 403, error: melding };
 
-  const { data: dienst } = await supabaseAdmin
-    .from("diensten")
-    .select("id, klant_id, status, plekken_beschikbaar, plekken_totaal, aantal_nodig")
-    .eq("id", dienstId)
-    .maybeSingle();
+  // kledingvoorschrift bestaat pas na migratie 20261023_uitgebreid_reageren.sql; zonder die kolom
+  // heeft geen enkele dienst een voorschrift.
+  const basisKolommen = "id, klant_id, status, plekken_beschikbaar, plekken_totaal, aantal_nodig, datum, start_tijd, eind_tijd, uurtarief";
+  const { data: dienstRij } = await leesMetKolomFallback((metNieuw) =>
+    supabaseAdmin
+      .from("diensten")
+      .select(metNieuw ? `${basisKolommen}, kledingvoorschrift` : basisKolommen)
+      .eq("id", dienstId)
+      .maybeSingle(),
+  );
+  const dienst = dienstRij as unknown as {
+    id: string;
+    klant_id: string | null;
+    status: string | null;
+    plekken_beschikbaar: number | null;
+    plekken_totaal: number | null;
+    aantal_nodig: number | null;
+    datum: string;
+    start_tijd: string;
+    eind_tijd: string;
+    uurtarief: number | null;
+    kledingvoorschrift?: string | null;
+  } | null;
   if (!dienst) return { ok: false, status: 404, error: "Dienst niet gevonden" };
   // Eerste dienst van een nieuwe klant die TopTalent nog controleert (lib/klant-controle-regels):
   // voor medewerkers bestaat hij nog niet.
@@ -129,18 +198,34 @@ export async function meldAan(
     return { ok: false, status: 404, error: "Dienst niet gevonden" };
   }
 
+  // Uitgebreid reageren: alleen bij zelf aanmelden. Een aanbieding of uitnodiging accepteren
+  // gebeurt tegen de voorwaarden van de dienst.
+  let voorwaarden: ReactieVoorwaarden = LEGE_VOORWAARDEN;
+  if (status === "aangemeld") {
+    const check = valideerReactie(opties.reactie ?? {}, dienst);
+    if (!check.ok) {
+      return { ok: false, status: check.status, error: check.error, code: check.code, kledingvoorschrift: check.kledingvoorschrift };
+    }
+    voorwaarden = check.voorwaarden;
+  }
+
   const ingepland = await telIngepland(dienstId);
   if (!heeftVrijePlek(dienst, ingepland)) {
     return { ok: false, status: 409, error: "Deze dienst zit vol" };
   }
 
-  const { data: bestaand } = await supabaseAdmin
-    .from("dienst_aanmeldingen")
-    .select("id, status")
-    .eq("dienst_id", dienstId)
-    .eq("medewerker_id", medewerkerId);
+  const { data: bestaand } = await leesMetKolomFallback((metNieuw) =>
+    supabaseAdmin
+      .from("dienst_aanmeldingen")
+      .select(metNieuw ? "id, status, auto_intrekken_uren" : "id, status")
+      .eq("dienst_id", dienstId)
+      .eq("medewerker_id", medewerkerId),
+  );
 
-  const rijen = (bestaand ?? []) as { id: string; status: string }[];
+  const rijen = (bestaand ?? []) as unknown as { id: string; status: string; auto_intrekken_uren?: number | null }[];
+  // Een open reactie voorbij haar intrekmoment telt als ingetrokken, ook als de cron nog niet draaide.
+  const heractiveerbaar = (r: (typeof rijen)[number]) =>
+    (HERACTIVEERBAAR as readonly string[]).includes(r.status) || isAutomatischIngetrokken(r, dienst);
   // Bij direct inplannen (aanbieding/uitnodiging) wordt een lopende sollicitatie of uitnodiging
   // opgewaardeerd in plaats van als "al aangemeld" geweigerd.
   const eigenRij = opties.bestaandeAanmeldingId
@@ -148,31 +233,42 @@ export async function meldAan(
     : status !== "aangemeld"
       ? rijen.find((r) => (VRIJ_AFMELDBAAR as readonly string[]).includes(r.status))
       : undefined;
-  const actief = rijen.find(
-    (r) => r.id !== eigenRij?.id && !(HERACTIVEERBAAR as readonly string[]).includes(r.status),
-  );
+  const actief = rijen.find((r) => r.id !== eigenRij?.id && !heractiveerbaar(r));
   if (actief) return { ok: false, status: 409, error: "Je bent al aangemeld voor deze dienst" };
 
-  const hergebruik = eigenRij ?? rijen.find((r) => (HERACTIVEERBAAR as readonly string[]).includes(r.status));
+  const hergebruik = eigenRij ?? rijen.find(heractiveerbaar);
+  const metVoorwaarden = heeftVoorwaarden(voorwaarden);
 
   let aanmeldingId: string;
   if (hergebruik) {
-    const { data, error } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .update({ status })
-      .eq("id", hergebruik.id)
-      .eq("status", hergebruik.status)
-      .select("id")
-      .maybeSingle();
+    // Hergebruikte rij: de voorwaarden van een eerdere reactie worden altijd overschreven (null
+    // als er nu niets is voorgesteld), zodat een oud tegenbod nooit stil blijft gelden.
+    const nieuweVelden = status === "aangemeld" ? { ...voorwaarden, annuleer_reden: null } : RESET_BIJ_INPLANNEN;
+    const werkBij = (velden: Record<string, unknown>) =>
+      supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .update(velden)
+        .eq("id", hergebruik.id)
+        .eq("status", hergebruik.status)
+        .select("id")
+        .maybeSingle();
+    let { data, error } = await werkBij({ status, ...nieuweVelden });
+    if (isOntbrekendeKolom(error)) {
+      // Migratie nog niet gedraaid: een voorstel kan niet worden opgeslagen, dus weigeren in plaats
+      // van de medewerker stil tegen andere voorwaarden aan te melden. Zonder voorstel: zoals voorheen.
+      if (metVoorwaarden) return NIET_BESCHIKBAAR;
+      ({ data, error } = await werkBij({ status }));
+    }
     if (error) return { ok: false, status: 500, error: "Aanmelden mislukt" };
     if (!data) return { ok: false, status: 409, error: "Je aanmelding is intussen gewijzigd, probeer het opnieuw" };
     aanmeldingId = data.id;
   } else {
     const { data, error } = await supabaseAdmin
       .from("dienst_aanmeldingen")
-      .insert({ dienst_id: dienstId, medewerker_id: medewerkerId, status })
+      .insert({ dienst_id: dienstId, medewerker_id: medewerkerId, status, ...(metVoorwaarden ? voorwaarden : {}) })
       .select("id")
       .single();
+    if (metVoorwaarden && isOntbrekendeKolom(error)) return NIET_BESCHIKBAAR;
     if (error?.code === "23505") return { ok: false, status: 409, error: "Je bent al aangemeld voor deze dienst" };
     if (error || !data) return { ok: false, status: 500, error: "Aanmelden mislukt" };
     aanmeldingId = data.id;
@@ -216,19 +312,48 @@ export async function meldAan(
  * Controleert de capaciteit vooraf en telt na de update opnieuw: bij overboeking (gelijktijdige
  * acceptatie) gaat de vervanger terug naar `aangemeld` en volgt een 409. De bezetting wordt
  * daarna altijd herberekend.
+ *
+ * Uitgebreid reageren: hier kiest een collega, niet de werkgever. Een reactie met eigen tijden of
+ * een tegenbod boven het tarief van de dienst kost de werkgever meer of dekt de dienst niet
+ * helemaal; die kan alleen de werkgever (of TopTalent) kiezen. Een automatisch ingetrokken reactie
+ * kan niemand meer kiezen.
  */
 export async function planVervangerIn(
   dienstId: string,
   vervangerAanmeldingId: string,
   vervangingVoor: string,
-): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+): Promise<{ ok: true } | { ok: false; status: number; error: string; code?: ReactieFoutcode }> {
   const { data: dienst } = await supabaseAdmin
     .from("diensten")
-    .select("id, status, plekken_beschikbaar, plekken_totaal, aantal_nodig")
+    .select("id, status, plekken_beschikbaar, plekken_totaal, aantal_nodig, datum, start_tijd, uurtarief")
     .eq("id", dienstId)
     .maybeSingle();
   if (!dienst) return { ok: false, status: 404, error: "Dienst niet gevonden" };
   if (dienst.status === "geannuleerd") return { ok: false, status: 409, error: "Deze dienst is geannuleerd" };
+
+  const voorstel = (await haalVoorwaarden([vervangerAanmeldingId])).get(vervangerAanmeldingId);
+  if (voorstel) {
+    if (isAutomatischIngetrokken({ status: "aangemeld", auto_intrekken_uren: voorstel.auto_intrekken_uren }, dienst)) {
+      return {
+        ok: false,
+        status: 409,
+        code: REACTIE_FOUTCODES.reactieIngetrokken,
+        error: "De reactie van deze collega is automatisch ingetrokken en kan niet meer worden gekozen.",
+      };
+    }
+    const eigenTijden = !!voorstel.voorgestelde_start_tijd && !!voorstel.voorgestelde_eind_tijd;
+    const duurder =
+      voorstel.voorgesteld_uurtarief != null &&
+      voorstel.voorgesteld_uurtarief > medewerkerTariefVanDienst(dienst.uurtarief as number | null) + 0.004;
+    if (eigenTijden || duurder) {
+      return {
+        ok: false,
+        status: 409,
+        error:
+          "Deze collega heeft eigen tijden of een hoger tarief voorgesteld. Zo'n reactie kan alleen de werkgever kiezen; neem contact op met TopTalent.",
+      };
+    }
+  }
 
   const totaal = dienst.plekken_totaal ?? dienst.aantal_nodig ?? 1;
   if ((await telIngepland(dienstId)) >= totaal) {

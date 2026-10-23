@@ -6,6 +6,9 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { dienstUren, nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { HERACTIVEERBAAR, heeftVrijePlek } from "@/lib/medewerker/dienst-regels";
 import { beperkDiensten, haalDemoIds } from "@/lib/demo";
+import { leesMetKolomFallback } from "@/lib/db-kolom-fallback";
+import { isAutomatischIngetrokken, medewerkerTariefVanDienst } from "@/lib/medewerker/reactie-regels";
+import { GEEN_EXTRAS, haalDienstExtras } from "@/lib/medewerker/reactie-voorwaarden";
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,17 +70,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter uit: diensten waar de medewerker al een lopende aanmelding heeft
-    // (een geannuleerde/afgewezen aanmelding mag opnieuw).
-    const { data: aanmeldingen } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select("dienst_id, status")
-      .eq("medewerker_id", medewerker.id);
+    // (een geannuleerde/afgewezen aanmelding mag opnieuw, net als een automatisch ingetrokken reactie).
+    const { data: aanmeldingenRuw } = await leesMetKolomFallback((metNieuw) =>
+      supabaseAdmin
+        .from("dienst_aanmeldingen")
+        .select(metNieuw ? "dienst_id, status, auto_intrekken_uren" : "dienst_id, status")
+        .eq("medewerker_id", medewerker.id),
+    );
+    const aanmeldingen = (aanmeldingenRuw ?? []) as unknown as { dienst_id: string; status: string; auto_intrekken_uren?: number | null }[];
+    const dienstPerId = new Map((diensten || []).map((d) => [d.id as string, d as { datum?: string; start_tijd?: string }]));
 
     const aangemeldeDienstIds = new Set(
-      (aanmeldingen || [])
+      aanmeldingen
         .filter((a) => !(HERACTIVEERBAAR as readonly string[]).includes(a.status))
+        .filter((a) => !isAutomatischIngetrokken(a, dienstPerId.get(a.dienst_id)))
         .map((a) => a.dienst_id),
     );
+    // Kledingvoorschrift en pauze voor het reageerscherm (leeg zolang de migratie niet gedraaid is).
+    const extras = await haalDienstExtras((diensten || []).map((d) => d.id as string));
 
     const beschikbareShifts = (diensten || [])
       .filter((d: Record<string, unknown>) => {
@@ -110,6 +120,7 @@ export async function GET(request: NextRequest) {
 
         const is_speciaal = medewerkerUurtarief >= 18 || plekkenBeschikbaar >= 5;
 
+        const extra = extras.get(d.id as string) ?? GEEN_EXTRAS;
         return {
           id: d.id,
           datum: d.datum,
@@ -117,6 +128,13 @@ export async function GET(request: NextRequest) {
           eind_tijd: d.eind_tijd,
           locatie: d.locatie,
           omschrijving: d.notities || d.functie || "Geen omschrijving",
+          functie: (d.functie as string | null) ?? null,
+          // Uitgebreid reageren: opmerkingen (notities), kledingvoorschrift en pauze apart, en wat de
+          // medewerker bij het tarief van de dienst per uur krijgt (vooringevuld bij een tegenbod).
+          opmerkingen: (d.notities as string | null) || null,
+          kledingvoorschrift: extra.kledingvoorschrift,
+          pauze_minuten: extra.pauze_minuten,
+          medewerker_uurtarief: medewerkerTariefVanDienst(d.uurtarief as number | null),
           uurtarief: d.uurtarief,
           plekken_beschikbaar: plekkenBeschikbaar,
           plekken_totaal: plekkenTotaal,

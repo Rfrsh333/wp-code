@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
-import { sendMedewerkerShiftConfirmationEmail } from "@/lib/medewerker-shift-email";
+import { stuurInplanBevestiging } from "@/lib/medewerker/inplan-bevestiging";
 import { INGEPLAND_STATUSSEN } from "@/lib/dienst-status";
 import { planVervangerIn, werkBezettingBij } from "@/lib/medewerker/aanmelden";
 import { annuleerUitkomst, urenTotDienststart } from "@/lib/medewerker/dienst-regels";
@@ -139,32 +139,7 @@ export async function PATCH(request: NextRequest) {
     await werkBezettingBij(vervanging.dienst_id);
 
     // Bevestigingsmail naar vervanger
-    const { data: fullVervanger } = await supabaseAdmin
-      .from("dienst_aanmeldingen")
-      .select(`
-        id,
-        medewerker:medewerkers(naam, email),
-        dienst:diensten(klant_naam, locatie, datum, start_tijd, eind_tijd, functie, notities)
-      `)
-      .eq("id", vervanger_aanmelding_id)
-      .single();
-
-    const mw = Array.isArray(fullVervanger?.medewerker) ? fullVervanger?.medewerker[0] : fullVervanger?.medewerker;
-    const d = Array.isArray(fullVervanger?.dienst) ? fullVervanger?.dienst[0] : fullVervanger?.dienst;
-
-    if (mw?.email && d) {
-      await sendMedewerkerShiftConfirmationEmail({
-        medewerkerNaam: mw.naam,
-        medewerkerEmail: mw.email,
-        functie: d.functie,
-        datum: d.datum,
-        startTijd: d.start_tijd,
-        eindTijd: d.eind_tijd,
-        locatie: d.locatie,
-        klantNaam: d.klant_naam,
-        kledingvoorschrift: d.notities,
-      });
-    }
+    await stuurInplanBevestiging(vervanger_aanmelding_id);
 
     return NextResponse.json({ success: true });
   }

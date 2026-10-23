@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { isAutomatischIngetrokken } from "@/lib/medewerker/reactie-regels";
+import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
 import { valideerLeeftijdVoorDienst, valideerVSHVoorFunctie } from "@/lib/compliance/arbeidstijden";
 import { normaliseerBeschikbaarheid } from "@/lib/medewerker/beschikbaarheid";
 import { beschikbaarheidPerMedewerker } from "@/lib/medewerker/beschikbaarheid-bron";
@@ -227,11 +229,18 @@ export async function findMatchesForDienst(dienstId: string): Promise<{
   // Haal bestaande aanmeldingen op voor deze dienst
   const { data: bestaandeAanmeldingen } = await supabaseAdmin
     .from("dienst_aanmeldingen")
-    .select("medewerker_id")
+    .select("id, medewerker_id, status")
     .eq("dienst_id", dienstId)
     .in("status", ["aangemeld", "geaccepteerd"]);
 
-  const alAangemeldIds = new Set((bestaandeAanmeldingen || []).map((a) => a.medewerker_id));
+  // Een automatisch ingetrokken reactie (voorbij het intrekmoment, cron nog niet gedraaid) telt
+  // niet meer als aangemeld: die medewerker mag weer worden voorgesteld.
+  const voorwaarden = await haalVoorwaarden((bestaandeAanmeldingen || []).map((a) => a.id));
+  const alAangemeldIds = new Set(
+    (bestaandeAanmeldingen || [])
+      .filter((a) => !isAutomatischIngetrokken({ status: a.status, auto_intrekken_uren: voorwaarden.get(a.id)?.auto_intrekken_uren }, dienst))
+      .map((a) => a.medewerker_id),
+  );
 
   // C-23 / B10: verlopen ID-bewijs, werkvergunning of verblijfsvergunning blokkeert. Zelfde regel
   // als meldAan (inzetbaarheidsMelding): per type alleen het nieuwste goedgekeurde document.

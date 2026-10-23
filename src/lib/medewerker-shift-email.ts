@@ -12,6 +12,8 @@ interface ShiftConfirmationInput {
   locatie: string;
   klantNaam: string;
   kledingvoorschrift?: string | null;
+  /** Pauze van de dienst in minuten (optioneel, sinds uitgebreid reageren). */
+  pauzeMinuten?: number | null;
 }
 
 function getBaseUrl() {
@@ -71,6 +73,7 @@ export async function sendMedewerkerShiftConfirmationEmail(input: ShiftConfirmat
           <li><strong>Functie:</strong> ${escapeHtml(input.functie)}</li>
           <li><strong>Datum:</strong> ${formatDutchDate(input.datum)}</li>
           <li><strong>Tijd:</strong> ${escapeHtml(input.startTijd.substring(0, 5))} - ${escapeHtml(input.eindTijd.substring(0, 5))}</li>
+          ${input.pauzeMinuten ? `<li><strong>Pauze:</strong> ${Math.round(input.pauzeMinuten)} minuten</li>` : ""}
           <li><strong>Locatie:</strong> ${escapeHtml(input.locatie)}</li>
         </ul>
       </div>
