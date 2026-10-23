@@ -23,6 +23,7 @@ import {
   Target,
   Users,
   UtensilsCrossed,
+  Wallet,
 } from "lucide-react";
 import type {
   AdminTab,
@@ -113,6 +114,15 @@ export const sidebarItems = {
     tab: "facturen",
     pinnable: true,
     keywords: ["billing", "finance"],
+  },
+  uitbetalingen: {
+    id: "uitbetalingen",
+    title: "Uitbetalingen",
+    icon: Wallet,
+    kind: "tab",
+    tab: "uitbetalingen",
+    pinnable: true,
+    keywords: ["uitbetalen", "sepa", "zelffacturering", "zzp", "betalen"],
   },
   contact: {
     id: "contact",
@@ -298,7 +308,7 @@ export const sidebarGroups: SidebarGroupConfig[] = [
   {
     id: "finance",
     label: "Finance",
-    itemIds: ["uren", "facturen", "offertes", "boetes"],
+    itemIds: ["uren", "facturen", "uitbetalingen", "offertes", "boetes"],
     collapsible: true,
     dividerBefore: true,
   },

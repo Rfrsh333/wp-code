@@ -12,6 +12,7 @@ import {
   overeenkomstVoorMedewerker,
   vulOvereenkomstIn,
 } from "../../src/content/overeenkomst-van-opdracht";
+import { ZELFFACTURERING_VERSIE } from "../../src/content/zelffacturering-akkoord";
 
 const vandaag = "2026-10-23";
 const compleet: ChecklistMedewerker = {
@@ -95,5 +96,27 @@ test.describe("overeenkomst van opdracht", () => {
     expect(vulOvereenkomstIn("{{btw_nummer}}", {})).toBe("[nog niet ingevuld]");
     const tekst = overeenkomstVoorMedewerker({ opdrachtnemer_naam: "Sanne" }).secties.map((s) => s.tekst).join("\n");
     expect(tekst).not.toMatch(/\{\{\w+\}\}/);
+  });
+});
+
+test.describe("akkoord zelffacturering (stap 6, achter ZELFFACTURERING_ACTIEF)", () => {
+  test("zonder de vlag verandert de checklist niet", () => {
+    expect(reageerChecklist(compleet, [geldigId], vandaag).map((p) => p.code)).not.toContain("zelffacturering");
+    expect(ontbrekendVoorReageren(compleet, [geldigId], vandaag)).toEqual([]);
+  });
+
+  test("met de vlag: extra punt, blokkeert tot akkoord op de huidige versie", () => {
+    const aan = { zelffacturering: true };
+    const open = ontbrekendVoorReageren(compleet, [geldigId], vandaag, aan);
+    expect(open.map((p) => p.code)).toEqual(["zelffacturering"]);
+    expect(open[0].label).toBe("Akkoord zelffacturering");
+    expect(open[0].actie).toEqual({ scherm: "zelffacturering", web_pad: "/medewerker/zelffacturering", label: "Lezen en akkoord geven" });
+    expect(checklistMelding(open)).toContain("je akkoord op zelffacturering");
+
+    const metAkkoord = { ...compleet, zelffacturering_akkoord_op: "2026-10-23T10:00:00Z", zelffacturering_akkoord_versie: ZELFFACTURERING_VERSIE };
+    expect(ontbrekendVoorReageren(metAkkoord, [geldigId], vandaag, aan)).toEqual([]);
+
+    const oudeVersie = { ...metAkkoord, zelffacturering_akkoord_versie: "oud" };
+    expect(ontbrekendVoorReageren(oudeVersie, [geldigId], vandaag, aan)[0]?.uitleg).toContain("gewijzigd");
   });
 });
