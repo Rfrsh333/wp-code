@@ -193,12 +193,17 @@ export async function sendIntakeBevestiging(kandidaat: Kandidaat) {
 }
 
 // 2. Documenten verzoek - Upbeat en duidelijk
-export async function sendDocumentenVerzoek(kandidaat: Kandidaat, portalToken?: string) {
+export async function sendDocumentenVerzoek(
+  kandidaat: Kandidaat,
+  portalToken?: string,
+  opties: { automatisch?: boolean } = {},
+) {
   const uploadToken = portalToken || await generateAndSaveUploadToken(kandidaat.id);
   const uploadUrl = `${getBaseUrl()}/kandidaat/documenten?token=${uploadToken}`;
 
   const isZZP = kandidaat.uitbetalingswijze === "zzp";
-  const copy = candidateEmailCopy.documenten;
+  // Automatisch (autopilot): neutrale tekst, er is nog geen oordeel over het profiel.
+  const copy = opties.automatisch ? candidateEmailCopy.documentenAutomatisch : candidateEmailCopy.documenten;
 
   const content = `
     <span class="emoji">📄</span>

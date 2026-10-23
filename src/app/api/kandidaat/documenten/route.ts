@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isKandidaatUploadType } from "@/lib/kandidaat-documenten";
 import { bepaalDocumentFormaat, valideerDocument } from "@/lib/medewerker/documenten";
+import { STAP_PER_STATUS } from "@/lib/onboarding-autopilot-regels";
 
 // 🚀 Optimized: O(1) token validation via database lookup
 async function validateUploadToken(token: string): Promise<{ valid: boolean; kandidaatId?: string }> {
@@ -173,15 +174,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database fout" }, { status: 500 });
     }
 
-    // Update kandidaat status if this was first upload
+    // Eerste upload: status naar "documenten in beoordeling" (wacht_op_kandidaat), alleen vanuit
+    // de fases vóór de beoordeling. onboarding_step en laatste_onboarding_actie gaan mee, zodat
+    // status en stap niet meer uit elkaar lopen (B3).
     if (!existingDocs || existingDocs.length === 0) {
+      const nu = new Date().toISOString();
       await supabaseAdmin
         .from("inschrijvingen")
         .update({
           onboarding_status: "wacht_op_kandidaat", // Waiting for admin review
-          laatste_contact_op: new Date().toISOString(),
+          onboarding_step: STAP_PER_STATUS.wacht_op_kandidaat,
+          laatste_onboarding_actie: nu,
+          laatste_contact_op: nu,
         })
-        .eq("id", validation.kandidaatId);
+        .eq("id", validation.kandidaatId)
+        .in("onboarding_status", ["nieuw", "in_beoordeling", "documenten_opvragen"]);
     }
 
     // Send confirmation email on first document upload

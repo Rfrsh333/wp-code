@@ -36,6 +36,19 @@ export const candidateEmailCopy = {
     outro:
       "🔒 Deze link is beveiligd en 7 dagen geldig.<br>Nadat we alles hebben, ben je zo goedgekeurd! 🚀",
   },
+  // Zelfde verzoek, maar automatisch verstuurd door de autopilot (B3): zonder "je profiel ziet
+  // er goed uit", want er heeft nog niemand naar gekeken.
+  documentenAutomatisch: {
+    subject: "{voornaam}, de volgende stap: je documenten 📄",
+    heading: "Hey {voornaam}, de volgende stap!",
+    intro:
+      "Bedankt voor je inschrijving! Om je aanmelding verder te brengen hebben we een paar documenten van je nodig. Dit duurt maar 2 minuten. 😊",
+    cardTitle: "Dit hebben we nodig:",
+    bodyAfterCard: "Upload je documenten hier:",
+    ctaLabel: "📤 Upload documenten (2 min)",
+    outro:
+      "🔒 Deze link is beveiligd en 7 dagen geldig.<br>Daarna bekijken we je inschrijving en documenten en hoor je van ons.",
+  },
   documentenReminder: {
     subject: "{voornaam}, vergeet je documenten niet! 📄",
     heading: "Hey {voornaam}, nog heel eventjes!",
