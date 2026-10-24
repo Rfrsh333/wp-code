@@ -110,23 +110,42 @@ export function teltVoorVerloop(doc: { review_status?: string | null }): boolean
   return doc.review_status === undefined || doc.review_status === "goedgekeurd";
 }
 
+type InzetbaarheidInput = {
+  vandaag: string;
+  documenten: { document_type: string; expiry_date: string | null; uploaded_at?: string | null; review_status?: string | null }[];
+  werkvergunningGeldigTot?: string | null;
+  /**
+   * Wat de werknemer bij een verlopen ID-bewijs moet doen (lib/id-check/controlerecord
+   * idVervalActie): `id_controle` = opnieuw laten controleren bij Documenten (Didit of videocall),
+   * `upload` (standaard) = een nieuw ID-bewijs uploaden.
+   */
+  idActie?: "id_controle" | "upload";
+};
+
+/** Kritieke documenttypen waarvan het nieuwste goedgekeurde document verlopen is. */
+export function verlopenKritiekeDocumenten(input: Pick<InzetbaarheidInput, "vandaag" | "documenten">): string[] {
+  const types = nieuwstePerType(input.documenten.filter(teltVoorVerloop))
+    .filter((d) => (KRITIEKE_DOCUMENTEN as readonly string[]).includes(d.document_type))
+    .filter((d) => !!d.expiry_date && d.expiry_date < input.vandaag)
+    .map((d) => d.document_type);
+  return [...new Set(types)];
+}
+
 /**
  * Melding als de medewerker niet ingezet mag worden (verlopen ID/werkvergunning), anders null.
  * `vandaag` is YYYY-MM-DD (NL); datums vóór vandaag zijn verlopen. Per documenttype telt alleen
  * het nieuwste goedgekeurde document (zie teltVoorVerloop en nieuwstePerType). Dezelfde regel
  * geldt voor `meldAan` en voor de admin-matching (lib/matching.ts).
  */
-export function inzetbaarheidsMelding(input: {
-  vandaag: string;
-  documenten: { document_type: string; expiry_date: string | null; uploaded_at?: string | null; review_status?: string | null }[];
-  werkvergunningGeldigTot?: string | null;
-}): string | null {
-  const verlopen = nieuwstePerType(input.documenten.filter(teltVoorVerloop))
-    .filter((d) => (KRITIEKE_DOCUMENTEN as readonly string[]).includes(d.document_type))
-    .filter((d) => !!d.expiry_date && d.expiry_date < input.vandaag)
-    .map((d) => DOCUMENT_LABELS[d.document_type] ?? d.document_type);
+export function inzetbaarheidsMelding(input: InzetbaarheidInput): string | null {
+  const verlopen = verlopenKritiekeDocumenten(input);
   if (verlopen.length > 0) {
-    const uniek = [...new Set(verlopen)].join(", ");
+    const uniek = verlopen.map((t) => DOCUMENT_LABELS[t] ?? t).join(", ");
+    if (input.idActie === "id_controle" && verlopen.includes("id_bewijs")) {
+      const overige = verlopen.filter((t) => t !== "id_bewijs").map((t) => DOCUMENT_LABELS[t] ?? t);
+      const upload = overige.length > 0 ? ` Upload ook een nieuwe ${overige.join(", ")}.` : "";
+      return `Je kunt je niet aanmelden: je ${uniek} is verlopen. Laat je nieuwe ID controleren bij Documenten (via Didit of een videocall).${upload}`;
+    }
     return `Je kunt je niet aanmelden: je ${uniek} is verlopen. Upload een nieuw document bij Documenten.`;
   }
   if (input.werkvergunningGeldigTot && input.werkvergunningGeldigTot < input.vandaag) {

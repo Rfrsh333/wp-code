@@ -5,7 +5,7 @@ import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isDiditActiefVoorMedewerker } from "@/lib/id-check/actief";
 import { bewaarTotVoorMedewerker, haalLaatsteIdCheck } from "@/lib/id-check/db";
-import { kopieNodig } from "@/lib/id-check/controlerecord";
+import { isBewaardeWavKopie, kopieNodig } from "@/lib/id-check/controlerecord";
 import {
   bepaalDocumentFormaat,
   isDocumentType,
@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       expiry_date: (r.expiry_date as string | null) ?? null,
       review_status: (r.review_status as string | null) ?? null,
       url: r.file_path ? (urlPerPad.get(r.file_path as string) ?? null) : null,
+      verwijderbaar: !isBewaardeWavKopie(r),
     }));
 
     return NextResponse.json({ documenten }, { headers: { "Cache-Control": "private, no-store" } });
@@ -76,8 +77,10 @@ export async function POST(request: NextRequest) {
     }
     // Met de ID-controle via Didit aan bewaren we geen kopie van het ID meer (AP: geen ID-kopie van
     // zzp'ers). Het ID gaat dan via POST /api/medewerker/id-check. Uitzondering (Wav art. 15): is de
-    // nationaliteit volgens de nieuwste controle buiten de EER/Zwitserland, dan moet de horecazaak een
-    // kopie krijgen en mag de werknemer zijn ID wél uploaden. Die kopie krijgt de Wav-termijn.
+    // nationaliteit volgens de nieuwste controle buiten de EER/Zwitserland, dan is een kopie van het ID
+    // verplicht en mag de werknemer zijn ID wél uploaden. TopTalent bewaart die kopie zelf, beveiligd,
+    // en geeft hem niet aan horecazaken (privacyverklaring 2.6, 10f). De kopie krijgt de Wav-termijn
+    // en blijft ook na het verwijderen van het account tot bewaar_tot (lib/id-check/bewaartermijn).
     let wavKopie = false;
     if (documentType === "id_bewijs" && (await isDiditActiefVoorMedewerker(medewerker.id))) {
       const laatste = await haalLaatsteIdCheck(medewerker.id).catch(() => null);
@@ -156,14 +159,25 @@ export async function DELETE(request: NextRequest) {
     const id = request.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "ID ontbreekt" }, { status: 400 });
 
+    // "*": verificatie_methode/review_status zijn later toegevoegd; zo breekt dit niet als een kolom ontbreekt.
     const { data: doc } = await supabaseAdmin
       .from("medewerker_documenten")
-      .select("file_path")
+      .select("*")
       .eq("id", id)
       .eq("medewerker_id", medewerker.id)
       .maybeSingle();
 
     if (!doc) return NextResponse.json({ error: "Document niet gevonden" }, { status: 404 });
+    // Een goedgekeurde Wav-kopie van het ID bewaart TopTalent tot het einde van de Wav-termijn.
+    if (isBewaardeWavKopie(doc)) {
+      return NextResponse.json(
+        {
+          code: "wav_kopie",
+          error: "Deze kopie van je ID moet TopTalent bewaren (Wet arbeid vreemdelingen). Je kunt hem daarom niet zelf verwijderen.",
+        },
+        { status: 409 },
+      );
+    }
 
     const { error } = await supabaseAdmin
       .from("medewerker_documenten")

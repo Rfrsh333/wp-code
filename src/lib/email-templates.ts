@@ -559,16 +559,25 @@ export function buildDocumentAfgewezen(params: {
 }
 
 // N4. Document verloopt binnenkort
+/**
+ * `idControle`: het is een ID-bewijs en de ID-controle via Didit staat voor deze werknemer aan (en er
+ * is geen kopie nodig, lib/id-check/controlerecord idVervalActie). Dan laat hij zijn nieuwe ID opnieuw
+ * controleren bij Documenten (Didit of videocall) in plaats van een document te uploaden.
+ */
 export function buildDocumentVerlooptHtml(params: {
-  naam: string; documentType: string; verloopDatum: string;
+  naam: string; documentType: string; verloopDatum: string; idControle?: boolean;
 }): string {
   const firstName = params.naam.split(" ")[0];
+  const actie = params.idControle
+    ? `<p style="font-size: 15px; line-height: 1.6; color: #333;">Laat je nieuwe ID op tijd opnieuw controleren: ga in je portaal naar Documenten en kies "Controleer je ID" (via Didit), of vraag daar een videocall aan. Je hoeft niets te uploaden.</p>
+    ${bookingButton("https://www.toptalentjobs.nl/medewerker/documenten", "Controleer je ID")}`
+    : `<p style="font-size: 15px; line-height: 1.6; color: #333;">Upload zo snel mogelijk een nieuw document om onderbrekingen te voorkomen.</p>
+    ${bookingButton("https://www.toptalentjobs.nl/medewerker/dashboard", "Document vernieuwen")}`;
   return emailWrapper(`
     <p style="font-size: 32px; margin: 0 0 16px;">⚠️</p>
     <h2 style="color: ${BRAND_COLOR}; margin: 0 0 16px; font-size: 22px;">Document verloopt binnenkort</h2>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Hey ${firstName}, je ${params.documentType} verloopt op <strong>${params.verloopDatum}</strong>.</p>
-    <p style="font-size: 15px; line-height: 1.6; color: #333;">Upload zo snel mogelijk een nieuw document om onderbrekingen te voorkomen.</p>
-    ${bookingButton("https://www.toptalentjobs.nl/medewerker/dashboard", "Document vernieuwen")}
+    <p style="font-size: 15px; line-height: 1.6; color: #333;">Hey ${escapeHtml(firstName)}, je ${escapeHtml(params.documentType)} verloopt op <strong>${escapeHtml(params.verloopDatum)}</strong>.</p>
+    ${actie}
   `);
 }
 

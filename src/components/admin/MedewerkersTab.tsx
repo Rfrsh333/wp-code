@@ -170,11 +170,17 @@ export default function MedewerkersTab() {
   const deleteMedewerker = async (id: string) => {
     if (!window.confirm("Weet u zeker dat u deze medewerker wilt verwijderen?")) return;
     const headers = await getAuthHeader();
-    await fetch("/api/admin/medewerkers", {
+    const response = await fetch("/api/admin/medewerkers", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ action: "delete", id }),
     });
+    if (!response.ok) {
+      // Bijv. een Wav-kopie van het ID die eerst beoordeeld moet worden: dan blijft het account bestaan.
+      const result = await response.json().catch(() => ({}));
+      setFeedback(result.error || "Verwijderen mislukt.");
+      return;
+    }
     setFeedback("Medewerker verwijderd.");
     fetchMedewerkers();
   };

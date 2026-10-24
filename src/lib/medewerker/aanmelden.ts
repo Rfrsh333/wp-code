@@ -7,6 +7,7 @@ import { haalDemoIds, zelfdeWereld } from "@/lib/demo";
 import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
 import { checklistMelding, CHECKLIST_CODE, type ChecklistPunt } from "@/lib/medewerker/reageer-checklist";
 import { haalChecklist } from "@/lib/medewerker/checklist";
+import { idVervalActieVoorMedewerker } from "@/lib/id-check/actief";
 import { isOntbrekendeKolom, leesMetKolomFallback } from "@/lib/db-kolom-fallback";
 import {
   heeftVoorwaarden,
@@ -25,6 +26,7 @@ import {
   HERACTIVEERBAAR,
   heeftVrijePlek,
   inzetbaarheidsMelding,
+  verlopenKritiekeDocumenten,
   kiesTeHoudenAanmelding,
   urenTotDienststart,
   VRIJ_AFMELDBAAR,
@@ -96,12 +98,16 @@ export async function controleerInzetbaarheid(medewerkerId: string): Promise<str
     supabaseAdmin.from("medewerkers").select("werkvergunning_geldig_tot").eq("id", medewerkerId).maybeSingle(),
   ]);
 
-  return inzetbaarheidsMelding({
+  const invoer = {
     vandaag,
     // Alle versies: inzetbaarheidsMelding beoordeelt alleen het nieuwste goedgekeurde document per type.
     documenten: documenten.get(medewerkerId) ?? [],
     werkvergunningGeldigTot: (mw as { werkvergunning_geldig_tot?: string | null } | null)?.werkvergunning_geldig_tot,
-  });
+  };
+  // Verlopen ID-bewijs met de ID-controle via Didit aan: opnieuw laten controleren i.p.v. uploaden.
+  // Alleen dan opzoeken (scheelt queries bij elke aanmelding).
+  if (!verlopenKritiekeDocumenten(invoer).includes("id_bewijs")) return inzetbaarheidsMelding(invoer);
+  return inzetbaarheidsMelding({ ...invoer, idActie: await idVervalActieVoorMedewerker(medewerkerId) });
 }
 
 /** Aantal ingeplande medewerkers op een dienst (live geteld). */

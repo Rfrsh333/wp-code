@@ -341,13 +341,15 @@ export default function DocumentenClient() {
                         </a>
                       </>
                     )}
-                    <button
-                      onClick={() => handleDelete(doc.id)}
-                      className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-danger)] transition-colors"
-                      aria-label="Verwijderen"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {doc.verwijderbaar !== false && (
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        className="w-10 h-10 rounded-xl bg-[var(--mp-bg)] flex items-center justify-center text-[var(--mp-text-secondary)] hover:text-[var(--mp-danger)] transition-colors"
+                        aria-label="Verwijderen"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
