@@ -87,7 +87,7 @@ export default function KandidaatWorkflowPanel({
   const [taskNote, setTaskNote] = useState("");
   const [taskDueAt, setTaskDueAt] = useState("");
   const [sendingAction, setSendingAction] = useState<string | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<AdminCandidateTemplateKey>("missing_id");
+  const [selectedTemplate, setSelectedTemplate] = useState<AdminCandidateTemplateKey>("follow_up_tomorrow");
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const toast = useToast();
 
@@ -411,7 +411,7 @@ export default function KandidaatWorkflowPanel({
             <input
               value={taskTitle}
               onChange={(e) => setTaskTitle(e.target.value)}
-              placeholder="Bijv. Bel kandidaat morgen over ID"
+              placeholder="Bijv. Bel kandidaat morgen over het cv"
               className="w-full px-4 py-3 rounded-xl border border-neutral-200"
             />
             <textarea

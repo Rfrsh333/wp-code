@@ -11,11 +11,14 @@ const MB = 1024 * 1024;
 
 test.describe("kandidaat-upload (B6/B7)", () => {
   test("kandidaat kiest uit een vaste lijst; onbekende waarden worden geweigerd", () => {
-    expect(isKandidaatUploadType("id")).toBe(true);
+    expect(isKandidaatUploadType("cv")).toBe(true);
+    // Geen ID-bewijs meer (juridisch advies 24-10-2026), zie kandidaat-geen-id.spec.ts.
+    expect(isKandidaatUploadType("id")).toBe(false);
     expect(isKandidaatUploadType("loonheffingsverklaring")).toBe(false);
     expect(isKandidaatUploadType(null)).toBe(false);
-    // De admin mag ook andere types zetten (correctie).
+    // De admin mag ook andere types zetten (correctie), ook "id" voor een oude kopie.
     expect(isKandidaatDocumentType("bankbewijs")).toBe(true);
+    expect(isKandidaatDocumentType("id")).toBe(true);
     expect(isKandidaatDocumentType("../pad")).toBe(false);
     expect(kandidaatDocumentLabel("id")).toContain("ID-bewijs");
     expect(kandidaatDocumentLabel("onbekend")).toBe("onbekend");
@@ -54,14 +57,14 @@ test.describe("kandidaat-upload (B6/B7)", () => {
 test.describe("verplichte kandidaatdocumenten (B16)", () => {
   test("alleen goedgekeurde documenten tellen, KvK alleen bij zzp", async () => {
     const { alleVerplichteGoedgekeurd, verplichteKandidaatDocumenten } = await import("../../src/lib/kandidaat-documenten");
-    expect(verplichteKandidaatDocumenten("zzp")).toEqual(["id", "cv", "kvk"]);
-    expect(verplichteKandidaatDocumenten("loondienst")).toEqual(["id", "cv"]);
-    const docs = [
-      { type: "id", status: "goedgekeurd" },
-      { type: "cv", status: "ontvangen" },
-    ];
+    expect(verplichteKandidaatDocumenten("zzp")).toEqual(["cv", "kvk"]);
+    expect(verplichteKandidaatDocumenten("loondienst")).toEqual(["cv"]);
+    const docs = [{ type: "cv", status: "ontvangen" }];
     expect(alleVerplichteGoedgekeurd(docs, "loondienst")).toBe(false);
     expect(alleVerplichteGoedgekeurd([...docs, { type: "cv", status: "goedgekeurd" }], "loondienst")).toBe(true);
     expect(alleVerplichteGoedgekeurd([...docs, { type: "cv", status: "goedgekeurd" }], "zzp")).toBe(false);
+    expect(
+      alleVerplichteGoedgekeurd([...docs, { type: "cv", status: "goedgekeurd" }, { type: "kvk", status: "goedgekeurd" }], "zzp"),
+    ).toBe(true);
   });
 });

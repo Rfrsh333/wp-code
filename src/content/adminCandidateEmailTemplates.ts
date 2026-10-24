@@ -1,5 +1,7 @@
+// Geen template "we missen nog je ID" meer (juridisch advies 24-10-2026): kandidaten uploaden geen
+// ID-bewijs; het ID wordt later in het medewerkerportaal gecontroleerd, zonder kopie. Ontbreekt er
+// een ander document, gebruik dan "Documentenverzoek opnieuw".
 export type AdminCandidateTemplateKey =
-  | "missing_id"
   | "follow_up_tomorrow"
   | "approved_update";
 
@@ -17,17 +19,6 @@ export const adminCandidateEmailTemplates: Record<
     ctaUrlType?: "status" | "upload";
   }
 > = {
-  missing_id: {
-    subject: "{voornaam}, we missen nog je ID",
-    heading: "Hey {voornaam}, nog 1 dingetje 👀",
-    intro: "Je bent al lekker op weg, maar we missen nog je ID. Zodra die binnen is kunnen we sneller door.",
-    cardTitle: "Upload nog even:",
-    cardItems: ["Een geldig identiteitsbewijs", "Gewoon een duidelijke foto is prima"],
-    bodyAfterCard: "Gebruik hieronder direct je uploadlink:",
-    ctaLabel: "ID uploaden",
-    outro: "Als iets niet lukt, app of mail ons gewoon even.",
-    ctaUrlType: "upload",
-  },
   follow_up_tomorrow: {
     subject: "{voornaam}, we bellen je morgen even",
     heading: "Kleine heads-up ☎️",

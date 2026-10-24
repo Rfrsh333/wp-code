@@ -1,6 +1,7 @@
 "use client";
 
 import { isGeldigKvkNummer } from "@/lib/medewerker/zzp-gegevens";
+import { ID_LATER_TEKST } from "@/lib/kandidaat-documenten";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
@@ -656,7 +657,7 @@ export default function InschrijfFormulier() {
                     Ik geef toestemming voor het verwerken van mijn gegevens voor werving en selectie.
                   </span>
                   <p className="text-sm text-neutral-500 mt-1">
-                    Documenten zoals ID, cv of KvK vragen we later apart op wanneer je onboarding start.
+                    Documenten zoals je cv of KvK-uittreksel vragen we later apart op wanneer je onboarding start. {ID_LATER_TEKST}
                   </p>
                   {errors.toestemming ? (
                     <p className="text-red-500 text-sm mt-2" role="alert">{errors.toestemming}</p>

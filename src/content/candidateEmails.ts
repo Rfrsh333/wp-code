@@ -1,3 +1,5 @@
+import { ID_LATER_TEKST } from "@/lib/kandidaat-documenten";
+
 export interface CandidateEmailCopy {
   subject: string;
   heading: string;
@@ -109,10 +111,16 @@ export function applyCandidateEmailVars(template: string, vars: Record<string, s
   );
 }
 
+/**
+ * Wat een kandidaat moet uploaden (documentenverzoek en herinnering). Geen ID-bewijs meer (juridisch
+ * advies 24-10-2026): het ID wordt later in het portaal gecontroleerd, zonder kopie; zie idLaterRegel.
+ */
 export function getDocumentChecklist(isZZP: boolean) {
   return [
-    "📸 <strong>Geldig identiteitsbewijs</strong> (paspoort of ID-kaart)",
     "📝 <strong>CV</strong> (mag kort, gewoon je ervaring)",
     ...(isZZP ? ["🏢 <strong>KVK uittreksel</strong> (niet ouder dan 3 maanden)"] : []),
   ];
 }
+
+/** Regel onder de checklist: je ID hoef je niet te uploaden. */
+export const idLaterRegel = `🪪 Je ID hoef je niet te uploaden. ${ID_LATER_TEKST}`;

@@ -8,6 +8,10 @@ import { medewerkerDocumentType, meeTeNemenDocumenten } from "@/lib/kandidaat-do
  * het bestand wordt gekopieerd naar de bucket `medewerker-documenten` en er komt een rij in
  * `medewerker_documenten` met type, vervaldatum en review_status "goedgekeurd".
  *
+ * Geen ID-documenten (juridisch advies 24-10-2026): meeTeNemenDocumenten laat type `id` weg, zodat er
+ * geen nieuwe ID-kopie in het werknemersdossier komt. Rijen die eerder al zijn meegenomen blijven
+ * staan; die ruimt de opschoontool op (lib/id-check/opschonen).
+ *
  * Idempotent: het doelpad is vast per kandidaatdocument (`<medewerker>/onboarding_<id>.<ext>`);
  * bestaat dat al, dan wordt het overgeslagen. Fouten blokkeren het aanmaken van het account niet
  * (Sentry); de medewerker kan een document altijd zelf opnieuw uploaden.

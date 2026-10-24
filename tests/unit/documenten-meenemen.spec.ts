@@ -5,15 +5,15 @@ import { isDocumentType } from "../../src/lib/medewerker/documenten";
 test.describe("kandidaatdocumenten mee naar het medewerkeraccount", () => {
   test("alleen goedgekeurde documenten gaan mee", () => {
     const docs = [
-      { id: "1", status: "goedgekeurd" },
-      { id: "2", status: "ontvangen" },
-      { id: "3", status: "afgekeurd" },
-      { id: "4", status: null },
+      { id: "1", type: "cv", status: "goedgekeurd" },
+      { id: "2", type: "cv", status: "ontvangen" },
+      { id: "3", type: "kvk", status: "afgekeurd" },
+      { id: "4", type: "overig", status: null },
     ];
     expect(meeTeNemenDocumenten(docs).map((d) => d.id)).toEqual(["1"]);
   });
 
-  test("type wordt een geldig medewerkertype; ID wordt id_bewijs (telt voor de checklist)", () => {
+  test("type wordt een geldig medewerkertype; een ID-kopie zou id_bewijs worden, nooit verstopt als overig", () => {
     expect(medewerkerDocumentType("id")).toBe("id_bewijs");
     expect(medewerkerDocumentType("kvk")).toBe("kvk");
     expect(medewerkerDocumentType("contract")).toBe("contract");

@@ -21,13 +21,34 @@ export type KandidaatDocumentStatus = (typeof KANDIDAAT_DOCUMENT_STATUSSEN)[numb
 
 export type ReviewStatus = "in_review" | "approved" | "rejected";
 
-/** Documenttypes die een kandidaat zelf via de uploadlink mag aanleveren. */
-export const KANDIDAAT_UPLOAD_TYPES = ["id", "cv", "kvk", "overig"] as const;
+/**
+ * Geen ID-kopie meer bij de inschrijving (juridisch advies 24-10-2026): van zzp'ers uit de
+ * EER/Zwitserland mag TopTalent geen kopie van het ID maken of bewaren. De identiteit wordt later
+ * gecontroleerd via de checklist van de werknemer (Didit of videocall, en alleen bij een
+ * nationaliteit buiten de EER de Wav-upload in het medewerkerportaal). Bestaande kandidaatdocumenten
+ * van type `id` blijven staan tot de opschoontool (lib/id-check/opschonen) ze opruimt; ze tellen
+ * nergens meer mee en gaan niet mee naar het werknemersdossier.
+ */
+export const ID_DOCUMENT_TYPE = "id";
+
+/** Wat kandidaten (en horecazaken, in u-vorm) over het ID lezen. */
+export const ID_LATER_TEKST = "We controleren je ID later in het portaal; we bewaren geen kopie.";
+
+/** Melding als er toch een ID-bewijs wordt aangeboden bij de kandidaatupload. */
+export const ID_UPLOAD_GEWEIGERD = `Een ID-bewijs uploaden is niet nodig. ${ID_LATER_TEKST}`;
+
+export function isIdDocumentType(waarde: unknown): boolean {
+  return waarde === ID_DOCUMENT_TYPE;
+}
+
+/** Documenttypes die een kandidaat zelf via de uploadlink mag aanleveren (geen ID-bewijs). */
+export const KANDIDAAT_UPLOAD_TYPES = ["cv", "kvk", "overig"] as const;
 export type KandidaatUploadType = (typeof KANDIDAAT_UPLOAD_TYPES)[number];
 
 /**
- * Alle types die een kandidaatdocument kan hebben (admin-upload en typecorrectie, B6).
- * Labels zijn wat kandidaat en admin te zien krijgen.
+ * Alle types die een kandidaatdocument kan hebben (typecorrectie door de admin, B6, en de weergave
+ * van oude documenten). Labels zijn wat kandidaat en admin te zien krijgen. `id` blijft erin voor
+ * bestaande ID-kopieën; een nieuw document van dat type kan niet meer (KANDIDAAT_NIEUWE_DOCUMENT_TYPES).
  */
 export const KANDIDAAT_DOCUMENT_TYPES = [
   { value: "id", label: "ID-bewijs (paspoort of ID-kaart)" },
@@ -45,8 +66,21 @@ export function isKandidaatDocumentType(waarde: unknown): waarde is KandidaatDoc
   return typeof waarde === "string" && KANDIDAAT_DOCUMENT_TYPES.some((t) => t.value === waarde);
 }
 
+/** Types die de admin nog nieuw mag uploaden bij een kandidaat: alles behalve een ID-bewijs. */
+export const KANDIDAAT_NIEUWE_DOCUMENT_TYPES = KANDIDAAT_DOCUMENT_TYPES.filter((t) => t.value !== ID_DOCUMENT_TYPE);
+
 export function isKandidaatUploadType(waarde: unknown): waarde is KandidaatUploadType {
   return typeof waarde === "string" && (KANDIDAAT_UPLOAD_TYPES as readonly string[]).includes(waarde);
+}
+
+/**
+ * Foutmelding bij het type dat de kandidaat meestuurt, of null als het mag. Een ID-bewijs wordt
+ * netjes geweigerd (geen kopie meer, zie ID_DOCUMENT_TYPE); andere onbekende waarden ook.
+ */
+export function kandidaatUploadTypeFout(waarde: unknown): string | null {
+  if (isIdDocumentType(waarde)) return ID_UPLOAD_GEWEIGERD;
+  if (!isKandidaatUploadType(waarde)) return "Kies eerst wat voor document je uploadt";
+  return null;
 }
 
 export function kandidaatDocumentLabel(type: string | null | undefined): string {
@@ -145,12 +179,19 @@ export function naarAdminDocument(rij: KandidaatDocumentRij) {
   };
 }
 
-/** Documenten die een kandidaat moet aanleveren: ID en CV, en bij zzp ook het KvK-uittreksel. */
+/**
+ * Documenten die een kandidaat moet aanleveren: het CV, en bij zzp ook het KvK-uittreksel. Geen
+ * ID-bewijs meer (juridisch advies 24-10-2026, zie ID_DOCUMENT_TYPE): het ID wordt later in het
+ * medewerkerportaal gecontroleerd, dus geen kandidaat wacht nog op een ID-document.
+ */
 export function verplichteKandidaatDocumenten(uitbetalingswijze: string | null | undefined): KandidaatUploadType[] {
-  return uitbetalingswijze === "zzp" ? ["id", "cv", "kvk"] : ["id", "cv"];
+  return uitbetalingswijze === "zzp" ? ["cv", "kvk"] : ["cv"];
 }
 
-/** Zijn alle verplichte documenten door een admin goedgekeurd? "Ontvangen" telt niet (B2, B16). */
+/**
+ * Zijn alle verplichte documenten door een admin goedgekeurd? "Ontvangen" telt niet (B2, B16).
+ * Een (oud) ID-document speelt geen rol: goedgekeurd, afgekeurd of afwezig maakt niets uit.
+ */
 export function alleVerplichteGoedgekeurd(
   documenten: readonly { type: string; status: string | null }[],
   uitbetalingswijze: string | null | undefined,
@@ -169,6 +210,8 @@ export const DOCUMENTFASE_STATUSSEN = ["documenten_opvragen", "wacht_op_kandidaa
 /**
  * Documenttype van een kandidaatdocument in `medewerker_documenten` (lib/medewerker/documenten).
  * Types zonder eigen medewerkertype (CV, bankbewijs, …) worden "overig"; de bestandsnaam blijft.
+ * `id` → `id_bewijs` blijft staan zodat een ID-kopie nooit als "overig" verstopt raakt, maar komt
+ * hier niet meer langs: meeTeNemenDocumenten laat ID-documenten weg.
  */
 export function medewerkerDocumentType(kandidaatType: string): string {
   if (kandidaatType === "id") return "id_bewijs";
@@ -179,9 +222,11 @@ export function medewerkerDocumentType(kandidaatType: string): string {
 
 /**
  * Welke kandidaatdocumenten mee gaan naar het medewerkeraccount: alleen wat een admin heeft
- * goedgekeurd (besluit Rachid, 23-10-2026). Zo begint een nieuwe medewerker niet met een lege
- * documentenlijst en telt een goedgekeurd ID meteen voor de checklist vóór reageren.
+ * goedgekeurd (besluit Rachid, 23-10-2026), zodat een nieuwe medewerker niet met een lege
+ * documentenlijst begint. Nooit een ID-bewijs (juridisch advies 24-10-2026): dan zou er een nieuwe
+ * ID-kopie in het werknemersdossier ontstaan. Het ID wordt in het medewerkerportaal gecontroleerd;
+ * oude kandidaatkopieën ruimt de opschoontool op.
  */
-export function meeTeNemenDocumenten<T extends { status: string | null }>(documenten: readonly T[]): T[] {
-  return documenten.filter((d) => d.status === "goedgekeurd");
+export function meeTeNemenDocumenten<T extends { type: string; status: string | null }>(documenten: readonly T[]): T[] {
+  return documenten.filter((d) => d.status === "goedgekeurd" && !isIdDocumentType(d.type));
 }

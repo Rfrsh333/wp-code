@@ -18,8 +18,8 @@ interface CandidateData {
   email: string;
 }
 
+// Geen ID-bewijs: de server weigert dat (juridisch advies 24-10-2026, geen ID-kopie meer).
 const documentTypes = [
-  { value: "id", label: "ID" },
   { value: "cv", label: "CV" },
   { value: "kvk", label: "KvK" },
   { value: "btw", label: "BTW" },
@@ -37,7 +37,7 @@ const statusLabels: Record<DocumentStatus, string> = {
 export default function KandidaatDocumentenClient({ token }: { token: string }) {
   const [candidate, setCandidate] = useState<CandidateData | null>(null);
   const [documents, setDocuments] = useState<CandidateDocument[]>([]);
-  const [selectedType, setSelectedType] = useState("id");
+  const [selectedType, setSelectedType] = useState("cv");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
