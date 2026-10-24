@@ -6,6 +6,7 @@ import { documentOpslagPad, MEDEWERKER_DOCUMENTEN_BUCKET } from "@/lib/medewerke
 import { klantUurtariefVoorAanmelding } from "@/lib/medewerker/reactie-regels";
 import { verdienstenVanRegel } from "@/lib/medewerker/uren-regels";
 import { haalVoorwaarden } from "@/lib/medewerker/reactie-voorwaarden";
+import { isDiditActiefVoorMedewerker } from "@/lib/id-check/actief";
 
 /** Signed URL's voor documenten (privé bucket) zijn 10 minuten geldig. */
 const DOCUMENT_URL_SECONDEN = 10 * 60;
@@ -177,6 +178,8 @@ export async function GET(
     diensten: (dienstenRes.data || []).map((d) => ({ ...d, aangemeld_op: d.aangemeld_at })),
     financieel,
     beoordelingen: beoordelingenRes.data || [],
+    // ID-controle via Didit aan: toont "ID gecontroleerd via videocall" bij Documenten.
+    id_check: { actief: await isDiditActiefVoorMedewerker(id) },
     stats: {
       opkomst_percentage: opkomstPct,
       totaal_uren: totalUren,

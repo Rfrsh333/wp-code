@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import IdVideocallActie from "./IdVideocallActie";
 
 interface MedewerkerDetail {
   profiel: {
@@ -61,10 +62,15 @@ interface MedewerkerDetail {
     file_url: string | null;
     /** Signed URL (10 min) uit de admin-route; de bucket is privé. */
     signed_url: string | null;
-    file_size: number;
+    /** null bij een ID-bewijs zonder bestand (Didit of videocall). */
+    file_size: number | null;
     uploaded_at: string;
     expiry_date?: string | null;
+    /** null = geüpload bestand; didit/videocall = gecontroleerd zonder kopie. */
+    verificatie_methode?: string | null;
   }[];
+  /** ID-controle via Didit aan (ID_CHECK_DIDIT_ACTIEF + sleutels). */
+  id_check?: { actief: boolean };
   diensten: {
     id: string;
     status: string;
@@ -590,6 +596,7 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
 
       {activeTab === "documenten" && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          {data.id_check?.actief && <IdVideocallActie medewerkerId={medewerkerId} onKlaar={() => void fetchDetail()} />}
           <div className="divide-y divide-neutral-100">
             {documenten.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between px-6 py-4 hover:bg-neutral-50">
@@ -602,7 +609,8 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
                   <div>
                     <p className="text-sm font-medium text-neutral-900">{doc.file_name}</p>
                     <p className="text-xs text-neutral-500">
-                      {doc.document_type} &middot; {(doc.file_size / 1024).toFixed(0)} KB &middot; {formatDate(doc.uploaded_at)}
+                      {doc.document_type}
+                      {doc.file_size ? <> &middot; {(doc.file_size / 1024).toFixed(0)} KB</> : null} &middot; {formatDate(doc.uploaded_at)}
                     </p>
                     {doc.expiry_date && (() => {
                       const expiry = new Date(doc.expiry_date);
@@ -626,6 +634,10 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
                   >
                     Bekijken
                   </a>
+                ) : doc.verificatie_methode ? (
+                  <span className="text-sm text-neutral-500" title="Gecontroleerd zonder kopie van het ID">
+                    Geen kopie ({doc.verificatie_methode === "didit" ? "Didit" : "videocall"})
+                  </span>
                 ) : (
                   <span className="text-sm text-neutral-400" title="Bestand niet gevonden in de opslag">
                     Niet beschikbaar
