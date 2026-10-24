@@ -371,8 +371,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Alleen de eigenaar kan medewerkers verwijderen" }, { status: 403 });
     }
     // Alles wat bij het verwijderen hoort (lib/medewerker/account-verwijderen): het ID-controlerecord
-    // en een Wav-kopie van het ID blijven tot bewaar_tot, Didit-sessies en ontdekken-gegevens gaan weg.
-    // Kan een Wav-kopie niet veilig bewaard blijven, dan blijft het account bestaan (melding).
+    // en een Wav-kopie van het ID blijven tot bewaar_tot, Didit-sessies en ontdekken-gegevens gaan weg,
+    // loonheffingsverklaring, contract en (buiten de EER) vergunningen blijven (bewaarde_documenten),
+    // overige bestanden gaan weg.
+    // Kan iets dat moet blijven niet veilig bewaard blijven, dan blijft het account bestaan (melding).
     const resultaat = await verwijderMedewerkerAccount(id);
     if (!resultaat.ok) {
       return NextResponse.json({ error: resultaat.fout }, { status: resultaat.status });
@@ -385,7 +387,12 @@ export async function POST(request: NextRequest) {
       targetTable: "medewerkers",
       targetId: id,
       summary: "Medewerker verwijderd",
-      metadata: { id_kopieen_bewaard: resultaat.idKopieenBewaard, id_kopieen_verwijderd: resultaat.idKopieenVerwijderd },
+      metadata: {
+        id_kopieen_bewaard: resultaat.idKopieenBewaard,
+        id_kopieen_verwijderd: resultaat.idKopieenVerwijderd,
+        bestanden_bewaard: resultaat.bestandenBewaard,
+        bestanden_verwijderd: resultaat.bestandenVerwijderd,
+      },
     });
   }
 

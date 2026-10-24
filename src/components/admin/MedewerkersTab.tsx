@@ -6,6 +6,7 @@ import StarRating from "@/components/ui/StarRating";
 import MedewerkerDetailView from "./MedewerkerDetailView";
 import IdChecksPaneel from "./IdChecksPaneel";
 import IdKopieenOpschonen from "./IdKopieenOpschonen";
+import WavKopieenPaneel from "./WavKopieenPaneel";
 
 interface Medewerker {
   id: string;
@@ -297,6 +298,9 @@ export default function MedewerkersTab() {
 
       {/* Oude ID-kopieën opschonen (alleen owner/operations; anderen zien niets) */}
       <IdKopieenOpschonen />
+
+      {/* Wav-kopieën van het ID terugvinden, ook van verwijderde accounts (alleen owner/operations) */}
+      <WavKopieenPaneel />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

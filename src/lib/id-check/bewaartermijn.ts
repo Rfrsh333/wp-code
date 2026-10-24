@@ -5,13 +5,15 @@ import { nlDatum, nlVandaag } from "@/lib/nl-tijd";
 import { documentOpslagPad, MEDEWERKER_DOCUMENTEN_BUCKET } from "@/lib/medewerker/documenten";
 import { bewaarTotVoorMedewerker, haalLaatsteDienstDatum, isMigratieFout, verwijderDiditSessieVanRecord } from "@/lib/id-check/db";
 import { eerVolgensControles, idBewaarTot, kopieBijAccountVerwijderen, wavKopieBewaarTot, wavKopieRij } from "@/lib/id-check/controlerecord";
+import { WAV_VERGUNNINGEN } from "@/lib/medewerker/bestanden-bij-verwijderen";
 
 /**
  * Bewaartermijnen van ID-gegevens volgens de Wav (juridisch advies, 24-10-2026), voor de
  * retentie-cron (api/cron/retentie) en het verwijderen van een account:
  *
- * - controlerecords (`id_verificaties`), ID-bewijzen in `medewerker_documenten` (met of zonder
- *   kopie) en bewaarde kandidaatkopieën van werknemers krijgen bewaar_tot = 31-12 van (jaar laatste
+ * - controlerecords (`id_verificaties`), ID-bewijzen en werk- en verblijfsvergunningen in
+ *   `medewerker_documenten` (met of zonder kopie; vergunningen sinds privacyverklaring 2.7) en
+ *   bewaarde kandidaatkopieën van werknemers krijgen bewaar_tot = 31-12 van (jaar laatste
  *   dienst + 5); zonder diensten vanaf het jaar van de beslissing/upload. Elke nacht opnieuw, zodat de
  *   termijn meeschuift zolang iemand werkt;
  * - records na die datum, en onbesliste controles van een verwijderd account, worden opgeruimd;
@@ -65,7 +67,7 @@ export async function werkIdBewaartermijnenBij(input: { vandaag: string; dryRun:
   const documenten = await supabaseAdmin
     .from("medewerker_documenten")
     .select("id, medewerker_id, reviewed_at, uploaded_at, bewaar_tot")
-    .eq("document_type", "id_bewijs")
+    .in("document_type", ["id_bewijs", ...WAV_VERGUNNINGEN])
     .limit(LIMIET);
   if (documenten.error) throw new Error(`Retentie kon medewerker_documenten niet lezen: ${documenten.error.message}`);
 

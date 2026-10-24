@@ -1,5 +1,5 @@
 /**
- * Privacyverklaring 10f: controle van de identiteit van zzp'ers (Didit of videocall), versie 2.6.
+ * Privacyverklaring 10f: controle van de identiteit van zzp'ers (Didit of videocall), versie 2.7.
  * Bewust een eigen bestand (één regel in page.tsx), net als UitbetalingSectie, omdat andere PR's
  * tegelijk in de privacyverklaring werken. De regels erachter staan in lib/id-check (controlerecord,
  * bewaartermijn, regels); houd deze tekst daarmee in de pas.
@@ -106,8 +106,10 @@ export default function IdControleSectie() {
         Zwitserland, dan beoordeelt altijd een medewerker van TopTalent uw controle. De Wet arbeid vreemdelingen (artikel
         15) vraagt dan om een kopie van uw identiteitsbewijs; een controle via Didit of een videocall alleen is dan niet
         genoeg. U uploadt die kopie in het werknemersportaal bij Documenten. Wij bewaren de kopie beveiligd, tot 31
-        december van het vijfde jaar na het jaar waarin uw werk via TopTalent eindigde. De grondslag hiervoor is onze
-        wettelijke verplichting (artikel 6 lid 1 sub c AVG).
+        december van het vijfde jaar na het jaar waarin uw werk via TopTalent eindigde, ook als u uw account laat
+        verwijderen. De grondslag hiervoor is onze wettelijke verplichting (artikel 6 lid 1 sub c AVG). Een werk- of
+        verblijfsvergunning die u bij Documenten heeft geüpload, bewaren wij tot dezelfde datum (Wet arbeid
+        vreemdelingen).
       </p>
 
       <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Eerder geüploade kopieën</h3>

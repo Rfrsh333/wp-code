@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { withCronMonitor } from "@/lib/sentry-utils";
 import { logAuditEvent } from "@/lib/audit-log";
-import { berekenBewaarTot } from "@/lib/compliance/arbeidstijden";
 import { ruimIdControlerecordsOp, ruimWavKopieenOp, werkIdBewaartermijnenBij } from "@/lib/id-check/bewaartermijn";
+import { ruimBewaardeDocumentenOp } from "@/lib/medewerker/account-bestanden";
+import { bewaarTotBijUitDienst, WAV_VERGUNNINGEN } from "@/lib/medewerker/bestanden-bij-verwijderen";
 
 /**
  * Retentie-cron (AVG art. 5 lid 1 sub e — opslagbeperking).
  *
  * Dwingt de bewaartermijnen voor (bijzondere) PII-documenten technisch af:
- * - vult ontbrekende `bewaar_tot` voor documenten van uit-dienst medewerkers (5 jaar), behalve
- *   ID-bewijzen;
+ * - vult ontbrekende `bewaar_tot` voor documenten van uit-dienst medewerkers (5 jaar; contract tot
+ *   31-12 van het zevende jaar), behalve ID-bewijzen en vergunningen (Wav-termijn, stap 1b);
  * - ID-gegevens volgens de Wav (juridisch advies 24-10-2026, lib/id-check/bewaartermijn): het
  *   controlerecord (`id_verificaties`), ID-bewijzen en bewaarde kandidaatkopieën van werknemers tot
  *   31-12 van (jaar laatste dienst + 5), elke nacht opnieuw uitgerekend;
@@ -18,7 +19,10 @@ import { ruimIdControlerecordsOp, ruimWavKopieenOp, werkIdBewaartermijnenBij } f
  *   opslag-object (voorheen bleef dat als verweesd object achter);
  * - verwijdert controlerecords na de Wav-termijn en onbesliste controles van verwijderde accounts;
  * - verwijdert Wav-kopieën van het ID van verwijderde accounts (`id_wav_kopieen`) na hun termijn,
- *   met het bestand in de opslag.
+ *   met het bestand in de opslag;
+ * - verwijdert bewaarde documenten van verwijderde accounts (`bewaarde_documenten`:
+ *   loonheffingsverklaring, contract, vergunning buiten de EER; lib/medewerker/account-bestanden) na
+ *   hun termijn, met het bestand in de opslag.
  *
  * VEILIGHEID: standaard DRY-RUN — er wordt NIETS verwijderd tenzij de env-var
  * RETENTION_DELETE=1 is gezet. Zo kan de cron eerst draaien en rapporteren wat hij
@@ -45,14 +49,15 @@ export async function GET(request: NextRequest) {
     const vandaag = new Date().toISOString().split("T")[0];
     const dryRun = process.env.RETENTION_DELETE !== "1";
 
-    // 1) Vul ontbrekende bewaar_tot voor documenten van uit-dienst medewerkers (datum_uit_dienst + 5 jaar).
-    //    ID-bewijzen niet: die volgen de Wav-termijn (stap 1b).
+    // 1) Vul ontbrekende bewaar_tot voor documenten van uit-dienst medewerkers (datum_uit_dienst + 5
+    //    jaar; contract 31-12 van jaar uit dienst + 7, lib/medewerker/bestanden-bij-verwijderen).
+    //    ID-bewijzen en vergunningen niet: die volgen de Wav-termijn (stap 1b).
     let bewaarTotGevuld = 0;
     const { data: zonderBewaartermijn, error: vulFout } = await supabaseAdmin
       .from("medewerker_documenten")
-      .select("id, medewerker:medewerkers!medewerker_id(datum_uit_dienst)")
+      .select("id, document_type, medewerker:medewerkers!medewerker_id(datum_uit_dienst)")
       .is("bewaar_tot", null)
-      .neq("document_type", "id_bewijs")
+      .not("document_type", "in", `(${["id_bewijs", ...WAV_VERGUNNINGEN].join(",")})`)
       .limit(1000);
 
     if (vulFout) {
@@ -63,10 +68,12 @@ export async function GET(request: NextRequest) {
       const mw = (d as { medewerker?: { datum_uit_dienst?: string | null } | null }).medewerker;
       const uitDienst = mw?.datum_uit_dienst;
       if (!uitDienst) continue;
+      const bewaarTot = bewaarTotBijUitDienst((d as { document_type?: string | null }).document_type, uitDienst);
+      if (!bewaarTot) continue;
       if (!dryRun) {
         await supabaseAdmin
           .from("medewerker_documenten")
-          .update({ bewaar_tot: berekenBewaarTot(uitDienst) })
+          .update({ bewaar_tot: bewaarTot })
           .eq("id", (d as { id: string }).id);
       }
       bewaarTotGevuld += 1;
@@ -120,6 +127,9 @@ export async function GET(request: NextRequest) {
     // 4) Wav-kopieën van het ID van verwijderde accounts na de Wav-termijn (bestand + rij).
     const idWavKopieen = await ruimWavKopieenOp({ vandaag, dryRun });
 
+    // 5) Bewaarde documenten van verwijderde accounts (loonheffingsverklaring, contract, vergunning) na hun termijn.
+    const bewaardeDocumenten = await ruimBewaardeDocumentenOp({ vandaag, dryRun });
+
     return NextResponse.json({
       success: true,
       dryRun,
@@ -129,6 +139,7 @@ export async function GET(request: NextRequest) {
       verlopen_documenten: verwijderd,
       id_controlerecords_verwijderd: idControlerecords,
       id_wav_kopieen_verwijderd: idWavKopieen,
+      bewaarde_documenten_verwijderd: bewaardeDocumenten,
       hint: dryRun
         ? "DRY-RUN: er is niets verwijderd. Zet RETENTION_DELETE=1 om daadwerkelijk op te ruimen."
         : "Live: verlopen documenten zijn verwijderd.",
