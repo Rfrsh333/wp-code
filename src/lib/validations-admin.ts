@@ -129,6 +129,26 @@ export const medewerkersPostSchema = z.discriminatedUnion("action", [
       review_opmerking: z.string().max(2000).optional(),
     }),
   }),
+  // ID-controle via Didit: een mens beslist over een check die niet automatisch goed kon.
+  z.object({
+    action: z.literal("beoordeel_id_check"),
+    id: optionalString,
+    data: z.object({
+      verificatie_id: uuid,
+      besluit: z.enum(["goedgekeurd", "afgewezen"]),
+      reden: z.string().max(2000).optional(),
+      vervaldatum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ongeldige vervaldatum").optional(),
+    }),
+  }),
+  // "ID gecontroleerd via videocall": id = medewerker-id.
+  z.object({
+    action: z.literal("id_videocall"),
+    id: uuid,
+    data: z.object({
+      vervaldatum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ongeldige vervaldatum"),
+      opmerking: z.string().max(2000).optional(),
+    }),
+  }),
   z.object({ action: z.literal("delete"), id: uuid, data: z.any().optional() }),
 ]);
 

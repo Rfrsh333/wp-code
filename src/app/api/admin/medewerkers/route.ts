@@ -8,6 +8,16 @@ import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { normaliseerEmail } from "@/lib/email-normalisatie";
 import { werkMedewerkerLocatieBij, wisOntdekGegevensMedewerker } from "@/lib/locatie/locatie-opslag";
+import { nlVandaag } from "@/lib/nl-tijd";
+import {
+  haalIdCheck,
+  IdCheckMigratieOntbreekt,
+  keurGoed,
+  keurGoedViaVideocall,
+  verwijderSessieNaBeslissing,
+  wijsAf,
+} from "@/lib/id-check/db";
+import { controleerVervaldatum, isDefinitief } from "@/lib/id-check/regels";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -231,6 +241,111 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
+  }
+
+  // ID-controle via Didit: een mens beslist (nooit automatisch afwijzen, art. 22 AVG).
+  if (action === "beoordeel_id_check") {
+    const { verificatie_id, besluit, vervaldatum } = data as {
+      verificatie_id: string;
+      besluit: "goedgekeurd" | "afgewezen";
+      vervaldatum?: string;
+    };
+    const reden = typeof data?.reden === "string" ? data.reden.trim() : "";
+    try {
+      const rij = await haalIdCheck(verificatie_id);
+      if (!rij) return NextResponse.json({ error: "ID-check niet gevonden" }, { status: 404 });
+      if (isDefinitief(rij.status)) {
+        return NextResponse.json({ error: "Deze ID-check is al beoordeeld" }, { status: 409 });
+      }
+
+      if (besluit === "afgewezen") {
+        if (reden.length < 3) {
+          return NextResponse.json({ error: "Geef een reden voor het afwijzen" }, { status: 400 });
+        }
+        if ((await wijsAf({ id: rij.id, reden, door: email ?? "admin" })) === "al_beslist") {
+          return NextResponse.json({ error: "Deze ID-check is al beoordeeld" }, { status: 409 });
+        }
+      } else {
+        const datum = vervaldatum || rij.vervaldatum;
+        const fout = controleerVervaldatum(datum, nlVandaag());
+        if (fout) return NextResponse.json({ error: fout }, { status: 400 });
+        const resultaat = await keurGoed({
+          rij,
+          update: { reden: reden || null },
+          vervaldatum: datum!,
+          beoordeeldDoor: email ?? "admin",
+          opmerking: reden || null,
+        });
+        if (!resultaat.ok) return NextResponse.json({ error: "Deze ID-check is al beoordeeld" }, { status: 409 });
+      }
+
+      await logAuditEvent({
+        actorEmail: email,
+        actorRole: role,
+        action: "admin_id_check_beoordeeld",
+        targetTable: "id_verificaties",
+        targetId: rij.id,
+        summary: `ID-check ${besluit}`,
+        metadata: {
+          besluit,
+          reden: reden || null,
+          medewerker_id: rij.medewerker_id,
+          methode: rij.methode,
+          didit_status: rij.didit_status,
+          handmatig_redenen: rij.handmatig_redenen ?? [],
+        },
+      });
+
+      // Definitief: de sessie bij Didit opruimen (beelden weg), na het antwoord.
+      if (rij.didit_session_id) {
+        const sessionId = rij.didit_session_id;
+        after(() => verwijderSessieNaBeslissing(rij.id, sessionId));
+      }
+      return NextResponse.json({ success: true });
+    } catch (fout) {
+      if (fout instanceof IdCheckMigratieOntbreekt) {
+        return NextResponse.json({ error: "Migratie 20261024_id_verificaties_didit.sql ontbreekt" }, { status: 503 });
+      }
+      captureRouteError(fout, { route: "/api/admin/medewerkers", action: "ID_CHECK" });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
+    }
+  }
+
+  // "ID gecontroleerd via videocall": goedgekeurd id_bewijs zonder bestand, met de vervaldatum.
+  if (action === "id_videocall") {
+    const { vervaldatum } = data as { vervaldatum: string };
+    const opmerking = typeof data?.opmerking === "string" ? data.opmerking.trim() : "";
+    const fout = controleerVervaldatum(vervaldatum, nlVandaag());
+    if (fout) return NextResponse.json({ error: fout }, { status: 400 });
+    try {
+      const { data: medewerker } = await supabaseAdmin.from("medewerkers").select("id").eq("id", id).maybeSingle();
+      if (!medewerker) return NextResponse.json({ error: "Medewerker niet gevonden" }, { status: 404 });
+
+      const resultaat = await keurGoedViaVideocall({
+        medewerkerId: id,
+        vervaldatum,
+        door: email ?? "admin",
+        opmerking: opmerking || null,
+      });
+      if (!resultaat.ok) return NextResponse.json({ error: "Probeer het opnieuw" }, { status: 409 });
+
+      await logAuditEvent({
+        actorEmail: email,
+        actorRole: role,
+        action: "admin_id_videocall_goedgekeurd",
+        targetTable: "medewerker_documenten",
+        targetId: resultaat.documentId,
+        summary: "ID gecontroleerd via videocall",
+        metadata: { medewerker_id: id, vervaldatum, opmerking: opmerking || null },
+      });
+      return NextResponse.json({ success: true });
+    } catch (fout) {
+      if (fout instanceof IdCheckMigratieOntbreekt) {
+        return NextResponse.json({ error: "Migratie 20261024_id_verificaties_didit.sql ontbreekt" }, { status: 503 });
+      }
+      captureRouteError(fout, { route: "/api/admin/medewerkers", action: "ID_VIDEOCALL" });
+      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
+    }
   }
 
   if (action === "delete") {
