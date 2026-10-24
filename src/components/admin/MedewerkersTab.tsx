@@ -12,7 +12,7 @@ interface Medewerker {
   email: string;
   telefoon: string | null;
   functie: string[];
-  uurtarief: number;
+  uurtarief: number | null;
   status: "actief" | "inactief";
   notities: string | null;
   created_at: string;
@@ -99,7 +99,7 @@ export default function MedewerkersTab() {
       telefoon: medewerker.telefoon || "",
       wachtwoord: "",
       functie: medewerker.functie || [],
-      uurtarief: medewerker.uurtarief.toString(),
+      uurtarief: medewerker.uurtarief != null ? medewerker.uurtarief.toString() : "15.00",
       status: medewerker.status,
       notities: medewerker.notities || "",
       admin_score_aanwezigheid: medewerker.admin_score_aanwezigheid || 0,
@@ -361,7 +361,7 @@ export default function MedewerkersTab() {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <p className="font-medium text-neutral-900">€{medewerker.uurtarief.toFixed(2)}</p>
+                  <p className="font-medium text-neutral-900">{medewerker.uurtarief != null ? `€${Number(medewerker.uurtarief).toFixed(2)}` : "-"}</p>
                 </td>
                 <td className="px-6 py-4">
                   <span
