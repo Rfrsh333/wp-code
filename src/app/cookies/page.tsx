@@ -1,25 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-
-const CONSENT_KEY = "ttj_cookie_consent";
-
-type ConsentValue = "all" | "necessary";
+import { CONSENT_EVENT, CONSENT_KEY, useCookieKeuze, type CookieKeuze } from "@/hooks/useCookieKeuze";
 
 export default function CookiesPage() {
-  const [currentConsent, setCurrentConsent] = useState<ConsentValue | null>(
-    typeof window !== "undefined"
-      ? (window.localStorage.getItem(CONSENT_KEY) as ConsentValue | null)
-      : null
-  );
+  const currentConsent = useCookieKeuze();
 
-  const updateConsent = (value: ConsentValue) => {
+  // Het event laat useCookieKeuze opnieuw lezen, dus de getoonde keuze volgt vanzelf.
+  const updateConsent = (value: CookieKeuze) => {
     window.localStorage.setItem(CONSENT_KEY, value);
-    window.dispatchEvent(new CustomEvent("ttj-cookie-consent", { detail: value }));
+    window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: value }));
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: "cookie_consent_update", consent: value });
-    setCurrentConsent(value);
   };
 
   return (

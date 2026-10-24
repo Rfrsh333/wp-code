@@ -47,7 +47,7 @@ const securityHeaders = [
       "font-src 'self' data: https://fonts.gstatic.com",
       "frame-src https://www.google.com https://vercel.live",
       "worker-src 'self' blob:",
-      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co wss://*.supabase.co https://vercel.live https://*.clarity.ms https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.ingest.sentry.io https://eu.i.posthog.com",
+      "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.supabase.co wss://*.supabase.co https://vercel.live https://*.clarity.ms https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.ingest.sentry.io https://eu.i.posthog.com https://eu-assets.i.posthog.com",
     ].join('; '),
   },
 ];
