@@ -106,7 +106,7 @@ export async function ensureMedewerkerFromCandidate(candidate: CandidateRecord):
     throw new Error(error?.message || "Medewerker kon niet automatisch worden aangemaakt");
   }
 
-  // Goedgekeurde kandidaatdocumenten (ID, KvK, …) mee naar het medewerkeraccount.
+  // Goedgekeurde kandidaatdocumenten (KvK, CV, …) mee naar het medewerkeraccount; nooit een ID-kopie.
   await neemKandidaatDocumentenMee(candidate.id, data.id);
 
   return { id: data.id, bestond: false, heeftWachtwoord: false, status: "actief" };

@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import { compressImage } from "@/lib/image-compress";
 import { DOCUMENT_ACCEPT, MAX_DOCUMENT_BYTES } from "@/lib/medewerker/documenten";
 import {
+  ID_LATER_TEKST,
   kandidaatDocumentLabel,
   kandidaatUploadPlan,
   uploadFoutmelding,
@@ -31,7 +32,6 @@ function DocumentenUploadContent() {
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [gekozenType, setGekozenType] = useState<KandidaatUploadType | "">("");
-  const [vervaldatum, setVervaldatum] = useState("");
   const toast = useToast();
 
   useEffect(() => {
@@ -94,7 +94,7 @@ function DocumentenUploadContent() {
     if (!token) return;
     // B6: de kandidaat kiest zelf het type; niet meer raden uit de bestandsnaam.
     if (!gekozenType) {
-      toast.warning("Kies eerst wat je uploadt (bijvoorbeeld ID-bewijs of CV).");
+      toast.warning("Kies eerst wat je uploadt (bijvoorbeeld je CV).");
       return;
     }
 
@@ -116,7 +116,6 @@ function DocumentenUploadContent() {
         formData.append("file", file);
         formData.append("token", token);
         formData.append("document_type", gekozenType);
-        if (gekozenType === "id" && vervaldatum) formData.append("vervaldatum", vervaldatum);
 
         let response: Response;
         try {
@@ -174,17 +173,17 @@ function DocumentenUploadContent() {
 
   // Zelfde lijst als de server bij het goedkeuren hanteert (lib/kandidaat-documenten). B11: geen
   // loonheffingsverklaring meer; die kon nooit worden afgevinkt en TopTalent werkt alleen met zzp'ers.
-  const ICONEN: Record<string, string> = { id: "📸", cv: "📝", kvk: "🏢" };
+  // Geen ID-bewijs meer (juridisch advies 24-10-2026): het ID wordt later in het portaal gecontroleerd.
+  const ICONEN: Record<string, string> = { cv: "📝", kvk: "🏢" };
   const requiredDocs = verplichteKandidaatDocumenten(kandidaat.uitbetalingswijze).map((type) => ({
     type,
-    label: type === "id" ? "Geldig identiteitsbewijs" : kandidaatDocumentLabel(type),
+    label: kandidaatDocumentLabel(type),
     icon: ICONEN[type] ?? "📄",
   }));
 
   const isDocUploaded = (type: string) => uploadedDocs.some(doc => doc.document_type === type);
 
   const uploadOpties: { type: KandidaatUploadType; label: string }[] = [
-    { type: "id", label: kandidaatDocumentLabel("id") },
     { type: "cv", label: kandidaatDocumentLabel("cv") },
     ...(kandidaat.uitbetalingswijze === "zzp" ? [{ type: "kvk" as const, label: kandidaatDocumentLabel("kvk") }] : []),
     { type: "overig", label: "Iets anders" },
@@ -256,19 +255,8 @@ function DocumentenUploadContent() {
               ))}
             </div>
             <p className="text-sm text-neutral-500 mt-2">
-              Voor- en achterkant van je ID? Kies &quot;ID-bewijs&quot; en upload beide foto&apos;s.
+              Je ID hoef je hier niet te uploaden. {ID_LATER_TEKST}
             </p>
-            {gekozenType === "id" && (
-              <label className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-neutral-700">
-                <span className="font-medium">Geldig tot (staat op je ID)</span>
-                <input
-                  type="date"
-                  value={vervaldatum}
-                  onChange={(e) => setVervaldatum(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-neutral-200"
-                />
-              </label>
-            )}
           </div>
 
           {/* Upload Zone */}

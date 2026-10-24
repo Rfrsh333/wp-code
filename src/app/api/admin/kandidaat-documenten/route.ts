@@ -6,6 +6,7 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { naDocumentBeoordeling } from "@/lib/kandidaat-documentbeoordeling";
 import {
   KANDIDAAT_DOCUMENT_KOLOMMEN,
+  isIdDocumentType,
   isKandidaatDocumentType,
   naarAdminDocument,
   type KandidaatDocumentRij,
@@ -86,6 +87,19 @@ export async function POST(request: NextRequest) {
   }
   if (!isKandidaatDocumentType(type)) {
     return NextResponse.json({ error: "Onbekend documenttype" }, { status: 400 });
+  }
+  // Juridisch advies 24-10-2026: geen nieuwe ID-kopieën bij kandidaten. Het ID wordt later in het
+  // medewerkerportaal gecontroleerd (Didit of videocall; bij een nationaliteit buiten de EER de
+  // Wav-upload). Een type corrigeren naar `id` (PATCH) mag wel: dan gaat het document niet mee naar
+  // het werknemersdossier en vindt de opschoontool het.
+  if (isIdDocumentType(type)) {
+    return NextResponse.json(
+      {
+        code: "id_niet_nodig",
+        error: "Een ID-bewijs van een kandidaat slaan we niet meer op. Het ID wordt later in het medewerkerportaal gecontroleerd, zonder kopie.",
+      },
+      { status: 400 },
+    );
   }
 
   const safeFilename = sanitizeFilename(file.name);

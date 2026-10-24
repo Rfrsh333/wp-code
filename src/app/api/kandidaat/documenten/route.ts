@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { isKandidaatUploadType } from "@/lib/kandidaat-documenten";
+import { isIdDocumentType, kandidaatUploadTypeFout, type KandidaatUploadType } from "@/lib/kandidaat-documenten";
 import { bepaalDocumentFormaat, valideerDocument } from "@/lib/medewerker/documenten";
 import { STAP_PER_STATUS } from "@/lib/onboarding-autopilot-regels";
 
@@ -84,15 +84,17 @@ export async function POST(request: NextRequest) {
     const token = formData.get("token") as string;
     const file = formData.get("file");
     // B6: de kandidaat kiest het type zelf (niet meer geraden uit de bestandsnaam). Alleen
-    // bekende types: de waarde komt ook in het opslagpad terecht.
+    // bekende types: de waarde komt ook in het opslagpad terecht. Een ID-bewijs wordt geweigerd
+    // (juridisch advies 24-10-2026: geen ID-kopie meer bij de inschrijving).
     const gevraagdType = formData.get("document_type") || formData.get("type");
-    if (!isKandidaatUploadType(gevraagdType)) {
-      return NextResponse.json({ error: "Kies eerst wat voor document je uploadt" }, { status: 400 });
+    const typeFout = kandidaatUploadTypeFout(gevraagdType);
+    if (typeFout) {
+      return NextResponse.json(
+        isIdDocumentType(gevraagdType) ? { code: "id_niet_nodig", error: typeFout } : { error: typeFout },
+        { status: 400 },
+      );
     }
-    const documentType = gevraagdType;
-    // Optionele vervaldatum (ID-bewijs); gaat later mee naar het medewerkeraccount.
-    const vervaldatumRuw = formData.get("vervaldatum");
-    const vervaldatum = typeof vervaldatumRuw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(vervaldatumRuw) ? vervaldatumRuw : null;
+    const documentType = gevraagdType as KandidaatUploadType;
 
     // Validate token
     if (!token) {
@@ -169,13 +171,7 @@ export async function POST(request: NextRequest) {
       status: "ontvangen",
       uploaded_at: new Date().toISOString(),
     };
-    let { error: dbError } = await supabaseAdmin
-      .from("kandidaat_documenten")
-      .insert(vervaldatum ? { ...rij, vervaldatum } : rij);
-    // Kolom vervaldatum bestaat pas na migratie 20261023_medewerker_checklist_reageren.
-    if (vervaldatum && (dbError?.code === "42703" || dbError?.code === "PGRST204")) {
-      ({ error: dbError } = await supabaseAdmin.from("kandidaat_documenten").insert(rij));
-    }
+    const { error: dbError } = await supabaseAdmin.from("kandidaat_documenten").insert(rij);
 
     if (dbError) {
       captureRouteError(dbError, { route: "/api/kandidaat/documenten", action: "POST" });

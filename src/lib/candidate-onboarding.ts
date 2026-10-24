@@ -4,6 +4,7 @@ import {
   applyCandidateEmailVars,
   candidateEmailCopy,
   getDocumentChecklist,
+  idLaterRegel,
 } from "@/content/candidateEmails";
 import type { AdminCandidateTemplateKey } from "@/content/adminCandidateEmailTemplates";
 import { adminCandidateEmailTemplates } from "@/content/adminCandidateEmailTemplates";
@@ -217,6 +218,7 @@ export async function sendDocumentenVerzoek(
       <p style="margin-top: 16px; font-size: 14px; color: #666;">
         💡 <strong>Tip:</strong> Maak gewoon een foto met je telefoon - hoeft niet super professioneel!
       </p>
+      <p style="font-size: 14px; color: #666;">${idLaterRegel}</p>
     </div>
 
     <p>${copy.bodyAfterCard}</p>
@@ -263,6 +265,8 @@ export async function sendDocumentenReminder(kandidaat: Kandidaat, portalToken?:
     <p>${copy.intro}</p>
 
     ${renderCard(copy.cardTitle, getDocumentChecklist(isZZP))}
+
+    <p style="font-size: 14px; color: #666;">${idLaterRegel}</p>
 
     <p>${copy.bodyAfterCard}</p>
 

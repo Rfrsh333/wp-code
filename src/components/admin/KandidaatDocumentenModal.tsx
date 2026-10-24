@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { kandidaatDocumentLabel, verplichteKandidaatDocumenten } from "@/lib/kandidaat-documenten";
 
 interface KandidaatDocument {
   id: string;
@@ -164,11 +165,14 @@ export default function KandidaatDocumentenModal({
     }
   };
 
-  const requiredDocs = [
-    { type: "id", label: "Identiteitsbewijs", icon: "📸" },
-    { type: "cv", label: "CV", icon: "📝" },
-    ...(uitbetalingswijze === "zzp" ? [{ type: "kvk", label: "KVK Uittreksel", icon: "🏢" }] : []),
-  ];
+  // Zelfde lijst als de server bij het goedkeuren hanteert (lib/kandidaat-documenten). Geen ID-bewijs
+  // meer: dat wordt later in het medewerkerportaal gecontroleerd, zonder kopie (juridisch advies 24-10-2026).
+  const ICONEN: Record<string, string> = { cv: "📝", kvk: "🏢" };
+  const requiredDocs = verplichteKandidaatDocumenten(uitbetalingswijze).map((type) => ({
+    type,
+    label: kandidaatDocumentLabel(type),
+    icon: ICONEN[type] ?? "📄",
+  }));
 
   const getStatusColor = (status: string) => {
     switch (status) {

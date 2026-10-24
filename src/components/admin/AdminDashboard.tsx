@@ -15,7 +15,7 @@ import DashboardOverzicht from "@/components/admin/dashboard/DashboardOverzicht"
 import { BriefcaseBusiness, Inbox, Users } from "lucide-react";
 import { isAdminTab } from "@/lib/navigation/sidebar-config";
 import type { AdminTab } from "@/lib/navigation/sidebar-types";
-import { KANDIDAAT_DOCUMENT_TYPES } from "@/lib/kandidaat-documenten";
+import { KANDIDAAT_DOCUMENT_TYPES, KANDIDAAT_NIEUWE_DOCUMENT_TYPES } from "@/lib/kandidaat-documenten";
 
 const TabSkeleton = () => (
   <div className="space-y-4 animate-pulse">
@@ -284,8 +284,11 @@ const onboardingChecklistItems: { key: ChecklistKey; label: string }[] = [
   { key: "klaar_voor_inzet", label: "Klaar voor inzet" },
 ];
 
-// Zelfde lijst als de server controleert (lib/kandidaat-documenten), incl. "overig" (B6).
+// Zelfde lijst als de server controleert (lib/kandidaat-documenten), incl. "overig" (B6). Corrigeren
+// kan naar elk type (ook "id", zodat een verkeerd gelabelde ID-kopie niet meegaat en de opschoontool
+// hem vindt); nieuw uploaden niet als ID-bewijs (juridisch advies 24-10-2026, geen ID-kopie meer).
 const kandidaatDocumentTypeOptions = KANDIDAAT_DOCUMENT_TYPES;
+const kandidaatUploadTypeOptions = KANDIDAAT_NIEUWE_DOCUMENT_TYPES;
 
 const kandidaatDocumentStatusLabels: Record<KandidaatDocumentStatus, string> = {
   ontvangen: "Ontvangen",
@@ -369,7 +372,7 @@ export default function AdminDashboard() {
   const [inschrijvingNotitieDraft, setInschrijvingNotitieDraft] = useState("");
   const [kandidaatDocumenten, setKandidaatDocumenten] = useState<KandidaatDocument[]>([]);
   const [documentenLoading, setDocumentenLoading] = useState(false);
-  const [documentTypeDraft, setDocumentTypeDraft] = useState("id");
+  const [documentTypeDraft, setDocumentTypeDraft] = useState("cv");
   const [activatiemailBezig, setActivatiemailBezig] = useState(false);
   const [documentNotitieDraft, setDocumentNotitieDraft] = useState("");
   const [documentFileDraft, setDocumentFileDraft] = useState<File | null>(null);
@@ -615,7 +618,7 @@ export default function AdminDashboard() {
 
       setDocumentFileDraft(null);
       setDocumentNotitieDraft("");
-      setDocumentTypeDraft("id");
+      setDocumentTypeDraft("cv");
       await fetchKandidaatDocumenten(inschrijving.id);
     } finally {
       setDocumentUploading(false);
@@ -655,7 +658,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (detailType === "inschrijvingen" && selectedItem) {
-      setDocumentTypeDraft("id");
+      setDocumentTypeDraft("cv");
       setDocumentNotitieDraft("");
       setDocumentFileDraft(null);
       void fetchKandidaatDocumenten(selectedItem.id);
@@ -2135,7 +2138,7 @@ export default function AdminDashboard() {
                         onChange={(e) => setDocumentTypeDraft(e.target.value)}
                         className="px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]"
                       >
-                        {kandidaatDocumentTypeOptions.map((option) => (
+                        {kandidaatUploadTypeOptions.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
