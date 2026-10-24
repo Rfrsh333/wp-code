@@ -51,6 +51,25 @@ function getSupabaseAdminClient(): SupabaseClient {
   return _supabaseAdmin;
 }
 
+/**
+ * Losse client voor auth-aanroepen die een sessie zetten (signInWithPassword). Nooit de gedeelde
+ * supabaseAdmin daarvoor gebruiken: supabase-js stuurt na een login het token van die gebruiker mee
+ * met elke volgende query, dus alle routes op dezelfde serverinstantie draaien dan als
+ * `authenticated` (RLS) in plaats van service role. Per aanroep een nieuwe client, niets gecachet.
+ */
+export function maakAuthClient(): SupabaseClient {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) {
+    throw new Error("[SECURITY] SUPABASE_SERVICE_ROLE_KEY is required for the auth client.");
+  }
+  return createClient(getSupabaseUrl(), serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
 function createServerOnlyStub(prop: PropertyKey) {
   return () => {
     throw new Error(

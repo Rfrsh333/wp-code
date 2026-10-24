@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRedisRateLimit, getClientIP, loginRateLimit } from "@/lib/rate-limit-redis";
 import { isAdminEmail } from "@/lib/admin-auth";
-import { supabaseAdmin } from "@/lib/supabase";
+import { maakAuthClient, supabaseAdmin } from "@/lib/supabase";
 import { verifyTOTP, verifyBackupCode } from "@/lib/two-factor";
 import { loginSchema, formatZodErrors } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry-utils";
@@ -37,9 +37,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
     }
 
-    // Gebruik supabaseAdmin (service role key) voor login verificatie
-    // omdat NEXT_PUBLIC_SUPABASE_ANON_KEY op Vercel onbetrouwbaar kan zijn
-    const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+    // Losse auth-client per poging (service role key, want NEXT_PUBLIC_SUPABASE_ANON_KEY kan op Vercel
+    // onbetrouwbaar zijn). Niet supabaseAdmin: die zou na de login als deze gebruiker draaien.
+    const authClient = maakAuthClient();
+    const { data, error } = await authClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       console.warn(`[ADMIN LOGIN] Unauthorized access attempt by non-admin: ${email} from IP: ${clientIP}`);
 
       // Sign out de gebruiker direct
-      await supabaseAdmin.auth.signOut();
+      await authClient.auth.signOut();
 
       return NextResponse.json(
         { error: "Geen toegang. Alleen administrators kunnen inloggen." },
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       console.log(`[ADMIN LOGIN] 2FA required for ${email}`);
 
       // Sign out voor nu (front-end moet opnieuw posten met 2FA code)
-      await supabaseAdmin.auth.signOut();
+      await authClient.auth.signOut();
 
       return NextResponse.json({
         success: false,
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       if (isBackupCode) {
         // Verifieer backup code
         if (!twoFactorData.backup_codes || twoFactorData.backup_codes.length === 0) {
-          await supabaseAdmin.auth.signOut();
+          await authClient.auth.signOut();
           return NextResponse.json(
             { error: "Geen backup codes beschikbaar" },
             { status: 400 }
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
 
       if (!isValid) {
         console.warn(`[ADMIN LOGIN] Invalid 2FA code for ${email}`);
-        await supabaseAdmin.auth.signOut();
+        await authClient.auth.signOut();
         return NextResponse.json(
           { error: "Ongeldige 2FA code" },
           { status: 401 }
