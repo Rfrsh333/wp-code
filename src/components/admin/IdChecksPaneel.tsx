@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { documentsoortLabel, landNaam } from "@/lib/id-check/controlerecord";
+import IdControleFormulier from "./IdControleFormulier";
 
 /**
  * Admin → Medewerkers: ID-checks die een mens moet beoordelen (Didit-uitslag die niet automatisch
  * goed kon, of een videocall-verzoek). Goedkeuren/afwijzen door een mens, met reden; alles komt in
  * de audit-log. Leest GET /api/admin/medewerkers/id-checks; staat de functie uit en is er niets open,
- * dan toont het paneel niets.
+ * dan toont het paneel niets. Een videocall-verzoek handelt de admin af met IdControleFormulier
+ * (controlerecord volgens het juridisch advies).
  */
 
 type Item = {
@@ -15,6 +18,11 @@ type Item = {
   medewerker_id: string;
   naam: string | null;
   email: string | null;
+  geboortedatum: string | null;
+  naam_op_document: string | null;
+  nationaliteit: string | null;
+  /** Alleen bij een nationaliteit buiten de EER: heeft de werknemer al een ID-kopie geüpload? */
+  kopie_aanwezig: boolean | null;
   methode: "didit" | "videocall";
   status: "handmatig" | "videocall_gevraagd";
   didit_status: string | null;
@@ -73,17 +81,10 @@ function IdCheckRegel({ item, onKlaar }: { item: Item; onKlaar: (melding: string
       setFout("Vul de vervaldatum van het ID in");
       return;
     }
-    if (isVideocall) {
-      void verstuur(
-        { action: "id_videocall", id: item.medewerker_id, data: { vervaldatum, opmerking: reden || undefined } },
-        `ID van ${item.naam ?? "medewerker"} goedgekeurd (videocall).`,
-      );
-    } else {
-      void verstuur(
-        { action: "beoordeel_id_check", data: { verificatie_id: item.id, besluit: "goedgekeurd", vervaldatum, reden: reden || undefined } },
-        `ID van ${item.naam ?? "medewerker"} goedgekeurd.`,
-      );
-    }
+    void verstuur(
+      { action: "beoordeel_id_check", data: { verificatie_id: item.id, besluit: "goedgekeurd", vervaldatum, reden: reden || undefined } },
+      `ID van ${item.naam ?? "medewerker"} goedgekeurd.`,
+    );
   };
 
   const afwijzen = () => {
@@ -124,64 +125,87 @@ function IdCheckRegel({ item, onKlaar }: { item: Item; onKlaar: (melding: string
             </div>
           )}
           <p className="mt-2 text-xs text-neutral-500">
-            {item.documentsoort ?? "Documentsoort onbekend"} · uitgegeven door {item.uitgifteland ?? "?"} · EER/Zwitserland:{" "}
-            {janee(item.eer)} · naam klopt: {janee(item.naam_komt_overeen)}
+            {documentsoortLabel(item.documentsoort)} · uitgegeven door {item.uitgifteland ?? "?"} · nationaliteit:{" "}
+            {item.nationaliteit ? landNaam(item.nationaliteit) : "?"} · EER/Zwitserland: {janee(item.eer)} · naam klopt:{" "}
+            {janee(item.naam_komt_overeen)}
+            {item.naam_op_document ? ` (op het document: ${item.naam_op_document})` : ""}
             {item.didit_sessienummer ? ` · Didit-sessie #${item.didit_sessienummer}` : ""}
           </p>
           <p className="mt-1 text-xs text-neutral-500">
-            Bekijk de details in de Didit-console. Na je besluit wordt de sessie (met beelden) bij Didit verwijderd.
-            Bij een nationaliteit buiten de EER: controleer ook of de medewerker als zzp&apos;er mag werken.
+            {item.methode === "didit"
+              ? "Bekijk de details in de Didit-console. Na je besluit wordt de sessie (met beelden) bij Didit verwijderd."
+              : "Gecontroleerd in een videocall."}
           </p>
+          {item.eer === false && (
+            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Nationaliteit buiten de EER/Zwitserland: de horecazaak moet een kopie van het ID krijgen (Wav art. 15). De werknemer
+              kan zijn ID daarom bij Documenten uploaden.{" "}
+              {item.kopie_aanwezig
+                ? "Er is een kopie geüpload: beoordeel die bij de medewerker onder Documenten."
+                : "Er is nog geen kopie geüpload."}{" "}
+              Controleer ook of de werknemer als zzp&apos;er mag werken.
+            </p>
+          )}
         </>
       )}
-      {isVideocall && (
-        <p className="mt-2 text-xs text-neutral-500">
-          Spreek een videocall af (zie Berichten). Bekijk het ID in beeld, maak geen foto of schermafbeelding, en vul daarna de
-          vervaldatum in.
-        </p>
-      )}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr]">
-        <label className="block">
-          <span className="block text-xs font-semibold text-neutral-500 mb-1">Vervaldatum ID</span>
-          <input
-            type="date"
-            value={vervaldatum}
-            onChange={(e) => setVervaldatum(e.target.value)}
-            disabled={bezig}
-            className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm"
+      {isVideocall ? (
+        <div className="mt-3">
+          <p className="mb-3 text-xs text-neutral-500">
+            Spreek een videocall af (zie Berichten). Bekijk het ID in beeld en leg daarna het controlerecord vast.
+          </p>
+          <IdControleFormulier
+            medewerkerId={item.medewerker_id}
+            profielNaam={item.naam}
+            profielGeboortedatum={item.geboortedatum}
+            onKlaar={onKlaar}
           />
-        </label>
-        <label className="block">
-          <span className="block text-xs font-semibold text-neutral-500 mb-1">Reden / opmerking (verplicht bij afwijzen)</span>
-          <input
-            type="text"
-            value={reden}
-            onChange={(e) => setReden(e.target.value)}
-            maxLength={2000}
-            disabled={bezig}
-            placeholder={isVideocall ? "Bijv. ID gezien in videocall op 24-10" : "Bijv. naam komt overeen, roepnaam"}
-            className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm"
-          />
-        </label>
-      </div>
-      {fout && <p className="mt-2 text-sm text-red-600">{fout}</p>}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          onClick={goedkeuren}
-          disabled={bezig}
-          className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50"
-        >
-          {isVideocall ? "ID gecontroleerd via videocall" : "Goedkeuren"}
-        </button>
-        <button
-          onClick={afwijzen}
-          disabled={bezig}
-          className="px-4 py-2 rounded-lg bg-white border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50"
-        >
-          Afwijzen
-        </button>
-      </div>
+        </div>
+      ) : (
+        <>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[180px_1fr]">
+            <label className="block">
+              <span className="block text-xs font-semibold text-neutral-500 mb-1">Vervaldatum ID</span>
+              <input
+                type="date"
+                value={vervaldatum}
+                onChange={(e) => setVervaldatum(e.target.value)}
+                disabled={bezig}
+                className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="block text-xs font-semibold text-neutral-500 mb-1">Reden / opmerking (verplicht bij afwijzen)</span>
+              <input
+                type="text"
+                value={reden}
+                onChange={(e) => setReden(e.target.value)}
+                maxLength={2000}
+                disabled={bezig}
+                placeholder="Bijv. naam komt overeen, roepnaam"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm"
+              />
+            </label>
+          </div>
+          {fout && <p className="mt-2 text-sm text-red-600">{fout}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={goedkeuren}
+              disabled={bezig}
+              className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+            >
+              Goedkeuren
+            </button>
+            <button
+              onClick={afwijzen}
+              disabled={bezig}
+              className="px-4 py-2 rounded-lg bg-white border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+            >
+              Afwijzen
+            </button>
+          </div>
+        </>
+      )}
     </li>
   );
 }

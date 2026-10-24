@@ -66,7 +66,10 @@ interface MedewerkerDetail {
     file_size: number | null;
     uploaded_at: string;
     expiry_date?: string | null;
-    /** null = geüpload bestand; didit/videocall = gecontroleerd zonder kopie. */
+    /**
+     * null = geüpload bestand; didit/videocall = gecontroleerd zonder kopie; kopie_verwijderd = oude
+     * kopie opgeschoond; kopie_wav = kopie bewust bewaard (buiten de EER, Wav).
+     */
     verificatie_methode?: string | null;
   }[];
   /** ID-controle via Didit aan (ID_CHECK_DIDIT_ACTIEF + sleutels). */
@@ -596,7 +599,14 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
 
       {activeTab === "documenten" && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          {data.id_check?.actief && <IdVideocallActie medewerkerId={medewerkerId} onKlaar={() => void fetchDetail()} />}
+          {data.id_check?.actief && (
+            <IdVideocallActie
+              medewerkerId={medewerkerId}
+              naam={data.profiel.naam}
+              geboortedatum={data.profiel.geboortedatum}
+              onKlaar={() => void fetchDetail()}
+            />
+          )}
           <div className="divide-y divide-neutral-100">
             {documenten.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between px-6 py-4 hover:bg-neutral-50">
@@ -636,7 +646,13 @@ export default function MedewerkerDetailView({ medewerkerId, onBack }: Props) {
                   </a>
                 ) : doc.verificatie_methode ? (
                   <span className="text-sm text-neutral-500" title="Gecontroleerd zonder kopie van het ID">
-                    Geen kopie ({doc.verificatie_methode === "didit" ? "Didit" : "videocall"})
+                    Geen kopie (
+                    {doc.verificatie_methode === "didit"
+                      ? "Didit"
+                      : doc.verificatie_methode === "videocall"
+                        ? "videocall"
+                        : "kopie verwijderd bij opschonen"}
+                    )
                   </span>
                 ) : (
                   <span className="text-sm text-neutral-400" title="Bestand niet gevonden in de opslag">

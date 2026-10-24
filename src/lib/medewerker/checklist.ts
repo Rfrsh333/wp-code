@@ -17,6 +17,7 @@ import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
 import { isAkkoordMogelijk } from "@/lib/uitbetaling/config";
 import { isDiditActiefVoor } from "@/lib/id-check/config";
 import { haalLaatsteIdCheck, IdCheckMigratieOntbreekt } from "@/lib/id-check/db";
+import { kopieNodig } from "@/lib/id-check/controlerecord";
 
 /**
  * DB-kant van de checklist vóór reageren (B1); de regels staan in lib/medewerker/reageer-checklist.
@@ -66,7 +67,8 @@ async function idCheckOptie(medewerkerId: string, documenten: readonly Checklist
   if (!isDiditActiefVoor(demo)) return undefined;
   if (heeftGeldigId(documenten, vandaag)) return { status: "goedgekeurd" };
   try {
-    return { status: (await haalLaatsteIdCheck(medewerkerId))?.status ?? null };
+    const laatste = await haalLaatsteIdCheck(medewerkerId);
+    return { status: laatste?.status ?? null, kopieNodig: kopieNodig(laatste) };
   } catch (fout) {
     if (!(fout instanceof IdCheckMigratieOntbreekt)) {
       captureRouteError(fout, { route: "lib/medewerker/checklist", action: "ID_CHECK" });

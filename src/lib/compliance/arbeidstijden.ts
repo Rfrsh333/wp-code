@@ -306,11 +306,32 @@ export function isIDBewilsVerlopen(verloopdatum: string | null): boolean {
 }
 
 // ============================================================================
-// C-18: ID-retentiebeleid (5 jaar na uitdienst)
+// C-18: Bewaartermijnen
 // ============================================================================
 
+/**
+ * Algemene termijn voor overige documenten van een uit-dienst medewerker: 5 jaar na de
+ * uitdienstdatum. NIET voor ID-gegevens: daarvoor geldt berekenWavBewaarTot.
+ */
 export function berekenBewaarTot(datumUitDienst: string): string {
   const datum = new Date(datumUitDienst);
   datum.setFullYear(datum.getFullYear() + 5);
   return datum.toISOString().split("T")[0];
+}
+
+/**
+ * Bewaartermijn voor ID-gegevens volgens de Wav (juridisch advies, 24-10-2026): tot 5 jaar na het
+ * einde van het kalenderjaar waarin het werk stopte, dus tot en met 31-12 van (jaar + 5). Geldt voor
+ * het controlerecord (`id_verificaties`) en voor een bewaarde ID-kopie van een niet-EER-werknemer.
+ *
+ * `referentiedatum` is de datum van de laatste dienst; zonder diensten de datum van de beslissing
+ * (of upload). YYYY-MM-DD in Nederlandse tijd; het jaar komt uit de string zelf, zodat de
+ * tijdzone van de server rond de jaarwisseling niets uitmaakt.
+ */
+export function berekenWavBewaarTot(referentiedatum: string): string {
+  const jaar = Number(referentiedatum.slice(0, 4));
+  if (!/^\d{4}-\d{2}-\d{2}/.test(referentiedatum) || !Number.isInteger(jaar)) {
+    throw new Error("Ongeldige datum voor de bewaartermijn");
+  }
+  return `${jaar + 5}-12-31`;
 }

@@ -11,13 +11,16 @@ import { isDiditActiefVoorMedewerker } from "@/lib/id-check/actief";
 import { DiditFout, maakDiditSessie } from "@/lib/id-check/didit-api";
 import { haalLaatsteIdCheck, IdCheckMigratieOntbreekt, slaSessieOp } from "@/lib/id-check/db";
 import { kiesCallback } from "@/lib/id-check/regels";
+import { kopieNodig } from "@/lib/id-check/controlerecord";
 
 /**
  * ID-controle via Didit voor de ingelogde medewerker (webportaal: cookie; app: Bearer).
  *
- * GET  → 200 { actief: true, id_ok, status, methode, reden, vervaldatum, bijgewerkt_op }
+ * GET  → 200 { actief: true, id_ok, status, methode, reden, vervaldatum, kopie_nodig, bijgewerkt_op }
  *        status ∈ null | gestart | bezig | handmatig | videocall_gevraagd | goedgekeurd | afgewezen | verlopen
  *        reden alleen bij afgewezen (tekst van de admin).
+ *        kopie_nodig: nationaliteit buiten de EER/Zwitserland (Wav art. 15): de werknemer mag en moet
+ *        dan een kopie van zijn ID uploaden bij Documenten (POST /api/medewerker/documenten).
  *        404 { actief: false } als de functie uit staat (ID_CHECK_DIDIT_ACTIEF of sleutels ontbreken).
  * POST { callback?: "toptalent://…" }
  *      → 200 { url, status }: open `url` (hosted Didit-flow; op een computer toont Didit een QR-code
@@ -50,6 +53,7 @@ export async function GET(request: NextRequest) {
         methode: rij?.methode ?? null,
         reden: rij?.status === "afgewezen" ? (rij.reden ?? null) : null,
         vervaldatum: rij?.status === "goedgekeurd" ? (rij.vervaldatum ?? null) : null,
+        kopie_nodig: kopieNodig(rij),
         bijgewerkt_op: rij?.bijgewerkt_op ?? null,
       },
       { headers: { "Cache-Control": "private, no-store" } },

@@ -12,6 +12,10 @@ import { toast } from "sonner";
  * "Controleer je ID" opent de Didit-flow (op een computer toont Didit zelf een QR-code voor de
  * telefoon). Didit stuurt daarna terug naar /medewerker/documenten/?verificationSessionId=…&status=…;
  * dan tonen we "We controleren je ID" en kijken we een minuut lang of de uitslag er is.
+ *
+ * `kopie_nodig` (nationaliteit buiten de EER/Zwitserland, Wav art. 15): dan vraagt de kaart om een
+ * kopie van het ID en meldt hij `onActief(true, { kopieNodig: true })`, zodat de documentenpagina
+ * het ID-bewijs weer als uploadtype toont.
  */
 
 type IdCheck = {
@@ -21,6 +25,7 @@ type IdCheck = {
   methode: string | null;
   reden: string | null;
   vervaldatum: string | null;
+  kopie_nodig?: boolean;
 };
 
 const POLL_MS = 4000;
@@ -30,7 +35,11 @@ function datumNl(datum: string): string {
   return new Date(`${datum}T12:00:00`).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export default function IdCheckKaart({ onActief }: { onActief?: (actief: boolean) => void }) {
+export default function IdCheckKaart({
+  onActief,
+}: {
+  onActief?: (actief: boolean, opties?: { kopieNodig: boolean }) => void;
+}) {
   const [check, setCheck] = useState<IdCheck | null>(null);
   // Didit stuurt na afloop terug met ?verificationSessionId=…&status=…. De kaart rendert pas iets na
   // het ophalen van de status, dus dit verschil tussen server en browser geeft geen hydration-fout.
@@ -53,7 +62,7 @@ export default function IdCheckKaart({ onActief }: { onActief?: (actief: boolean
       }
       const data = (await res.json()) as IdCheck;
       setCheck(data);
-      onActiefRef.current?.(!!data.actief);
+      onActiefRef.current?.(!!data.actief, { kopieNodig: !!data.kopie_nodig && !data.id_ok });
       return data;
     } catch {
       return null;
@@ -139,6 +148,22 @@ export default function IdCheckKaart({ onActief }: { onActief?: (actief: boolean
           <h2 className="font-semibold text-[var(--mp-text-primary)]">Je ID is gecontroleerd</h2>
           <p className="text-sm text-[var(--mp-text-secondary)] mt-0.5">
             {check.vervaldatum ? `Geldig tot ${datumNl(check.vervaldatum)}. ` : ""}TopTalent bewaart geen kopie van je ID.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (check.kopie_nodig) {
+    return (
+      <div className={`${kaart} flex items-start gap-3`}>
+        <ShieldCheck className="w-6 h-6 text-[var(--mp-accent)] flex-shrink-0" />
+        <div>
+          <h2 className="font-semibold text-[var(--mp-text-primary)]">Upload een kopie van je ID</h2>
+          <p className="text-sm text-[var(--mp-text-secondary)] mt-0.5">
+            Je nationaliteit valt buiten de EU/EER en Zwitserland. Dan moet de opdrachtgever een kopie van je paspoort of
+            ID-bewijs krijgen (Wet arbeid vreemdelingen). Upload hieronder je ID-bewijs; heb je een verblijfs- of
+            werkvergunning, upload die dan ook.
           </p>
         </div>
       </div>

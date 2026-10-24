@@ -4,6 +4,8 @@ import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { isDiditActiefVoorMedewerker } from "@/lib/id-check/actief";
+import { bewaarTotVoorMedewerker, haalLaatsteIdCheck } from "@/lib/id-check/db";
+import { kopieNodig } from "@/lib/id-check/controlerecord";
 import {
   bepaalDocumentFormaat,
   isDocumentType,
@@ -73,12 +75,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Kies een geldig documenttype" }, { status: 400 });
     }
     // Met de ID-controle via Didit aan bewaren we geen kopie van het ID meer (AP: geen ID-kopie van
-    // zzp'ers). Het ID gaat dan via POST /api/medewerker/id-check.
+    // zzp'ers). Het ID gaat dan via POST /api/medewerker/id-check. Uitzondering (Wav art. 15): is de
+    // nationaliteit volgens de nieuwste controle buiten de EER/Zwitserland, dan moet de horecazaak een
+    // kopie krijgen en mag de werknemer zijn ID wél uploaden. Die kopie krijgt de Wav-termijn.
+    let wavKopie = false;
     if (documentType === "id_bewijs" && (await isDiditActiefVoorMedewerker(medewerker.id))) {
-      return NextResponse.json(
-        { code: "id_check_didit", error: "Een ID-bewijs uploaden kan niet meer. Gebruik 'Controleer je ID' bij Documenten." },
-        { status: 400 },
-      );
+      const laatste = await haalLaatsteIdCheck(medewerker.id).catch(() => null);
+      if (!kopieNodig(laatste)) {
+        return NextResponse.json(
+          { code: "id_check_didit", error: "Een ID-bewijs uploaden kan niet meer. Gebruik 'Controleer je ID' bij Documenten." },
+          { status: 400 },
+        );
+      }
+      wavKopie = true;
     }
     const fout = valideerDocument(file);
     if (fout) return NextResponse.json({ error: fout }, { status: 400 });
@@ -114,9 +123,16 @@ export async function POST(request: NextRequest) {
     // file_url was NOT NULL in de oorspronkelijke tabel (supabase-migration-portaal-redesign.sql);
     // de bucket is privé, dus een vaste URL heeft geen zin. Migratie 20261001_medewerker_portaal
     // maakt de kolom nullable; tot die gedraaid is valt de insert terug op het opslagpad.
-    let { error: dbError } = await supabaseAdmin.from("medewerker_documenten").insert(rij);
+    // Wav-kopie (niet-EER): gemarkeerd als bewust bewaard, met bewaar_tot = 31-12 van (jaar laatste
+    // dienst + 5). Vóór migratie 20261024_id_controlerecord_wav weigert de check-constraint
+    // 'kopie_wav' (23514); dan zonder markering, de retentie-cron zet de termijn alsnog.
+    const wav = wavKopie ? { verificatie_methode: "kopie_wav", bewaar_tot: await bewaarTotVoorMedewerker(medewerker.id) } : {};
+    let { error: dbError } = await supabaseAdmin.from("medewerker_documenten").insert({ ...rij, ...wav });
+    if (dbError?.code === "23514" && wavKopie) {
+      ({ error: dbError } = await supabaseAdmin.from("medewerker_documenten").insert(rij));
+    }
     if (dbError?.code === "23502") {
-      ({ error: dbError } = await supabaseAdmin.from("medewerker_documenten").insert({ ...rij, file_url: filePath }));
+      ({ error: dbError } = await supabaseAdmin.from("medewerker_documenten").insert({ ...rij, ...wav, file_url: filePath }));
     }
 
     if (dbError) {

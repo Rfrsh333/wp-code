@@ -164,9 +164,13 @@ test.describe("Didit-uitslag: beslisregels (nooit automatisch afwijzen)", () => 
     expect(b.velden).toEqual({
       vervaldatum: "2031-05-11",
       documentsoort: "Passport",
+      documentnummer: null,
       uitgifteland: "NLD",
+      nationaliteit: "NLD",
       eer: true,
       naam_komt_overeen: true,
+      naam: "Jan Pieter van der Berg",
+      geboortedatum: null,
     });
     // Ook een Belgische ID-kaart, en een Zwitser.
     expect(beoordeel("Approved", { ...NL_PASPOORT, document_type: "Identity Card", nationality: "BEL", issuing_state: "BEL" }).status).toBe(
@@ -283,8 +287,8 @@ test.describe("naam vergelijken: tolerant voor hoofdletters, accenten en tussenv
   });
 });
 
-test.describe("privacy: een persoonsnummer/BSN uit de payload komt nergens in de opgeslagen rijen", () => {
-  test("alleen de velden uit de witte lijst gaan de database in", () => {
+test.describe("privacy: controlerecord wel, persoonsnummer/BSN nergens in de opgeslagen rijen", () => {
+  test("alleen de velden uit de witte lijst gaan de database in (juridisch advies: record met naam, geboortedatum, nationaliteit en documentnummer)", () => {
     const BSN = "123456782";
     const beslissing = {
       session_id: "11111111-2222-3333-4444-555555555555",
@@ -316,14 +320,33 @@ test.describe("privacy: een persoonsnummer/BSN uit de payload komt nergens in de
 
     const id = idVerificatieUitBeslissing(beslissing);
     expect(Object.keys(id ?? {}).sort()).toEqual(
-      ["document_type", "expiration_date", "first_name", "issuing_state", "last_name", "nationality", "status"].sort(),
+      [
+        "date_of_birth",
+        "document_number",
+        "document_type",
+        "expiration_date",
+        "first_name",
+        "full_name",
+        "issuing_state",
+        "last_name",
+        "nationality",
+        "status",
+      ].sort(),
     );
+    // Documentnummer en persoonsnummer zijn aparte Didit-velden: het documentnummer, nooit het BSN.
+    expect(id?.document_number).toBe("IXK1234567");
 
     const beoordeling = beoordeelDiditUitslag({ diditStatus: "Approved", id, medewerkerNaam: "Jan van der Berg", vandaag });
     expect(beoordeling.status).toBe("goedgekeurd");
 
     const nu = "2026-10-24T10:00:00.000Z";
-    const verificatieRij = verificatieUpdateNaBeoordeling({ beoordeling, diditStatus: "Approved", eventId: "evt-1", nu });
+    const verificatieRij = verificatieUpdateNaBeoordeling({
+      beoordeling,
+      diditStatus: "Approved",
+      eventId: "evt-1",
+      nu,
+      bewaarTot: "2031-12-31",
+    });
     const documentRij = idBewijsRijZonderBestand({
       medewerkerId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
       vervaldatum: beoordeling.velden.vervaldatum,
@@ -333,19 +356,28 @@ test.describe("privacy: een persoonsnummer/BSN uit de payload komt nergens in de
     });
 
     const opgeslagen = JSON.stringify([verificatieRij, documentRij]);
-    for (const verboden of [BSN, "IXK1234567", "1990-05-12", "Kerkstraat", "Utrecht", "Pieter", "Berg", "portrait", "media.example", "personal_number"]) {
+    for (const verboden of [BSN, "Kerkstraat", "Utrecht", "portrait", "front_image", "media.example", "personal_number", "mrz", "gender", "2021-05-11"]) {
       expect(opgeslagen).not.toContain(verboden);
     }
-    // Wat er wel in staat.
+    // Het controlerecord (juridisch advies) + documentnummer (besluit Rachid) staat er wel in.
     expect(verificatieRij).toMatchObject({
       status: "goedgekeurd",
       beslissing: "goedgekeurd",
       vervaldatum: "2031-05-11",
       documentsoort: "Identity Card",
+      documentnummer: "IXK1234567",
       uitgifteland: "NLD",
+      nationaliteit: "NLD",
       eer: true,
       naam_komt_overeen: true,
+      naam: "Jan Pieter van der Berg",
+      geboortedatum: "1990-05-12",
+      bewaar_tot: "2031-12-31",
     });
+    // Het documentregel zonder bestand heeft geen persoonsgegevens.
+    for (const persoonlijk of ["IXK1234567", "1990-05-12", "Pieter"]) {
+      expect(JSON.stringify(documentRij)).not.toContain(persoonlijk);
+    }
     expect(documentRij).toMatchObject({
       document_type: "id_bewijs",
       review_status: "goedgekeurd",
@@ -353,6 +385,40 @@ test.describe("privacy: een persoonsnummer/BSN uit de payload komt nergens in de
       file_path: null,
       verificatie_methode: "didit",
     });
+  });
+});
+
+test.describe("documentnummer: nooit het persoonsnummer/BSN", () => {
+  const basis = {
+    status: "Approved",
+    document_type: "Identity Card",
+    expiration_date: "2031-05-11",
+    issuing_state: "NLD",
+    nationality: "NLD",
+    first_name: "Jan",
+    last_name: "Berg",
+  };
+
+  test("documentnummer gelijk aan het persoonsnummer → niet opgeslagen", () => {
+    const id = idVerificatieUitBeslissing({ id_verifications: [{ ...basis, document_number: "123456782", personal_number: "123456782" }] });
+    expect(id?.document_number).toBeNull();
+  });
+
+  test("Nederlands document met een documentnummer van alleen cijfers (BSN) → niet opgeslagen", () => {
+    const id = idVerificatieUitBeslissing({ id_verifications: [{ ...basis, document_number: "123456782" }] });
+    expect(id?.document_number).toBeNull();
+    // Buitenlands document met alleen cijfers (bijv. een Amerikaans paspoort) mag wel.
+    const usa = idVerificatieUitBeslissing({
+      id_verifications: [{ ...basis, issuing_state: "USA", nationality: "USA", document_number: "567891234", personal_number: "X1" }],
+    });
+    expect(usa?.document_number).toBe("567891234");
+  });
+
+  test("spaties en '<' uit de MRZ verdwijnen; onzin wordt null", () => {
+    expect(idVerificatieUitBeslissing({ id_verifications: [{ ...basis, document_number: "ixk 12345 67<" }] })?.document_number).toBe(
+      "IXK1234567",
+    );
+    expect(idVerificatieUitBeslissing({ id_verifications: [{ ...basis, document_number: "??" }] })?.document_number).toBeNull();
   });
 });
 
