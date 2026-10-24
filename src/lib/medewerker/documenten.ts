@@ -84,6 +84,8 @@ export interface MedewerkerDocument {
   review_status: string | null;
   /** Kortlevende signed URL (privé bucket); null als die niet kon worden gemaakt. */
   url: string | null;
+  /** false = goedgekeurde Wav-kopie van het ID: die bewaart TopTalent, de werknemer kan hem niet verwijderen. */
+  verwijderbaar?: boolean;
 }
 
 /** Privé opslagbucket van medewerkerdocumenten. */

@@ -138,8 +138,8 @@ function IdCheckRegel({ item, onKlaar }: { item: Item; onKlaar: (melding: string
           </p>
           {item.eer === false && (
             <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Nationaliteit buiten de EER/Zwitserland: de horecazaak moet een kopie van het ID krijgen (Wav art. 15). De werknemer
-              kan zijn ID daarom bij Documenten uploaden.{" "}
+              Nationaliteit buiten de EER/Zwitserland: de Wav (art. 15) vraagt een kopie van het ID. De werknemer uploadt die
+              bij Documenten. TopTalent bewaart de kopie zelf, beveiligd; horecazaken krijgen hem niet.{" "}
               {item.kopie_aanwezig
                 ? "Er is een kopie geüpload: beoordeel die bij de medewerker onder Documenten."
                 : "Er is nog geen kopie geüpload."}{" "}

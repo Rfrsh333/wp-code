@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { withCronMonitor } from "@/lib/sentry-utils";
 import { logAuditEvent } from "@/lib/audit-log";
 import { berekenBewaarTot } from "@/lib/compliance/arbeidstijden";
-import { ruimIdControlerecordsOp, werkIdBewaartermijnenBij } from "@/lib/id-check/bewaartermijn";
+import { ruimIdControlerecordsOp, ruimWavKopieenOp, werkIdBewaartermijnenBij } from "@/lib/id-check/bewaartermijn";
 
 /**
  * Retentie-cron (AVG art. 5 lid 1 sub e — opslagbeperking).
@@ -16,7 +16,9 @@ import { ruimIdControlerecordsOp, werkIdBewaartermijnenBij } from "@/lib/id-chec
  *   31-12 van (jaar laatste dienst + 5), elke nacht opnieuw uitgerekend;
  * - verwijdert documenten waarvan de bewaartermijn is verstreken, inclusief het
  *   opslag-object (voorheen bleef dat als verweesd object achter);
- * - verwijdert controlerecords na de Wav-termijn en onbesliste controles van verwijderde accounts.
+ * - verwijdert controlerecords na de Wav-termijn en onbesliste controles van verwijderde accounts;
+ * - verwijdert Wav-kopieën van het ID van verwijderde accounts (`id_wav_kopieen`) na hun termijn,
+ *   met het bestand in de opslag.
  *
  * VEILIGHEID: standaard DRY-RUN — er wordt NIETS verwijderd tenzij de env-var
  * RETENTION_DELETE=1 is gezet. Zo kan de cron eerst draaien en rapporteren wat hij
@@ -115,6 +117,9 @@ export async function GET(request: NextRequest) {
     // 3) ID-controlerecords na de Wav-termijn, en onbesliste controles van verwijderde accounts.
     const idControlerecords = await ruimIdControlerecordsOp({ vandaag, dryRun });
 
+    // 4) Wav-kopieën van het ID van verwijderde accounts na de Wav-termijn (bestand + rij).
+    const idWavKopieen = await ruimWavKopieenOp({ vandaag, dryRun });
+
     return NextResponse.json({
       success: true,
       dryRun,
@@ -123,6 +128,7 @@ export async function GET(request: NextRequest) {
       id_bewaar_tot_bijgewerkt: idBewaartermijnen,
       verlopen_documenten: verwijderd,
       id_controlerecords_verwijderd: idControlerecords,
+      id_wav_kopieen_verwijderd: idWavKopieen,
       hint: dryRun
         ? "DRY-RUN: er is niets verwijderd. Zet RETENTION_DELETE=1 om daadwerkelijk op te ruimen."
         : "Live: verlopen documenten zijn verwijderd.",

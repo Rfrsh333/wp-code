@@ -476,7 +476,7 @@ VALUES
 
 (
   'Voldoet TopTalent Jobs aan de Wet arbeid vreemdelingen (Wav)?',
-  'TopTalent Jobs voldoet volledig aan de Wet arbeid vreemdelingen en controleert voor elke medewerker het recht om in Nederland te werken. Wij verifieren verblijfsvergunningen en werkvergunningen conform de wettelijke vereisten. Het identiteitsbewijs controleren wij in ons medewerkerportaal en wij leggen die controle vast; een kopie bewaren wij niet. Alleen van medewerkers van buiten de EU/EER en Zwitserland is een kopie wettelijk verplicht. Wij nemen geen risico met illegale tewerkstelling en handelen altijd conform de wet.',
+  'TopTalent Jobs voldoet volledig aan de Wet arbeid vreemdelingen en controleert voor elke medewerker het recht om in Nederland te werken. Wij verifieren verblijfsvergunningen en werkvergunningen conform de wettelijke vereisten. Het identiteitsbewijs controleren wij in ons medewerkerportaal en wij leggen die controle vast. Van medewerkers uit de EU/EER en Zwitserland bewaren wij geen kopie. Alleen van medewerkers van daarbuiten is een kopie wettelijk verplicht; die bewaren wij zelf, beveiligd. Een kopie of controlegegevens geven wij niet aan opdrachtgevers; alleen als de Nederlandse Arbeidsinspectie daarom vraagt, laten wij zien wie er op een dienst werkte. Wij nemen geen risico met illegale tewerkstelling en handelen altijd conform de wet.',
   'Contracten & Juridisch',
   'WAV',
   'generated',

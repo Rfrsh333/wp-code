@@ -7,7 +7,7 @@ import { medewerkersPostSchema, validateAdminBody } from "@/lib/validations-admi
 import { validatePasswordSecurity } from "@/lib/password-security";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { normaliseerEmail } from "@/lib/email-normalisatie";
-import { werkMedewerkerLocatieBij, wisOntdekGegevensMedewerker } from "@/lib/locatie/locatie-opslag";
+import { werkMedewerkerLocatieBij } from "@/lib/locatie/locatie-opslag";
 import { nlVandaag } from "@/lib/nl-tijd";
 import {
   beslisViaVideocall,
@@ -19,7 +19,7 @@ import {
 } from "@/lib/id-check/db";
 import { controleerVervaldatum, isDefinitief } from "@/lib/id-check/regels";
 import { controleerVideocallInvoer } from "@/lib/id-check/controlerecord";
-import { bereidIdGegevensVoorAccountVerwijderen } from "@/lib/id-check/bewaartermijn";
+import { verwijderMedewerkerAccount } from "@/lib/medewerker/account-verwijderen";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -370,15 +370,12 @@ export async function POST(request: NextRequest) {
     if (!hasRequiredAdminRole(role, ["owner"])) {
       return NextResponse.json({ error: "Alleen de eigenaar kan medewerkers verwijderen" }, { status: 403 });
     }
-    // Ontdekken-gegevens expliciet eerst (de rij en de cascade ruimen ze ook op, maar zo staat het
-    // vast, ook als de medewerker straks geanonimiseerd in plaats van verwijderd wordt).
-    await wisOntdekGegevensMedewerker(id).catch((e) => captureRouteError(e, { route: "/api/admin/medewerkers", action: "ONTDEKKEN_WISSEN" }));
-    // Het ID-controlerecord blijft (Wav, on delete set null): termijn vastzetten met de laatste dienst
-    // en openstaande Didit-sessies laten wissen (privacy_erasure).
-    await bereidIdGegevensVoorAccountVerwijderen(id);
-    const { error } = await supabaseAdmin.from("medewerkers").delete().eq("id", id);
-    if (error) {
-      return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });
+    // Alles wat bij het verwijderen hoort (lib/medewerker/account-verwijderen): het ID-controlerecord
+    // en een Wav-kopie van het ID blijven tot bewaar_tot, Didit-sessies en ontdekken-gegevens gaan weg.
+    // Kan een Wav-kopie niet veilig bewaard blijven, dan blijft het account bestaan (melding).
+    const resultaat = await verwijderMedewerkerAccount(id);
+    if (!resultaat.ok) {
+      return NextResponse.json({ error: resultaat.fout }, { status: resultaat.status });
     }
 
     await logAuditEvent({
@@ -388,6 +385,7 @@ export async function POST(request: NextRequest) {
       targetTable: "medewerkers",
       targetId: id,
       summary: "Medewerker verwijderd",
+      metadata: { id_kopieen_bewaard: resultaat.idKopieenBewaard, id_kopieen_verwijderd: resultaat.idKopieenVerwijderd },
     });
   }
 

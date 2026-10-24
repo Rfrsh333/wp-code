@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { sendEmail } from "@/lib/email-service";
 import { buildDocumentVerlooptHtml } from "@/lib/email-templates";
 import { captureRouteError, withCronMonitor } from "@/lib/sentry-utils";
+import { documentTypeLabel } from "@/lib/medewerker/documenten";
+import { idVervalActieVoorMedewerker } from "@/lib/id-check/actief";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -41,16 +43,22 @@ export async function GET(request: NextRequest) {
       if (geemaildeMedewerkers.has(dedupeKey)) continue;
 
       try {
+        // ID-bewijs met de ID-controle via Didit aan (en geen Wav-kopie nodig): opnieuw laten
+        // controleren in het portaal (Didit of videocall), niet uploaden. Anders blijft het uploaden.
+        const idControle =
+          doc.document_type === "id_bewijs" && (await idVervalActieVoorMedewerker(doc.medewerker_id)) === "id_controle";
+        const label = doc.document_type === "id_bewijs" ? "ID-bewijs" : documentTypeLabel(doc.document_type);
         await sendEmail({
           from: "TopTalent <info@toptalentjobs.nl>",
           to: [medewerker.email],
-          subject: `Document verloopt binnenkort: ${doc.document_type}`,
+          subject: idControle ? "Je ID-bewijs verloopt binnenkort" : `Document verloopt binnenkort: ${label}`,
           html: buildDocumentVerlooptHtml({
             naam: medewerker.naam,
-            documentType: doc.document_type,
+            documentType: label,
             verloopDatum: new Date(doc.expiry_date).toLocaleDateString("nl-NL", {
               day: "numeric", month: "long", year: "numeric",
             }),
+            idControle,
           }),
         });
         sent++;

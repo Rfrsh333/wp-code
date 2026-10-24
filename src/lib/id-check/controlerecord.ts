@@ -17,10 +17,13 @@ import {
  *   vervaldatum en de uitslag, plus het documentnummer (toegevoegd door Rachid als extra bewijs
  *   welk document is gezien; niet in de minimale lijst van de jurist). Nooit het BSN of beelden.
  * - Bewaren tot 31-12 van (jaar laatste dienst + 5); zonder diensten vanaf het jaar van de beslissing.
- * - Videocall volstaat alleen voor EER/Zwitserland. Daarbuiten moet de horecazaak een kopie krijgen
- *   (Wav art. 15), dus een admin kan een niet-EER-ID niet via een videocall goedkeuren.
+ * - Videocall volstaat alleen voor EER/Zwitserland. Daarbuiten vraagt de Wav (art. 15) een kopie van
+ *   het ID, dus een admin kan een niet-EER-ID niet via een videocall goedkeuren. TopTalent bewaart
+ *   die kopie zelf, beveiligd, en geeft hem niet aan horecazaken (privacyverklaring 2.6, 10f).
  * - Oude kopieën: EER/Zwitserland heeft geen grondslag (weg, record blijft), niet-EER mag blijven
  *   (Wav-termijn), kandidaten die nooit werknemer werden: weg zonder record.
+ * - Account verwijderd: een Wav-kopie blijft tot bewaar_tot (tabel id_wav_kopieen), een kopie van
+ *   een EER/Zwitserse werknemer gaat mee weg (kopieBijAccountVerwijderen).
  */
 
 // --- Documentsoort en nationaliteit ----------------------------------------------------------------
@@ -97,17 +100,30 @@ export function landNaam(code: string | null | undefined): string {
   return LANDEN.find((l) => l.code === c)?.naam ?? c;
 }
 
-/** Tekst bij een niet-EER-nationaliteit in een videocall. */
+/** Tekst bij een niet-EER-nationaliteit in een videocall (admin). Zoals privacyverklaring 2.6, 10f. */
 export const KOPIE_NODIG_TEKST =
-  "Nationaliteit buiten de EER/Zwitserland: een videocall is niet genoeg. De horecazaak moet een kopie van het ID krijgen (Wav art. 15). Leg vast dat er een kopie nodig is; de werknemer kan dan zijn ID uploaden.";
+  "Nationaliteit buiten de EER/Zwitserland: een videocall is niet genoeg. De Wav (art. 15) vraagt dan een kopie van het ID. Die bewaart TopTalent zelf, beveiligd; horecazaken krijgen hem niet. Leg vast dat er een kopie nodig is; de werknemer kan zijn ID dan uploaden bij Documenten.";
 
 /**
  * Moet deze werknemer een kopie van zijn ID aanleveren (Wav art. 15)? Ja als zijn nieuwste controle
  * (Didit of videocall) een nationaliteit buiten de EER/Zwitserland heeft en niet is afgewezen of
- * verlopen. Dan mag hij, ook met de ID-controle via Didit aan, een ID-bewijs uploaden.
+ * verlopen. Dan mag hij, ook met de ID-controle via Didit aan, een ID-bewijs uploaden. TopTalent
+ * bewaart die kopie zelf (niet voor horecazaken), tot bewaar_tot.
  */
 export function kopieNodig(laatste: { eer?: boolean | null; status?: string | null } | null | undefined): boolean {
   return !!laatste && laatste.eer === false && laatste.status !== "afgewezen" && laatste.status !== "verlopen";
+}
+
+/** Wat een werknemer moet doen als zijn ID-bewijs verloopt of bijna verloopt. */
+export type IdVervalActie = "id_controle" | "upload";
+
+/**
+ * Verloopt het ID-bewijs: met de ID-controle via Didit aan laat de werknemer zijn nieuwe ID opnieuw
+ * controleren bij Documenten (Didit of een videocall), zonder upload. Upload blijft als de functie
+ * voor hem uit staat, of als er een kopie nodig is (buiten de EER, Wav art. 15: kopieNodig).
+ */
+export function idVervalActie(input: { diditActief: boolean; kopieNodig: boolean }): IdVervalActie {
+  return input.diditActief && !input.kopieNodig ? "id_controle" : "upload";
 }
 
 // --- Invoer van de admin ---------------------------------------------------------------------------
@@ -459,4 +475,84 @@ export function opschoonRecordRij(input: {
     aangemaakt_op: input.nu,
     bijgewerkt_op: input.nu,
   };
+}
+
+// --- Wav-kopie bij het verwijderen van een account -------------------------------------------------
+
+/**
+ * Nationaliteit binnen de EER/Zwitserland volgens de controles van een werknemer (Didit, videocall of
+ * opgeschoonde kopie): `eer` van de nieuwste controle die hem kent, afgewezen controles niet
+ * meegerekend. null = geen enkele controle weet het. `rijen` nieuwste eerst.
+ */
+export function eerVolgensControles(rijen: readonly { eer?: boolean | null; status?: string | null }[]): boolean | null {
+  for (const r of rijen) {
+    if (r.status === "afgewezen") continue;
+    if (r.eer === true || r.eer === false) return r.eer;
+  }
+  return null;
+}
+
+export type KopieBijVerwijderen = "bewaren" | "verwijderen" | "beoordelen";
+
+/**
+ * Wat er met een ID-kopie (id_bewijs mét bestand) gebeurt als het account wordt verwijderd
+ * (privacyverklaring 2.6, 10f):
+ * - afgekeurde kopie: verwijderen (geen geldige kopie, dus niets om te bewaren);
+ * - Wav-kopie (`kopie_wav`, buiten de EER vastgesteld bij de upload of het opschonen): bewaren tot
+ *   bewaar_tot;
+ * - nog niet beoordeelde kopie (oude upload): volgens de nationaliteit uit de controles. Buiten de
+ *   EER bewaren, EER/Zwitserland verwijderen (geen grondslag). Onbekend: eerst beoordelen in de
+ *   opschoontool, anders verdwijnt misschien een Wav-kopie of blijft een kopie zonder grondslag.
+ */
+export function kopieBijAccountVerwijderen(input: {
+  verificatieMethode: string | null | undefined;
+  reviewStatus: string | null | undefined;
+  eer: boolean | null;
+}): KopieBijVerwijderen {
+  if (input.reviewStatus === "afgekeurd") return "verwijderen";
+  if (input.verificatieMethode === "kopie_wav" || input.eer === false) return "bewaren";
+  if (input.eer === true) return "verwijderen";
+  return "beoordelen";
+}
+
+/**
+ * Bewaar-tot van een Wav-kopie bij het verwijderen van het account: 31-12 van (jaar laatste dienst +
+ * 5), zonder diensten vanaf de goedkeuring/upload. Staat er op de documentrij al een latere datum
+ * (de retentie-cron rekent elke nacht), dan die: een kopie mag nooit eerder weg dan beloofd.
+ */
+export function wavKopieBewaarTot(input: { laatsteDienst: string | null; beslisdatum: string; huidig: string | null | undefined }): string {
+  const berekend = idBewaarTot({ laatsteDienst: input.laatsteDienst, beslisdatum: input.beslisdatum });
+  const huidig = geldigeDatum(input.huidig);
+  return huidig && huidig > berekend ? huidig : berekend;
+}
+
+/** Rij voor `id_wav_kopieen` (migratie 20261024_id_wav_kopieen.sql). Alleen deze velden. */
+export function wavKopieRij(input: {
+  medewerkerId: string;
+  idVerificatieId: string | null;
+  naam: string | null;
+  pad: string;
+  vervaldatum: string | null;
+  geuploadOp: string | null;
+  bewaarTot: string;
+  nu: string;
+}): Record<string, unknown> {
+  return {
+    medewerker_id: input.medewerkerId,
+    id_verificatie_id: input.idVerificatieId,
+    naam: input.naam ? input.naam.slice(0, 200) : null,
+    bestand_pad: input.pad,
+    vervaldatum: geldigeDatum(input.vervaldatum),
+    geupload_op: input.geuploadOp,
+    bewaar_tot: input.bewaarTot,
+    bijgewerkt_op: input.nu,
+  };
+}
+
+/**
+ * Een goedgekeurde Wav-kopie bewaart TopTalent tot bewaar_tot (privacyverklaring 2.6): die kan de
+ * werknemer niet zelf verwijderen. Een kopie die nog beoordeeld wordt of is afgekeurd wel.
+ */
+export function isBewaardeWavKopie(doc: { document_type?: unknown; verificatie_methode?: unknown; review_status?: unknown }): boolean {
+  return doc.document_type === "id_bewijs" && doc.verificatie_methode === "kopie_wav" && doc.review_status === "goedgekeurd";
 }

@@ -147,7 +147,9 @@ export default function IdCheckKaart({
         <div>
           <h2 className="font-semibold text-[var(--mp-text-primary)]">Je ID is gecontroleerd</h2>
           <p className="text-sm text-[var(--mp-text-secondary)] mt-0.5">
-            {check.vervaldatum ? `Geldig tot ${datumNl(check.vervaldatum)}. ` : ""}TopTalent bewaart geen kopie van je ID.
+            {check.vervaldatum ? `Geldig tot ${datumNl(check.vervaldatum)}. ` : ""}
+            {/* Buiten de EER/Zwitserland is een kopie verplicht (Wav): dan klopt "geen kopie" niet. */}
+            {check.kopie_nodig ? "" : "TopTalent bewaart geen kopie van je ID."}
           </p>
         </div>
       </div>
@@ -161,9 +163,10 @@ export default function IdCheckKaart({
         <div>
           <h2 className="font-semibold text-[var(--mp-text-primary)]">Upload een kopie van je ID</h2>
           <p className="text-sm text-[var(--mp-text-secondary)] mt-0.5">
-            Je nationaliteit valt buiten de EU/EER en Zwitserland. Dan moet de opdrachtgever een kopie van je paspoort of
-            ID-bewijs krijgen (Wet arbeid vreemdelingen). Upload hieronder je ID-bewijs; heb je een verblijfs- of
-            werkvergunning, upload die dan ook.
+            Je nationaliteit valt buiten de EU/EER en Zwitserland. Dan vraagt de Wet arbeid vreemdelingen om een kopie van
+            je paspoort of ID-bewijs; een controle via Didit of een videocall is dan niet genoeg. Upload hieronder je
+            ID-bewijs; heb je een verblijfs- of werkvergunning, upload die dan ook. TopTalent bewaart de kopie beveiligd en
+            geeft hem niet aan horecazaken.
           </p>
         </div>
       </div>
