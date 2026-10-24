@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import UitbetalingSectie from "./UitbetalingSectie";
+import IdControleSectie from "./IdControleSectie";
 
 export const metadata: Metadata = {
   // absolute: de root-template voegt anders nogmaals "| TopTalent Jobs" toe.
@@ -21,7 +22,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-lg text-neutral-300">
-            TopTalent B.V. - Laatst bijgewerkt: 23 oktober 2026
+            TopTalent B.V. - Laatst bijgewerkt: 24 oktober 2026
           </p>
         </div>
       </section>
@@ -80,7 +81,7 @@ export default function PrivacyPolicyPage() {
               <li>Adresgegevens (straat, huisnummer, postcode, woonplaats, land)</li>
               <li>Telefoonnummer(s) en e-mailadres(sen)</li>
               <li>Nationaliteit</li>
-              <li>Kopie identiteitsbewijs (voor wettelijke identificatieplicht)</li>
+              <li>Gegevens uit de controle van uw identiteitsbewijs: uw naam en geboortedatum zoals op het document, uw nationaliteit, het soort document, het documentnummer, de vervaldatum en de uitslag (zie paragraaf 10f). Wij bewaren geen kopie van uw identiteitsbewijs; alleen als u van buiten de EER of Zwitserland komt, vraagt de Wet arbeid vreemdelingen om een kopie.</li>
             </ul>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">3.2 CV- en sollicitatiegegevens</h3>
@@ -206,7 +207,7 @@ export default function PrivacyPolicyPage() {
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">4.6 Wettelijke verplichtingen</h3>
             <ul className="list-disc pl-6 space-y-2">
               <li>Voldoen aan fiscale verplichtingen (Belastingdienst)</li>
-              <li>Identificatieplicht en verificatie van identiteit</li>
+              <li>Op verzoek van de Nederlandse Arbeidsinspectie kunnen laten zien wie er op een dienst werkte (Wet arbeid vreemdelingen)</li>
               <li>Wet arbeid vreemdelingen (WAV) en controle werkvergunningen</li>
               <li>Wet allocatie arbeidskrachten door intermediairs (WAADI)</li>
               <li>Arbo-wetgeving en veiligheidsverplichtingen</li>
@@ -248,7 +249,7 @@ export default function PrivacyPolicyPage() {
             <p>Verwerking die noodzakelijk is voor:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Fiscale verplichtingen (bewaren administratie, aangifte loonheffingen)</li>
-              <li>Identificatieplicht werkgever (Wet op de identificatieplicht)</li>
+              <li>Kopie van het identiteitsbewijs van zzp&apos;ers van buiten de EER of Zwitserland (Wet arbeid vreemdelingen)</li>
               <li>Wet arbeid vreemdelingen (WAV)</li>
               <li>WAADI-registratie en ketenaansprakelijkheid</li>
               <li>Pensioenwetgeving</li>
@@ -262,6 +263,7 @@ export default function PrivacyPolicyPage() {
               <li>Beveiliging van systemen en gegevens</li>
               <li>Verbetering van onze dienstverlening</li>
               <li>Beoordelingen van werkgevers door werknemers en kengetallen over werkgevers (zie paragraaf 10e)</li>
+              <li>Controle van uw identiteit voordat u als zzp&apos;er op diensten kunt reageren, om identiteitsfraude en het delen van accounts te voorkomen (zie paragraaf 10f)</li>
               <li>Interne bedrijfsvoering en managementrapportages</li>
               <li>Juridische claims en geschillen</li>
             </ul>
@@ -309,8 +311,16 @@ export default function PrivacyPolicyPage() {
                     <td className="px-4 py-3">7 jaar (fiscale bewaarplicht)</td>
                   </tr>
                   <tr className="border-b">
+                    <td className="px-4 py-3">Controle van uw identiteitsbewijs (controlerecord, zie paragraaf 10f)</td>
+                    <td className="px-4 py-3">Tot 31 december van het vijfde jaar na het jaar van uw laatste dienst via TopTalent (Wet arbeid vreemdelingen), ook als uw account wordt verwijderd</td>
+                  </tr>
+                  <tr className="border-b bg-neutral-50">
+                    <td className="px-4 py-3">Foto&apos;s en gegevens van uw identiteitsbewijs bij Didit</td>
+                    <td className="px-4 py-3">Door Didit verwijderd zodra wij hebben beslist, uiterlijk na 1 maand; wat Didit zelf gebruikt tegen fraude, valt onder de privacyverklaring van Didit (zie paragraaf 10f)</td>
+                  </tr>
+                  <tr className="border-b">
                     <td className="px-4 py-3">Kopie identiteitsbewijs</td>
-                    <td className="px-4 py-3">5 jaar na einde dienstverband</td>
+                    <td className="px-4 py-3">Alleen van zzp&apos;ers van buiten de EER of Zwitserland (Wet arbeid vreemdelingen): tot 31 december van het vijfde jaar na het jaar waarin het werk via TopTalent eindigde. Andere kopieën die eerder bij ons zijn geüpload, verwijderen wij (zie paragraaf 10f)</td>
                   </tr>
                   <tr className="border-b bg-neutral-50">
                     <td className="px-4 py-3">Loonbelastingverklaringen</td>
@@ -403,6 +413,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Resend (VS):</strong> voor het verzenden van e-mails vanuit onze systemen</li>
               <li><strong>Mollie (Nederland):</strong> voor de betaling van boetes</li>
               <li><strong>Expo / 650 Industries (VS), Apple en Google:</strong> voor het bezorgen van pushmeldingen in de TopTalent-app</li>
+              <li><strong>Didit (Didit Identity Spain S.L., Barcelona, Spanje; servers van Amazon Web Services in Ierland):</strong> voor de controle van uw identiteitsbewijs (zie paragraaf 10f). Didit werkt daarbij in onze opdracht. Wij hebben bij Didit uitgezet dat uw gegevens worden gebruikt om zijn systemen te trainen. Voor één beperkt doel is Didit zelf verantwoordelijk: Didit gebruikt gepseudonimiseerde gegevens uit de controle om fraude en misbruik te bestrijden en om zijn eigen platform te beveiligen (zie paragraaf 10f).</li>
               <li><strong>PostHog (servers in Frankfurt, Duitsland):</strong> voor gebruiksstatistieken van de website, de portalen en de app, zonder naam of e-mailadres (op de website alleen met uw toestemming voor analytics), en voor sessie-opnames in de app, alleen als u daar in de app toestemming voor geeft (zie paragraaf 10c). Op de website en in de portalen maken wij geen schermopnames.</li>
             </ul>
             <p>Met alle verwerkers hebben wij verwerkersovereenkomsten gesloten die voldoen aan de eisen van artikel 28 AVG.</p>
@@ -414,7 +425,7 @@ export default function PrivacyPolicyPage() {
               <li>Belastingdienst (loonheffingen, btw-aangifte)</li>
               <li>UWV (sociale verzekeringen, ziekmeldingen)</li>
               <li>Pensioenfonds StiPP</li>
-              <li>Inspectie SZW (bij controles)</li>
+              <li>Nederlandse Arbeidsinspectie (bij controles)</li>
               <li>Justitiële autoriteiten (bij gerechtelijk bevel)</li>
             </ul>
 
@@ -565,7 +576,7 @@ export default function PrivacyPolicyPage() {
             <p>De app is een andere toegang tot hetzelfde account als het werknemers- of werkgeversportaal op deze website. De gegevens worden bewaard op onze servers, niet in de app. Het gaat om:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Inloggen:</strong> uw e-mailadres en wachtwoord</li>
-              <li><strong>Werknemers:</strong> profielgegevens (naam, e-mail, telefoon, adres, geboortedatum, factuuradres, btw-nummer, IBAN en KOR-keuze), profielfoto, geüploade documenten (zoals identiteitsbewijs, werk- of verblijfsvergunning, VOG, KvK-uittreksel, loonheffingsverklaring en contract), diensten en aanmeldingen, beschikbaarheid, de maximale afstand voor meldingen, werkgevers die u heeft bewaard of verborgen, gewerkte uren en verdiensten, en berichten aan TopTalent. De app toont alleen óf uw BSN is gecontroleerd, niet het BSN zelf.</li>
+              <li><strong>Werknemers:</strong> profielgegevens (naam, e-mail, telefoon, adres, geboortedatum, factuuradres, btw-nummer, IBAN en KOR-keuze), profielfoto, geüploade documenten (zoals werk- of verblijfsvergunning, VOG, KvK-uittreksel, loonheffingsverklaring en contract, en alleen als u van buiten de EER of Zwitserland komt een kopie van uw identiteitsbewijs, zie paragraaf 10f), diensten en aanmeldingen, beschikbaarheid, de maximale afstand voor meldingen, werkgevers die u heeft bewaard of verborgen, gewerkte uren en verdiensten, en berichten aan TopTalent. De app toont alleen óf uw BSN is gecontroleerd, niet het BSN zelf.</li>
               <li><strong>Werkgevers:</strong> bedrijfsgegevens (contactpersoon, e-mail, telefoon, adres, KvK- en btw-nummer), personeelsaanvragen en diensten, goedgekeurde uren, facturen en beoordelingen die u over werknemers geeft</li>
               <li><strong>Pushmeldingen:</strong> een pushtoken van uw toestel en het platform (iOS of Android), zie hieronder</li>
             </ul>
@@ -630,6 +641,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Mollie (Nederland):</strong> betaling van boetes</li>
               <li><strong>Expo, Apple en Google:</strong> bezorging van pushmeldingen (zie hierboven)</li>
               <li><strong>PostHog:</strong> gebruiksstatistieken en, alleen met uw toestemming, sessie-opnames (zie hierboven; servers in Frankfurt, Duitsland)</li>
+              <li><strong>Didit (Spanje; servers in Ierland):</strong> controle van uw identiteitsbewijs in het werknemersportaal (zie paragraaf 10f)</li>
               <li><strong>PDOK Locatieserver (Nederlandse overheid):</strong> zet een postcode om in een globale locatie (zie paragraaf 10d); wij sturen alleen de postcode</li>
             </ul>
 
@@ -662,6 +674,9 @@ export default function PrivacyPolicyPage() {
               <li><strong>Kengetallen over werkgevers:</strong> bij een dienst tonen wij ook hoe snel de werkgever gewoonlijk over reacties beslist, in hoeveel procent van zijn diensten met reacties hij iemand kiest en binnen hoeveel dagen hij zijn facturen van TopTalent gewoonlijk betaalt. De eerste twee berekenen wij uit de diensten en aanmeldingen van de laatste 90 dagen; de betaaltermijn uit de facturen die in de laatste 180 dagen zijn betaald, van de factuurdatum tot de dag waarop wij de betaling hebben verwerkt. Elk kengetal tonen wij pas vanaf drie waarnemingen. Ze gaan over de werkgever, niet over u. De werkgever ziet dezelfde kengetallen over zichzelf in zijn portaal.</li>
             </ul>
             <p>Wij doen dit op grond van ons gerechtvaardigd belang (artikel 6 lid 1 sub f AVG): de kwaliteit van onze bemiddeling bewaken en werknemers helpen een werkgever te kiezen. Vraagt u om verwijdering van uw account, dan wissen wij direct de beoordelingen die u heeft gegeven.</p>
+
+            {/* 10f. Controle van uw identiteit (v2.6) */}
+            <IdControleSectie />
 
             {/* 11. Beveiliging */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
@@ -730,9 +745,10 @@ export default function PrivacyPolicyPage() {
               <li>Wanneer de verwerking gebaseerd is op ons gerechtvaardigd belang</li>
               <li>Tegen direct marketing (dit bezwaar wordt altijd gehonoreerd)</li>
             </ul>
+            <p>Dit geldt ook voor de controle van uw identiteit (paragraaf 10f).</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">12.7 Recht om niet onderworpen te worden aan geautomatiseerde besluitvorming (artikel 22 AVG)</h3>
-            <p>U heeft het recht om niet onderworpen te worden aan een uitsluitend op geautomatiseerde verwerking gebaseerd besluit dat voor u rechtsgevolgen heeft of u anderszins in aanmerkelijke mate treft. Wij gebruiken AI-ondersteunde screening om kandidaatprofielen te evalueren. De AI genereert een score en aanbeveling, maar de eindbeslissing wordt altijd door een medewerker genomen. U kunt altijd een menselijke herbeoordeling aanvragen.</p>
+            <p>U heeft het recht om niet onderworpen te worden aan een uitsluitend op geautomatiseerde verwerking gebaseerd besluit dat voor u rechtsgevolgen heeft of u anderszins in aanmerkelijke mate treft. Wij gebruiken AI-ondersteunde screening om kandidaatprofielen te evalueren. De AI genereert een score en aanbeveling, maar de eindbeslissing wordt altijd door een medewerker genomen. U kunt altijd een menselijke herbeoordeling aanvragen. Bij de controle van uw identiteit (paragraaf 10f) kan ons systeem de controle automatisch goedkeuren. Afwijzen doet altijd een medewerker van TopTalent.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">12.8 Uitoefening van uw rechten</h3>
             <p>Om uw rechten uit te oefenen kunt u contact met ons opnemen via:</p>
@@ -793,10 +809,10 @@ export default function PrivacyPolicyPage() {
             {/* Footer */}
             <div className="mt-16 pt-8 border-t border-neutral-200">
               <p className="text-neutral-500 text-sm">
-                <strong>Utrecht, 23 oktober 2026</strong>
+                <strong>Utrecht, 24 oktober 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 2.5
+                TopTalent B.V. - Privacy Policy versie 2.6
               </p>
             </div>
           </div>
