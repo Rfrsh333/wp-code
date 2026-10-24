@@ -16,20 +16,26 @@ import {
   type VervalMijlpaal,
 } from "../../src/lib/medewerker/verval-meldingen";
 import {
+  isWavDocument,
   isWavKopieDocument,
   leesOpenVerzoek,
   WAV_KOPIE_ROLLEN,
   wavKopieenOverzicht,
+  wavSoortLabel,
   zoekWavKopieen,
 } from "../../src/lib/id-check/wav-kopieen-overzicht";
 import {
   bestandBijAccountVerwijderen,
   BEWAREN_NA_ACCOUNT_VERWIJDEREN,
   bewaardDocumentRij,
+  bewaarTotBijUitDienst,
+  bewaarTotEindeJaar,
   bewaarTotNaEinde,
+  bewaarTotVoorDocument,
   eindeDienstverband,
   maakOpruimPlan,
   PROFIELFOTO_BUCKET,
+  vergunningBijAccountVerwijderen,
 } from "../../src/lib/medewerker/bestanden-bij-verwijderen";
 
 const bron = (pad: string) => readFileSync(join(__dirname, "../..", pad), "utf8");
@@ -219,6 +225,8 @@ test.describe("Wav-kopieën in de admin", () => {
     for (const [, methode, eersteRegel] of handlers) expect(eersteRegel, methode).toContain("await wavKopieToegang(request)");
     const db = bron("src/lib/id-check/wav-kopieen.ts");
     expect(db).not.toMatch(/\.remove\(|\.delete\(/);
+    // Uit bewaarde_documenten alleen vergunningen (geen loonheffingsverklaring of contract).
+    expect(db).toMatch(/!rij \|\| !isWavVergunning\(rij\.document_type\)/);
     // Eerst de audit-log, dan pas de link teruggeven.
     expect(db.indexOf('from("audit_log").insert')).toBeGreaterThan(db.indexOf("createSignedUrl"));
     expect(db.indexOf("return link.signedUrl")).toBeGreaterThan(db.indexOf('from("audit_log").insert'));
@@ -252,22 +260,48 @@ test.describe("Wav-kopieën in de admin", () => {
     expect(isWavKopieDocument(kopie({ document_type: "werkvergunning" }), [])).toBe(false);
   });
 
-  test("één lijst: bestaande en verwijderde accounts, zelfde bestand één keer, gesorteerd op naam", () => {
+  test("vergunningen: bij een werknemer van buiten de EER of met onbekende nationaliteit; nooit afgekeurd of EER", () => {
+    const twv = (extra: Record<string, unknown> = {}) => kopie({ document_type: "werkvergunning", file_path: "m1/werkvergunning_1.pdf", verificatie_methode: null, ...extra });
+    expect(isWavDocument(twv(), [{ eer: false, status: "goedgekeurd" }])).toBe(true);
+    expect(isWavDocument(twv(), [])).toBe(true);
+    expect(isWavDocument(twv({ document_type: "verblijfsvergunning" }), [])).toBe(true);
+    expect(isWavDocument(twv(), [{ eer: true, status: "goedgekeurd" }])).toBe(false);
+    expect(isWavDocument(twv({ review_status: "afgekeurd" }), [])).toBe(false);
+    expect(isWavDocument(twv({ file_path: null }), [])).toBe(false);
+    expect(isWavDocument(kopie({ document_type: "vog" }), [{ eer: false, status: "goedgekeurd" }])).toBe(false);
+    // ID-bewijs: zoals isWavKopieDocument.
+    expect(isWavDocument(kopie({ verificatie_methode: null }), [])).toBe(false);
+    expect(wavSoortLabel("verblijfsvergunning")).toBe("Verblijfsvergunning");
+  });
+
+  test("één lijst: bestaande en verwijderde accounts, ID-kopieën en vergunningen, zelfde bestand één keer", () => {
     const items = wavKopieenOverzicht({
-      documenten: [kopie(), kopie({ id: "d2", medewerker_id: "m2", verificatie_methode: null, file_path: "m2/id_bewijs_2.pdf" })],
+      documenten: [
+        kopie(),
+        kopie({ id: "d2", medewerker_id: "m2", verificatie_methode: null, file_path: "m2/id_bewijs_2.pdf" }),
+        kopie({ id: "d3", document_type: "werkvergunning", verificatie_methode: null, file_path: "m1/werkvergunning_3.pdf" }),
+      ],
       bewaard: [
         { id: "b1", medewerker_id: null, naam: "Ana Ólafsdóttir", bestand_pad: "x/id_bewijs_9.pdf", vervaldatum: "2029-01-01", geupload_op: "2025-01-01T00:00:00Z", bewaar_tot: "2031-12-31" },
         // Verwijderen mislukte na het vastleggen: zelfde bestand als documentrij d1.
         { id: "b2", medewerker_id: "m1", naam: "Zoë", bestand_pad: "m1/id_bewijs_1.pdf", vervaldatum: null, geupload_op: null, bewaar_tot: "2031-12-31" },
       ],
+      bewaardeDocumenten: [
+        { id: "v1", medewerker_id: null, document_type: "verblijfsvergunning", naam: "Ana Ólafsdóttir", bestand_pad: "x/verblijfsvergunning_8.pdf", geupload_op: "2025-01-02T00:00:00Z", bewaar_tot: "2031-12-31" },
+        // Niet in dit scherm.
+        { id: "l1", medewerker_id: null, document_type: "loonheffingsverklaring", naam: "Ana Ólafsdóttir", bestand_pad: "x/loonheffingsverklaring_7.pdf", geupload_op: null, bewaar_tot: "2031-01-01" },
+      ],
       controles: new Map([["m2", [{ eer: true, status: "goedgekeurd" }]]]),
       medewerkers: new Map([["m1", "Bram de Boer"], ["m2", "Chris"]]),
       bewaarTot: new Map([["d1", "2032-12-31"]]),
     });
-    expect(items.map((i) => i.sleutel)).toEqual(["bewaard:b1", "medewerker:d1"]);
-    const [verwijderd, bestaand] = items;
-    expect(verwijderd).toMatchObject({ account_bestaat: false, naam: "Ana Ólafsdóttir", bewaar_tot: "2031-12-31", bewaar_tot_voorlopig: false });
-    expect(bestaand).toMatchObject({ account_bestaat: true, naam: "Bram de Boer", bewaar_tot: "2032-12-31", bewaar_tot_voorlopig: true, goedgekeurd: true });
+    // Op naam; bij dezelfde naam de nieuwste upload eerst (gelijk: volgorde van binnenkomst).
+    expect(items.map((i) => i.sleutel)).toEqual(["bewaard_document:v1", "bewaard:b1", "medewerker:d1", "medewerker:d3"]);
+    const [vergunning, verwijderd, bestaand, bestaandeTwv] = items;
+    expect(vergunning).toMatchObject({ bron: "bewaard_document", soort: "verblijfsvergunning", account_bestaat: false, vervaldatum: null, bewaar_tot: "2031-12-31" });
+    expect(verwijderd).toMatchObject({ bron: "bewaard", soort: "id_bewijs", account_bestaat: false, naam: "Ana Ólafsdóttir", bewaar_tot_voorlopig: false });
+    expect(bestaandeTwv).toMatchObject({ soort: "werkvergunning", account_bestaat: true, naam: "Bram de Boer" });
+    expect(bestaand).toMatchObject({ soort: "id_bewijs", account_bestaat: true, bewaar_tot: "2032-12-31", bewaar_tot_voorlopig: true, goedgekeurd: true });
   });
 
   test("zoeken op naam: hoofdletters en accenten maken niet uit, elk woord telt", () => {
@@ -282,6 +316,7 @@ test.describe("Wav-kopieën in de admin", () => {
     const id = "123e4567-e89b-12d3-a456-426614174000";
     expect(leesOpenVerzoek({ actie: "open", bron: "bewaard", id })).toEqual({ bron: "bewaard", id });
     expect(leesOpenVerzoek({ actie: "open", bron: "medewerker", id })).toEqual({ bron: "medewerker", id });
+    expect(leesOpenVerzoek({ actie: "open", bron: "bewaard_document", id })).toEqual({ bron: "bewaard_document", id });
     expect(leesOpenVerzoek({ actie: "verwijder", bron: "bewaard", id })).toBeNull();
     expect(leesOpenVerzoek({ actie: "open", bron: "kandidaat", id })).toBeNull();
     expect(leesOpenVerzoek({ actie: "open", bron: "bewaard", id: "m1/../x" })).toBeNull();
@@ -294,19 +329,47 @@ test.describe("bestanden bij het verwijderen van een account", () => {
     expect(bestandBijAccountVerwijderen("id_bewijs")).toBe("id_regeling");
     expect(bestandBijAccountVerwijderen("loonheffingsverklaring")).toBe("bewaren");
     expect(bestandBijAccountVerwijderen("contract")).toBe("bewaren");
-    for (const soort of ["vog", "kvk", "vsh", "werkvergunning", "verblijfsvergunning", "overig", "constructor", null]) {
-      expect(bestandBijAccountVerwijderen(soort), String(soort)).toBe("verwijderen");
+    for (const soort of ["vog", "kvk", "vsh", "overig", "constructor", null]) {
+      expect(bestandBijAccountVerwijderen(soort, { eer: false }), String(soort)).toBe("verwijderen");
     }
   });
 
-  test("termijnen staan zo in de privacyverklaring (paragraaf 6)", () => {
+  test("werk- en verblijfsvergunning: zoals de ID-kopie (#38), maar onbekende nationaliteit = bewaren", () => {
+    for (const soort of ["werkvergunning", "verblijfsvergunning"]) {
+      expect(bestandBijAccountVerwijderen(soort, { eer: false }), soort).toBe("bewaren");
+      expect(bestandBijAccountVerwijderen(soort, { eer: null }), soort).toBe("bewaren");
+      expect(bestandBijAccountVerwijderen(soort, { eer: true }), soort).toBe("verwijderen");
+      expect(bestandBijAccountVerwijderen(soort, { eer: false, reviewStatus: "afgekeurd" }), soort).toBe("verwijderen");
+    }
+    expect(vergunningBijAccountVerwijderen({ reviewStatus: "goedgekeurd", eer: null })).toBe("bewaren");
+    expect(vergunningBijAccountVerwijderen({ reviewStatus: null, eer: true })).toBe("verwijderen");
+  });
+
+  test("termijnen staan zo in de privacyverklaring 2.7 en op de pagina Account verwijderen", () => {
     const privacy = bron("src/app/privacy/page.tsx").replace(/\s+/g, " ");
     expect(privacy).toMatch(/Loonbelastingverklaringen<\/td> <td[^>]*>5 jaar na einde dienstverband</);
-    expect(privacy).toMatch(/Arbeidsovereenkomst en personeelsdossier<\/td> <td[^>]*>2 jaar na einde dienstverband</);
-    expect(BEWAREN_NA_ACCOUNT_VERWIJDEREN.loonheffingsverklaring.jaren).toBe(5);
-    expect(BEWAREN_NA_ACCOUNT_VERWIJDEREN.contract.jaren).toBe(2);
-    // De pagina Account verwijderen belooft de loonbelastingverklaring te bewaren.
-    expect(bron("src/app/account-verwijderen/page.tsx")).toMatch(/loonbelastingverklaring: 5 jaar na einde dienstverband/);
+    expect(privacy).toMatch(
+      /Arbeidsovereenkomst of overeenkomst van opdracht \(contract\)<\/td> <td[^>]*>7 jaar \(fiscale bewaarplicht\): tot 31 december van het zevende jaar na het jaar waarin uw werk via TopTalent eindigde, ook als uw account wordt verwijderd</,
+    );
+    expect(privacy).toMatch(
+      /Werk- of verblijfsvergunning<\/td> <td[^>]*>Van zzp&apos;ers van buiten de EER of Zwitserland \(Wet arbeid vreemdelingen\): tot 31 december van het vijfde jaar na het jaar waarin het werk via TopTalent eindigde, ook als uw account wordt verwijderd/,
+    );
+    expect(privacy).not.toMatch(/Arbeidsovereenkomst en personeelsdossier/);
+    expect(privacy).toContain("Privacy Policy versie 2.7");
+    expect(bron("src/app/privacy/IdControleSectie.tsx").replace(/\s+/g, " ")).toMatch(
+      /Een werk- of verblijfsvergunning die u bij Documenten heeft geüpload, bewaren wij tot dezelfde datum/,
+    );
+    expect(BEWAREN_NA_ACCOUNT_VERWIJDEREN.loonheffingsverklaring).toMatchObject({ termijn: "na_einde", jaren: 5, totEindeJaar: false });
+    expect(BEWAREN_NA_ACCOUNT_VERWIJDEREN.contract).toMatchObject({ termijn: "na_einde", jaren: 7, totEindeJaar: true });
+    expect(BEWAREN_NA_ACCOUNT_VERWIJDEREN.werkvergunning).toMatchObject({ termijn: "wav" });
+    expect(BEWAREN_NA_ACCOUNT_VERWIJDEREN.verblijfsvergunning).toMatchObject({ termijn: "wav" });
+
+    const pagina = bron("src/app/account-verwijderen/page.tsx").replace(/\s+/g, " ");
+    expect(pagina).toMatch(/loonbelastingverklaring: 5 jaar na einde dienstverband/);
+    expect(pagina).toMatch(/uw contract \(arbeidsovereenkomst of overeenkomst van opdracht\): tot 31 december van het zevende jaar/);
+    expect(pagina).toMatch(/de kopie van uw identiteitsbewijs en uw werk- of verblijfsvergunning, tot 31 december van het vijfde jaar/);
+    expect(pagina).toMatch(/facturen die wij namens u als zzp&apos;er opmaken en de gegevens van uw uitbetalingen: 7 jaar/);
+    expect(pagina).toMatch(/Andere documenten die u heeft geüpload \(zoals VOG en KvK-uittreksel\) en uw profielfoto verwijderen wij/);
   });
 
   test("einde dienstverband en bewaar-tot", () => {
@@ -317,7 +380,41 @@ test.describe("bestanden bij het verwijderen van een account", () => {
     expect(eindeDienstverband({ laatsteDienst: null, datumUitDienst: undefined, vandaag: "2026-10-24" })).toBe("2026-10-24");
     expect(bewaarTotNaEinde("2026-10-24", 5)).toBe("2031-10-24");
     expect(bewaarTotNaEinde("2024-02-29", 2)).toBe("2026-02-28");
+    expect(bewaarTotEindeJaar("2026-01-15", 7)).toBe("2033-12-31");
     expect(() => bewaarTotNaEinde("kapot", 2)).toThrow();
+    expect(() => bewaarTotEindeJaar("kapot", 2)).toThrow();
+  });
+
+  test("bewaar-tot per regel: contract 31-12 van jaar einde + 7, vergunning zoals de Wav-kopie", () => {
+    const basis = { einde: "2026-06-30", laatsteDienst: "2026-05-01", vandaag: "2026-10-24" };
+    const regel = (soort: string) => BEWAREN_NA_ACCOUNT_VERWIJDEREN[soort];
+    expect(bewaarTotVoorDocument(regel("contract"), { ...basis, doc: { id: "c", document_type: "contract" } })).toBe("2033-12-31");
+    expect(bewaarTotVoorDocument(regel("loonheffingsverklaring"), { ...basis, doc: { id: "l", document_type: "loonheffingsverklaring" } })).toBe("2031-06-30");
+    // Vergunning: jaar laatste dienst + 5 (niet de datum uit dienst), nooit eerder dan de datum op de rij.
+    expect(bewaarTotVoorDocument(regel("werkvergunning"), { ...basis, doc: { id: "w", document_type: "werkvergunning" } })).toBe("2031-12-31");
+    expect(
+      bewaarTotVoorDocument(regel("werkvergunning"), { ...basis, doc: { id: "w", document_type: "werkvergunning", bewaar_tot: "2033-12-31" } }),
+    ).toBe("2033-12-31");
+    // Zonder diensten vanaf de goedkeuring of upload.
+    expect(
+      bewaarTotVoorDocument(regel("verblijfsvergunning"), {
+        ...basis,
+        laatsteDienst: null,
+        doc: { id: "v", document_type: "verblijfsvergunning", reviewed_at: "2024-03-01T10:00:00Z", uploaded_at: "2023-01-01T10:00:00Z" },
+      }),
+    ).toBe("2029-12-31");
+  });
+
+  test("retentie-cron (account bestaat nog): contract 7 jaar, vergunningen volgen elke nacht de Wav-termijn", () => {
+    expect(bewaarTotBijUitDienst("contract", "2026-06-30")).toBe("2033-12-31");
+    expect(bewaarTotBijUitDienst("loonheffingsverklaring", "2026-06-30")).toBe("2031-06-30");
+    expect(bewaarTotBijUitDienst("vog", "2026-06-30")).toBe("2031-06-30");
+    expect(bewaarTotBijUitDienst("werkvergunning", "2026-06-30")).toBeNull();
+    expect(bewaarTotBijUitDienst("id_bewijs", "2026-06-30")).toBeNull();
+    const retentie = bron("src/app/api/cron/retentie/route.ts");
+    expect(retentie).toContain("bewaarTotBijUitDienst(");
+    expect(retentie).toMatch(/\.not\("document_type", "in", `\(\$\{\["id_bewijs", \.\.\.WAV_VERGUNNINGEN\]/);
+    expect(bron("src/lib/id-check/bewaartermijn.ts")).toMatch(/\.in\("document_type", \["id_bewijs", \.\.\.WAV_VERGUNNINGEN\]\)/);
   });
 
   const documenten = [
@@ -326,14 +423,17 @@ test.describe("bestanden bij het verwijderen van een account", () => {
     { id: "3", document_type: "kvk", file_url: "m1/kvk_3.pdf" },
     { id: "4", document_type: "loonheffingsverklaring", file_path: "m1/loonheffingsverklaring_4.pdf", uploaded_at: "2025-01-01T00:00:00Z" },
     { id: "5", document_type: "contract", file_path: "m1/contract_5.pdf" },
-    { id: "6", document_type: "werkvergunning", file_path: "m1/onboarding_aaaa.pdf" },
+    { id: "6", document_type: "werkvergunning", file_path: "m1/onboarding_aaaa.pdf", reviewed_at: "2025-02-01T10:00:00Z" },
     { id: "7", document_type: "id_bewijs", file_path: null, file_url: null },
     { id: "8", document_type: "overig", file_url: "https://elders.example/x.pdf" },
+    { id: "9", document_type: "verblijfsvergunning", file_path: "m1/verblijfsvergunning_9.pdf", review_status: "afgekeurd" },
   ];
+  const basis = { medewerkerId: "m1", einde: "2026-06-30", laatsteDienst: "2026-05-01", vandaag: "2026-10-24" };
 
-  test("plan: wat weg mag en wat blijft, met losse bestanden uit de map", () => {
+  test("plan: wat weg mag en wat blijft, met losse bestanden uit de map (werknemer van buiten de EER)", () => {
     const plan = maakOpruimPlan({
-      medewerkerId: "m1",
+      ...basis,
+      eer: false,
       documenten,
       beschermd: ["m1/id_bewijs_0.pdf", "m1/vsh_9.pdf"],
       mapInhoud: [
@@ -344,31 +444,43 @@ test.describe("bestanden bij het verwijderen van een account", () => {
         "m1/vsh_9.pdf", // beschermd: blijft
         "m1/onboarding_bbbb.pdf", // onbekende soort: blijft
         "m1/loonheffingsverklaring_10.pdf", // soort met termijn zonder rij: blijft
+        "m1/werkvergunning_12.pdf", // vergunning zonder rij: blijft
         "m1/id_bewijs_11.pdf", // ID zonder rij: niet hier
         "m2/vog_1.pdf", // andere werknemer: nooit
       ],
       profielfoto: ["m1/profile.jpg", "m1/profile.jpg", "m1/profile.png", "m2/profile.jpg"],
-      einde: "2026-06-30",
     });
     const docs = plan.verwijderen.find((b) => b.bucket === "medewerker-documenten")?.paden.sort();
-    expect(docs).toEqual(["m1/kvk_3.pdf", "m1/onboarding_aaaa.pdf", "m1/vog_2.pdf", "m1/vsh_7.pdf"]);
+    // Afgekeurde vergunning gaat weg, de goedgekeurde blijft.
+    expect(docs).toEqual(["m1/kvk_3.pdf", "m1/verblijfsvergunning_9.pdf", "m1/vog_2.pdf", "m1/vsh_7.pdf"]);
     expect(plan.verwijderen.find((b) => b.bucket === PROFIELFOTO_BUCKET)?.paden.sort()).toEqual(["m1/profile.jpg", "m1/profile.png"]);
     expect(plan.bewaren).toEqual([
       { pad: "m1/loonheffingsverklaring_4.pdf", documentType: "loonheffingsverklaring", geuploadOp: "2025-01-01T00:00:00Z", bewaarTot: "2031-06-30" },
-      { pad: "m1/contract_5.pdf", documentType: "contract", geuploadOp: null, bewaarTot: "2028-06-30" },
+      { pad: "m1/contract_5.pdf", documentType: "contract", geuploadOp: null, bewaarTot: "2033-12-31" },
+      { pad: "m1/onboarding_aaaa.pdf", documentType: "werkvergunning", geuploadOp: null, bewaarTot: "2031-12-31" },
     ]);
     const alleWeg = plan.verwijderen.flatMap((b) => b.paden);
     for (const b of plan.bewaren) expect(alleWeg).not.toContain(b.pad);
   });
 
+  test("werknemer uit de EER/Zwitserland: vergunningen gaan weg; onbekend: blijven", () => {
+    const eer = maakOpruimPlan({ ...basis, eer: true, documenten, beschermd: [], mapInhoud: null, profielfoto: [] });
+    expect(eer.verwijderen[0].paden).toContain("m1/onboarding_aaaa.pdf");
+    expect(eer.bewaren.map((b) => b.documentType)).toEqual(["loonheffingsverklaring", "contract"]);
+    const onbekend = maakOpruimPlan({ ...basis, eer: null, documenten, beschermd: [], mapInhoud: null, profielfoto: [] });
+    expect(onbekend.verwijderen[0].paden).not.toContain("m1/onboarding_aaaa.pdf");
+    expect(onbekend.bewaren.map((b) => b.documentType)).toEqual(["loonheffingsverklaring", "contract", "werkvergunning"]);
+  });
+
   test("map niet te lezen (of beschermde paden onbekend): alleen de bestanden van de documentrijen", () => {
-    const plan = maakOpruimPlan({ medewerkerId: "m1", documenten, beschermd: [], mapInhoud: null, profielfoto: [], einde: "2026-06-30" });
-    expect(plan.verwijderen).toEqual([{ bucket: "medewerker-documenten", paden: ["m1/vog_2.pdf", "m1/kvk_3.pdf", "m1/onboarding_aaaa.pdf"] }]);
+    const plan = maakOpruimPlan({ ...basis, eer: false, documenten, beschermd: [], mapInhoud: null, profielfoto: [] });
+    expect(plan.verwijderen).toEqual([{ bucket: "medewerker-documenten", paden: ["m1/vog_2.pdf", "m1/kvk_3.pdf", "m1/verblijfsvergunning_9.pdf"] }]);
   });
 
   test("een bestand dat ook bij een ID-bewijs of bewaard document hoort, gaat nooit weg", () => {
     const plan = maakOpruimPlan({
-      medewerkerId: "m1",
+      ...basis,
+      eer: true,
       documenten: [
         { id: "1", document_type: "overig", file_path: "m1/gedeeld.pdf" },
         { id: "2", document_type: "id_bewijs", file_path: "m1/gedeeld.pdf" },
@@ -378,7 +490,6 @@ test.describe("bestanden bij het verwijderen van een account", () => {
       beschermd: [],
       mapInhoud: [],
       profielfoto: [],
-      einde: "2026-06-30",
     });
     expect(plan.verwijderen).toEqual([]);
     expect(plan.bewaren.map((b) => b.pad)).toEqual(["m1/contract_5.pdf"]);
@@ -388,7 +499,7 @@ test.describe("bestanden bij het verwijderen van een account", () => {
     const rij = bewaardDocumentRij({
       medewerkerId: "m1",
       naam: "x".repeat(250),
-      bestand: { pad: "m1/contract_5.pdf", documentType: "contract", geuploadOp: null, bewaarTot: "2028-06-30" },
+      bestand: { pad: "m1/contract_5.pdf", documentType: "contract", geuploadOp: null, bewaarTot: "2033-12-31" },
       einde: "2026-06-30",
       nu: "2026-10-24T10:00:00Z",
     });

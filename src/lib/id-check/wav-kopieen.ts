@@ -6,19 +6,22 @@ import { documentOpslagPad, MEDEWERKER_DOCUMENTEN_BUCKET } from "@/lib/medewerke
 import { haalLaatsteDienstDatum, isMigratieFout } from "@/lib/id-check/db";
 import { wavKopieBewaarTot } from "@/lib/id-check/controlerecord";
 import {
-  isWavKopieDocument,
+  isWavDocument,
   WAV_KOPIE_LINK_SECONDEN,
   wavKopieenOverzicht,
+  type WavBewaardDocumentRij,
   type WavBewaardRij,
   type WavDocumentRij,
   type WavKopieBron,
   type WavKopieItem,
 } from "@/lib/id-check/wav-kopieen-overzicht";
+import { isWavVergunning, WAV_VERGUNNINGEN } from "@/lib/medewerker/bestanden-bij-verwijderen";
 
 /**
  * DB- en opslagkant van Admin → Medewerkers → Wav-kopieën (regels in
- * lib/id-check/wav-kopieen-overzicht). Alleen lezen en een kortlevende link; elke keer openen komt
- * in de audit-log (actie wav_kopie_geopend: wie, wanneer, welke kopie).
+ * lib/id-check/wav-kopieen-overzicht): ID-kopieën en werk- of verblijfsvergunningen van werknemers
+ * van buiten de EER/Zwitserland. Alleen lezen en een kortlevende link; elke keer openen komt in de
+ * audit-log (actie wav_kopie_geopend: wie, wanneer, welk document).
  */
 
 const ROUTE = "lib/id-check/wav-kopieen";
@@ -122,9 +125,12 @@ async function huidigeBewaarTot(docs: readonly (WavDocumentRij & { reviewed_at?:
   return uitkomst;
 }
 
-/** De lijst. `migratie: false` als id_wav_kopieen nog niet bestaat (dan alleen bestaande accounts). */
-export async function haalWavKopieen(): Promise<{ migratie: boolean; items: WavKopieItem[] }> {
-  let migratie = true;
+/**
+ * De lijst. `ontbrekend` = migraties die nog niet gedraaid zijn (dan ontbreken de bewaarde stukken
+ * van verwijderde accounts uit die tabel).
+ */
+export async function haalWavKopieen(): Promise<{ migratie: boolean; ontbrekend: string[]; items: WavKopieItem[] }> {
+  const ontbrekend: string[] = [];
   const bewaardRes = await supabaseAdmin
     .from("id_wav_kopieen")
     .select("id, medewerker_id, naam, bestand_pad, vervaldatum, geupload_op, bewaar_tot")
@@ -132,14 +138,26 @@ export async function haalWavKopieen(): Promise<{ migratie: boolean; items: WavK
     .limit(5000);
   if (bewaardRes.error) {
     if (!isMigratieFout(bewaardRes.error)) gooi(bewaardRes.error);
-    migratie = false;
+    ontbrekend.push("20261024_id_wav_kopieen.sql");
   }
   const bewaard = (bewaardRes.error ? [] : (bewaardRes.data ?? [])) as WavBewaardRij[];
+
+  const documentRes = await supabaseAdmin
+    .from("bewaarde_documenten")
+    .select("id, medewerker_id, document_type, naam, bestand_pad, geupload_op, bewaar_tot")
+    .in("document_type", [...WAV_VERGUNNINGEN])
+    .order("geupload_op", { ascending: false })
+    .limit(5000);
+  if (documentRes.error) {
+    if (!isMigratieFout(documentRes.error)) gooi(documentRes.error);
+    ontbrekend.push("20261024_documenten_nawerk.sql");
+  }
+  const bewaardeDocumenten = (documentRes.error ? [] : (documentRes.data ?? [])) as WavBewaardDocumentRij[];
 
   const docRes = await supabaseAdmin
     .from("medewerker_documenten")
     .select(DOC_KOLOMMEN)
-    .eq("document_type", "id_bewijs")
+    .in("document_type", ["id_bewijs", ...WAV_VERGUNNINGEN])
     .or("file_path.not.is.null,file_url.not.is.null")
     .limit(5000);
   if (docRes.error) gooi(docRes.error);
@@ -148,17 +166,25 @@ export async function haalWavKopieen(): Promise<{ migratie: boolean; items: WavK
   const docMedewerkers = [...new Set(documenten.map((d) => d.medewerker_id))];
   const controles = await haalControles(docMedewerkers);
   const medewerkers = await haalMedewerkers([
-    ...new Set([...docMedewerkers, ...bewaard.map((b) => b.medewerker_id).filter((id): id is string => !!id)]),
+    ...new Set(
+      [...docMedewerkers, ...bewaard.map((b) => b.medewerker_id), ...bewaardeDocumenten.map((b) => b.medewerker_id)].filter(
+        (id): id is string => !!id,
+      ),
+    ),
   ]);
-  const wav = documenten.filter((d) => isWavKopieDocument(d, controles.get(d.medewerker_id) ?? []));
+  const wav = documenten.filter((d) => isWavDocument(d, controles.get(d.medewerker_id) ?? []));
   const bewaarTot = await huidigeBewaarTot(wav);
 
-  return { migratie, items: wavKopieenOverzicht({ bewaard, documenten: wav, controles, medewerkers, bewaarTot }) };
+  return {
+    migratie: ontbrekend.length === 0,
+    ontbrekend,
+    items: wavKopieenOverzicht({ bewaard, bewaardeDocumenten, documenten: wav, controles, medewerkers, bewaarTot }),
+  };
 }
 
 /**
- * Kortlevende link (5 minuten) naar één Wav-kopie. Alleen voor een kopie die in de lijst staat
- * (zelfde selectie), en alleen als het openen in de audit-log is vastgelegd.
+ * Kortlevende link (5 minuten) naar één Wav-kopie of vergunning. Alleen voor een document dat in de
+ * lijst staat (zelfde selectie), en alleen als het openen in de audit-log is vastgelegd.
  */
 export async function openWavKopie(input: {
   bron: WavKopieBron;
@@ -181,14 +207,33 @@ export async function openWavKopie(input: {
     pad = rij.bestand_pad;
     medewerkerId = rij.medewerker_id;
     accountBestaat = !!medewerkerId && (await haalMedewerkers([medewerkerId])).has(medewerkerId);
+  } else if (input.bron === "bewaard_document") {
+    const { data, error } = await supabaseAdmin
+      .from("bewaarde_documenten")
+      .select("id, medewerker_id, document_type, bucket, bestand_pad")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) {
+      if (isMigratieFout(error)) throw new WavKopieFout("Migratie 20261024_documenten_nawerk.sql ontbreekt", 503);
+      gooi(error);
+    }
+    const rij = data as { medewerker_id: string | null; document_type: string; bucket: string; bestand_pad: string } | null;
+    // Alleen vergunningen: loonheffingsverklaring en contract horen niet in dit scherm.
+    if (!rij || !isWavVergunning(rij.document_type)) {
+      throw new WavKopieFout("Dit document bestaat niet (meer); misschien is de bewaartermijn voorbij", 404);
+    }
+    if (rij.bucket !== MEDEWERKER_DOCUMENTEN_BUCKET) throw new WavKopieFout("Het bestand staat niet in de opslag van TopTalent", 409);
+    pad = rij.bestand_pad;
+    medewerkerId = rij.medewerker_id;
+    accountBestaat = !!medewerkerId && (await haalMedewerkers([medewerkerId])).has(medewerkerId);
   } else {
     const { data, error } = await supabaseAdmin.from("medewerker_documenten").select(DOC_KOLOMMEN).eq("id", input.id).maybeSingle();
     if (error) gooi(error);
     const doc = data as WavDocumentRij | null;
-    if (!doc) throw new WavKopieFout("Deze kopie bestaat niet (meer)", 404);
+    if (!doc) throw new WavKopieFout("Dit document bestaat niet (meer)", 404);
     const controles = await haalControles([doc.medewerker_id]);
-    if (!isWavKopieDocument(doc, controles.get(doc.medewerker_id) ?? [])) {
-      throw new WavKopieFout("Dit document is geen Wav-kopie van het ID", 404);
+    if (!isWavDocument(doc, controles.get(doc.medewerker_id) ?? [])) {
+      throw new WavKopieFout("Dit document is geen Wav-kopie of vergunning", 404);
     }
     pad = documentOpslagPad(doc);
     medewerkerId = doc.medewerker_id;
@@ -207,9 +252,9 @@ export async function openWavKopie(input: {
     actor_email: input.door || null,
     actor_role: input.rol || null,
     action: OPEN_ACTIE,
-    target_table: input.bron === "bewaard" ? "id_wav_kopieen" : "medewerker_documenten",
+    target_table: { bewaard: "id_wav_kopieen", bewaard_document: "bewaarde_documenten", medewerker: "medewerker_documenten" }[input.bron],
     target_id: input.id,
-    summary: "Wav-kopie van het ID geopend",
+    summary: "Wav-kopie of vergunning geopend",
     metadata: { bron: input.bron, medewerker_id: medewerkerId, account_bestaat: accountBestaat },
   });
   if (logFout) {

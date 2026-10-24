@@ -14,13 +14,14 @@ import { bereidBestandenVoorAccountVerwijderen, verwijderAccountBestanden } from
  *    Didit-sessies worden gewist. Kan een kopie niet veilig bewaard blijven, dan stopt het hier en
  *    blijft het account bestaan.
  * 2. Overige bestanden voorbereiden (lib/medewerker/account-bestanden): paden verzamelen vóór de
- *    cascade; loonheffingsverklaring en contract vastleggen in bewaarde_documenten (termijn uit de
- *    privacyverklaring). Lukt dat vastleggen niet, dan stopt het hier.
+ *    cascade; loonheffingsverklaring, contract en (buiten de EER) werk- of verblijfsvergunning
+ *    vastleggen in bewaarde_documenten (termijn uit de privacyverklaring). Lukt dat vastleggen niet,
+ *    dan stopt het hier.
  * 3. Ontdekken-gegevens wissen (de cascade ruimt ze ook op, maar zo staat het vast).
  * 4. De medewerker verwijderen (documentrijen e.d. gaan mee via on delete cascade).
- * 5. Bestanden zonder grondslag uit de opslag halen: ID-kopieën (EER/Zwitserland, afgekeurd),
- *    overige documenten (VOG, KvK, enz.) en de profielfoto. Fouten daarbij gaan naar Sentry; het
- *    account blijft verwijderd.
+ * 5. Bestanden zonder grondslag uit de opslag halen: ID-kopieën en vergunningen (EER/Zwitserland,
+ *    afgekeurd), overige documenten (VOG, KvK, enz.) en de profielfoto. Fouten daarbij gaan naar
+ *    Sentry; het account blijft verwijderd.
  */
 
 const ROUTE = "lib/medewerker/account-verwijderen";
@@ -30,7 +31,7 @@ export type AccountVerwijderResultaat =
       ok: true;
       idKopieenBewaard: number;
       idKopieenVerwijderd: number;
-      /** Bestanden met een bewaartermijn (loonheffingsverklaring, contract) die blijven. */
+      /** Bestanden met een bewaartermijn (loonheffingsverklaring, contract, vergunning buiten de EER) die blijven. */
       bestandenBewaard: number;
       /** Overige documenten en de profielfoto die uit de opslag zijn gehaald. */
       bestandenVerwijderd: number;

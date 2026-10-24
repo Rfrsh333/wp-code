@@ -8,13 +8,16 @@
 --    Zonder deze tabel mailt de cron alleen op de dag van de mijlpaal zelf.
 --
 -- 2. bewaarde_documenten: bestanden die het verwijderen van een werknemersaccount overleven omdat de
---    privacyverklaring er een bewaartermijn voor noemt (paragraaf 6): loonbelastingverklaring
---    (5 jaar na einde dienstverband) en contract (arbeidsovereenkomst/personeelsdossier: 2 jaar na
---    einde dienstverband). medewerker_documenten heeft on delete cascade, dus zonder deze tabel
---    bleef zo'n bestand zonder verwijzing in de opslag staan. Net als id_wav_kopieen:
+--    privacyverklaring (2.7, paragraaf 6 en 10f) er een bewaartermijn voor noemt:
+--    loonbelastingverklaring (5 jaar na einde dienstverband), contract (7 jaar, fiscale
+--    bewaarplicht: tot 31-12 van jaar einde dienstverband + 7) en werk- of verblijfsvergunning van
+--    een werknemer van buiten de EER/Zwitserland (Wav: tot 31-12 van jaar laatste dienst + 5, zoals
+--    id_wav_kopieen). medewerker_documenten heeft on delete cascade, dus zonder deze tabel bleef zo'n
+--    bestand zonder verwijzing in de opslag staan. Net als id_wav_kopieen:
 --    - vlak vóór het verwijderen (lib/medewerker/account-bestanden) komt hier per bestand een rij
 --      met het opslagpad en bewaar_tot; het bestand blijft staan. Andere documenten (VOG, KvK,
---      werkvergunning, enz.) en de profielfoto verwijdert de code na het verwijderen van het account;
+--      vergunning van een EER/Zwitserse werknemer, enz.) en de profielfoto verwijdert de code na het
+--      verwijderen van het account;
 --    - medewerker_id wordt null als het account weg is (on delete set null);
 --    - na bewaar_tot verwijdert de retentie-cron bestand en rij (api/cron/retentie).
 --    Zonder deze tabel wordt het verwijderen van een account mét zo'n bestand geweigerd (met een
@@ -90,13 +93,13 @@ create index if not exists bewaarde_documenten_bewaar_tot on public.bewaarde_doc
 create index if not exists bewaarde_documenten_medewerker on public.bewaarde_documenten (medewerker_id);
 
 comment on table public.bewaarde_documenten is
-  'Bestanden van verwijderde werknemersaccounts met een bewaartermijn uit de privacyverklaring (loonheffingsverklaring 5 jaar, contract 2 jaar na einde dienstverband). Het bestand blijft tot bewaar_tot; daarna verwijdert de retentie-cron bestand en rij. ID-kopieën staan in id_wav_kopieen, niet hier.';
+  'Bestanden van verwijderde werknemersaccounts met een bewaartermijn uit de privacyverklaring 2.7 (loonheffingsverklaring 5 jaar na einde dienstverband; contract tot 31-12 van jaar einde + 7; werk- of verblijfsvergunning van buiten de EER/Zwitserland tot 31-12 van jaar laatste dienst + 5, Wav). Het bestand blijft tot bewaar_tot; daarna verwijdert de retentie-cron bestand en rij. ID-kopieën staan in id_wav_kopieen, niet hier.';
 comment on column public.bewaarde_documenten.medewerker_id is
   'De werknemer; null nadat het account is verwijderd. Zolang hij gevuld is, hoort het bestand nog bij de documentrij in medewerker_documenten.';
 comment on column public.bewaarde_documenten.naam is
   'Naam uit het profiel op het moment van verwijderen, om het document terug te vinden.';
 comment on column public.bewaarde_documenten.einde_dienstverband is
-  'Laatste dienst of datum uit dienst (zonder beide: de dag van verwijderen); de termijn loopt vanaf hier.';
+  'Laatste dienst of datum uit dienst (zonder beide: de dag van verwijderen). Loonheffingsverklaring en contract rekenen vanaf hier; een vergunning (Wav) vanaf de laatste dienst, zoals id_wav_kopieen.';
 
 alter table public.bewaarde_documenten enable row level security;
 revoke all on public.bewaarde_documenten from anon, authenticated;

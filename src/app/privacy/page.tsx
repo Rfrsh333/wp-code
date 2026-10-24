@@ -303,7 +303,7 @@ export default function PrivacyPolicyPage() {
                     <td className="px-4 py-3">Maximaal 2 jaar na laatste contact, tenzij vernieuwd</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="px-4 py-3">Arbeidsovereenkomst en personeelsdossier</td>
+                    <td className="px-4 py-3">Personeelsdossier</td>
                     <td className="px-4 py-3">2 jaar na einde dienstverband</td>
                   </tr>
                   <tr className="border-b bg-neutral-50">
@@ -321,6 +321,15 @@ export default function PrivacyPolicyPage() {
                   <tr className="border-b">
                     <td className="px-4 py-3">Kopie identiteitsbewijs</td>
                     <td className="px-4 py-3">Alleen van zzp&apos;ers van buiten de EER of Zwitserland (Wet arbeid vreemdelingen): tot 31 december van het vijfde jaar na het jaar waarin het werk via TopTalent eindigde. Andere kopieën die eerder bij ons zijn geüpload, verwijderen wij (zie paragraaf 10f)</td>
+                  </tr>
+                  {/* Vergunningen en contract: v2.7 */}
+                  <tr className="border-b bg-neutral-50">
+                    <td className="px-4 py-3">Werk- of verblijfsvergunning</td>
+                    <td className="px-4 py-3">Van zzp&apos;ers van buiten de EER of Zwitserland (Wet arbeid vreemdelingen): tot 31 december van het vijfde jaar na het jaar waarin het werk via TopTalent eindigde, ook als uw account wordt verwijderd (zie paragraaf 10f)</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Arbeidsovereenkomst of overeenkomst van opdracht (contract)</td>
+                    <td className="px-4 py-3">7 jaar (fiscale bewaarplicht): tot 31 december van het zevende jaar na het jaar waarin uw werk via TopTalent eindigde, ook als uw account wordt verwijderd</td>
                   </tr>
                   <tr className="border-b bg-neutral-50">
                     <td className="px-4 py-3">Loonbelastingverklaringen</td>
@@ -675,7 +684,7 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>Wij doen dit op grond van ons gerechtvaardigd belang (artikel 6 lid 1 sub f AVG): de kwaliteit van onze bemiddeling bewaken en werknemers helpen een werkgever te kiezen. Vraagt u om verwijdering van uw account, dan wissen wij direct de beoordelingen die u heeft gegeven.</p>
 
-            {/* 10f. Controle van uw identiteit (v2.6) */}
+            {/* 10f. Controle van uw identiteit (v2.6; vergunningen: v2.7) */}
             <IdControleSectie />
 
             {/* 11. Beveiliging */}
@@ -812,7 +821,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Utrecht, 24 oktober 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 2.6
+                TopTalent B.V. - Privacy Policy versie 2.7
               </p>
             </div>
           </div>

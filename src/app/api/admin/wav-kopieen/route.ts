@@ -5,13 +5,15 @@ import { haalWavKopieen, openWavKopie, WavKopieFout } from "@/lib/id-check/wav-k
 import { leesOpenVerzoek, WAV_KOPIE_ROLLEN } from "@/lib/id-check/wav-kopieen-overzicht";
 
 /**
- * Wav-kopieën van het ID (werknemers van buiten de EER/Zwitserland, Wav art. 15): van verwijderde
- * accounts (id_wav_kopieen) en van bestaande accounts (medewerker_documenten). Alleen owner en
- * operations. Alleen lezen: opruimen gaat via de retentie-cron na bewaar_tot.
+ * Wav-kopieën van het ID en werk- of verblijfsvergunningen (werknemers van buiten de EER/Zwitserland,
+ * Wet arbeid vreemdelingen): van verwijderde accounts (id_wav_kopieen, bewaarde_documenten) en van
+ * bestaande accounts (medewerker_documenten). Alleen owner en operations. Alleen lezen: opruimen gaat
+ * via de retentie-cron na bewaar_tot.
  *
- * GET  → 200 { migratie, items: WavKopieItem[] }
- *        migratie = false zolang 20261024_id_wav_kopieen.sql niet gedraaid is (dan alleen bestaande accounts).
- * POST { actie: "open", bron: "bewaard" | "medewerker", id } → 200 { url } (5 minuten geldig; komt in de audit-log)
+ * GET  → 200 { migratie, ontbrekend, items: WavKopieItem[] }
+ *        ontbrekend = migraties die nog niet gedraaid zijn (dan ontbreken de stukken uit die tabel).
+ * POST { actie: "open", bron: "bewaard" | "bewaard_document" | "medewerker", id }
+ *      → 200 { url } (5 minuten geldig; komt in de audit-log)
  *      → 400 invoer · 403 rol · 404 niet (meer) gevonden of geen Wav-kopie · 502 opslag · 503 migratie ontbreekt
  */
 
@@ -36,8 +38,8 @@ export async function GET(request: NextRequest) {
   const t = await wavKopieToegang(request);
   if ("fout" in t) return t.fout;
   try {
-    const { migratie, items } = await haalWavKopieen();
-    return NextResponse.json({ migratie, items }, { headers: GEEN_CACHE });
+    const { migratie, ontbrekend, items } = await haalWavKopieen();
+    return NextResponse.json({ migratie, ontbrekend, items }, { headers: GEEN_CACHE });
   } catch (fout) {
     return foutAntwoord(fout, "GET");
   }

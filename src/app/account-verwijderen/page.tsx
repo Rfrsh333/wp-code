@@ -165,7 +165,20 @@ export default function AccountVerwijderenPage() {
                 documentsoort, documentnummer, vervaldatum en de uitslag; geen kopie): tot 31 december van het vijfde jaar
                 na het jaar van uw laatste dienst (Wet arbeid vreemdelingen);
               </li>
-              <li>loonbelastingverklaring: 5 jaar na einde dienstverband.</li>
+              <li>loonbelastingverklaring: 5 jaar na einde dienstverband;</li>
+              <li>
+                uw contract (arbeidsovereenkomst of overeenkomst van opdracht): tot 31 december van het zevende jaar na het
+                jaar waarin uw werk via TopTalent eindigde (fiscale bewaarplicht);
+              </li>
+              <li>
+                facturen die wij namens u als zzp&apos;er opmaken en de gegevens van uw uitbetalingen: 7 jaar (fiscale
+                bewaarplicht);
+              </li>
+              <li>
+                alleen als u van buiten de EER of Zwitserland komt: de kopie van uw identiteitsbewijs en uw werk- of
+                verblijfsvergunning, tot 31 december van het vijfde jaar na het jaar waarin uw werk via TopTalent eindigde
+                (Wet arbeid vreemdelingen).
+              </li>
             </ul>
             <p>
               Deze termijnen staan ook in onze{" "}
@@ -174,6 +187,9 @@ export default function AccountVerwijderenPage() {
               </Link>{" "}
               (paragraaf 6, Bewaartermijnen, en paragraaf 10f over de ID-controle). Na afloop van de termijn worden deze
               gegevens verwijderd of geanonimiseerd.
+            </p>
+            <p>
+              Andere documenten die u heeft geüpload (zoals VOG en KvK-uittreksel) en uw profielfoto verwijderen wij.
             </p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Op uw telefoon</h3>

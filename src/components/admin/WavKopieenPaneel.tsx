@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { zoekWavKopieen, type WavKopieItem } from "@/lib/id-check/wav-kopieen-overzicht";
+import { wavSoortLabel, zoekWavKopieen, type WavKopieItem } from "@/lib/id-check/wav-kopieen-overzicht";
 
 /**
- * Admin → Medewerkers: Wav-kopieën van het ID (werknemers van buiten de EER/Zwitserland, Wav art. 15),
- * van bestaande én verwijderde accounts. Zo vindt de beheerder een kopie terug als de
+ * Admin → Medewerkers: Wav-kopieën van het ID en werk- of verblijfsvergunningen (werknemers van
+ * buiten de EER/Zwitserland, Wet arbeid vreemdelingen), van bestaande én verwijderde accounts. Zo vindt de beheerder een kopie terug als de
  * Arbeidsinspectie vraagt wie er werkte. Alleen owner en operations (de API geeft anderen 403; dan
  * toont dit paneel niets). Openen geeft een link van 5 minuten en komt in de audit-log. Geen
  * verwijderknop: opruimen gaat via de retentie-cron na de bewaartermijn.
  */
 
-type Antwoord = { migratie: boolean; items: WavKopieItem[] };
+type Antwoord = { migratie: boolean; ontbrekend?: string[]; items: WavKopieItem[] };
 
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -47,12 +47,12 @@ function KopieRegel({ item }: { item: WavKopieItem }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) {
-        setFout(data.error || "De kopie kon niet worden geopend");
+        setFout(data.error || "Het document kon niet worden geopend");
         return;
       }
       setLink(data.url);
     } catch {
-      setFout("De kopie kon niet worden geopend");
+      setFout("Het document kon niet worden geopend");
     } finally {
       setBezig(false);
     }
@@ -66,13 +66,14 @@ function KopieRegel({ item }: { item: WavKopieItem }) {
         {link && (
           <p className="mt-1 text-sm">
             <a href={link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#F27501] hover:text-[#d96800]">
-              Kopie openen
+              Document openen
             </a>{" "}
             <span className="text-neutral-500">(link 5 minuten geldig; download of bewaar hem niet)</span>
           </p>
         )}
         {fout && <p className="mt-1 text-sm text-red-600">{fout}</p>}
       </td>
+      <td className="py-3 pr-4 whitespace-nowrap">{wavSoortLabel(item.soort)}</td>
       <td className="py-3 pr-4 whitespace-nowrap">
         {item.account_bestaat ? (
           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Bestaat</span>
@@ -133,7 +134,7 @@ export default function WavKopieenPaneel() {
             {verwijderd ? `, ${verwijderd} van verwijderde accounts` : ""})
           </span>
           <span className="block text-sm text-neutral-500">
-            Kopieën van het ID van werknemers van buiten de EER/Zwitserland, voor als de Arbeidsinspectie vraagt wie er werkte.
+            ID-kopieën en vergunningen van werknemers van buiten de EER/Zwitserland, voor als de Arbeidsinspectie vraagt wie er werkte.
           </span>
         </span>
         <span className="text-sm text-neutral-500">{open ? "Sluiten" : "Openen"}</span>
@@ -144,7 +145,8 @@ export default function WavKopieenPaneel() {
           <div className="px-6 pb-4 space-y-3 border-b border-neutral-100">
             {!antwoord.migratie && (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                Migratie 20261024_id_wav_kopieen.sql is nog niet gedraaid: alleen kopieën van bestaande accounts.
+                Migratie {(antwoord.ontbrekend ?? ["20261024_id_wav_kopieen.sql"]).join(" en ")} nog niet gedraaid: stukken van
+                verwijderde accounts uit die tabel ontbreken.
               </p>
             )}
             <p className="text-sm text-neutral-600">
@@ -162,12 +164,13 @@ export default function WavKopieenPaneel() {
             </label>
           </div>
           <div className="px-6 py-2 overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[820px] text-sm">
               <thead className="text-left text-xs text-neutral-500">
                 <tr>
                   <th className="py-2 pr-4">Naam</th>
+                  <th className="py-2 pr-4">Soort</th>
                   <th className="py-2 pr-4">Account</th>
-                  <th className="py-2 pr-4">Vervaldatum ID</th>
+                  <th className="py-2 pr-4">Vervaldatum</th>
                   <th className="py-2 pr-4">Geüpload op</th>
                   <th className="py-2 pr-4">Bewaren tot</th>
                   <th className="py-2">
@@ -181,8 +184,8 @@ export default function WavKopieenPaneel() {
                 ))}
                 {gevonden.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-3 text-neutral-500">
-                      {antwoord.items.length === 0 ? "Geen Wav-kopieën." : "Geen kopie gevonden met deze naam."}
+                    <td colSpan={7} className="py-3 text-neutral-500">
+                      {antwoord.items.length === 0 ? "Geen Wav-kopieën." : "Niets gevonden met deze naam."}
                     </td>
                   </tr>
                 )}

@@ -372,7 +372,8 @@ export async function POST(request: NextRequest) {
     }
     // Alles wat bij het verwijderen hoort (lib/medewerker/account-verwijderen): het ID-controlerecord
     // en een Wav-kopie van het ID blijven tot bewaar_tot, Didit-sessies en ontdekken-gegevens gaan weg,
-    // loonheffingsverklaring en contract blijven (bewaarde_documenten), overige bestanden gaan weg.
+    // loonheffingsverklaring, contract en (buiten de EER) vergunningen blijven (bewaarde_documenten),
+    // overige bestanden gaan weg.
     // Kan iets dat moet blijven niet veilig bewaard blijven, dan blijft het account bestaan (melding).
     const resultaat = await verwijderMedewerkerAccount(id);
     if (!resultaat.ok) {

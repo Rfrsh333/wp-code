@@ -4,10 +4,12 @@ import { logAuditEvent } from "@/lib/audit-log";
 import { nlVandaag } from "@/lib/nl-tijd";
 import { MEDEWERKER_DOCUMENTEN_BUCKET } from "@/lib/medewerker/documenten";
 import { haalLaatsteDienstDatum, isMigratieFout } from "@/lib/id-check/db";
+import { eerVolgensControles } from "@/lib/id-check/controlerecord";
 import {
-  bestandBijAccountVerwijderen,
   bewaardDocumentRij,
+  bewaarRegel,
   eindeDienstverband,
+  isWavVergunning,
   maakOpruimPlan,
   PROFIELFOTO_BUCKET,
   type OpruimDocument,
@@ -18,9 +20,10 @@ import {
  * lib/medewerker/bestanden-bij-verwijderen). Gebruikt door lib/medewerker/account-verwijderen:
  *
  * 1. Vóór het verwijderen: alle paden verzamelen (documentrijen, de map van de werknemer, de
- *    profielfoto) en bestanden met een bewaartermijn (loonheffingsverklaring, contract) vastleggen
- *    in `bewaarde_documenten` (migratie 20261024_documenten_nawerk.sql). Lukt dat niet, dan gaat
- *    het verwijderen niet door: anders blijft zo'n bestand zonder verwijzing achter.
+ *    profielfoto) en bestanden met een bewaartermijn (loonheffingsverklaring, contract, werk- of
+ *    verblijfsvergunning van buiten de EER) vastleggen in `bewaarde_documenten` (migratie
+ *    20261024_documenten_nawerk.sql). Lukt dat niet, dan gaat het verwijderen niet door: anders
+ *    blijft zo'n bestand zonder verwijzing achter.
  * 2. Ná het geslaagde verwijderen: de rest uit de opslag halen. Een fout daarbij gaat naar Sentry;
  *    het account is dan al weg en dat blijft zo.
  * 3. De retentie-cron haalt bewaarde bestanden weg na bewaar_tot (ruimBewaardeDocumentenOp).
@@ -66,6 +69,24 @@ async function beschermdePaden(medewerkerId: string): Promise<string[] | null> {
 }
 
 /**
+ * Nationaliteit binnen de EER/Zwitserland volgens de ID-controles (zoals #38 voor de ID-kopie);
+ * null = onbekend (geen controle die het weet, tabel ontbreekt of lezen mislukt: dan blijft een
+ * vergunning bewaard).
+ */
+async function eerVanMedewerker(medewerkerId: string): Promise<boolean | null> {
+  const { data, error } = await supabaseAdmin
+    .from("id_verificaties")
+    .select("eer, status")
+    .eq("medewerker_id", medewerkerId)
+    .order("aangemaakt_op", { ascending: false });
+  if (error) {
+    if (!isMigratieFout(error)) captureRouteError(error, { route: ROUTE, action: "CONTROLES_LEZEN" });
+    return null;
+  }
+  return eerVolgensControles((data ?? []) as { eer: boolean | null; status: string | null }[]);
+}
+
+/**
  * Stap 1, vlak vóór het verwijderen. `ok: false` = het account mag NIET worden verwijderd (de
  * documenten konden niet worden gelezen, of een bestand met een bewaartermijn kon niet worden
  * vastgelegd).
@@ -73,7 +94,7 @@ async function beschermdePaden(medewerkerId: string): Promise<string[] | null> {
 export async function bereidBestandenVoorAccountVerwijderen(medewerkerId: string): Promise<BestandenVoorbereiding> {
   const { data: docs, error } = await supabaseAdmin
     .from("medewerker_documenten")
-    .select("id, document_type, file_path, file_url, uploaded_at")
+    .select("id, document_type, file_path, file_url, uploaded_at, reviewed_at, review_status, bewaar_tot")
     .eq("medewerker_id", medewerkerId);
   if (error) {
     captureRouteError(error, { route: ROUTE, action: "DOCUMENTEN_LEZEN" });
@@ -97,15 +118,17 @@ export async function bereidBestandenVoorAccountVerwijderen(medewerkerId: string
   const documenten = (docs ?? []) as OpruimDocument[];
   const vandaag = nlVandaag();
   let laatsteDienst: string | null = null;
-  if (documenten.some((d) => bestandBijAccountVerwijderen(d.document_type) === "bewaren")) {
+  if (documenten.some((d) => !!bewaarRegel(d.document_type))) {
     try {
       laatsteDienst = await haalLaatsteDienstDatum(medewerkerId, vandaag);
     } catch (fout) {
-      // Dan telt de datum uit dienst of vandaag: de termijn wordt eerder later dan te vroeg.
+      // Dan telt de datum uit dienst of vandaag (vergunning: de datum op de documentrij of de
+      // goedkeuring/upload, zoals bij de Wav-kopie).
       captureRouteError(fout, { route: ROUTE, action: "LAATSTE_DIENST" });
     }
   }
   const einde = eindeDienstverband({ laatsteDienst, datumUitDienst: p.datum_uit_dienst, vandaag });
+  const eer = documenten.some((d) => isWavVergunning(d.document_type)) ? await eerVanMedewerker(medewerkerId) : null;
 
   const plan = maakOpruimPlan({
     medewerkerId,
@@ -115,6 +138,9 @@ export async function bereidBestandenVoorAccountVerwijderen(medewerkerId: string
     mapInhoud: beschermd ? documentenMap : null,
     profielfoto: [...(p.profile_photo_path ? [p.profile_photo_path] : []), ...(fotoMap ?? [])],
     einde,
+    eer,
+    laatsteDienst,
+    vandaag,
   });
 
   if (plan.bewaren.length > 0) {
@@ -128,7 +154,7 @@ export async function bereidBestandenVoorAccountVerwijderen(medewerkerId: string
         return {
           ok: false,
           status: 503,
-          fout: "Deze werknemer heeft documenten die bewaard moeten blijven (loonheffingsverklaring of contract). Draai eerst migratie 20261024_documenten_nawerk.sql en verwijder daarna het account.",
+          fout: "Deze werknemer heeft documenten die bewaard moeten blijven (loonheffingsverklaring, contract of vergunning). Draai eerst migratie 20261024_documenten_nawerk.sql en verwijder daarna het account.",
         };
       }
       captureRouteError(schrijfFout, { route: ROUTE, action: "BEWAREN_VASTLEGGEN" });
