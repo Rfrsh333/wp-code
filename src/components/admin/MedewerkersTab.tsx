@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import StarRating from "@/components/ui/StarRating";
 import MedewerkerDetailView from "./MedewerkerDetailView";
 import IdChecksPaneel from "./IdChecksPaneel";
+import IdKopieenOpschonen from "./IdKopieenOpschonen";
 
 interface Medewerker {
   id: string;
@@ -287,6 +288,9 @@ export default function MedewerkersTab() {
 
       {/* ID-checks via Didit die een mens moet beoordelen (alleen zichtbaar als er iets open staat) */}
       <IdChecksPaneel />
+
+      {/* Oude ID-kopieën opschonen (alleen owner/operations; anderen zien niets) */}
+      <IdKopieenOpschonen />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
