@@ -1,26 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Script from "next/script";
+import { useCookieKeuze } from "@/hooks/useCookieKeuze";
 
-const CONSENT_KEY = "ttj_cookie_consent";
 const GTM_ID = "GTM-5X3QX6Z6";
 
 export default function GtmLoader() {
-  const [hasConsent, setHasConsent] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(CONSENT_KEY) === "all";
-  });
-
-  useEffect(() => {
-    const onConsentChange = (event: Event) => {
-      const detail = (event as CustomEvent<string>).detail;
-      setHasConsent(detail === "all");
-    };
-
-    window.addEventListener("ttj-cookie-consent", onConsentChange);
-    return () => window.removeEventListener("ttj-cookie-consent", onConsentChange);
-  }, []);
+  const hasConsent = useCookieKeuze() === "all";
 
   if (!hasConsent) {
     return null;
