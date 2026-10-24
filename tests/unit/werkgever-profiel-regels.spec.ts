@@ -1,8 +1,11 @@
 import { test, expect } from "@playwright/test";
 import {
+  BETAAL_PERIODE_DAGEN,
   DIRECT_INGEPLAND_SECONDEN,
   LEEG_PROFIEL,
   MIN_WAARNEMINGEN,
+  betaaltBinnen,
+  betaaltBinnenTekst,
   bouwWerkgeverProfiel,
   compactProfiel,
   heeftKengetallen,
@@ -14,6 +17,7 @@ import {
   scoreSamenvatting,
   scoreTekst,
   type BeoordelingRij,
+  type BetaalRij,
   type ReactieRij,
 } from "../../src/lib/werkgever-profiel-regels";
 
@@ -140,11 +144,84 @@ test.describe("kiesPercentage", () => {
   });
 });
 
+test.describe("betaaltBinnen (factuurdatum → betaald_op)", () => {
+  /** Factuur `factuurDagen` geleden gemaakt, `betaaldDagen` geleden als betaald gemarkeerd. */
+  const dagenGeleden = (d: number) => new Date(NU.getTime() - d * 24 * 3600_000).toISOString();
+  const f = (factuurDagen: number, betaaldDagen: number | null): BetaalRij => ({
+    factuur_datum: dagenGeleden(factuurDagen),
+    betaald_op: betaaldDagen == null ? null : dagenGeleden(betaaldDagen),
+  });
+
+  test(`mediaan in hele dagen, pas vanaf ${MIN_WAARNEMINGEN} betaalde facturen`, () => {
+    expect(betaaltBinnen([f(20, 10), f(30, 16)], NU)).toEqual({ dagen: null, aantal: 2 });
+    // 10, 14 en 30 dagen → mediaan 14
+    expect(betaaltBinnen([f(20, 10), f(30, 16), f(40, 10)], NU)).toEqual({ dagen: 14, aantal: 3 });
+  });
+
+  test("even aantal: halve mediaan naar boven afgerond (\"binnen\" moet kloppen)", () => {
+    // 10, 13, 14, 30 → mediaan 13,5 → 14
+    expect(betaaltBinnen([f(20, 10), f(23, 10), f(30, 16), f(40, 10)], NU).dagen).toBe(14);
+  });
+
+  test("facturen zonder betaald_op of factuurdatum tellen niet mee", () => {
+    const zonder = [f(20, null), f(30, null), { factuur_datum: null, betaald_op: dagenGeleden(1) }];
+    expect(betaaltBinnen([...zonder, f(20, 10), f(30, 16)], NU)).toEqual({ dagen: null, aantal: 2 });
+    expect(betaaltBinnen([...zonder, f(20, 10), f(30, 16), f(25, 20)], NU)).toEqual({ dagen: 10, aantal: 3 });
+  });
+
+  test(`alleen betalingen uit de laatste ${BETAAL_PERIODE_DAGEN} dagen`, () => {
+    const oud = [f(BETAAL_PERIODE_DAGEN + 30, BETAAL_PERIODE_DAGEN + 1), f(BETAAL_PERIODE_DAGEN + 40, BETAAL_PERIODE_DAGEN + 2)];
+    expect(betaaltBinnen([...oud, f(20, 10)], NU)).toEqual({ dagen: null, aantal: 1 });
+    // Factuur van vóór de periode maar binnen de periode betaald telt wel.
+    expect(betaaltBinnen([f(BETAAL_PERIODE_DAGEN + 10, 5), f(20, 10), f(30, 16)], NU).aantal).toBe(3);
+  });
+
+  test("onzin telt niet mee: betaald vóór de factuurdatum, in de toekomst of ongeldige datum", () => {
+    const onzin: BetaalRij[] = [
+      f(5, 10),
+      { factuur_datum: dagenGeleden(3), betaald_op: new Date(NU.getTime() + 3600_000).toISOString() },
+      { factuur_datum: "geen datum", betaald_op: dagenGeleden(1) },
+    ];
+    expect(betaaltBinnen(onzin, NU)).toEqual({ dagen: null, aantal: 0 });
+  });
+
+  test("telt kalenderdagen in Nederlandse tijd, niet 24-uursblokken", () => {
+    // Factuur op 1 okt om 23:30 NL (21:30 UTC), betaald op 2 okt om 00:30 NL: 1 dag, niet 0.
+    const laat = { factuur_datum: "2026-10-01T21:30:00Z", betaald_op: "2026-10-01T22:30:00Z" };
+    // Factuur op 5 okt 08:00 NL, betaald 19 okt 20:00 NL: 14 dagen (geen 14,5 → 15).
+    const termijn = { factuur_datum: "2026-10-05T06:00:00Z", betaald_op: "2026-10-19T18:00:00Z" };
+    // Zelfde dag betaald: 0 dagen.
+    const zelfdeDag = { factuur_datum: "2026-10-10T07:00:00Z", betaald_op: "2026-10-10T15:00:00Z" };
+    expect(betaaltBinnen([laat, laat, laat], NU).dagen).toBe(1);
+    expect(betaaltBinnen([termijn, termijn, termijn], NU).dagen).toBe(14);
+    expect(betaaltBinnen([zelfdeDag, zelfdeDag, zelfdeDag], NU).dagen).toBe(0);
+  });
+});
+
 test.describe("bouwWerkgeverProfiel", () => {
-  test("betaalt_binnen_dagen is altijd null (geen betaaldatum bekend)", () => {
-    const p = bouwWerkgeverProfiel({ beoordelingen: [], beslissingen: [], dienstIds: [], reacties: [], nu: NU });
-    expect(p.betaalt_binnen_dagen).toBeNull();
+  test("betaalt_binnen_dagen uit de betaalde facturen; zonder facturen null", () => {
+    const leeg = bouwWerkgeverProfiel({ beoordelingen: [], beslissingen: [], dienstIds: [], reacties: [], nu: NU });
+    expect(leeg.betaalt_binnen_dagen).toBeNull();
+    expect(leeg.waarnemingen.betaalde_facturen).toBe(0);
     expect(LEEG_PROFIEL.betaalt_binnen_dagen).toBeNull();
+
+    const betaald = (factuur: string, op: string): BetaalRij => ({ factuur_datum: factuur, betaald_op: op });
+    const p = bouwWerkgeverProfiel({
+      beoordelingen: [],
+      beslissingen: [],
+      dienstIds: [],
+      reacties: [],
+      betalingen: [
+        betaald("2026-09-01T10:00:00Z", "2026-09-11T10:00:00Z"),
+        betaald("2026-09-10T10:00:00Z", "2026-09-22T10:00:00Z"),
+        betaald("2026-10-01T10:00:00Z", "2026-10-21T10:00:00Z"),
+      ],
+      nu: NU,
+    });
+    expect(p.betaalt_binnen_dagen).toBe(12);
+    expect(p.waarnemingen.betaalde_facturen).toBe(3);
+    expect(p.betaal_periode_dagen).toBe(BETAAL_PERIODE_DAGEN);
+    expect(heeftKengetallen(compactProfiel(p))).toBe(true);
   });
 
   test("compact profiel bevat precies de vijf velden voor de dienstdata", () => {
@@ -165,6 +242,7 @@ test.describe("bouwWerkgeverProfiel", () => {
       deelscores: { instructies: 0, sfeer: 0, zoals_beschreven: 0 },
       beslissingen: 3,
       diensten_met_reactie: 3,
+      betaalde_facturen: 0,
     });
     expect(p.minimum_waarnemingen).toBe(MIN_WAARNEMINGEN);
     expect(heeftKengetallen(p)).toBe(true);
@@ -186,6 +264,16 @@ test.describe("teksten", () => {
     expect(kiestBinnenTekst(24)).toBe("binnen 1 dag");
     expect(kiestBinnenTekst(25)).toBe("binnen 2 dagen");
     expect(kiestBinnenTekst(-1)).toBeNull();
+  });
+
+  test("betaaltBinnenTekst: hele dagen, minimaal 1", () => {
+    expect(betaaltBinnenTekst(null)).toBeNull();
+    expect(betaaltBinnenTekst(undefined)).toBeNull();
+    expect(betaaltBinnenTekst(-1)).toBeNull();
+    expect(betaaltBinnenTekst(0)).toBe("binnen 1 dag");
+    expect(betaaltBinnenTekst(1)).toBe("binnen 1 dag");
+    expect(betaaltBinnenTekst(14)).toBe("binnen 14 dagen");
+    expect(betaaltBinnenTekst(13.5)).toBe("binnen 14 dagen");
   });
 
   test("scoreTekst met komma", () => {

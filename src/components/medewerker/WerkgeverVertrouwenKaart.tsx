@@ -1,8 +1,9 @@
 "use client";
 
 import { useId } from "react";
-import { Clock, Star, UserCheck } from "lucide-react";
+import { Clock, Star, UserCheck, Wallet } from "lucide-react";
 import {
+  betaaltBinnenTekst,
   heeftKengetallen,
   kiestBinnenTekst,
   scoreTekst,
@@ -11,9 +12,9 @@ import {
 
 /**
  * "Over deze werkgever" in het dienstdetail (stap 4 "Vertrouwen zoals YoungOnes"): sterren met het
- * aantal beoordelingen, en wat de werkgever gewoonlijk doet met reacties. Een kengetal onder het
- * minimum aantal waarnemingen is null en wordt niet getoond; is er niets, dan "Nog te weinig gegevens".
- * De betaaltermijn ontbreekt bewust: TopTalent legt geen betaaldatum van facturen vast.
+ * aantal beoordelingen, wat de werkgever gewoonlijk doet met reacties en hoe snel hij zijn facturen
+ * betaalt (factuurdatum → betaald, laatste 180 dagen). Een kengetal onder het minimum aantal
+ * waarnemingen is null en wordt niet getoond; is er niets, dan "Nog te weinig gegevens".
  */
 export default function WerkgeverVertrouwenKaart({
   bedrijfsnaam,
@@ -24,11 +25,13 @@ export default function WerkgeverVertrouwenKaart({
 }) {
   const titelId = useId();
   const kiest = kiestBinnenTekst(profiel?.kiest_binnen_uren);
+  const betaalt = betaaltBinnenTekst(profiel?.betaalt_binnen_dagen);
   const regels: { icoon: typeof Clock; tekst: string }[] = [];
   if (kiest) regels.push({ icoon: Clock, tekst: `Kiest meestal ${kiest} na een reactie` });
   if (profiel?.kies_percentage != null) {
     regels.push({ icoon: UserCheck, tekst: `Kiest in ${profiel.kies_percentage}% van de diensten met reacties iemand` });
   }
+  if (betaalt) regels.push({ icoon: Wallet, tekst: `Betaalt meestal ${betaalt}` });
 
   return (
     <section aria-labelledby={titelId} className="rounded-xl border border-[var(--mp-separator)] p-3 space-y-2">

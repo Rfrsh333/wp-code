@@ -21,7 +21,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-lg text-neutral-300">
-            TopTalent B.V. - Laatst bijgewerkt: oktober 2026
+            TopTalent B.V. - Laatst bijgewerkt: 23 oktober 2026
           </p>
         </div>
       </section>
@@ -348,6 +348,14 @@ export default function PrivacyPolicyPage() {
                     <td className="px-4 py-3">Beoordelingen die u als werknemer over werkgevers geeft</td>
                     <td className="px-4 py-3">Zolang uw account bestaat; bij een verzoek om verwijdering van uw account direct gewist</td>
                   </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Meldingen in uw meldingenoverzicht</td>
+                    <td className="px-4 py-3">90 dagen, daarna automatisch verwijderd; bij verwijdering van uw account direct gewist</td>
+                  </tr>
+                  <tr className="border-b bg-neutral-50">
+                    <td className="px-4 py-3">Facturen die wij namens u als zzp&apos;er opmaken en de gegevens van uw uitbetalingen</td>
+                    <td className="px-4 py-3">7 jaar (fiscale bewaarplicht), ook als uw account wordt verwijderd</td>
+                  </tr>
                   <tr>
                     <td className="px-4 py-3">Klachten en geschillen</td>
                     <td className="px-4 py-3">5 jaar na afhandeling</td>
@@ -356,8 +364,8 @@ export default function PrivacyPolicyPage() {
               </table>
             </div>
             <p>Na afloop van de bewaartermijn worden uw gegevens verwijderd of geanonimiseerd, tenzij een wettelijke verplichting of een gerechtvaardigd belang een langere bewaartermijn rechtvaardigt.</p>
-            {/* Meldingencentrum (v2.4) */}
-            <p id="meldingen">Meldingen die wij u sturen over uw diensten, uren, facturen of account, bijvoorbeeld als pushmelding, bewaren wij ook in het meldingenoverzicht van uw account, zodat u ze kunt teruglezen. Wij bewaren ze 90 dagen; daarna worden ze automatisch verwijderd. Wordt uw account verwijderd, dan verwijderen wij ook uw meldingen.</p>
+            {/* Meldingencentrum (v2.4; uitbetalingen en bewaren naast facturen: v2.5) */}
+            <p id="meldingen">Meldingen die wij u sturen over uw diensten, uren, facturen, uitbetalingen of account, bijvoorbeeld als pushmelding, bewaren wij ook in het meldingenoverzicht van uw account, zodat u ze kunt teruglezen. Wij bewaren meldingen 90 dagen; daarna worden ze automatisch verwijderd. Wordt uw account verwijderd, dan verwijderen wij ook uw meldingen. Dat geldt alleen voor de meldingen zelf: facturen en de gegevens van uw uitbetalingen bewaren wij zoals in de tabel hierboven en in paragraaf 3.5a staat.</p>
 
             {/* 7. Verstrekking aan derden */}
             <h2 className="text-2xl font-bold text-[#1F1F1F] border-b-2 border-[#FF7A00] pb-2 mb-6 mt-12">
@@ -573,13 +581,13 @@ export default function PrivacyPolicyPage() {
             <p>Het QR-pasje van de werknemer kantelt mee als u de telefoon beweegt. Daarvoor leest de app de bewegingssensor van het toestel uit. Die gegevens worden alleen op het toestel gebruikt voor dit visuele effect en worden niet opgeslagen of verstuurd.</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Pushmeldingen</h3>
-            <p>Als u toestemming geeft, stuurt de app meldingen over uw werk bij TopTalent, bijvoorbeeld een uitnodiging voor een dienst, een nieuwe dienst, een geannuleerde dienst, een nieuwe aanmelding, uren die op goedkeuring wachten of een nieuwe factuur. Daarvoor slaan wij een pushtoken van uw toestel op, gekoppeld aan uw account. De meldingen lopen via:</p>
+            <p>Als u toestemming geeft, stuurt de app meldingen over uw werk bij TopTalent, bijvoorbeeld een uitnodiging voor een dienst, een nieuwe dienst, een geannuleerde dienst, een nieuwe aanmelding, uren die op goedkeuring wachten, een nieuwe factuur of een verwerkte uitbetaling. Daarvoor slaan wij een pushtoken van uw toestel op, gekoppeld aan uw account. De meldingen lopen via:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Expo Push Service</strong> van 650 Industries, Inc. (VS)</li>
               <li><strong>Apple Push Notification service</strong> (iPhone)</li>
               <li><strong>Firebase Cloud Messaging</strong> van Google (Android)</li>
             </ul>
-            <p>Bij het uitloggen wordt het pushtoken van dat toestel bij ons verwijderd. Werknemers kunnen meldingen in de app uitzetten onder Account &rarr; Meldingen en wachtwoord. Iedereen kan meldingen ook uitzetten in de instellingen van de telefoon.</p>
+            <p>Bij het uitloggen wordt het pushtoken van dat toestel bij ons verwijderd. Werknemers kunnen meldingen in de app uitzetten onder Account &rarr; Meldingen en wachtwoord. Iedereen kan meldingen ook uitzetten in de instellingen van de telefoon. Elke pushmelding bewaren wij daarnaast in uw meldingenoverzicht (zie paragraaf 6).</p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Gebruiksstatistieken</h3>
             <p>Om de app te verbeteren meten wij welke schermen worden geopend en welke stappen worden gezet, bijvoorbeeld een aanmelding voor een dienst of het indienen van uren. Wij sturen daarbij geen naam, e-mailadres of telefoonnummer mee. De gegevens gaan naar PostHog (servers in Frankfurt, Duitsland). Wij doen dit op basis van ons gerechtvaardigd belang om de app te verbeteren. U kunt het altijd uitzetten in de instellingen van de app, onder &ldquo;Gebruiksstatistieken delen&rdquo;. Deze statistieken zijn geen schermopnames; die maken wij alleen als u daar apart toestemming voor geeft (zie hieronder).</p>
@@ -651,7 +659,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Anoniem voor werkgevers:</strong> werkgevers zien alleen het aantal beoordelingen en de gemiddelden van alle beoordelingen samen; een gemiddelde pas vanaf drie beoordelingen. Zij zien niet wie welke beoordeling gaf, niet wanneer, en nooit uw opmerking.</li>
               <li><strong>Andere werknemers</strong> zien bij een dienst hetzelfde gemiddelde en het aantal beoordelingen, zonder namen of opmerkingen.</li>
               <li><strong>Alleen TopTalent</strong> ziet bij een beoordeling uw naam, de dienst en uw opmerking. Wij gebruiken dat om de kwaliteit van onze werkgevers te bewaken en om ongepaste beoordelingen te kunnen verbergen.</li>
-              <li><strong>Kengetallen over werkgevers:</strong> bij een dienst tonen wij ook hoe snel de werkgever gewoonlijk over reacties beslist en in hoeveel procent van zijn diensten met reacties hij iemand kiest. Die berekenen wij uit de diensten en aanmeldingen van de laatste 90 dagen, ook pas vanaf drie waarnemingen. Ze gaan over de werkgever, niet over u.</li>
+              <li><strong>Kengetallen over werkgevers:</strong> bij een dienst tonen wij ook hoe snel de werkgever gewoonlijk over reacties beslist, in hoeveel procent van zijn diensten met reacties hij iemand kiest en binnen hoeveel dagen hij zijn facturen van TopTalent gewoonlijk betaalt. De eerste twee berekenen wij uit de diensten en aanmeldingen van de laatste 90 dagen; de betaaltermijn uit de facturen die in de laatste 180 dagen zijn betaald, van de factuurdatum tot de dag waarop wij de betaling hebben verwerkt. Elk kengetal tonen wij pas vanaf drie waarnemingen. Ze gaan over de werkgever, niet over u. De werkgever ziet dezelfde kengetallen over zichzelf in zijn portaal.</li>
             </ul>
             <p>Wij doen dit op grond van ons gerechtvaardigd belang (artikel 6 lid 1 sub f AVG): de kwaliteit van onze bemiddeling bewaken en werknemers helpen een werkgever te kiezen. Vraagt u om verwijdering van uw account, dan wissen wij direct de beoordelingen die u heeft gegeven.</p>
 
@@ -785,10 +793,10 @@ export default function PrivacyPolicyPage() {
             {/* Footer */}
             <div className="mt-16 pt-8 border-t border-neutral-200">
               <p className="text-neutral-500 text-sm">
-                <strong>Utrecht, oktober 2026</strong>
+                <strong>Utrecht, 23 oktober 2026</strong>
               </p>
               <p className="text-neutral-500 text-sm mt-2">
-                TopTalent B.V. - Privacy Policy versie 2.4
+                TopTalent B.V. - Privacy Policy versie 2.5
               </p>
             </div>
           </div>

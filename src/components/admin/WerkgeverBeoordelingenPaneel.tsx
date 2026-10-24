@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { DEELSCORE_KOLOM, DEELSCORE_LABEL, DEELSCORES, kiestBinnenTekst, scoreTekst, type WerkgeverProfielKern } from "@/lib/werkgever-profiel-regels";
+import {
+  betaaltBinnenTekst,
+  DEELSCORE_KOLOM,
+  DEELSCORE_LABEL,
+  DEELSCORES,
+  kiestBinnenTekst,
+  scoreTekst,
+  type WerkgeverProfielKern,
+} from "@/lib/werkgever-profiel-regels";
 
 /**
  * Klantdetail (admin) → "Beoordelingen door medewerkers" (stap 4 "Vertrouwen zoals YoungOnes").
@@ -123,9 +131,9 @@ export default function WerkgeverBeoordelingenPaneel({ klantId }: { klantId: str
             <p className="text-xs text-neutral-500">{p.waarnemingen.diensten_met_reactie} diensten met reacties</p>
           </div>
           <div className="rounded-xl bg-neutral-50 p-3">
-            <p className="text-xs text-neutral-500">Betaalt binnen</p>
-            <p className="text-sm font-bold text-neutral-900">–</p>
-            <p className="text-xs text-neutral-500">Geen betaaldatum vastgelegd</p>
+            <p className="text-xs text-neutral-500">Betaalt meestal</p>
+            <p className="text-sm font-bold text-neutral-900">{betaaltBinnenTekst(p.betaalt_binnen_dagen) ?? "–"}</p>
+            <p className="text-xs text-neutral-500">{p.waarnemingen.betaalde_facturen} betaalde facturen ({p.betaal_periode_dagen} d)</p>
           </div>
         </div>
       )}

@@ -2,13 +2,15 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { haalDemoIds, zelfdeWereld } from "@/lib/demo";
 import { nlVandaag, plusDagen } from "@/lib/nl-tijd";
 import { isOntbrekendeTabel } from "@/lib/medewerker/werkgever-voorkeuren";
-import type { DbFout } from "@/lib/db-kolom-fallback";
+import { isOntbrekendeKolom, type DbFout } from "@/lib/db-kolom-fallback";
 import {
+  BETAAL_PERIODE_DAGEN,
   bouwWerkgeverProfiel,
   compactProfiel,
   LEEG_PROFIEL,
   PROFIEL_PERIODE_DAGEN,
   type BeoordelingRij,
+  type BetaalRij,
   type BeslisRij,
   type ReactieRij,
   type WerkgeverProfielCompact,
@@ -23,6 +25,9 @@ import {
  *   werkgever_beoordelingen   sterren en deelscores (niet verborgen); ontbreekt de tabel → geen sterren
  *   dienst_aanmeldingen       aangemeld_at → beoordeeld_at (beslissingen in de laatste 90 dagen)
  *   diensten + aanmeldingen   afgelopen diensten (laatste 90 dagen) met reacties, en of iemand gekozen is
+ *   facturen                  status 'betaald' met betaald_op in de laatste 180 dagen: created_at
+ *                             (factuurdatum) → betaald_op. Zonder kolom betaald_op (migratie 20261024
+ *                             niet gedraaid) geen betaaltermijn, de rest van het profiel gewoon.
  * Demo-accounts: alleen waarnemingen uit de wereld van de werkgever tellen (lib/demo.ts).
  *
  * De cache (per serverinstantie, 5 minuten) houdt Ontdekken snel: daar staan tot 200 diensten van
@@ -73,12 +78,14 @@ async function berekenProfielen(klantIds: string[], nu: Date): Promise<Map<strin
   const vandaag = nlVandaag();
   const periodeStart = plusDagen(vandaag, -PROFIEL_PERIODE_DAGEN);
   const beslisGrens = new Date(nu.getTime() - PROFIEL_PERIODE_DAGEN * 24 * 60 * 60 * 1000).toISOString();
+  const betaalGrens = new Date(nu.getTime() - BETAAL_PERIODE_DAGEN * 24 * 60 * 60 * 1000).toISOString();
 
   const beoordelingen = new Map<string, BeoordelingRij[]>();
   const beslissingen = new Map<string, BeslisRij[]>();
   const dienstenPerKlant = new Map<string, string[]>();
   const klantVanDienst = new Map<string, string>();
   const reacties = new Map<string, ReactieRij[]>();
+  const betalingen = new Map<string, BetaalRij[]>();
   let beoordelingenBeschikbaar = true;
 
   const voeg = <T,>(m: Map<string, T[]>, k: string, v: T) => {
@@ -88,7 +95,7 @@ async function berekenProfielen(klantIds: string[], nu: Date): Promise<Map<strin
   };
 
   for (const blok of blokken(klantIds)) {
-    const [b, s, d] = await Promise.all([
+    const [b, s, d, f] = await Promise.all([
       allePaginas<BeoordelingRij & { klant_id: string; medewerker_id: string }>((van, tot) =>
         supabaseAdmin
           .from("werkgever_beoordelingen")
@@ -117,12 +124,23 @@ async function berekenProfielen(klantIds: string[], nu: Date): Promise<Map<strin
           .order("id")
           .range(van, tot),
       ),
+      allePaginas<{ id: string; klant_id: string; created_at: string | null; betaald_op: string | null }>((van, tot) =>
+        supabaseAdmin
+          .from("facturen")
+          .select("id, klant_id, created_at, betaald_op")
+          .in("klant_id", blok)
+          .eq("status", "betaald")
+          .gte("betaald_op", betaalGrens)
+          .order("id")
+          .range(van, tot),
+      ),
     ]);
 
     if (isOntbrekendeTabel(b.error)) beoordelingenBeschikbaar = false;
     else if (b.error) throw b.error;
     if (s.error) throw s.error;
     if (d.error) throw d.error;
+    if (f.error && !isOntbrekendeKolom(f.error)) throw f.error;
 
     for (const r of b.data) {
       if (!zelfdeWereld(demoIds, r.medewerker_id, r.klant_id)) continue;
@@ -136,6 +154,10 @@ async function berekenProfielen(klantIds: string[], nu: Date): Promise<Map<strin
     for (const r of d.data) {
       voeg(dienstenPerKlant, r.klant_id, r.id);
       klantVanDienst.set(r.id, r.klant_id);
+    }
+    // Een factuur hoort bij één werkgever; geen medewerker erbij, dus geen demo-filter nodig.
+    for (const r of f.error ? [] : f.data) {
+      voeg(betalingen, r.klant_id, { factuur_datum: r.created_at, betaald_op: r.betaald_op });
     }
   }
 
@@ -165,6 +187,7 @@ async function berekenProfielen(klantIds: string[], nu: Date): Promise<Map<strin
         beslissingen: beslissingen.get(id) ?? [],
         dienstIds: dienstenPerKlant.get(id) ?? [],
         reacties: reacties.get(id) ?? [],
+        betalingen: betalingen.get(id) ?? [],
         beoordelingenBeschikbaar,
         nu,
       }),

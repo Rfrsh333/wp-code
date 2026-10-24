@@ -8,9 +8,12 @@ import {
   maakMeldingRijen,
   MELDING_CATEGORIEEN,
   MELDING_ONTDUBBEL_VENSTER_MS,
+  nieuwsteKaartPerOntvanger,
   telling,
+  verzamelMeldingIds,
   type MeldingCategorie,
   type MeldingenVraag,
+  type MeldingIds,
   type MeldingInvoer,
   type MeldingRij,
   type MeldingUserType,
@@ -24,6 +27,9 @@ import {
  * Zolang de tabel niet bestaat (42P01 / PostgREST PGRST205) slaat opslaan niets op en geven de
  * leesfuncties `beschikbaar: false`; alles werkt dan zoals voorheen. Opslaan gooit nooit: een
  * mislukte insert mag een push of een route nooit breken (fout naar Sentry).
+ *
+ * Opslaan geeft per ontvanger het id van zijn melding terug (MeldingIds), voor `melding_id` in de
+ * push (lib/push-notifications.ts).
  */
 
 export type MeldingGebruiker = { type: MeldingUserType; id: string };
@@ -40,6 +46,11 @@ export type MeldingWeergave = {
 };
 
 type DbFout = { code?: string | null; message?: string | null } | null | undefined;
+
+/** Resultaat van opslaan: aantal nieuwe rijen en per ontvanger het id van zijn melding. */
+export type MeldingOpslag = { opgeslagen: number; ids: MeldingIds };
+
+const NIETS_OPGESLAGEN = (): MeldingOpslag => ({ opgeslagen: 0, ids: new Map() });
 
 /** Tabel (of een kolom) bestaat nog niet: migratie niet gedraaid. */
 function tabelOntbreekt(fout: DbFout): boolean {
@@ -66,22 +77,29 @@ function tabelVan(userType: MeldingUserType): "medewerkers" | "klanten" {
   return userType === "medewerker" ? "medewerkers" : "klanten";
 }
 
-/** Rijen in blokken van 500 wegschrijven. Gooit nooit (aanroeper vangt alles af). */
-async function schrijfRijen(rijen: MeldingRij[]): Promise<number> {
+type NieuweMelding = { id: string; user_id: string };
+
+/**
+ * Rijen in blokken van 500 wegschrijven; geeft id en ontvanger van elke nieuwe rij terug. Gooit
+ * nooit (aanroeper vangt alles af).
+ */
+async function schrijfRijen(rijen: MeldingRij[]): Promise<{ opgeslagen: number; nieuw: NieuweMelding[] }> {
   let opgeslagen = 0;
+  const nieuw: NieuweMelding[] = [];
   for (const blok of inBlokken(rijen)) {
-    const { error } = await supabaseAdmin.from("meldingen").insert(blok);
+    const { data, error } = await supabaseAdmin.from("meldingen").insert(blok).select("id, user_id");
     if (!error) {
       opgeslagen += blok.length;
+      nieuw.push(...((data ?? []) as NieuweMelding[]));
       continue;
     }
     if (tabelOntbreekt(error)) {
       ontbreektTot = Date.now() + ONTBREEKT_TTL_MS;
-      return opgeslagen;
+      return { opgeslagen, nieuw };
     }
     captureRouteError(error, { route: ROUTE, action: "OPSLAAN" });
   }
-  return opgeslagen;
+  return { opgeslagen, nieuw };
 }
 
 /**
@@ -110,77 +128,88 @@ async function alleenBestaandeAccounts(rijen: MeldingRij[], userType: MeldingUse
  * `ontdubbel: "vervangen"` (de specifiekere melding, zoals een uitnodiging) de eerdere kaart
  * verwijderd. Lukt de controle niet, dan liever dubbel dan gemist (fout naar Sentry).
  * Klein restrisico: twee meldingen die op exact hetzelfde moment worden opgeslagen, zien elkaar niet.
+ * `bestaand`: wie is overgeslagen → id van zijn nieuwste eerdere kaart (voor melding_id in de push).
  */
 async function ontdubbel(
   rijen: MeldingRij[],
   userType: MeldingUserType,
   wijze: MeldingInvoer["ontdubbel"],
-): Promise<MeldingRij[]> {
+): Promise<{ rijen: MeldingRij[]; bestaand: MeldingIds }> {
   const sleutels = rijen[0]?.sleutels;
-  if (!sleutels?.length) return rijen;
+  if (!sleutels?.length) return { rijen, bestaand: new Map() };
   const grens = new Date(Date.now() - MELDING_ONTDUBBEL_VENSTER_MS).toISOString();
-  const eerder = new Map<string, string[]>(); // user_id → ids van eerdere kaarten
+  const gevonden: { id: string; user_id: string; created_at: string | null }[] = [];
   for (const blok of inBlokken(rijen.map((r) => r.user_id), IN_BLOK)) {
     const { data, error } = await supabaseAdmin
       .from("meldingen")
-      .select("id, user_id")
+      .select("id, user_id, created_at")
       .eq("user_type", userType)
       .in("user_id", blok)
       .overlaps("sleutels", sleutels)
       .gte("created_at", grens);
     if (error) {
       if (!tabelOntbreekt(error)) captureRouteError(error, { route: ROUTE, action: "ONTDUBBELEN" });
-      return rijen;
+      return { rijen, bestaand: new Map() };
     }
-    for (const r of (data ?? []) as { id: string; user_id: string }[]) {
-      const uid = String(r.user_id).toLowerCase();
-      eerder.set(uid, [...(eerder.get(uid) ?? []), r.id]);
-    }
+    gevonden.push(...((data ?? []) as typeof gevonden));
   }
-  if (eerder.size === 0) return rijen;
-  if (wijze !== "vervangen") return rijen.filter((r) => !eerder.has(r.user_id));
+  if (gevonden.length === 0) return { rijen, bestaand: new Map() };
+  const nieuwste = nieuwsteKaartPerOntvanger(gevonden);
+  if (wijze !== "vervangen") return { rijen: rijen.filter((r) => !nieuwste.has(r.user_id)), bestaand: nieuwste };
 
-  const weg = [...eerder.values()].flat();
+  const weg = gevonden.map((r) => r.id);
   for (const blok of inBlokken(weg, IN_BLOK)) {
     const { error } = await supabaseAdmin.from("meldingen").delete().in("id", blok);
     if (error) captureRouteError(error, { route: ROUTE, action: "ONTDUBBELEN" });
   }
-  return rijen;
+  return { rijen, bestaand: new Map() };
+}
+
+/** Ontdubbelen + wegschrijven; per ontvanger het id van zijn (nieuwe of eerdere) melding. */
+async function ontdubbelEnSchrijf(
+  rijen: MeldingRij[],
+  userType: MeldingUserType,
+  wijze: MeldingInvoer["ontdubbel"],
+): Promise<MeldingOpslag> {
+  const { rijen: teSchrijven, bestaand } = await ontdubbel(rijen, userType, wijze);
+  const { opgeslagen, nieuw } = await schrijfRijen(teSchrijven);
+  return { opgeslagen, ids: verzamelMeldingIds(nieuw, bestaand) };
 }
 
 /**
  * Sla één melding op voor elke ontvanger, in blokken van 500 rijen. Gooit nooit; geeft het aantal
- * opgeslagen rijen terug. Lukt een blok niet, dan gaan de andere blokken toch door.
+ * opgeslagen rijen en per ontvanger het melding-id terug. Lukt een blok niet, dan gaan de andere
+ * blokken toch door.
  */
 export async function bewaarMeldingen(
   userIds: readonly string[],
   userType: MeldingUserType,
   invoer: MeldingInvoer,
-): Promise<number> {
+): Promise<MeldingOpslag> {
   try {
-    if (ontbreektTot > Date.now()) return 0;
+    if (ontbreektTot > Date.now()) return NIETS_OPGESLAGEN();
     const rijen = maakMeldingRijen(userIds, userType, invoer);
-    if (rijen.length === 0) return 0;
+    if (rijen.length === 0) return NIETS_OPGESLAGEN();
     const bestaand = await alleenBestaandeAccounts(rijen, userType);
-    return await schrijfRijen(await ontdubbel(bestaand, userType, invoer.ontdubbel));
+    return await ontdubbelEnSchrijf(bestaand, userType, invoer.ontdubbel);
   } catch (e) {
     captureRouteError(e, { route: ROUTE, action: "OPSLAAN" });
-    return 0;
+    return NIETS_OPGESLAGEN();
   }
 }
 
 /**
  * Broadcast naar iedereen van een type (sendPushToAllOfType): een melding voor alle actieve
  * accounts uit dezelfde wereld (demo blijft gescheiden), ook wie geen pushabonnement heeft.
- * Gooit nooit.
+ * Gooit nooit. Elke ontvanger krijgt een eigen melding-id (MeldingIds).
  */
 export async function bewaarMeldingenVoorIedereen(
   userType: MeldingUserType,
   invoer: MeldingInvoer,
   wereld: { demo: boolean; demoIds: ReadonlySet<string> },
-): Promise<number> {
+): Promise<MeldingOpslag> {
   try {
-    if (ontbreektTot > Date.now()) return 0;
+    if (ontbreektTot > Date.now()) return NIETS_OPGESLAGEN();
     const ids: string[] = [];
     // Doorgaan tot een lege pagina: zo valt niemand weg als max_rows lager staat dan PAGINA.
     for (let pagina = 0, van = 0; pagina < MAX_PAGINAS; pagina++) {
@@ -192,7 +221,7 @@ export async function bewaarMeldingenVoorIedereen(
         .range(van, van + PAGINA - 1);
       if (error) {
         captureRouteError(error, { route: ROUTE, action: "ONTVANGERS" });
-        return 0;
+        return NIETS_OPGESLAGEN();
       }
       const rijen = (data ?? []) as { id: string }[];
       if (rijen.length === 0) break;
@@ -201,10 +230,10 @@ export async function bewaarMeldingenVoorIedereen(
     }
     // Al gefilterd op status 'actief': geen extra accountcontrole nodig.
     const wereldIds = ids.filter((id) => wereld.demoIds.has(id) === wereld.demo);
-    return await schrijfRijen(await ontdubbel(maakMeldingRijen(wereldIds, userType, invoer), userType, invoer.ontdubbel));
+    return await ontdubbelEnSchrijf(maakMeldingRijen(wereldIds, userType, invoer), userType, invoer.ontdubbel);
   } catch (e) {
     captureRouteError(e, { route: ROUTE, action: "ONTVANGERS" });
-    return 0;
+    return NIETS_OPGESLAGEN();
   }
 }
 

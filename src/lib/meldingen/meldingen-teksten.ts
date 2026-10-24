@@ -118,3 +118,28 @@ export function meldingUrenBeoordeeld(i: UrenMeldingInput): { title: string; bod
     categorie: "uren_geld",
   };
 }
+
+// --- Uren & geld (stap 6): push naar de medewerker als zijn uitbetaling is verwerkt ---------------
+
+export type UitbetaaldMeldingInput = {
+  /** id van de uitbetaling (zelffactuur); maakt de tag uniek per uitbetaling. */
+  uitbetalingId: string;
+  factuurNummer: string;
+  /** Al opgemaakt bedrag incl. btw, bv. "€ 193,60" (euroTekst in lib/uitbetaling/regels.ts). */
+  bedrag: string;
+  ibanLaatste4?: string | null;
+};
+
+/**
+ * Push en melding na "verwerkt in bank" (api/admin/uitbetalingen/rondes/[id]/verwerkt). Categorie
+ * expliciet uren_geld (tab Uren & geld), niet afgeleid uit de tag.
+ */
+export function meldingUitbetaald(i: UitbetaaldMeldingInput): { title: string; body: string; url: string; tag: string; categorie: "uren_geld" } {
+  return {
+    title: "Je uitbetaling is verwerkt",
+    body: `Factuur ${i.factuurNummer}: ${i.bedrag} is uitbetaald${i.ibanLaatste4 ? ` naar je rekening die eindigt op ${i.ibanLaatste4}` : ""}.`,
+    url: "/medewerker/financieel/facturen",
+    tag: `uitbetaling-${i.uitbetalingId}`,
+    categorie: "uren_geld",
+  };
+}

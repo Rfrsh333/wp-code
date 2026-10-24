@@ -15,8 +15,8 @@ import { ZELFFACTURERING_IS_CONCEPT } from "@/content/zelffacturering-akkoord";
  *                                stelt Rachid vast. Zonder deze waarde kan niemand akkoord geven.
  */
 
-/** Wie uitbetalingen mag zien en aanmaken: dezelfde rollen als de andere geld-routes in de code
- *  (facturen genereren/versturen/betaald, boetes): owner en finance. */
+/** Wie uitbetalingen mag zien en aanmaken: eigenaar en financiën (owner/finance), bevestigd door
+ *  Rachid; dezelfde rollen als de andere geld-routes (facturen genereren/versturen/betaald, boetes). */
 export const UITBETALING_ROLLEN: AdminRole[] = ["owner", "finance"];
 
 export function isZelffactureringActief(): boolean {
