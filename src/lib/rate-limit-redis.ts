@@ -84,6 +84,17 @@ export const klantAanvraagRateLimit = redis
     })
   : null;
 
+// ID-controle via Didit (POST /api/medewerker/id-check en het videocall-verzoek), per medewerker.
+// Elke sessie kan Didit-krediet kosten; 5 per uur is ruim genoeg om een mislukte poging over te doen.
+export const idCheckRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "1 h"),
+      analytics: true,
+      prefix: "ratelimit:id-check",
+    })
+  : null;
+
 // Striktere rate limit voor AI endpoints (kostbaar + misbruikgevoelig)
 export const aiRateLimit = redis
   ? new Ratelimit({
@@ -182,6 +193,10 @@ function inferFallbackRateLimitOptions(identifier: string): FallbackRateLimitOpt
 
   if (identifier.startsWith("klant-aanvraag:")) {
     return { windowMs: 60 * 60 * 1000, maxRequests: 20 };
+  }
+
+  if (identifier.startsWith("id-check:")) {
+    return { windowMs: 60 * 60 * 1000, maxRequests: 5 };
   }
 
   if (identifier.startsWith("calculator-lead:")) {

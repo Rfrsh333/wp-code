@@ -50,6 +50,13 @@ export type ChecklistMedewerker = {
 export type ChecklistOpties = {
   /** true = punt "Akkoord zelffacturering" meenemen (vlag aan én migratie gedraaid). */
   zelffacturering?: boolean;
+  /**
+   * ID-controle via Didit staat aan (ID_CHECK_DIDIT_ACTIEF=1 + sleutels): dan gaat het ID-punt over
+   * "Controleer je ID" in plaats van uploaden. `status` = status van de nieuwste ID-controle
+   * (lib/id-check/regels), of null. Of het punt in orde is, blijft afhangen van een goedgekeurd,
+   * geldig `id_bewijs` in medewerker_documenten.
+   */
+  idCheck?: { status: string | null };
 };
 
 export type ChecklistDocument = {
@@ -61,18 +68,39 @@ export type ChecklistDocument = {
 
 const PROFIEL: ChecklistActie = { scherm: "profiel", web_pad: "/medewerker/profiel", label: "Naar je profiel" };
 const DOCUMENTEN: ChecklistActie = { scherm: "documenten", web_pad: "/medewerker/documenten", label: "Naar je documenten" };
+/** Zelfde scherm (de app kent "documenten"), andere knoptekst als de ID-controle via Didit aan staat. */
+const ID_CHECK: ChecklistActie = { scherm: "documenten", web_pad: "/medewerker/documenten", label: "Controleer je ID" };
 const OVEREENKOMST: ChecklistActie = { scherm: "overeenkomst", web_pad: "/medewerker/overeenkomst", label: "Overeenkomst lezen" };
 const ZELFFACTURERING: ChecklistActie = { scherm: "zelffacturering", web_pad: "/medewerker/zelffacturering", label: "Lezen en akkoord geven" };
+
+/** Goedgekeurde ID-bewijzen (ook zonder bestand, via Didit of videocall). */
+function goedgekeurdeIds(documenten: readonly ChecklistDocument[]): ChecklistDocument[] {
+  // Zelfde regel als de verloopblokkade (teltVoorVerloop): zonder kolom review_status (waarde
+  // undefined) is goedkeuring niet vast te stellen en telt het document, anders blokkeert iedereen.
+  return documenten.filter((d) => d.document_type === "id_bewijs").filter(teltVoorVerloop);
+}
+
+/** Is er een goedgekeurd, niet verlopen ID-bewijs? (geen vervaldatum = niet verlopen) */
+export function heeftGeldigId(documenten: readonly ChecklistDocument[], vandaag: string): boolean {
+  return goedgekeurdeIds(documenten).some((d) => !d.expiry_date || d.expiry_date >= vandaag);
+}
+
+/** Uitleg bij de ID-controle via Didit (opties.idCheck), of "" als het ID in orde is. */
+function idCheckUitleg(documenten: readonly ChecklistDocument[], vandaag: string, status: string | null): string {
+  if (heeftGeldigId(documenten, vandaag)) return "";
+  if (status === "handmatig") return "We controleren je ID. Je hoeft niets te doen.";
+  if (status === "videocall_gevraagd") return "Je hebt een videocall aangevraagd. We nemen contact met je op.";
+  if (status === "bezig") return "Je ID-controle is nog niet klaar. Rond hem af of begin opnieuw.";
+  if (status === "afgewezen") return "Je ID-controle is niet goedgekeurd. Probeer het opnieuw of kies een videocall.";
+  if (goedgekeurdeIds(documenten).length > 0) return "Je ID-bewijs is verlopen. Controleer je nieuwe ID.";
+  return "Controleer je ID met je telefoon. Het duurt een paar minuten.";
+}
 
 /** Uitleg bij het ID-bewijs, of "" als er een goedgekeurd, geldig ID is. */
 function idUitleg(documenten: readonly ChecklistDocument[], vandaag: string): string {
   const ids = documenten.filter((d) => d.document_type === "id_bewijs");
-  // Zelfde regel als de verloopblokkade (teltVoorVerloop): zonder kolom review_status (waarde
-  // undefined) is goedkeuring niet vast te stellen en telt het document, anders blokkeert iedereen.
-  const goedgekeurd = ids.filter(teltVoorVerloop);
-  const geldig = goedgekeurd.filter((d) => !d.expiry_date || d.expiry_date >= vandaag);
-  if (geldig.length > 0) return "";
-  if (goedgekeurd.length > 0) return "Je ID-bewijs is verlopen. Upload een nieuw, geldig ID-bewijs.";
+  if (heeftGeldigId(documenten, vandaag)) return "";
+  if (goedgekeurdeIds(documenten).length > 0) return "Je ID-bewijs is verlopen. Upload een nieuw, geldig ID-bewijs.";
   const nieuwste = nieuwstePerType(ids)[0];
   if (nieuwste?.review_status === "afgekeurd") return "Je ID-bewijs is afgekeurd. Upload een nieuw, goed leesbaar ID-bewijs.";
   if (nieuwste) return "Je ID-bewijs wordt nog gecontroleerd door TopTalent.";
@@ -86,7 +114,7 @@ export function reageerChecklist(
   vandaag: string,
   opties: ChecklistOpties = {},
 ): ChecklistPunt[] {
-  const id = idUitleg(documenten, vandaag);
+  const id = opties.idCheck ? idCheckUitleg(documenten, vandaag, opties.idCheck.status) : idUitleg(documenten, vandaag);
   const kvk = isGeldigKvkNummer(medewerker.kvk_nummer)
     ? ""
     : medewerker.kvk_nummer
@@ -110,7 +138,7 @@ export function reageerChecklist(
         : "Lees de overeenkomst van opdracht en ga akkoord.";
 
   const punten: ChecklistPunt[] = [
-    { code: "id_bewijs", label: "Geldig ID-bewijs", uitleg: id, ok: !id, actie: DOCUMENTEN },
+    { code: "id_bewijs", label: "Geldig ID-bewijs", uitleg: id, ok: !id, actie: opties.idCheck ? ID_CHECK : DOCUMENTEN },
     { code: "kvk_nummer", label: "KvK-nummer", uitleg: kvk, ok: !kvk, actie: PROFIEL },
     { code: "btw_nummer", label: "Btw-nummer", uitleg: btw, ok: !btw, actie: PROFIEL },
     { code: "iban", label: "IBAN", uitleg: iban, ok: !iban, actie: PROFIEL },

@@ -5,9 +5,18 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
 import { haalDemoIds } from "@/lib/demo";
 import { isDemoMedewerkerId } from "@/lib/demo-regels";
-import { reageerChecklist, type ChecklistMedewerker, type ChecklistPunt } from "@/lib/medewerker/reageer-checklist";
+import {
+  heeftGeldigId,
+  reageerChecklist,
+  type ChecklistDocument,
+  type ChecklistMedewerker,
+  type ChecklistOpties,
+  type ChecklistPunt,
+} from "@/lib/medewerker/reageer-checklist";
 import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
 import { isAkkoordMogelijk } from "@/lib/uitbetaling/config";
+import { isDiditActief } from "@/lib/id-check/config";
+import { haalLaatsteIdCheck, IdCheckMigratieOntbreekt } from "@/lib/id-check/db";
 
 /**
  * DB-kant van de checklist vóór reageren (B1); de regels staan in lib/medewerker/reageer-checklist.
@@ -48,6 +57,24 @@ async function haalMedewerker(medewerkerId: string) {
   return { ...basis, zelffacturering: false };
 }
 
+/**
+ * ID-controle via Didit aan: de status van de nieuwste controle, voor de tekst bij het ID-punt.
+ * Alleen opgehaald als het ID nog niet in orde is (scheelt een query bij aanmelden en matching).
+ * Een fout hier mag de checklist nooit breken: dan zonder status.
+ */
+async function idCheckOptie(medewerkerId: string, documenten: readonly ChecklistDocument[], vandaag: string): Promise<ChecklistOpties["idCheck"]> {
+  if (!isDiditActief()) return undefined;
+  if (heeftGeldigId(documenten, vandaag)) return { status: "goedgekeurd" };
+  try {
+    return { status: (await haalLaatsteIdCheck(medewerkerId))?.status ?? null };
+  } catch (fout) {
+    if (!(fout instanceof IdCheckMigratieOntbreekt)) {
+      captureRouteError(fout, { route: "lib/medewerker/checklist", action: "ID_CHECK" });
+    }
+    return { status: null };
+  }
+}
+
 export async function haalChecklist(medewerkerId: string): Promise<ChecklistStatus> {
   const [{ data, error, zelffacturering }, documenten, demoIds] = await Promise.all([
     haalMedewerker(medewerkerId),
@@ -77,7 +104,10 @@ export async function haalChecklist(medewerkerId: string): Promise<ChecklistStat
     zelffacturering_akkoord_versie: rij.zelffacturering_akkoord_versie ?? null,
   };
 
-  const punten = reageerChecklist(medewerker, documenten.get(medewerkerId) ?? [], nlVandaag(), { zelffacturering });
+  const vandaag = nlVandaag();
+  const eigenDocumenten = documenten.get(medewerkerId) ?? [];
+  const idCheck = await idCheckOptie(medewerkerId, eigenDocumenten, vandaag);
+  const punten = reageerChecklist(medewerker, eigenDocumenten, vandaag, { zelffacturering, idCheck });
   // Demo-accounts (app-review) en een ontbrekende migratie blokkeren niet.
   const ontbrekend = migratieOntbreekt || demo ? [] : punten.filter((p) => !p.ok);
   return {
