@@ -160,14 +160,20 @@ export default function AccountVerwijderenPage() {
             </p>
             <ul className="list-disc pl-6 space-y-2">
               <li>loonadministratie, fiscale gegevens en urenregistraties: 7 jaar (fiscale bewaarplicht);</li>
-              <li>kopie identiteitsbewijs en loonbelastingverklaring: 5 jaar na einde dienstverband.</li>
+              <li>
+                de controle van uw identiteitsbewijs (uw naam en geboortedatum zoals op het document, nationaliteit,
+                documentsoort, documentnummer, vervaldatum en de uitslag; geen kopie): tot 31 december van het vijfde jaar
+                na het jaar van uw laatste dienst (Wet arbeid vreemdelingen);
+              </li>
+              <li>loonbelastingverklaring: 5 jaar na einde dienstverband.</li>
             </ul>
             <p>
               Deze termijnen staan ook in onze{" "}
               <Link href="/privacy/" className={linkClass}>
                 privacy policy
               </Link>{" "}
-              (paragraaf 6, Bewaartermijnen). Na afloop van de termijn worden deze gegevens verwijderd of geanonimiseerd.
+              (paragraaf 6, Bewaartermijnen, en paragraaf 10f over de ID-controle). Na afloop van de termijn worden deze
+              gegevens verwijderd of geanonimiseerd.
             </p>
 
             <h3 className="text-xl font-semibold text-[#1F1F1F] mt-8 mb-4">Op uw telefoon</h3>

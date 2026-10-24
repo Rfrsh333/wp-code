@@ -80,18 +80,96 @@
 
 ---
 
-### 2.5 Identiteitsdocumenten
+### 2.5 Identiteitscontrole
 
-| Veld | Tabel(len) | Opslag | Toegang |
-|------|-----------|--------|---------|
-| ID-kopie / paspoort | `kandidaat_documenten` (type='id') | Supabase Storage `kandidaat-documenten` (privé bucket, RLS) | Admin via signed URL |
-| KvK-uittreksel | `kandidaat_documenten` (type='kvk') | Supabase Storage | Admin via signed URL |
-| Overige documenten | `kandidaat_documenten` (type='overig') | Supabase Storage | Admin via signed URL |
-| Documentvervaldatum | `kandidaat_documenten.document_expires_at` | Supabase PostgreSQL | Admin |
+> Bijgewerkt 24-10-2026 (privacyverklaring 2.6), op basis van het juridisch advies van 24-10-2026, PR #32 (Didit), #35 (controlerecord volgens de Wav, opschoontool) en #36 (geen ID-upload meer bij kandidaten). Concept, geen juridisch advies; laat de jurist meelezen.
 
-**Grondslag:** Art. 6.1.c (wettelijke verplichting — WAV, identificatieplicht)
-**Bewaartermijn:** ID-kopie 5 jaar na einde dienstverband (wettelijk)
-**Beveiliging:** Private bucket, alleen service_role + authenticated admin. Signed URLs met tijdslimiet. ✅
+#### 2.5a ID-controle via Didit of videocall (controlerecord)
+
+| Veld | Tabel | Opslag | Toegang |
+|------|-------|--------|---------|
+| Methode (`didit`/`videocall`/`kopie`), status, uitslag, wie besliste, wanneer, reden bij afwijzing, redenen voor handmatige beoordeling | `id_verificaties` | Supabase PostgreSQL (Frankfurt), RLS: alleen service role | Admin |
+| Didit-sessie-id, sessienummer, laatste Didit-status, laatste event-id, wanneer de sessie bij Didit is verwijderd | `id_verificaties` | idem | Admin |
+| Naam en geboortedatum zoals op het document, nationaliteit (ISO alpha-3) | `id_verificaties` | idem | Admin |
+| Documentsoort, documentnummer, uitgifteland (ISO alpha-3), vervaldatum, EER/Zwitserland ja/nee, naam klopt ja/nee | `id_verificaties` | idem | Admin |
+| Bewaar-tot | `id_verificaties.bewaar_tot` | idem | Admin |
+| ID-bewijs **zonder bestand**: vervaldatum, review-status, verificatiemethode, beoordeeld door | `medewerker_documenten` (`document_type = 'id_bewijs'`, `file_path` leeg) | idem | Admin, medewerker zelf (status) |
+
+| Onderdeel art. 30 AVG | Invulling |
+|---|---|
+| Doel | Identiteitsfraude en accountdelen voorkomen; binnen 48 uur kunnen identificeren op verzoek van de Nederlandse Arbeidsinspectie (art. 15a Wav, volgens jurist) |
+| Grondslag | Art. 6.1.f (gerechtvaardigd belang), met recht van bezwaar (art. 21); belangenafweging als concept aanwezig |
+| Art. 22 AVG | Didit-uitslag wordt alleen automatisch goedgekeurd als alles klopt (Didit Approved, paspoort of ID-kaart, niet verlopen, naam klopt, EER/Zwitserland); anders naar de admin. Nooit automatisch afgewezen (`beoordeelDiditUitslag` in `src/lib/id-check/regels.ts`) |
+| Betrokkenen | Zzp'ers die via TopTalent op diensten willen reageren. Kandidaten niet meer (sinds #36) |
+| Ontvangers | Didit (verwerker; voor fraudebestrijding deels zelfstandig verantwoordelijke, zie 2.5b); Nederlandse Arbeidsinspectie alleen op verzoek. Niet: horecazaken |
+| Doorgifte buiten EER | Nee (Supabase Frankfurt; Didit AWS Ierland). Didit's DPA staat doorgifte met SCC's toe: open punt O3 |
+| Bewaartermijn | Tot 31-12 van (jaar laatste dienst + 5); zonder diensten vanaf het jaar van de beslissing (`berekenWavBewaarTot`). Ook na verwijdering van het account |
+| Bewaartermijn technisch | Retentie-cron (`src/app/api/cron/retentie/route.ts` → `src/lib/id-check/bewaartermijn.ts`) rekent `bewaar_tot` elke nacht opnieuw uit en ruimt verlopen records en onbesliste controles van verwijderde accounts op; dry-run zolang `RETENTION_DELETE=1` niet gezet is. Bij accountverwijdering: termijn vastgezet, `medewerker_id` → null (`on delete set null`), open Didit-sessies gewist met `privacy_erasure` |
+| Bewust **niet** opgeslagen | BSN/persoonsnummer (ook niet als documentnummer: `veiligDocumentnummer`, `controleerDocumentnummer`), adres, beelden, ruwe webhook-payload |
+| Documentnummer | Wel opgeslagen: niet in de minimale lijst van de jurist, door Rachid bewust toegevoegd als extra bewijs welk document is gecontroleerd |
+| Beveiliging | RLS service role; webhook met HMAC + tijdstempel; witte lijst van velden (`verificatieUpdateNaBeoordeling`); payload nooit gelogd; audit-log bij admin-acties; admin-2FA |
+| Code | `src/lib/id-check/*`, `src/app/api/webhooks/didit/route.ts`, `src/app/api/medewerker/id-check/*`, `src/app/api/admin/medewerkers/id-checks/route.ts`, migraties `supabase/migrations/20261024_id_verificaties_didit.sql` en `20261024_id_controlerecord_wav.sql` |
+| Privacyverklaring | `/privacy/` §10f (versie 2.6) |
+
+#### 2.5b Gegevens bij Didit
+
+| Veld | Opslag | Toegang |
+|------|--------|---------|
+| Foto's van voor- en achterkant van het document, pasfoto op het document, uitgelezen gegevens (naam, geboortedatum, nationaliteit, documentnummer, data), apparaat- en IP-gegevens, uitslag | Didit, AWS eu-west-1 (Ierland) | Didit; admin via de Didit-console (bij handmatige beoordeling) |
+
+| Onderdeel | Invulling |
+|---|---|
+| Doel en grondslag | Als 2.5a |
+| Verwerker | Didit Identity Spain S.L., CIF B22929327, Calle Nápoles 227, 08013 Barcelona |
+| Zelfstandig verantwoordelijke (DPA §6) | Didit gebruikt gepseudonimiseerde gegevens als zelfstandig verwerkingsverantwoordelijke voor fraudebestrijding en beveiliging van het eigen platform. Geen opt-out. Geaccepteerd door Rachid (24-10-2026) en vermeld in de privacyverklaring (§7.2, §10f, met link naar https://didit.me/terms/verification-privacy-notice/) |
+| Subverwerkers | Volgens Didit-helppagina (15-09-2026): AWS EMEA SARL (Ierland) en Google Maps Platform (alleen adrescontrole, niet gebruikt). Officiële lijst: open punt |
+| Verwerkersovereenkomst | Annex 2 (DPA) van de Didit Business Terms (versie 23-09-2026), geaccepteerd bij aanmelding. Niet ondertekend |
+| Instellingen | Workflow zonder selfie, liveness, face match, face search, NFC en geluid; bewaartermijn 1 maand; modeltraining uit |
+| Bewaartermijn | Direct verwijderd na definitieve beslissing (`DELETE /v3/session/{id}/delete/` met `retain_face_embeddings: false`; `face_retention_outcome` wordt gelogd); vangnet 1 maand |
+| Biometrie | Niet gebruikt. Schriftelijke bevestiging van Didit volgt (open punt O1) |
+
+#### 2.5c Videocall
+
+| Onderdeel | Invulling |
+|---|---|
+| Wat | De zzp'er laat zijn ID zien in een videocall met TopTalent |
+| Opgeslagen | Alleen het controlerecord (2.5a), met methode `videocall`. De admin vult uitslag, naam, geboortedatum, nationaliteit, documentsoort, documentnummer (verplicht bij goedkeuren) en vervaldatum in; datum en beoordelaar vult de server in. Geen opname, geen foto, geen schermafbeelding |
+| Buiten de EER/Zwitserland | Een videocall kan niet goedkeuren; de admin legt "kopie nodig" vast (2.5d) |
+| Grondslag | Art. 6.1.f |
+| Tool | **Open**: [naam videotool], verwerkersovereenkomst, waar gehost |
+| Code | `src/app/api/medewerker/id-check/videocall/route.ts`; admin-actie `id_videocall` in `src/app/api/admin/medewerkers/route.ts`; regels in `controleerVideocallInvoer` (`src/lib/id-check/controlerecord.ts`) |
+
+#### 2.5d Wav-kopie (alleen zzp'ers van buiten de EER/Zwitserland)
+
+| Onderdeel | Invulling |
+|---|---|
+| Wat | Kopie van het identiteitsbewijs, volgens art. 15 Wav |
+| Wanneer | Als de nieuwste controle (Didit of videocall) een nationaliteit buiten de EER/Zwitserland heeft (`kopieNodig`); de werknemer uploadt de kopie bij Documenten, ook als de ID-controle via Didit aan staat |
+| Grondslag | Art. 6.1.c (Wav). **Laten bevestigen door jurist** |
+| Opslag | `medewerker_documenten` (`document_type = 'id_bewijs'`, `verificatie_methode = 'kopie_wav'`, `bewaar_tot`), bucket `medewerker-documenten` (privé) |
+| Toegang | Admin via signed URL; medewerker zelf (eigen documenten) |
+| Bewaartermijn | Tot 31-12 van (jaar laatste dienst + 5), zoals 2.5a; bijgehouden door de retentie-cron |
+| Let op | `medewerker_documenten` heeft `on delete cascade` op `medewerker_id`: bij verwijdering van het account verdwijnt de Wav-kopie, vóór het einde van de Wav-termijn. Herzien |
+| BSN | Niet nodig; afdekken waar mogelijk |
+
+#### 2.5e Oude ID-kopieën (uitfaseren)
+
+| Veld | Tabel | Opslag |
+|------|-------|--------|
+| ID-kopie / paspoort (upload) | `medewerker_documenten` (`document_type = 'id_bewijs'`, met `file_path`) | Bucket `medewerker-documenten` (privé) |
+| ID-kopie (kandidaat) | `kandidaat_documenten` (type `id`) | Bucket `kandidaat-documenten` (privé) |
+| Documenten met BSN (o.a. `loonheffingsverklaring`, oudere NL-ID's) | `medewerker_documenten`, `kandidaat_documenten` | idem |
+
+| Onderdeel | Invulling |
+|---|---|
+| Status | Wordt opgeschoond met de opschoontool (admin → Medewerkers → "Oude ID-kopieën opschonen", `src/lib/id-check/opschonen.ts`, #35). EER/Zwitserland: bestand weg, controlerecord erbij (`kopie_verwijderd`). Buiten de EER: kopie blijft (`kopie_wav`, 2.5d). Kandidaat die nooit werknemer werd: kopie en regel weg, geen record |
+| Nieuwe uploads | Kandidaten kunnen geen ID meer uploaden (#36, code `id_niet_nodig`). Werknemers alleen als een Wav-kopie nodig is (2.5d) |
+| Planning | Documenten met BSN eerst; de rest uiterlijk 3 maanden na livegang. **Open**: [datum] |
+| Vastleggen | Audit-log `id_kopie_opgeschoond` (zichtbaar als opschoonlog in het paneel) |
+
+#### 2.5f Overige documenten (ongewijzigd, wel controleren)
+
+KvK-uittreksel, werkvergunning (TWV), verblijfsvergunning, VSH, VOG, contract, overig (`src/lib/medewerker/documenten.ts`; bij kandidaten `kandidaat_documenten` type `kvk`/`overig`). Grondslag en bewaartermijn per soort nog nalopen.
 
 ---
 
@@ -221,7 +299,8 @@
 | Werving & selectie | Uitvoering overeenkomst | b |
 | AI-screening kandidaten | Gerechtvaardigd belang **`LEGAL_REVIEW_REQUIRED`** | f |
 | Salarisadministratie | Wettelijke verplichting | c |
-| Identiteitscontrole (WAV) | Wettelijke verplichting | c |
+| ID-controle zzp'ers (Didit of videocall) | Gerechtvaardigd belang | f |
+| Wav-kopie zzp'ers buiten EER/Zwitserland | Wettelijke verplichting (laten bevestigen) | c |
 | E-mailcommunicatie | Uitvoering overeenkomst | b |
 | E-mail open/click tracking | Gerechtvaardigd belang | f |
 | Analytics (GTM/GA4) | Toestemming | a |

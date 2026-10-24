@@ -118,7 +118,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/privacy/`,
-      lastModified: new Date('2026-10-23'),
+      lastModified: new Date('2026-10-24'),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
@@ -136,7 +136,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/account-verwijderen/`,
-      lastModified: new Date('2026-10-03'),
+      lastModified: new Date('2026-10-24'),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
