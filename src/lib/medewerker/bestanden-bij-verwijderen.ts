@@ -140,14 +140,17 @@ export function bewaarTotEindeJaar(einde: string, jaren: number): string {
 /**
  * Bewaar-tot voor een document van een werknemer die uit dienst is (retentie-cron, stap 1; het
  * account bestaat nog): de regel van de soort (contract 31-12 van jaar uit dienst + 7,
- * loonheffingsverklaring 5 jaar), anders 5 jaar na de datum uit dienst zoals voorheen. null voor
+ * loonheffingsverklaring 5 jaar), anders 2 jaar na de datum uit dienst (personeelsdossier, privacy §6). null voor
  * ID-bewijs en vergunningen: die volgen elke nacht de Wav-termijn (lib/id-check/bewaartermijn).
  */
+/** Personeelsdossier (VOG, KvK, VSH, overig): 2 jaar na einde dienstverband (privacyverklaring §6). */
+export const PERSONEELSDOSSIER_JAREN = 2;
+
 export function bewaarTotBijUitDienst(documentType: string | null | undefined, datumUitDienst: string): string | null {
   if (documentType === "id_bewijs") return null;
   const regel = bewaarRegel(documentType);
   if (regel?.termijn === "wav") return null;
-  if (!regel) return bewaarTotNaEinde(datumUitDienst, 5);
+  if (!regel) return bewaarTotNaEinde(datumUitDienst, PERSONEELSDOSSIER_JAREN);
   return regel.totEindeJaar ? bewaarTotEindeJaar(datumUitDienst, regel.jaren) : bewaarTotNaEinde(datumUitDienst, regel.jaren);
 }
 
