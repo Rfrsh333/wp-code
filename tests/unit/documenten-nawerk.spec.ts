@@ -408,7 +408,9 @@ test.describe("bestanden bij het verwijderen van een account", () => {
   test("retentie-cron (account bestaat nog): contract 7 jaar, vergunningen volgen elke nacht de Wav-termijn", () => {
     expect(bewaarTotBijUitDienst("contract", "2026-06-30")).toBe("2033-12-31");
     expect(bewaarTotBijUitDienst("loonheffingsverklaring", "2026-06-30")).toBe("2031-06-30");
-    expect(bewaarTotBijUitDienst("vog", "2026-06-30")).toBe("2031-06-30");
+    expect(bewaarTotBijUitDienst("vog", "2026-06-30")).toBe("2028-06-30");
+    expect(bewaarTotBijUitDienst("kvk_uittreksel", "2026-06-30")).toBe("2028-06-30");
+    expect(bewaarTotBijUitDienst(null, "2026-06-30")).toBe("2028-06-30");
     expect(bewaarTotBijUitDienst("werkvergunning", "2026-06-30")).toBeNull();
     expect(bewaarTotBijUitDienst("id_bewijs", "2026-06-30")).toBeNull();
     const retentie = bron("src/app/api/cron/retentie/route.ts");

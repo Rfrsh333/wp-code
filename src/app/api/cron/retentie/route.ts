@@ -10,7 +10,8 @@ import { bewaarTotBijUitDienst, WAV_VERGUNNINGEN } from "@/lib/medewerker/bestan
  * Retentie-cron (AVG art. 5 lid 1 sub e — opslagbeperking).
  *
  * Dwingt de bewaartermijnen voor (bijzondere) PII-documenten technisch af:
- * - vult ontbrekende `bewaar_tot` voor documenten van uit-dienst medewerkers (5 jaar; contract tot
+ * - vult ontbrekende `bewaar_tot` voor documenten van uit-dienst medewerkers (personeelsdossier 2 jaar,
+ *   loonheffingsverklaring 5 jaar; contract tot
  *   31-12 van het zevende jaar), behalve ID-bewijzen en vergunningen (Wav-termijn, stap 1b);
  * - ID-gegevens volgens de Wav (juridisch advies 24-10-2026, lib/id-check/bewaartermijn): het
  *   controlerecord (`id_verificaties`), ID-bewijzen en bewaarde kandidaatkopieën van werknemers tot
@@ -49,8 +50,9 @@ export async function GET(request: NextRequest) {
     const vandaag = new Date().toISOString().split("T")[0];
     const dryRun = process.env.RETENTION_DELETE !== "1";
 
-    // 1) Vul ontbrekende bewaar_tot voor documenten van uit-dienst medewerkers (datum_uit_dienst + 5
-    //    jaar; contract 31-12 van jaar uit dienst + 7, lib/medewerker/bestanden-bij-verwijderen).
+    // 1) Vul ontbrekende bewaar_tot voor documenten van uit-dienst medewerkers (personeelsdossier
+    //    datum_uit_dienst + 2 jaar, loonheffingsverklaring + 5 jaar, contract 31-12 van jaar uit dienst + 7;
+    //    lib/medewerker/bestanden-bij-verwijderen).
     //    ID-bewijzen en vergunningen niet: die volgen de Wav-termijn (stap 1b).
     let bewaarTotGevuld = 0;
     const { data: zonderBewaartermijn, error: vulFout } = await supabaseAdmin
