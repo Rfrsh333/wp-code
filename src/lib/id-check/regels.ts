@@ -4,9 +4,12 @@
  * lib/id-check/didit-api.ts.
  *
  * Achtergrond (besluit Rachid, 24-10-2026): volgens de Autoriteit Persoonsgegevens mag TopTalent van
- * zzp'ers geen kopie van het ID maken. Didit controleert het ID; wij bewaren alleen de uitslag en
- * een paar velden (vervaldatum, documentsoort, uitgifteland, EER ja/nee, naam klopt ja/nee). Naam,
- * geboortedatum, documentnummer, persoonsnummer/BSN en beelden komen NOOIT in onze database.
+ * zzp'ers geen kopie van het ID maken. Didit controleert het ID; wij bewaren een minimaal
+ * controlerecord (juridisch advies, Wav art. 15a): naam en geboortedatum zoals op het document,
+ * nationaliteit, documentsoort, documentnummer, vervaldatum en de uitslag. Het documentnummer staat
+ * niet in de minimale lijst van de jurist; Rachid neemt het bewust op als extra bewijs welk document
+ * is gecontroleerd. Persoonsnummer/BSN, adres, beelden en de ruwe payload komen NOOIT in onze
+ * database. Het record blijft tot 31-12 van (jaar laatste dienst + 5), zie berekenWavBewaarTot.
  *
  * Nooit automatisch afwijzen (art. 22 AVG): alles wat niet zeker goed is, gaat naar "handmatig" en
  * een mens beslist.
@@ -196,6 +199,7 @@ export const HANDMATIG_REDENEN = {
   nationaliteit_onbekend: "Nationaliteit niet gevonden",
   documentsoort: "Geen paspoort of ID-kaart",
   opslaan_mislukt: "Automatisch goedkeuren lukte niet (opslaan mislukt)",
+  kopie_nodig: "Buiten EER/Zwitserland: kopie van het ID nodig (Wav), na videocall vastgelegd",
 } as const;
 export type HandmatigReden = keyof typeof HANDMATIG_REDENEN;
 
@@ -205,25 +209,36 @@ export function handmatigRedenLabel(code: string): string {
 
 /**
  * Wat we uit een Didit-`id_verifications[]`-item lezen. Alleen deze velden; al het andere (o.a.
- * `personal_number`, `document_number`, `date_of_birth`, adres, beelden) wordt genegeerd.
+ * `personal_number`, adres, geboorteplaats, MRZ, beelden) wordt genegeerd. `document_number` is al
+ * gecontroleerd met veiligDocumentnummer (nooit gelijk aan het persoonsnummer/BSN).
  */
 export type DiditIdVerificatie = {
   status?: string | null;
   document_type?: string | null;
+  document_number?: string | null;
   expiration_date?: string | null;
+  date_of_birth?: string | null;
   issuing_state?: string | null;
   nationality?: string | null;
   first_name?: string | null;
   last_name?: string | null;
+  full_name?: string | null;
 };
 
-/** Wat we bewaren over de uitslag. Geen naam, geboortedatum, documentnummer of persoonsnummer. */
+/**
+ * Wat we bewaren over de uitslag: het controlerecord. Nooit het persoonsnummer/BSN, adres of beelden.
+ */
 export type IdCheckVelden = {
   vervaldatum: string | null;
   documentsoort: string | null;
+  documentnummer: string | null;
   uitgifteland: string | null;
+  nationaliteit: string | null;
   eer: boolean | null;
   naam_komt_overeen: boolean | null;
+  /** Naam zoals op het document. */
+  naam: string | null;
+  geboortedatum: string | null;
 };
 
 export type IdCheckBeoordeling = {
@@ -239,6 +254,67 @@ function tekst(waarde: unknown, max = 100): string | null {
   return typeof waarde === "string" && waarde.trim() ? waarde.trim().slice(0, max) : null;
 }
 
+/** YYYY-MM-DD dat een bestaande kalenderdatum is, anders null. */
+export function geldigeDatum(waarde: unknown): string | null {
+  if (typeof waarde !== "string" || !DATUM.test(waarde)) return null;
+  const d = new Date(`${waarde}T12:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === waarde ? waarde : null;
+}
+
+// --- Documentnummer en BSN -------------------------------------------------------------------------
+
+/**
+ * 11-proef van een BSN: 9 cijfers (8 = met voorloopnul), som van cijfer × (9..2) min het laatste
+ * cijfer is deelbaar door 11. Alleen om te voorkomen dat een BSN als documentnummer wordt opgeslagen.
+ */
+export function isBsn(waarde: unknown): boolean {
+  if (typeof waarde !== "string") return false;
+  const c = waarde.replace(/[\s.-]/g, "");
+  if (!/^\d{8,9}$/.test(c)) return false;
+  const n = c.padStart(9, "0");
+  if (/^0+$/.test(n)) return false;
+  let som = 0;
+  for (let i = 0; i < 8; i++) som += Number(n[i]) * (9 - i);
+  som -= Number(n[8]);
+  return som % 11 === 0;
+}
+
+/** Documentnummer zoals op het document: hoofdletters, zonder spaties, streepjes, punten of '<'. */
+export function normaliseerDocumentnummer(waarde: unknown): string | null {
+  if (typeof waarde !== "string") return null;
+  const c = waarde.toUpperCase().replace(/[\s<.\-/]/g, "");
+  return /^[A-Z0-9]{5,20}$/.test(c) ? c : null;
+}
+
+/**
+ * Het documentnummer dat we mogen opslaan, of null. Documentnummer en persoonsnummer zijn bij Didit
+ * aparte velden (`document_number` vs `personal_number`); toch nooit iets opslaan dat het BSN kan
+ * zijn: gelijk aan het persoonsnummer → null, en bij een Nederlands document (uitgifteland of
+ * nationaliteit NLD) een documentnummer van alleen cijfers → null (Nederlandse paspoorten en
+ * ID-kaarten hebben een documentnummer met letters; alleen cijfers is daar vrijwel zeker het BSN).
+ */
+export function veiligDocumentnummer(input: {
+  documentnummer: unknown;
+  persoonsnummer?: unknown;
+  landen?: readonly (string | null | undefined)[];
+}): string | null {
+  const nummer = normaliseerDocumentnummer(input.documentnummer);
+  if (!nummer) return null;
+  const persoonsnummer = typeof input.persoonsnummer === "string" ? input.persoonsnummer.toUpperCase().replace(/[\s<.\-/]/g, "") : "";
+  if (persoonsnummer && persoonsnummer === nummer) return null;
+  const nederlands = (input.landen ?? []).some((l) => normaliseerLandcode(l) === "NLD");
+  if (nederlands && /^\d+$/.test(nummer)) return null;
+  return nummer;
+}
+
+/** Naam zoals op het document: voornamen + achternaam, anders de volledige naam. */
+export function naamOpDocument(id: Pick<DiditIdVerificatie, "first_name" | "last_name" | "full_name"> | null): string | null {
+  if (!id) return null;
+  const delen = [id.first_name, id.last_name].map((d) => (d ?? "").trim()).filter(Boolean);
+  const naam = delen.length > 0 ? delen.join(" ") : (id.full_name ?? "").trim();
+  return naam ? naam.replace(/\s+/g, " ").slice(0, 200) : null;
+}
+
 /** Het eerste ID-item uit een Didit-beslissing (V3: `id_verifications[]`), alleen de velden die we lezen. */
 export function idVerificatieUitBeslissing(beslissing: unknown): DiditIdVerificatie | null {
   if (!beslissing || typeof beslissing !== "object") return null;
@@ -246,14 +322,25 @@ export function idVerificatieUitBeslissing(beslissing: unknown): DiditIdVerifica
   const item = Array.isArray(lijst) ? lijst[0] : null;
   if (!item || typeof item !== "object") return null;
   const i = item as Record<string, unknown>;
+  const issuing_state = tekst(i.issuing_state, 3);
+  const nationality = tekst(i.nationality, 3);
   return {
     status: tekst(i.status, 40),
     document_type: tekst(i.document_type, 60),
+    // Alleen `document_number`; `personal_number` (bij NL-documenten het BSN) wordt alleen gebruikt
+    // om te controleren dat het documentnummer niet toevallig hetzelfde is, en nooit teruggegeven.
+    document_number: veiligDocumentnummer({
+      documentnummer: i.document_number,
+      persoonsnummer: i.personal_number,
+      landen: [issuing_state, nationality],
+    }),
     expiration_date: tekst(i.expiration_date, 10),
-    issuing_state: tekst(i.issuing_state, 3),
-    nationality: tekst(i.nationality, 3),
+    date_of_birth: geldigeDatum(i.date_of_birth),
+    issuing_state,
+    nationality,
     first_name: tekst(i.first_name, 200),
     last_name: tekst(i.last_name, 200),
+    full_name: tekst(i.full_name, 200),
   };
 }
 
@@ -280,9 +367,13 @@ export function beoordeelDiditUitslag(input: {
   const velden: IdCheckVelden = {
     vervaldatum,
     documentsoort: id?.document_type ?? null,
+    documentnummer: id?.document_number ?? null,
     uitgifteland: normaliseerLandcode(id?.issuing_state),
+    nationaliteit: normaliseerLandcode(id?.nationality),
     eer,
     naam_komt_overeen: naamOk,
+    naam: naamOpDocument(id),
+    geboortedatum: geldigeDatum(id?.date_of_birth),
   };
 
   if (diditStatus === "In Review") redenen.push("didit_in_review");
@@ -307,14 +398,18 @@ export function beoordeelDiditUitslag(input: {
 
 /**
  * De kolommen die we na een Didit-beoordeling in `id_verificaties` schrijven. Bewust een witte lijst:
- * niets uit de payload komt hier ongezien in (geen naam, geboortedatum, documentnummer,
- * persoonsnummer/BSN, adres of beelden).
+ * niets uit de payload komt hier ongezien in. Wel het controlerecord (naam en geboortedatum zoals
+ * op het document, nationaliteit, documentsoort, documentnummer, vervaldatum); nooit het
+ * persoonsnummer/BSN, adres, beelden of de ruwe payload.
+ *
+ * @param bewaarTot 31-12 van (jaar laatste dienst + 5), zie berekenWavBewaarTot
  */
 export function verificatieUpdateNaBeoordeling(input: {
   beoordeling: IdCheckBeoordeling;
   diditStatus: string;
   eventId: string | null;
   nu: string;
+  bewaarTot: string | null;
 }): Record<string, unknown> {
   const { beoordeling, diditStatus, eventId, nu } = input;
   const goed = beoordeling.status === "goedgekeurd";
@@ -327,20 +422,34 @@ export function verificatieUpdateNaBeoordeling(input: {
     handmatig_redenen: beoordeling.redenen,
     vervaldatum: beoordeling.velden.vervaldatum,
     documentsoort: beoordeling.velden.documentsoort,
+    documentnummer: beoordeling.velden.documentnummer,
     uitgifteland: beoordeling.velden.uitgifteland,
+    nationaliteit: beoordeling.velden.nationaliteit,
     eer: beoordeling.velden.eer,
     naam_komt_overeen: beoordeling.velden.naam_komt_overeen,
+    naam: beoordeling.velden.naam,
+    geboortedatum: beoordeling.velden.geboortedatum,
+    bewaar_tot: input.bewaarTot,
     laatste_event_id: eventId ? eventId.slice(0, 100) : null,
     bijgewerkt_op: nu,
   };
 }
 
+/**
+ * Kolommen van het controlerecord die pas bestaan na migratie 20261024_id_controlerecord_wav.sql.
+ * Zolang die niet gedraaid is, schrijft de code zonder deze kolommen (zoals vóór het advies), zodat
+ * de ID-controle blijft werken (lib/db-kolom-fallback).
+ */
+export const CONTROLERECORD_KOLOMMEN = ["naam", "geboortedatum", "nationaliteit", "documentnummer", "bewaar_tot"] as const;
+
 /** Wie besliste bij een automatische goedkeuring (kolom beslist_door / beoordeeld_door). */
 export const BESLIST_DOOR_DIDIT = "systeem (Didit)";
 
 /** Bestandsnaam (kolom file_name is verplicht) voor een ID-bewijsrij zonder bestand. */
-export function idBewijsZonderBestandNaam(methode: "didit" | "videocall"): string {
-  return methode === "didit" ? "ID gecontroleerd via Didit (geen kopie)" : "ID gecontroleerd via videocall (geen kopie)";
+export function idBewijsZonderBestandNaam(methode: "didit" | "videocall" | "kopie_verwijderd"): string {
+  if (methode === "didit") return "ID gecontroleerd via Didit (geen kopie)";
+  if (methode === "videocall") return "ID gecontroleerd via videocall (geen kopie)";
+  return "ID gecontroleerd, kopie verwijderd";
 }
 
 /**
@@ -376,10 +485,9 @@ export function idBewijsRijZonderBestand(input: {
 
 /** Geldige vervaldatum voor een handmatige goedkeuring: YYYY-MM-DD, een echte datum, niet vóór vandaag. */
 export function controleerVervaldatum(datum: unknown, vandaag: string): string | null {
-  if (typeof datum !== "string" || !DATUM.test(datum)) return "Vul een geldige vervaldatum in";
-  const d = new Date(`${datum}T12:00:00Z`);
-  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== datum) return "Vul een geldige vervaldatum in";
-  if (datum < vandaag) return "Dit ID is verlopen. Een verlopen ID kan niet worden goedgekeurd.";
+  const geldig = geldigeDatum(datum);
+  if (!geldig) return "Vul een geldige vervaldatum in";
+  if (geldig < vandaag) return "Dit ID is verlopen. Een verlopen ID kan niet worden goedgekeurd.";
   return null;
 }
 

@@ -10,14 +10,16 @@ import { normaliseerEmail } from "@/lib/email-normalisatie";
 import { werkMedewerkerLocatieBij, wisOntdekGegevensMedewerker } from "@/lib/locatie/locatie-opslag";
 import { nlVandaag } from "@/lib/nl-tijd";
 import {
+  beslisViaVideocall,
   haalIdCheck,
   IdCheckMigratieOntbreekt,
   keurGoed,
-  keurGoedViaVideocall,
   verwijderSessieNaBeslissing,
   wijsAf,
 } from "@/lib/id-check/db";
 import { controleerVervaldatum, isDefinitief } from "@/lib/id-check/regels";
+import { controleerVideocallInvoer } from "@/lib/id-check/controlerecord";
+import { bereidIdGegevensVoorAccountVerwijderen } from "@/lib/id-check/bewaartermijn";
 
 function generateTemporaryPassword(length = 12) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
@@ -258,11 +260,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Deze ID-check is al beoordeeld" }, { status: 409 });
       }
 
+      if (!rij.medewerker_id) {
+        return NextResponse.json({ error: "Het account van deze werknemer bestaat niet meer" }, { status: 409 });
+      }
+
       if (besluit === "afgewezen") {
         if (reden.length < 3) {
           return NextResponse.json({ error: "Geef een reden voor het afwijzen" }, { status: 400 });
         }
-        if ((await wijsAf({ id: rij.id, reden, door: email ?? "admin" })) === "al_beslist") {
+        if ((await wijsAf({ id: rij.id, medewerkerId: rij.medewerker_id, reden, door: email ?? "admin" })) === "al_beslist") {
           return NextResponse.json({ error: "Deze ID-check is al beoordeeld" }, { status: 409 });
         }
       } else {
@@ -311,34 +317,46 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // "ID gecontroleerd via videocall": goedgekeurd id_bewijs zonder bestand, met de vervaldatum.
+  // "ID gecontroleerd via videocall" (juridisch advies punt 2): controlerecord met naam,
+  // geboortedatum, nationaliteit, documentsoort, documentnummer, vervaldatum en uitslag; datum en
+  // beoordelaar automatisch. Niet-EER kan niet via een videocall worden goedgekeurd (kopie nodig, Wav).
   if (action === "id_videocall") {
-    const { vervaldatum } = data as { vervaldatum: string };
-    const opmerking = typeof data?.opmerking === "string" ? data.opmerking.trim() : "";
-    const fout = controleerVervaldatum(vervaldatum, nlVandaag());
-    if (fout) return NextResponse.json({ error: fout }, { status: 400 });
+    const controle = controleerVideocallInvoer((data ?? {}) as Record<string, unknown>, nlVandaag());
+    if (!controle.ok) {
+      return NextResponse.json({ error: controle.fout, code: controle.code ?? null }, { status: 400 });
+    }
+    const record = controle.waarden;
     try {
       const { data: medewerker } = await supabaseAdmin.from("medewerkers").select("id").eq("id", id).maybeSingle();
       if (!medewerker) return NextResponse.json({ error: "Medewerker niet gevonden" }, { status: 404 });
 
-      const resultaat = await keurGoedViaVideocall({
-        medewerkerId: id,
-        vervaldatum,
-        door: email ?? "admin",
-        opmerking: opmerking || null,
-      });
+      const resultaat = await beslisViaVideocall({ medewerkerId: id, record, door: email ?? "admin" });
       if (!resultaat.ok) return NextResponse.json({ error: "Probeer het opnieuw" }, { status: 409 });
 
+      // Geen naam, geboortedatum of documentnummer in de audit-log: die staan in het record.
+      const samenvatting = {
+        goedgekeurd: "ID gecontroleerd via videocall",
+        afgewezen: "ID afgewezen na videocall",
+        kopie_nodig: "Na videocall: kopie van het ID nodig (buiten de EER, Wav)",
+      } as const;
       await logAuditEvent({
         actorEmail: email,
         actorRole: role,
-        action: "admin_id_videocall_goedgekeurd",
-        targetTable: "medewerker_documenten",
-        targetId: resultaat.documentId,
-        summary: "ID gecontroleerd via videocall",
-        metadata: { medewerker_id: id, vervaldatum, opmerking: opmerking || null },
+        action: `admin_id_videocall_${record.uitslag}`,
+        targetTable: resultaat.uitkomst === "goedgekeurd" ? "medewerker_documenten" : "id_verificaties",
+        targetId: resultaat.uitkomst === "goedgekeurd" ? resultaat.documentId : id,
+        summary: samenvatting[record.uitslag],
+        metadata: {
+          medewerker_id: id,
+          uitslag: record.uitslag,
+          documentsoort: record.documentsoort,
+          nationaliteit: record.nationaliteit,
+          eer: record.eer,
+          vervaldatum: record.vervaldatum,
+          reden: record.reden,
+        },
       });
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, uitslag: record.uitslag });
     } catch (fout) {
       if (fout instanceof IdCheckMigratieOntbreekt) {
         return NextResponse.json({ error: "Migratie 20261024_id_verificaties_didit.sql ontbreekt" }, { status: 503 });
@@ -355,6 +373,9 @@ export async function POST(request: NextRequest) {
     // Ontdekken-gegevens expliciet eerst (de rij en de cascade ruimen ze ook op, maar zo staat het
     // vast, ook als de medewerker straks geanonimiseerd in plaats van verwijderd wordt).
     await wisOntdekGegevensMedewerker(id).catch((e) => captureRouteError(e, { route: "/api/admin/medewerkers", action: "ONTDEKKEN_WISSEN" }));
+    // Het ID-controlerecord blijft (Wav, on delete set null): termijn vastzetten met de laatste dienst
+    // en openstaande Didit-sessies laten wissen (privacy_erasure).
+    await bereidIdGegevensVoorAccountVerwijderen(id);
     const { error } = await supabaseAdmin.from("medewerkers").delete().eq("id", id);
     if (error) {
       return NextResponse.json({ error: "Er is een fout opgetreden" }, { status: 500 });

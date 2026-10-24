@@ -140,13 +140,20 @@ export const medewerkersPostSchema = z.discriminatedUnion("action", [
       vervaldatum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ongeldige vervaldatum").optional(),
     }),
   }),
-  // "ID gecontroleerd via videocall": id = medewerker-id.
+  // "ID gecontroleerd via videocall": id = medewerker-id. De inhoud controleert
+  // controleerVideocallInvoer (lib/id-check/controlerecord), met Nederlandse foutmeldingen.
   z.object({
     action: z.literal("id_videocall"),
     id: uuid,
     data: z.object({
-      vervaldatum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ongeldige vervaldatum"),
-      opmerking: z.string().max(2000).optional(),
+      uitslag: z.string().max(20).optional(),
+      naam: z.string().max(300).optional(),
+      geboortedatum: z.string().max(20).optional(),
+      nationaliteit: z.string().max(10).optional(),
+      documentsoort: z.string().max(60).optional(),
+      documentnummer: z.string().max(40).optional(),
+      vervaldatum: z.string().max(20).optional(),
+      reden: z.string().max(2000).optional(),
     }),
   }),
   z.object({ action: z.literal("delete"), id: uuid, data: z.any().optional() }),

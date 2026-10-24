@@ -54,9 +54,10 @@ export type ChecklistOpties = {
    * ID-controle via Didit staat aan (ID_CHECK_DIDIT_ACTIEF=1 + sleutels): dan gaat het ID-punt over
    * "Controleer je ID" in plaats van uploaden. `status` = status van de nieuwste ID-controle
    * (lib/id-check/regels), of null. Of het punt in orde is, blijft afhangen van een goedgekeurd,
-   * geldig `id_bewijs` in medewerker_documenten.
+   * geldig `id_bewijs` in medewerker_documenten. `kopieNodig`: nationaliteit buiten de EER (Wav),
+   * dan moet de medewerker een kopie van zijn ID uploaden (lib/id-check/controlerecord kopieNodig).
    */
-  idCheck?: { status: string | null };
+  idCheck?: { status: string | null; kopieNodig?: boolean };
 };
 
 export type ChecklistDocument = {
@@ -86,8 +87,15 @@ export function heeftGeldigId(documenten: readonly ChecklistDocument[], vandaag:
 }
 
 /** Uitleg bij de ID-controle via Didit (opties.idCheck), of "" als het ID in orde is. */
-function idCheckUitleg(documenten: readonly ChecklistDocument[], vandaag: string, status: string | null): string {
+function idCheckUitleg(documenten: readonly ChecklistDocument[], vandaag: string, status: string | null, kopieNodig = false): string {
   if (heeftGeldigId(documenten, vandaag)) return "";
+  if (kopieNodig) {
+    // Nationaliteit buiten de EER (Wav art. 15): een kopie is verplicht, de werknemer mag hem uploaden.
+    const nieuwste = nieuwstePerType(documenten.filter((d) => d.document_type === "id_bewijs"))[0];
+    if (nieuwste?.review_status === "afgekeurd") return "Je kopie van je ID is afgekeurd. Upload een nieuwe, goed leesbare kopie bij Documenten.";
+    if (nieuwste && nieuwste.review_status !== "goedgekeurd") return "Je kopie van je ID wordt nog gecontroleerd door TopTalent.";
+    return "Je nationaliteit valt buiten de EU/EER en Zwitserland. Upload daarom een kopie van je paspoort of ID-bewijs bij Documenten.";
+  }
   if (status === "handmatig") return "We controleren je ID. Je hoeft niets te doen.";
   if (status === "videocall_gevraagd") return "Je hebt een videocall aangevraagd. We nemen contact met je op.";
   if (status === "bezig") return "Je ID-controle is nog niet klaar. Rond hem af of begin opnieuw.";
@@ -114,7 +122,9 @@ export function reageerChecklist(
   vandaag: string,
   opties: ChecklistOpties = {},
 ): ChecklistPunt[] {
-  const id = opties.idCheck ? idCheckUitleg(documenten, vandaag, opties.idCheck.status) : idUitleg(documenten, vandaag);
+  const id = opties.idCheck
+    ? idCheckUitleg(documenten, vandaag, opties.idCheck.status, opties.idCheck.kopieNodig)
+    : idUitleg(documenten, vandaag);
   const kvk = isGeldigKvkNummer(medewerker.kvk_nummer)
     ? ""
     : medewerker.kvk_nummer

@@ -33,10 +33,16 @@ export default function DocumentenClient() {
   const [documentType, setDocumentType] = useState<string>(DOCUMENT_TYPES[0].value);
   const [vervaldatum, setVervaldatum] = useState("");
   // ID-controle via Didit aan: geen ID-bewijs meer uploaden (geen kopie van het ID), wel de rest.
+  // Behalve als er een kopie nodig is (nationaliteit buiten de EER, Wav): dan mag het ID-bewijs wel.
   const [idCheckActief, setIdCheckActief] = useState(false);
   const uploadTypes = idCheckActief ? DOCUMENT_TYPES.filter((t) => t.value !== "id_bewijs") : DOCUMENT_TYPES;
   const vraagtVervaldatum = DOCUMENT_TYPES.find((t) => t.value === documentType)?.vervaldatum ?? false;
-  const meldIdCheckActief = useCallback((actief: boolean) => {
+  const meldIdCheckActief = useCallback((actief: boolean, opties?: { kopieNodig: boolean }) => {
+    if (opties?.kopieNodig) {
+      setIdCheckActief(false);
+      setDocumentType("id_bewijs");
+      return;
+    }
     setIdCheckActief(actief);
     if (actief) setDocumentType((huidig) => (huidig === "id_bewijs" ? "werkvergunning" : huidig));
   }, []);

@@ -81,20 +81,55 @@ export async function haalDiditBeslissing(sessionId: string, timeoutMs = 3_000):
   return res.json();
 }
 
+/** Wat Didit na het verwijderen over het gezichtstemplate meldt (`face_retention_outcome`). */
+export type FaceRetentionOutcome = "deleted" | "retained_with_user" | "none" | "ineligible_no_vendor_user";
+
+export type DiditVerwijderUitkomst = {
+  uitkomst: "verwijderd" | "was_al_weg";
+  /** null bij 404 of als Didit het veld niet meestuurt. */
+  faceRetentionOutcome: string | null;
+};
+
 /**
  * Verwijder de sessie bij Didit: beslissing, uitgelezen gegevens en alle beelden. Geen
  * gezichtstemplate bewaren (`retain_face_embeddings: false`). 404 = al weg; dat telt als gelukt.
+ *
+ * `privacyErasure`: bij het verwijderen van een account (AVG-verwijderverzoek) met
+ * `deletion_instruction: "privacy_erasure"` en een eigen referentie (`instruction_id`), anders
+ * `"operational_session_delete"` (https://docs.didit.me/sessions-api/delete-session). Uit het
+ * antwoord lezen we alleen `face_retention_outcome` (deleted / none / retained_with_user /
+ * ineligible_no_vendor_user); de rest negeren we.
  */
-export async function verwijderDiditSessie(sessionId: string): Promise<"verwijderd" | "was_al_weg"> {
+export async function verwijderDiditSessie(
+  sessionId: string,
+  opties: { privacyErasure?: boolean; instructionId?: string } = {},
+): Promise<DiditVerwijderUitkomst> {
   const { apiKey } = config();
+  const body: Record<string, unknown> = {
+    retain_face_embeddings: false,
+    deletion_instruction: opties.privacyErasure ? "privacy_erasure" : "operational_session_delete",
+  };
+  if (opties.instructionId) body.instruction_id = opties.instructionId.slice(0, 255);
   const res = await fetch(`${DIDIT_API_BASIS}/v3/session/${encodeURIComponent(sessionId)}/delete/`, {
     method: "DELETE",
     headers: { "x-api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ retain_face_embeddings: false }),
+    body: JSON.stringify(body),
     signal: AbortSignal.timeout(10_000),
     cache: "no-store",
   });
-  if (res.status === 404) return "was_al_weg";
+  if (res.status === 404) return { uitkomst: "was_al_weg", faceRetentionOutcome: null };
   if (!res.ok) throw new DiditFout("sessie_verwijderen", res.status);
-  return "verwijderd";
+  const data = (await res.json().catch(() => null)) as { face_retention_outcome?: unknown } | null;
+  return { uitkomst: "verwijderd", faceRetentionOutcome: faceRetentionUitAntwoord(data) };
+}
+
+/** Alleen het enum-veld, zodat er nooit iets anders uit het antwoord in een log belandt. */
+export function faceRetentionUitAntwoord(data: unknown): string | null {
+  const waarde = data && typeof data === "object" ? (data as { face_retention_outcome?: unknown }).face_retention_outcome : null;
+  return typeof waarde === "string" && /^[a-z_]{1,40}$/.test(waarde) ? waarde : null;
+}
+
+/** Bewaarde Didit toch een gezichtstemplate (terwijl wij `retain_face_embeddings: false` vragen)? */
+export function templateBewaard(outcome: string | null): boolean {
+  return outcome === "retained_with_user";
 }
