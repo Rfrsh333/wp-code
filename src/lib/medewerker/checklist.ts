@@ -15,7 +15,7 @@ import {
 } from "@/lib/medewerker/reageer-checklist";
 import { OVEREENKOMST_VERSIE } from "@/content/overeenkomst-van-opdracht";
 import { isAkkoordMogelijk } from "@/lib/uitbetaling/config";
-import { isDiditActief } from "@/lib/id-check/config";
+import { isDiditActiefVoor } from "@/lib/id-check/config";
 import { haalLaatsteIdCheck, IdCheckMigratieOntbreekt } from "@/lib/id-check/db";
 
 /**
@@ -62,8 +62,8 @@ async function haalMedewerker(medewerkerId: string) {
  * Alleen opgehaald als het ID nog niet in orde is (scheelt een query bij aanmelden en matching).
  * Een fout hier mag de checklist nooit breken: dan zonder status.
  */
-async function idCheckOptie(medewerkerId: string, documenten: readonly ChecklistDocument[], vandaag: string): Promise<ChecklistOpties["idCheck"]> {
-  if (!isDiditActief()) return undefined;
+async function idCheckOptie(medewerkerId: string, documenten: readonly ChecklistDocument[], vandaag: string, demo: boolean): Promise<ChecklistOpties["idCheck"]> {
+  if (!isDiditActiefVoor(demo)) return undefined;
   if (heeftGeldigId(documenten, vandaag)) return { status: "goedgekeurd" };
   try {
     return { status: (await haalLaatsteIdCheck(medewerkerId))?.status ?? null };
@@ -106,7 +106,7 @@ export async function haalChecklist(medewerkerId: string): Promise<ChecklistStat
 
   const vandaag = nlVandaag();
   const eigenDocumenten = documenten.get(medewerkerId) ?? [];
-  const idCheck = await idCheckOptie(medewerkerId, eigenDocumenten, vandaag);
+  const idCheck = await idCheckOptie(medewerkerId, eigenDocumenten, vandaag, demo);
   const punten = reageerChecklist(medewerker, eigenDocumenten, vandaag, { zelffacturering, idCheck });
   // Demo-accounts (app-review) en een ontbrekende migratie blokkeren niet.
   const ontbrekend = migratieOntbreekt || demo ? [] : punten.filter((p) => !p.ok);

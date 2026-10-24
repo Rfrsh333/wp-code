@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getMedewerkerSession } from "@/lib/portal-auth";
 import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { captureRouteError } from "@/lib/sentry-utils";
-import { isDiditActief } from "@/lib/id-check/config";
+import { isDiditActiefVoorMedewerker } from "@/lib/id-check/actief";
 import {
   bepaalDocumentFormaat,
   isDocumentType,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
     // Met de ID-controle via Didit aan bewaren we geen kopie van het ID meer (AP: geen ID-kopie van
     // zzp'ers). Het ID gaat dan via POST /api/medewerker/id-check.
-    if (documentType === "id_bewijs" && isDiditActief()) {
+    if (documentType === "id_bewijs" && (await isDiditActiefVoorMedewerker(medewerker.id))) {
       return NextResponse.json(
         { code: "id_check_didit", error: "Een ID-bewijs uploaden kan niet meer. Gebruik 'Controleer je ID' bij Documenten." },
         { status: 400 },

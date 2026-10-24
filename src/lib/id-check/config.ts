@@ -4,6 +4,8 @@
  * - ID_CHECK_DIDIT_ACTIEF=1   zet de functie aan. Zonder (of zonder de drie sleutels hieronder)
  *                             werkt alles zoals vóór Didit: de upload van een ID-bewijs blijft, de
  *                             nieuwe routes geven 503/404.
+ *   ID_CHECK_DIDIT_ACTIEF=demo  alleen voor demo-/testaccounts (`is_demo`), om op de echte site met
+ *                             de Didit-testsleutels te testen; alle andere werknemers merken niets.
  * - DIDIT_API_KEY             API-sleutel van de Didit-applicatie (header x-api-key). Geheim.
  * - DIDIT_WEBHOOK_SECRET      secret_shared_key van de webhook-bestemming in de Didit-console.
  * - DIDIT_WORKFLOW_ID         workflow "TopTalent ID-controle (zonder selfie)".
@@ -30,9 +32,26 @@ export function diditConfig(): DiditConfig | null {
   return { apiKey, webhookSecret, workflowId };
 }
 
-/** Staat de ID-controle via Didit aan? Vlag op 1 én alle sleutels ingesteld. */
+/** "1" = voor iedereen, "demo" = alleen voor demo-accounts, anders uit. */
+function vlag(): "iedereen" | "demo" | null {
+  const waarde = env("ID_CHECK_DIDIT_ACTIEF");
+  if (waarde === "1") return "iedereen";
+  if (waarde === "demo") return "demo";
+  return null;
+}
+
+/**
+ * Is de ID-controle via Didit ingesteld? Vlag op 1 of demo én alle sleutels. Voor de webhook en de
+ * admin; of een werknemer hem ziet, bepaalt isDiditActiefVoor.
+ */
 export function isDiditActief(): boolean {
-  return env("ID_CHECK_DIDIT_ACTIEF") === "1" && diditConfig() !== null;
+  return vlag() !== null && diditConfig() !== null;
+}
+
+/** Staat de ID-controle aan voor deze werknemer? Met de vlag op demo alleen voor demo-accounts. */
+export function isDiditActiefVoor(isDemo: boolean): boolean {
+  const modus = vlag();
+  return diditConfig() !== null && (modus === "iedereen" || (modus === "demo" && isDemo));
 }
 
 /** Sessie bij Didit verwijderen na een definitieve beslissing (standaard ja). */

@@ -6,7 +6,8 @@ import { captureRouteError } from "@/lib/sentry-utils";
 import { haalKritiekeDocumenten } from "@/lib/medewerker/kritieke-documenten";
 import { heeftGeldigId } from "@/lib/medewerker/reageer-checklist";
 import { nlVandaag } from "@/lib/nl-tijd";
-import { isDiditActief, siteUrl } from "@/lib/id-check/config";
+import { siteUrl } from "@/lib/id-check/config";
+import { isDiditActiefVoorMedewerker } from "@/lib/id-check/actief";
 import { DiditFout, maakDiditSessie } from "@/lib/id-check/didit-api";
 import { haalLaatsteIdCheck, IdCheckMigratieOntbreekt, slaSessieOp } from "@/lib/id-check/db";
 import { kiesCallback } from "@/lib/id-check/regels";
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return geenMedewerkerToegang(request);
-    if (!isDiditActief()) return NextResponse.json(UIT, { status: 404 });
+    if (!(await isDiditActiefVoorMedewerker(medewerker.id))) return NextResponse.json(UIT, { status: 404 });
 
     const [rij, documenten] = await Promise.all([
       haalLaatsteIdCheck(medewerker.id),
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return geenMedewerkerToegang(request);
-    if (!isDiditActief()) return NextResponse.json(UIT, { status: 503 });
+    if (!(await isDiditActiefVoorMedewerker(medewerker.id))) return NextResponse.json(UIT, { status: 503 });
 
     const limiet = await checkRedisRateLimit(`id-check:${medewerker.id}`, idCheckRateLimit);
     if (!limiet.success) {

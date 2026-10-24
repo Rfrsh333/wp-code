@@ -5,7 +5,7 @@ import { geenMedewerkerToegang } from "@/lib/medewerker/sessie-boete";
 import { checkRedisRateLimit, idCheckRateLimit } from "@/lib/rate-limit-redis";
 import { captureRouteError } from "@/lib/sentry-utils";
 import { logAuditEvent } from "@/lib/audit-log";
-import { isDiditActief } from "@/lib/id-check/config";
+import { isDiditActiefVoorMedewerker } from "@/lib/id-check/actief";
 import { IdCheckMigratieOntbreekt, vraagVideocallAan } from "@/lib/id-check/db";
 
 /**
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     const medewerker = await getMedewerkerSession(request);
     if (!medewerker) return geenMedewerkerToegang(request);
-    if (!isDiditActief()) {
+    if (!(await isDiditActiefVoorMedewerker(medewerker.id))) {
       return NextResponse.json({ error: "De ID-controle via Didit staat (nog) niet aan." }, { status: 503 });
     }
 

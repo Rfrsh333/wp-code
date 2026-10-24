@@ -13,6 +13,7 @@ import {
   type DiditIdVerificatie,
 } from "../../src/lib/id-check/regels";
 import { heeftGeldigId, reageerChecklist, type ChecklistMedewerker } from "../../src/lib/medewerker/reageer-checklist";
+import { isDiditActief, isDiditActiefVoor } from "../../src/lib/id-check/config";
 import { OVEREENKOMST_VERSIE } from "../../src/content/overeenkomst-van-opdracht";
 
 const GEHEIM = "whsec_test_geheim";
@@ -397,5 +398,46 @@ test.describe("overig", () => {
     const oud = reageerChecklist(compleet, [], vandaag)[0];
     expect(oud.actie.label).toBe("Naar je documenten");
     expect(oud.uitleg).toMatch(/^Upload een geldig ID-bewijs/);
+  });
+});
+
+test.describe("vlag ID_CHECK_DIDIT_ACTIEF", () => {
+  const SLEUTELS = { DIDIT_API_KEY: "k", DIDIT_WEBHOOK_SECRET: "s", DIDIT_WORKFLOW_ID: "w" };
+  const NAMEN = ["ID_CHECK_DIDIT_ACTIEF", ...Object.keys(SLEUTELS)];
+  let bewaard: Record<string, string | undefined> = {};
+
+  test.beforeEach(() => {
+    bewaard = Object.fromEntries(NAMEN.map((n) => [n, process.env[n]]));
+    Object.assign(process.env, SLEUTELS);
+  });
+  test.afterEach(() => {
+    for (const [n, w] of Object.entries(bewaard)) {
+      if (w === undefined) delete process.env[n];
+      else process.env[n] = w;
+    }
+  });
+
+  test("1: aan voor iedereen", () => {
+    process.env.ID_CHECK_DIDIT_ACTIEF = "1";
+    expect(isDiditActief()).toBe(true);
+    expect(isDiditActiefVoor(false)).toBe(true);
+    expect(isDiditActiefVoor(true)).toBe(true);
+  });
+
+  test("demo: alleen voor demo-accounts, webhook en admin wel aan", () => {
+    process.env.ID_CHECK_DIDIT_ACTIEF = "demo";
+    expect(isDiditActief()).toBe(true);
+    expect(isDiditActiefVoor(false)).toBe(false);
+    expect(isDiditActiefVoor(true)).toBe(true);
+  });
+
+  test("uit of zonder sleutels: voor niemand", () => {
+    process.env.ID_CHECK_DIDIT_ACTIEF = "ja";
+    expect(isDiditActief()).toBe(false);
+    expect(isDiditActiefVoor(true)).toBe(false);
+    process.env.ID_CHECK_DIDIT_ACTIEF = "demo";
+    delete process.env.DIDIT_API_KEY;
+    expect(isDiditActief()).toBe(false);
+    expect(isDiditActiefVoor(true)).toBe(false);
   });
 });
