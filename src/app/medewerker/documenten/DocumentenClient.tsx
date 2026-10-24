@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { FileText, Download, Upload, Eye, Trash2, IdCard, X } from "lucide-react";
 import MedewerkerResponsiveLayout from "@/components/medewerker/MedewerkerResponsiveLayout";
+import IdCheckKaart from "@/components/medewerker/IdCheckKaart";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 import QRCode from "react-qr-code";
@@ -31,7 +32,14 @@ export default function DocumentenClient() {
   const [documenten, setDocumenten] = useState<MedewerkerDocument[]>([]);
   const [documentType, setDocumentType] = useState<string>(DOCUMENT_TYPES[0].value);
   const [vervaldatum, setVervaldatum] = useState("");
+  // ID-controle via Didit aan: geen ID-bewijs meer uploaden (geen kopie van het ID), wel de rest.
+  const [idCheckActief, setIdCheckActief] = useState(false);
+  const uploadTypes = idCheckActief ? DOCUMENT_TYPES.filter((t) => t.value !== "id_bewijs") : DOCUMENT_TYPES;
   const vraagtVervaldatum = DOCUMENT_TYPES.find((t) => t.value === documentType)?.vervaldatum ?? false;
+  const meldIdCheckActief = useCallback((actief: boolean) => {
+    setIdCheckActief(actief);
+    if (actief) setDocumentType((huidig) => (huidig === "id_bewijs" ? "werkvergunning" : huidig));
+  }, []);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -167,6 +175,9 @@ export default function DocumentenClient() {
 
         {/* Content */}
         <div className="p-4 max-w-4xl mx-auto">
+          {/* ID-controle via Didit (alleen als de functie aan staat) */}
+          <IdCheckKaart onActief={meldIdCheckActief} />
+
           {/* Upload section */}
           <div className="bg-[var(--mp-card)] rounded-[var(--mp-radius)] p-6 shadow-[var(--mp-shadow)] mb-6">
             <h2 className="text-lg font-semibold text-[var(--mp-text-primary)] mb-4">
@@ -183,7 +194,7 @@ export default function DocumentenClient() {
                   disabled={uploading}
                   className="w-full px-3 py-2.5 rounded-xl bg-[var(--mp-bg)] border border-[var(--mp-separator)] text-[var(--mp-text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--mp-accent)]"
                 >
-                  {DOCUMENT_TYPES.map((t) => (
+                  {uploadTypes.map((t) => (
                     <option key={t.value} value={t.value}>
                       {t.label}
                     </option>

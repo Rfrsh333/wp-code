@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import StarRating from "@/components/ui/StarRating";
 import MedewerkerDetailView from "./MedewerkerDetailView";
+import IdChecksPaneel from "./IdChecksPaneel";
 
 interface Medewerker {
   id: string;
@@ -283,6 +284,9 @@ export default function MedewerkersTab() {
           {feedback}
         </div>
       )}
+
+      {/* ID-checks via Didit die een mens moet beoordelen (alleen zichtbaar als er iets open staat) */}
+      <IdChecksPaneel />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
