@@ -118,7 +118,7 @@ export default function IdCheckKaart({
   };
 
   const vraagVideocall = async () => {
-    if (!confirm("Wil je je ID liever in een videocall laten zien? We nemen contact met je op om een moment af te spreken.")) return;
+    if (!confirm("Wil je je ID liever in een videocall laten zien? We nemen binnen 2 werkdagen contact met je op om een moment af te spreken.")) return;
     setBezig("videocall");
     try {
       const res = await fetch("/api/medewerker/id-check/videocall", { method: "POST" });
@@ -181,7 +181,9 @@ export default function IdCheckKaart({
         <div>
           <h2 className="font-semibold text-[var(--mp-text-primary)]">We controleren je ID</h2>
           <p className="text-sm text-[var(--mp-text-secondary)] mt-0.5">
-            Je hoeft niets te doen. Zodra je ID is goedgekeurd, zie je dat hier.
+            {check.status === "handmatig"
+              ? "Iemand van TopTalent bekijkt je controle, uiterlijk binnen 2 werkdagen. Je hoeft niets te doen. Zodra je ID is goedgekeurd, zie je dat hier."
+              : "Je hoeft niets te doen. Zodra je ID is goedgekeurd, zie je dat hier."}
           </p>
         </div>
       </div>
@@ -195,7 +197,8 @@ export default function IdCheckKaart({
         <div>
           <h2 className="font-semibold text-[var(--mp-text-primary)]">Videocall aangevraagd</h2>
           <p className="text-sm text-[var(--mp-text-secondary)] mt-0.5">
-            We nemen contact met je op om een moment af te spreken. Houd je paspoort of ID-kaart bij de hand.
+            We nemen binnen 2 werkdagen contact met je op om een moment af te spreken. Houd je paspoort of ID-kaart bij
+            de hand.
           </p>
         </div>
       </div>

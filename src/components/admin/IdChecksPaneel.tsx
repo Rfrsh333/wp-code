@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { documentsoortLabel, landNaam } from "@/lib/id-check/controlerecord";
+import { idBeoordelingTeLaat, idBeoordelingUiterlijk } from "@/lib/id-check/termijn";
+import { nlDatumKort } from "@/lib/nl-tijd";
 import IdControleFormulier from "./IdControleFormulier";
 
 /**
@@ -55,6 +57,8 @@ function IdCheckRegel({ item, onKlaar }: { item: Item; onKlaar: (melding: string
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const isVideocall = item.status === "videocall_gevraagd";
+  const uiterlijk = idBeoordelingUiterlijk(item.aangemaakt_op);
+  const teLaat = idBeoordelingTeLaat(item.aangemaakt_op);
 
   const verstuur = async (body: Record<string, unknown>, melding: string) => {
     setBezig(true);
@@ -105,6 +109,11 @@ function IdCheckRegel({ item, onKlaar }: { item: Item; onKlaar: (melding: string
         <div>
           <p className="font-medium text-neutral-900">{item.naam ?? "Onbekende medewerker"}</p>
           <p className="text-sm text-neutral-500">{item.email}</p>
+          {uiterlijk && (
+            <p className={`mt-0.5 text-xs ${teLaat ? "font-semibold text-red-600" : "text-neutral-500"}`}>
+              {teLaat ? "Te laat: " : ""}uiterlijk {nlDatumKort(uiterlijk)} bekijken (2 werkdagen)
+            </p>
+          )}
         </div>
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${isVideocall ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}
